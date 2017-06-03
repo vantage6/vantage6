@@ -23,24 +23,29 @@ print("Starting with client ID " + str(clientData["id"]))
 
 while True:
     resp = requests.get("http://localhost:5000/client/"+str(clientData["id"])+"/task")
-    respObjTask = json.loads(resp.text)
+    taskList = json.loads(resp.text)
 
-    if len(respObjTask) == 0:
+    if len(taskList) == 0:
         print("nothing to do....")
         time.sleep(clientData["interval"])
-    else :
-        
-        taskId = respObjTask.get('id')
-        image = respObjTask.get('image')
-        inputArgs = respObjTask.get("input")
 
-        if image is "hello-world":
+    iTask = 0
+    while iTask < len(taskList):
+        myTask = taskList[iTask]
+        taskId = myTask.get('id')
+        image = myTask.get('image')
+        inputArgs = myTask.get("input")
+        imageResponse = ""
+
+        if image == "hello-world":
             print("found hello-world!")
-            clientData = {
-                'response': "Hello, world!"
-            }
-            # execute HTTP POST to try and authenticate
-            resp = requests.post("http://localhost:5000/client/" + str(clientData["id"]) + "/task/" + str(taskId) + "/add", data=json.dumps(clientData), headers=headerData)
-            respObjResult = json.loads(resp.text)
-            resultId = respObjResult.get('resultId', '')
-            print("resultId" + str(resultId))
+            imageResponse = "Hello, world!"
+
+        responseData = {
+            'response': imageResponse
+        }
+        # execute HTTP POST to send back result (response)
+        resp = requests.post("http://localhost:5000/client/" + str(clientData["id"]) + "/task/" + str(taskId) + "/result/add", data=json.dumps(responseData), headers=headerData)
+        respObjResult = json.loads(resp.text)
+        print("resultId" + str(respObjResult["taskId"]))
+        iTask += 1
