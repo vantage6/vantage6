@@ -1,6 +1,8 @@
-import json, requests, time
+import json
+import requests
+import time
 
-#connect to service
+# connect to service
 headerData = {
     'Content-Type': "application/json"
 }
@@ -22,7 +24,7 @@ if "id" not in clientData:
 print("Starting with client ID " + str(clientData["id"]))
 
 while True:
-    resp = requests.get("http://localhost:5000/client/"+str(clientData["id"])+"/task")
+    resp = requests.get("http://localhost:5000/client/" + str(clientData["id"]) + "/task")
     taskList = json.loads(resp.text)
 
     if len(taskList) == 0:
@@ -45,7 +47,9 @@ while True:
             'response': imageResponse
         }
         # execute HTTP POST to send back result (response)
-        resp = requests.post("http://localhost:5000/client/" + str(clientData["id"]) + "/task/" + str(taskId) + "/result/add", data=json.dumps(responseData), headers=headerData)
+        resp = requests.post(
+            "http://localhost:5000/client/" + str(clientData["id"]) + "/task/" + str(taskId) + "/result/add",
+            data=json.dumps(responseData), headers=headerData)
         respObjResult = json.loads(resp.text)
         print("resultId" + str(respObjResult["taskId"]))
         iTask += 1
