@@ -9,7 +9,8 @@ class DbDao:
             "email CHAR(255), "
             "institute CHAR(255), "
             "country CHAR(255), "
-            "ip CHAR(255) );")
+            "ip CHAR(255),"
+            "last_seen DATETIME );")
         dbCon.execute("CREATE TABLE IF NOT EXISTS task ( "
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
             "client INT, "
@@ -74,3 +75,10 @@ class DbDao:
         data = cur.fetchall()
         dbCon.close()
         return [dict(ix) for ix in data]
+    def setClientTimestamp(self, clientId):
+        dbCon = self.sqlite.connect(self.dbLoc)
+        cur = dbCon.cursor()
+        cur.execute("UPDATE client SET last_seen = DATETIME('now') WHERE id = ?", str(clientId))
+        dbCon.commit()
+        dbCon.close()
+        return id
