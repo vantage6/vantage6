@@ -27,6 +27,7 @@ def addClient():
 @app.route('/client/<int:clientId>/task')
 def getClientTasks(clientId):
     openTasks = dbDao.getClientOpenTasks(clientId)
+    dbDao.setClientTimestamp(clientId)
     return Response(json.dumps(openTasks), mimetype='application/json')
 
 @app.route('/client/<int:clientId>/task/add', methods=["POST"])
@@ -48,6 +49,7 @@ def getTaskResult(clientId, taskId):
 def addTaskResult(clientId, taskId):
     data = request.get_json()
     resultId = dbDao.addTaskResult(taskId, data["response"])
+    dbDao.setClientTimestamp(clientId)
     data = {
         'success': True,
         'taskId': resultId

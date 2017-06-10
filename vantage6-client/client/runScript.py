@@ -28,7 +28,9 @@ if "id" not in clientData:
 
 print("Starting with client ID " + str(clientData["id"]))
 
-while True:
+abort = 0
+
+while abort == 0:
     taskList = list()
 
     # Connect to central host, if fails do nothing
