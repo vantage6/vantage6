@@ -1,7 +1,6 @@
 import json
 import requests
 import time
-import docker
 import os
 
 # connect to service
@@ -13,9 +12,6 @@ headerData = {
 configFile = open("config.json")
 clientData = json.load(configFile)
 configFile.close()
-
-# Init docker
-dockerClient = docker.from_env()
 
 if "id" not in clientData:
     # execute HTTP POST to try and authenticate
@@ -56,34 +52,27 @@ while abort == 0:
         imageResponse = "output.txt"
 
         #create directory to put files into
-        myFolder = os.getcwd()
-        curFolder = "task"+str(taskId)
+        curFolder = os.getcwd()+"\\task"+str(taskId)
         os.mkdir(curFolder)
 
         #put the input arguments in a text file
-        inputFilePath = myFolder+"/"+curFolder+"/input.txt"
+        inputFilePath = curFolder+"\\input.txt"
         text_file = open(inputFilePath, "w")
         text_file.write(inputText)
         text_file.close()
 
-        outputFilePath = myFolder+"/"+curFolder+"/output.txt"
+        outputFilePath = curFolder+"\\output.txt"
         text_file = open(outputFilePath, "w")
         text_file.write(inputText)
         text_file.close()
 
-        folderFileMounts = {
-            outputFilePath: {"bind": "/output.txt", "mode": "rw"}, 
-            inputFilePath: {"bind": "/input.txt", "mode": "rw"}
-        }
+        #pulling the image for updates or download
+        os.system("docker pull " + image)
 
-        print(folderFileMounts)
-
-        #always do a pull first, to make sure the image is of the latest version
-        dockerClient.images.pull(image)
-        #run the image
-        dockerClient.containers.run(
-            image,
-            volumes=folderFileMounts)
+        #create the command line execution line
+        dockerExecLine = "docker run -v " + inputFilePath + ":/input -v " + outputFilePath + ":/output " + image
+        print("running: " + dockerExecLine)
+        os.system(dockerExecLine)
 
         file = open(outputFilePath, 'r')
         responseText = file.read()
