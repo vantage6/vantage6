@@ -54,6 +54,9 @@ while abort == 0:
         inputArgs = myTask.get("input")
         imageResponse = ""
 
+        #always do a pull first, to make sure the image is of the latest version
+        dockerClient.images.pull("image")
+        #run the image
         logResult = dockerClient.containers.run(image)
 
         responseData = {
