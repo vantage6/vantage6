@@ -2,6 +2,7 @@ import json
 import requests
 import time
 import docker
+import os
 
 # connect to service
 headerData = {
@@ -51,16 +52,45 @@ while abort == 0:
         myTask = taskList[iTask]
         taskId = myTask.get('id')
         image = myTask.get('image')
-        inputArgs = myTask.get("input")
-        imageResponse = ""
+        inputText = myTask.get("input")
+        imageResponse = "output.txt"
+
+        #create directory to put files into
+        myFolder = os.getcwd()
+        curFolder = "task"+str(taskId)
+        os.mkdir(curFolder)
+
+        #put the input arguments in a text file
+        inputFilePath = myFolder+"/"+curFolder+"/input.txt"
+        text_file = open(inputFilePath, "w")
+        text_file.write(inputText)
+        text_file.close()
+
+        outputFilePath = myFolder+"/"+curFolder+"/output.txt"
+        text_file = open(outputFilePath, "w")
+        text_file.write(inputText)
+        text_file.close()
+
+        folderFileMounts = {
+            outputFilePath: {"bind": "/output.txt", "mode": "rw"}, 
+            inputFilePath: {"bind": "/input.txt", "mode": "rw"}
+        }
+
+        print(folderFileMounts)
 
         #always do a pull first, to make sure the image is of the latest version
-        dockerClient.images.pull("image")
+        dockerClient.images.pull(image)
         #run the image
-        logResult = dockerClient.containers.run(image)
+        dockerClient.containers.run(
+            image,
+            volumes=folderFileMounts)
+
+        file = open(outputFilePath, 'r')
+        responseText = file.read()
+        file.close()
 
         responseData = {
-            'response': logResult
+            'response': str(responseText)
         }
 
         # execute HTTP POST to send back result (response)
