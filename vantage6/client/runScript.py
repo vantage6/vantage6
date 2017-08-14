@@ -18,7 +18,7 @@ dockerClient = docker.from_env()
 
 if "id" not in clientData:
     # execute HTTP POST to try and authenticate
-    resp = requests.post("http://localhost:5000/client/add", data=json.dumps(clientData), headers=headerData)
+    resp = requests.post(clientData["masterUrl"] + "/client/add", data=json.dumps(clientData), headers=headerData)
     respObj = json.loads(resp.text)
     clientId = respObj.get('clientId', '')
     clientData["id"] = clientId
@@ -35,7 +35,7 @@ while abort == 0:
 
     # Connect to central host, if fails do nothing
     try:
-        resp = requests.get("http://localhost:5000/client/" + str(clientData["id"]) + "/task")
+        resp = requests.get(clientData["masterUrl"] + "/client/" + str(clientData["id"]) + "/task")
         taskList = json.loads(resp.text)
     except:
         print("Could not retrieve result from master.")
@@ -62,7 +62,7 @@ while abort == 0:
 
         # execute HTTP POST to send back result (response)
         resp = requests.post(
-            "http://localhost:5000/client/" + str(clientData["id"]) + "/task/" + str(taskId) + "/result/add",
+            clientData["masterUrl"] + "/client/" + str(clientData["id"]) + "/task/" + str(taskId) + "/result/add",
             data=json.dumps(responseData), headers=headerData)
         respObjResult = json.loads(resp.text)
         print("resultId" + str(respObjResult["taskId"]))
