@@ -2,6 +2,7 @@ import json
 import requests
 import time
 import os
+import subprocess
 
 # connect to service
 headerData = {
@@ -69,11 +70,11 @@ while abort == 0:
         os.system("docker pull " + image)
 
         #create the command line execution line
-        dockerExecLine = "docker run -v " + inputFilePath + ":/input -v " + outputFilePath + ":/output " + image
+        dockerExecLine = "docker run --rm -v " + inputFilePath + ":/input.txt -v " + outputFilePath + ":/output.txt " + image
         print("running: " + dockerExecLine)
         p = subprocess.Popen(dockerExecLine, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.communicate()
-        log = str(out) +"\r\n" + str(err)
+        log = out.decode("utf-8")  + "\r\n" + err.decode("utf-8") 
 
         file = open(outputFilePath, 'r')
         responseText = file.read()
