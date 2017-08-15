@@ -62,7 +62,7 @@ class DbDao:
     def addTaskResult(self,taskId,response,log):
         dbCon = self.sqlite.connect(self.dbLoc)
         cur = dbCon.cursor()
-        cur.execute("INSERT INTO task_result (task, response) VALUES ( ?, ?, ?)",
+        cur.execute("INSERT INTO task_result (task, response, log) VALUES ( ?, ?, ?)",
             (str(taskId), response, log))
         id = cur.lastrowid
         dbCon.commit()
