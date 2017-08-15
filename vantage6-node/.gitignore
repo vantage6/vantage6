@@ -1,3 +1,4 @@
 **/virt*
 **/__pycache__
 **/*.sqlite
+client/task*
