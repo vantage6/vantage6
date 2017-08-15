@@ -67,10 +67,15 @@ while abort == 0:
         text_file.close()
 
         #pulling the image for updates or download
-        os.system("docker pull " + image)
+        subprocess.Popen("docker pull " + image, shell=True)
+
+        dockerParams = "--rm " #container should be removed after execution
+        dockerParams += "-v " + inputFilePath + ":/input.txt " #mount input file
+        dockerParams += "-v " + outputFilePath + ":/output.txt " #mount output file
+        dockerParams += "-e SPARQL_ENDPOINT=%s " % clientData["sparqlEndpoint"]
 
         #create the command line execution line
-        dockerExecLine = "docker run --rm -v " + inputFilePath + ":/input.txt -v " + outputFilePath + ":/output.txt " + image
+        dockerExecLine = "docker run  " + dockerParams + image
         print("running: " + dockerExecLine)
         p = subprocess.Popen(dockerExecLine, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.communicate()
@@ -84,6 +89,8 @@ while abort == 0:
             'response': str(responseText),
             'log': str(log)
         }
+
+        print(responseData)
 
         # execute HTTP POST to send back result (response)
         resp = requests.post(
