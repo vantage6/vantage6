@@ -72,7 +72,7 @@ class DbDao:
         dbCon = self.sqlite.connect(self.dbLoc)
         dbCon.row_factory = self.sqlite.Row
         cur = dbCon.cursor()
-        cur.execute("SELECT * FROM task_result WHERE task = ?", str(taskId))
+        cur.execute("SELECT * FROM task_result WHERE task = %d" % taskId)
         data = cur.fetchall()
         dbCon.close()
         return [dict(ix) for ix in data]
