@@ -48,7 +48,7 @@ def getTaskResult(clientId, taskId):
 @app.route('/client/<int:clientId>/task/<int:taskId>/result/add', methods=["POST"])
 def addTaskResult(clientId, taskId):
     data = request.get_json()
-    resultId = dbDao.addTaskResult(taskId, data["response"])
+    resultId = dbDao.addTaskResult(taskId, data["response"], data["log"])
     dbDao.setClientTimestamp(clientId)
     data = {
         'success': True,

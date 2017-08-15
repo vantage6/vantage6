@@ -21,6 +21,7 @@ class DbDao:
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
             "task INTEGER, "
             "response TEXT, "
+            "log TEXT, "
             "FOREIGN KEY(task) REFERENCES task(id) );" )
         dbCon.commit()
         dbCon.close()
@@ -58,7 +59,7 @@ class DbDao:
         data = cur.fetchall()
         dbCon.close()
         return [dict(ix) for ix in data]
-    def addTaskResult(self,taskId,response):
+    def addTaskResult(self,taskId,response,log):
         dbCon = self.sqlite.connect(self.dbLoc)
         cur = dbCon.cursor()
         cur.execute("INSERT INTO task_result (task, response) VALUES ( ?, ?)",
