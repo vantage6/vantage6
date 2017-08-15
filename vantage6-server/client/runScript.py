@@ -49,19 +49,18 @@ while abort == 0:
         taskId = myTask.get('id')
         image = myTask.get('image')
         inputText = myTask.get("input")
-        imageResponse = "output.txt"
 
         #create directory to put files into
-        curFolder = os.getcwd()+"\\task"+str(taskId)
+        curFolder = os.path.join(os.getcwd(), "task"+str(taskId))
         os.mkdir(curFolder)
 
         #put the input arguments in a text file
-        inputFilePath = curFolder+"\\input.txt"
+        inputFilePath = os.path.join(curFolder,"input.txt")
         text_file = open(inputFilePath, "w")
         text_file.write(inputText)
         text_file.close()
 
-        outputFilePath = curFolder+"\\output.txt"
+        outputFilePath = os.path.join(curFolder,"output.txt")
         text_file = open(outputFilePath, "w")
         text_file.write(inputText)
         text_file.close()
