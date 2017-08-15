@@ -1,1 +1,1 @@
-{"name": "Johan van Soest", "institute": "MAASTRO Clinic", "country": "Netherlands", "interval": 5, "email": "johan.vansoest@maastro.nl", "masterUrl": "http://localhost:5000"}
+{"name": "Johan van Soest", "institute": "MAASTRO Clinic", "country": "Netherlands", "interval": 5, "email": "johan.vansoest@maastro.nl", "masterUrl": "http://localhost:5000", "sparqlEndpoint": "http://sparql.cancerdata.org/namespace/thunder/sparql"}
