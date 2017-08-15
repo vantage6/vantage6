@@ -71,14 +71,17 @@ while abort == 0:
         #create the command line execution line
         dockerExecLine = "docker run -v " + inputFilePath + ":/input -v " + outputFilePath + ":/output " + image
         print("running: " + dockerExecLine)
-        os.system(dockerExecLine)
+        p = subprocess.Popen(dockerExecLine, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        out, err = p.communicate()
+        log = str(out) +"\r\n" + str(err)
 
         file = open(outputFilePath, 'r')
         responseText = file.read()
         file.close()
 
         responseData = {
-            'response': str(responseText)
+            'response': str(responseText),
+            'log': str(log)
         }
 
         # execute HTTP POST to send back result (response)
