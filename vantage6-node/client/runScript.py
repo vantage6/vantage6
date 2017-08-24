@@ -26,6 +26,10 @@ if "id" not in clientData:
 
 print("Starting with client ID " + str(clientData["id"]))
 
+taskDir = "tasks"
+if not os.path.exists(taskDir):
+    os.mkdir(taskDir)
+
 abort = 0
 
 while abort == 0:
@@ -52,7 +56,7 @@ while abort == 0:
         inputText = myTask.get("input")
 
         #create directory to put files into
-        curFolder = os.path.join(os.getcwd(), "task"+str(taskId))
+        curFolder = os.path.join(os.getcwd(), taskDir, "task"+str(taskId))
         os.mkdir(curFolder)
 
         #put the input arguments in a text file
