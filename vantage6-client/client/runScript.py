@@ -77,6 +77,7 @@ while abort == 0:
         dockerParams += "-v " + inputFilePath + ":/input.txt " #mount input file
         dockerParams += "-v " + outputFilePath + ":/output.txt " #mount output file
         dockerParams += "-e SPARQL_ENDPOINT=%s " % clientData["sparqlEndpoint"]
+        dockerParams += "--add-host dockerhost:%s " % clientData["dockerHost"]
 
         #create the command line execution line
         dockerExecLine = "docker run  " + dockerParams + image
