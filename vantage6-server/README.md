@@ -1,5 +1,7 @@
 # PyTaskManager
 
+License: (Apache 2.0)[./LICENSE]
+
 ## Introduction
 This package contains the software to run the open-source Personal Health Train and/or Distributed learning infrastructure. This infrastructure can be setup between different collaborative partners who do trust each other.
 
