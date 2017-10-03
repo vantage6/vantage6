@@ -13,28 +13,35 @@ This means the researcher is free to implement any application/script, embedded 
 # How to use it?
 
 ## Prerequisites
+
 At the (hospital) site:
+
 * A Windows Server 2012R2 (or higher) machine, or a unix machine supporting Docker
 * Docker installed, and given rights to the user executing the client rights to perform docker commands
 * Python 2.7 or 3 (tested on both)
 
 At the central registry:
+
 * A Windows Server 2012R2 (or higher) machine, or a unix machine supporting Docker
 * Docker installed, and given rights to the user executing the client rights to perform docker commands
 * Python 2.7 or 3 (tested on both)
 
 ## How to run?
+
 At the central registry:
+
 1. Please checkout this repository
 2. Run the python script master/TaskMaster.py (`python master/TaskMaster.py`). The registry will now run at port 5000, and the output is shown at the console.
 
 At the (hospital) sites:
+
 1. Checkout this repository
 2. Please adapt the config.json file to your site information, including the local URL to your internal SPARQL endpoint.
 3. Run the python script client/runScript.py (`python client/runScript.py`)
 4. **Optionally**: if you have a public IP address, you can also receive direct files (e.g. usefull if your site is a Trusted Third Party, and (encrypted) files are sent to you). To run this service, please execute the python script client/FileService.py (`python client/FileService.py`).
 
 ## How to build and run an algorithm?
+
 The registry is based on REST commands. The docker containers are *only* needed for execution at the sites. As a researcher, this means you have to develop a docker container which can run on *every* site.
 
 To merge results from all sites, and to run the *centralised* part of your analysis, you can develop a script on your own computer. This computer can retrieve the results from the registry, perform its calculations, and (optionally, in an iterative algorithm) post a new request to run an image on the contributing sites. This can also be the same Docker image, using an updated configuration file.
