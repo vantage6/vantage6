@@ -6,8 +6,8 @@ import os, os.path
 
 from flask import g, request
 from flask_restful import Resource, abort
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
 
+from requests import codes as rqc
 
 import logging
 module_name = __name__.split('.')[-1]
@@ -38,6 +38,7 @@ def setup(api, API_BASE):
 
 # Schemas
 task_schema = TaskSchema()
+task_inc_schema = TaskIncludedSchema()
 
 
 # ------------------------------------------------------------------------------
@@ -46,47 +47,29 @@ task_schema = TaskSchema()
 class Task(Resource):
     """Resource for /api/task"""
 
-    @jwt_required
+    @with_user_or_client
     def get(self, id=None):
         t = db.Task.get(id)
-        return task_schema.dump(t, many=not bool(id))
+
+        if request.args.get('include') == 'results':
+            s = task_inc_schema
+        else:
+            s = task_schema
+
+        return s.dump(t, many=not bool(id))
 
 
-    @jwt_required
     def post(self):
         """Create a new Task."""
-        abort(400, message="Please post new tasks to /api/collaboration/<id>/task")
+        abort(rqc.not_allowed, message="Please post new tasks to /api/collaboration/<id>/task")
 
 
 class TaskResult(Resource):
     """Resource for /api/task/<int:id>/result"""
 
-    @jwt_required
+    @with_user_or_client
     def get(self, id):
         """Return results for task."""
         task = db.Task.get(id)
         return task.results
 
-    @with_client
-    def post(self, id, result_id):
-        """Update an oustanding result for task."""
-        data = request.get_json()
-        result = db.TaskResult.get(result_id)
-
-        if result.id != id:
-            abort(401, message="Result is not part of task!")
-
-        if result.client_id != g.client.id:
-            abort(401, message="Unauthorized: this is not your result to post!")
-
-        if result.finished_at is not None:
-            abort(401, message="Cannot update a finished result!")            
-
-        result.started_at = parse_datetime(data.get("started_at"), result.started_at)
-        result.finished_at = parse_datetime(data.get("finished_at"))
-        result.result = data.get("result")
-        result.log = data.get("log")
-
-        result.save()
-
-        return result
