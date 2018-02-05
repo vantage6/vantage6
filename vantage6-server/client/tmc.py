@@ -55,12 +55,14 @@ class TaskMasterClient(object):
 
 
     def request(self, url, json_data=None, method='get'):
-
+        """Performs a PUT by default is json_data is provided without method."""
         headers = {
             'Authorization': 'Bearer ' + self._access_token,
         }
 
-        if json_data or method == 'post':
+        if method == 'put' or json_data:
+            response = requests.put(url, json=json_data, headers=headers)
+        elif method == 'post':
             response = requests.post(url, json=json_data, headers=headers)
         else:
             response = requests.get(url, headers=headers)
@@ -193,10 +195,9 @@ class TaskMasterClient(object):
         log.info("Starting task {id} - {name}".format(**task))
         log.info("-" * 80)
 
-        url = '{baseURL}/task/{task_id}/result/{result_id}'
+        url = '{baseURL}/result/{result_id}'
         url = url.format(
             baseURL=self.config.baseURL, 
-            task_id=task['id'],
             result_id=taskresult['id'],
         )
 
@@ -205,7 +206,7 @@ class TaskMasterClient(object):
             'started_at': datetime.datetime.now().isoformat(),
         }
 
-        response = self.request(url, json_data=result_data)
+        response = self.request(url, json_data=result_data, method='put')
         log.debug(response)
 
         
@@ -229,7 +230,7 @@ class TaskMasterClient(object):
 
         # Do an HTTP POST to send back result (response)
         log.info('POSTing result to server')
-        response = self.request(url, json_data=result_data)
+        response = self.request(url, json_data=result_data, method='put')
 
         log.info("-" * 80)
         log.info("Finished task {id} - {name}".format(**task))
