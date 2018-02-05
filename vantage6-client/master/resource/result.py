@@ -60,14 +60,21 @@ class Result(Resource):
             t = q.all()
 
         if request.args.get('include') == 'task':
-            return result_inc_schema.dump(t, many=not bool(id))
+            s = result_inc_schema
+        else:
+            s = result_schema
 
-        return result_schema.dump(t, many=not bool(id))
+        return s.dump(t, many=not bool(id))
+
+
+    def post(self, id=None):
+        abort(rqc.not_allowed, message="Results cannot be created by POSTing.")
 
 
     @with_client
     def put(self, id):
         """Update a Result."""
+        data = request.get_json()
         result = db.TaskResult.get(id)
 
         if result.client_id != g.client.id:
