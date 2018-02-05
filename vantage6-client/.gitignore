@@ -2,4 +2,11 @@
 **/__pycache__
 **/*.sqlite
 client/task*
-client/storage*
+client2
+client3
+
+*.vpp
+client/logs
+*.sublime-project
+*.sublime-workspace
+master/logs
