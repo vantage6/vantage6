@@ -1,0 +1,11 @@
+bcrypt
+flask
+flask-cors
+flask-jwt-extended
+flask-restful
+marshmallow
+marshmallow-sqlalchemy
+pyjwt
+pyyaml
+requests
+sqlalchemy
