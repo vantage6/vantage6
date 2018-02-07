@@ -10,3 +10,4 @@ client/logs
 *.sublime-project
 *.sublime-workspace
 master/logs
+pytaskmanager.egg-info
