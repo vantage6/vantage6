@@ -70,8 +70,14 @@ pparams = {
 @create.command(name='client')
 @click.option('--location', prompt='Please enter a folder name', type=click.Path(*pparams))
 def create_client(location):    
-    click.echo("create_client")
-    click.echo(click.format_filename(location))
+    click.echo("Creating directory for client (instance): {}".format(location))
+    os.makedirs(location, exist_ok=True)
+
+    src = os.path.join(here, '_data', 'client_config_skeleton.yaml')
+    dst = os.path.join(location, 'config.yaml')
+    shutil.copy(src, dst)
+    click.echo("Don't forget to edit the config file and set the API-key!")
+
 
 
 @create.command(name='server')
