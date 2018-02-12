@@ -40,6 +40,12 @@ def init(URI='sqlite:////tmp/test.db', drop_all=False):
 
     from . import db
     db.URI = URI
+
+    # Make sure that the director for the file database exists.
+    URL = make_url(URI)
+    if URL.host is None and URL.database:        
+        os.makedirs(os.path.dirname(URL.database), exist_ok=True)
+
     db.engine = create_engine(URI, convert_unicode=True)
     db.Session = scoped_session(sessionmaker(autocommit=False, autoflush=False))
     db.object_session = Session.object_session
