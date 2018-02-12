@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 import os, os.path
 
 from flask import request
-from flask_restful import Resource, abort
+from flask_restful import Api, Resource, abort
 from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
 
 import sqlalchemy
@@ -16,6 +16,8 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 from .. import db
+import pytaskmanager.server as server
+
 
 def setup(api, API_BASE):
     module_name = __name__.split('.')[-1]
@@ -52,28 +54,35 @@ class Token(Resource):
             ret = {
                 'access_token': create_access_token(user),
                 'refresh_token': create_refresh_token(user),
+                'user_url': server.api.url_for(server.resource.client.Client, id=user.id),
+                'refresh_url': server.api.url_for(RefreshToken),
             }
 
+            log.info("Succesful login for '{}'".format(username))
             return ret, 200
 
         elif api_key:
+            log.info("trying to authenticate client with api_key")
             try:
                 client = db.Client.getByApiKey(api_key)
 
                 ret = {
                     'access_token': create_access_token(client),
                     'refresh_token': create_refresh_token(client),
+                    'client_url': server.api.url_for(server.resource.client.Client, id=client.id),
+                    'refresh_url': server.api.url_for(RefreshToken),
                 }
 
+                log.info("Authenticated as client '{}'".format(client.id))
             # FIXME: should not depend on sqlalchemy errors
             except sqlalchemy.orm.exc.NoResultFound as e:
+                log.info("Invalid API-key! Aborting!")
                 return abort(401, message="Invalid API-key!")
 
             return ret, 200
 
         msg = "No username and/or pasword nor API-key!? Aren't you forgetting something?"
-        log.error((msg, 404))
-        log.error(request.get_json())
+        log.error(msg)
         return {"msg": msg}, 404
 
 

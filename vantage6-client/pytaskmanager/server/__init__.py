@@ -105,6 +105,7 @@ def user_loader_callback(identity):
 # Resources / API's
 # ------------------------------------------------------------------------------
 def load_resources(api, API_BASE, resources):
+    """Import the modules containing Resources."""
     for name in resources:
         module = importlib.import_module('pytaskmanager.server.resource.' + name)
         module.setup(api, API_BASE)
@@ -147,20 +148,20 @@ def init_resources():
     RESOURCES_INITIALIZED = True
 
 
-def run(environment, config_file, *args, **kwargs):
-    # app.run(debug=True, host='0.0.0.0', port=5000)
-
-    # Loading configuration and init logging
-    cfg = util.init('taskmaster', environment, config_file)
+def run(ctx, *args, **kwargs):
+    # Load configuration and init logging
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    # Initialize the database
-    uri = cfg['env']['uri']
+    uri = ctx.get_database_location()
     db.init(uri)
     
     # Set an extra long expiration time on access tokens for testing
-    if cfg['env']['type'] == 'test':
+    if ctx.config['env']['type'] == 'test':
         log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
+    # Actually start the server
     app.run(*args, **kwargs)
+
+
+
