@@ -155,8 +155,8 @@ def create():
     createTasks()
 
 
-def init(environment, config):
-    cfg = util.init('fixtures', environment, config)        
-    uri = cfg['env']['uri']
+def init(ctx):
+    uri = ctx.get_database_location()
     db.init(uri, drop_all=True)
+
 

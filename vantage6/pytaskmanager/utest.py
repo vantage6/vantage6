@@ -134,7 +134,7 @@ def find_tests(path=None):
   return suites
 
 
-def run_tests(suites, config):
+def run_tests(suites):
   log = logging.getLogger('utest')
   print('-' * 90)
   print('Started: ' + datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
@@ -149,11 +149,9 @@ def run_tests(suites, config):
 # ------------------------------------------------------------------------------
 # run
 # ------------------------------------------------------------------------------
-def run(config_file):
-  config = util.init('unittest', config_file=config_file)
-
+def run():
   suites = find_tests()
-  run_tests(suites, config)
+  run_tests(suites)
 
 
 # ------------------------------------------------------------------------------
