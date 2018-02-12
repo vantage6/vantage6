@@ -9,6 +9,7 @@ from .. import db
 
 # ------------------------------------------------------------------------------
 class TaskSchema(ModelSchema):
+    _id = ma.URLFor('task', id='<id>')
     results = ma.List(ma.HyperlinkRelated('result'))
     collaboration = ma.HyperlinkRelated('collaboration')
 
@@ -25,6 +26,7 @@ class TaskIncludedSchema(TaskSchema):
 # ------------------------------------------------------------------------------
 class TaskResultSchema(ModelSchema):
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
+    _id = ma.URLFor('result', id='<id>')
     task = ma.HyperlinkRelated('task')
     client = ma.HyperlinkRelated('client')
 
@@ -35,6 +37,7 @@ class TaskResultSchema(ModelSchema):
 # ------------------------------------------------------------------------------
 class ResultSchema(ModelSchema):
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
+    _id = ma.URLFor('result', id='<id>')
     task = ma.HyperlinkRelated('task')
 
     class Meta:
@@ -52,7 +55,7 @@ class OrganizationSchema(ModelSchema):
     #     many=True, 
     #     exclude=['organizations', 'clients', 'tasks']
     # )
-
+    _id = ma.URLFor('organization', id='<id>')
     collaborations = ma.List(ma.HyperlinkRelated('collaboration'))
     tasks = ma.List(ma.HyperlinkRelated('task'))
     clients = ma.List(ma.HyperlinkRelated('client'))

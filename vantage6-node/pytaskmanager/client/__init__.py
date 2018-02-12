@@ -30,9 +30,14 @@ class AuthenticationError(Exception):
 
 class TaskMasterClient(object):
 
-    def __init__(self, config):
+    def __init__(self, ctx):
         """Initialize a new TaskMasterClient instance."""
-        self.config = config
+        self.ctx = ctx
+        self.name = ctx.instance_name
+        self.config = ctx.config['app']
+
+        self._HOST = self.config['server_url']
+        self._REFRESH_URL = ''
 
         self.client_id = None
         self._access_token = None
@@ -41,8 +46,7 @@ class TaskMasterClient(object):
     def refresh_token(self):
         log.info('Refreshing token')
 
-        url = '{baseURL}/token/refresh'
-        url = url.format(baseURL = self.config['baseURL'])
+        url = '{}{}'.format(self._HOST, self._REFRESH_URL)
         response = requests.post(url, headers={'Authorization': 'Bearer ' + self._access_token})
         response_data = response.json()
 
@@ -58,12 +62,17 @@ class TaskMasterClient(object):
             'Authorization': 'Bearer ' + self._access_token,
         }
 
+        full_url = '{baseURL}{path}'.format(
+            baseURL=self._HOST,
+            path=url,
+        )
+
         if method == 'put' or json_data:
-            response = requests.put(url, json=json_data, headers=headers)
+            response = requests.put(full_url, json=json_data, headers=headers)
         elif method == 'post':
-            response = requests.post(url, json=json_data, headers=headers)
+            response = requests.post(full_url, json=json_data, headers=headers)
         else:
-            response = requests.get(url, headers=headers)
+            response = requests.get(full_url, headers=headers)
 
         response_data = response.json()
 
@@ -78,8 +87,7 @@ class TaskMasterClient(object):
 
     def authenticate(self):
         """Authenticate with the server using the api-key."""
-        url = '{baseURL}/token'
-        url = url.format(baseURL = self.config['baseURL'])
+        url = '{}/api/token'.format(self._HOST)
         data = {'api_key': self.config['api_key']}
 
         response = requests.post(url, json=data)
@@ -91,6 +99,7 @@ class TaskMasterClient(object):
 
         self._access_token = response_data['access_token']
         self._refresh_token = response_data['refresh_token']
+        self._REFRESH_URL = response_data['refresh_url']
 
         decoded_token = jwt.decode(self._access_token, verify=False)
         self.client_id = decoded_token['identity']
@@ -99,19 +108,14 @@ class TaskMasterClient(object):
         log.info("Authentication succesful!")
         log.debug("Found client_id: {}".format(self.client_id))
 
-        client_url = '{}/client/{}'.format(self.config['baseURL'], self.client_id)
-        client = self.request(client_url)
+        client = self.request(response_data['client_url'])
         log.info("Client name: '{name}'".format(**client))
         # log.info("Client for: '{name}'".format(**client))
 
     def get_tasks(self):
         """Retrieve a list of tasks from the server."""
-        url = '{baseURL}/result?state=open&include=task&client_id={client_id}'
-        url = url.format(
-            baseURL=self.config['baseURL'],
-            client_id=self.client_id,
-        )
-
+        url = '/api/result?state=open&include=task&client_id={client_id}'
+        url = url.format(client_id=self.client_id)
         return self.request(url)
 
     def get_and_execute_tasks(self):
@@ -131,9 +135,10 @@ class TaskMasterClient(object):
         time.sleep(self.config['delay'])
 
     def make_task_dir(self, task):
-        task_dir = os.path.abspath(self.config['task_dir'])
-        task_dir = os.path.join(task_dir, "task-{0:09d}".format(task['id']))
 
+        # task_dir = util.getFileLocation(filename, self.config, name, 'client', DIRS)
+        task_dir = self.ctx.get_file_location('data', "task-{0:09d}".format(task['id']))
+        log.info("Using '{}' for task".format(task_dir))
         if os.path.exists(task_dir):
             log.warning("Task directory already exists: '{}'".format(task_dir))
 
@@ -199,18 +204,13 @@ class TaskMasterClient(object):
         log.info("Starting task {id} - {name}".format(**task))
         log.info("-" * 80)
 
-        url = '{baseURL}/result/{result_id}'
-        url = url.format(
-            baseURL=self.config['baseURL'], 
-            result_id=taskresult['id'],
-        )
-
         # Notify the server we've started .. 
         result_data = {
             'started_at': datetime.datetime.now().isoformat(),
         }
 
-        response = self.request(url, json_data=result_data, method='put')
+        path = taskresult['_id']
+        response = self.request(path, json_data=result_data, method='put')
         log.debug(response)
 
         
@@ -232,9 +232,9 @@ class TaskMasterClient(object):
             'finished_at': datetime.datetime.now().isoformat(),
         }
 
-        # Do an HTTP POST to send back result (response)
-        log.info('POSTing result to server')
-        response = self.request(url, json_data=result_data, method='put')
+        # Do an HTTP PUT to send back result (response)
+        log.info('PUTing result to server')
+        response = self.request(path, json_data=result_data, method='put')
 
         log.info("-" * 80)
         log.info("Finished task {id} - {name}".format(**task))
@@ -250,19 +250,11 @@ class TaskMasterClient(object):
 
 
 # ------------------------------------------------------------------------------
-def run(environment, config):
-    config = util.init('client', environment, config)
+def run(ctx):
+    """Run the client."""
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    tmc = TaskMasterClient(config['app'])
+    tmc = TaskMasterClient(ctx)
     tmc.run_forever()
-
-
-
-# ------------------------------------------------------------------------------
-# __main__
-# ------------------------------------------------------------------------------
-if __name__ == '__main__':
-    run('test', './config.yaml')
 
 
 

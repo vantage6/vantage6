@@ -1,39 +1,26 @@
-applications:
-  taskmaster:
-    logging:
-      level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-      file:         logs/taskmaster.log    # Filename of logfile
-      use_console:  True                   # Log output to the console?
-      backup_count: 5                      # Number of logs to keep
-      max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
-      format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-      datefmt:      "%Y-%m-%d %H:%M:%S"
+application:
+  ip: '0.0.0.0' # ip address to listen on
+  port: 5000.   # port to listen on
 
-  fixtures:
-    logging:
-      level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-      file:         logs/fixtures.log    # Filename of logfile
-      use_console:  True                   # Log output to the console?
-      backup_count: 5                      # Number of logs to keep
-      max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
-      format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-      datefmt:      "%Y-%m-%d %H:%M:%S"
+  logging:
+    level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+    file:         default.log            # Filename of logfile
+    use_console:  True                   # Log output to the console?
+    backup_count: 5                      # Number of logs to keep
+    max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
+    format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+    datefmt:      "%Y-%m-%d %H:%M:%S"
 
-  unittest:
-    logging:
-      level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-      file:         logs/unittest.log      # Filename of logfile
-      use_console:  False                  # Log output to the console?
-      backup_count: 5                      # Number of logs to keep
-      max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
-      format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-      datefmt:      "%H:%M:%S"
-  
-    
 environments:
   test:
     description: Test
     type: test
-    uri: sqlite:///db.sqlite
-    drop_all: False
+    uri: sqlite:///test.sqlite
+    allow_drop_all: True
+
+  prod:
+    description: Productions
+    type: prod
+    uri: sqlite:///prod.sqlite
+    allow_drop_all: False
 
