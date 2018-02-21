@@ -1,11 +1,15 @@
+appdirs
 bcrypt
 flask
 flask-cors
 flask-jwt-extended
 flask-restful
+flask-sqlalchemy
+flask-marshmallow
 marshmallow
 marshmallow-sqlalchemy
 pyjwt
 pyyaml
 requests
+termcolor
 sqlalchemy
