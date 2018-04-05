@@ -50,7 +50,7 @@ setup(
         'sqlalchemy',
     ],
     package_data={  
-        'pytaskmanager': ['_data/*.yaml'],
+        'pytaskmanager': ['VERSION', '_data/*.yaml'],
     },
     entry_points={
         'console_scripts': [
