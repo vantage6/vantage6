@@ -31,6 +31,7 @@ setup(
     # author='Maastro/IKNL',
     # author_email='',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    python_requires='>=3',
     install_requires=[
         'appdirs',
         'bcrypt',
