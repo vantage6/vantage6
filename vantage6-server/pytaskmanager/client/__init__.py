@@ -14,52 +14,90 @@ import jwt
 from pprint import pprint
 
 from pytaskmanager import util
-from pytaskmanager.util.jsdict import JSDict
 
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
+# ------------------------------------------------------------------------------
 class AuthenticationError(Exception):
 
     def __init__(self, message):
         self.message = message
 
 
+# ------------------------------------------------------------------------------
+class ClientBase(object):
+    """Base class for Client and TaskMasterClient."""
+    def __init__(self, host):
+        """Initialize a ClientBase instance."""
+        self._HOST = host        
+        self._REFRESH_URL = None
+        self._ACCESS_TOKEN = None
+        self._REFRESH_TOKEN = None
 
-class TaskMasterClient(object):
+    def authenticate(self, username=None, password=None, api_key=None):
+        """Authenticate with the server as a User or Client.
 
-    def __init__(self, ctx):
-        """Initialize a new TaskMasterClient instance."""
-        self.ctx = ctx
-        self.name = ctx.instance_name
-        self.config = ctx.config['app']
+        Either username and password OR api_key should be provided.
+        """
+        url = '{}/api/token'.format(self._HOST)
 
-        self._HOST = self.config['server_url']
-        self._REFRESH_URL = ''
+        # Infer whether we're authenticating as a user or as a client.
+        if username:
+            data = {
+                'username': username,
+                'password': password
+            }
+        else:
+            data = {'api_key': api_key}
 
-        self.client_id = None
-        self._access_token = None
-        self._refresh_token = None
-
-    def refresh_token(self):
-        log.info('Refreshing token')
-
-        url = '{}{}'.format(self._HOST, self._REFRESH_URL)
-        response = requests.post(url, headers={'Authorization': 'Bearer ' + self._access_token})
+        # Request a token from the server.
+        response = requests.post(url, json=data)
         response_data = response.json()
 
         if response.status_code != 200:
             msg = response_data.get('message')
             raise AuthenticationError(msg)
 
-        self._access_token = response_data['access_token']
+        log.info("Authentication succesful!")
+
+        # Process the response
+        self._ACCESS_TOKEN = response_data['access_token']
+        self._REFRESH_TOKEN = response_data['refresh_token']
+        self._REFRESH_URL = response_data['refresh_url']
+
+        decoded_token = jwt.decode(self._ACCESS_TOKEN, verify=False)
+        log.debug("JWT payload: {}".format(decoded_token))
+
+        return response_data, decoded_token
+
+    def refresh_token(self):
+        if self._REFRESH_URL is None:
+            raise AuthenticationError('Not authenticated!')
+
+        log.info('Refreshing token')
+
+        url = '{}{}'.format(self._HOST, self._REFRESH_URL)
+        response = requests.post(url, headers={'Authorization': 'Bearer ' + self._ACCESS_TOKEN})
+        response_data = response.json()
+
+        if response.status_code != 200:
+            msg = response_data.get('message')
+            raise AuthenticationError(msg)
+
+        self._ACCESS_TOKEN = response_data['access_token']
 
     def request(self, url, json_data=None, method='get'):
         """Performs a PUT by default is json_data is provided without method."""
+        method = method.lower()
+
+        if json_data and method == 'get':
+            method = 'put'
+
         headers = {
-            'Authorization': 'Bearer ' + self._access_token,
+            'Authorization': 'Bearer ' + self._ACCESS_TOKEN,
         }
 
         full_url = '{baseURL}{path}'.format(
@@ -67,7 +105,7 @@ class TaskMasterClient(object):
             path=url,
         )
 
-        if method == 'put' or json_data:
+        if method == 'put':
             response = requests.put(full_url, json=json_data, headers=headers)
         elif method == 'post':
             response = requests.post(full_url, json=json_data, headers=headers)
@@ -85,32 +123,64 @@ class TaskMasterClient(object):
 
         return response_data
 
+    def get_collaboration(self, collaboration_id=None):
+        if collaboration_id:
+            return self.request('/api/collaboration/{}'.format(collaboration_id))
+
+        return self.request('/api/collaboration')
+
+    def get_task(self, task_id, include=''):
+        url = '/api/task/{}?include={}'.format(task_id, include)
+        return self.request(url)
+
+    def create_task(self, name, image, collaboration_id,  input_='', description=''):
+        task = {
+            "name": name,
+            "image": image, 
+            "collaboration_id": collaboration_id,
+            "input": input_,
+            "description": description,
+        }        
+
+        return self.request('/api/task', json_data=task, method='post')
+
+# ------------------------------------------------------------------------------
+class Client(ClientBase):
+    """Class for communicating with the server in custom scripts."""
+    pass
+
+
+
+# ------------------------------------------------------------------------------
+class TaskMasterClient(ClientBase):
+    """Automated client that checks for tasks and executes them."""
+    def __init__(self, ctx=None, host=''):
+        """Initialize a new TaskMasterClient instance."""
+        self.ctx = ctx
+        self.name = None
+        self.config = None
+
+        if ctx:
+            self.name = ctx.instance_name
+            self.config = ctx.config['app']
+
+        self._HOST = self.config['server_url']
+        self._REFRESH_URL = ''
+
+        self.client_id = None
+        self._ACCESS_TOKEN = None
+        self._REFRESH_TOKEN = None
+
     def authenticate(self):
         """Authenticate with the server using the api-key."""
-        url = '{}/api/token'.format(self._HOST)
-        data = {'api_key': self.config['api_key']}
-
-        response = requests.post(url, json=data)
-        response_data = response.json()
-
-        if response.status_code != 200:
-            msg = response_data.get('message')
-            raise AuthenticationError(msg)
-
-        self._access_token = response_data['access_token']
-        self._refresh_token = response_data['refresh_token']
-        self._REFRESH_URL = response_data['refresh_url']
-
-        decoded_token = jwt.decode(self._access_token, verify=False)
+        response_data, decoded_token = super().authenticate(api_key=self.config['api_key'])
         self.client_id = decoded_token['identity']
 
-        # log.debug("Access token: {}".format(self._access_token))
         log.info("Authentication succesful!")
         log.debug("Found client_id: {}".format(self.client_id))
 
         client = self.request(response_data['client_url'])
         log.info("Client name: '{name}'".format(**client))
-        # log.info("Client for: '{name}'".format(**client))
 
     def get_tasks(self):
         """Retrieve a list of tasks from the server."""
@@ -135,8 +205,6 @@ class TaskMasterClient(object):
         time.sleep(self.config['delay'])
 
     def make_task_dir(self, task):
-
-        # task_dir = util.getFileLocation(filename, self.config, name, 'client', DIRS)
         task_dir = self.ctx.get_file_location('data', "task-{0:09d}".format(task['id']))
         log.info("Using '{}' for task".format(task_dir))
         if os.path.exists(task_dir):
@@ -160,6 +228,7 @@ class TaskMasterClient(object):
 
     def docker_run(self, task, inputFilePath, outputFilePath):
         # FIXME: need to check for running docker daemon and/or other error messages!
+        # FIXME: switch to package 'docker' instead
 
         # Prepare files for input/output.
         with open(inputFilePath, 'w') as fp:
