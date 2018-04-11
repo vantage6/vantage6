@@ -59,9 +59,29 @@ class Task(Resource):
         return s.dump(t, many=not bool(id))
 
 
+    @with_user_or_client
     def post(self):
         """Create a new Task."""
-        abort(rqc.not_allowed, message="Please post new tasks to /api/collaboration/<id>/task")
+        data = request.get_json()
+        collaboration_id = data.get('collaboration_id')
+
+        if not collaboration_id:
+            abort(rqc.bad_request, "JSON should contain 'collaboration_id'")
+
+        collaboration = db.Collaboration.get(collaboration_id)
+        
+        task = db.Task(collaboration=collaboration)
+        task.name = data.get('name', '')
+        task.description = data.get('description', '')
+        task.image = data.get('image', '')
+        task.input = data.get('input', '')
+        task.status = "open"
+
+        for c in collaboration.clients:
+            result = db.TaskResult(task=task, client=c)
+
+        task.save()
+        return task_schema.dump(task, many=False)
 
 
 class TaskResult(Resource):

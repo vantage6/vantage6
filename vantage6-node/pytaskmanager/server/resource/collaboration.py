@@ -9,6 +9,8 @@ from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
 
+from requests import codes as rqc
+
 import logging
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -129,24 +131,23 @@ class CollaborationTask(Resource):
     @jwt_required
     def post(self, id):
         """Add a task to a specific collaboration."""
-        
-        collaboration = db.Collaboration.get(id)
-        
-        data = request.get_json()
-        
-        task = db.Task(collaboration=collaboration)
-        task.name = data.get('name', '')
-        task.description = data.get('description', '')
-        task.image = data.get('image', '')
-        task.input = data.get('input', '')
-        task.status = "open"
+        abort(rqc.bad_request, "Please POST to /api/task instead.")
 
-        for c in collaboration.clients:
-            result = db.TaskResult(task=task, client=c)
+        # collaboration = db.Collaboration.get(id)
+        # data = request.get_json()
+        
+        # task = db.Task(collaboration=collaboration)
+        # task.name = data.get('name', '')
+        # task.description = data.get('description', '')
+        # task.image = data.get('image', '')
+        # task.input = data.get('input', '')
+        # task.status = "open"
 
-        task.save()
+        # for c in collaboration.clients:
+        #     result = db.TaskResult(task=task, client=c)
 
-        return task
+        # task.save()
+        # return task
 
 
 
