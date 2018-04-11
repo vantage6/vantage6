@@ -11,3 +11,4 @@ client/logs
 *.sublime-workspace
 master/logs
 pytaskmanager.egg-info
+.ipynb_checkpoints
