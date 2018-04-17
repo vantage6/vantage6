@@ -35,6 +35,7 @@ def createOrganizations():
     },
     {
         "name": "SouthParkCancerRegister",
+        "domain": "southpark.example",
         "address1": "Street 1",
         "address2": "",
         "zipcode": "66666",
@@ -67,7 +68,14 @@ def createCollaborations():
             "Big Organization", 
             "SouthParkCancerRegister"
         ]
-    }
+    },
+    {
+        "name": "The Useless Consortium",
+        "description": "Consortium with a single organization",
+        "participants": [
+            "SouthParkCancerRegister",
+        ]
+    },
     ]
 
     for collab_dict in collaborations:
