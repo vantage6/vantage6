@@ -3,6 +3,7 @@
 from __future__ import unicode_literals, print_function
 
 import sys, os
+import pathlib
 
 import json
 import requests
@@ -189,7 +190,13 @@ class TaskMasterClient(ClientBase):
         return self.request(url)
 
     def get_and_execute_tasks(self):
-        """Continuously check for tasks and execute them."""
+        """
+        Continuously check for tasks and execute them.
+
+        A list of tasks for a client actually consists of a list of (empty)
+        task *results* that are (pre)created by the server. This allows the
+        server to keep track of unfinished tasks.
+        """
 
         # Get tasks actually returns a list of taskresults where
         # result == null
@@ -203,6 +210,58 @@ class TaskMasterClient(ClientBase):
         # Sleep 10 seconds
         log.debug("Sleeping {} second(s)".format(self.config['delay']))
         time.sleep(self.config['delay'])
+
+
+    def execute_task(self, taskresult):
+        """
+        Execute a single task and uploads result to server.
+
+        :param taskresult: dict that contains the (empty) result details as well
+                           as the details of the task itself.
+        :raises Exception: raises an exception if ... 
+        """
+        task = taskresult['task']
+
+        log.info("-" * 80)
+        log.info("Starting task {id} - {name}".format(**task))
+        log.info("-" * 80)
+
+        # Notify the server we've started .. 
+        result_data = {
+            'started_at': datetime.datetime.now().isoformat(),
+        }
+
+        path = taskresult['_id']
+        response = self.request(path, json_data=result_data, method='put')
+        log.debug(response)
+
+        
+        # Create directory to put files into
+        task_dir = self.make_task_dir(task)
+
+        # Pull the image for updates or download
+        self.docker_pull(task['image'])
+
+        # Files are used for input and output
+        inputFilePath = os.path.join(task_dir, "input.txt")
+        outputFilePath = os.path.join(task_dir, "output.txt")
+
+        result_text, log_data = self.docker_run(task, inputFilePath, outputFilePath)
+
+        result_data = {
+            'result': result_text,
+            'log': log_data,
+            'finished_at': datetime.datetime.now().isoformat(),
+        }
+
+        # Do an HTTP PUT to send back result (response)
+        log.info('PUTing result to server')
+        response = self.request(path, json_data=result_data, method='put')
+
+        log.info("-" * 80)
+        log.info("Finished task {id} - {name}".format(**task))
+        log.info("-" * 80)
+        log.info('')
 
     def make_task_dir(self, task):
         task_dir = self.ctx.get_file_location('data', "task-{0:09d}".format(task['id']))
@@ -220,13 +279,26 @@ class TaskMasterClient(ClientBase):
 
         return task_dir
 
-    def docker_pull(self, task):
-        log.info("Pulling latest version of docker image '{}'".format(task['image']))
-        p = subprocess.Popen("docker pull " + task['image'], subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    def docker_pull(self, image):
+        cmd = "docker pull " + image
+
+        log.info("Pulling latest version of docker image '{}'".format(image))
+        log.info("Command: '{}'".format(cmd))
+        p = subprocess.Popen(cmd, subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         out, err = p.communicate()
         log.info(out)
 
     def docker_run(self, task, inputFilePath, outputFilePath):
+        """
+        Run the docker container for the task and provide it with IO.
+
+        :param task: dict containing the task details
+        :param inputFilePath: path to the file used for input
+        :param outputFilePath: path to the file used for output
+        :returns: tuple of output (contents of outputFilePath after execution) 
+                  and STDOUT
+        :raises Exception: raises an exception if docker cannot be run.
+        """
         # FIXME: need to check for running docker daemon and/or other error messages!
         # FIXME: switch to package 'docker' instead
 
@@ -237,11 +309,23 @@ class TaskMasterClient(ClientBase):
         with open(outputFilePath, 'w') as fp:
             fp.write('')
 
+
         # Prepare shell statement for running the docker image
-        dockerParams = "--rm " # container should be removed after execution
+        dockerParams  = "--rm " # container should be removed after execution
         dockerParams += "-v " + inputFilePath.replace(' ', '\ ') + ":/app/input.txt "   # mount input file
         dockerParams += "-v " + outputFilePath.replace(' ', '\ ') + ":/app/output.txt " # mount output file
-        dockerParams += "-e DATABASE_URI=%s " % self.config['database_uri']
+
+        DATABASE_URI = self.config['database_uri']
+
+        if pathlib.Path(self.config['database_uri']).is_file():
+            dockerParams += "-v " + DATABASE_URI.replace(' ', '\ ') + ":/app/database " # mount data store
+            DATABASE_URI = "/app/database"
+        else:
+            print("*** warning ***")
+            print("'{}' is not a file!".format(self.config['database_uri']))
+
+        dockerParams += "-e DATABASE_URI=%s " % DATABASE_URI
+
         dockerParams += "--add-host dockerhost:%s" % self.config['docker_host']
 
         dockerExecLine = "docker run  " + dockerParams + ' ' + task['image']
@@ -266,49 +350,6 @@ class TaskMasterClient(ClientBase):
 
         return result_text, log_data
 
-    def execute_task(self, taskresult):
-        task = taskresult['task']
-
-        log.info("-" * 80)
-        log.info("Starting task {id} - {name}".format(**task))
-        log.info("-" * 80)
-
-        # Notify the server we've started .. 
-        result_data = {
-            'started_at': datetime.datetime.now().isoformat(),
-        }
-
-        path = taskresult['_id']
-        response = self.request(path, json_data=result_data, method='put')
-        log.debug(response)
-
-        
-        # Create directory to put files into
-        task_dir = self.make_task_dir(task)
-
-        # Pull the image for updates or download
-        self.docker_pull(task)
-
-        # Files are used for input and output
-        inputFilePath = os.path.join(task_dir, "input.txt")
-        outputFilePath = os.path.join(task_dir, "output.txt")
-
-        result_text, log_data = self.docker_run(task, inputFilePath, outputFilePath)
-
-        result_data = {
-            'result': result_text,
-            'log': log_data,
-            'finished_at': datetime.datetime.now().isoformat(),
-        }
-
-        # Do an HTTP PUT to send back result (response)
-        log.info('PUTing result to server')
-        response = self.request(path, json_data=result_data, method='put')
-
-        log.info("-" * 80)
-        log.info("Finished task {id} - {name}".format(**task))
-        log.info("-" * 80)
-        log.info('')
 
     def run_forever(self):
         """Run!"""
