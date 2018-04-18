@@ -353,11 +353,19 @@ class TaskMasterClient(ClientBase):
 
     def run_forever(self):
         """Run!"""
-        self.authenticate()
-
+        interval = 30
+        
         while True:
-            self.get_and_execute_tasks()
+            try:
+                self.authenticate()
 
+                while True:
+                    self.get_and_execute_tasks()
+            except requests.exceptions.ConnectionError as e:
+                log.error("Could not connect to server!")
+                log.error(e)
+                log.info("Sleeping {} seconds".format(interval))
+                time.sleep(interval)
 
 # ------------------------------------------------------------------------------
 def run(ctx):
