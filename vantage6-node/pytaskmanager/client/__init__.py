@@ -354,7 +354,7 @@ class TaskMasterClient(ClientBase):
     def run_forever(self):
         """Run!"""
         interval = 30
-        
+
         while True:
             try:
                 self.authenticate()
@@ -364,7 +364,7 @@ class TaskMasterClient(ClientBase):
             except requests.exceptions.ConnectionError as e:
                 log.error("Could not connect to server!")
                 log.error(e)
-                log.info("Sleeping {} seconds".format(interval))
+                log.info("Wating {} seconds before trying again".format(interval))
                 time.sleep(interval)
 
 # ------------------------------------------------------------------------------
