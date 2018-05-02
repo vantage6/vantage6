@@ -70,7 +70,7 @@ class ClientBase(object):
         self._REFRESH_URL = response_data['refresh_url']
 
         decoded_token = jwt.decode(self._ACCESS_TOKEN, verify=False)
-        log.debug("JWT payload: {}".format(decoded_token))
+        # log.debug("JWT payload: {}".format(decoded_token))
 
         return response_data, decoded_token
 
@@ -81,7 +81,7 @@ class ClientBase(object):
         log.info('Refreshing token')
 
         url = '{}{}'.format(self._HOST, self._REFRESH_URL)
-        response = requests.post(url, headers={'Authorization': 'Bearer ' + self._ACCESS_TOKEN})
+        response = requests.post(url, headers={'Authorization': 'Bearer ' + self._REFRESH_TOKEN})
         response_data = response.json()
 
         if response.status_code != 200:
@@ -157,6 +157,8 @@ class TaskMasterClient(ClientBase):
     """Automated client that checks for tasks and executes them."""
     def __init__(self, ctx=None, host=''):
         """Initialize a new TaskMasterClient instance."""
+        self.log = logging.getLogger(__name__)
+
         self.ctx = ctx
         self.name = None
         self.config = None
@@ -172,13 +174,15 @@ class TaskMasterClient(ClientBase):
         self._ACCESS_TOKEN = None
         self._REFRESH_TOKEN = None
 
+        self.log.info("Using server: {}".format(self._HOST))
+
     def authenticate(self):
         """Authenticate with the server using the api-key."""
         response_data, decoded_token = super().authenticate(api_key=self.config['api_key'])
         self.client_id = decoded_token['identity']
 
         log.info("Authentication succesful!")
-        log.debug("Found client_id: {}".format(self.client_id))
+        # log.debug("Found client_id: {}".format(self.client_id))
 
         client = self.request(response_data['client_url'])
         log.info("Client name: '{name}'".format(**client))
@@ -211,7 +215,6 @@ class TaskMasterClient(ClientBase):
         log.debug("Sleeping {} second(s)".format(self.config['delay']))
         time.sleep(self.config['delay'])
 
-
     def execute_task(self, taskresult):
         """
         Execute a single task and uploads result to server.
@@ -233,7 +236,7 @@ class TaskMasterClient(ClientBase):
 
         path = taskresult['_id']
         response = self.request(path, json_data=result_data, method='put')
-        log.debug(response)
+        # log.debug(response)
 
         
         # Create directory to put files into
@@ -305,6 +308,7 @@ class TaskMasterClient(ClientBase):
         # Prepare files for input/output.
         with open(inputFilePath, 'w') as fp:
             fp.write(task['input'] or '')
+            fp.write('\n')
 
         with open(outputFilePath, 'w') as fp:
             fp.write('')
@@ -338,7 +342,7 @@ class TaskMasterClient(ClientBase):
         # This blocks until the process finishes.
         out, err = p.communicate()
         log_data = out.decode("utf-8") # + "\r\n" + err.decode("utf-8") 
-        log.info(log_data)
+        # log.info(log_data)
 
         if p.returncode:
             raise Exception('did not succeed in running docker!?')
@@ -346,10 +350,9 @@ class TaskMasterClient(ClientBase):
 
         with open(outputFilePath) as fp:
             result_text = fp.read()
-            log.info(result_text)
+            # log.info(result_text)
 
         return result_text, log_data
-
 
     def run_forever(self):
         """Run!"""
@@ -371,6 +374,8 @@ class TaskMasterClient(ClientBase):
 def run(ctx):
     """Run the client."""
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    
     tmc = TaskMasterClient(ctx)
     tmc.run_forever()
 
