@@ -8,6 +8,7 @@ from flask import g, request
 from flask_restful import Resource, abort
 
 from requests import codes as rqc
+import json
 
 import logging
 module_name = __name__.split('.')[-1]
@@ -66,6 +67,7 @@ class Task(Resource):
         collaboration_id = data.get('collaboration_id')
 
         if not collaboration_id:
+            log.error("JSON causing the error:\n{}".format(data))
             abort(rqc.bad_request, "JSON should contain 'collaboration_id'")
 
         collaboration = db.Collaboration.get(collaboration_id)
@@ -74,7 +76,12 @@ class Task(Resource):
         task.name = data.get('name', '')
         task.description = data.get('description', '')
         task.image = data.get('image', '')
-        task.input = data.get('input', '')
+
+        input_ = data.get('input', '')
+        if not isinstance(input_, str):
+            input_ = json.dumps(input_)
+
+        task.input = input_
         task.status = "open"
 
         for c in collaboration.clients:
