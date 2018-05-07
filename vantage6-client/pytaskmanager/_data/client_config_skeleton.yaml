@@ -1,6 +1,7 @@
 application:
   api_key: 
   server_url: http://localhost:5000
+  api_path: /api
   server_entry_point: /api/token
   delay: 30 # seconds
   task_dir: tasks

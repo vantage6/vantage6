@@ -7,6 +7,8 @@ import pathlib
 
 import json
 import requests
+from requests.compat import urljoin
+
 import time, datetime
 import subprocess
 
@@ -31,19 +33,31 @@ class AuthenticationError(Exception):
 # ------------------------------------------------------------------------------
 class ClientBase(object):
     """Base class for Client and TaskMasterClient."""
-    def __init__(self, host):
+    def __init__(self, host, api_path='/api'):
         """Initialize a ClientBase instance."""
-        self._HOST = host        
+        self._HOST = host       
+        self._API_PATH = api_path 
         self._REFRESH_URL = None
         self._ACCESS_TOKEN = None
         self._REFRESH_TOKEN = None
+
+        print('*' * 80)
+        print('host', host)
+        print('api_path', api_path)
+        print('*' * 80)
+
+    def get_url(self, path):
+        if self._API_PATH:
+            return '/'.join([self._HOST, self._API_PATH, path])
+        return '/'.join([self._HOST, path])
 
     def authenticate(self, username=None, password=None, api_key=None):
         """Authenticate with the server as a User or Client.
 
         Either username and password OR api_key should be provided.
         """
-        url = '{}/api/token'.format(self._HOST)
+        # url = '{}/api/token'.format(self._HOST)
+        url = self.get_url('token')
 
         # Infer whether we're authenticating as a user or as a client.
         if username:
@@ -90,7 +104,7 @@ class ClientBase(object):
 
         self._ACCESS_TOKEN = response_data['access_token']
 
-    def request(self, url, json_data=None, method='get'):
+    def request(self, path, json_data=None, method='get'):
         """Performs a PUT by default is json_data is provided without method."""
         method = method.lower()
 
@@ -101,17 +115,14 @@ class ClientBase(object):
             'Authorization': 'Bearer ' + self._ACCESS_TOKEN,
         }
 
-        full_url = '{baseURL}{path}'.format(
-            baseURL=self._HOST,
-            path=url,
-        )
+        url = self.get_url(path)
 
         if method == 'put':
-            response = requests.put(full_url, json=json_data, headers=headers)
+            response = requests.put(url, json=json_data, headers=headers)
         elif method == 'post':
-            response = requests.post(full_url, json=json_data, headers=headers)
+            response = requests.post(url, json=json_data, headers=headers)
         else:
-            response = requests.get(full_url, headers=headers)
+            response = requests.get(url, headers=headers)
 
         response_data = response.json()
 
@@ -120,18 +131,18 @@ class ClientBase(object):
             log.warning('Request failed: {}'.format(msg))
             self.refresh_token()
             log.info('Retrying ...')
-            return self.request(url, json_data, method)
+            return self.request(path, json_data, method)
 
         return response_data
 
     def get_collaboration(self, collaboration_id=None):
         if collaboration_id:
-            return self.request('/api/collaboration/{}'.format(collaboration_id))
+            return self.request('/collaboration/{}'.format(collaboration_id))
 
-        return self.request('/api/collaboration')
+        return self.request('/collaboration')
 
     def get_task(self, task_id, include=''):
-        url = '/api/task/{}?include={}'.format(task_id, include)
+        url = '/task/{}?include={}'.format(task_id, include)
         return self.request(url)
 
     def create_task(self, name, image, collaboration_id,  input_='', description=''):
@@ -143,7 +154,7 @@ class ClientBase(object):
             "description": description,
         }        
 
-        return self.request('/api/task', json_data=task, method='post')
+        return self.request('/task', json_data=task, method='post')
 
 # ------------------------------------------------------------------------------
 class Client(ClientBase):
@@ -155,7 +166,7 @@ class Client(ClientBase):
 # ------------------------------------------------------------------------------
 class TaskMasterClient(ClientBase):
     """Automated client that checks for tasks and executes them."""
-    def __init__(self, ctx=None, host=''):
+    def __init__(self, ctx):
         """Initialize a new TaskMasterClient instance."""
         self.log = logging.getLogger(__name__)
 
@@ -167,13 +178,13 @@ class TaskMasterClient(ClientBase):
             self.name = ctx.instance_name
             self.config = ctx.config['app']
 
-        self._HOST = self.config['server_url']
-        self._REFRESH_URL = ''
+        super().__init__(
+            self.config['server_url'], 
+            self.config['api_path']
+        )
+
 
         self.client_id = None
-        self._ACCESS_TOKEN = None
-        self._REFRESH_TOKEN = None
-
         self.log.info("Using server: {}".format(self._HOST))
 
     def authenticate(self):
@@ -181,15 +192,12 @@ class TaskMasterClient(ClientBase):
         response_data, decoded_token = super().authenticate(api_key=self.config['api_key'])
         self.client_id = decoded_token['identity']
 
-        log.info("Authentication succesful!")
-        # log.debug("Found client_id: {}".format(self.client_id))
-
         client = self.request(response_data['client_url'])
         log.info("Client name: '{name}'".format(**client))
 
     def get_tasks(self):
         """Retrieve a list of tasks from the server."""
-        url = '/api/result?state=open&include=task&client_id={client_id}'
+        url = '/result?state=open&include=task&client_id={client_id}'
         url = url.format(client_id=self.client_id)
         return self.request(url)
 
