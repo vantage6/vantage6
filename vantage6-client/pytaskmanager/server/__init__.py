@@ -123,12 +123,14 @@ def index():
 # ------------------------------------------------------------------------------
 # init & run
 # ------------------------------------------------------------------------------
-def init_resources():
+def init_resources(ctx):
     # Load resources
     global RESOURCES_INITIALIZED
 
     if RESOURCES_INITIALIZED:
         return
+
+    API_BASE = ctx.config['app']['api_path']
 
     resources = [
             'client',

@@ -133,8 +133,7 @@ def cli_server_start(name, config, environment, ip, port, debug, force_create):
     ctx.init(cfg_filename, environment)
 
     # Load the flask.Resources
-    server.init_resources()
-
+    server.init_resources(ctx)
     # Run the server
     server.run(ctx, ip, port, debug=debug)
 
