@@ -17,11 +17,13 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-__version__ = ''
 
+# Read the API version from disk 
 with open(path.join(here, 'pytaskmanager', 'VERSION')) as fp:
     __version__ = fp.read()
 
+
+# Setup the package
 setup(
     name='pytaskmanager',
     version=__version__,
@@ -44,14 +46,17 @@ setup(
         'flask-marshmallow',
         'marshmallow',
         'marshmallow-sqlalchemy',
-        'pyjwt',
         'pyyaml',
         'requests',
         'termcolor',
         'sqlalchemy',
     ],
     package_data={  
-        'pytaskmanager': ['pytaskmanager/VERSION', '_data/*.yaml'],
+        'pytaskmanager': [
+            'server/server.wsgi', 
+            'VERSION', 
+            '_data/*.yaml',
+        ],
     },
     entry_points={
         'console_scripts': [
