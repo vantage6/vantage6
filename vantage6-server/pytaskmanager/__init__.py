@@ -1,11 +1,10 @@
 import click
 
-import sys, os
+import sys
+import os
 import shutil
 import yaml
 import logging
-
-import appdirs
 
 # Define version and directories *before* importing submodules
 here = os.path.abspath(os.path.dirname(__file__))
@@ -18,8 +17,8 @@ with open(os.path.join(here, 'VERSION')) as fp:
 
 # default parameters for click.Path
 pparams = {
-    'exists': False, 
-    'file_okay': False, 
+    'exists': False,
+    'file_okay': False,
     'dir_okay': True,
 }
 
@@ -79,7 +78,7 @@ def get_config_location(ctx, config, force_create):
                 print(cfg)
                 print('-' * 80)
 
-            cfg['application']['logging']['file'] = ctx.instance_name +'.log'
+            cfg['application']['logging']['file'] = ctx.instance_name + '.log'
 
             with open(dst, 'w') as fp:
                 yaml.dump(cfg, fp)
@@ -127,8 +126,6 @@ def cli_server_start(name, config, environment, ip, port, debug, force_create):
     """Start the server."""
     click.echo("Starting server ...")
     ctx = util.ServerContext(APPNAME, 'default')
-
-
     # Load configuration and initialize logging system
     cfg_filename = get_config_location(ctx, config, force_create)
     ctx.init(cfg_filename, environment)
@@ -157,11 +154,10 @@ def cli_server_passwd(name, config, environment, password):
     """Set the root password."""
     log = logging.getLogger('ptm')
 
-
     ctx = util.AppContext(APPNAME, 'server', name)
 
     # Load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create)
+    cfg_filename = get_config_location(ctx, config)
     ctx.init(cfg_filename, environment)
 
     uri = ctx.get_database_location()
@@ -170,7 +166,7 @@ def cli_server_passwd(name, config, environment, password):
     try:
         root = db.User.getByUsername('root')
     except Exception as e:
-        log.info("Creating user root")        
+        log.info("Creating user root")
         root = db.User(username='root')
 
     log.info("Setting password for root")
@@ -178,7 +174,6 @@ def cli_server_passwd(name, config, environment, password):
     root.save()
 
     log.info("[DONE]")
-
 
 
 @cli_server.command(name='load_fixtures')
@@ -206,6 +201,7 @@ def cli_client():
     """Subcommand `ptm client`."""
     pass
 
+
 @cli_client.command(name='config_location')
 @click.option('-n', '--name', default='default', help='client instance to use')
 def cli_server_configlocation(name):
@@ -213,8 +209,6 @@ def cli_server_configlocation(name):
     ctx = util.AppContext(APPNAME, 'client', name)
     cfg_filename = get_config_location(ctx, config=None, force_create=False)
     click.echo('{}'.format(cfg_filename))
-
-
 
 
 @cli_client.command(name='start')
@@ -230,7 +224,3 @@ def cli_client_start(name, config):
 
     # Run the client
     client.run(ctx)
-
-
-
-
