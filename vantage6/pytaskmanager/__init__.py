@@ -126,7 +126,8 @@ def cli_server():
 def cli_server_start(name, config, environment, ip, port, debug, force_create):
     """Start the server."""
     click.echo("Starting server ...")
-    ctx = util.AppContext(APPNAME, 'server', name)
+    ctx = util.ServerContext(APPNAME, 'default')
+
 
     # Load configuration and initialize logging system
     cfg_filename = get_config_location(ctx, config, force_create)
