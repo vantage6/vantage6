@@ -73,7 +73,7 @@ class Token(Resource):
                     'refresh_url': server.api.url_for(RefreshToken),
                 }
 
-                log.info("Authenticated as client '{}'".format(client.id))
+                log.info("Authenticated as client '{}' ({})".format(client.id, client.name))
             # FIXME: should not depend on sqlalchemy errors
             except sqlalchemy.orm.exc.NoResultFound as e:
                 log.info("Invalid API-key! Aborting!")
