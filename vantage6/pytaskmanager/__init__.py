@@ -86,6 +86,34 @@ def get_config_location(ctx, config, force_create):
     return filename
 
 
+def set_api_key_in_config(cfg_filename, api_key=None):
+    """"Make sure an API is present in the configuration file"""
+    log = logging.getLogger('ptm')
+
+    with open(cfg_filename, 'r') as f:
+        config = yaml.load(f)
+
+    # get the api key from the config file, this could be an empty field
+    config_api_key = config['application']['api_key']
+
+    # check if api-key is not set in the config file and not provided
+    if not config_api_key and not api_key:
+        api_key = click.prompt("please enter API-key", type=str)
+
+    if api_key:
+        # notify that key is overwritten or set
+        if config_api_key:
+            log.info("API key has been updated")
+        else:
+            log.info("New API key has been set")
+
+        config['application']['api_key'] = api_key
+
+        with open(cfg_filename, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False)
+
+
+
 @click.group()
 def cli():
     """Main entry point for CLI scripts."""
@@ -214,12 +242,17 @@ def cli_server_configlocation(name):
 @cli_client.command(name='start')
 @click.option('-n', '--name', default='default', help='client instance to use')
 @click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-def cli_client_start(name, config):
+@click.option('-a', '--apikey', default=None, help='ptm server api-key')
+def cli_client_start(name, config, apikey):
     """Start the client."""
     ctx = util.AppContext(APPNAME, 'client', name)
 
     # Load configuration and initialize logging system
     cfg_filename = get_config_location(ctx, config, force_create=False)
+
+    # provide api key to the configuration file
+    set_api_key_in_config(cfg_filename, apikey)
+
     ctx.init(cfg_filename)
 
     # Run the client
