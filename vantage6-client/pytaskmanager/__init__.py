@@ -173,6 +173,7 @@ def cli_server_configlocation(name):
     click.echo('{}'.format(cfg_filename))
 
 
+# TODO this functionality is replaced by 'ptm server update_user'
 @cli_server.command(name='passwd')
 @click.option('-n', '--name', default='default', help='server instance to use')
 @click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
@@ -219,6 +220,101 @@ def cli_server_load_fixtures(name, environment, config):
 
     fixtures.init(ctx)
     fixtures.create()
+
+
+# user
+@cli_server.command(name='add_user')
+@click.option('-n', '--name', default='default', help='server instance to use')
+@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
+@click.option('-e', '--environment', default='test', help='database environment to use')
+@click.option('-u', '--username', prompt='Username', help='username')
+@click.option('-p', '--password', prompt='Password', hide_input=True)
+@click.option('-f', '--firstname', prompt='First-name', help='first name of the user')
+@click.option('-l', '--lastname', prompt='Last-name', help='family name of the user')
+@click.option('-l', '--organization_id', prompt='Organization Id', help='organization id to which te user belongs')
+def cli_server_add_user(name, config, environment, username, password, firstname, lastname, organization_id):
+    """add super-user"""
+    log = logging.getLogger('ptm')
+
+    # initialize application class
+    ctx = util.AppContext(APPNAME, 'server', name)
+
+    # load configuration and initialize logging system
+    cfg_filename = get_config_location(ctx, config, force_create=False)
+    ctx.init(cfg_filename, environment)
+
+    # initialize database from environment
+    uri = ctx.get_database_location()
+    db.init(uri)
+
+    # make sure the username does not exist yet
+    while db.User.username_exists(username):
+        log.debug('Username: "{}", is already in the database'.format(username))
+        username = click.prompt('Username already exists, please enter a new username')
+
+    # create new user
+    user = db.User(
+        username=username,
+        password=password,
+        firstname=firstname,
+        lastname=lastname,
+        organization_id=organization_id,
+        roles='admin'
+    )
+
+    # write to database
+    log.info('Username "{}" is added to the database'.format(username))
+    user.save()
+
+
+@cli_server.command(name='update_user')
+@click.option('-u', '--username', prompt='Username', help='username')
+@click.option('-p', '--password', prompt='Password', hide_input=True)
+@click.option('-f', '--firstname', prompt='First-name', help='first name of the user')
+@click.option('-l', '--lastname', prompt='Last-name', help='family name of the user')
+def cli_server_update_user():
+    """update user"""
+    click.echo('update user')
+
+
+@cli_server.command(name='user_list')
+@click.option('-n', '--name', default='default', help='server instance to use')
+@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
+@click.option('-e', '--environment', default='test', help='database environment to use')
+@click.option('-r', '--role', default='All')
+def cli_server_user_list(name, config, environment, role):
+    """list users"""
+    log = logging.getLogger('ptm')
+
+    # initialize application class
+    ctx = util.AppContext(APPNAME, 'server', name)
+
+    # load configuration and initialize logging system
+    cfg_filename = get_config_location(ctx, config, force_create=False)
+    ctx.init(cfg_filename, environment)
+
+    # initialize database from environment
+    uri = ctx.get_database_location()
+    db.init(uri)
+
+    # retrieve user-list from database
+    users = db.User.get_user_list(None)
+
+    # display users
+    click.echo('\n')
+    for user in users:
+        click.secho('{username:45} {organization:30} {role:30}'.format(
+            organization=user.organization.name,
+            username=user.username,
+            role=user.roles))
+
+
+
+@cli_server.command(name='remove_user')
+@click.option('-u', '--username', prompt='Username', help='username of user to remove')
+def cli_server_remove_user():
+    """remove user"""
+    click.echo('remove user')
 
 
 # ------------------------------------------------------------------------------
