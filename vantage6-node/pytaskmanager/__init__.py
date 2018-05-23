@@ -354,12 +354,31 @@ def cli_server_user_list(name, config, environment, role):
             role=user.roles))
 
 
-
 @cli_server.command(name='remove_user')
+@click.option('-n', '--name', default='default', help='server instance to use')
+@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
+@click.option('-e', '--environment', default='test', help='database environment to use')
 @click.option('-u', '--username', prompt='Username', help='username of user to remove')
-def cli_server_remove_user():
+def cli_server_remove_user(name, config, environment, username):
     """remove user"""
-    click.echo('remove user')
+    log = logging.getLogger('ptm')
+
+    # initialize application class
+    ctx = util.AppContext(APPNAME, 'server', name)
+
+    # load configuration and initialize logging system
+    cfg_filename = get_config_location(ctx, config, force_create=False)
+    ctx.init(cfg_filename, environment)
+
+    # initialize database from environment
+    uri = ctx.get_database_location()
+    db.init(uri)
+
+    if db.User.username_exists(username):
+        click.echo(db.User.remove_user(username))
+        log.info('user: "{}" has been removed from the database'.format(username))
+    else:
+        log.warning('username "{}" does not exist'.format(username))
 
 
 # ------------------------------------------------------------------------------
@@ -383,8 +402,8 @@ def cli_server_configlocation(name):
 @cli_client.command(name='start')
 @click.option('-n', '--name', default='default', help='client instance to use')
 @click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-@click.option('-a', '--apikey', default=None, help='ptm server api-key')
-def cli_client_start(name, config, apikey):
+@click.option('-a', '--api_key', default=None, help='ptm server api-key')
+def cli_client_start(name, config, api_key):
     """Start the client."""
     ctx = util.AppContext(APPNAME, 'client', name)
 
@@ -392,7 +411,7 @@ def cli_client_start(name, config, apikey):
     cfg_filename = get_config_location(ctx, config, force_create=False)
 
     # provide api key to the configuration file
-    set_api_key_in_config(cfg_filename, apikey)
+    set_api_key_in_client_config(cfg_filename, api_key)
 
     ctx.init(cfg_filename)
 
