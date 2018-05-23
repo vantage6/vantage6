@@ -28,12 +28,15 @@ from .server import db
 from . import client
 from . import utest
 from . import util
+from sqlalchemy.orm.exc import NoResultFound
 
 APPNAME = 'pytaskmanager'
 
 # ------------------------------------------------------------------------------
 # helper functions
 # ------------------------------------------------------------------------------
+
+
 def get_config_location(ctx, config, force_create):
     """Ensure configuration file exists and return its location."""
     if config is None:
@@ -183,10 +186,11 @@ def cli_server_passwd(name, config, environment, password):
     """Set the root password."""
     log = logging.getLogger('ptm')
 
+    # initialize application
     ctx = util.AppContext(APPNAME, 'server', name)
 
     # Load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config)
+    cfg_filename = get_config_location(ctx, config, force_create=False)
     ctx.init(cfg_filename, environment)
 
     uri = ctx.get_database_location()
@@ -268,13 +272,60 @@ def cli_server_add_user(name, config, environment, username, password, firstname
 
 
 @cli_server.command(name='update_user')
-@click.option('-u', '--username', prompt='Username', help='username')
-@click.option('-p', '--password', prompt='Password', hide_input=True)
-@click.option('-f', '--firstname', prompt='First-name', help='first name of the user')
-@click.option('-l', '--lastname', prompt='Last-name', help='family name of the user')
-def cli_server_update_user():
+@click.option('-n', '--name', default='default', help='server instance to use')
+@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
+@click.option('-e', '--environment', default='test', help='database environment to use')
+@click.option('-u', '--username', prompt='Username you want to change', help='username to update')
+@click.option('-u', '--new_username', default=None, help='username to update')
+@click.option('-p', '--password', default=False, is_flag=True, hide_input=True)
+@click.option('-f', '--firstname', default=None, help='first name of the user')
+@click.option('-l', '--lastname', default=None, help='family name of the user')
+@click.option('-r', '--role', default=None, help='role of the user')
+@click.option('-r', '--organization_id', default=None, help='role of the user')
+def cli_server_update_user(name, config, environment, username, new_username, password, firstname, lastname, role, organization_id):
     """update user"""
-    click.echo('update user')
+    log = logging.getLogger('ptm')
+
+    # initialize application class
+    ctx = util.AppContext(APPNAME, 'server', name)
+
+    # load configuration and initialize logging system
+    cfg_filename = get_config_location(ctx, config, force_create=False)
+    ctx.init(cfg_filename, environment)
+
+    # initialize database from environment
+    uri = ctx.get_database_location()
+    db.init(uri)
+
+    # get user
+    while not db.User.username_exists(username):
+        click.echo('Username {} not found in the database'.format(username))
+        username = click.prompt('Enter username you wish to change')
+    user = db.User.getByUsername(username)
+
+    # modify fields
+    if new_username:
+        log.debug('username updated from {} to {}'.format(user.username, new_username))
+        user.username = new_username
+    if password:
+        new_password = click.prompt('Please enter new password', hide_input=True)
+        log.debug('password updated')
+        user.set_password(new_password)
+    if firstname:
+        log.debug('firstname updated from {} to {}'.format(user.firstname, firstname))
+        user.firstname = firstname
+    if lastname:
+        log.debug('lastname updated from {} to {}'.format(user.lastname, lastname))
+        user.lastname = lastname
+    if role:
+        log.debug('roles updated from {} to {}'.format(user.roles, role))
+        user.roles = role
+    if organization_id:  # TODO make this a human readable input
+        log.debug('organization_id updated from {} to {}'.format(user.organization_id, organization_id))
+        user.organization_id = organization_id
+
+    # store updated fields
+    user.save()
 
 
 @cli_server.command(name='user_list')
