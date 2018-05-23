@@ -89,9 +89,8 @@ def get_config_location(ctx, config, force_create):
     return filename
 
 
-def set_api_key_in_config(cfg_filename, api_key=None):
-    """"Make sure an API is present in the configuration file"""
-    log = logging.getLogger('ptm')
+def set_api_key_in_client_config(cfg_filename, api_key=None):
+    """"Make sure an API is present in the client configuration file"""
 
     with open(cfg_filename, 'r') as f:
         config = yaml.load(f)
@@ -104,11 +103,6 @@ def set_api_key_in_config(cfg_filename, api_key=None):
         api_key = click.prompt("please enter API-key", type=str)
 
     if api_key:
-        # notify that key is overwritten or set
-        if config_api_key:
-            log.info("API key has been updated")
-        else:
-            log.info("New API key has been set")
 
         config['application']['api_key'] = api_key
 
@@ -349,7 +343,7 @@ def cli_server_user_list(name, config, environment, role):
     db.init(uri)
 
     # retrieve user-list from database
-    users = db.User.get_user_list(None)
+    users = db.User.get_user_list(None)  # TODO filter on roles (?) maybe others too
 
     # display users
     click.echo('\n')
