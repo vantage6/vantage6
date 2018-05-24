@@ -205,7 +205,7 @@ class User(Authenticatable):
         'polymorphic_identity':'user',
     }
 
-    def __init__(self, username=None, password=None,
+    def __init__(self, username=None, password='password',
                  firstname=None, lastname=None, organization_id=None, roles='Administrator'):
         self.username = username
         self.set_password(password)
@@ -241,6 +241,12 @@ class User(Authenticatable):
         session = Session()
         res = session.query(exists().where(cls.username == username)).scalar()
         return res
+
+    @classmethod
+    def remove_user(cls, username):
+        session = Session()
+        session.query(cls).filter_by(username=username).delete()
+        session.commit()
 
 
 # ------------------------------------------------------------------------------
