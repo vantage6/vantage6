@@ -13,3 +13,4 @@ pyyaml
 requests
 termcolor
 sqlalchemy
+click
