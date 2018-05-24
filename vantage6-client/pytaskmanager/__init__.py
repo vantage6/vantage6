@@ -1,5 +1,4 @@
 import click
-
 import sys
 import os
 import shutil
@@ -28,9 +27,46 @@ from .server import db
 from . import client
 from . import utest
 from . import util
+from functools import wraps
 from sqlalchemy.orm.exc import NoResultFound
 
 APPNAME = 'pytaskmanager'
+
+
+# ------------------------------------------------------------------------------
+# context decorator
+# see: https://github.com/pallets/click/issues/108
+# ------------------------------------------------------------------------------
+# TODO we can use this decorator also for the node, but it might be clearer if we split them
+# TODO do we need the force_create to be an option too?
+def set_context(return_context=False):
+    def real_set_context(func):
+
+        # add option decorators
+        @click.option('-n', '--name', default='default', help='server instance to use')
+        @click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
+        @click.option('-e', '--environment', default='test', help='database environment to use')
+        @wraps(func)
+        def func_with_context(name, config, environment, *args, **kwargs):
+            # initialize application class
+            ctx = util.AppContext(APPNAME, 'server', name)
+
+            # load configuration and initialize logging system
+            cfg_filename = get_config_location(ctx, config, force_create=False)
+            ctx.init(cfg_filename, environment)
+
+            # initialize database from environment
+            uri = ctx.get_database_location()
+            db.init(uri)
+
+            # click.echo(args)
+            if return_context:
+                return func(ctx, *args, **kwargs)
+            else:
+                return func(*args, **kwargs)
+        return func_with_context
+    return real_set_context
+
 
 # ------------------------------------------------------------------------------
 # helper functions
@@ -110,7 +146,6 @@ def set_api_key_in_client_config(cfg_filename, api_key=None):
             yaml.dump(config, f, default_flow_style=False)
 
 
-
 @click.group()
 def cli():
     """Main entry point for CLI scripts."""
@@ -140,23 +175,17 @@ def cli_server():
 
 
 @cli_server.command(name='start')
-@click.option('-n', '--name', default='default', help='server instance to use')
-@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-@click.option('-e', '--environment', default='test', help='database environment to use')
 @click.option('--ip', default='0.0.0.0', help='ip address to listen on')
 @click.option('-p', '--port', default=5000, help='port to listen on')
 @click.option('--debug/--no-debug', default=True, help='run server in debug mode (auto-restart)')
-@click.option('--force-create', is_flag=True, help='Force creation of config file')
-def cli_server_start(name, config, environment, ip, port, debug, force_create):
+@set_context(return_context=True)  # adds options (--name, --config, --environment)
+def cli_server_start(ctx, ip, port, debug):
     """Start the server."""
     click.echo("Starting server ...")
-    ctx = util.ServerContext(APPNAME, 'default')
-    # Load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create)
-    ctx.init(cfg_filename, environment)
 
     # Load the flask.Resources
     server.init_resources(ctx)
+
     # Run the server
     server.run(ctx, ip, port, debug=debug)
 
@@ -172,23 +201,11 @@ def cli_server_configlocation(name):
 
 # TODO this functionality is replaced by 'ptm server update_user'
 @cli_server.command(name='passwd')
-@click.option('-n', '--name', default='default', help='server instance to use')
-@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-@click.option('-e', '--environment', default='test', help='database environment to use')
 @click.option('-p', '--password', prompt='Password', hide_input=True)
-def cli_server_passwd(name, config, environment, password):
+@set_context()  # adds options (--name, --config, --environment)
+def cli_server_passwd(password):
     """Set the root password."""
     log = logging.getLogger('ptm')
-
-    # initialize application
-    ctx = util.AppContext(APPNAME, 'server', name)
-
-    # Load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create=False)
-    ctx.init(cfg_filename, environment)
-
-    uri = ctx.get_database_location()
-    db.init(uri)
 
     try:
         root = db.User.getByUsername('root')
@@ -204,46 +221,24 @@ def cli_server_passwd(name, config, environment, password):
 
 
 @cli_server.command(name='load_fixtures')
-@click.option('-n', '--name', default='default', help='server instance to use')
-@click.option('-e', '--environment', default='test', help='database environment to use')
-@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-def cli_server_load_fixtures(name, environment, config):
+@set_context(return_context=True)  # adds options (--name, --config, --environment)
+def cli_server_load_fixtures(ctx):
     """Load fixtures for testing."""
-    click.echo("Loading fixtures.")
-    ctx = util.AppContext(APPNAME, 'server', name)
-
-    # Load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create=False)
-    ctx.init(cfg_filename, environment)
-
     fixtures.init(ctx)
     fixtures.create()
 
 
 # user
 @cli_server.command(name='add_user')
-@click.option('-n', '--name', default='default', help='server instance to use')
-@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-@click.option('-e', '--environment', default='test', help='database environment to use')
 @click.option('-u', '--username', prompt='Username', help='username')
 @click.option('-p', '--password', prompt='Password', hide_input=True)
 @click.option('-f', '--firstname', prompt='First-name', help='first name of the user')
 @click.option('-l', '--lastname', prompt='Last-name', help='family name of the user')
 @click.option('-l', '--organization_id', prompt='Organization Id', help='organization id to which te user belongs')
-def cli_server_add_user(name, config, environment, username, password, firstname, lastname, organization_id):
-    """add super-user"""
+@set_context()  # adds options (--name, --config, --environment)
+def cli_server_add_user(username, password, firstname, lastname, organization_id):
+    """add super-user in a specific environment and configuration"""
     log = logging.getLogger('ptm')
-
-    # initialize application class
-    ctx = util.AppContext(APPNAME, 'server', name)
-
-    # load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create=False)
-    ctx.init(cfg_filename, environment)
-
-    # initialize database from environment
-    uri = ctx.get_database_location()
-    db.init(uri)
 
     # make sure the username does not exist yet
     while db.User.username_exists(username):
@@ -266,30 +261,17 @@ def cli_server_add_user(name, config, environment, username, password, firstname
 
 
 @cli_server.command(name='update_user')
-@click.option('-n', '--name', default='default', help='server instance to use')
-@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-@click.option('-e', '--environment', default='test', help='database environment to use')
-@click.option('-u', '--username', prompt='Username you want to change', help='username to update')
+@click.argument('username')
 @click.option('-u', '--new_username', default=None, help='username to update')
 @click.option('-p', '--password', default=False, is_flag=True, hide_input=True)
 @click.option('-f', '--firstname', default=None, help='first name of the user')
 @click.option('-l', '--lastname', default=None, help='family name of the user')
 @click.option('-r', '--role', default=None, help='role of the user')
 @click.option('-r', '--organization_id', default=None, help='role of the user')
-def cli_server_update_user(name, config, environment, username, new_username, password, firstname, lastname, role, organization_id):
-    """update user"""
+@set_context()  # adds options (--name, --config, --environment)
+def cli_server_update_user(username, new_username, password, firstname, lastname, role, organization_id):
+    """update user in specific environment and configuration"""
     log = logging.getLogger('ptm')
-
-    # initialize application class
-    ctx = util.AppContext(APPNAME, 'server', name)
-
-    # load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create=False)
-    ctx.init(cfg_filename, environment)
-
-    # initialize database from environment
-    uri = ctx.get_database_location()
-    db.init(uri)
 
     # get user
     while not db.User.username_exists(username):
@@ -314,7 +296,7 @@ def cli_server_update_user(name, config, environment, username, new_username, pa
     if role:
         log.debug('roles updated from {} to {}'.format(user.roles, role))
         user.roles = role
-    if organization_id:  # TODO make this a human readable input
+    if organization_id:  # TODO make this a human-readable input
         log.debug('organization_id updated from {} to {}'.format(user.organization_id, organization_id))
         user.organization_id = organization_id
 
@@ -323,29 +305,18 @@ def cli_server_update_user(name, config, environment, username, new_username, pa
 
 
 @cli_server.command(name='user_list')
-@click.option('-n', '--name', default='default', help='server instance to use')
-@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-@click.option('-e', '--environment', default='test', help='database environment to use')
 @click.option('-r', '--role', default='All')
-def cli_server_user_list(name, config, environment, role):
-    """list users"""
+@set_context()  # adds options (--name, --config, --environment)
+def cli_server_user_list(role):
+    """list users of specific environment and configuration"""
     log = logging.getLogger('ptm')
 
-    # initialize application class
-    ctx = util.AppContext(APPNAME, 'server', name)
-
-    # load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create=False)
-    ctx.init(cfg_filename, environment)
-
-    # initialize database from environment
-    uri = ctx.get_database_location()
-    db.init(uri)
-
     # retrieve user-list from database
-    users = db.User.get_user_list(None)  # TODO filter on roles (?) maybe others too
+    # TODO filter on roles (?) maybe others too
+    users = db.User.get_user_list(None)
 
     # display users
+    # TODO this fails if a field is missing, maybe raise an error if this is the case?
     click.echo('\n')
     for user in users:
         click.secho('{username:45} {organization:30} {role:30}'.format(
@@ -355,25 +326,13 @@ def cli_server_user_list(name, config, environment, role):
 
 
 @cli_server.command(name='remove_user')
-@click.option('-n', '--name', default='default', help='server instance to use')
-@click.option('-c', '--config', default=None, help='filename of config file; overrides --name if provided')
-@click.option('-e', '--environment', default='test', help='database environment to use')
-@click.option('-u', '--username', prompt='Username', help='username of user to remove')
-def cli_server_remove_user(name, config, environment, username):
+@click.argument('username')
+@set_context()  # adds options (--name, --config, --environment)
+def cli_server_remove_user(username):
     """remove user"""
     log = logging.getLogger('ptm')
 
-    # initialize application class
-    ctx = util.AppContext(APPNAME, 'server', name)
-
-    # load configuration and initialize logging system
-    cfg_filename = get_config_location(ctx, config, force_create=False)
-    ctx.init(cfg_filename, environment)
-
-    # initialize database from environment
-    uri = ctx.get_database_location()
-    db.init(uri)
-
+    # check if user exists, and delete if this is the case
     if db.User.username_exists(username):
         click.echo(db.User.remove_user(username))
         log.info('user: "{}" has been removed from the database'.format(username))
