@@ -21,7 +21,8 @@ from ._schema import *
 
 
 def setup(api, API_BASE):
-    path = os.path.join(API_BASE, module_name)
+    # path = os.path.join(API_BASE, module_name)
+    path = '/'.join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(Client, 
@@ -59,7 +60,8 @@ class Client(Resource):
                     return client_schema.dump(client)
 
         elif g.client:
-            log.info(g.client)
+            # log.info(g.client)
+            pass
 
         # return db.Client.get(id)
         return client_schema.dump(client, many=not id)
