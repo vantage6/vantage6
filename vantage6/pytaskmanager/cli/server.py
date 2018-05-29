@@ -17,7 +17,6 @@ APPNAME = 'pytaskmanager'
 # context decorator
 # see: https://github.com/pallets/click/issues/108
 # ------------------------------------------------------------------------------
-# TODO we can use this decorator also for the node, but it might be clearer if we split them
 # TODO do we need the force_create to be an option too?
 def set_context(return_context=False):
     def real_set_context(func):
@@ -80,27 +79,6 @@ def cli_server_configlocation(name):
     ctx = util.AppContext(APPNAME, 'server', name)
     cfg_filename = get_config_location(ctx, config=None, force_create=False)
     click.echo('{}'.format(cfg_filename))
-
-
-# TODO this functionality is replaced by 'ptm server update_user'
-@cli_server.command(name='passwd')
-@click.option('-p', '--password', prompt='Password', hide_input=True)
-@set_context()  # adds options (--name, --config, --environment)
-def cli_server_passwd(password):
-    """Set the root password."""
-    log = logging.getLogger('ptm')
-
-    try:
-        root = db.User.getByUsername('root')
-    except Exception as e:
-        log.info("Creating user root")
-        root = db.User(username='root')
-
-    log.info("Setting password for root")
-    root.set_password(password)
-    root.save()
-
-    log.info("[DONE]")
 
 
 @cli_server.command(name='load_fixtures')
