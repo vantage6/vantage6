@@ -116,7 +116,7 @@ def load_resources(api, API_BASE, resources):
 # ------------------------------------------------------------------------------
 @app.route(WEB_BASE+'/', defaults={'path': ''})
 @app.route(WEB_BASE+'/<path:path>')
-def index():
+def index(path):
     return "Hello, World"
 
 

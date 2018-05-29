@@ -23,7 +23,7 @@ from ._schema import *
 
 def setup(api, API_BASE):
     module_name = __name__.split('.')[-1]
-    path = os.path.join(API_BASE, module_name)
+    path = '/'.join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
     
     api.add_resource(Task,
@@ -88,6 +88,7 @@ class Task(Resource):
             result = db.TaskResult(task=task, client=c)
 
         task.save()
+        log.info("Created new task '{}' for collaboration '{}'".format(task.name, collaboration.name))
         return task_schema.dump(task, many=False)
 
 

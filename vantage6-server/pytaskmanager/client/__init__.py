@@ -36,20 +36,24 @@ class ClientBase(object):
     def __init__(self, host, api_path='/api'):
         """Initialize a ClientBase instance."""
         self._HOST = host       
-        self._API_PATH = api_path 
+        self._API_PATH = api_path
+        if self._API_PATH.endswith('/'):
+            self._API_PATH = self._API_PATH.rstrip('/')
         self._REFRESH_URL = None
         self._ACCESS_TOKEN = None
         self._REFRESH_TOKEN = None
 
-        print('*' * 80)
-        print('host', host)
-        print('api_path', api_path)
-        print('*' * 80)
-
     def get_url(self, path):
-        if self._API_PATH:
-            return '/'.join([self._HOST, self._API_PATH, path])
-        return '/'.join([self._HOST, path])
+        url = ''
+        if path.startswith('/'):
+            url = self._HOST + path
+        else:
+            if self._API_PATH:
+                url = self._HOST + self._API_PATH + '/' + path
+            else:
+                url = self._HOST + path
+
+        return url
 
     def authenticate(self, username=None, password=None, api_key=None):
         """Authenticate with the server as a User or Client.
