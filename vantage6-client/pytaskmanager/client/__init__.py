@@ -146,7 +146,7 @@ class ClientBase(object):
         return self.request('/collaboration')
 
     def get_task(self, task_id, include=''):
-        url = '/task/{}?include={}'.format(task_id, include)
+        url = 'task/{}?include={}'.format(task_id, include)
         return self.request(url)
 
     def create_task(self, name, image, collaboration_id,  input_='', description=''):
@@ -158,7 +158,7 @@ class ClientBase(object):
             "description": description,
         }        
 
-        return self.request('/task', json_data=task, method='post')
+        return self.request('task', json_data=task, method='post')
 
 # ------------------------------------------------------------------------------
 class Client(ClientBase):
@@ -201,7 +201,7 @@ class TaskMasterClient(ClientBase):
 
     def get_tasks(self):
         """Retrieve a list of tasks from the server."""
-        url = '/result?state=open&include=task&client_id={client_id}'
+        url = 'result?state=open&include=task&client_id={client_id}'
         url = url.format(client_id=self.client_id)
         return self.request(url)
 

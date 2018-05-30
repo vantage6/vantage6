@@ -19,7 +19,7 @@ environments:
     allow_drop_all: True
 
   prod:
-    description: Productions
+    description: Production
     type: prod
     uri: sqlite:///prod.sqlite
     allow_drop_all: False
