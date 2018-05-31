@@ -60,7 +60,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'ptm=pytaskmanager:cli',
+            'ptm=pytaskmanager.cli.cli:cli',
         ],
     },
 )
