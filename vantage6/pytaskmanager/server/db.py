@@ -13,13 +13,14 @@ import bcrypt
 #  SQLAlchemy
 import sqlalchemy
 from sqlalchemy import *
+from sqlalchemy.sql import exists
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
+from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.ext.associationproxy import association_proxy
-
 
 
 # ------------------------------------------------------------------------------
@@ -204,6 +205,15 @@ class User(Authenticatable):
         'polymorphic_identity':'user',
     }
 
+    # TODO init method not required
+    def __init__(self, username=None, password='password',
+                 firstname=None, lastname=None, organization_id=None, roles='Administrator'):
+        self.username = username
+        self.set_password(password)
+        self.firstname = firstname
+        self.lastname = lastname
+        self.roles = roles
+        self.organization_id = organization_id
 
     # Copied from https://docs.pylonsproject.org/projects/pyramid/en/master/tutorials/wiki2/definingmodels.html
     def set_password(self, pw):
@@ -222,6 +232,22 @@ class User(Authenticatable):
         session = Session()
         return session.query(cls).filter_by(username=username).one()
 
+    @classmethod
+    def get_user_list(cls, filters=None):
+        session = Session()
+        return session.query(cls).all()
+
+    @classmethod
+    def username_exists(cls, username):
+        session = Session()
+        res = session.query(exists().where(cls.username == username)).scalar()
+        return res
+
+    @classmethod
+    def remove_user(cls, username):
+        session = Session()
+        session.query(cls).filter_by(username=username).delete()
+        session.commit()
 
 
 # ------------------------------------------------------------------------------
