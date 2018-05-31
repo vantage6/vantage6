@@ -35,10 +35,15 @@ class ClientBase(object):
     """Base class for Client and TaskMasterClient."""
     def __init__(self, host, api_path='/api'):
         """Initialize a ClientBase instance."""
-        self._HOST = host       
-        self._API_PATH = api_path
-        if self._API_PATH.endswith('/'):
+        self._HOST = host
+
+        if api_path.endswith('/') and len(api_path) > 1:
             self._API_PATH = self._API_PATH.rstrip('/')
+        elif api_path:
+            self._API_PATH = api_path
+        else:
+            self._API_PATH = '/'
+
         self._REFRESH_URL = None
         self._ACCESS_TOKEN = None
         self._REFRESH_TOKEN = None
@@ -48,10 +53,7 @@ class ClientBase(object):
         if path.startswith('/'):
             url = self._HOST + path
         else:
-            if self._API_PATH:
-                url = self._HOST + self._API_PATH + '/' + path
-            else:
-                url = self._HOST + path
+            url = self._HOST + self._API_PATH + '/' + path
 
         return url
 
@@ -220,8 +222,12 @@ class TaskMasterClient(ClientBase):
 
         log.info("Received {} task(s)".format(len(taskresults)))
 
-        for taskresult in taskresults:
-            self.execute_task(taskresult)
+        try:
+            for taskresult in taskresults:
+                self.execute_task(taskresult)
+                
+        except Exception as e:
+            log.exception(e)
 
         # Sleep 10 seconds
         log.debug("Sleeping {} second(s)".format(self.config['delay']))
