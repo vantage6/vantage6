@@ -8,7 +8,7 @@ import json
 from flask import g, request
 from flask_restful import Resource, abort
 from requests import codes as rqc
-from . import with_user_or_client
+from . import with_user_or_node
 from ._schema import TaskSchema, TaskIncludedSchema
 from pytaskmanager.server import db
 
@@ -39,7 +39,7 @@ def setup(api, API_BASE):
 class Task(Resource):
     """Resource for /api/task"""
 
-    @with_user_or_client
+    @with_user_or_node
     def get(self, id=None):
         t = db.Task.get(id)
 
@@ -50,7 +50,7 @@ class Task(Resource):
 
         return s.dump(t, many=not bool(id))
 
-    @with_user_or_client
+    @with_user_or_node
     def post(self):
         """Create a new Task."""
         data = request.get_json()
@@ -74,9 +74,9 @@ class Task(Resource):
         task.input = input_
         task.status = "open"
 
-        # a collaboration can include multiple clients (!)
-        for c in collaboration.clients:
-            result = db.TaskResult(task=task, client=c)
+        # a collaboration can include multiple nodes
+        for c in collaboration.nodes:
+            result = db.TaskResult(task=task, node=c)
 
         task.save()
         return TaskSchema().dump(task, many=False)
@@ -85,7 +85,7 @@ class Task(Resource):
 class TaskResult(Resource):
     """Resource for /api/task/<int:id>/result"""
 
-    @with_user_or_client
+    @with_user_or_node
     def get(self, id):
         """Return results for task."""
         task = db.Task.get(id)

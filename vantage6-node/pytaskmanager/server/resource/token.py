@@ -54,7 +54,7 @@ class Token(Resource):
             ret = {
                 'access_token': create_access_token(user),
                 'refresh_token': create_refresh_token(user),
-                'user_url': server.api.url_for(server.resource.client.Client, id=user.id),
+                'user_url': server.api.url_for(server.resource.node.Node, id=user.id),
                 'refresh_url': server.api.url_for(RefreshToken),
             }
 
@@ -62,18 +62,18 @@ class Token(Resource):
             return ret, 200
 
         elif api_key:
-            log.info("trying to authenticate client with api_key")
+            log.info("trying to authenticate node with api_key")
             try:
-                client = db.Client.getByApiKey(api_key)
+                node = db.Node.getByApiKey(api_key)
 
                 ret = {
-                    'access_token': create_access_token(client),
-                    'refresh_token': create_refresh_token(client),
-                    'client_url': server.api.url_for(server.resource.client.Client, id=client.id),
+                    'access_token': create_access_token(node),
+                    'refresh_token': create_refresh_token(node),
+                    'node_url': server.api.url_for(server.resource.node.Node, id=node.id),
                     'refresh_url': server.api.url_for(RefreshToken),
                 }
 
-                log.info("Authenticated as client '{}' ({})".format(client.id, client.name))
+                log.info("Authenticated as node '{}' ({})".format(node.id, node.name))
             # FIXME: should not depend on sqlalchemy errors
             except sqlalchemy.orm.exc.NoResultFound as e:
                 log.info("Invalid API-key! Aborting!")
@@ -91,11 +91,9 @@ class RefreshToken(Resource):
     @jwt_refresh_token_required
     def post(self):
         """Create a token from a refresh token."""
-        user_or_client_id = get_jwt_identity()
-        log.info('Refreshing token for user or client "{}"'.format(user_or_client_id))
-        ret = None
-        
-        user_or_client = db.Authenticatable.get(user_or_client_id)
-        ret = {'access_token': create_access_token(user_or_client)}
+        user_or_node_id = get_jwt_identity()
+        log.info('Refreshing token for user or node "{}"'.format(user_or_node_id))
+        user_or_node = db.Authenticatable.get(user_or_node_id)
+        ret = {'access_token': create_access_token(user_or_node)}
 
         return ret, 200

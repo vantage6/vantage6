@@ -31,9 +31,10 @@ class AuthenticationError(Exception):
 
 
 # ------------------------------------------------------------------------------
-class ClientBase(object):
-    """Base class for Client and TaskMasterClient."""
+class NodeBase(object):
+    """Base class for Node and TaskMasterNode."""
     def __init__(self, host, api_path='/api'):
+
         """Initialize a ClientBase instance."""
         self._HOST = host
 
@@ -58,14 +59,14 @@ class ClientBase(object):
         return url
 
     def authenticate(self, username=None, password=None, api_key=None):
-        """Authenticate with the server as a User or Client.
+        """Authenticate with the server as a User or Node.
 
         Either username and password OR api_key should be provided.
         """
         # url = '{}/api/token'.format(self._HOST)
         url = self.get_url('token')
 
-        # Infer whether we're authenticating as a user or as a client.
+        # Infer whether we're authenticating as a user or as a node.
         if username:
             data = {
                 'username': username,
@@ -163,17 +164,17 @@ class ClientBase(object):
         return self.request('task', json_data=task, method='post')
 
 # ------------------------------------------------------------------------------
-class Client(ClientBase):
+class Node(NodeBase):
     """Class for communicating with the server in custom scripts."""
     pass
 
 
 
 # ------------------------------------------------------------------------------
-class TaskMasterClient(ClientBase):
-    """Automated client that checks for tasks and executes them."""
+class TaskMasterNode(NodeBase):
+    """Automated node that checks for tasks and executes them."""
     def __init__(self, ctx):
-        """Initialize a new TaskMasterClient instance."""
+        """Initialize a new TaskMasterNode instance."""
         self.log = logging.getLogger(__name__)
 
         self.ctx = ctx
@@ -189,29 +190,28 @@ class TaskMasterClient(ClientBase):
             self.config['api_path']
         )
 
-
-        self.client_id = None
+        self.node_id = None
         self.log.info("Using server: {}".format(self._HOST))
 
     def authenticate(self):
         """Authenticate with the server using the api-key."""
         response_data, decoded_token = super().authenticate(api_key=self.config['api_key'])
-        self.client_id = decoded_token['identity']
-
-        client = self.request(response_data['client_url'])
-        log.info("Client name: '{name}'".format(**client))
+        self.node_id = decoded_token['identity']
+        node = self.request(response_data['node_url'])
+        log.info("Node name: '{name}'".format(**node))
 
     def get_tasks(self):
         """Retrieve a list of tasks from the server."""
-        url = 'result?state=open&include=task&client_id={client_id}'
-        url = url.format(client_id=self.client_id)
+        url = '/result?state=open&include=task&node_id={node_id}'
+        url = url.format(node_id=self.node_id)
+
         return self.request(url)
 
     def get_and_execute_tasks(self):
         """
         Continuously check for tasks and execute them.
 
-        A list of tasks for a client actually consists of a list of (empty)
+        A list of tasks for a node actually consists of a list of (empty)
         task *results* that are (pre)created by the server. This allows the
         server to keep track of unfinished tasks.
         """
@@ -390,11 +390,11 @@ class TaskMasterClient(ClientBase):
 
 # ------------------------------------------------------------------------------
 def run(ctx):
-    """Run the client."""
+    """Run the node."""
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
     
-    tmc = TaskMasterClient(ctx)
+    tmc = TaskMasterNode(ctx)
     tmc.run_forever()
 
 
