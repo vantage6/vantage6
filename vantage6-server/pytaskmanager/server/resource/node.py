@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Resources below '/<api_base>/client'
+Resources below '/<api_base>/node'
 """
 import os, os.path
 
@@ -16,7 +16,7 @@ log = logging.getLogger(module_name)
 
 from .. import db
 
-from . import with_user_or_client
+from . import with_user_or_node
 from ._schema import *
 
 
@@ -24,53 +24,53 @@ def setup(api, API_BASE):
     path = "/".join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
-    api.add_resource(Client, 
+    api.add_resource(Node,
         path,
         path + '/<int:id>',
-        endpoint='client'
+        endpoint='node'
     )
-    api.add_resource(ClientTasks,
+    api.add_resource(NodeTasks,
         path + '/<int:id>/task',
         path + '/<int:id>/task/<int:taskresult_id>',
     )
 
 
 # Schemas
-client_schema = ClientSchema()
+node_schema = NodeSchema()
 taskresult_schema = TaskResultSchema()
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Client(Resource):
-    """Resource for /api/client/<int:id>."""
+class Node(Resource):
+    """Resource for /api/node/<int:id>."""
 
-    @with_user_or_client
+    @with_user_or_node
     def get(self, id=None):
-        client = db.Client.get(id)
+        node = db.Node.get(id)
 
         if g.user:
             if id:
                 # FIXME: use proper roles instead of CSV
-                if 'root' in g.user.roles.replace(' ', '').split() or g.user in client.organization.users:
-                    # json_representation = db.jsonable(client)
-                    # json_representation['api_key'] = client.api_key
+                if 'root' in g.user.roles.replace(' ', '').split() or g.user in node.organization.users:
+                    # json_representation = db.jsonable(node)
+                    # json_representation['api_key'] = node.api_key
                     # return json_representation
-                    return client_schema.dump(client)
+                    return node_schema.dump(node)
 
-        elif g.client:
-            log.info(g.client)
+        elif g.node:
+            log.info(g.node)
 
-        # return db.Client.get(id)
-        return client_schema.dump(client, many=not id)
+        # return db.Node.get(id)
+        return node_schema.dump(node, many=not id)
 
 
-class ClientTasks(Resource):
-    """Resource for /api/client/<int:id>/task."""
+class NodeTasks(Resource):
+    """Resource for /api/node/<int:id>/task."""
 
-    @with_user_or_client
+    @with_user_or_node
     def get(self, id, taskresult_id=None):
-        """Return a list of tasks for a client.
+        """Return a list of tasks for a node.
 
         If the query parameter 'state' equals 'open' the list is
         filtered to return only tasks without result.
@@ -83,14 +83,14 @@ class ClientTasks(Resource):
             return taskresult_schema.dump(result)
 
         # If taskresult_id is None, we're returning all taskresults
-        # that belong to this client (potentially filtered by state).
-        client = db.Client.get(id)
+        # that belong to this node (potentially filtered by state).
+        node = db.Node.get(id)
 
         if request.args.get('state') == 'open':
-            results = [result for result in client.taskresults if result.finished_at is None]
+            results = [result for result in node.taskresults if result.finished_at is None]
             return taskresult_schema.dump(results, many=True)
 
-        return [result for result in client.taskresults]
+        return [result for result in node.taskresults]
 
 
 

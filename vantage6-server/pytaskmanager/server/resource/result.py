@@ -17,7 +17,7 @@ log = logging.getLogger(module_name)
 from .. import db
 
 from . import parse_datetime
-from . import with_user_or_client, with_client
+from . import with_user_or_node, with_node
 from ._schema import *
 
 
@@ -43,7 +43,7 @@ result_inc_schema = ResultTaskIncludedSchema()
 class Result(Resource):
     """Resource for /api/task"""
 
-    @with_user_or_client
+    @with_user_or_node
     def get(self, id=None):
         if id:
             t = db.TaskResult.get(id)
@@ -54,8 +54,8 @@ class Result(Resource):
             if request.args.get('state') == 'open':
                 q = q.filter(db.TaskResult.finished_at == None)
 
-            if request.args.get('client_id'):
-                q = q.filter_by(client_id=request.args.get('client_id'))                
+            if request.args.get('node_id'):
+                q = q.filter_by(node_id=request.args.get('node_id'))
 
             t = q.all()
 
@@ -71,13 +71,13 @@ class Result(Resource):
         abort(rqc.not_allowed, message="Results cannot be created by POSTing.")
 
 
-    @with_client
+    @with_node
     def put(self, id):
         """Update a Result."""
         data = request.get_json()
         result = db.TaskResult.get(id)
 
-        if result.client_id != g.client.id:
+        if result.node_id != g.node.id:
             abort(rqc.forbidden, message="Unauthorized: this is not your result to PUT!")
 
         if result.finished_at is not None:

@@ -28,7 +28,7 @@ class TaskResultSchema(ModelSchema):
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
     _id = ma.URLFor('result', id='<id>')
     task = ma.HyperlinkRelated('task')
-    client = ma.HyperlinkRelated('client')
+    node = ma.HyperlinkRelated('node')
 
     class Meta:
         model = db.TaskResult
@@ -53,12 +53,12 @@ class OrganizationSchema(ModelSchema):
     # collaborations = fields.Nested(
     #     'CollaborationSchema', 
     #     many=True, 
-    #     exclude=['organizations', 'clients', 'tasks']
+    #     exclude=['organizations', 'nodes', 'tasks']
     # )
     _id = ma.URLFor('organization', id='<id>')
     collaborations = ma.List(ma.HyperlinkRelated('collaboration'))
     tasks = ma.List(ma.HyperlinkRelated('task'))
-    clients = ma.List(ma.HyperlinkRelated('client'))
+    node = ma.List(ma.HyperlinkRelated('node'))
 
     class Meta:
         model = db.Organization
@@ -68,7 +68,7 @@ class CollaborationSchema(ModelSchema):
     # organizations = fields.Nested(
     #     'OrganizationSchema', 
     #     many=True, 
-    #     exclude=['collaborations', 'users', 'clients', 'tasks']
+    #     exclude=['collaborations', 'users', 'nodes', 'tasks']
     # )
     # _links = ma.Hyperlinks({
     #     'self': ma.URLFor('collaboration', id='<id>'),
@@ -76,19 +76,19 @@ class CollaborationSchema(ModelSchema):
 
     organizations = ma.List(ma.HyperlinkRelated('organization'))
     tasks = ma.List(ma.HyperlinkRelated('task'))
-    clients = ma.List(ma.HyperlinkRelated('client'))
+    nodes = ma.List(ma.HyperlinkRelated('node'))
 
     class Meta:
         model = db.Collaboration
 
 
 # ------------------------------------------------------------------------------
-class ClientSchema(ModelSchema):
+class NodeSchema(ModelSchema):
     organization = ma.HyperlinkRelated('organization')
     collaboration = ma.HyperlinkRelated('collaboration')
 
     class Meta:
-        model = db.Client
+        model = db.Node
 
 
 # ------------------------------------------------------------------------------

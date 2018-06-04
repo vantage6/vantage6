@@ -15,7 +15,7 @@ log = logging.getLogger(module_name)
 
 from .. import db
 
-from . import with_user_or_client, with_client
+from . import with_user_or_node, with_node
 from ._schema import *
 
 
@@ -33,9 +33,9 @@ def setup(api, API_BASE):
         path + '/<int:id>',
         path + '/<int:id>/<int:collaboration_id>',
     )
-    api.add_resource(OrganizationClient,
-        path + '/<int:id>/client',
-        path + '/<int:id>/client/<int:client_id>',
+    api.add_resource(OrganizationNode,
+        path + '/<int:id>/node',
+        path + '/<int:id>/node/<int:node_id>',
     )
 
 # Schemas
@@ -84,29 +84,29 @@ class OrganizationCollaboration(Resource):
         return organization.collaborations
 
 
-class OrganizationClient(Resource):
-    """Resource for /api/organization/<int:id>/client."""
+class OrganizationNode(Resource):
+    """Resource for /api/organization/<int:id>/node."""
 
     @jwt_required
-    def get(self, id, client_id=None):
-        """Return a list of Clients."""
+    def get(self, id, node_id=None):
+        """Return a list of Nodes."""
         organization = db.Organization.get(id)
 
-        if client_id is not None:
-            client = db.Client.get(client_id)
-            if client in organization.clients:
-                return client
+        if node_id is not None:
+            node = db.Node.get(node_id)
+            if node in organization.nodes:
+                return node
 
-        return organization.clients     
+        return organization.nodes     
 
     @jwt_required
     def post(self, id):
-        """Create new client"""
+        """Create new node"""
         data = request.get_json()
         data['id'] = id
-        client = db.Client.fromDict(data)
-        client.save()
+        node = db.Node.fromDict(data)
+        node.save()
 
-        return client
+        return node
 
 

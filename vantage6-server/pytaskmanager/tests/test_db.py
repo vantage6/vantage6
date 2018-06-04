@@ -7,7 +7,7 @@ import logging
 
 
 def load_tests(loader, tests, ignore):
-    # tests.addTests(doctest.DocTestSuite(fhir.client))
+    # tests.addTests(doctest.DocTestSuite(fhir.node))
     return tests
 
 class TestOrganization(unittest.TestCase):
