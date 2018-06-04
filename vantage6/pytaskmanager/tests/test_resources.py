@@ -18,7 +18,7 @@ from pytaskmanager.server import fixtures
 log = logging.getLogger(__name__.split('.')[-1])
 
 # def load_tests(loader, tests, ignore):
-#     # tests.addTests(doctest.DocTestSuite(fhir.client))
+#     # tests.addTests(doctest.DocTestSuite(fhir.node))
 #     return tests
 
 
@@ -28,12 +28,12 @@ class Response(BaseResponse):
         return json.loads(self.data)
 
 
-class TestClient(FlaskClient):
+class TestNode(FlaskNode):
     def open(self, *args, **kwargs):
         if 'json' in kwargs:
             kwargs['data'] = json.dumps(kwargs.pop('json'))
             kwargs['content_type'] = 'application/json'
-        return super(TestClient, self).open(*args, **kwargs)
+        return super(TestNode, self).open(*args, **kwargs)
 
 
 
@@ -62,7 +62,7 @@ class TestResources(unittest.TestCase):
 
         server.app.testing = True
         server.app.response_class = Response
-        server.app.test_client_class = TestClient
+        server.app.test_client_class = TestNode
         server.init_resources()
 
         self.app = server.app.test_client()

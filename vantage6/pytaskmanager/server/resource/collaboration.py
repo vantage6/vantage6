@@ -17,7 +17,7 @@ log = logging.getLogger(module_name)
 
 from .. import db
 
-from . import with_user_or_client
+from . import with_user_or_node
 from ._schema import *
 
 
@@ -35,9 +35,9 @@ def setup(api, API_BASE):
         path+'/<int:id>/organization',
         path+'/<int:id>/organization/<int:organization_id>'
     )
-    api.add_resource(CollaborationClient, 
-        path+'/<int:id>/client',
-        path+'/<int:id>/client/<int:client_id>',
+    api.add_resource(CollaborationNode,
+        path+'/<int:id>/node',
+        path+'/<int:id>/node/<int:node_id>',
     )
     api.add_resource(CollaborationTask, 
         path+'/<int:id>/task',
@@ -97,23 +97,23 @@ class CollaborationOrganization(Resource):
         return collaboration.organizations
 
 
-class CollaborationClient(Resource):
-    """Resource for /api/collaboration/<int:id>/client."""
+class CollaborationNode(Resource):
+    """Resource for /api/collaboration/<int:id>/node."""
 
     @jwt_required
     def get(self, id):
         collaboration = db.Collaboration.get(id)
-        return collaboration.clients
+        return collaboration.nodes
 
     @jwt_required
     def post(self, id):
         """Add an organizations to a specific collaboration."""
         data = request.get_json()
         collaboration = db.Collaboration.get(id)
-        client = db.Client.get(data['id'])
-        collaboration.clients.append(client)
+        node = db.Node.get(data['id'])
+        collaboration.nodes.append(node)
         collaboration.save()
-        return collaboration.clients
+        return collaboration.nodes
 
 
 class CollaborationTask(Resource):
@@ -143,8 +143,8 @@ class CollaborationTask(Resource):
         # task.input = data.get('input', '')
         # task.status = "open"
 
-        # for c in collaboration.clients:
-        #     result = db.TaskResult(task=task, client=c)
+        # for c in collaboration.nodes:
+        #     result = db.TaskResult(task=task, node=c)
 
         # task.save()
         # return task
