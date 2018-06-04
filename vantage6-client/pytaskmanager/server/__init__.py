@@ -41,6 +41,7 @@ CORS(app)
 # ------------------------------------------------------------------------------
 api = Api(app)
 
+
 @api.representation('application/json')
 def output_json(data, code, headers=None):
 
@@ -68,12 +69,12 @@ jwt = JWTManager(app)
 
 
 @jwt.user_claims_loader
-def user_claims_loader(user_or_client):
-    if isinstance(user_or_client, db.User):
+def user_claims_loader(user_or_node):
+    if isinstance(user_or_node, db.User):
         type_ = 'user'
-        roles = user_or_client.roles.split(',')
+        roles = user_or_node.roles.split(',')
     else:
-        type_ = 'client'
+        type_ = 'node'
         roles = []
     
     claims = {
@@ -83,20 +84,22 @@ def user_claims_loader(user_or_client):
 
     return claims
 
+
 @jwt.user_identity_loader
-def user_identity_loader(user_or_client):
-    if isinstance(user_or_client, db.Authenticatable):
-        return user_or_client.id
+def user_identity_loader(user_or_node):
+    if isinstance(user_or_node, db.Authenticatable):
+        return user_or_node.id
     
     msg = "Could not create a JSON serializable identity from '{}'"
-    msg = msg.format(user_or_client)
+    msg = msg.format(user_or_node)
     log.error(msg)
     return None
 
+
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
-    user_or_client = None
-    claims = get_jwt_claims()
+    # user_or_node = None
+    # claims = get_jwt_claims()
 
     return db.Authenticatable.get(identity)
 
@@ -133,7 +136,7 @@ def init_resources(ctx):
     API_BASE = ctx.config['app']['api_path']
 
     resources = [
-            'client',
+            'node',
             'collaboration',
             'organization',
             'task',

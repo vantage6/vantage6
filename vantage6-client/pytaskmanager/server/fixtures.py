@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Database Model."""
 from __future__ import print_function, unicode_literals
 import uuid
+import logging
 
 from pytaskmanager.server import db
-from pytaskmanager import util
-
-import logging
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -52,30 +49,30 @@ def createCollaborations():
     log.info('Creating collaborations')
 
     collaborations = [
-    {
-        "name": "The Big Small Consortium",
-        "description": "",
-        "participants": [
-            "Small Organization", 
-            "Big Organization", 
-            "SouthParkCancerRegister"
-        ]
-    },
-    {
-        "name": "The Small Big Consortium",
-        "description": "",
-        "participants": [
-            "Big Organization", 
-            "SouthParkCancerRegister"
-        ]
-    },
-    {
-        "name": "The Useless Consortium",
-        "description": "Consortium with a single organization",
-        "participants": [
-            "SouthParkCancerRegister",
-        ]
-    },
+        {
+            "name": "The Big Small Consortium",
+            "description": "",
+            "participants": [
+                "Small Organization",
+                "Big Organization",
+                "SouthParkCancerRegister"
+            ]
+        },
+        {
+            "name": "The Small Big Consortium",
+            "description": "",
+            "participants": [
+                "Big Organization",
+                "SouthParkCancerRegister"
+            ]
+        },
+        {
+            "name": "The Useless Consortium",
+            "description": "Consortium with a single organization",
+            "participants": [
+                "SouthParkCancerRegister",
+            ]
+        },
     ]
 
     for collab_dict in collaborations:
@@ -93,18 +90,17 @@ def createCollaborations():
 
         collaboration.save()
 
-
-def createClients():
-    log.info('Creating clients')
+def createNodes():
+    log.info('Creating nodes')
 
     for organization in db.Organization.get():
         for collaboration in organization.collaborations:
-            client = db.Client()
-            client.name = "{} - {} Client".format(organization.name, collaboration.name)
-            client.api_key = str(uuid.uuid1())
-            client.organization = organization
-            client.collaboration = collaboration
-            log.debug(' - API-key for "{}": {}'.format(client.name, client.api_key))
+            node = db.Node()
+            node.name = "{} - {} Node".format(organization.name, collaboration.name)
+            node.api_key = str(uuid.uuid1())
+            node.organization = organization
+            node.collaboration = collaboration
+            log.debug(' - API-key for "{}": {}'.format(node.name, node.api_key))
 
         organization.save()
 
@@ -144,9 +140,9 @@ def createTasks():
         task.status = 'open'
         task.collaboration = collaboration
 
-        for client in collaboration.clients:
+        for node in collaboration.nodes:
             result = db.TaskResult()
-            result.client = client
+            result.node = node
             result.task = task
 
         task.save()
@@ -159,7 +155,7 @@ def create():
     createOrganizations()
     createUsers()
     createCollaborations()
-    createClients()
+    createNodes()
     createTasks()
 
 

@@ -36,12 +36,14 @@ def get_config_location(ctx, config, force_create):
         # Copy a default config file
         if ctx.instance_type == 'server':
             skeleton_file = 'server_config_skeleton.yaml'
-        elif ctx.instance_type == 'client':
-            skeleton_file = 'client_config_skeleton.yaml'
+        elif ctx.instance_type == 'node':
+            skeleton_file = 'node_config_skeleton.yaml'
         elif ctx.instance_type == 'unittest':
             skeleton_file = 'unittest_config_skeleton.yaml'
 
+        # TODO relocate this to a config file
         src = os.path.join(here, '..', '_data', skeleton_file)
+
         dst = os.path.join(filename)
         shutil.copy(src, dst)
 

@@ -30,10 +30,10 @@ class AppContext(metaclass=Singleton):
     def __init__(self, application, instance_type, instance_name='', version=None):
         """Initialize a new instance.
 
-            instance_type: {'server', 'client', 'unittest', 'fixtures'}
-            instance_name: only relevant for clients/servers
+            instance_type: {'server', 'node', 'unittest', 'fixtures'}
+            instance_name: only relevant for nodes/servers
         """
-        instance_types = ('server', 'client', 'unittest')
+        instance_types = ('server', 'node', 'unittest')
         msg = "instance_type should be one of {}".format(instance_types)
         assert instance_type in instance_types, msg
 
@@ -186,7 +186,7 @@ class AppContext(metaclass=Singleton):
         if self.instance_type in ('unittest', ):
             filename = os.path.join(self.dirs[filetype], filename)
 
-        elif self.instance_type in ('server', 'client'):
+        elif self.instance_type in ('server', 'node'):
             elements = [
                 self.dirs[filetype], 
                 self.instance_type
@@ -216,7 +216,7 @@ class ServerContext(AppContext):
     def __init__(self, application, instance_name='', version=None):
         """Initialize a new instance.
 
-            instance_name: only relevant for clients/servers
+            instance_name: only relevant for nodes/servers
         """
         super().__init__(application, 'server', instance_name, version=version)
 
@@ -250,7 +250,7 @@ class ServerContext(AppContext):
 
 
 
-class ClientContext(AppContext):
+class NodeContext(AppContext):
     pass
 
 

@@ -1,26 +1,19 @@
 # -*- coding: utf-8 -*-
-# Standard library
-import sys
 import os
 import logging
-import datetime, time
+import datetime
 
 import enum
 import json
 import bcrypt
 
-
-#  SQLAlchemy
-import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.sql import exists
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
+from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 # ------------------------------------------------------------------------------
@@ -39,6 +32,7 @@ def init(URI='sqlite:////tmp/test.db', drop_all=False):
     log.debug("  database: {}".format(url.database))
     log.debug("  username: {}".format(url.username))
 
+    # TODO is this really necessary
     from . import db
     db.URI = URI
 
@@ -251,7 +245,7 @@ class User(Authenticatable):
 
 
 # ------------------------------------------------------------------------------
-class Client(Authenticatable):
+class Node(Authenticatable):
     """Application that executes Tasks."""
     _hidden_attributes = ['api_key']
 
@@ -261,13 +255,13 @@ class Client(Authenticatable):
     api_key = Column(String)
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
-    collaboration = relationship('Collaboration', backref='clients')
+    collaboration = relationship('Collaboration', backref='nodes')
 
     organization_id = Column(Integer, ForeignKey('organization.id'))
-    organization = relationship('Organization', backref='clients')
+    organization = relationship('Organization', backref='nodes')
 
     __mapper_args__ = {
-        'polymorphic_identity':'client',
+        'polymorphic_identity':'node',
     }
 
 
@@ -306,11 +300,11 @@ class Task(Base):
 
 # ------------------------------------------------------------------------------
 class TaskResult(Base):
-    """Result of a Task as executed by a Client.
+    """Result of a Task as executed by a Node.
 
-    Unfinished TaskResults constitute a Client's todo list.
+    Unfinished TaskResults constitute a Node's todo list.
     """
-    result =  Column(Text)
+    result = Column(Text)
 
     assigned_at = Column(DateTime, default=datetime.datetime.utcnow)
     started_at = Column(DateTime)
@@ -320,8 +314,8 @@ class TaskResult(Base):
     task_id = Column(Integer, ForeignKey('task.id'))
     task = relationship('Task', backref='results')
 
-    client_id = Column(Integer, ForeignKey('client.id'))
-    client = relationship('Client', backref='taskresults')
+    node_id = Column(Integer, ForeignKey('node.id'))
+    node = relationship('Node', backref='taskresults')
 
     @hybrid_property
     def isComplete(self):

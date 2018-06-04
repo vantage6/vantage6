@@ -15,7 +15,7 @@ log = logging.getLogger(module_name)
 
 from .. import db
 
-from . import with_user_or_client, with_user
+from . import with_user_or_node, with_user
 
 def setup(api, API_BASE):
     module_name = __name__.split('.')[-1]
