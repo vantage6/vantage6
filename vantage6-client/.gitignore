@@ -12,3 +12,4 @@ client/logs
 master/logs
 pytaskmanager.egg-info
 .ipynb_checkpoints
+.idea/
