@@ -41,7 +41,7 @@ def get_config_location(ctx, config, force_create):
         elif ctx.instance_type == 'unittest':
             skeleton_file = 'unittest_config_skeleton.yaml'
 
-        src = os.path.join(here, '_data', skeleton_file)
+        src = os.path.join(here, '..', '_data', skeleton_file)
         dst = os.path.join(filename)
         shutil.copy(src, dst)
 
