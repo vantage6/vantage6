@@ -125,6 +125,15 @@ class Base(object):
 
         session.commit()
 
+    def delete(self):
+        if not self.id:
+            session = Session()
+        else:
+            session = object_session(self)
+
+        session.delete(self)
+        session.commit()
+
 
 Base = declarative_base(cls=Base)
 
@@ -237,11 +246,11 @@ class User(Authenticatable):
         res = session.query(exists().where(cls.username == username)).scalar()
         return res
 
-    @classmethod
-    def remove_user(cls, username):
-        session = Session()
-        session.query(cls).filter_by(username=username).delete()
-        session.commit()
+    # @classmethod
+    # def remove_user(cls, username):
+    #     session = Session()
+    #     session.query(cls).filter_by(username=username).delete()
+    #     session.commit()
 
 
 # ------------------------------------------------------------------------------
