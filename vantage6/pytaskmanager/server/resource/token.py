@@ -29,16 +29,16 @@ def setup(api, api_base):
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Token(Resource):
-    """"Managing user and node authorization"""
+    """resource for api/token"""
 
     @staticmethod
     def post():
-        """/token"""
+        """authenticate"""
         if not request.is_json:
             log.warning('POST request without JSON body.')
             log.warning(request.headers)
             log.warning(request.data)
-            return {"msg": "Missing JSON in request"}, 400
+            return {"msg": "Missing JSON in request"}, 400  # Bad Request
 
         username = request.json.get('username', None)
         password = request.json.get('password', None)
@@ -55,12 +55,12 @@ class Token(Resource):
                     return {"msg": "password not valid"}, 401
 
             else:
-                return {"msg": "invalid username"}, 401
+                return {"msg": "username does not exist"}, 401
 
             ret = {
                 'access_token': create_access_token(user),
                 'refresh_token': create_refresh_token(user),
-                'user_url': server.api.url_for(server.resource.node.Node, uid=user.id),
+                'user_url': server.api.url_for(server.resource.user.User, user_id=user.id),
                 'refresh_url': server.api.url_for(RefreshToken),
             }
 
@@ -88,7 +88,7 @@ class Token(Resource):
                 return abort(401, message="Invalid API-key")
 
         # bad request
-        return {"msg": "no API key or user/password combination"}, 400
+        return {"msg": "no API key or user/password combination provided"}, 400
 
 
 class RefreshToken(Resource):
