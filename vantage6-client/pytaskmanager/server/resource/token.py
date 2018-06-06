@@ -3,37 +3,37 @@
 Resources below '/<api_base>/token'
 """
 from __future__ import print_function, unicode_literals
-import os, os.path
-
-from flask import request
-from flask_restful import Api, Resource, abort
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
-
-import sqlalchemy
 
 import logging
+import pytaskmanager.server as server
+
+from pytaskmanager.server import db
+from flask import request, g
+from flask_restful import Resource, abort
+from flask_jwt_extended import jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
+
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-from .. import db
-import pytaskmanager.server as server
 
+def setup(api, api_base):
 
-def setup(api, API_BASE):
-    module_name = __name__.split('.')[-1]
-    path = "/".join([API_BASE, module_name])
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(Token, path)
     api.add_resource(RefreshToken, path+'/refresh')
 
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Token(Resource):
+    """"Managing user and node authorization"""
 
-    def post(self):
-        """Create a new Token."""
+    @staticmethod
+    def post():
+        """/token"""
         if not request.is_json:
             log.warning('POST request without JSON body.')
             log.warning(request.headers)
@@ -44,12 +44,18 @@ class Token(Resource):
         password = request.json.get('password', None)
         api_key = request.json.get('api_key', None)
 
+        # user login
         if username and password:
             log.info("trying to login '{}'".format(username))
-            user = db.User.getByUsername(username)
 
-            if not user.check_password(password):
-                return {"msg": "Computer says no!"}, 401
+            if db.User.username_exists(username):
+                user = db.User.getByUsername(username)
+
+                if not user.check_password(password):
+                    return {"msg": "password not valid"}, 401
+
+            else:
+                return {"msg": "invalid username"}, 401
 
             ret = {
                 'access_token': create_access_token(user),
@@ -58,32 +64,31 @@ class Token(Resource):
                 'refresh_url': server.api.url_for(RefreshToken),
             }
 
-            log.info("Succesful login for '{}'".format(username))
+            log.info("Successful login for '{}'".format(username))
             return ret, 200
 
+        # node login
         elif api_key:
             log.info("trying to authenticate node with api_key")
-            try:
-                node = db.Node.getByApiKey(api_key)
 
+            node = db.Node.get_by_api_key(api_key)
+
+            if node:
                 ret = {
                     'access_token': create_access_token(node),
                     'refresh_token': create_refresh_token(node),
                     'node_url': server.api.url_for(server.resource.node.Node, id=node.id),
                     'refresh_url': server.api.url_for(RefreshToken),
                 }
-
                 log.info("Authenticated as node '{}' ({})".format(node.id, node.name))
-            # FIXME: should not depend on sqlalchemy errors
-            except sqlalchemy.orm.exc.NoResultFound as e:
+                return ret, 200
+
+            else:
                 log.info("Invalid API-key! Aborting!")
-                return abort(401, message="Invalid API-key!")
+                return abort(401, message="Invalid API-key")
 
-            return ret, 200
-
-        msg = "No username and/or pasword nor API-key!? Aren't you forgetting something?"
-        log.error(msg)
-        return {"msg": msg}, 404
+        # bad request
+        return {"msg": "no API key or user/password combination"}, 400
 
 
 class RefreshToken(Resource):
