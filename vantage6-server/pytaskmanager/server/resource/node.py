@@ -21,18 +21,16 @@ def setup(api, api_base):
 
     api.add_resource(
         Nodes,
-        api_base + '/nodes',
-        endpoint='nodes'
+        api_base + '/nodes'
     )
     api.add_resource(
         Node,
-        path + '/<int:uid>',
-        endpoint='node'
+        path + '/<int:uid>'
     )
     api.add_resource(
         NodeTasks,
         path + '/<int:uid>/task',
-        path + '/<int:uid>/task/<int:taskresult_id>',
+        path + '/<int:uid>/task/<int:taskresult_id>'
     )
 
 
@@ -44,7 +42,6 @@ task_result_schema = TaskResultSchema()
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-
 class Nodes(Resource):
     """resource for /api/nodes"""
 
@@ -57,25 +54,25 @@ class Nodes(Resource):
         if g.user.roles != 'admin':
             nodes = [node for node in nodes if node.organization_id == g.user.organization_id]
 
-        return node_schema.dump(nodes, many=True)
+        return node_schema.dump(nodes, many=True).data
 
     @with_user
     def post(self):
         """"register new node"""
         parser = reqparse.RequestParser()
         parser.add_argument(
-            'collaboration_id',
+            "collaboration_id",
             type=int,
             required=True,
             help="This field cannot be left blank!"
         )
         data = parser.parse_args()
 
-        collaboration = db.Collaboration.get(data['collaboration_id'])
+        collaboration = db.Collaboration.get(data["collaboration_id"])
 
         # check that the collaboration exists
         if not collaboration:
-            return {"msg": "collaboration_id '{}' does not exist".format(data['collaboration_id'])}, 400  # bad request
+            return {"msg": "collaboration_id '{}' does not exist".format(data["collaboration_id"])}, 400  # bad request
 
         # new api-key which node can use to authenticate
         api_key = str(uuid.uuid1())
@@ -91,7 +88,7 @@ class Nodes(Resource):
         )
         node.save()
 
-        return node, 201  # created
+        return node_schema.dump(node).data, 201  # created
 
 
 class Node(Resource):
@@ -108,7 +105,9 @@ class Node(Resource):
         if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
             return {"msg": "you are not allowed to see this node"}, 403  # forbidden
 
-        return node_schema.dump(node, many=False), 200  # success
+        return node_schema.dump(node).data
+        #
+        # return node_schema.dump(node, many=False), 200  # success
 
     @with_user
     def delete(self, uid):
@@ -122,6 +121,8 @@ class Node(Resource):
             return {"msg": "you are not allowed to delete this node"}, 403  # forbidden
 
         node.delete()
+
+        return {"msg": "successfully deleted node id={}".format(uid)}, 200  # success
 
     @with_user
     def put(self, uid):
@@ -166,7 +167,7 @@ class Node(Resource):
             node.collaboration_id = data['collaboration_id']
             node.save()
 
-        return node
+        return node_schema.dump(node).data, 200  # success
 
 
 class NodeTasks(Resource):
@@ -183,8 +184,8 @@ class NodeTasks(Resource):
     """
 
     @with_user_or_node
-    def get(self, uid, taskresult_id=None):
-        """Return a list of tasks for a node or a single task <taskresult_id> belonging t.
+    def get(self, uid, task_result_id=None):
+        """Return a list of tasks for a node or a single task <task_result_id> belonging t.
 
         If the query parameter 'state' equals 'open' the list is
         filtered to return only tasks without result.
@@ -192,8 +193,8 @@ class NodeTasks(Resource):
         global log
         log = logging.getLogger(__name__)
 
-        if taskresult_id is not None:
-            result = db.TaskResult.get(taskresult_id)
+        if task_result_id is not None:
+            result = db.TaskResult.get(task_result_id)
             return task_result_schema.dump(result)
 
         # get tasks that belong to node <uid>
