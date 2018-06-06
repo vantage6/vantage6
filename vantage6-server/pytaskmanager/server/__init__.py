@@ -31,6 +31,7 @@ WEB_BASE = '/app'
 
 # Create Flask app
 app = Flask('taskmaster')
+# TODO app.config
 
 # Enable cross-origin resource sharing
 CORS(app)
@@ -133,7 +134,7 @@ def init_resources(ctx):
     if RESOURCES_INITIALIZED:
         return
 
-    API_BASE = ctx.config['app']['api_path']
+    api_base = ctx.config['app']['api_path']
 
     resources = [
             'node',
@@ -147,7 +148,7 @@ def init_resources(ctx):
     ]
 
     # Load resources
-    load_resources(api, API_BASE, resources)
+    load_resources(api, api_base, resources)
 
     # Make sure we do this only once
     RESOURCES_INITIALIZED = True
