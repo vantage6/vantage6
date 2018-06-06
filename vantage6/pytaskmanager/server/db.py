@@ -14,7 +14,10 @@ from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm.exc import NoResultFound
 
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
 
 # ------------------------------------------------------------------------------
 # Helper functions
@@ -107,9 +110,12 @@ class Base(object):
         session = Session()
 
         if id_ is None:
-            result =  session.query(cls).all()    
+            result = session.query(cls).all()
         else:
-            result = session.query(cls).filter_by(id=id_).one()
+            try:
+                result = session.query(cls).filter_by(id=id_).one()
+            except NoResultFound:
+                result = None
 
         if with_session:
             return result, session
@@ -160,7 +166,6 @@ class Organization(Base):
     country = Column(String)
 
 
-
 # ------------------------------------------------------------------------------
 class Collaboration(Base):
     """Combination of 2 or more Organizations."""
@@ -171,6 +176,14 @@ class Collaboration(Base):
         secondary=association_table_organization_collaboration, 
         backref='collaborations'
     )
+
+    @classmethod
+    def get_collaboration_by_name(cls, name):
+        session = Session()
+        try:
+            return session.query(cls).filter_by(name=name).one()
+        except NoResultFound:
+            return None
 
 
 # ------------------------------------------------------------------------------
@@ -270,14 +283,8 @@ class Node(Authenticatable):
     organization = relationship('Organization', backref='nodes')
 
     __mapper_args__ = {
-        'polymorphic_identity':'node',
+        'polymorphic_identity': 'node',
     }
-
-
-    @classmethod
-    def getByApiKey(cls, api_key):
-        session = Session()
-        return session.query(cls).filter_by(api_key=api_key).one()
 
     @property
     def open_tasks(self):
@@ -289,6 +296,18 @@ class Node(Authenticatable):
             values.append(r)
 
         return values
+
+    @classmethod
+    def get_by_api_key(cls, api_key):
+        """returns Node based on the provided API key"""
+        session = Session()
+
+        try:
+            return session.query(cls).filter_by(api_key=api_key).one()
+        except NoResultFound:
+            return None
+
+
 
 
 # ------------------------------------------------------------------------------
