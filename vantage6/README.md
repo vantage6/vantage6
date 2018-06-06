@@ -1,54 +1,34 @@
 # PyTaskManager
-
-License: [Apache 2.0](./LICENSE)
-
 ## Introduction
-This package contains the software to run the open-source Personal Health Train and/or Distributed learning infrastructure. This infrastructure can be setup between different collaborative partners who do trust each other.
+The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is difficult due to patient privacy and data protection needs. Privacy preserving distributed learning technology has the potential to overcome these limitations. In this setting organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data on site and undisclosed. This repository contains software (and instructions) to setup a distributed learning infrastructure.
 
 ## How does it work?
-This infrastructure builds on the concept of a public registry of tasks (e.g. jobs), encapsulated in Docker images. This registry **only** holds a reference to a docker container (e.g. `hello-world:latest`), and a configuration file which can be used how the docker container developer envisioned. Results of containers are stored again in this registry.
+ Conceptually, the infrastructure consists of three parts:
 
-Next to this registry, there is a client, which polls a central registry, to check for new tasks to execute. If a new task is available, the referenced container is pulled from the docker hub (e.g. `docker pull <container name>`) irrespective of whether it was pulled before. Afterwards, this container is executed (e.g. `docker run --rm -d <container name>`), with mounts for configuration files and output folders. Furthermore, the *internal* SPARQL endpoint URL is passed to the container as an environment variable (`$SPARQL_ENDPOINT=<url>`).
+1. A central server that coordinates communication with the nodes
+1. Multiple nodes 
+1. A Docker registry
 
-This means the researcher is free to implement any application/script, embedded in a docker container. Sites running the client are able to limit the docker containers being able to run on their system. It is possible to limit the user/organization which developed the container (e.g. only allowing the regular expression `myConsortium/.*:.*` of container images), or even on the repository level (e.g. `myConsortium/myImage:.*`).
+Each participating site runs a node. This node is configured to access a local data store. Researchers can upload "tasks" (computation requests) to the central server which are picked up by the nodes and executed. Afterwards the nodes return the results to the server. At that point a researcher can retrieve the results and combine them into a single result if he/she so chooses.
+
+In order to support different working environments and provide researchers with as much flexibility as possible with respect to the tools they can use, the infrastructure is built on the concept of computation requests encapsulated in Docker images. This means the researcher is free to implement any application/script, embedded in a Docker image. The nodes only need to run the image and to provide the container with access to the data store in order to execute the computation.
+
+![Systems overview](https://raw.githubusercontent.com/IKNL/pytaskmanager/master/img/systems_overview.png)
+
 
 # How to use it?
+## Hard- and software requirements
+Running the central server requires a (virtual) machine that:
+* is accessible from the internet
+* has Python 3 and the PyTaskManager package installed
+* has Docker installed, and given rights to the user executing the client rights to perform docker commands
 
-## Prerequisites
+Running a node/site requires a (virtual) machine that has:
+* Python 3 and the PyTaskManager package installed
+* Docker CE installed (the user running the node software needs to have the proper permissions to perform docker commands)
+* Access to a local data store
+* Access to the internet and/or central server
 
-At the (hospital) site:
+## Installation
+See the [wiki](https://github.com/IKNL/pytaskmanager/wiki) for detailed instructions on how to install the server and nodes. 
 
-* A Windows Server 2012R2 (or higher) machine, or a unix machine supporting Docker
-* Docker installed, and given rights to the user executing the client rights to perform docker commands
-* Python 2.7 or 3 (tested on both)
-
-At the central registry:
-
-* A Windows Server 2012R2 (or higher) machine, or a unix machine supporting Docker
-* Docker installed, and given rights to the user executing the client rights to perform docker commands
-* Python 2.7 or 3 (tested on both)
-
-## How to run?
-
-At the central registry:
-
-1. Please checkout this repository
-2. Run the python script master/TaskMaster.py (`python master/TaskMaster.py`). The registry will now run at port 5000, and the output is shown at the console.
-
-At the (hospital) sites:
-
-1. Checkout this repository
-2. Please adapt the config.json file to your site information, including the local URL to your internal SPARQL endpoint.
-3. Run the python script client/runScript.py (`python client/runScript.py`)
-4. **Optionally**: if you have a public IP address, you can also receive direct files (e.g. usefull if your site is a Trusted Third Party, and (encrypted) files are sent to you). To run this service, please execute the python script client/FileService.py (`python client/FileService.py`).
-
-## How to build and run an algorithm?
-
-The registry is based on REST commands. The docker containers are *only* needed for execution at the sites. As a researcher, this means you have to develop a docker container which can run on *every* site.
-
-To merge results from all sites, and to run the *centralised* part of your analysis, you can develop a script on your own computer. This computer can retrieve the results from the registry, perform its calculations, and (optionally, in an iterative algorithm) post a new request to run an image on the contributing sites. This can also be the same Docker image, using an updated configuration file.
-
-# How to contribute?
-If you have any requests, you can fork this repository, develop the addition/change, and send a pull request. If you have a request for a change, please add it to the issue tracker (see "Issues" in the left navigation bar).
-
-This readme and documentation still needs work, as the code for this infrastructure is still work in progress. If you have any question regarding use, please use the issue tracker as well. We might update the readme file accordingly, but also helps us to define where the need for help is.
