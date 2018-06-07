@@ -7,7 +7,7 @@
   * [Installation](#installation)
   
 # Introduction
-The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is difficult due to patient privacy and data protection needs. Privacy preserving distributed learning technology has the potential to overcome these limitations. In this setting organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data on site and undisclosed. This repository contains software (and instructions) to setup a distributed learning infrastructure.
+The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is difficult due to patient privacy and data protection needs. Privacy preserving distributed learning technology has the potential to overcome these limitations. In this setting organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data safely on site and undisclosed. This repository contains software (and instructions) to setup a distributed learning infrastructure.
 
 # Architecture of the infrastructure
  Conceptually, the infrastructure consists of three parts:
@@ -18,7 +18,7 @@ The growing complexity of cancer diagnosis and treatment requires data sets that
 
 Each participating site runs a node. This node is configured to access a local data store. Researchers can upload "tasks" (computation requests) to the central server which are picked up by the nodes and executed. Afterwards the nodes return the results to the server. At that point a researcher can retrieve the results and combine them into a single result if he/she so chooses.
 
-In order to support different working environments and provide researchers with as much flexibility as possible with respect to the tools they can use, the infrastructure is built on the concept of computation requests encapsulated in Docker images. This means the researcher is free to implement any application/script, embedded in a Docker image. The nodes only need to run the image and to provide the container with access to the data store in order to execute the computation.
+In order to support different working environments and provide researchers with as much flexibility as possible with respect to the tools they can use, the infrastructure is built on the concept of computation requests encapsulated in Docker images. This means the researcher is free to implement any application/script, embedded in a Docker image. The nodes only need to run the image and to provide the container with access to the data store in order to execute the computation. For some algorithms images are already available, for example the [distributed Cox Proportional Hazards](https://github.com/IKNL/dcoxph/) algorithm
 
 ![Systems overview](https://raw.githubusercontent.com/IKNL/pytaskmanager/master/img/systems_overview.png)
 
