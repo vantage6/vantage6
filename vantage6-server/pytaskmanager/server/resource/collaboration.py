@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 import os, os.path
 
 from flask import request
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
 
 from requests import codes as rqc
@@ -17,7 +17,7 @@ log = logging.getLogger(module_name)
 
 from .. import db
 
-from . import with_user_or_node
+from pytaskmanager.server.resource import with_user_or_node, with_user
 from ._schema import *
 
 
@@ -25,21 +25,25 @@ def setup(api, API_BASE):
     module_name = __name__.split('.')[-1]
     path = "/".join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
-    
-    api.add_resource(Collaboration,
+
+    api.add_resource(
+        Collaboration,
         path,
         path + '/<int:id>',
         endpoint='collaboration'
     )
-    api.add_resource(CollaborationOrganization,
+    api.add_resource(
+        CollaborationOrganization,
         path+'/<int:id>/organization',
         path+'/<int:id>/organization/<int:organization_id>'
     )
-    api.add_resource(CollaborationNode,
+    api.add_resource(
+        CollaborationNode,
         path+'/<int:id>/node',
         path+'/<int:id>/node/<int:node_id>',
     )
-    api.add_resource(CollaborationTask, 
+    api.add_resource(
+        CollaborationTask,
         path+'/<int:id>/task',
         path+'/<int:id>/task/<int:task_id>',
     )
@@ -54,27 +58,65 @@ collaboration_schema = CollaborationSchema()
 # ------------------------------------------------------------------------------
 class Collaboration(Resource):
 
-    @jwt_required
-    def get(self, id=None):
-        """Return either a single collaboration or a list of all available collaborations."""
-        c = db.Collaboration.get(id)
-        return collaboration_schema.dump(c, many=not id)
+    @with_user
+    def post(self, id=None):
+        """create a new collaboration"""
+        if id:
+            return {"msg": "id provided, but this is not allowed for the POST method"}, 400
 
-
-    @jwt_required
-    def post(self):
-        """Create a new organization."""
         data = request.get_json()
-        collaboration = db.Collaboration.fromDict(data)
-        collaboration.save()
 
-        return collaboration
+        collaboration = db.Collaboration(
+            name=data['name'],
+            organizations=[
+                db.Organization.get(org_id) for org_id in data['organization_ids'] if db.Organization.get(org_id)
+            ]
+        )
 
+        return collaboration_schema.dump(collaboration).data
 
-    @jwt_required
-    def put(self, id):
-        """Update an organization."""
-        pass
+    @with_user_or_node
+    def get(self, id=None):
+        """collaboration or list of collaborations in case no id is provided"""
+        # TODO only the collaboration to which the node or user belongs should be shown
+        collaboration = db.Collaboration.get(id)
+        return collaboration_schema.dump(collaboration, many=not id).data
+
+    # @with_user
+    # def put(self, id=None):
+    #     """update a collaboration"""
+    #     data = request.get_json()
+    #
+    #     if not id:
+    #         return {"msg": "to create or update a node you need to specify an id"}, 400
+    #
+    #     collaboration = db.Collaboration.get(id)
+    #
+    #     if not collaboration:
+    #         collaboration = db.Collaboration(id=id)
+    #
+    #     if "name" in data:
+    #         collaboration.name = data["name"]
+    #     if "organization_ids" in data:
+    #         collaboration.organizations = [
+    #             db.Organization.get(org_id) for org_id in data['organization_ids'] if db.Organization.get(org_id)
+    #         ]
+    #     collaboration.save()
+    #
+    #     return collaboration, 200
+
+    @with_user
+    def delete(self, id=None):
+        """123"""
+        if not id:
+            return {"msg": "to delete a node you need to specify an id"}, 400
+
+        collaboration = db.Collaboration.get(id)
+        if not collaboration:
+            return {"msg": "collaboration id={} is not found".format(id)}
+
+        collaboration.delete()
+        return {"msg": "node id={} successfully deleted".format(id)}, 200
 
 
 class CollaborationOrganization(Resource):
