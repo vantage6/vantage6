@@ -77,7 +77,7 @@ class Token(Resource):
                 ret = {
                     'access_token': create_access_token(node),
                     'refresh_token': create_refresh_token(node),
-                    'node_url': server.api.url_for(server.resource.node.Node, uid=node.id),
+                    'node_url': server.api.url_for(server.resource.node.Node, id=node.id),
                     'refresh_url': server.api.url_for(RefreshToken),
                 }
                 log.info("Authenticated as node '{}' ({})".format(node.id, node.name))
