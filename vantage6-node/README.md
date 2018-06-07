@@ -1,8 +1,15 @@
-# PyTaskManager
-## Introduction
+# Table of Contents
+* [Introduction](#introduction)
+* [Architecture of the infrastructure](#architecture-of-the-infrastructure)
+* [Using the infrastructure](#using-the-infrastructure)
+  * [Process flow](#process-flow)
+  * [Hardware and software requirements](#hardware-and-software-requirements)
+  * [Installation](#installation)
+  
+# Introduction
 The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is difficult due to patient privacy and data protection needs. Privacy preserving distributed learning technology has the potential to overcome these limitations. In this setting organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data on site and undisclosed. This repository contains software (and instructions) to setup a distributed learning infrastructure.
 
-## How does it work?
+# Architecture of the infrastructure
  Conceptually, the infrastructure consists of three parts:
 
 1. A central server that coordinates communication with the nodes
@@ -16,8 +23,12 @@ In order to support different working environments and provide researchers with 
 ![Systems overview](https://raw.githubusercontent.com/IKNL/pytaskmanager/master/img/systems_overview.png)
 
 
-# How to use it?
-## Hard- and software requirements
+# Using the infrastructure
+## Process flow
+The following image illustrates how a researcher would use the infrastructure on a high level. For a more detailed example, see the GitHub repository for the [distributed Cox Proportional Hazards](https://github.com/IKNL/dcoxph/) algorithm.
+![Process flow](https://raw.githubusercontent.com/IKNL/pytaskmanager/master/img/process_flow.png)
+
+## Hardware and software requirements
 Running the central server requires a (virtual) machine that:
 * is accessible from the internet
 * has Python 3 and the PyTaskManager package installed
@@ -31,4 +42,5 @@ Running a node/site requires a (virtual) machine that has:
 
 ## Installation
 See the [wiki](https://github.com/IKNL/pytaskmanager/wiki) for detailed instructions on how to install the server and nodes. 
+
 
