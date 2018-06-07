@@ -20,17 +20,15 @@ def setup(api, api_base):
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
-        Nodes,
-        api_base + '/nodes'
-    )
-    api.add_resource(
         Node,
-        path + '/<int:uid>'
+        path,
+        path + '/<int:id>',
+        methods=['GET', 'POST', 'PUT', 'DELETE']
     )
     api.add_resource(
         NodeTasks,
-        path + '/<int:uid>/task',
-        path + '/<int:uid>/task/<int:taskresult_id>'
+        path + '/<int:id>/task',
+        path + '/<int:id>/task/<int:task_result_id>'
     )
 
 
@@ -45,20 +43,33 @@ task_result_schema = TaskResultSchema()
 class Nodes(Resource):
     """resource for /api/nodes"""
 
+
+class Node(Resource):
+    """resource for /api/node/<int:id>"""
+
     @with_user
-    def get(self):
+    def get(self, id=None):
         """list of nodes that are owned by the logged-in user"""
-        nodes = db.Node.get(None)
+        nodes = db.Node.get(id)
 
-        # only the nodes of the users organization are returned
-        if g.user.roles != 'admin':
-            nodes = [node for node in nodes if node.organization_id == g.user.organization_id]
+        if id:
+            if not nodes:
+                return {"msg": "node with id={} not found".format(id)}, 404  # not found
+            if nodes.organization_id != g.user.organization_id and g.user.roles != 'admin':
+                return {"msg": "you are not allowed to see this node"}, 403  # forbidden
+        else:
+            # only the nodes of the users organization are returned
+            if g.user.roles != 'admin':
+                nodes = [node for node in nodes if node.organization_id == g.user.organization_id]
 
-        return node_schema.dump(nodes, many=True).data
+        return node_schema.dump(nodes, many=not id).data
 
     @with_user
-    def post(self):
+    def post(self, id=None):
         """"register new node"""
+        if id:
+            return {"msg": "id specified, but not allowed when using POST method"}, 200
+
         parser = reqparse.RequestParser()
         parser.add_argument(
             "collaboration_id",
@@ -90,42 +101,23 @@ class Nodes(Resource):
 
         return node_schema.dump(node).data, 201  # created
 
-
-class Node(Resource):
-    """"resource for /api/node/<int:id>"""
-
     @with_user
-    def get(self, uid):
-        """single node info"""
-        node = db.Node.get(uid)
-
-        if not node:
-            return {"msg": "node with uid={} not found".format(uid)}, 404  # not found
-
-        if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
-            return {"msg": "you are not allowed to see this node"}, 403  # forbidden
-
-        return node_schema.dump(node).data
-        #
-        # return node_schema.dump(node, many=False), 200  # success
-
-    @with_user
-    def delete(self, uid):
+    def delete(self, id):
         """delete node account"""
-        node = db.Node.get(uid)
+        node = db.Node.get(id)
 
         if not node:
-            return {"msg": "node with uid={} not found".format(uid)}, 404  # not found
+            return {"msg": "node with id={} not found".format(id)}, 404  # not found
 
         if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
             return {"msg": "you are not allowed to delete this node"}, 403  # forbidden
 
         node.delete()
 
-        return {"msg": "successfully deleted node id={}".format(uid)}, 200  # success
+        return {"msg": "successfully deleted node id={}".format(id)}, 200  # success
 
     @with_user
-    def put(self, uid):
+    def put(self, id):
         """update existing node"""
         parser = reqparse.RequestParser()
         parser.add_argument(
@@ -136,7 +128,7 @@ class Node(Resource):
         )
         data = parser.parse_args()
 
-        node = db.Node.get(uid)
+        node = db.Node.get(id)
 
         # create new node
         if not node:
@@ -154,6 +146,7 @@ class Node(Resource):
             # TODO an admin does not have to belong to an organization?
             organization = g.user.organization
             node = db.Node(
+                id=id,
                 name="{} - {} Node".format(organization.name, collaboration.name),
                 collaboration=collaboration,
                 organization=organization,
@@ -184,7 +177,7 @@ class NodeTasks(Resource):
     """
 
     @with_user_or_node
-    def get(self, uid, task_result_id=None):
+    def get(self, id, task_result_id=None):
         """Return a list of tasks for a node or a single task <task_result_id> belonging t.
 
         If the query parameter 'state' equals 'open' the list is
@@ -197,8 +190,8 @@ class NodeTasks(Resource):
             result = db.TaskResult.get(task_result_id)
             return task_result_schema.dump(result)
 
-        # get tasks that belong to node <uid>
-        node = db.Node.get(uid)
+        # get tasks that belong to node <id>
+        node = db.Node.get(id)
 
         # filter tasks if a specific state is requested
         if request.args.get('state') == 'open':

@@ -127,7 +127,7 @@ class Base(object):
             session = Session()
             session.add(self)
         else:
-            session = object_session(self)
+            session = Session.object_session(self)
 
         session.commit()
 
@@ -135,7 +135,7 @@ class Base(object):
         if not self.id:
             session = Session()
         else:
-            session = object_session(self)
+            session = Session.object_session(self)
 
         session.delete(self)
         session.commit()
@@ -169,6 +169,7 @@ class Organization(Base):
 # ------------------------------------------------------------------------------
 class Collaboration(Base):
     """Combination of 2 or more Organizations."""
+
     name = Column(String)
 
     organizations = relationship(
