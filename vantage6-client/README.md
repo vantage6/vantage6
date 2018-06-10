@@ -29,11 +29,12 @@ The following image illustrates how a researcher would use the infrastructure on
 ![Process flow](https://raw.githubusercontent.com/IKNL/pytaskmanager/master/img/process_flow.png)
 
 ## Hardware and software requirements
+### Server
 Running the central server requires a (virtual) machine that:
 * is accessible from the internet
 * has Python 3 and the PyTaskManager package installed
-* has Docker installed, and given rights to the user executing the client rights to perform docker commands
 
+### Node
 Running a node/site requires a (virtual) machine that has:
 * Python 3 and the PyTaskManager package installed
 * Docker CE installed (the user running the node software needs to have the proper permissions to perform docker commands)
