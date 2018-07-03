@@ -81,6 +81,10 @@ class Collaboration(Resource):
         """collaboration or list of collaborations in case no id is provided"""
         # TODO only the collaboration to which the node or user belongs should be shown
         collaboration = db.Collaboration.get(id)
+
+        if not collaboration:
+            return {"msg": "collaboration having id={} not found".format(id)}, 404
+
         return collaboration_schema.dump(collaboration, many=not id).data
 
     # @with_user
