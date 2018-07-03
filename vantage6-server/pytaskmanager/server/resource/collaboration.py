@@ -73,6 +73,7 @@ class Collaboration(Resource):
             ]
         )
 
+        collaboration.save()
         return collaboration_schema.dump(collaboration).data
 
     @with_user_or_node
