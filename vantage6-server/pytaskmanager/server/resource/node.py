@@ -23,7 +23,7 @@ def setup(api, api_base):
         Node,
         path,
         path + '/<int:id>',
-        methods=['GET', 'POST', 'PUT', 'DELETE']
+        methods=['GET', 'POST', 'PATCH', 'DELETE']
     )
     api.add_resource(
         NodeTasks,
@@ -117,7 +117,7 @@ class Node(Resource):
         return {"msg": "successfully deleted node id={}".format(id)}, 200  # success
 
     @with_user
-    def put(self, id):
+    def patch(self, id):
         """update existing node"""
         parser = reqparse.RequestParser()
         parser.add_argument(
@@ -188,7 +188,7 @@ class NodeTasks(Resource):
 
         if task_result_id is not None:
             result = db.TaskResult.get(task_result_id)
-            return task_result_schema.dump(result)
+            return task_result_schema.dump(result).data
 
         # get tasks that belong to node <id>
         node = db.Node.get(id)
