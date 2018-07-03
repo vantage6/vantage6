@@ -75,6 +75,9 @@ class User(Resource):
         parser.add_argument("password", type=str, required=True, help="This field is required")
         data = parser.parse_args()
 
+        if db.User.username_exists(data["username"]):
+            return {"msg": "username already exists"}, 200
+
         user = db.User(
             username=data["username"],
             firstname=data["firstname"],
