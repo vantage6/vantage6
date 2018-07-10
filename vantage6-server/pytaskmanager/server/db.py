@@ -178,6 +178,12 @@ class Collaboration(Base):
         backref='collaborations'
     )
 
+    def get_organization_ids(self):
+        return [organization.id for organization in self.organizations]
+
+    def get_task_ids(self):
+        return [task.id for task in self.tasks]
+
     @classmethod
     def get_collaboration_by_name(cls, name):
         session = Session()
