@@ -3,25 +3,20 @@
 Resources below '/<api_base>/user'
 """
 from __future__ import print_function, unicode_literals
-import os, os.path
-
-from flask import request
-from flask_restful import Resource
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
 
 import logging
+
+from flask_restful import Resource
+from flask import g
+from flask_restful import reqparse
+from http import HTTPStatus
+from pytaskmanager.server import db
+from pytaskmanager.server.resource import with_user
+from pytaskmanager.server.resource._schema import UserSchema
+
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-from flask import g
-from flask.ext.api import status
-from flask.
-from flask_restful import reqparse
-from pytaskmanager.server.resource._schema import UserSchema
-
-from .. import db
-
-from . import with_user_or_node, with_user
 
 def setup(api, API_BASE):
     module_name = __name__.split('.')[-1]
@@ -56,7 +51,7 @@ class User(Resource):
 
         else:
             if not all_users:
-                return {"msg": "user id={} is not found".format(user_id)}, status
+                return {"msg": "user id={} is not found".format(user_id)}, HTTPStatus.NOT_FOUND
             else:
                 return self.user_schema.dump(all_users, many=False)
 
@@ -76,7 +71,7 @@ class User(Resource):
         data = parser.parse_args()
 
         if db.User.username_exists(data["username"]):
-            return {"msg": "username already exists"}, 200
+            return {"msg": "username already exists"}, HTTPStatus.OK
 
         user = db.User(
             username=data["username"],
@@ -88,7 +83,7 @@ class User(Resource):
         user.set_password(data["password"])
         user.save()
 
-        return self.user_schema(user), 201
+        return self.user_schema(user), HTTPStatus.CREATED
 
     @with_user
     def patch(self, user_id=None):
@@ -98,9 +93,9 @@ class User(Resource):
         user = db.User.get(user_id)
 
         if not user:
-            return {"msg": "user id={} not found".format(user_id)}, 404
+            return {"msg": "user id={} not found".format(user_id)}, HTTPStatus.NOT_FOUND
         if user.organization_id != g.user.organization_id and g.user.roles != "admin":
-            return {"msg": "you do not have permission to modify user id={}".format(user_id)}, 403
+            return {"msg": "you do not have permission to modify user id={}".format(user_id)}, HTTPStatus.FORBIDDEN
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=False, help="This field is required")
@@ -122,16 +117,16 @@ class User(Resource):
             user.roles = data["roles"]
 
         user.save()
-        return user
+        return user, HTTPStatus.OK
 
     @with_user
     def delete(self, user_id=None):
         if not user_id:
-            return {"msg": "to delete an user you need to specify an id"}, 400
+            return {"msg": "to delete an user you need to specify an id"}, HTTPStatus.BAD_REQUEST
 
         user = db.User.get(user_id)
         if not user:
-            return {"msg": "user id={} not found".format(user_id)}, 404
+            return {"msg": "user id={} not found".format(user_id)}, HTTPStatus.NOT_FOUND
         if user.organization_id != g.user.organization_id and g.user.roles != "admin":
             log.warning(
                 "user {} has tried to delete user {} but does not have the required permissions".format(
@@ -139,8 +134,8 @@ class User(Resource):
                     user.id
                 )
             )
-            return {"msg": "you do not have permission to modify user id={}".format(user_id)}, 403
+            return {"msg": "you do not have permission to modify user id={}".format(user_id)}, HTTPStatus.FORBIDDEN
 
         user.delete()
         log.info("user id={} is removed from the database".format(user_id))
-        return {"msg": "user id={} is removed from the database".format(user_id)}, 200
+        return {"msg": "user id={} is removed from the database".format(user_id)}, HTTPStatus.OK
