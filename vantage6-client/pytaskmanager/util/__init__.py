@@ -24,6 +24,8 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+
+
 # ------------------------------------------------------------------------------
 class AppContext(metaclass=Singleton):
 
@@ -50,6 +52,16 @@ class AppContext(metaclass=Singleton):
             'config': d.user_config_dir,
         }
 
+    @staticmethod
+    def package_directory():
+        here = os.path.abspath(os.path.dirname(__file__))
+        return os.path.normpath(os.path.join(here, '../'))
+
+    @classmethod
+    def package_data_dir(cls):
+
+        return os.path.join(cls.package_directory(), '_data')
+
     @property
     def data_dir(self):
         return self.get_file_location('data', '')
@@ -65,7 +77,7 @@ class AppContext(metaclass=Singleton):
     @property
     def config_file(self):
         if self.instance_type == 'unittest':
-            filename = 'unittest.yaml'
+            filename = 'unittest_config.yaml'
         else:
             filename = self.instance_name + '.yaml'
 
@@ -259,6 +271,19 @@ class FixturesContext(AppContext):
 
 
 class TestContext(AppContext):
-    pass
+    def __init__(self):
+        super().__init__('unittest', 'unittest')
+
+    def get_file_location(self, filetype, filename):
+        """
+        filetype: ('config', log', 'data')
+        """
+        if os.path.isabs(filename):
+            return filename
+
+        if filetype == 'config':
+            return os.path.join(self.package_data_dir(), filename)
+
+        return super().get_file_location(filetype, filename)
 
     

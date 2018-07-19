@@ -144,9 +144,9 @@ class NodeBase(object):
 
     def get_collaboration(self, collaboration_id=None):
         if collaboration_id:
-            return self.request('/collaboration/{}'.format(collaboration_id))
+            return self.request('collaboration/{}'.format(collaboration_id))
 
-        return self.request('/collaboration')
+        return self.request('collaboration')
 
     def get_task(self, task_id, include=''):
         url = 'task/{}?include={}'.format(task_id, include)
@@ -202,7 +202,7 @@ class TaskMasterNode(NodeBase):
 
     def get_tasks(self):
         """Retrieve a list of tasks from the server."""
-        url = '/result?state=open&include=task&node_id={node_id}'
+        url = 'result?state=open&include=task&node_id={node_id}'
         url = url.format(node_id=self.node_id)
 
         return self.request(url)
