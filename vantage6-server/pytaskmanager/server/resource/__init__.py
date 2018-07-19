@@ -13,14 +13,14 @@ import logging
 log = logging.getLogger(__name__)
 
 from .. import db
-
+from functools import wraps
 
 
 # ------------------------------------------------------------------------------
 # Helpfer functions/decoraters ... 
 # ------------------------------------------------------------------------------
 def with_user_or_node(fn):
-
+    @wraps(fn)
     def decorator(*args, **kwargs):
         user_or_node_id = get_jwt_identity()
         claims = get_jwt_claims()
@@ -49,7 +49,7 @@ def with_user_or_node(fn):
 
 
 def with_user(fn):
-
+    @wraps(fn)
     def decorator(*args, **kwargs):
         user_or_node_id = get_jwt_identity()
         claims = get_jwt_claims()
@@ -75,7 +75,7 @@ def with_user(fn):
 
 
 def with_node(fn):
-
+    @wraps(fn)
     def decorator(*args, **kwargs):
         user_or_node_id = get_jwt_identity()
         claims = get_jwt_claims()
