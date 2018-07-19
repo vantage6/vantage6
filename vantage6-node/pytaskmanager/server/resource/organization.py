@@ -15,7 +15,9 @@ log = logging.getLogger(module_name)
 
 from .. import db
 
-from . import with_user_or_node, with_node
+from pytaskmanager.server.resource import with_user_or_node, with_node, with_user
+from pytaskmanager.server.resource.node import Node
+from http import HTTPStatus
 from ._schema import *
 
 
@@ -30,83 +32,106 @@ def setup(api, API_BASE):
         endpoint='organization'
     )
     api.add_resource(OrganizationCollaboration,
-        path + '/<int:id>',
-        path + '/<int:id>/<int:collaboration_id>',
+        path + '/<int:id>/collaboration'
     )
     api.add_resource(OrganizationNode,
-        path + '/<int:id>/node',
-        path + '/<int:id>/node/<int:node_id>',
+        path + '/<int:id>/node'
     )
-
-# Schemas
-org_schema = OrganizationSchema()
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Organization(Resource):
-    
-    @jwt_required
+
+    org_schema = OrganizationSchema()
+
+    @with_user
     def get(self, id=None):
-        orgs = db.Organization.get(id)
-        return org_schema.dump(orgs, many=not id)
+        organization = db.Organization.get(id)
+        if not organization:
+            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
 
-    @jwt_required
-    def post(self):
+        return self.org_schema.dump(organization, many=not id).data, HTTPStatus.OK
+
+    @with_user
+    def post(self, id=None):
         """Create a new organization."""
+        if id:
+            return {"msg": "id should not be given by POST method"}, HTTPStatus.BAD_REQUEST
+
         data = request.get_json()
-        org = db.Organization()
-
-        for p in ['name', 'address1', 'address2', 'zipcode', 'country']:
-            setattr(org, p, data.get(p, ''))
-
-        org.save()
-
-        return org
+        organization = db.Organization(
+            name=data.get('name', ''),
+            address1=data.get('address1', ''),
+            address2=data.get('address2' ''),
+            zipcode=data.get('zipcode', ''),
+            country=data.get('country', '')
+        )
+        organization.save()
+        return self.org_schema.dump(organization, many=False).data, HTTPStatus.OK
 
 
 class OrganizationCollaboration(Resource):
     """Collaborations for a specific organization."""
 
-    @jwt_required
+    col_schema = CollaborationSchema()
+
+    @with_user_or_node
     def get(self, id):
         organization = db.Organization.get(id)
-        return organization.collaborations
+        if not organization:
+            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
 
-    @jwt_required
-    def post(self, id):
-        data = request.get_json()
-        organization = db.Organization.get(id)
-        collaboration = db.Collaboration.get(data['id'])
-        organization.collaborations.append(collaboration)
-        organization.save()
-        return organization.collaborations
+        return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
+
+    # @with_user
+    # def post(self, id):
+    #     organization = db.Organization.get(id)
+    #     if not organization:
+    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+    #
+    #     data = request.get_json()
+    #     collaboration = db.Collaboration.get(data['id'])
+    #     if not collaboration:
+    #         return {"msg": "collaboration id={} is not found".format(data['id'])}, HTTPStatus.NOT_FOUND
+    #
+    #     organization.collaborations.append(collaboration)
+    #     organization.save()
+    #     return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
 
 
 class OrganizationNode(Resource):
     """Resource for /api/organization/<int:id>/node."""
 
-    @jwt_required
-    def get(self, id, node_id=None):
+    nod_schema = NodeSchema()
+
+    @with_user_or_node
+    def get(self, id):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
+        if not organization:
+            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
 
-        if node_id is not None:
-            node = db.Node.get(node_id)
-            if node in organization.nodes:
-                return node
+        return self.nod_schema.dump(organization.nodes, many=True).data, HTTPStatus.OK
 
-        return organization.nodes     
-
-    @jwt_required
-    def post(self, id):
-        """Create new node"""
-        data = request.get_json()
-        data['id'] = id
-        node = db.Node.fromDict(data)
-        node.save()
-
-        return node
+    # @with_user
+    # def post(self, id):
+    #     """Create new node"""
+    #     organization = db.Organization.get(id)
+    #     if not organization:
+    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+    #
+    #     data = request.get_json()
+    #
+    #     db.Node(
+    #         name="{} - {} Node".format(organization.name, collaboration.name),
+    #         collaboration=collaboration,
+    #         organization=organization,
+    #         api_key=api_key
+    #     )
+    #     node.save()
+    #
+    #     return node
 
 
