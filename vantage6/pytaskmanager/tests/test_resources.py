@@ -12,6 +12,7 @@ from werkzeug.utils import cached_property
 import json
 
 from pytaskmanager import server
+from pytaskmanager import util
 from pytaskmanager.server import db
 from pytaskmanager.server import fixtures
 
@@ -28,7 +29,7 @@ class Response(BaseResponse):
         return json.loads(self.data)
 
 
-class TestNode(FlaskNode):
+class TestNode(FlaskClient):
     def open(self, *args, **kwargs):
         if 'json' in kwargs:
             kwargs['data'] = json.dumps(kwargs.pop('json'))
@@ -63,7 +64,10 @@ class TestResources(unittest.TestCase):
         server.app.testing = True
         server.app.response_class = Response
         server.app.test_client_class = TestNode
-        server.init_resources()
+
+        ctx = util.TestContext()
+        ctx.init(ctx.config_file)
+        server.init_resources(ctx)
 
         self.app = server.app.test_client()
 
@@ -141,6 +145,6 @@ class TestResources(unittest.TestCase):
         headers = self.login()
 
         collaborations = self.app.get('/api/collaboration', headers=headers).json
-        self.assertEqual(len(collaborations), 2)
+        self.assertEqual(len(collaborations), 3)
         
 
