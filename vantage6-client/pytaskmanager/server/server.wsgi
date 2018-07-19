@@ -9,7 +9,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 # Load configuration and initialize logging system
-ctx = ptm.util.AppContext(ptm.APPNAME, 'server', 'default')
+ctx = ptm.util.ServerContext(ptm.APPNAME, 'default')
 ctx.init(ctx.config_file, 'prod')
 
 # Load the flask.Resources
