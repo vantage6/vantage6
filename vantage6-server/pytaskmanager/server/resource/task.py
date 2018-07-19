@@ -8,9 +8,10 @@ import json
 from flask import g, request
 from flask_restful import Resource, abort
 from requests import codes as rqc
-from . import with_user_or_node
+from . import with_user_or_node, with_user
 from ._schema import TaskSchema, TaskIncludedSchema
 from pytaskmanager.server import db
+from http import HTTPStatus
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -39,29 +40,31 @@ def setup(api, API_BASE):
 class Task(Resource):
     """Resource for /api/task"""
 
+    task_schema = TaskSchema()
+    task_result_schema = TaskIncludedSchema()
+
     @with_user_or_node
     def get(self, id=None):
-        t = db.Task.get(id)
+        task = db.Task.get(id)
+        if not task:
+            return {"msg": "task id={} is not found"}, HTTPStatus.NOT_FOUND
 
-        if request.args.get('include') == 'results':
-            s = TaskIncludedSchema()
-        else:
-            s = TaskSchema()
+        s = self.task_result_schema if request.args.get('include') == 'results' else self.task_schema
+        return s.dump(task, many=not id), HTTPStatus.OK
 
-        return s.dump(t, many=not bool(id))
-
-    @with_user_or_node
+    @with_user
     def post(self):
         """Create a new Task."""
         data = request.get_json()
         collaboration_id = data.get('collaboration_id')
-
         if not collaboration_id:
             log.error("JSON causing the error:\n{}".format(data))
-            abort(rqc.bad_request, "JSON should contain 'collaboration_id'")
+            return {"msg": "JSON should contain 'collaboration_id'"}, HTTPStatus.BAD_REQUEST
 
         collaboration = db.Collaboration.get(collaboration_id)
-        
+        if not collaboration:
+            return {"msg": "collaboration id={} not found".format(collaboration_id)}, HTTPStatus.NOT_FOUND
+
         task = db.Task(collaboration=collaboration)
         task.name = data.get('name', '')
         task.description = data.get('description', '')
@@ -76,10 +79,49 @@ class Task(Resource):
 
         # a collaboration can include multiple nodes
         for c in collaboration.nodes:
-            result = db.TaskResult(task=task, node=c)
+            db.TaskResult(task=task, node=c)
 
         task.save()
-        return TaskSchema().dump(task, many=False)
+        return self.task_schema.dump(task, many=False)
+
+    # @with_user_or_node
+    # def patch(self, id=None):
+    #     # TODO not sure if this is such a good idea?
+    #     if not id:
+    #         return {"msg": "no task id is specified"}, HTTPStatus.BAD_REQUEST
+    #
+    #     task = db.Task.get(id)
+    #     if not task:
+    #         return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+    #
+    #     data = request.get_json()
+    #     if 'name' in data:
+    #         task.name = data['name']
+    #     if 'description' in data:
+    #         task.description = data['description']
+    #     if 'image' in data:
+    #         task.image = data['image']
+    #     if 'status' in data:
+    #         task.status = data['status']
+    #     if 'input' in data:
+    #         input_ = data['input']
+    #         if not isinstance(input_, str):
+    #             input_ = json.dumps(input_)
+    #         task.input = input_
+
+    @with_user
+    def delete(self, id=None):
+        """Deletes a task"""
+        # TODO we might want to delete the corresponding results also?
+        if not id:
+            return {"msg": "no task id is specified"}, HTTPStatus.BAD_REQUEST
+
+        task = db.Task.get(id)
+        if not task:
+            return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+
+        task.delete()
+        return {"msg": "task id={} successfully deleted".format(id)}, HTTPStatus.OK
 
 
 class TaskResult(Resource):
@@ -89,5 +131,8 @@ class TaskResult(Resource):
     def get(self, id):
         """Return results for task."""
         task = db.Task.get(id)
-        return task.results
+        if not task:
+            return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+
+        return task.results, HTTPStatus.OK
 
