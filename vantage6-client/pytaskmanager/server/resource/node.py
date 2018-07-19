@@ -22,8 +22,7 @@ def setup(api, api_base):
     api.add_resource(
         Node,
         path,
-        path + '/<int:id>',
-        methods=['GET', 'POST', 'PATCH', 'DELETE']
+        path + '/<int:id>'
     )
     api.add_resource(
         NodeTasks,
@@ -40,16 +39,18 @@ task_result_schema = TaskResultSchema()
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Nodes(Resource):
-    """resource for /api/nodes"""
-
-
 class Node(Resource):
-    """resource for /api/node/<int:id>"""
 
     @with_user
     def get(self, id=None):
-        """list of nodes that are owned by the logged-in user"""
+        """Get server user or user list.
+            ---
+            description: get a greeting
+            responses:
+                200:
+                    description: a pet to be returned
+
+        """
         nodes = db.Node.get(id)
 
         if id:
@@ -66,7 +67,15 @@ class Node(Resource):
 
     @with_user
     def post(self, id=None):
-        """"register new node"""
+        """A greeting endpoint.
+            ---
+            description: get a greeting
+            responses:
+                200:
+                    description: a pet to be returned
+                    schema:
+                       user: string
+        """
         if id:
             return {"msg": "id specified, but not allowed when using POST method"}, 200
 
