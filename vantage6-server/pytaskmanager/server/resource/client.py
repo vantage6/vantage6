@@ -50,8 +50,6 @@ class Client(Resource):
         client = db.Client.get(id)
 
         if g.user:
-            log.info(g.user)
-            
             if id:
                 # FIXME: use proper roles instead of CSV
                 if 'root' in g.user.roles.replace(' ', '').split() or g.user in client.organization.users:
