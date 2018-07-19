@@ -179,7 +179,6 @@ class AppContext(metaclass=Singleton):
     def get_file_location(self, filetype, filename):
         """
         filetype: ('config', log', 'data')
-        instance_type: ('client', 'server', 'unittest')
         """
         if os.path.isabs(filename):
             return filename
@@ -213,6 +212,53 @@ class AppContext(metaclass=Singleton):
         return uri
 
 
+class ServerContext(AppContext):
+    def __init__(self, application, instance_name='', version=None):
+        """Initialize a new instance.
 
+            instance_name: only relevant for clients/servers
+        """
+        super().__init__(application, 'server', instance_name, version=version)
+
+        d = appdirs.AppDirs(application, version=version)
+        self.dirs = {
+            'data': d.site_data_dir,
+            'log': d.site_data_dir,
+            'config': d.site_config_dir,
+        }
+
+
+    def get_file_location(self, filetype, filename):
+        """
+        filetype: ('config', log', 'data')
+        """
+        if os.path.isabs(filename):
+            return filename
+
+        elements = [
+            self.dirs[filetype], 
+            self.instance_type
+        ]
+
+        if filetype == 'data':
+            elements.append(self.instance_name)
+        
+        elements.append(filename)
+        filename = os.path.join(*elements)
+
+        return filename
+
+
+
+class ClientContext(AppContext):
+    pass
+
+
+class FixturesContext(AppContext):
+    pass
+
+
+class TestContext(AppContext):
+    pass
 
     
