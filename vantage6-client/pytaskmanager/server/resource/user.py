@@ -60,7 +60,7 @@ class User(Resource):
         """Create a new User."""
 
         if user_id:
-            return {"msg": "id specified, but this is not allowed when using the POST method"}
+            return {"msg": "id specified, but this is not allowed when using the POST method"}, HTTPStatus.BAD_REQUEST
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=True, help="This field is required")
