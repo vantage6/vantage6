@@ -10,7 +10,7 @@ import unittest
 from datetime import datetime
 from termcolor import colored
 
-from . import util
+from pytaskmanager import util
 
 
 class TestResult(unittest.TextTestResult):
