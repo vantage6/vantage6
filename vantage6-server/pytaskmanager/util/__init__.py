@@ -40,6 +40,7 @@ class AppContext(metaclass=Singleton):
         assert instance_type in instance_types, msg
 
         self.application = application
+        self.environment = None
         self.instance_type = instance_type
         self.instance_name = instance_name
         self.version = version
@@ -90,9 +91,12 @@ class AppContext(metaclass=Singleton):
 
     def init(self, config_file, environment=None):
         """Load the configuration from disk and setup logging."""
-        
+        self.environment = environment
+
         # Load configuration
         config = self.load_config(config_file)
+
+        # FIXME: this is a hack!
         cfg_app = config['application']
         cfg_env = config.get('environments', {}).get(environment)
 
@@ -101,13 +105,24 @@ class AppContext(metaclass=Singleton):
             'env': cfg_env,
         }
 
-        # Override default locations based on OS defaults if defined in 
-        # configuration file
-        if cfg_app.get('data_dir'):
-            self.dirs['data_dir'] = cfg_app.get('data_dir')
+        if environment is None:
+            # Use 'application' rather than the configuration in a specific environment
+            # Override default locations based on OS defaults if defined in 
+            # configuration file
+            if self.config.get('data_dir'):
+                self.dirs['data_dir'] = cfg_app.get('data_dir')
 
-        if cfg_app.get('log_dir'):
-            self.dirs['log_dir'] = cfg_app.get('log_dir')
+            if self.config.get('log_dir'):
+                self.dirs['log_dir'] = cfg_app.get('log_dir')
+        else:
+            # Apparently we're running a server (why else use an environment)
+            # Override default locations based on OS defaults if defined in 
+            # configuration file
+            if self.config.get('data_dir'):
+                self.dirs['data_dir'] = cfg_env.get('data_dir')
+
+            if self.config.get('log_dir'):
+                self.dirs['log_dir'] = cfg_env.get('log_dir')
 
         # Setup logging
         log_file = self.setup_logging()
@@ -141,7 +156,10 @@ class AppContext(metaclass=Singleton):
 
     def setup_logging(self):
         """Setup a basic logging mechanism."""
-        config = self.config['app']
+        if self.environment is None:
+            config = self.config['app']
+        else:
+            config = self.config['env']
 
         if ('logging' not in config) or (config["logging"]["level"].upper() == 'NONE'):
             return

@@ -156,7 +156,8 @@ def init_resources(ctx):
     if RESOURCES_INITIALIZED:
         return
 
-    API_BASE = ctx.config['app']['api_path']
+    print(ctx.config['env'])
+    API_BASE = ctx.config['env']['api_path']
 
     resources = [
             'node',
