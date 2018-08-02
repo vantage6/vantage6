@@ -32,6 +32,7 @@ def set_context(return_context=False):
 
             # load configuration and initialize logging system
             cfg_filename = get_config_location(ctx, config, force_create=False)
+            print("Using configuration at: '{}'".format(config))
             ctx.init(cfg_filename, environment)
 
             # initialize database from environment
