@@ -20,6 +20,7 @@ import json
 
 from . import db
 from pytaskmanager import util
+from pytaskmanager import APPNAME
 
 
 # ------------------------------------------------------------------------------
@@ -30,7 +31,7 @@ API_BASE = '/api'
 WEB_BASE = '/app'
 
 # Create Flask app
-app = Flask('taskmaster')
+app = Flask(APPNAME)
 
 # Enable cross-origin resource sharing
 CORS(app)
@@ -126,6 +127,28 @@ def index(path):
 # ------------------------------------------------------------------------------
 # init & run
 # ------------------------------------------------------------------------------
+def init(environment=None):
+    """Initialize the server using a site-wide ServerContext."""
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    if environment is None:
+        if 'environment' in os.environ:
+            environment = os.environ['environment']
+        else:
+            environment = 'prod'
+
+    # Load configuration and initialize logging system
+    ctx = util.ServerContext(APPNAME, 'default')
+    ctx.init(ctx.config_file, environment)
+
+    # Load the flask.Resources
+    init_resources(ctx)
+
+
+    uri = ctx.get_database_location()
+    db.init(uri)
+
+
 def init_resources(ctx):
     # Load resources
     global RESOURCES_INITIALIZED
@@ -154,6 +177,11 @@ def init_resources(ctx):
 
 
 def run(ctx, *args, **kwargs):
+    """Run the server.
+
+        Note that this method is never called when the server is instantiated
+        through the Web Server Gateway Interface (WSGI)!
+    """
     # Load configuration and init logging
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
