@@ -10,6 +10,8 @@ from flask_restful import Resource
 from flask import g
 from flask_restful import reqparse
 from http import HTTPStatus
+from flasgger import swag_from
+
 from pytaskmanager.server import db
 from pytaskmanager.server.resource import with_user
 from pytaskmanager.server.resource._schema import UserSchema
@@ -23,9 +25,15 @@ def setup(api, API_BASE):
     path = "/".join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
     
-    api.add_resource(User,
+    api.add_resource(
+        User,
         path,
+        endpoint='user_without_id'
+    )
+    api.add_resource(
+        User,
         path + '/<int:user_id>',
+        endpoint='user_with_id'
     )
 
 
@@ -37,6 +45,8 @@ class User(Resource):
     user_schema = UserSchema()
 
     @with_user
+    @swag_from("swagger/get_user_with_id.yaml", endpoint='user_with_id')
+    @swag_from("swagger/get_user_without_id.yaml", endpoint='user_without_id')
     def get(self, user_id=None):
         """Return user details."""
         all_users = db.User.get(user_id)
@@ -56,11 +66,12 @@ class User(Resource):
                 return self.user_schema.dump(all_users, many=False)
 
     @with_user
+    @swag_from("swagger/post_user_without_id.yaml", endpoint='user_without_id')
     def post(self, user_id=None):
         """Create a new User."""
 
-        if user_id:
-            return {"msg": "id specified, but this is not allowed when using the POST method"}, HTTPStatus.BAD_REQUEST
+        # if user_id:
+        #     return {"msg": "id specified, but this is not allowed when using the POST method"}, HTTPStatus.BAD_REQUEST
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=True, help="This field is required")
@@ -71,7 +82,7 @@ class User(Resource):
         data = parser.parse_args()
 
         if db.User.username_exists(data["username"]):
-            return {"msg": "username already exists"}, HTTPStatus.OK
+            return {"msg": "username already exists"}, HTTPStatus.BAD_REQUEST
 
         user = db.User(
             username=data["username"],
@@ -86,9 +97,10 @@ class User(Resource):
         return self.user_schema(user), HTTPStatus.CREATED
 
     @with_user
+    @swag_from("swagger/patch_user_with_id.yaml", endpoint='user_with_id')
     def patch(self, user_id=None):
-        if not user_id:
-            return {"msg": "to update an user you need to specify an id"}, 400
+        # if not user_id:
+        #     return {"msg": "to update an user you need to specify an id"}, 400
 
         user = db.User.get(user_id)
 
@@ -120,9 +132,10 @@ class User(Resource):
         return user, HTTPStatus.OK
 
     @with_user
+    @swag_from("swagger/delete_user_with_id.yaml", endpoint='user_with_id')
     def delete(self, user_id=None):
-        if not user_id:
-            return {"msg": "to delete an user you need to specify an id"}, HTTPStatus.BAD_REQUEST
+        # if not user_id:
+        #     return {"msg": "to delete an user you need to specify an id"}, HTTPStatus.BAD_REQUEST
 
         user = db.User.get(user_id)
         if not user:

@@ -1,0 +1,25 @@
+summary: Get collaborations from organization
+
+description:
+  Returns a list of collaboration in which the organization participates
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: organization id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: organization not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Organization"]
