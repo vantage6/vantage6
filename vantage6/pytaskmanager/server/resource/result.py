@@ -2,34 +2,36 @@
 """
 Resources below '/<api_base>/collaboration'
 """
-import os, os.path
+import logging
 
 from flask import g, request
 from flask_restful import Resource, abort
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
-
 from requests import codes as rqc
-
-import logging
-module_name = __name__.split('.')[-1]
-log = logging.getLogger(module_name)
-
-from .. import db
-
 from . import parse_datetime
 from . import with_user_or_node, with_node
 from ._schema import *
+from flasgger import swag_from
+from http import HTTPStatus
+from pytaskmanager.server import db
+
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
 
 
 def setup(api, API_BASE):
-    module_name = __name__.split('.')[-1]
+
     path = "/".join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
     
-    api.add_resource(Result,
+    api.add_resource(
+        Result,
         path,
+        endpoint='result_without_id'
+    )
+    api.add_resource(
+        Result,
         path + '/<int:id>',
-        endpoint='result'
+        endpoint='result_with_id'
     )
 
 
@@ -44,6 +46,8 @@ class Result(Resource):
     """Resource for /api/task"""
 
     @with_user_or_node
+    @swag_from("swagger\get_result_with_id.yaml",endpoint="result_with_id")
+    @swag_from("swagger\get_result_without_id.yaml", endpoint="result_without_id")
     def get(self, id=None):
         if id:
             t = db.TaskResult.get(id)
@@ -64,15 +68,11 @@ class Result(Resource):
         else:
             s = result_schema
 
-        return s.dump(t, many=not bool(id))
-
-
-    def post(self, id=None):
-        abort(rqc.not_allowed, message="Results cannot be created by POSTing.")
-
+        return s.dump(t, many=not bool(id)), HTTPStatus.OK
 
     @with_node
-    def put(self, id):
+    @swag_from("swagger\patch_result_with_id.yaml", endpoint="result_with_id")
+    def patch(self, id):
         """Update a Result."""
         data = request.get_json()
         result = db.TaskResult.get(id)

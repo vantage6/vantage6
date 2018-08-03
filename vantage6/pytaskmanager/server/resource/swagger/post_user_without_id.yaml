@@ -1,0 +1,37 @@
+summary: Add user
+
+description:
+  Creates new user from the request data to the users organization.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          username:
+            type: string
+            description: unique username
+          firstname:
+            type: string
+          lastname:
+            type: string
+          roles:
+            type: array
+            items:
+              type: string
+            description: user roles
+          password:
+            type: string
+
+responses:
+  400:
+    description: Username already exists
+  201:
+    description: Ok
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["User"]

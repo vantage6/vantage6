@@ -8,6 +8,8 @@ import uuid
 
 from flask import g, request
 from flask_restful import Resource, reqparse
+from http import HTTPStatus
+from flasgger.utils import swag_from
 from . import with_user_or_node, with_user
 from ._schema import *
 
@@ -22,62 +24,50 @@ def setup(api, api_base):
     api.add_resource(
         Node,
         path,
-        path + '/<int:id>'
+        endpoint='node_without_user_id'
+    )
+    api.add_resource(
+        Node,
+        path + '/<int:id>',
+        endpoint='node_with_user_id'
     )
     api.add_resource(
         NodeTasks,
         path + '/<int:id>/task',
-        path + '/<int:id>/task/<int:task_result_id>'
+        endpoint='node_tasks'
     )
-
-
-# Schemas
-node_schema = NodeSchema()
-task_result_schema = TaskResultSchema()
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
+
 class Node(Resource):
 
-    @with_user
-    def get(self, id=None):
-        """Get server user or user list.
-            ---
-            description: get a greeting
-            responses:
-                200:
-                    description: a pet to be returned
+    # Schemas
+    node_schema = NodeSchema()
 
-        """
+    @with_user
+    @swag_from("swagger\get_node_with_node_id.yaml", endpoint='node_with_user_id')
+    @swag_from("swagger\get_node_without_node_id.yaml", endpoint='node_without_user_id')
+    def get(self, id=None):
         nodes = db.Node.get(id)
 
         if id:
             if not nodes:
-                return {"msg": "node with id={} not found".format(id)}, 404  # not found
+                return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
             if nodes.organization_id != g.user.organization_id and g.user.roles != 'admin':
-                return {"msg": "you are not allowed to see this node"}, 403  # forbidden
+                return {"msg": "you are not allowed to see this node"}, HTTPStatus.FORBIDDEN  # 403
         else:
             # only the nodes of the users organization are returned
             if g.user.roles != 'admin':
                 nodes = [node for node in nodes if node.organization_id == g.user.organization_id]
 
-        return node_schema.dump(nodes, many=not id).data
+        return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
 
     @with_user
-    def post(self, id=None):
-        """A greeting endpoint.
-            ---
-            description: get a greeting
-            responses:
-                200:
-                    description: a pet to be returned
-                    schema:
-                       user: string
-        """
-        if id:
-            return {"msg": "id specified, but not allowed when using POST method"}, 200
+    @swag_from("swagger\post_node_without_node_id.yaml", endpoint='node_without_user_id')
+    def post(self):
 
         parser = reqparse.RequestParser()
         parser.add_argument(
@@ -92,7 +82,7 @@ class Node(Resource):
 
         # check that the collaboration exists
         if not collaboration:
-            return {"msg": "collaboration_id '{}' does not exist".format(data["collaboration_id"])}, 400  # bad request
+            return {"msg": "collaboration_id '{}' does not exist".format(data["collaboration_id"])}, HTTPStatus.NOT_FOUND  # 404
 
         # new api-key which node can use to authenticate
         api_key = str(uuid.uuid1())
@@ -108,24 +98,26 @@ class Node(Resource):
         )
         node.save()
 
-        return node_schema.dump(node).data, 201  # created
+        return self.node_schema.dump(node).data, HTTPStatus.CREATED  # 201
 
     @with_user
+    @swag_from("swagger\delete_node_with_node_id.yaml", endpoint='node_with_user_id')
     def delete(self, id):
         """delete node account"""
         node = db.Node.get(id)
 
         if not node:
-            return {"msg": "node with id={} not found".format(id)}, 404  # not found
+            return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
 
         if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
-            return {"msg": "you are not allowed to delete this node"}, 403  # forbidden
+            return {"msg": "you are not allowed to delete this node"}, HTTPStatus.FORBIDDEN  # 403
 
         node.delete()
 
-        return {"msg": "successfully deleted node id={}".format(id)}, 200  # success
+        return {"msg": "successfully deleted node id={}".format(id)}, HTTPStatus.OK  # 200
 
     @with_user
+    @swag_from("swagger\patch_node_with_node_id.yaml", endpoint='node_with_user_id')
     def patch(self, id):
         """update existing node"""
         parser = reqparse.RequestParser()
@@ -146,7 +138,7 @@ class Node(Resource):
             # check that the collaboration exists
             if not collaboration:
                 return {"msg": "collaboration_id '{}' does not exist".format(
-                    data['collaboration_id'])}, 400  # bad request
+                    data['collaboration_id'])}, HTTPStatus.NOT_FOUND  # 404
 
             # new api-key which node can use to authenticate
             api_key = str(uuid.uuid1())
@@ -164,12 +156,12 @@ class Node(Resource):
             node.save()
         else:  # update node
             if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
-                return {"msg": "you are not allowed to edit this node"}, 403  # forbidden
+                return {"msg": "you are not allowed to edit this node"}, HTTPStatus.FORBIDDEN  # 403
 
             node.collaboration_id = data['collaboration_id']
             node.save()
 
-        return node_schema.dump(node).data, 200  # success
+        return self.node_schema.dump(node).data, HTTPStatus.OK  # 200
 
 
 class NodeTasks(Resource):
@@ -185,26 +177,26 @@ class NodeTasks(Resource):
     TODO also the user can only see nodes which belong to their organization
     """
 
+    task_result_schema = TaskResultSchema()
+
     @with_user_or_node
-    def get(self, id, task_result_id=None):
+    @swag_from("swagger\get_node_tasks.yaml", endpoint='node_tasks')
+    def get(self, id):
         """Return a list of tasks for a node or a single task <task_result_id> belonging t.
 
         If the query parameter 'state' equals 'open' the list is
         filtered to return only tasks without result.
         """
-        global log
-        log = logging.getLogger(__name__)
-
-        if task_result_id is not None:
-            result = db.TaskResult.get(task_result_id)
-            return task_result_schema.dump(result).data
 
         # get tasks that belong to node <id>
         node = db.Node.get(id)
+        if not node:
+            return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
 
         # filter tasks if a specific state is requested
         if request.args.get('state') == 'open':
             results = [result for result in node.taskresults if not result.finished_at]
-            return task_result_schema.dump(results, many=True)
+            return self.task_result_schema.dump(results, many=True), HTTPStatus.OK  # 200
 
-        return [result for result in node.taskresults]
+        results = [result for result in node.taskresults]
+        return results, HTTPStatus.OK  # 200
