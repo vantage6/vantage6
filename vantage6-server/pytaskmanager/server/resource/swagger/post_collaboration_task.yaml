@@ -1,0 +1,44 @@
+summary: Add task to collaboration
+
+description:
+  Adds a single task to a collaboration.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          name:
+            type: string
+            description: Human readable label
+          description:
+            type: string
+            description: Human readable description of the task
+          image:
+            type: string
+            description: docker-image identifier that contains the task
+            required: true
+          input:
+            type: string
+            description: input which is stored in input.txt which is supplied to the docker image
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized
+  404:
+    description: specified collaboration does not exists
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

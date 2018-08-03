@@ -1,0 +1,27 @@
+summary: Remove user
+
+description:
+  Remove user entirely from the database
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: user id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  403:
+    description: No permission to update this user
+  404:
+    description: User not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["User"]

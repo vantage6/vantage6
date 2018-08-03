@@ -3,39 +3,45 @@
 Resources below '/<api_base>/organization'
 """
 from __future__ import print_function, unicode_literals
-import os, os.path
+
+import logging
 
 from flask import request
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
-
-import logging
-module_name = __name__.split('.')[-1]
-log = logging.getLogger(module_name)
-
-from .. import db
-
-from pytaskmanager.server.resource import with_user_or_node, with_node, with_user
-from pytaskmanager.server.resource.node import Node
+from flasgger import swag_from
 from http import HTTPStatus
+from pytaskmanager.server.resource import with_user_or_node, with_user
 from ._schema import *
 
 
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
+
+
 def setup(api, API_BASE):
-    module_name = __name__.split('.')[-1]
+
     path = "/".join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
-    
-    api.add_resource(Organization,
+
+    api.add_resource(
+        Organization,
         path,
+        endpoint='organization_without_id'
+     )
+    api.add_resource(
+        Organization,
         path + '/<int:id>',
-        endpoint='organization'
+        endpoint='organization_with_id'
     )
-    api.add_resource(OrganizationCollaboration,
-        path + '/<int:id>/collaboration'
+    api.add_resource(
+        OrganizationCollaboration,
+        path + '/<int:id>/collaboration',
+        endpoint='organization_collaboration'
     )
-    api.add_resource(OrganizationNode,
-        path + '/<int:id>/node'
+    api.add_resource(
+        OrganizationNode,
+        path + '/<int:id>/node',
+        endpoint='organization_node'
     )
 
 
@@ -47,6 +53,8 @@ class Organization(Resource):
     org_schema = OrganizationSchema()
 
     @with_user
+    @swag_from("swagger\get_organization_with_id.yaml", endpoint='organization_with_id')
+    @swag_from("swagger\get_organization_without_id.yaml", endpoint='organization_without_id')
     def get(self, id=None):
         organization = db.Organization.get(id)
         if not organization:
@@ -55,10 +63,9 @@ class Organization(Resource):
         return self.org_schema.dump(organization, many=not id).data, HTTPStatus.OK
 
     @with_user
-    def post(self, id=None):
+    @swag_from("swagger\post_organization_without_id.yaml", endpoint='organization_without_id')
+    def post(self):
         """Create a new organization."""
-        if id:
-            return {"msg": "id should not be given by POST method"}, HTTPStatus.BAD_REQUEST
 
         data = request.get_json()
         organization = db.Organization(
@@ -69,7 +76,9 @@ class Organization(Resource):
             country=data.get('country', '')
         )
         organization.save()
-        return self.org_schema.dump(organization, many=False).data, HTTPStatus.OK
+        return self.org_schema.dump(organization, many=False).data, HTTPStatus.CREATED
+
+    # TODO patch?
 
 
 class OrganizationCollaboration(Resource):
@@ -78,6 +87,7 @@ class OrganizationCollaboration(Resource):
     col_schema = CollaborationSchema()
 
     @with_user_or_node
+    @swag_from("swagger\get_organization_collaboration.yaml", endpoint='organization_collaboration')
     def get(self, id):
         organization = db.Organization.get(id)
         if not organization:
@@ -107,6 +117,7 @@ class OrganizationNode(Resource):
     nod_schema = NodeSchema()
 
     @with_user_or_node
+    @swag_from("swagger\get_organization_node.yaml", endpoint='organization_node')
     def get(self, id):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
