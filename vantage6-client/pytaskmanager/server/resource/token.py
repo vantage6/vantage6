@@ -6,9 +6,10 @@ from __future__ import print_function, unicode_literals
 
 import logging
 
-from flask import request
+from flask import request, jsonify
 from flask_restful import Resource
 from flask_jwt_extended import jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
+from flasgger import swag_from
 from http import HTTPStatus
 from pytaskmanager import server
 from pytaskmanager.server import db
@@ -22,8 +23,17 @@ def setup(api, api_base):
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
-    api.add_resource(Token, path)
-    api.add_resource(RefreshToken, path+'/refresh')
+    api.add_resource(
+        Token,
+        path,
+        endpoint='token'
+    )
+
+    api.add_resource(
+        RefreshToken,
+        path+'/refresh',
+        endpoint='refresh_token'
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -33,6 +43,7 @@ class Token(Resource):
     """resource for api/token"""
 
     @staticmethod
+    @swag_from("swagger\post_token.yaml", endpoint='token')
     def post():
         """Authenticate user or node"""
         if not request.is_json:
@@ -48,14 +59,15 @@ class Token(Resource):
             if code is not HTTPStatus.OK:  # login failed
                 return user, code
 
+            token = create_access_token(user)
             ret = {
-                'access_token': create_access_token(user),
+                'access_token': token,
                 'refresh_token': create_refresh_token(user),
                 'user_url': server.api.url_for(server.resource.user.User, user_id=user.id),
                 'refresh_url': server.api.url_for(RefreshToken),
             }
 
-            return ret, HTTPStatus.OK
+            return ret, HTTPStatus.OK, {'jwt-token': token}
 
         elif api_key:
             log.info("trying to authenticate node with api_key")
@@ -101,6 +113,7 @@ class Token(Resource):
 class RefreshToken(Resource):
 
     @jwt_refresh_token_required
+    @swag_from("swagger\post_token_refresh.yaml", endpoint='refresh_token')
     def post(self):
         """Create a token from a refresh token."""
         user_or_node_id = get_jwt_identity()

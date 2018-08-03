@@ -1,0 +1,23 @@
+summary: List organizations in collaboration
+
+description:
+  Returns a list of all organizations that belong to the specified collaboration.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: Collaboration specified by id does not exists
+  401:
+    description: Unauthorized
+security:
+  - bearerAuth: []
+tags: ["Collaboration"]
