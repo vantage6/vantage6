@@ -24,7 +24,8 @@ def setup(api, API_BASE):
     api.add_resource(
         Version,
         path,
-        endpoint='version'
+        endpoint='version',
+        methods=('GET',)
     )
 
 

@@ -21,34 +21,39 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
-    path = "/".join([API_BASE, module_name])
+def setup(api, api_base):
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
         Collaboration,
         path,
-        endpoint='collaboration_without_id'
+        endpoint='collaboration_without_id',
+        methods=('GET', 'POST')
     )
     api.add_resource(
         Collaboration,
         path + '/<int:id>',
-        endpoint='collaboration_with_id'
+        endpoint='collaboration_with_id',
+        methods=('GET', 'PATCH', 'DELETE')
     )
     api.add_resource(
         CollaborationOrganization,
         path+'/<int:id>/organization',
-        endpoint='collaboration_with_id_organization'
+        endpoint='collaboration_with_id_organization',
+        methods=('GET', 'POST', 'DELETE')
     )
     api.add_resource(
         CollaborationNode,
         path+'/<int:id>/node',
-        endpoint='collaboration_with_id_node'
+        endpoint='collaboration_with_id_node',
+        methods=('GET', 'POST', 'DELETE')
     )
     api.add_resource(
         CollaborationTask,
         path+'/<int:id>/task',
-        endpoint='collaboration_with_id_task'
+        endpoint='collaboration_with_id_task',
+        methods=('GET', 'POST', 'DELETE')
     )
 
 
@@ -116,12 +121,10 @@ class Collaboration(Resource):
 
     @with_user
     @swag_from("swagger\patch_collaboration_with_id.yaml", endpoint='collaboration_with_id')
-    def patch(self, id=None):
+    def patch(self, id):
         """update a collaboration"""
         # if "admin" not in g.user.roles:
         #     return {"msg": "only administrators can edit collaborations"}, 403  # forbidden
-        # if not id:
-        #     return {"msg": "to create or update a node you need to specify an id"}, 400  # bad request
 
         collaboration = db.Collaboration.get(id)
 
@@ -145,10 +148,8 @@ class Collaboration(Resource):
 
     @with_user
     @swag_from("swagger\delete_collaboration_with_id.yaml", endpoint='collaboration_with_id')
-    def delete(self, id=None):
+    def delete(self, id):
         """delete collaboration"""
-        # if not id:
-        #     return {"msg": "to delete a node you need to specify an id"}, 400
 
         collaboration = db.Collaboration.get(id)
         if not collaboration:
@@ -163,7 +164,7 @@ class CollaborationOrganization(Resource):
 
     @with_user
     @swag_from("swagger\get_collaboration_organization.yaml", endpoint='collaboration_with_id_organization')
-    def get(self, id=None):
+    def get(self, id):
         """Return organizations for a specific collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
@@ -180,7 +181,7 @@ class CollaborationOrganization(Resource):
 
     @with_user
     @swag_from("swagger\post_collaboration_organization.yaml", endpoint='collaboration_with_id_organization')
-    def post(self, id=None):
+    def post(self, id):
         """Add an organizations to a specific collaboration."""
         # get collaboration to which te organization should be added
         collaboration = db.Collaboration.get(id)
@@ -202,7 +203,7 @@ class CollaborationOrganization(Resource):
 
     @with_user
     @swag_from("swagger\delete_collaboration_organization.yaml", endpoint='collaboration_with_id_organization')
-    def delete(self, id=None):
+    def delete(self, id):
         """Removes an organization from a collaboration."""
         # get collaboration from which organization should be removed
         collaboration = db.Collaboration.get(id)
