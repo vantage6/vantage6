@@ -4,9 +4,6 @@ import os
 import shutil
 import yaml
 
-# Define version and directories *before* importing submodules
-here = os.path.abspath(os.path.dirname(__file__))
-
 
 def get_config_location(ctx, config, force_create):
     """Ensure configuration file exists and return its location."""
@@ -38,11 +35,8 @@ def get_config_location(ctx, config, force_create):
             skeleton_file = 'server_config_skeleton.yaml'
         elif ctx.instance_type == 'node':
             skeleton_file = 'node_config_skeleton.yaml'
-        elif ctx.instance_type == 'unittest':
-            skeleton_file = 'unittest_config_skeleton.yaml'
 
-        # TODO relocate this to a config file
-        src = os.path.join(here, '..', '_data', skeleton_file)
+        src = os.path.join(ctx.package_data_dir(), skeleton_file)
 
         dst = os.path.join(filename)
         shutil.copy(src, dst)
