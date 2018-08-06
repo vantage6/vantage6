@@ -28,7 +28,7 @@ class TaskResultSchema(ModelSchema):
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
     _id = ma.URLFor('result_with_id', id='<id>')
     task = ma.HyperlinkRelated('task_with_id')
-    node = ma.HyperlinkRelated('node_with_id')
+    node = ma.HyperlinkRelated('node_with_node_id')
 
     class Meta:
         model = db.TaskResult
@@ -58,7 +58,7 @@ class OrganizationSchema(ModelSchema):
     _id = ma.URLFor('organization_with_id', id='<id>')
     collaborations = ma.List(ma.HyperlinkRelated('collaboration_with_id'))
     tasks = ma.List(ma.HyperlinkRelated('task_with_id'))
-    node = ma.List(ma.HyperlinkRelated('node_with_id'))
+    node = ma.List(ma.HyperlinkRelated('node_with_node_id'))
 
     class Meta:
         model = db.Organization
@@ -76,7 +76,7 @@ class CollaborationSchema(ModelSchema):
 
     organizations = ma.List(ma.HyperlinkRelated('organization_with_id'))
     tasks = ma.List(ma.HyperlinkRelated('task_with_id'))
-    nodes = ma.List(ma.HyperlinkRelated('node_with_id'))
+    nodes = ma.List(ma.HyperlinkRelated('node_with_node_id'))
 
     class Meta:
         model = db.Collaboration
