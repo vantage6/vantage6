@@ -24,6 +24,8 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+
+
 # ------------------------------------------------------------------------------
 class AppContext(metaclass=Singleton):
 
@@ -38,6 +40,7 @@ class AppContext(metaclass=Singleton):
         assert instance_type in instance_types, msg
 
         self.application = application
+        self.environment = None
         self.instance_type = instance_type
         self.instance_name = instance_name
         self.version = version
@@ -49,6 +52,16 @@ class AppContext(metaclass=Singleton):
             'log': d.user_log_dir,
             'config': d.user_config_dir,
         }
+
+    @staticmethod
+    def package_directory():
+        here = os.path.abspath(os.path.dirname(__file__))
+        return os.path.normpath(os.path.join(here, '../'))
+
+    @classmethod
+    def package_data_dir(cls):
+
+        return os.path.join(cls.package_directory(), '_data')
 
     @property
     def data_dir(self):
@@ -65,7 +78,7 @@ class AppContext(metaclass=Singleton):
     @property
     def config_file(self):
         if self.instance_type == 'unittest':
-            filename = 'unittest.yaml'
+            filename = 'unittest_config.yaml'
         else:
             filename = self.instance_name + '.yaml'
 
@@ -78,9 +91,12 @@ class AppContext(metaclass=Singleton):
 
     def init(self, config_file, environment=None):
         """Load the configuration from disk and setup logging."""
-        
+        self.environment = environment
+
         # Load configuration
         config = self.load_config(config_file)
+
+        # FIXME: this is a hack!
         cfg_app = config['application']
         cfg_env = config.get('environments', {}).get(environment)
 
@@ -89,13 +105,24 @@ class AppContext(metaclass=Singleton):
             'env': cfg_env,
         }
 
-        # Override default locations based on OS defaults if defined in 
-        # configuration file
-        if cfg_app.get('data_dir'):
-            self.dirs['data_dir'] = cfg_app.get('data_dir')
+        if environment is None:
+            # Use 'application' rather than the configuration in a specific environment
+            # Override default locations based on OS defaults if defined in 
+            # configuration file
+            if self.config.get('data_dir'):
+                self.dirs['data_dir'] = cfg_app.get('data_dir')
 
-        if cfg_app.get('log_dir'):
-            self.dirs['log_dir'] = cfg_app.get('log_dir')
+            if self.config.get('log_dir'):
+                self.dirs['log_dir'] = cfg_app.get('log_dir')
+        else:
+            # Apparently we're running a server (why else use an environment)
+            # Override default locations based on OS defaults if defined in 
+            # configuration file
+            if self.config.get('data_dir'):
+                self.dirs['data_dir'] = cfg_env.get('data_dir')
+
+            if self.config.get('log_dir'):
+                self.dirs['log_dir'] = cfg_env.get('log_dir')
 
         # Setup logging
         log_file = self.setup_logging()
@@ -129,7 +156,10 @@ class AppContext(metaclass=Singleton):
 
     def setup_logging(self):
         """Setup a basic logging mechanism."""
-        config = self.config['app']
+        if self.environment is None:
+            config = self.config['app']
+        else:
+            config = self.config['env']
 
         if ('logging' not in config) or (config["logging"]["level"].upper() == 'NONE'):
             return
@@ -259,6 +289,19 @@ class FixturesContext(AppContext):
 
 
 class TestContext(AppContext):
-    pass
+    def __init__(self):
+        super().__init__('unittest', 'unittest')
+
+    def get_file_location(self, filetype, filename):
+        """
+        filetype: ('config', log', 'data')
+        """
+        if os.path.isabs(filename):
+            return filename
+
+        if filetype == 'config':
+            return os.path.join(self.package_data_dir(), filename)
+
+        return super().get_file_location(filetype, filename)
 
     
