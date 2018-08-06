@@ -25,17 +25,20 @@ def setup(api, API_BASE):
     api.add_resource(
         Task,
         path,
-        endpoint='task_without_id'
+        endpoint='task_without_id',
+        methods=('GET', 'POST')
     )
     api.add_resource(
         Task,
         path + '/<int:id>',
-        endpoint='task_with_id'
+        endpoint='task_with_id',
+        methods=('GET', 'DELETE')
     )
     api.add_resource(
         TaskResult,
         path + '/<int:id>/result',
-        endpoint='task_result'
+        endpoint='task_result',
+        methods=('GET',)
     )
 
 
@@ -119,11 +122,9 @@ class Task(Resource):
 
     @with_user
     @swag_from("swagger/delete_task_with_id.yaml", endpoint='task_with_id')
-    def delete(self, id=None):
+    def delete(self, id):
         """Deletes a task"""
         # TODO we might want to delete the corresponding results also?
-        # if not id:
-        #     return {"msg": "no task id is specified"}, HTTPStatus.BAD_REQUEST
 
         task = db.Task.get(id)
         if not task:
