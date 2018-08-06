@@ -18,26 +18,29 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
+def setup(api, api_base):
 
-    path = "/".join([API_BASE, module_name])
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
     
     api.add_resource(
         Result,
         path,
-        endpoint='result_without_id'
+        endpoint='result_without_id',
+        methods=('GET',)
     )
     api.add_resource(
         Result,
         path + '/<int:id>',
-        endpoint='result_with_id'
+        endpoint='result_with_id',
+        methods=('GET', 'PATCH')
     )
 
 
 # Schemas
 result_schema = ResultSchema()
 result_inc_schema = ResultTaskIncludedSchema()
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's

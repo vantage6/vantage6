@@ -26,22 +26,26 @@ def setup(api, API_BASE):
     api.add_resource(
         Organization,
         path,
-        endpoint='organization_without_id'
+        endpoint='organization_without_id',
+        methods=('GET', 'POST')
      )
     api.add_resource(
         Organization,
         path + '/<int:id>',
-        endpoint='organization_with_id'
+        endpoint='organization_with_id',
+        methods=('GET',)
     )
     api.add_resource(
         OrganizationCollaboration,
         path + '/<int:id>/collaboration',
-        endpoint='organization_collaboration'
+        endpoint='organization_collaboration',
+        methods=('GET',)
     )
     api.add_resource(
         OrganizationNode,
         path + '/<int:id>/node',
-        endpoint='organization_node'
+        endpoint='organization_node',
+        methods=('GET',)
     )
 
 

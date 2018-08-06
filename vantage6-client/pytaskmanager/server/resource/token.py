@@ -26,13 +26,15 @@ def setup(api, api_base):
     api.add_resource(
         Token,
         path,
-        endpoint='token'
+        endpoint='token',
+        methods=('POST',)
     )
 
     api.add_resource(
         RefreshToken,
         path+'/refresh',
-        endpoint='refresh_token'
+        endpoint='refresh_token',
+        methods=('POST',)
     )
 
 

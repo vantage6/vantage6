@@ -28,12 +28,14 @@ def setup(api, API_BASE):
     api.add_resource(
         User,
         path,
-        endpoint='user_without_id'
+        endpoint='user_without_id',
+        methods=('GET', 'POST')
     )
     api.add_resource(
         User,
         path + '/<int:user_id>',
-        endpoint='user_with_id'
+        endpoint='user_with_id',
+        methods=('GET', 'PATCH', 'DELETE')
     )
 
 
@@ -67,11 +69,8 @@ class User(Resource):
 
     @with_user
     @swag_from("swagger/post_user_without_id.yaml", endpoint='user_without_id')
-    def post(self, user_id=None):
+    def post(self):
         """Create a new User."""
-
-        # if user_id:
-        #     return {"msg": "id specified, but this is not allowed when using the POST method"}, HTTPStatus.BAD_REQUEST
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=True, help="This field is required")
@@ -98,9 +97,7 @@ class User(Resource):
 
     @with_user
     @swag_from("swagger/patch_user_with_id.yaml", endpoint='user_with_id')
-    def patch(self, user_id=None):
-        # if not user_id:
-        #     return {"msg": "to update an user you need to specify an id"}, 400
+    def patch(self, user_id):
 
         user = db.User.get(user_id)
 
@@ -133,9 +130,7 @@ class User(Resource):
 
     @with_user
     @swag_from("swagger/delete_user_with_id.yaml", endpoint='user_with_id')
-    def delete(self, user_id=None):
-        # if not user_id:
-        #     return {"msg": "to delete an user you need to specify an id"}, HTTPStatus.BAD_REQUEST
+    def delete(self, user_id):
 
         user = db.User.get(user_id)
         if not user:
