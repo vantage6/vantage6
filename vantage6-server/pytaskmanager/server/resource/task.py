@@ -51,7 +51,7 @@ class Task(Resource):
     task_schema = TaskSchema()
     task_result_schema = TaskIncludedSchema()
 
-    @with_user_or_node
+    # @with_user_or_node
     @swag_from("swagger/get_task_with_id.yaml", endpoint='task_with_id')
     @swag_from("swagger/get_task_without_id.yaml", endpoint='task_without_id')
     def get(self, id=None):
@@ -60,7 +60,7 @@ class Task(Resource):
             return {"msg": "task id={} is not found"}, HTTPStatus.NOT_FOUND
 
         s = self.task_result_schema if request.args.get('include') == 'results' else self.task_schema
-        return s.dump(task, many=not id), HTTPStatus.OK
+        return s.dump(task, many=not id).data, HTTPStatus.OK
 
     @with_user
     @swag_from("swagger/post_task_without_id.yaml", endpoint='task_without_id')
