@@ -11,7 +11,7 @@ from .. import db
 class TaskSchema(ModelSchema):
     _id = ma.URLFor('task_with_id', id='<id>')
     results = ma.List(ma.HyperlinkRelated('result_with_id'))
-    collaboration = ma.HyperlinkRelated('collaboration_with_id')
+    collaboration = ma.HyperlinkRelated('collaboration_without_id')
 
     complete = fields.Boolean()
 
