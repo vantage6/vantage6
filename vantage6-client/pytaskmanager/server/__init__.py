@@ -127,7 +127,7 @@ def index(path):
 # ------------------------------------------------------------------------------
 # init & run
 # ------------------------------------------------------------------------------
-def init(environment=None):
+def init(environment=None, init_resources=False):
     """Initialize the server using a site-wide ServerContext."""
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
@@ -141,11 +141,13 @@ def init(environment=None):
     ctx = util.ServerContext(APPNAME, 'default')
     ctx.init(ctx.config_file, environment)
 
-    # Load the flask.Resources
-    init_resources(ctx)
-
+    if init_resources:
+        init_resources(ctx)
 
     uri = ctx.get_database_location()
+    print('-' * 80)
+    print(uri)
+    print('-' * 80)
     db.init(uri)
 
 
