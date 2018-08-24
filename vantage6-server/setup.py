@@ -47,6 +47,7 @@ setup(
         'marshmallow',
         'marshmallow-sqlalchemy',
         'pyyaml',
+        'psycopg2',
         'requests',
         'termcolor',
         'sqlalchemy',
