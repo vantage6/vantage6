@@ -29,6 +29,6 @@ if env not in ['dev', 'test', 'acc', 'prod']:
 print('-' * 80)
 print('Using environment: {}'.format(env))
 print('-' * 80)
-ptm.server.init(env)
+ptm.server.init(env, init_resources=True)
 
 application = ptm.server.app
