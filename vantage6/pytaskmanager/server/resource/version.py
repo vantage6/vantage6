@@ -37,4 +37,4 @@ class Version(Resource):
     @swag_from("swagger/version.yaml", endpoint='version')
     def get(self):
         """Return the version of this server."""
-        return {"version": "0.1dev1"}
+        return {"version": "0.1dev2"}
