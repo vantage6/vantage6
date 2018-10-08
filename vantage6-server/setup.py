@@ -56,6 +56,7 @@ setup(
             'server/server.wsgi', 
             'VERSION', 
             '_data/*.yaml',
+            'server/resource/swagger/*.yaml'
         ],
     },
     entry_points={
