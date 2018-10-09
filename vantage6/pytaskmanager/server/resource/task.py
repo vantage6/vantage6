@@ -11,6 +11,7 @@ from . import with_user_or_node, with_user
 from ._schema import TaskSchema, TaskIncludedSchema
 from http import HTTPStatus
 from flasgger import swag_from
+from pathlib import Path
 
 from pytaskmanager.server import db
 
@@ -52,8 +53,8 @@ class Task(Resource):
     task_result_schema = TaskIncludedSchema()
 
     # @with_user_or_node
-    @swag_from("swagger/get_task_with_id.yaml", endpoint='task_with_id')
-    @swag_from("swagger/get_task_without_id.yaml", endpoint='task_without_id')
+    @swag_from(Path("swagger/get_task_with_id.yaml"), endpoint='task_with_id')
+    @swag_from(Path("swagger/get_task_without_id.yaml"), endpoint='task_without_id')
     def get(self, id=None):
         task = db.Task.get(id)
         if not task:
@@ -63,7 +64,7 @@ class Task(Resource):
         return s.dump(task, many=not id).data, HTTPStatus.OK
 
     @with_user
-    @swag_from("swagger/post_task_without_id.yaml", endpoint='task_without_id')
+    @swag_from(Path("swagger/post_task_without_id.yaml"), endpoint='task_without_id')
     def post(self):
         """Create a new Task."""
         data = request.get_json()
@@ -121,7 +122,7 @@ class Task(Resource):
     #         task.input = input_
 
     @with_user
-    @swag_from("swagger/delete_task_with_id.yaml", endpoint='task_with_id')
+    @swag_from(Path("swagger/delete_task_with_id.yaml"), endpoint='task_with_id')
     def delete(self, id):
         """Deletes a task"""
         # TODO we might want to delete the corresponding results also?
@@ -138,7 +139,7 @@ class TaskResult(Resource):
     """Resource for /api/task/<int:id>/result"""
 
     @with_user_or_node
-    @swag_from("swagger/get_task_result.yaml", endpoint='task_result')
+    @swag_from(Path("swagger/get_task_result.yaml"), endpoint='task_result')
     def get(self, id):
         """Return results for task."""
         task = db.Task.get(id)
