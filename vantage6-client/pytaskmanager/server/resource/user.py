@@ -48,8 +48,8 @@ class User(Resource):
     user_schema = UserSchema()
 
     @with_user
-    @swag_from(Path("swagger/get_user_with_id.yaml"), endpoint='user_with_id')
-    @swag_from(Path("swagger/get_user_without_id.yaml"), endpoint='user_without_id')
+    @swag_from(str(Path("swagger/get_user_with_id.yaml")), endpoint='user_with_id')
+    @swag_from(str(Path("swagger/get_user_without_id.yaml")), endpoint='user_without_id')
     def get(self, user_id=None):
         """Return user details."""
         all_users = db.User.get(user_id)
@@ -69,7 +69,7 @@ class User(Resource):
                 return self.user_schema.dump(all_users, many=False)
 
     @with_user
-    @swag_from(Path("swagger/post_user_without_id.yaml"), endpoint='user_without_id')
+    @swag_from(str(Path("swagger/post_user_without_id.yaml")), endpoint='user_without_id')
     def post(self):
         """Create a new User."""
 
@@ -97,7 +97,7 @@ class User(Resource):
         return self.user_schema.dump(user), HTTPStatus.CREATED
 
     @with_user
-    @swag_from(Path("swagger/patch_user_with_id.yaml"), endpoint='user_with_id')
+    @swag_from(str(Path("swagger/patch_user_with_id.yaml")), endpoint='user_with_id')
     def patch(self, user_id):
 
         user = db.User.get(user_id)
@@ -130,7 +130,7 @@ class User(Resource):
         return user, HTTPStatus.OK
 
     @with_user
-    @swag_from(Path("swagger/delete_user_with_id.yaml"), endpoint='user_with_id')
+    @swag_from(str(Path("swagger/delete_user_with_id.yaml")), endpoint='user_with_id')
     def delete(self, user_id):
 
         user = db.User.get(user_id)

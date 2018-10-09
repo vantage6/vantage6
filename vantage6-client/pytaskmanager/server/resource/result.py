@@ -52,8 +52,8 @@ class Result(Resource):
     """Resource for /api/task"""
 
     @with_user_or_node
-    @swag_from(Path("swagger\get_result_with_id.yaml"),endpoint="result_with_id")
-    @swag_from(Path("swagger\get_result_without_id.yaml"), endpoint="result_without_id")
+    @swag_from(str(Path("swagger\get_result_with_id.yaml")),endpoint="result_with_id")
+    @swag_from(str(Path("swagger\get_result_without_id.yaml")), endpoint="result_without_id")
     def get(self, id=None):
         if id:
             t = db.TaskResult.get(id)
@@ -77,7 +77,7 @@ class Result(Resource):
         return s.dump(t, many=not bool(id)), HTTPStatus.OK
 
     @with_node
-    @swag_from(Path("swagger\patch_result_with_id.yaml"), endpoint="result_with_id")
+    @swag_from(str(Path("swagger\patch_result_with_id.yaml")), endpoint="result_with_id")
     def patch(self, id):
         """Update a Result."""
         data = request.get_json()

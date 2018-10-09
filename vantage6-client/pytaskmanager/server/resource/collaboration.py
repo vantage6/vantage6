@@ -69,7 +69,7 @@ tasks_schema = TaskSchema()
 class Collaboration(Resource):
 
     @with_user
-    @swag_from(Path("swagger\post_collaboration_without_id.yaml"), endpoint='collaboration_without_id')
+    @swag_from(str(Path("swagger\post_collaboration_without_id.yaml")), endpoint='collaboration_without_id')
     def post(self):
         """create a new collaboration"""
 
@@ -99,8 +99,8 @@ class Collaboration(Resource):
         return collaboration_schema.dump(collaboration).data, HTTPStatus.OK
 
     @with_user_or_node
-    @swag_from(Path("swagger\get_collaboration_with_id.yaml"), endpoint='collaboration_with_id')
-    @swag_from(Path("swagger\get_collaboration_without_id.yaml"), endpoint='collaboration_without_id')
+    @swag_from(str(Path("swagger\get_collaboration_with_id.yaml")), endpoint='collaboration_with_id')
+    @swag_from(str(Path("swagger\get_collaboration_without_id.yaml")), endpoint='collaboration_without_id')
     def get(self, id=None):
         """collaboration or list of collaborations in case no id is provided"""
         collaboration = db.Collaboration.get(id)
@@ -121,7 +121,7 @@ class Collaboration(Resource):
         return collaboration_schema.dump(collaboration, many=not id).data, HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(Path("swagger\patch_collaboration_with_id.yaml"), endpoint='collaboration_with_id')
+    @swag_from(str(Path("swagger\patch_collaboration_with_id.yaml")), endpoint='collaboration_with_id')
     def patch(self, id):
         """update a collaboration"""
         # if "admin" not in g.user.roles:
@@ -148,7 +148,7 @@ class Collaboration(Resource):
         return collaboration_schema.dump(collaboration, many=False), HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(Path("swagger\delete_collaboration_with_id.yaml"), endpoint='collaboration_with_id')
+    @swag_from(str(Path("swagger\delete_collaboration_with_id.yaml")), endpoint='collaboration_with_id')
     def delete(self, id):
         """delete collaboration"""
 
@@ -164,7 +164,7 @@ class CollaborationOrganization(Resource):
     """Resource for /api/collaboration/<int:id>/organization."""
 
     @with_user
-    @swag_from(Path("swagger\get_collaboration_organization.yaml"), endpoint='collaboration_with_id_organization')
+    @swag_from(str(Path("swagger\get_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
     def get(self, id):
         """Return organizations for a specific collaboration."""
         collaboration = db.Collaboration.get(id)
@@ -181,7 +181,7 @@ class CollaborationOrganization(Resource):
         return collaboration.organizations, HTTPStatus.OK
 
     @with_user
-    @swag_from(Path("swagger\post_collaboration_organization.yaml"), endpoint='collaboration_with_id_organization')
+    @swag_from(str(Path("swagger\post_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
     def post(self, id):
         """Add an organizations to a specific collaboration."""
         # get collaboration to which te organization should be added
@@ -203,7 +203,7 @@ class CollaborationOrganization(Resource):
         return collaboration.organizations
 
     @with_user
-    @swag_from(Path("swagger\delete_collaboration_organization.yaml"), endpoint='collaboration_with_id_organization')
+    @swag_from(str(Path("swagger\delete_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
     def delete(self, id):
         """Removes an organization from a collaboration."""
         # get collaboration from which organization should be removed
@@ -231,7 +231,7 @@ class CollaborationNode(Resource):
     """Resource for /api/collaboration/<int:id>/node."""
 
     @with_user
-    @swag_from(Path("swagger\get_collaboration_node.yaml"), endpoint='collaboration_with_id_node')
+    @swag_from(str(Path("swagger\get_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
     def get(self, id):
         """"Return a list of nodes that belong to the collaboration."""
         collaboration = db.Collaboration.get(id)
@@ -243,7 +243,7 @@ class CollaborationNode(Resource):
         return collaboration.nodes, HTTPStatus.OK
 
     @with_user
-    @swag_from(Path("swagger\post_collaboration_node.yaml"), endpoint='collaboration_with_id_node')
+    @swag_from(str(Path("swagger\post_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
     def post(self, id):
         """Add an node to a specific collaboration."""
         collaboration = db.Collaboration.get(id)
@@ -266,7 +266,7 @@ class CollaborationNode(Resource):
         return collaboration.nodes
 
     @with_user
-    @swag_from(Path("swagger\delete_collaboration_node.yaml"), endpoint='collaboration_with_id_node')
+    @swag_from(str(Path("swagger\delete_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
     def delete(self, id):
         """Remove node from collaboration."""
         collaboration = db.Collaboration.get(id)
@@ -290,14 +290,14 @@ class CollaborationTask(Resource):
     """Resource for /api/collaboration/<int:id>/task."""
 
     @with_user_or_node
-    @swag_from(Path("swagger\get_collaboration_task.yaml"), endpoint='collaboration_with_id_task')
+    @swag_from(str(Path("swagger\get_collaboration_task.yaml")), endpoint='collaboration_with_id_task')
     def get(self, id):
         """List of tasks that belong to a collaboration"""
         collaboration = db.Collaboration.get(id)
         return tasks_schema.dump(collaboration.tasks, many=True)
 
     @with_user
-    @swag_from(Path("swagger\post_collaboration_task.yaml"), endpoint='collaboration_with_id_task')
+    @swag_from(str(Path("swagger\post_collaboration_task.yaml")), endpoint='collaboration_with_id_task')
     def post(self, id):
         """Attach new task to collaboration"""
         collaboration = db.Collaboration.get(id)
@@ -323,7 +323,7 @@ class CollaborationTask(Resource):
         return tasks_schema.dump(collaboration.tasks, many=True)
 
     @with_user
-    @swag_from(Path("swagger\delete_collaboration_task.yaml"), endpoint='collaboration_with_id_task')
+    @swag_from(str(Path("swagger\delete_collaboration_task.yaml")), endpoint='collaboration_with_id_task')
     def delete(self, id):
         """Remove task from collaboration"""
         collaboration = db.Collaboration.get(id)
