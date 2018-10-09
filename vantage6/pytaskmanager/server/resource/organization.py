@@ -59,8 +59,8 @@ class Organization(Resource):
     org_schema = OrganizationSchema()
 
     @with_user
-    @swag_from(Path("swagger\get_organization_with_id.yaml"), endpoint='organization_with_id')
-    @swag_from(Path("swagger\get_organization_without_id.yaml"), endpoint='organization_without_id')
+    @swag_from(str(Path("swagger\get_organization_with_id.yaml")), endpoint='organization_with_id')
+    @swag_from(str(Path("swagger\get_organization_without_id.yaml")), endpoint='organization_without_id')
     def get(self, id=None):
         organization = db.Organization.get(id)
         if not organization:
@@ -69,7 +69,7 @@ class Organization(Resource):
         return self.org_schema.dump(organization, many=not id).data, HTTPStatus.OK
 
     @with_user
-    @swag_from(Path("swagger\post_organization_without_id.yaml"), endpoint='organization_without_id')
+    @swag_from(str(Path("swagger\post_organization_without_id.yaml")), endpoint='organization_without_id')
     def post(self):
         """Create a new organization."""
 
@@ -93,7 +93,7 @@ class OrganizationCollaboration(Resource):
     col_schema = CollaborationSchema()
 
     @with_user_or_node
-    @swag_from(Path("swagger\get_organization_collaboration.yaml"), endpoint='organization_collaboration')
+    @swag_from(str(Path("swagger\get_organization_collaboration.yaml")), endpoint='organization_collaboration')
     def get(self, id):
         organization = db.Organization.get(id)
         if not organization:
@@ -123,7 +123,7 @@ class OrganizationNode(Resource):
     nod_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(Path("swagger\get_organization_node.yaml"), endpoint='organization_node')
+    @swag_from(str(Path("swagger\get_organization_node.yaml")), endpoint='organization_node')
     def get(self, id):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
