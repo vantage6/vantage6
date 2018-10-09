@@ -35,7 +35,7 @@ def setup(api, API_BASE):
 # ------------------------------------------------------------------------------
 class Version(Resource):
 
-    @swag_from(Path("swagger/version.yaml"), endpoint='version')
+    @swag_from(str(Path("swagger/version.yaml")), endpoint='version')
     def get(self):
         """Return the version of this server."""
         return {"version": "0.1dev2"}
