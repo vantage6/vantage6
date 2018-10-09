@@ -11,6 +11,8 @@ from flask_restful import Resource
 from flask_jwt_extended import jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
 from flasgger import swag_from
 from http import HTTPStatus
+from pathlib import Path
+
 from pytaskmanager import server
 from pytaskmanager.server import db
 
@@ -45,7 +47,7 @@ class Token(Resource):
     """resource for api/token"""
 
     @staticmethod
-    @swag_from("swagger\post_token.yaml", endpoint='token')
+    @swag_from(Path("swagger\post_token.yaml"), endpoint='token')
     def post():
         """Authenticate user or node"""
         if not request.is_json:
@@ -115,7 +117,7 @@ class Token(Resource):
 class RefreshToken(Resource):
 
     @jwt_refresh_token_required
-    @swag_from("swagger\post_token_refresh.yaml", endpoint='refresh_token')
+    @swag_from(Path("swagger\post_token_refresh.yaml"), endpoint='refresh_token')
     def post(self):
         """Create a token from a refresh token."""
         user_or_node_id = get_jwt_identity()
