@@ -11,6 +11,7 @@ from flask import g
 from flask_restful import reqparse
 from http import HTTPStatus
 from flasgger import swag_from
+from pathlib import Path
 
 from pytaskmanager.server import db
 from pytaskmanager.server.resource import with_user
@@ -47,8 +48,8 @@ class User(Resource):
     user_schema = UserSchema()
 
     @with_user
-    @swag_from("swagger/get_user_with_id.yaml", endpoint='user_with_id')
-    @swag_from("swagger/get_user_without_id.yaml", endpoint='user_without_id')
+    @swag_from(Path("swagger/get_user_with_id.yaml"), endpoint='user_with_id')
+    @swag_from(Path("swagger/get_user_without_id.yaml"), endpoint='user_without_id')
     def get(self, user_id=None):
         """Return user details."""
         all_users = db.User.get(user_id)
@@ -68,7 +69,7 @@ class User(Resource):
                 return self.user_schema.dump(all_users, many=False)
 
     @with_user
-    @swag_from("swagger/post_user_without_id.yaml", endpoint='user_without_id')
+    @swag_from(Path("swagger/post_user_without_id.yaml"), endpoint='user_without_id')
     def post(self):
         """Create a new User."""
 
@@ -93,10 +94,10 @@ class User(Resource):
         user.set_password(data["password"])
         user.save()
 
-        return self.user_schema(user), HTTPStatus.CREATED
+        return self.user_schema.dump(user), HTTPStatus.CREATED
 
     @with_user
-    @swag_from("swagger/patch_user_with_id.yaml", endpoint='user_with_id')
+    @swag_from(Path("swagger/patch_user_with_id.yaml"), endpoint='user_with_id')
     def patch(self, user_id):
 
         user = db.User.get(user_id)
@@ -129,7 +130,7 @@ class User(Resource):
         return user, HTTPStatus.OK
 
     @with_user
-    @swag_from("swagger/delete_user_with_id.yaml", endpoint='user_with_id')
+    @swag_from(Path("swagger/delete_user_with_id.yaml"), endpoint='user_with_id')
     def delete(self, user_id):
 
         user = db.User.get(user_id)

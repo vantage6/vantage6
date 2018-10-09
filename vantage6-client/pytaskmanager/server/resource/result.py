@@ -6,12 +6,15 @@ import logging
 
 from flask import g, request
 from flask_restful import Resource, abort
-from requests import codes as rqc
+from requests import codes as rqc # todo remove and use HTTPStatus
+from http import HTTPStatus
 from . import parse_datetime
 from . import with_user_or_node, with_node
 from ._schema import *
 from flasgger import swag_from
 from http import HTTPStatus
+from pathlib import Path
+
 from pytaskmanager.server import db
 
 module_name = __name__.split('.')[-1]
@@ -49,8 +52,8 @@ class Result(Resource):
     """Resource for /api/task"""
 
     @with_user_or_node
-    @swag_from("swagger\get_result_with_id.yaml",endpoint="result_with_id")
-    @swag_from("swagger\get_result_without_id.yaml", endpoint="result_without_id")
+    @swag_from(Path("swagger\get_result_with_id.yaml"),endpoint="result_with_id")
+    @swag_from(Path("swagger\get_result_without_id.yaml"), endpoint="result_without_id")
     def get(self, id=None):
         if id:
             t = db.TaskResult.get(id)
@@ -74,17 +77,17 @@ class Result(Resource):
         return s.dump(t, many=not bool(id)), HTTPStatus.OK
 
     @with_node
-    @swag_from("swagger\patch_result_with_id.yaml", endpoint="result_with_id")
+    @swag_from(Path("swagger\patch_result_with_id.yaml"), endpoint="result_with_id")
     def patch(self, id):
         """Update a Result."""
         data = request.get_json()
         result = db.TaskResult.get(id)
 
         if result.node_id != g.node.id:
-            abort(rqc.forbidden, message="Unauthorized: this is not your result to PUT!")
+            return {"msg": "This is not your result to PUT!"}, HTTPStatus.UNAUTHORIZED
 
         if result.finished_at is not None:
-            abort(rqc.not_allowed, message="Cannot update a finished result!")            
+            return {"msg": "Cannot update an already finished result!"}, HTTPStatus.BAD_REQUEST
 
         result.started_at = parse_datetime(data.get("started_at"), result.started_at)
         result.finished_at = parse_datetime(data.get("finished_at"))
@@ -94,5 +97,3 @@ class Result(Resource):
         result.save()
 
         return result
-
-

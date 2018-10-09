@@ -11,6 +11,8 @@ from flask_restful import Resource, reqparse
 from http import HTTPStatus
 from flasgger.utils import swag_from
 from . import with_user_or_node, with_user
+from pathlib import Path
+
 from ._schema import *
 
 module_name = __name__.split('.')[-1]
@@ -51,8 +53,8 @@ class Node(Resource):
     node_schema = NodeSchema()
 
     @with_user
-    @swag_from("swagger\get_node_with_node_id.yaml", endpoint='node_with_node_id')
-    @swag_from("swagger\get_node_without_node_id.yaml", endpoint='node_without_node_id')
+    @swag_from(Path("swagger\get_node_with_node_id.yaml"), endpoint='node_with_node_id')
+    @swag_from(Path("swagger\get_node_without_node_id.yaml"), endpoint='node_without_node_id')
     def get(self, id=None):
         nodes = db.Node.get(id)
 
@@ -69,7 +71,7 @@ class Node(Resource):
         return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from("swagger\post_node_without_node_id.yaml", endpoint='node_without_node_id')
+    @swag_from(Path("swagger\post_node_without_node_id.yaml"), endpoint='node_without_node_id')
     def post(self):
 
         parser = reqparse.RequestParser()
@@ -106,7 +108,7 @@ class Node(Resource):
         return self.node_schema.dump(node).data, HTTPStatus.CREATED  # 201
 
     @with_user
-    @swag_from("swagger\delete_node_with_node_id.yaml", endpoint='node_with_node_id')
+    @swag_from(Path("swagger\delete_node_with_node_id.yaml"), endpoint='node_with_node_id')
     def delete(self, id):
         """delete node account"""
         node = db.Node.get(id)
@@ -122,7 +124,7 @@ class Node(Resource):
         return {"msg": "successfully deleted node id={}".format(id)}, HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from("swagger\patch_node_with_node_id.yaml", endpoint='node_with_node_id')
+    @swag_from(Path("swagger\patch_node_with_node_id.yaml"), endpoint='node_with_node_id')
     def patch(self, id):
         """update existing node"""
         parser = reqparse.RequestParser()
@@ -185,7 +187,7 @@ class NodeTasks(Resource):
     task_result_schema = TaskResultSchema()
 
     @with_user_or_node
-    @swag_from("swagger\get_node_tasks.yaml", endpoint='node_tasks')
+    @swag_from(Path("swagger\get_node_tasks.yaml"), endpoint='node_tasks')
     def get(self, id):
         """Return a list of tasks for a node or a single task <task_result_id> belonging t.
 

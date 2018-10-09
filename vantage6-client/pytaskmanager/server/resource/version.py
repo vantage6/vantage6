@@ -8,6 +8,7 @@ import logging
 
 from flask_restful import Resource, abort
 from flasgger import swag_from
+from pathlib import Path
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -34,7 +35,7 @@ def setup(api, API_BASE):
 # ------------------------------------------------------------------------------
 class Version(Resource):
 
-    @swag_from("swagger/version.yaml", endpoint='version')
+    @swag_from(Path("swagger/version.yaml"), endpoint='version')
     def get(self):
         """Return the version of this server."""
         return {"version": "0.1dev2"}
