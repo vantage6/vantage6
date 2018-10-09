@@ -53,8 +53,8 @@ class Node(Resource):
     node_schema = NodeSchema()
 
     @with_user
-    @swag_from(str(Path("swagger\get_node_with_node_id.yaml")), endpoint='node_with_node_id')
-    @swag_from(str(Path("swagger\get_node_without_node_id.yaml")), endpoint='node_without_node_id')
+    @swag_from(str(Path(r"swagger/get_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    @swag_from(str(Path(r"swagger/get_node_without_node_id.yaml")), endpoint='node_without_node_id')
     def get(self, id=None):
         nodes = db.Node.get(id)
 
@@ -71,7 +71,7 @@ class Node(Resource):
         return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(str(Path("swagger\post_node_without_node_id.yaml")), endpoint='node_without_node_id')
+    @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")), endpoint='node_without_node_id')
     def post(self):
 
         parser = reqparse.RequestParser()
@@ -108,7 +108,7 @@ class Node(Resource):
         return self.node_schema.dump(node).data, HTTPStatus.CREATED  # 201
 
     @with_user
-    @swag_from(str(Path("swagger\delete_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    @swag_from(str(Path(r"swagger/delete_node_with_node_id.yaml")), endpoint='node_with_node_id')
     def delete(self, id):
         """delete node account"""
         node = db.Node.get(id)
@@ -124,7 +124,7 @@ class Node(Resource):
         return {"msg": "successfully deleted node id={}".format(id)}, HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(str(Path("swagger\patch_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    @swag_from(str(Path(r"swagger/patch_node_with_node_id.yaml")), endpoint='node_with_node_id')
     def patch(self, id):
         """update existing node"""
         parser = reqparse.RequestParser()
@@ -187,7 +187,7 @@ class NodeTasks(Resource):
     task_result_schema = TaskResultSchema()
 
     @with_user_or_node
-    @swag_from(str(Path("swagger\get_node_tasks.yaml")), endpoint='node_tasks')
+    @swag_from(str(Path(r"swagger/get_node_tasks.yaml")), endpoint='node_tasks')
     def get(self, id):
         """Return a list of tasks for a node or a single task <task_result_id> belonging t.
 
