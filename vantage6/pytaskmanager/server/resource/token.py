@@ -47,7 +47,7 @@ class Token(Resource):
     """resource for api/token"""
 
     @staticmethod
-    @swag_from(str(Path("swagger\post_token.yaml")), endpoint='token')
+    @swag_from(str(Path(r"swagger/post_token.yaml")), endpoint='token')
     def post():
         """Authenticate user or node"""
         if not request.is_json:
@@ -117,7 +117,7 @@ class Token(Resource):
 class RefreshToken(Resource):
 
     @jwt_refresh_token_required
-    @swag_from(str(Path("swagger\post_token_refresh.yaml")), endpoint='refresh_token')
+    @swag_from(str(Path(r"swagger/post_token_refresh.yaml")), endpoint='refresh_token')
     def post(self):
         """Create a token from a refresh token."""
         user_or_node_id = get_jwt_identity()
