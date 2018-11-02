@@ -1,0 +1,25 @@
+summary: List tasks from collaboration
+
+description:
+  Returns a list of all tasks which belong to the collaboration.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized
+  404:
+    description: specified collaboration does not exists
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

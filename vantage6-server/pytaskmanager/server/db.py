@@ -14,7 +14,10 @@ from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm.exc import NoResultFound
 
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
 
 # ------------------------------------------------------------------------------
 # Helper functions
@@ -107,9 +110,12 @@ class Base(object):
         session = Session()
 
         if id_ is None:
-            result =  session.query(cls).all()    
+            result = session.query(cls).all()
         else:
-            result = session.query(cls).filter_by(id=id_).one()
+            try:
+                result = session.query(cls).filter_by(id=id_).one()
+            except NoResultFound:
+                result = None
 
         if with_session:
             return result, session
@@ -121,8 +127,17 @@ class Base(object):
             session = Session()
             session.add(self)
         else:
-            session = object_session(self)
+            session = Session.object_session(self)
 
+        session.commit()
+
+    def delete(self):
+        if not self.id:
+            session = Session()
+        else:
+            session = Session.object_session(self)
+
+        session.delete(self)
         session.commit()
 
 
@@ -151,10 +166,10 @@ class Organization(Base):
     country = Column(String)
 
 
-
 # ------------------------------------------------------------------------------
 class Collaboration(Base):
     """Combination of 2 or more Organizations."""
+
     name = Column(String)
 
     organizations = relationship(
@@ -162,6 +177,20 @@ class Collaboration(Base):
         secondary=association_table_organization_collaboration, 
         backref='collaborations'
     )
+
+    def get_organization_ids(self):
+        return [organization.id for organization in self.organizations]
+
+    def get_task_ids(self):
+        return [task.id for task in self.tasks]
+
+    @classmethod
+    def get_collaboration_by_name(cls, name):
+        session = Session()
+        try:
+            return session.query(cls).filter_by(name=name).one()
+        except NoResultFound:
+            return None
 
 
 # ------------------------------------------------------------------------------
@@ -237,11 +266,11 @@ class User(Authenticatable):
         res = session.query(exists().where(cls.username == username)).scalar()
         return res
 
-    @classmethod
-    def remove_user(cls, username):
-        session = Session()
-        session.query(cls).filter_by(username=username).delete()
-        session.commit()
+    # @classmethod
+    # def remove_user(cls, username):
+    #     session = Session()
+    #     session.query(cls).filter_by(username=username).delete()
+    #     session.commit()
 
 
 # ------------------------------------------------------------------------------
@@ -261,14 +290,8 @@ class Node(Authenticatable):
     organization = relationship('Organization', backref='nodes')
 
     __mapper_args__ = {
-        'polymorphic_identity':'node',
+        'polymorphic_identity': 'node',
     }
-
-
-    @classmethod
-    def getByApiKey(cls, api_key):
-        session = Session()
-        return session.query(cls).filter_by(api_key=api_key).one()
 
     @property
     def open_tasks(self):
@@ -280,6 +303,18 @@ class Node(Authenticatable):
             values.append(r)
 
         return values
+
+    @classmethod
+    def get_by_api_key(cls, api_key):
+        """returns Node based on the provided API key"""
+        session = Session()
+
+        try:
+            return session.query(cls).filter_by(api_key=api_key).one()
+        except NoResultFound:
+            return None
+
+
 
 
 # ------------------------------------------------------------------------------
