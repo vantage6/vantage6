@@ -2,95 +2,208 @@
 """
 Resources below '/<api_base>/node'
 """
-import os, os.path
+
+import logging
+import uuid
 
 from flask import g, request
-from flask_restful import Resource
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt_claims
+from flask_restful import Resource, reqparse
+from http import HTTPStatus
+from flasgger.utils import swag_from
+from . import with_user_or_node, with_user
+from pathlib import Path
 
-import datetime
-import logging
+from ._schema import *
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-from .. import db
 
-from . import with_user_or_node
-from ._schema import *
-
-
-def setup(api, API_BASE):
-    path = "/".join([API_BASE, module_name])
+def setup(api, api_base):
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
-    api.add_resource(Node,
+    api.add_resource(
+        Node,
         path,
+        endpoint='node_without_node_id',
+        methods=('GET', 'POST')
+    )
+    api.add_resource(
+        Node,
         path + '/<int:id>',
-        endpoint='node'
+        endpoint='node_with_node_id',
+        methods=('GET', 'DELETE', 'PATCH')
     )
-    api.add_resource(NodeTasks,
+    api.add_resource(
+        NodeTasks,
         path + '/<int:id>/task',
-        path + '/<int:id>/task/<int:taskresult_id>',
+        endpoint='node_tasks',
+        methods=('GET', )
     )
 
-
-# Schemas
-node_schema = NodeSchema()
-taskresult_schema = TaskResultSchema()
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Node(Resource):
-    """Resource for /api/node/<int:id>."""
 
-    @with_user_or_node
+class Node(Resource):
+
+    # Schemas
+    node_schema = NodeSchema()
+
+    @with_user
+    @swag_from(str(Path(r"swagger/get_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    @swag_from(str(Path(r"swagger/get_node_without_node_id.yaml")), endpoint='node_without_node_id')
     def get(self, id=None):
+        nodes = db.Node.get(id)
+
+        if id:
+            if not nodes:
+                return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
+            if nodes.organization_id != g.user.organization_id and g.user.roles != 'admin':
+                return {"msg": "you are not allowed to see this node"}, HTTPStatus.FORBIDDEN  # 403
+        else:
+            # only the nodes of the users organization are returned
+            if g.user.roles != 'admin':
+                nodes = [node for node in nodes if node.organization_id == g.user.organization_id]
+
+        return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
+
+    @with_user
+    @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")), endpoint='node_without_node_id')
+    def post(self):
+
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            "collaboration_id",
+            type=int,
+            required=True,
+            help="This field cannot be left blank!"
+        )
+        data = parser.parse_args()
+
+        collaboration = db.Collaboration.get(data["collaboration_id"])
+
+        # check that the collaboration exists
+        if not collaboration:
+            return {"msg": "collaboration_id '{}' does not exist".format(
+                data["collaboration_id"]
+            )}, HTTPStatus.NOT_FOUND  # 404
+
+        # new api-key which node can use to authenticate
+        api_key = str(uuid.uuid1())
+
+        # store the new node
+        # TODO an admin does not have to belong to an organization?
+        organization = g.user.organization
+        node = db.Node(
+            name="{} - {} Node".format(organization.name, collaboration.name),
+            collaboration=collaboration,
+            organization=organization,
+            api_key=api_key
+        )
+        node.save()
+
+        return self.node_schema.dump(node).data, HTTPStatus.CREATED  # 201
+
+    @with_user
+    @swag_from(str(Path(r"swagger/delete_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    def delete(self, id):
+        """delete node account"""
         node = db.Node.get(id)
 
-        if g.user:
-            if id:
-                # FIXME: use proper roles instead of CSV
-                if 'root' in g.user.roles.replace(' ', '').split() or g.user in node.organization.users:
-                    # json_representation = db.jsonable(node)
-                    # json_representation['api_key'] = node.api_key
-                    # return json_representation
-                    return node_schema.dump(node)
+        if not node:
+            return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
 
-        elif g.node:
-            log.info(g.node)
+        if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
+            return {"msg": "you are not allowed to delete this node"}, HTTPStatus.FORBIDDEN  # 403
 
-        # return db.Node.get(id)
-        return node_schema.dump(node, many=not id)
+        node.delete()
+
+        return {"msg": "successfully deleted node id={}".format(id)}, HTTPStatus.OK  # 200
+
+    @with_user
+    @swag_from(str(Path(r"swagger/patch_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    def patch(self, id):
+        """update existing node"""
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            'collaboration_id',
+            type=int,
+            required=True,
+            help="This field cannot be left blank!"
+        )
+        data = parser.parse_args()
+
+        node = db.Node.get(id)
+
+        # create new node
+        if not node:
+            collaboration = db.Collaboration.get(data['collaboration_id'])
+
+            # check that the collaboration exists
+            if not collaboration:
+                return {"msg": "collaboration_id '{}' does not exist".format(
+                    data['collaboration_id'])}, HTTPStatus.NOT_FOUND  # 404
+
+            # new api-key which node can use to authenticate
+            api_key = str(uuid.uuid1())
+
+            # store the new node
+            # TODO an admin does not have to belong to an organization?
+            organization = g.user.organization
+            node = db.Node(
+                id=id,
+                name="{} - {} Node".format(organization.name, collaboration.name),
+                collaboration=collaboration,
+                organization=organization,
+                api_key=api_key
+            )
+            node.save()
+        else:  # update node
+            if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
+                return {"msg": "you are not allowed to edit this node"}, HTTPStatus.FORBIDDEN  # 403
+
+            node.collaboration_id = data['collaboration_id']
+            node.save()
+
+        return self.node_schema.dump(node).data, HTTPStatus.OK  # 200
 
 
 class NodeTasks(Resource):
-    """Resource for /api/node/<int:id>/task."""
+    """Resource for /api/node/<int:id>/task.
+    returns task(s) belonging to a specific node
+
+       Resource for /api/node/<int:id>/task/<int:id>
+    returns
+
+
+    TODO do we need the second usage? we can retrieve tasks by the endpoint /api/task
+    TODO if we do want to keep this, we need to make sure the user only sees task that belong to this node
+    TODO also the user can only see nodes which belong to their organization
+    """
+
+    task_result_schema = TaskResultSchema()
 
     @with_user_or_node
-    def get(self, id, taskresult_id=None):
-        """Return a list of tasks for a node.
+    @swag_from(str(Path(r"swagger/get_node_tasks.yaml")), endpoint='node_tasks')
+    def get(self, id):
+        """Return a list of tasks for a node or a single task <task_result_id> belonging t.
 
         If the query parameter 'state' equals 'open' the list is
         filtered to return only tasks without result.
         """
-        log = logging.getLogger(__name__)
 
-
-        if taskresult_id is not None:
-            result = db.TaskResult.get(taskresult_id)
-            return taskresult_schema.dump(result)
-
-        # If taskresult_id is None, we're returning all taskresults
-        # that belong to this node (potentially filtered by state).
+        # get tasks that belong to node <id>
         node = db.Node.get(id)
+        if not node:
+            return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
 
+        # filter tasks if a specific state is requested
         if request.args.get('state') == 'open':
-            results = [result for result in node.taskresults if result.finished_at is None]
-            return taskresult_schema.dump(results, many=True)
+            results = [result for result in node.taskresults if not result.finished_at]
+            return self.task_result_schema.dump(results, many=True), HTTPStatus.OK  # 200
 
-        return [result for result in node.taskresults]
-
-
-
+        results = [result for result in node.taskresults]
+        return results, HTTPStatus.OK  # 200

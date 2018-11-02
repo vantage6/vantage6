@@ -14,3 +14,5 @@ requests
 termcolor
 sqlalchemy
 click
+apispec
+flasgger

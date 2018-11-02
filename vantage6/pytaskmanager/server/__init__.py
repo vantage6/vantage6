@@ -9,6 +9,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_claims
 
 from flask_marshmallow import Marshmallow
+from flasgger import Swagger
 
 import datetime
 import logging
@@ -32,6 +33,55 @@ WEB_BASE = '/app'
 
 # Create Flask app
 app = Flask(APPNAME)
+# TODO app.config
+app.config['JWT_AUTH_URL_RULE'] ='/api/token'
+
+app.config['SWAGGER'] = {
+    'title': 'PyTaskManager',
+    'uiversion': 3,
+    'openapi': '3.0.0',
+    'definitions': {
+        'Collaboration':{
+            'properties':{
+                'collaboration_id':{
+                    'type': 'integer'
+                }
+            }
+        },
+        'User':{
+            'properties':{
+                'username':{
+                    'type': 'string'
+                },
+                'password':{
+                    'type': 'string'
+                }
+            },
+            'example':{
+                'username': 'string',
+                'password': 'string'
+            }
+        },
+        'Node':{
+            'properties':{
+                'api_key':{
+                    'type': 'string'
+                }
+            }
+        }
+    },
+    "securityDefinitions": { "api_key": { "type": "apiKey", "name": "Authorization", "in": "header" }}
+    # 'securityDefinitions': {
+    #     'bearerAuth': {
+    #         'type': 'http',
+    #         'scheme': 'bearer',
+    #         'bearerFormat': 'JWT'
+    #     }
+    # }
+}
+swagger = Swagger(app)
+
+# swagger.load_swagger_file('D:/Repositories/PyTaskManager/pytaskmanager/server/swagger/components.yaml')
 
 # Enable cross-origin resource sharing
 CORS(app)
@@ -158,8 +208,7 @@ def init_resources(ctx):
     if RESOURCES_INITIALIZED:
         return
 
-    print(ctx.config['env'])
-    API_BASE = ctx.config['env']['api_path']
+    api_base = ctx.config['app']['api_path']
 
     resources = [
             'node',
@@ -173,7 +222,7 @@ def init_resources(ctx):
     ]
 
     # Load resources
-    load_resources(api, API_BASE, resources)
+    load_resources(api, api_base, resources)
 
     # Make sure we do this only once
     RESOURCES_INITIALIZED = True
