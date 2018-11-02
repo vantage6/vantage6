@@ -1,0 +1,16 @@
+summary: List users
+
+description:
+  returns a list of users that are within the organization of the user. In case of an **administrator** all users from
+  all organizations are returned
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["User"]

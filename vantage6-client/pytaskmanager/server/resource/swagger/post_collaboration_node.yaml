@@ -1,0 +1,36 @@
+summary: Add node to collaboration
+
+description:
+  Adds a single node to an existing collaboration
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          id:
+            type: integer
+            description: node id which should be added
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration or node not found
+  400:
+    description: node is alrady in collaboration
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]
