@@ -198,7 +198,8 @@ def cli_server_remove_user(username):
 
     # check if user exists, and delete if this is the case
     if db.User.username_exists(username):
-        click.echo(db.User.remove_user(username))
+        user = db.User.getByUsername(username)
+        user.delete()
         log.info('user: "{}" has been removed from the database'.format(username))
     else:
         log.warning('username "{}" does not exist'.format(username))

@@ -2,40 +2,48 @@
 """
 Resources below '/<api_base>/collaboration'
 """
-import os, os.path
+import logging
 
 from flask import g, request
 from flask_restful import Resource, abort
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
-
-from requests import codes as rqc
-
-import logging
-module_name = __name__.split('.')[-1]
-log = logging.getLogger(module_name)
-
-from .. import db
-
+from requests import codes as rqc # todo remove and use HTTPStatus
+from http import HTTPStatus
 from . import parse_datetime
 from . import with_user_or_node, with_node
 from ._schema import *
+from flasgger import swag_from
+from http import HTTPStatus
+from pathlib import Path
+
+from pytaskmanager.server import db
+
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
-    module_name = __name__.split('.')[-1]
-    path = "/".join([API_BASE, module_name])
+def setup(api, api_base):
+
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
     
-    api.add_resource(Result,
+    api.add_resource(
+        Result,
         path,
+        endpoint='result_without_id',
+        methods=('GET',)
+    )
+    api.add_resource(
+        Result,
         path + '/<int:id>',
-        endpoint='result'
+        endpoint='result_with_id',
+        methods=('GET', 'PATCH')
     )
 
 
 # Schemas
 result_schema = ResultSchema()
 result_inc_schema = ResultTaskIncludedSchema()
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's
@@ -44,6 +52,8 @@ class Result(Resource):
     """Resource for /api/task"""
 
     @with_user_or_node
+    @swag_from(str(Path(r"swagger/get_result_with_id.yaml")),endpoint="result_with_id")
+    @swag_from(str(Path(r"swagger/get_result_without_id.yaml")), endpoint="result_without_id")
     def get(self, id=None):
         if id:
             t = db.TaskResult.get(id)
@@ -64,24 +74,20 @@ class Result(Resource):
         else:
             s = result_schema
 
-        return s.dump(t, many=not bool(id))
-
-
-    def post(self, id=None):
-        abort(rqc.not_allowed, message="Results cannot be created by POSTing.")
-
+        return s.dump(t, many=not bool(id)), HTTPStatus.OK
 
     @with_node
-    def put(self, id):
+    @swag_from(str(Path(r"swagger/patch_result_with_id.yaml")), endpoint="result_with_id")
+    def patch(self, id):
         """Update a Result."""
         data = request.get_json()
         result = db.TaskResult.get(id)
 
         if result.node_id != g.node.id:
-            abort(rqc.forbidden, message="Unauthorized: this is not your result to PUT!")
+            return {"msg": "This is not your result to PUT!"}, HTTPStatus.UNAUTHORIZED
 
         if result.finished_at is not None:
-            abort(rqc.not_allowed, message="Cannot update a finished result!")            
+            return {"msg": "Cannot update an already finished result!"}, HTTPStatus.BAD_REQUEST
 
         result.started_at = parse_datetime(data.get("started_at"), result.started_at)
         result.finished_at = parse_datetime(data.get("finished_at"))
@@ -91,5 +97,3 @@ class Result(Resource):
         result.save()
 
         return result
-
-

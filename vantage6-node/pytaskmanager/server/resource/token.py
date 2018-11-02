@@ -3,92 +3,121 @@
 Resources below '/<api_base>/token'
 """
 from __future__ import print_function, unicode_literals
-import os, os.path
-
-from flask import request
-from flask_restful import Api, Resource, abort
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
-
-import sqlalchemy
 
 import logging
+
+from flask import request, jsonify
+from flask_restful import Resource
+from flask_jwt_extended import jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
+from flasgger import swag_from
+from http import HTTPStatus
+from pathlib import Path
+
+from pytaskmanager import server
+from pytaskmanager.server import db
+
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-from .. import db
-import pytaskmanager.server as server
 
+def setup(api, api_base):
 
-def setup(api, API_BASE):
-    module_name = __name__.split('.')[-1]
-    path = "/".join([API_BASE, module_name])
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
-    api.add_resource(Token, path)
-    api.add_resource(RefreshToken, path+'/refresh')
+    api.add_resource(
+        Token,
+        path,
+        endpoint='token',
+        methods=('POST',)
+    )
+
+    api.add_resource(
+        RefreshToken,
+        path+'/refresh',
+        endpoint='refresh_token',
+        methods=('POST',)
+    )
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Token(Resource):
+    """resource for api/token"""
 
-    def post(self):
-        """Create a new Token."""
+    @staticmethod
+    @swag_from(str(Path(r"swagger/post_token.yaml")), endpoint='token')
+    def post():
+        """Authenticate user or node"""
         if not request.is_json:
             log.warning('POST request without JSON body.')
-            log.warning(request.headers)
-            log.warning(request.data)
-            return {"msg": "Missing JSON in request"}, 400
+            return {"msg": "Missing JSON in request"}, HTTPStatus.BAD_REQUEST
 
         username = request.json.get('username', None)
         password = request.json.get('password', None)
         api_key = request.json.get('api_key', None)
 
         if username and password:
-            log.info("trying to login '{}'".format(username))
-            user = db.User.getByUsername(username)
+            user, code = Token.user_login(username, password)
+            if code is not HTTPStatus.OK:  # login failed
+                return user, code
 
-            if not user.check_password(password):
-                return {"msg": "Computer says no!"}, 401
-
+            token = create_access_token(user)
             ret = {
-                'access_token': create_access_token(user),
+                'access_token': token,
                 'refresh_token': create_refresh_token(user),
-                'user_url': server.api.url_for(server.resource.node.Node, id=user.id),
+                'user_url': server.api.url_for(server.resource.user.User, user_id=user.id),
                 'refresh_url': server.api.url_for(RefreshToken),
             }
 
-            log.info("Succesful login for '{}'".format(username))
-            return ret, 200
+            return ret, HTTPStatus.OK, {'jwt-token': token}
 
         elif api_key:
             log.info("trying to authenticate node with api_key")
-            try:
-                node = db.Node.getByApiKey(api_key)
-
+            node = db.Node.get_by_api_key(api_key)
+            if node:
                 ret = {
                     'access_token': create_access_token(node),
                     'refresh_token': create_refresh_token(node),
                     'node_url': server.api.url_for(server.resource.node.Node, id=node.id),
                     'refresh_url': server.api.url_for(RefreshToken),
                 }
-
                 log.info("Authenticated as node '{}' ({})".format(node.id, node.name))
-            # FIXME: should not depend on sqlalchemy errors
-            except sqlalchemy.orm.exc.NoResultFound as e:
-                log.info("Invalid API-key! Aborting!")
-                return abort(401, message="Invalid API-key!")
+                return ret, HTTPStatus.OK
 
-            return ret, 200
+            else:
+                msg = "Invalid API-key!"
+                log.error(msg)
+                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
-        msg = "No username and/or pasword nor API-key!? Aren't you forgetting something?"
-        log.error(msg)
-        return {"msg": msg}, 404
+        else:
+            return {"msg": "no API key or user/password combination provided"}, 400
+
+    @staticmethod
+    def user_login(username, password):
+        """Returns user or message in case of failed login attempt"""
+        log.info("trying to login '{}'".format(username))
+
+        if db.User.username_exists(username):
+            user = db.User.getByUsername(username)
+            if not user.check_password(password):
+                msg = "password for username={} is invalid".format(username)
+                log.error(msg)
+                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+        else:
+            msg = "username={} does not exist".format(username)
+            log.error(msg)
+            return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+
+        log.info("Successful login for '{}'".format(username))
+        return user, HTTPStatus.OK
 
 
 class RefreshToken(Resource):
 
     @jwt_refresh_token_required
+    @swag_from(str(Path(r"swagger/post_token_refresh.yaml")), endpoint='refresh_token')
     def post(self):
         """Create a token from a refresh token."""
         user_or_node_id = get_jwt_identity()
@@ -96,4 +125,4 @@ class RefreshToken(Resource):
         user_or_node = db.Authenticatable.get(user_or_node_id)
         ret = {'access_token': create_access_token(user_or_node)}
 
-        return ret, 200
+        return ret, HTTPStatus.OK
