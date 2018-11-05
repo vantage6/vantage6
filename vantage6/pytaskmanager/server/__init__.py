@@ -3,12 +3,14 @@
 import os, sys
 import importlib
 
-from flask import Flask, Response, request, render_template, make_response
+from flask import Flask, Response, request, render_template, make_response, g, session
 from flask_restful import Resource, Api, fields
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, get_jwt_claims
+from flask_jwt_extended import JWTManager, get_jwt_identity, get_jwt_claims, get_raw_jwt, jwt_required, jwt_optional
 
 from flask_marshmallow import Marshmallow
+from flask_socketio import SocketIO, emit, send,join_room, leave_room
+
 from flasgger import Swagger
 
 import datetime
@@ -81,8 +83,6 @@ app.config['SWAGGER'] = {
 }
 swagger = Swagger(app)
 
-# swagger.load_swagger_file('D:/Repositories/PyTaskManager/pytaskmanager/server/swagger/components.yaml')
-
 # Enable cross-origin resource sharing
 CORS(app)
 
@@ -91,7 +91,6 @@ CORS(app)
 # Api - REST JSON-rpc
 # ------------------------------------------------------------------------------
 api = Api(app)
-
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
@@ -111,6 +110,10 @@ def output_json(data, code, headers=None):
 # ------------------------------------------------------------------------------
 ma = Marshmallow(app)
 
+# ------------------------------------------------------------------------------
+# Setup flask-socketio
+# ------------------------------------------------------------------------------
+socketio = SocketIO(app)
 
 # ------------------------------------------------------------------------------
 # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
@@ -149,9 +152,6 @@ def user_identity_loader(user_or_node):
 
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
-    # user_or_node = None
-    # claims = get_jwt_claims()
-
     return db.Authenticatable.get(identity)
 
 
@@ -171,7 +171,102 @@ def load_resources(api, API_BASE, resources):
 @app.route(WEB_BASE+'/', defaults={'path': ''})
 @app.route(WEB_BASE+'/<path:path>')
 def index(path):
-    return "Hello, World"
+    return """
+    <html>
+        <head>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.dev.js"></script>
+        <script type="text/javascript" charset="utf-8">
+            setTimeout(function() {
+                console.log('running javascript');
+                socket = io.connect('http://' + document.domain + ':' + location.port, { transports: ['websocket']});
+
+                socket.on('message', function(msg){
+                    console.log(msg);
+                });
+
+                socket.on('connect', function() {
+                    console.log('emitting!');
+                    socket.emit("my event", {data: "I'm connected!"});
+                });},
+                2000
+            );
+        </script>
+        </head>
+        <body>
+            <h1>Hi there!!</h2>
+        </body>
+    </html>
+"""
+
+@socketio.on('connect', namespace='/')
+@jwt_optional
+def on_socket_connect():
+    log = logging.getLogger("socket.io")
+    log.info(f'Client connected: "{request.sid}"')
+    user_or_node_id = get_jwt_identity()
+
+    if user_or_node_id is None:
+        return False
+
+    user_or_node = db.Authenticatable.get(user_or_node_id)
+    log.info(f'user_or_node.username: {user_or_node.username}')
+    session.username = user_or_node.username
+    
+    room = 'all_connections'
+    join_room(room)
+    send(user_or_node.username + ' has entered the room.', room=room)
+
+    return True
+
+
+@socketio.on('join')
+def on_join():
+    username = request.sid
+    room = 'all_connections'
+    join_room(room)
+    send(session.username + ' has entered the room.', room=room)
+
+@socketio.on('leave')
+def on_leave(data):
+    username = data['username']
+    room = data['room']
+    leave_room(room)
+    send(username + ' has left the room.', room=room)
+
+@socketio.on('disconnect', namespace='/')
+def on_socket_disconnect():
+    log = logging.getLogger("socket.io")
+    log.info('Client disconnected')
+
+
+
+@socketio.on('my event')
+def on_my_event(json=None):
+    log = logging.getLogger("socket.io")
+    log.info('received json: ' + str(json))
+
+    emit('my event', 'this is an event with a space in its name :-)')
+    emit('unnown event', 'params!')
+
+    send({'request.sid': request.sid})
+    send('a regular message')
+
+@socketio.on('message')
+def on_message(message):
+    log = logging.getLogger("socket.io")    
+    log.info('received message: ' + message)
+
+# Handles the default namespace
+@socketio.on_error()        
+def on_error(e):
+    log = logging.getLogger("socket.io")
+    log.error(e)
+
+# handles all namespaces without an explicit error handler
+@socketio.on_error_default  
+def default_error_handler(e):
+    log = logging.getLogger("socket.io")
+    log.error(e)
 
 
 # ------------------------------------------------------------------------------
@@ -219,6 +314,7 @@ def init_resources(ctx):
             'token',
             'user',
             'version',
+            'websocket_test',
     ]
 
     # Load resources
@@ -246,7 +342,8 @@ def run(ctx, *args, **kwargs):
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
     # Actually start the server
-    app.run(*args, **kwargs)
+    # app.run(*args, **kwargs)
+    SocketIO.run(app, *args, **kwargs)
 
 
 
