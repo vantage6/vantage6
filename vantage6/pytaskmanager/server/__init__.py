@@ -6,10 +6,11 @@ import importlib
 from flask import Flask, Response, request, render_template, make_response, g, session
 from flask_restful import Resource, Api, fields
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, get_jwt_identity, get_jwt_claims, get_raw_jwt, jwt_required, jwt_optional
+from flask_jwt_extended import JWTManager, get_jwt_identity, get_jwt_claims, get_raw_jwt, jwt_required, jwt_optional, verify_jwt_in_request
 
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, emit, send,join_room, leave_room
+
 
 from flasgger import Swagger
 
@@ -113,7 +114,10 @@ ma = Marshmallow(app)
 # ------------------------------------------------------------------------------
 # Setup flask-socketio
 # ------------------------------------------------------------------------------
-socketio = SocketIO(app)
+try:
+    socketio = SocketIO(app, async_mode='gevent_uwsgi')
+except:
+    socketio = SocketIO(app)
 
 # ------------------------------------------------------------------------------
 # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
@@ -199,25 +203,28 @@ def index(path):
 """
 
 @socketio.on('connect', namespace='/')
-@jwt_optional
 def on_socket_connect():
     log = logging.getLogger("socket.io")
     log.info(f'Client connected: "{request.sid}"')
-    user_or_node_id = get_jwt_identity()
 
-    if user_or_node_id is None:
+    try:
+        verify_jwt_in_request()
+    except Exception as e:
+        log.error("Could not connect client!?")
+        log.exception(e)
         return False
 
-    user_or_node = db.Authenticatable.get(user_or_node_id)
-    log.info(f'user_or_node.username: {user_or_node.username}')
+    user_or_node_id = get_jwt_identity()
+    user_or_node = db.Authenticatable.get(user_or_node_id)    
     session.username = user_or_node.username
+
+    log.info(f'user_or_node.username: {user_or_node.username}')
     
     room = 'all_connections'
     join_room(room)
     send(user_or_node.username + ' has entered the room.', room=room)
 
     return True
-
 
 @socketio.on('join')
 def on_join():
@@ -272,7 +279,7 @@ def default_error_handler(e):
 # ------------------------------------------------------------------------------
 # init & run
 # ------------------------------------------------------------------------------
-def init(environment=None, init_resources=False):
+def init(environment=None, init_resources_=False):
     """Initialize the server using a site-wide ServerContext."""
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
@@ -286,7 +293,7 @@ def init(environment=None, init_resources=False):
     ctx = util.ServerContext(APPNAME, 'default')
     ctx.init(ctx.config_file, environment)
 
-    if init_resources:
+    if init_resources_:
         init_resources(ctx)
 
     uri = ctx.get_database_location()
@@ -330,12 +337,9 @@ def run(ctx, *args, **kwargs):
         Note that this method is never called when the server is instantiated
         through the Web Server Gateway Interface (WSGI)!
     """
-    # Load configuration and init logging
+    # Prevent logging from urllib3
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    uri = ctx.get_database_location()
-    db.init(uri)
-    
     # Set an extra long expiration time on access tokens for testing
     if ctx.config['env']['type'] == 'test':
         log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
@@ -343,7 +347,7 @@ def run(ctx, *args, **kwargs):
 
     # Actually start the server
     # app.run(*args, **kwargs)
-    SocketIO.run(app, *args, **kwargs)
+    socketio.run(app, *args, **kwargs)
 
 
 
