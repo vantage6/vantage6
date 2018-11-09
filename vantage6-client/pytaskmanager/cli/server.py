@@ -68,10 +68,10 @@ def cli_server_start(ctx, ip, port, debug):
     # click.echo(f"  port: {port}")
     # Load the flask.Resources
     server.init_resources(ctx)
-
+    print(ctx.config['app'])
     # Run the server
-    ip = ip or ctx.config['env']['ip'] or '127.0.0.1'
-    port = port or ctx.config['env']['port'] or 5000
+    ip = ip or ctx.config['app']['ip'] or '127.0.0.1'
+    port = port or ctx.config['app']['port'] or 5000
     server.run(ctx, ip, port, debug=debug)
 
 
