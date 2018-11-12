@@ -1,7 +1,4 @@
 application:
-  ip: '0.0.0.0' # ip address to listen on
-  port: 5000   # port to listen on
-  api_path: /api
   logging:
     level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
     file:         default.log            # Filename of logfile
@@ -15,11 +12,17 @@ environments:
   test:
     description: Test
     type: test
+    ip: '127.0.0.1' 
+    port: 5000  
+    api_path: /api
     uri: sqlite:///test.sqlite
     allow_drop_all: True
 
   prod:
     description: Production
     type: prod
+    ip: '127.0.0.1' 
+    port: 5000  
+    api_path: /api
     uri: sqlite:///prod.sqlite
     allow_drop_all: False
