@@ -5,6 +5,7 @@ import sys
 import os, os.path
 import pprint
 
+import pytaskmanager.util.Colorer
 import logging
 import logging.handlers
 
@@ -91,14 +92,18 @@ class AppContext(metaclass=Singleton):
 
     def init(self, config_file, environment=None):
         """Load the configuration from disk and setup logging."""
-        self.environment = environment
+        self.environment = environment if environment else 'test'
+        print(f"argument enviroment={environment}")
 
         # Load configuration
         config = self.load_config(config_file)
 
         # FIXME: this is a hack!
+        # TODO we changed the config file, app is no longer used as 
+        # all is enviroment specific
         cfg_app = config['application']
-        cfg_env = config.get('environments', {}).get(environment)
+        cfg_env = config['application']['environments'][self.environment]
+        # cfg_env = config.get('environments', {}).get(environment)
 
         self.config = {
             'app': cfg_app,
@@ -157,9 +162,12 @@ class AppContext(metaclass=Singleton):
     def setup_logging(self):
         """Setup a basic logging mechanism."""
         if self.environment is None:
+            print(f"no environment found")
             config = self.config['app']
         else:
             config = self.config['env']
+            print(f"enviroment found {self.environment}")
+        print(self.config)
 
         if ('logging' not in config) or (config["logging"]["level"].upper() == 'NONE'):
             return

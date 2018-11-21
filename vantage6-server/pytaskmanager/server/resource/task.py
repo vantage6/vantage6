@@ -14,6 +14,7 @@ from flasgger import swag_from
 from pathlib import Path
 
 from pytaskmanager.server import db
+from pytaskmanager.server import socketio
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -94,6 +95,11 @@ class Task(Resource):
             db.TaskResult(task=task, node=c)
 
         task.save()
+
+        # if the node is connected send a socket message that there
+        # is a new task available
+        socketio.emit('new_task', task.id, room='collaboration_'+str(task.collaboration_id))
+
         return self.task_schema.dump(task, many=False)
 
     # @with_user_or_node
