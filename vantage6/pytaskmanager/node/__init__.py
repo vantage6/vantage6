@@ -21,11 +21,6 @@ from socketIO_client import SocketIO, SocketIONamespace
 
 from pytaskmanager import util
 
-
-module_name = __name__.split('.')[-1]
-log = logging.getLogger(module_name)
-
-
 class NodeNamespace(SocketIONamespace):
     """Class that handles incomming websocket events."""
 
@@ -33,21 +28,24 @@ class NodeNamespace(SocketIONamespace):
     # node instance.
     task_master_node_ref = None
 
+    def __init__(self, *args, **kwargs):
+        self.log = logging.getLogger(__name__)
+        super().__init__(*args, **kwargs)
+
     def on_disconnect(self):
         """Call-back when the server disconnects."""
 
-        log.debug('diconnected callback')
-        log.info('Disconnected from the server')
+        self.log.debug('diconnected callback')
+        self.log.info('Disconnected from the server')
     
     def on_new_task(self, task_id):
         """Call back to fetch new available tasks."""
 
         if self.task_master_node_ref:
             self.task_master_node_ref.get_task_and_add_to_queue(task_id)
-            log.info(f'New task has been added task_id={task_id}')
+            self.log.info(f'New task has been added task_id={task_id}')
         else:
-            log.critical('Task Master Node reference not set is socket namespace')
-
+            self.log.critical('Task Master Node reference not set is socket namespace')
 
 # ------------------------------------------------------------------------------
 class AuthenticationError(Exception):
@@ -57,10 +55,14 @@ class AuthenticationError(Exception):
 
 # ------------------------------------------------------------------------------
 class NodeBase(object):
-    """Base class for Node and TaskMasterNode."""
+    """Base class for Node and TaskMasterNode. Provides the interface to the
+    ppDLI server."""
+    
     def __init__(self, host, api_path='/api'):
-
         """Initialize a ClientBase instance."""
+
+        self.log = logging.getLogger(__name__)
+
         self._HOST = host
 
         if api_path.endswith('/') and len(api_path) > 1:
@@ -75,41 +77,24 @@ class NodeBase(object):
         self._REFRESH_TOKEN = None
 
     def get_url(self, path):
-        url = ''
-        if path.startswith('/'):
-            url = self._HOST + path
-        else:
-            url = self._HOST + self._API_PATH + '/' + path
-
-        return url
-
-    def authenticate(self, username=None, password=None, api_key=None):
-        """Authenticate with the server as a User or Node.
-
-        Either username and password OR api_key should be provided.
-        """
+        return self._HOST + path if path.startswith('/') else \
+          self._HOST + self._API_PATH + '/' + path 
         
+    def authenticate(self, api_key=None):
+        """Authenticate with the server as a Node."""
+
+        # get url where token can be obtained.
         url = self.get_url('token')
 
-        # Infer whether we're authenticating as a user or as a node.
-        if username:
-            data = {
-                'username': username,
-                'password': password
-            }
-        else:
-            data = {'api_key': api_key}
-
-        # Request a token from the server.
-        response = requests.post(url, json=data)
+        # request a token from the server.
+        response = requests.post(url, json={'api_key': api_key})
         response_data = response.json()
 
-        # TODO handle not authorized messages
+        # handle authentication problems
         if response.status_code != 200:
             msg = response_data.get('msg')
             raise AuthenticationError(msg)
-
-        log.info("Authentication succesful!")
+        self.log.info("Authenticated")
 
         # Process the response
         self._ACCESS_TOKEN = response_data['access_token']
@@ -117,15 +102,14 @@ class NodeBase(object):
         self._REFRESH_URL = response_data['refresh_url']
 
         decoded_token = jwt.decode(self._ACCESS_TOKEN, verify=False)
-        # log.debug("JWT payload: {}".format(decoded_token))
-
+        
         return response_data, decoded_token
 
     def refresh_token(self):
         if self._REFRESH_URL is None:
             raise AuthenticationError('Not authenticated!')
 
-        log.info('Refreshing token')
+        self.log.info('Refreshing token')
 
         url = '{}{}'.format(self._HOST, self._REFRESH_URL)
         response = requests.post(url, headers={'Authorization': 'Bearer ' + self._REFRESH_TOKEN})
@@ -149,7 +133,7 @@ class NodeBase(object):
         }
 
         url = self.get_url(path)
-        log.debug(f"{method} | {url}")
+        self.log.debug(f"{method} | {url}")
 
         if method == 'put':
             response = requests.put(url, json=json_data, headers=headers)
@@ -165,9 +149,9 @@ class NodeBase(object):
         # TODO only do this when token is expired!
         if response.status_code != 200:
             msg = response_data.get('msg')
-            log.warning('Request failed: {}'.format(msg))
+            self.log.warning('Request failed: {}'.format(msg))
             self.refresh_token()
-            log.info('Retrying ...')
+            self.log.info('Retrying ...')
             return self.request(path, json_data, method)
 
         return response_data
@@ -193,10 +177,6 @@ class NodeBase(object):
 
         return self.request('task', json_data=task, method='post')
 
-# ------------------------------------------------------------------------------
-class Node(NodeBase):
-    """Class for communicating with the server in custom scripts."""
-    pass
 
 # ------------------------------------------------------------------------------
 class TaskMasterNode(NodeBase):
@@ -205,18 +185,9 @@ class TaskMasterNode(NodeBase):
     def __init__(self, ctx):
         """Initialize a new TaskMasterNode instance."""
 
-        self.log = logging.getLogger(__name__)
-
         self.ctx = ctx
-        self.name = None
-        self.config = None
-
-        # if context is provided load enviroment settings
-        # TODO is this correct? in case no ctx is provided
-        # this will fail, right?
-        if ctx:
-            self.name = ctx.instance_name
-            self.config = ctx.config['env']
+        self.name = ctx.instance_name
+        self.config = ctx.config['env']
 
         super().__init__(
             self.config['server_url'], 
@@ -228,32 +199,33 @@ class TaskMasterNode(NodeBase):
 
         # Authenticate to the DL server, obtaining a JWT
         # authorization token.
-        log.debug("authenticating")
+        self.log.debug("authenticating")
         self.authenticate()
 
         # Create a long-lasting websocket connection.
-        log.debug("create socket connection with the server")
+        self.log.debug("create socket connection with the server")
         self.__connect_to_socket(action_handler=NodeNamespace)
 
         # listen forever for incomming messages, tasks are stored in
         # the queue.
         self.queue = queue.Queue()
-        log.debug("start thread for incomming messages (tasks)")
+        self.log.debug("start thread for incomming messages (tasks)")
         t = Thread(target=self.__listening_worker, daemon=True)
         t.start()
 
         # check if new tasks were posted while offline.
-        log.debug("fetching tasks that were posted while offline")
-        self.sync_task_que_with_server() 
+        self.log.debug("fetching tasks that were posted while offline")
+        self.__sync_task_que_with_server() 
 
     def authenticate(self):
-        """Authenticate with the server using the api-key."""
-        authenticated = False
-        while not authenticated:
+        """Authenticate with the server using the api-key. If the server
+        rejects for any reason we keep trying."""
+        
+        while True:
             try:
                 response_data, decoded_token = super().authenticate(
                     api_key=self.config['api_key'])
-                authenticated = True
+                break # authenticated, leave loop
             except Exception as e:
                 self.log.warning('Connection refused by server, server might be offline')
                 self.log.info('trying again in 10 seconds')
@@ -261,19 +233,9 @@ class TaskMasterNode(NodeBase):
                 time.sleep(10)
         
         self.node_id = decoded_token['identity']
+
         node = self.request(response_data['node_url'])
-        
-        log.info("Node name: '{name}'".format(**node))
-
-    def sync_task_que_with_server(self):
-        """Get all unprocessed tasks from the server"""
-
-        url = f'result?state=open&include=task&node_id={self.node_id}'
-
-        for task in self.request(url):
-            self.queue.put(task)
-
-        self.log.info(f"there are {self.queue._qsize()} new tasks since last time" )
+        self.log.info("Node name: '{name}'".format(**node))
 
     def get_task_and_add_to_queue(self, task_id):
         
@@ -285,7 +247,28 @@ class TaskMasterNode(NodeBase):
         for task in tasks:
             self.queue.put(task)
 
-    def execute_task(self, taskresult):
+    def run_forever(self):
+        """Connect to the server to obtain and execute tasks forever"""
+        
+        while True:
+            # blocking untill a task comes available
+            task = self.queue.get()
+            self.__execute_task(task)
+    
+    def __sync_task_que_with_server(self):
+        """Get all unprocessed tasks from the server"""
+
+        # make sure we do not add the same job twice. 
+        self.queue = queue.Queue()
+
+        # request open tasks from the server
+        url = f'result?state=open&include=task&node_id={self.node_id}'
+        for task in self.request(url):
+            self.queue.put(task)
+
+        self.log.info(f"received {self.queue._qsize()} tasks" )
+
+    def __execute_task(self, taskresult):
         """
         Execute a single task and uploads result to server.
 
@@ -295,9 +278,9 @@ class TaskMasterNode(NodeBase):
         """
         task = taskresult['task']
 
-        log.info("-" * 80)
-        log.info("Starting task {id} - {name}".format(**task))
-        log.info("-" * 80)
+        self.log.info("-" * 80)
+        self.log.info("Starting task {id} - {name}".format(**task))
+        self.log.info("-" * 80)
 
         # notify the server we've started the task. 
         result_data = {
@@ -305,19 +288,19 @@ class TaskMasterNode(NodeBase):
         }
         path = taskresult['_id']
         response = self.request(path, json_data=result_data, method='patch')
-        log.debug(f"server response = {response}")
+        self.log.debug(f"server response = {response}")
 
         # create directory to put files into
-        task_dir = self.make_task_dir(task)
+        task_dir = self.__make_task_dir(task)
 
         # pull the image for updates or download
-        self.docker_pull(task['image'])
+        self.__docker_pull(task['image'])
 
         # Files are used for input and output
         inputFilePath = os.path.join(task_dir, "input.txt")
         outputFilePath = os.path.join(task_dir, "output.txt")
 
-        result_text, log_data = self.docker_run(task, inputFilePath, outputFilePath)
+        result_text, log_data = self.__docker_run(task, inputFilePath, outputFilePath)
 
         result_data = {
             'result': result_text,
@@ -326,45 +309,44 @@ class TaskMasterNode(NodeBase):
         }
 
         # Do an HTTP PATCH to send back result (response)
-        log.info('PATCHing result to server')
+        self.log.info('PATCHing result to server')
         response = self.request(path, json_data=result_data, method='patch')
-        log.debug(f"server response = {response}")
+        self.log.debug(f"server response = {response}")
 
-        log.info("-" * 80)
-        log.info("Finished task {id} - {name}".format(**task))
-        log.info("-" * 80)
-        log.info('')
+        self.log.info("-" * 80)
+        self.log.info("Finished task {id} - {name}".format(**task))
+        self.log.info("-" * 80)
+        self.log.info('')
 
-    def make_task_dir(self, task):
+    def __make_task_dir(self, task):
         task_dir = self.ctx.get_file_location('data', "task-{0:09d}".format(task['id']))
-        log.info("Using '{}' for task".format(task_dir))
+        self.log.info("Using '{}' for task".format(task_dir))
         if os.path.exists(task_dir):
-            log.warning("Task directory already exists: '{}'".format(task_dir))
+            self.log.warning("Task directory already exists: '{}'".format(task_dir))
 
         else:
             try:
                 os.makedirs(task_dir)
             except Exception as e:
-                log.error("Could not create task directory: {}".format(task_dir))
-                log.exception(e)
+                self.log.error("Could not create task directory: {}".format(task_dir))
+                self.log.exception(e)
                 raise
 
         return task_dir
 
-    def docker_pull(self, image):
+    def __docker_pull(self, image):
         
         cmd = "docker pull " + image
-
-        log.info(f"Pulling latest version of docker image '{image}'")
-        log.info(f"Command: '{cmd}'")
+        self.log.info(f"Pulling latest version of docker image '{image}'")
+        self.log.info(f"Command: '{cmd}'")
         
         p = subprocess.Popen(cmd, subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         out, err = p.communicate()
         
-        log.info(out)
-        log.debug(err)
+        self.log.info(out)
+        self.log.debug(err)
 
-    def docker_run(self, task, inputFilePath, outputFilePath):
+    def __docker_run(self, task, inputFilePath, outputFilePath):
         """
         Run the docker container for the task and provide it with IO.
 
@@ -399,9 +381,9 @@ class TaskMasterNode(NodeBase):
                 dockerParams += "-v " + DATABASE_URI.replace(' ', '\ ') + ":/app/database " # mount data store
                 DATABASE_URI = "/app/database"
             else:
-                log.warning("'{}' is not a file!".format(self.config['database_uri']))
+                self.log.warning("'{}' is not a file!".format(self.config['database_uri']))
         else:
-            log.warning('no database file specified')
+            self.log.warning('no database file specified')
 
 
         dockerParams += "-e DATABASE_URI=%s " % DATABASE_URI
@@ -409,7 +391,7 @@ class TaskMasterNode(NodeBase):
         dockerParams += "--add-host dockerhost:%s" % self.config['docker_host']
 
         dockerExecLine = "docker run  " + dockerParams + ' ' + task['image']
-        log.info("Executing docker: {}".format(dockerExecLine))
+        self.log.info("Executing docker: {}".format(dockerExecLine))
 
         # FIXME: consider using subprocess.run(...)
         # https://docs.python.org/3/library/subprocess.html#module-subprocess
@@ -434,11 +416,13 @@ class TaskMasterNode(NodeBase):
         headers = {
             "Authorization": f"Bearer {self._ACCESS_TOKEN}",
         }
-        # TODO we need to split host and port from the start
+        
+        # seperate host and port.
         host_and_port = self._HOST.split(':')
         host = host_and_port[0]+':'+host_and_port[1]
         port = int(host_and_port[2])
         
+        # establish connection.
         self.socketIO = SocketIO(
             host, 
             port=port, 
@@ -452,14 +436,6 @@ class TaskMasterNode(NodeBase):
         else:
             self.log.critical(f'could not connect to <{host}> on port <{port}>')
         
-    def run_forever(self):
-        """Connect to the server to obtain and execute tasks forever"""
-        
-        while True:
-            # blocking untill a task comes available
-            task = self.queue.get()
-            self.execute_task(task)
-    
     def __listening_worker(self):
         """routine that is in a seperate thread and listens for
         incomming messages from the server"""
@@ -480,6 +456,7 @@ def run(ctx):
     
     # initialize node, connect to the server using websockets
     tmc = TaskMasterNode(ctx)
+
     # reference to tmc in to give call-back functions
     # access to the node methods.
     NodeNamespace.task_master_node_ref = tmc
