@@ -32,7 +32,6 @@ def set_context(return_context=False):
 
             # load configuration and initialize logging system
             cfg_filename = get_config_location(ctx, config, force_create=False)
-            print("Using configuration at: '{}'".format(config))
             ctx.init(cfg_filename, environment)
 
             # initialize database from environment
@@ -58,18 +57,21 @@ def cli_server():
 
 
 @cli_server.command(name='start')
-@click.option('--ip', default='0.0.0.0', help='ip address to listen on')
-@click.option('-p', '--port', default=5000, help='port to listen on')
+@click.option('--ip', type=str, help='ip address to listen on')
+@click.option('-p', '--port', type=int, help='port to listen on')
 @click.option('--debug/--no-debug', default=True, help='run server in debug mode (auto-restart)')
 @set_context(return_context=True)  # adds options (--name, --config, --environment)
 def cli_server_start(ctx, ip, port, debug):
     """Start the server."""
-    click.echo("Starting server ...")
-
+    # click.echo("Starting server ...")
+    # click.echo(f"  ip: {ip}")
+    # click.echo(f"  port: {port}")
     # Load the flask.Resources
     server.init_resources(ctx)
-
+    
     # Run the server
+    ip = ip or ctx.config['env']['ip'] or '127.0.0.1'
+    port = port or ctx.config['env']['port'] or 5000
     server.run(ctx, ip, port, debug=debug)
 
 

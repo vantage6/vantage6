@@ -37,7 +37,7 @@ class TaskResultSchema(ModelSchema):
 # ------------------------------------------------------------------------------
 class ResultSchema(ModelSchema):
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
-    _id = ma.URLFor('result', id='<id>')
+    _id = ma.URLFor('result_with_id', id='<id>')
     task = ma.HyperlinkRelated('task_with_id')
 
     class Meta:
