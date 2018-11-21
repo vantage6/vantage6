@@ -40,5 +40,4 @@ class Test(Resource):
     def get(self):
         """Return something."""
         socketio.send("you're welcome!", room='all_nodes')
-        socketio.emit('connect', room='all_nodes')
-        return {"version": "0.1dev2"}
+        return socketio.server.manager.rooms
