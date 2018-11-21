@@ -66,6 +66,9 @@ class Result(Resource):
 
             if request.args.get('node_id'):
                 q = q.filter_by(node_id=request.args.get('node_id'))
+            
+            if request.args.get('task_id'):
+                q = q.filter_by(task_id=request.args.get('task_id'))
 
             t = q.all()
 
@@ -74,7 +77,7 @@ class Result(Resource):
         else:
             s = result_schema
 
-        return s.dump(t, many=not bool(id)), HTTPStatus.OK
+        return s.dump(t, many=not bool(id)).data, HTTPStatus.OK
 
     @with_node
     @swag_from(str(Path(r"swagger/patch_result_with_id.yaml")), endpoint="result_with_id")
