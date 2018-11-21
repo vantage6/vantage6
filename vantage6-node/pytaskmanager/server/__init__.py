@@ -25,6 +25,7 @@ import json
 from . import db
 from pytaskmanager import util
 from pytaskmanager import APPNAME
+from pytaskmanager.server.websockets import DefaultSocketNamespace
 
 
 # ------------------------------------------------------------------------------
@@ -112,14 +113,6 @@ def output_json(data, code, headers=None):
 ma = Marshmallow(app)
 
 # ------------------------------------------------------------------------------
-# Setup flask-socketio
-# ------------------------------------------------------------------------------
-try:
-    socketio = SocketIO(app, async_mode='gevent_uwsgi')
-except:
-    socketio = SocketIO(app)
-
-# ------------------------------------------------------------------------------
 # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
 # ------------------------------------------------------------------------------
 app.config['JWT_SECRET_KEY'] = 'f8a87430-fe18-11e7-a7b2-a45e60d00d91'
@@ -157,6 +150,17 @@ def user_identity_loader(user_or_node):
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
     return db.Authenticatable.get(identity)
+
+
+# ------------------------------------------------------------------------------
+# Setup flask-socketio
+# ------------------------------------------------------------------------------
+try:
+    socketio = SocketIO(app, async_mode='gevent_uwsgi')
+except:
+    socketio = SocketIO(app)
+
+socketio.on_namespace(DefaultSocketNamespace("/"))
 
 
 # ------------------------------------------------------------------------------
@@ -202,79 +206,6 @@ def index(path):
     </html>
 """
 
-@socketio.on('connect', namespace='/')
-def on_socket_connect():
-    log = logging.getLogger("socket.io")
-    log.info(f'Client connected: "{request.sid}"')
-
-    try:
-        verify_jwt_in_request()
-    except Exception as e:
-        log.error("Could not connect client!?")
-        log.exception(e)
-        return False
-
-    user_or_node_id = get_jwt_identity()
-    user_or_node = db.Authenticatable.get(user_or_node_id)    
-    session.username = user_or_node.username
-
-    log.info(f'user_or_node.username: {user_or_node.username}')
-    
-    room = 'all_connections'
-    join_room(room)
-    send(user_or_node.username + ' has entered the room.', room=room)
-
-    return True
-
-@socketio.on('join')
-def on_join():
-    username = request.sid
-    room = 'all_connections'
-    join_room(room)
-    send(session.username + ' has entered the room.', room=room)
-
-@socketio.on('leave')
-def on_leave(data):
-    username = data['username']
-    room = data['room']
-    leave_room(room)
-    send(username + ' has left the room.', room=room)
-
-@socketio.on('disconnect', namespace='/')
-def on_socket_disconnect():
-    log = logging.getLogger("socket.io")
-    log.info('Client disconnected')
-
-
-
-@socketio.on('my event')
-def on_my_event(json=None):
-    log = logging.getLogger("socket.io")
-    log.info('received json: ' + str(json))
-
-    emit('my event', 'this is an event with a space in its name :-)')
-    emit('unnown event', 'params!')
-
-    send({'request.sid': request.sid})
-    send('a regular message')
-
-@socketio.on('message')
-def on_message(message):
-    log = logging.getLogger("socket.io")    
-    log.info('received message: ' + message)
-
-# Handles the default namespace
-@socketio.on_error()        
-def on_error(e):
-    log = logging.getLogger("socket.io")
-    log.error(e)
-
-# handles all namespaces without an explicit error handler
-@socketio.on_error_default  
-def default_error_handler(e):
-    log = logging.getLogger("socket.io")
-    log.error(e)
-
 
 # ------------------------------------------------------------------------------
 # init & run
@@ -310,7 +241,7 @@ def init_resources(ctx):
     if RESOURCES_INITIALIZED:
         return
 
-    api_base = ctx.config['app']['api_path']
+    api_base = ctx.config['env']['api_path']
 
     resources = [
             'node',
