@@ -25,36 +25,29 @@ from pytaskmanager import util
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-class SocketCallBackActions(SocketIONamespace):
 
+class NodeNamespace(SocketIONamespace):
+    """Class that handles incomming websocket events."""
+
+    # reference to the node objects, so a call-back can edit the 
+    # node instance.
     task_master_node_ref = None
 
-    def on_open(self, *args):
-        log.debug('on open callback')
-
-    def on_connect(self, *args):
-        log.debug('socket connected callback')
-        self.emit('enter_rooms')
-    
-    def on_reconnect(self, *args):
-        log.debug('socket reconnected callback')
-        self.emit('enter_rooms')
-
     def on_disconnect(self):
+        """Call-back when the server disconnects."""
+
         log.debug('diconnected callback')
         log.info('Disconnected from the server')
     
-    def on_message(self, *args):
-        log.info(args)
-    
     def on_new_task(self, task_id):
-        log.debug('new task callback')
-        log.info(f'New task is available on the server task_id={task_id}')
+        """Call back to fetch new available tasks."""
+
         if self.task_master_node_ref:
             self.task_master_node_ref.get_task_and_add_to_queue(task_id)
+            log.info(f'New task has been added task_id={task_id}')
         else:
             log.critical('Task Master Node reference not set is socket namespace')
-        # get_and_execute_tasks()
+
 
 # ------------------------------------------------------------------------------
 class AuthenticationError(Exception):
@@ -111,8 +104,9 @@ class NodeBase(object):
         response = requests.post(url, json=data)
         response_data = response.json()
 
+        # TODO handle not authorized messages
         if response.status_code != 200:
-            msg = response_data.get('message')
+            msg = response_data.get('msg')
             raise AuthenticationError(msg)
 
         log.info("Authentication succesful!")
@@ -138,7 +132,7 @@ class NodeBase(object):
         response_data = response.json()
 
         if response.status_code != 200:
-            msg = response_data.get('message')
+            msg = response_data.get('msg')
             raise AuthenticationError(msg)
 
         self._ACCESS_TOKEN = response_data['access_token']
@@ -170,7 +164,7 @@ class NodeBase(object):
 
         # TODO only do this when token is expired!
         if response.status_code != 200:
-            msg = response_data.get('message')
+            msg = response_data.get('msg')
             log.warning('Request failed: {}'.format(msg))
             self.refresh_token()
             log.info('Retrying ...')
@@ -239,7 +233,7 @@ class TaskMasterNode(NodeBase):
 
         # Create a long-lasting websocket connection.
         log.debug("create socket connection with the server")
-        self.connect_to_socket(action_handler=SocketCallBackActions)
+        self.__connect_to_socket(action_handler=NodeNamespace)
 
         # listen forever for incomming messages, tasks are stored in
         # the queue.
@@ -250,7 +244,7 @@ class TaskMasterNode(NodeBase):
 
         # check if new tasks were posted while offline.
         log.debug("fetching tasks that were posted while offline")
-        self.sync_task_que_with_server()  # adds them to queue
+        self.sync_task_que_with_server() 
 
     def authenticate(self):
         """Authenticate with the server using the api-key."""
@@ -282,9 +276,12 @@ class TaskMasterNode(NodeBase):
         self.log.info(f"there are {self.queue._qsize()} new tasks since last time" )
 
     def get_task_and_add_to_queue(self, task_id):
+        
+        # fetch (empty) result for the node with the task_id
         url = f'result?state=open&include=task&task_id={task_id}&node_id={self.node_id}'
         tasks = self.request(url)
-        # FIXME this should only be a single task
+
+        # in the current setup, only a single result for a single node in a task exists.
         for task in tasks:
             self.queue.put(task)
 
@@ -433,7 +430,7 @@ class TaskMasterNode(NodeBase):
 
         return result_text, log_data
 
-    def connect_to_socket(self, action_handler=None):
+    def __connect_to_socket(self, action_handler=None):
         headers = {
             "Authorization": f"Bearer {self._ACCESS_TOKEN}",
         }
@@ -485,7 +482,7 @@ def run(ctx):
     tmc = TaskMasterNode(ctx)
     # reference to tmc in to give call-back functions
     # access to the node methods.
-    SocketCallBackActions.task_master_node_ref = tmc
+    NodeNamespace.task_master_node_ref = tmc
 
     # put the node to work, executing tasks that are in the que
     tmc.run_forever()
