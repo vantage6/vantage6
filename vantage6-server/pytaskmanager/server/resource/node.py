@@ -52,16 +52,17 @@ class Node(Resource):
     # Schemas
     node_schema = NodeSchema()
 
-    @with_user
+    @with_user_or_node
     @swag_from(str(Path(r"swagger/get_node_with_node_id.yaml")), endpoint='node_with_node_id')
     @swag_from(str(Path(r"swagger/get_node_without_node_id.yaml")), endpoint='node_without_node_id')
     def get(self, id=None):
         nodes = db.Node.get(id)
+        user_or_node = g.user or g.node
 
         if id:
             if not nodes:
                 return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
-            if nodes.organization_id != g.user.organization_id and g.user.roles != 'admin':
+            if nodes.organization_id != user_or_node.organization_id and g.user.roles != 'admin':
                 return {"msg": "you are not allowed to see this node"}, HTTPStatus.FORBIDDEN  # 403
         else:
             # only the nodes of the users organization are returned
