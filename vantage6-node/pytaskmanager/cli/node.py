@@ -63,7 +63,8 @@ def cli_node_start(name, config, api_key):
     cfg_filename = get_config_location(ctx, config, force_create=False)
 
     # provide api key to the configuration file
-    set_api_key_in_node_config(cfg_filename, api_key)
+    # TODO this does not work in combination with the new config layout
+    # set_api_key_in_node_config(cfg_filename, api_key)
 
     ctx.init(cfg_filename)
 
