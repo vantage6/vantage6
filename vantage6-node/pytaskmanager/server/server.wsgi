@@ -2,33 +2,26 @@
 WSGI (Web Server Gateway Interface) file for PyTaskManager.
 """
 import os
-import mod_wsgi
+# import mod_wsgi
 
 import pytaskmanager as ptm
 import pytaskmanager.server
-
-# import logging
-# logging.getLogger("urllib3").setLevel(logging.WARNING)
-
-
-# # Load configuration and initialize logging system
-# ctx = ptm.util.ServerContext(ptm.APPNAME, 'default')
-# ctx.init(ctx.config_file, 'prod')
-
-# # Load the flask.Resources
-# ptm.server.init_resources(ctx)
+from pytaskmanager.server import db
+import pytaskmanager.util as util
+from pytaskmanager.util.find_files import get_config_location
 
 
-# uri = ctx.get_database_location()
-# ptm.server.db.init(uri)
-env = mod_wsgi.application_group
-if env not in ['dev', 'test', 'acc', 'prod']:
-    env = 'prod'
+#FIXME: this is a temporary solution to proof uWSGI works ... 
+APPNAME = 'pytaskmanager'
+env = 'test'
+name = 'default'
+ctx = util.AppContext(APPNAME, 'server', name)
 
+# load configuration and initialize logging system
+cfg_filename = get_config_location(ctx, None, force_create=False)
+ctx.init(cfg_filename, env)
 
-print('-' * 80)
-print('Using environment: {}'.format(env))
-print('-' * 80)
-ptm.server.init(env)
-
+# initialize database from environment
+db.init(ctx.get_database_location())
+ptm.server.init_resources(ctx)
 application = ptm.server.app

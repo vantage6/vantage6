@@ -6,6 +6,7 @@ flask-jwt-extended
 flask-restful
 flask-sqlalchemy
 flask-marshmallow
+flasgger
 marshmallow
 marshmallow-sqlalchemy
 pyjwt
@@ -16,3 +17,4 @@ sqlalchemy
 click
 apispec
 flasgger
+flask_socketio

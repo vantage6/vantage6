@@ -7,6 +7,7 @@ import yaml
 
 def get_config_location(ctx, config, force_create):
     """Ensure configuration file exists and return its location."""
+    
     if config is None:
         # Get the location of config.yaml if not provided
         filename = ctx.config_file
@@ -17,39 +18,35 @@ def get_config_location(ctx, config, force_create):
     # Check that the config file exists and create it if necessary, but
     # only if it was not explicitly provided!
     if not os.path.exists(filename):
-        # We will always create a configuration file at the default location
-        # when necessary.
+        
+        # TODO let's remove this
         if config and not force_create:
             click.echo("Configuration file '{}' does not exist and '--force-create' not specified!".format(filename))
             click.echo("Aborting ...")
             sys.exit(1)
 
-        # Make sure the directory exists
+        # make sure the config directory exists
         dirname = os.path.dirname(filename)
-
         if dirname:
             os.makedirs(dirname, exist_ok=True)
 
-        # Copy a default config file
-        if ctx.instance_type == 'server':
-            skeleton_file = 'server_config_skeleton.yaml'
-        elif ctx.instance_type == 'node':
-            skeleton_file = 'node_config_skeleton.yaml'
-
+        # copy a default config file to the config location
+        skeleton_file = ctx.instance_type + "_config_skeleton.yaml"
         src = os.path.join(ctx.package_data_dir(), skeleton_file)
-
         dst = os.path.join(filename)
         shutil.copy(src, dst)
 
+        # set the logging file to the name of the instance 
         if ctx.instance_type == 'server':
+             # load current config
             with open(dst, 'r') as fp:
                 cfg = yaml.load(fp)
-                print('-' * 80)
-                print(cfg)
-                print('-' * 80)
+            
+            # update logging filename for all enviroments
+            for environment in cfg['environments'].items():
+                cfg['application'][environment]['logging']['file'] = ctx.instance_name + '.log'
 
-            cfg['application']['logging']['file'] = ctx.instance_name + '.log'
-
+            # write back to the config
             with open(dst, 'w') as fp:
                 yaml.dump(cfg, fp)
 
