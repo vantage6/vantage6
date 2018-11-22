@@ -92,7 +92,7 @@ class Task(Resource):
 
         # a collaboration can include multiple nodes
         for c in collaboration.nodes:
-            db.TaskResult(task=task, node=c)
+            db.TaskResult(task=task, node=c, collaboration=collaboration)
 
         task.save()
 
