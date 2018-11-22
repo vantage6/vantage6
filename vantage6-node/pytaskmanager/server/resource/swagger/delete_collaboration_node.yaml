@@ -11,14 +11,14 @@ parameters:
     description: collaboration id
     required: true
 
-requestBody:
-  content:
-    application/json:
-      schema:
-        properties:
-          id:
-            type: integer
-            description: node id which should be deleted
+# requestBody:
+#   content:
+#     application/json:
+#       schema:
+#         properties:
+#           id:
+#             type: integer
+#             description: node id which should be deleted
 
 responses:
   200:

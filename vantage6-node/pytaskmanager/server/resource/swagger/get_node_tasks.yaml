@@ -8,7 +8,7 @@ parameters:
     name: id
     schema:
       type: integer
-      minumum: 1
+      minimum: 1
     description: "Unique node identifier"
     required: true
   - in: query

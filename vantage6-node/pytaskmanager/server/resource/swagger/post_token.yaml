@@ -15,10 +15,10 @@ requestBody:
     application/json:
       schema:
         oneOf:
-          - $ref: '#/definitions/User'
-          - $ref: '#/definitions/Node'
+          - $ref: '#/components/schemas/User'
+          - $ref: '#/components/schemas/Node'
         example:
-          $ref: '#/definitions/User/example'
+          $ref: '#/components/schemas/User/example'
 #
 #\properties:
 #            username:
