@@ -7,12 +7,13 @@ from flask import session, request
 
 
 class DefaultSocketNamespace(Namespace):
-    """ Class to define the different actions of the websocket.
-    Needs to be attached to a SocketIO class which manages the
-    connections.
+    """Handlers for SocketIO events are different than handlers for routes and that 
+    introduces a lot of confusion around what can and cannot be done in a SocketIO handler. 
+    The main difference is that all the SocketIO events generated for a client occur in 
+    the context of a single long running request.
     """
 
-    log = logging.getLogger("socket.io")
+    log = logging.getLogger(__name__)
 
     def on_connect(self):
         """New incomming connections are authenticated using their
@@ -45,6 +46,8 @@ class DefaultSocketNamespace(Namespace):
         session.rooms = ['all_connections', 'all_'+session.type+'s']
         if session.type == 'node':
             session.rooms.append('collaboration_' + str(auth.collaboration_id))
+        elif session.type == 'user':
+             session.rooms.append('user_'+str(auth.id))
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
@@ -58,6 +61,9 @@ class DefaultSocketNamespace(Namespace):
 
     def on_error(self, e):
         self.log.error(e)
+    
+    def on_join_room(self, room):
+        self.__join_room_and_notify(room)
 
     def __join_room_and_notify(self, room):
         join_room(room)
