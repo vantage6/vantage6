@@ -17,7 +17,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/definitions/Collaboration'
+        $ref: '#/components/schemas/Collaboration'
 
 responses:
   200:
