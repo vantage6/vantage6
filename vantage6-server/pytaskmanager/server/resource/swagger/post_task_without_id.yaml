@@ -7,22 +7,7 @@ requestBody:
   content:
     application/json:
       schema:
-        properties:
-          name:
-            type: string
-            description: Human readable label
-          description:
-            type: string
-            description: Description of the task
-          image:
-            type: string
-            description: docker image identifier which contains the algorithm
-          input:
-            type: string
-            description: input string which is supplied to the docker image
-          collaboration_id:
-            type: integer
-            description: collaboration identifier
+        $ref: '#/components/schemas/Task'
 
 responses:
   200:
