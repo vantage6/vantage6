@@ -40,6 +40,7 @@ app = Flask(APPNAME)
 # TODO app.config
 app.config['JWT_AUTH_URL_RULE'] ='/api/token'
 
+# '#/components/schemas/Pet'
 template = {
     "components":{
         "securitySchemes":{
@@ -47,6 +48,54 @@ template = {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": " JWT"
+            }
+        },
+        "schemas":{
+            "Task":{
+                "properties":{
+                    "description":{
+                        "type": "string"
+                    },
+                    "image":{
+                        "type": "string",
+                    },
+                    "input":{
+                        "type": "string"
+                    },
+                    "name":{
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "image"
+                ]
+            },
+            "Collaboration": {
+                "properties": {
+                    "collaboration_id": {
+                        "type": "integer"
+                    }
+                },
+                "example":{
+                    "collaboration_id": 1
+                }
+            },
+            "Node": {
+                "properties": {
+                    "api_key": {
+                        "type": "string"
+                    }
+                }
+            },
+            "User": {
+                "example": {
+                    "password": "secret!", 
+                    "username": "yourname"
+                }, 
+                "properties": {
+                    "password": {"type": "string"}, 
+                    "username": {"type": "string"}
+                }
             }
         }
     },
