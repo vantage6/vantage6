@@ -14,7 +14,5 @@ responses:
   401:
     description: Unauthorized
 security:
-  type: http
-  scheme: bearer
-  bearerFormat: JWT
+  - bearerAuth: []
 tags: ["Collaboration"]

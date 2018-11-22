@@ -40,50 +40,27 @@ app = Flask(APPNAME)
 # TODO app.config
 app.config['JWT_AUTH_URL_RULE'] ='/api/token'
 
+template = {
+    "components":{
+        "securitySchemes":{
+            "bearerAuth":{
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": " JWT"
+            }
+        }
+    },
+    "security": [
+        {"bearerAuth": []}
+    ]
+}
+
 app.config['SWAGGER'] = {
     'title': 'PyTaskManager',
     'uiversion': 3,
     'openapi': '3.0.0',
-    'definitions': {
-        'Collaboration':{
-            'properties':{
-                'collaboration_id':{
-                    'type': 'integer'
-                }
-            }
-        },
-        'User':{
-            'properties':{
-                'username':{
-                    'type': 'string'
-                },
-                'password':{
-                    'type': 'string'
-                }
-            },
-            'example':{
-                'username': 'string',
-                'password': 'string'
-            }
-        },
-        'Node':{
-            'properties':{
-                'api_key':{
-                    'type': 'string'
-                }
-            }
-        }
-    },
-    "securityDefinitions": { "api_key": { "type": "apiKey", "name": "Authorization", "in": "header" }}
-    # 'securityDefinitions': {
-    #     'bearerAuth': {
-    #         'type': 'http',
-    #         'scheme': 'bearer',
-    #         'bearerFormat': 'JWT'
-    #     }
-    # }
 }
-swagger = Swagger(app)
+swagger = Swagger(app, template=template)
 
 # Enable cross-origin resource sharing
 CORS(app)

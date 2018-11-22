@@ -19,7 +19,4 @@ responses:
   401:
     description: Unauthorized
 
-security:
-  - bearerAuth: []
-
 tags: ["Collaboration"]
