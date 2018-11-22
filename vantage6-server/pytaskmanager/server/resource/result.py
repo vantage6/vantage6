@@ -15,7 +15,7 @@ from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
-from pytaskmanager.server import db
+from pytaskmanager.server import db, socketio
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -87,10 +87,18 @@ class Result(Resource):
         result = db.TaskResult.get(id)
 
         if result.node_id != g.node.id:
-            return {"msg": "This is not your result to PUT!"}, HTTPStatus.UNAUTHORIZED
+            return {"msg": "This is not your result to PATCH!"}, HTTPStatus.UNAUTHORIZED
 
         if result.finished_at is not None:
             return {"msg": "Cannot update an already finished result!"}, HTTPStatus.BAD_REQUEST
+
+        
+        # notify collaboration nodes/users that the task has an update
+        socketio.emit(
+            "status_update", 
+            {'result_id': id}, 
+            room='collaboration_'+str(result.collaboration_id)
+        )
 
         result.started_at = parse_datetime(data.get("started_at"), result.started_at)
         result.finished_at = parse_datetime(data.get("finished_at"))
