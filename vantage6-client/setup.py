@@ -44,6 +44,8 @@ setup(
         'flask-restful',
         'flask-sqlalchemy',
         'flask-marshmallow',
+        'flask-socketio',
+        'socketIO_client',
         'flasgger',
         'marshmallow',
         'marshmallow-sqlalchemy',
