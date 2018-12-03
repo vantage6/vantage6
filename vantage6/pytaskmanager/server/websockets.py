@@ -31,6 +31,7 @@ class DefaultSocketNamespace(Namespace):
         except Exception as e:
             self.log.error("Could not connect client! No or Invalid JWT token?")
             self.log.exception(e)
+            raise
 
         # get identity from token.
         user_or_node_id = get_jwt_identity()
@@ -44,10 +45,12 @@ class DefaultSocketNamespace(Namespace):
         # join appropiate rooms, nodes join a specific collaboration room.
         # users do not belong to specific collaborations. 
         session.rooms = ['all_connections', 'all_'+session.type+'s']
+        
         if session.type == 'node':
             session.rooms.append('collaboration_' + str(auth.collaboration_id))
         elif session.type == 'user':
              session.rooms.append('user_'+str(auth.id))
+
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
@@ -76,3 +79,6 @@ class DefaultSocketNamespace(Namespace):
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
         emit('message', msg, room=room)
+
+
+        
