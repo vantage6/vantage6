@@ -97,7 +97,8 @@ class Result(Resource):
         socketio.emit(
             "status_update", 
             {'result_id': id}, 
-            room='collaboration_'+str(result.collaboration_id)
+            room='collaboration_'+str(result.task.collaboration_id),
+            namespace='/tasks',
         )
 
         result.started_at = parse_datetime(data.get("started_at"), result.started_at)
