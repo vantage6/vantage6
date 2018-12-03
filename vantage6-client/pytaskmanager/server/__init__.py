@@ -267,7 +267,7 @@ def init_resources(ctx):
     if RESOURCES_INITIALIZED:
         return
 
-    api_base = ctx.config['env']['api_path']
+    api_base = ctx.config['api_path']
 
     resources = [
             'node',
@@ -297,8 +297,11 @@ def run(ctx, *args, **kwargs):
     # Prevent logging from urllib3
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+    environment = ctx.config.get('type')
+    app.config['environment'] = environment
+
     # Set an extra long expiration time on access tokens for testing
-    if ctx.config['env']['type'] == 'test':
+    if environment == 'test':
         log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
