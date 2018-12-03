@@ -187,7 +187,7 @@ class TaskMasterNode(NodeBase):
 
         self.ctx = ctx
         self.name = ctx.instance_name
-        self.config = ctx.config['env']
+        self.config = ctx.config
 
         super().__init__(
             self.config['server_url'], 
