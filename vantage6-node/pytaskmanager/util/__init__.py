@@ -90,7 +90,7 @@ class AppContext(metaclass=Singleton):
         """Return true if a config file is available."""
         return os.path.exists(self.config_file)
 
-    def init(self, config_file, environment=None):
+    def init(self, config_file, environment=None, setup_logging=True):
         """Load the configuration from disk and setup logging."""
         self.environment = environment 
 
@@ -105,21 +105,22 @@ class AppContext(metaclass=Singleton):
         if self.config.get('log_dir'):
             self.dirs['log_dir'] = self.config.get('log_dir')
 
-        # Setup logging
-        log_file = self.setup_logging()
-        
-        # Create a logger
-        module_name = __name__.split('.')[-1]
-        log = logging.getLogger(module_name)
-        
-        # Make some history
-        log.info("#" * 80)
-        log.info('#{:^78}#'.format(self.application))
-        log.info("#" * 80)
-        log.info("Started application '%s' with environment '%s'" % (self.application, environment))
-        log.info("Current working directory is '%s'" % os.getcwd())
-        log.info("Succesfully loaded configuration from '%s'" % config_file)
-        log.info("Logging to '%s'" % log_file)
+        if setup_logging:
+            # Setup logging
+            log_file = self.setup_logging()
+            
+            # Create a logger
+            module_name = __name__.split('.')[-1]
+            log = logging.getLogger(module_name)
+            
+            # Make some history
+            log.info("#" * 80)
+            log.info('#{:^78}#'.format(self.application))
+            log.info("#" * 80)
+            log.info("Started application '%s' with environment '%s'" % (self.application, environment))
+            log.info("Current working directory is '%s'" % os.getcwd())
+            log.info("Succesfully loaded configuration from '%s'" % config_file)
+            log.info("Logging to '%s'" % log_file)
 
         # Return the configuration for the current application.            
         return self.config
