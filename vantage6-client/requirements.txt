@@ -6,7 +6,6 @@ flask-jwt-extended
 flask-restful
 flask-sqlalchemy
 flask-marshmallow
-flasgger
 marshmallow
 marshmallow-sqlalchemy
 pyjwt
@@ -16,5 +15,5 @@ termcolor
 sqlalchemy
 click
 apispec
-flasgger
+git+git@github.com:IKNL/flasgger.git#egg=flasgger
 flask_socketio
