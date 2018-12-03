@@ -44,7 +44,7 @@ setup(
         'flask-restful',
         'flask-sqlalchemy',
         'flask-marshmallow',
-        'flasgger',
+        # 'flasgger',
         'marshmallow',
         'marshmallow-sqlalchemy',
         'pyyaml',
@@ -66,4 +66,7 @@ setup(
             'ptm=pytaskmanager.cli.cli:cli',
         ],
     },
+    dependency_links=[
+        "git+git@github.com:IKNL/flasgger.git#egg=flasgger"
+    ]
 )
