@@ -18,3 +18,4 @@ click
 apispec
 flasgger
 flask_socketio
+socketIO_client
