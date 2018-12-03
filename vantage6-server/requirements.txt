@@ -17,3 +17,4 @@ click
 apispec
 git+git@github.com:IKNL/flasgger.git#egg=flasgger
 flask_socketio
+socketIO_client

@@ -1,0 +1,36 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>pyxterm.js</title>
+  <style>
+  html {
+    font-family: arial;
+  }
+
+  #terminal {
+    width: 100%; 
+    height: calc(100% - 50px);
+  }
+
+  #footer {
+    height: 50px;
+    background-color: #efefef;
+  }
+  </style>
+
+  <!-- xterm -->
+  <script src="https://unpkg.com/xterm@3.6.0/dist/xterm.js"></script>
+  <script src="https://unpkg.com/xterm@3.6.0/dist/addons/fit/fit.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/xterm@3.6.0/dist/xterm.css" />
+  <script src="term.js"></script>  
+</head>
+
+<body>
+
+  <div id="terminal"></div>
+  <div id="footer"></div>
+
+</body>
+</html>
