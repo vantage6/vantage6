@@ -186,7 +186,8 @@ try:
 except:
     socketio = SocketIO(app)
 
-socketio.on_namespace(DefaultSocketNamespace("/"))
+# socketio.on_namespace(DefaultSocketNamespace("/"))
+socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
 
 # ------------------------------------------------------------------------------

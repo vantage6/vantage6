@@ -21,6 +21,10 @@ from socketIO_client import SocketIO, SocketIONamespace
 
 from pytaskmanager import util
 
+def name():
+    return __name__.split('.')[-1]
+
+
 class NodeNamespace(SocketIONamespace):
     """Class that handles incomming websocket events."""
 
@@ -29,7 +33,7 @@ class NodeNamespace(SocketIONamespace):
     task_master_node_ref = None
 
     def __init__(self, *args, **kwargs):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(name())
         super().__init__(*args, **kwargs)
 
     def on_disconnect(self):
@@ -61,7 +65,7 @@ class NodeBase(object):
     def __init__(self, host, api_path='/api'):
         """Initialize a ClientBase instance."""
 
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(name())
 
         self._HOST = host
 
@@ -394,6 +398,7 @@ class TaskMasterNode(NodeBase):
         self.log.info("Executing docker: {}".format(dockerExecLine))
 
         # FIXME: consider using subprocess.run(...)
+        #        or use the python package that provides an API for docker
         # https://docs.python.org/3/library/subprocess.html#module-subprocess
         p = subprocess.Popen(dockerExecLine, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
@@ -426,11 +431,14 @@ class TaskMasterNode(NodeBase):
         self.socketIO = SocketIO(
             host, 
             port=port, 
-            Namespace=action_handler,
+            # Namespace=action_handler,
             headers=headers,
             wait_for_connection=True
         )
         
+        event_namespace = self.socketIO.define(action_handler, '/tasks')
+
+
         if self.socketIO.connected:
             self.log.info(f'connected to host <{host}> on port <{port}>')
         else:
