@@ -70,6 +70,7 @@ class Task(Resource):
         """Create a new Task."""
         data = request.get_json()
         collaboration_id = data.get('collaboration_id')
+
         if not collaboration_id:
             log.error("JSON causing the error:\n{}".format(data))
             return {"msg": "JSON should contain 'collaboration_id'"}, HTTPStatus.BAD_REQUEST
@@ -92,13 +93,18 @@ class Task(Resource):
 
         # a collaboration can include multiple nodes
         for c in collaboration.nodes:
-            db.TaskResult(task=task, node=c, collaboration=collaboration)
+            db.TaskResult(task=task, node=c)
 
         task.save()
 
         # if the node is connected send a socket message that there
         # is a new task available
-        socketio.emit('new_task', task.id, room='collaboration_'+str(task.collaboration_id))
+        socketio.emit(
+            'new_task', 
+            task.id, 
+            room='collaboration_'+str(task.collaboration_id),
+            namespace='/tasks'
+        )
 
         return self.task_schema.dump(task, many=False)
 
