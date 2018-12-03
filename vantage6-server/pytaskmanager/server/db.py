@@ -352,8 +352,8 @@ class TaskResult(Base):
     node_id = Column(Integer, ForeignKey('node.id'))
     node = relationship('Node', backref='taskresults')
 
-    collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
-    ollaboration = relationship('Collaboration', backref='taskresults')
+    # collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
+    # collaboration = relationship('Collaboration', backref='taskresults')
 
     @hybrid_property
     def isComplete(self):
