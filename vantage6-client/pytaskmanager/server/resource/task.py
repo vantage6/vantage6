@@ -70,6 +70,7 @@ class Task(Resource):
         """Create a new Task."""
         data = request.get_json()
         collaboration_id = data.get('collaboration_id')
+
         if not collaboration_id:
             log.error("JSON causing the error:\n{}".format(data))
             return {"msg": "JSON should contain 'collaboration_id'"}, HTTPStatus.BAD_REQUEST
@@ -92,7 +93,7 @@ class Task(Resource):
 
         # a collaboration can include multiple nodes
         for c in collaboration.nodes:
-            db.TaskResult(task=task, node=c, collaboration=collaboration)
+            db.TaskResult(task=task, node=c)
 
         task.save()
 
