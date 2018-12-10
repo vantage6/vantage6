@@ -1,6 +1,26 @@
 application:
-  environments:
-    test:
+environments:
+  test:
+    api_key: 
+    server_url: https://api.distributedlearning.ai
+    api_path: ''
+    server_entry_point: /token
+    delay: 30 # seconds
+    task_dir: tasks
+    docker_host: 127.0.0.1
+    database_uri: 
+
+    logging:
+        level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+        file:         node.log       # Filename of logfile
+        use_console:  True                   # Log output to the console?
+        backup_count: 5                      # Number of logs to keep
+        max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
+        format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+        # datefmt:      "%Y-%m-%d %H:%M:%S"
+        datefmt:      "%H:%M:%S"
+    
+    prod:
       api_key: 
       server_url: https://api.distributedlearning.ai
       api_path: ''
@@ -19,23 +39,3 @@ application:
           format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
           # datefmt:      "%Y-%m-%d %H:%M:%S"
           datefmt:      "%H:%M:%S"
-      
-      prod:
-        api_key: 
-        server_url: https://api.distributedlearning.ai
-        api_path: ''
-        server_entry_point: /token
-        delay: 30 # seconds
-        task_dir: tasks
-        docker_host: 127.0.0.1
-        database_uri: 
-
-        logging:
-            level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-            file:         node.log       # Filename of logfile
-            use_console:  True                   # Log output to the console?
-            backup_count: 5                      # Number of logs to keep
-            max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
-            format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-            # datefmt:      "%Y-%m-%d %H:%M:%S"
-            datefmt:      "%H:%M:%S"
