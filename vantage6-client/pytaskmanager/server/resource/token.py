@@ -50,17 +50,28 @@ class Token(Resource):
     @swag_from(str(Path(r"swagger/post_token.yaml")), endpoint='token')
     def post():
         """Authenticate user or node"""
+        log.debug("POST /token")
+
         if not request.is_json:
             log.warning('POST request without JSON body.')
             return {"msg": "Missing JSON in request"}, HTTPStatus.BAD_REQUEST
+
+        # log.debug("got some json:")
+        # log.debug(request.json)
+        # log.debug("can print it too")
 
         username = request.json.get('username', None)
         password = request.json.get('password', None)
         api_key = request.json.get('api_key', None)
 
+        log.debug(f"username: '{username}'")
+        # log.debug(f"api_key: '{api_key}'")
+
         if username and password:
+            log.debug(f"trying to login {username}")
             user, code = Token.user_login(username, password)
             if code is not HTTPStatus.OK:  # login failed
+                log.error(f"Could not login user '{username}'")
                 return user, code
 
             token = create_access_token(user)
@@ -74,8 +85,10 @@ class Token(Resource):
             return ret, HTTPStatus.OK, {'jwt-token': token}
 
         elif api_key:
-            log.info("trying to authenticate node with api_key")
+            log.debug("trying to authenticate node with api_key")
+
             node = db.Node.get_by_api_key(api_key)
+
             if node:
                 ret = {
                     'access_token': create_access_token(node),
@@ -92,7 +105,12 @@ class Token(Resource):
                 return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
         else:
-            return {"msg": "no API key or user/password combination provided"}, 400
+            msg = "no API key or user/password combination provided"
+            log.error(msg)
+            return {"msg": msg}, 400
+
+        log.error("this can't be right ...")
+
 
     @staticmethod
     def user_login(username, password):
@@ -102,11 +120,11 @@ class Token(Resource):
         if db.User.username_exists(username):
             user = db.User.getByUsername(username)
             if not user.check_password(password):
-                msg = "password for username={} is invalid".format(username)
+                msg = f"password for '{username}' is invalid"
                 log.error(msg)
                 return {"msg": msg}, HTTPStatus.UNAUTHORIZED
         else:
-            msg = "username={} does not exist".format(username)
+            msg = "username '{}' does not exist".format(username)
             log.error(msg)
             return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
