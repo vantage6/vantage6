@@ -205,83 +205,134 @@ def start_interpreter():
     env = app.config['environment']
     cmd = ['ipython', '-m', 'pytaskmanager.server.shell', '-i', '--', env]
 
+    log.debug("opening pty")
     master_fd, slave_fd = pty.openpty()
+
+    log.debug("starting process")
     child = subprocess.Popen(
         cmd, 
         stdin=slave_fd, 
         stdout=slave_fd, 
         stderr=slave_fd
     )
-    app.config["child"] = child
-    app.config["fd"] = master_fd
-    app.config["master_fd"] = master_fd
-    app.config["slave_fd"] = slave_fd
 
+    log.debug("adding process details to session")
+    session.child = child
+    session.fd = master_fd
+    session.master_fd = master_fd
+    session.slave_fd = slave_fd
+
+    log.debug("setting window size")
     set_winsize(master_fd, 50, 50)
 
-    socketio.start_background_task(target=read_and_forward_pty_output)
-    print("ipython terminal backend")
+    log.debug("starting background task")
+    socketio.start_background_task(
+        read_and_forward_pty_output, 
+        fd=master_fd, 
+        sid=request.sid,
+        child=child,
+    )
+    log.debug("ipython terminal backend started")
 
 
-def assert_running_interpreter(start_if_required=False):
+def assert_running_interpreter(start_if_required=False, child=None):
+    # log.debug(f"assert_running_interpreter(start_if_required={start_if_required})")
 
     try:
-        if app.config["child"].poll() is None:
+        child = child or session.child
+
+        if child.poll() is None:
+            # log.debug("interpreter already running!")
             return True
-    except KeyError:
+    except (AttributeError, TypeError):
         pass
 
 
     if start_if_required:
+        # log.debug("starting interpreter")
         start_interpreter()
         return True
 
-    else:
-        if not 'socket_connections' in app.config:
-            print('This is weird!')
-            app.config['socket_connections'] = []
-
-        nr_clients = len(app.config['socket_connections'])
-
-        print('-' * 80)
-        print("The interpreter has been shut down.")
-        print("It will be restarted when a client reconnects.")
-        print()
-        if nr_clients == 1:
-            print(f'There is 1 client connected')
-        else:
-            print(f'There are {nr_clients} clients connected')
-        print('disconnecting ...')
-
-        for sid in app.config['socket_connections']:
-            with app.app_context():
-                print(f' - {sid}')
-                flask_socketio.disconnect(sid=sid, namespace='/pty')
-
-        print('-' * 80)
-
-        return False
-
+    return False
 
 def set_winsize(fd, row, col, xpix=0, ypix=0):
     winsize = struct.pack("HHHH", row, col, xpix, ypix)
     fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
 
 
-def read_and_forward_pty_output():
+def read_and_forward_pty_output(fd, sid, child):
     max_read_bytes = 1024 * 20
 
-    fd = app.config["fd"]
+    # fd = session.fd
     timeout_sec = 0.01
 
-    while assert_running_interpreter():
+    while assert_running_interpreter(child=child):
         socketio.sleep(timeout_sec)
 
         (rs, ws, es) = select.select([fd], [], [], timeout_sec)
 
         for r in rs:
             output = os.read(r, max_read_bytes).decode()
-            socketio.emit("pty-output", {"output": output}, namespace="/pty")
+            socketio.emit(
+                "pty-output", 
+                {"output": output}, 
+                namespace="/pty",
+                room=sid,
+            )
+
+
+@socketio.on("connect", namespace="/pty")
+def connect_pty():
+    """new client connected"""
+    environment = app.config['environment']
+
+    log.debug('-' * 80)
+    log.debug('connect /pty')
+    log.debug(f'environment: {environment}')
+    log.debug('-' * 80)
+
+    try:
+        verify_jwt_in_request()
+    except Exception as e:
+        log.error("Could not connect client! No or Invalid JWT token?")
+        log.info(list(request.headers.keys()))
+        log.exception(e)
+    else:
+        # At this point we're sure that the user/client/whatever 
+        # checks out
+        user_or_node_id = get_jwt_identity()
+        auth = db.Authenticatable.get(user_or_node_id)
+
+        if not isinstance(auth, db.User):
+            log.error("Sorry, but only users can use this websocket")
+            return False
+
+        if auth.username != 'root':
+            log.error("Only root can connect to the admin channel")
+            log.error(f"You're trying to connect as '{auth.username}'")
+            return False
+
+        # define socket-session variables.
+        session.type = auth.type
+        session.name = auth.username if session.type == 'user' else auth.name
+        log.info(f'Client identified as <{session.type}>: <{session.name}>')
+
+        assert_running_interpreter(start_if_required=True)
+        return True
+
+    return False
+
+@socketio.on("disconnect", namespace="/pty")
+def disconnect_pty():
+    print(f'Client {request.sid} disconnected')
+    # app.config['socket_connections'].remove(request.sid)
+    # session["child"].kill()
+    try:
+        session.child.kill()
+    except Exception as e:
+        log.error("Could not kill interpreter backend!?")
+        log.exception(e)
+
 
 
 @socketio.on("pty-input", namespace="/pty")
@@ -291,23 +342,28 @@ def pty_input(data):
     """
     if assert_running_interpreter():
         raw_data = data["input"].encode()
-        os.write(app.config["fd"], raw_data)
+        # if raw_data == '':
+        #     log.error('empty string!?')
+        # else:
+        #     log.info(f"input: '{raw_data}'")
+
+        # os.write(app.config["fd"], raw_data)
+        os.write(session.fd, raw_data)
 
 
 @socketio.on("resize", namespace="/pty")
 def resize(data):
     if assert_running_interpreter():
-        set_winsize(app.config["fd"], data["rows"], data["cols"])
+        set_winsize(session.fd, data["rows"], data["cols"])
 
 
-@socketio.on("connect", namespace="/pty")
-def connect():
-    """new client connected"""
+@socketio.on("connect", namespace="/admin")
+def connect_admin():
     environment = app.config['environment']
 
     print('-' * 80)
-    print('connect /pty')
-    print('environment: {environment}')
+    print('connect /admin')
+    print(f'environment: {environment}')
     print('-' * 80)
 
     try:
@@ -322,27 +378,24 @@ def connect():
         user_or_node_id = get_jwt_identity()
         auth = db.Authenticatable.get(user_or_node_id)
 
+        if not isinstance(auth, db.User):
+            log.error("Sorry, but only users can use this websocket")
+            return False
+
+        if auth.username != 'root':
+            log.error("Only root can connect to the admin channel")
+            log.error(f"You're trying to connect as '{auth.username}'")
+            return False
+
         # define socket-session variables.
         session.type = auth.type
         session.name = auth.username if session.type == 'user' else auth.name
         log.info(f'Client identified as <{session.type}>: <{session.name}>')
 
-        assert_running_interpreter(start_if_required=True)
-
-        if not 'socket_connections' in app.config:
-            app.config['socket_connections'] = []
-
         print(f'connecting {request.sid}')
-        app.config['socket_connections'].append(request.sid)
         return True
 
-    return False
-
-@socketio.on("disconnect", namespace="/pty")
-def disconnect():
-    print(f'Client {request.sid} disconnected')
-    app.config['socket_connections'].remove(request.sid)
-
+    return False    
 
 # ------------------------------------------------------------------------------
 # Resources / API's
@@ -414,6 +467,14 @@ def index(path):
 #     print('-' * 80)
 #     db.init(uri)
 
+class WebSocketLoggingHandler(logging.Handler):
+
+    def emit(self, record):
+        entry = self.format(record)
+        # print(f'emitting to websocket: {entry}')
+
+        socketio.emit('append-log', entry, namespace='/admin')
+
 
 def init_resources(ctx):
     # Load resources
@@ -433,7 +494,8 @@ def init_resources(ctx):
             'token',
             'user',
             'version',
-            'websocket_test',
+            # 'websocket_test',
+            'stats',
     ]
 
     # Load resources
@@ -452,6 +514,10 @@ def run(ctx, *args, **kwargs):
     # Prevent logging from urllib3
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+    wslh = WebSocketLoggingHandler()
+    wslh.setLevel(logging.DEBUG)
+    logging.getLogger().addHandler(wslh)
+
     environment = ctx.config.get('type')
     app.config['environment'] = environment
 
@@ -466,6 +532,11 @@ def run(ctx, *args, **kwargs):
 
     # Actually start the server
     # app.run(*args, **kwargs)
+    nodes, session = db.Node.get(with_session=True)
+    for node in nodes:
+        node.status = 'offline'
+    session.commit()
+
     socketio.run(app, *args, **kwargs)
 
 
