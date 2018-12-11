@@ -3,13 +3,16 @@
 import os, sys
 import importlib
 
-# Stuff needed for running shell in a browser
-import pty
-import select
-import subprocess
-import struct
-import fcntl
-import termios
+try:
+    # Stuff needed for running shell in a browser
+    import pty
+    import select
+    import subprocess
+    import struct
+    import fcntl
+    import termios
+except: 
+    pass
 
 from flask import Flask, Response, request, render_template, make_response, g, session
 from flask_restful import Resource, Api, fields
