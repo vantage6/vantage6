@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Resources below '/<api_base>/collaboration'
+Resources below '/<api_base>/task'
 """
 import logging
 import json
 
-from flask import g, request
+from flask import g, request, url_for
 from flask_restful import Resource
 from . import with_user_or_node, with_user
 from ._schema import TaskSchema, TaskIncludedSchema
@@ -90,9 +90,19 @@ class Task(Resource):
 
         task.input = input_
         task.status = "open"
+        task.save()
+
+        log.info(f"New task created for collaboration '{task.collaboration.name}'")
+        log.debug(f" created by: '{g.user.username}'")
+        log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
+        log.debug(f" name: '{task.name}'")
+        log.debug(f" image: '{task.image}'")
+        log.debug(f"Assigning task to {len(collaboration.nodes)} nodes")
+
 
         # a collaboration can include multiple nodes
         for c in collaboration.nodes:
+            log.debug(f"   Assigning task to '{c.name}'")
             db.TaskResult(task=task, node=c)
 
         task.save()
