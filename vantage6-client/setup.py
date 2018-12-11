@@ -38,6 +38,7 @@ setup(
         'appdirs',
         'bcrypt',
         'click',
+        'eventlet',
         'flask',
         'flask-cors',
         'flask-jwt-extended',
