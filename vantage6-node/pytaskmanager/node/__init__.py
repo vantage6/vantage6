@@ -257,7 +257,11 @@ class TaskMasterNode(NodeBase):
         while True:
             # blocking untill a task comes available
             task = self.queue.get()
-            self.__execute_task(task)
+            try:
+                self.__execute_task(task)
+            except Exception as e:
+                self.log.exception(e)
+
     
     def __sync_task_que_with_server(self):
         """Get all unprocessed tasks from the server"""
