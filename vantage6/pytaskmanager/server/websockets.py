@@ -1,9 +1,10 @@
 import logging
 
 from pytaskmanager.server import db
+from pytaskmanager import server
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from flask_socketio import join_room, send, leave_room, emit, Namespace
-from flask import session, request
+from flask import g, session, request
 
 
 class DefaultSocketNamespace(Namespace):
@@ -35,7 +36,14 @@ class DefaultSocketNamespace(Namespace):
 
         # get identity from token.
         user_or_node_id = get_jwt_identity()
-        auth = db.Authenticatable.get(user_or_node_id)
+        session.auth = auth = db.Authenticatable.get(user_or_node_id)
+        session.auth.status = 'online'
+        session.auth.save()
+
+        # It appears to be necessary to use the root socketio instance
+        # otherwise events cannot be sent outside the current namespace.
+        # In this case, only events to '/tasks' can be emitted otherwise.
+        server.socketio.emit('node-status-changed', namespace='/admin')
 
         # define socket-session variables.
         session.type = auth.type
@@ -54,9 +62,20 @@ class DefaultSocketNamespace(Namespace):
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
+
     def on_disconnect(self):
         for room in session.rooms:
             self.__leave_room_and_notify(room)
+
+        session.auth.status = 'offline'
+        session.auth.save()
+
+        # It appears to be necessary to use the root socketio instance
+        # otherwise events cannot be sent outside the current namespace.
+        # In this case, only events to '/tasks' can be emitted otherwise.
+        self.log.warning('emitting to /admin')
+        server.socketio.emit('node-status-changed', namespace='/admin')
+
         self.log.info(f'{session.name} disconnected')
 
     def on_message(self, message):

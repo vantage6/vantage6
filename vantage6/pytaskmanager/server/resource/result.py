@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Resources below '/<api_base>/collaboration'
+Resources below '/<api_base>/result'
 """
 import logging
 
-from flask import g, request
+from flask import g, request, url_for
 from flask_restful import Resource, abort
 from requests import codes as rqc # todo remove and use HTTPStatus
 from http import HTTPStatus
@@ -15,7 +15,7 @@ from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
-from pytaskmanager.server import db, socketio
+from pytaskmanager.server import db, socketio, api
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -100,6 +100,9 @@ class Result(Resource):
             room='collaboration_'+str(result.task.collaboration_id),
             namespace='/tasks',
         )
+
+        url = url_for('result_with_id', id=id)
+        log.debug(f'result [{url}] was updated.')
 
         result.started_at = parse_datetime(data.get("started_at"), result.started_at)
         result.finished_at = parse_datetime(data.get("finished_at"))
