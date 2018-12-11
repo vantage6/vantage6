@@ -1,0 +1,19 @@
+summary: Container token
+description:
+  Create access token for a master container.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ContainerToken'
+
+responses:
+  200:
+    description: Container token generated
+  400:
+    description: Task already completed
+  401:
+    description: Unauthorized
+
+tags: ["Authentication"]
