@@ -110,6 +110,16 @@ template = {
                     "password": {"type": "string"}, 
                     "username": {"type": "string"}
                 }
+            },
+            "ContainerToken": {
+                "properties": {
+                    "task_id": {"type": "string"},
+                    "image": {"type": "string"}
+                },
+                "example": {
+                    "task_id": 1,
+                    "image": "hello-world"
+                }
             }
         }
     },
