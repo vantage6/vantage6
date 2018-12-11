@@ -49,11 +49,12 @@ setup(
         'marshmallow',
         'marshmallow-sqlalchemy',
         'pyyaml',
+        'psutil',
         'psycopg2',
         'requests',
         'termcolor',
         'sqlalchemy',
-        'flasgger=0.9.3' # flassger OAS 3+ support
+        'flasgger>0.9.2' # flassger OAS 3+ support
     ],
     package_data={  
         'pytaskmanager': [
