@@ -3,6 +3,7 @@
 import os, sys
 import importlib
 
+TERMINAL_AVAILABLE = True
 try:
     # Stuff needed for running shell in a browser
     import pty
@@ -12,7 +13,7 @@ try:
     import fcntl
     import termios
 except: 
-    pass
+    TERMINAL_AVAILABLE = False
 
 from flask import Flask, Response, request, render_template, make_response, g, session
 from flask_restful import Resource, Api, fields
@@ -205,37 +206,40 @@ socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
 def start_interpreter():
     # create child process attached to a pty we can read from and write to
-    env = app.config['environment']
-    cmd = ['ipython', '-m', 'pytaskmanager.server.shell', '-i', '--', env]
+    if TERMINAL_AVAILABLE:
+        env = app.config['environment']
+        cmd = ['ipython', '-m', 'pytaskmanager.server.shell', '-i', '--', env]
 
-    log.debug("opening pty")
-    master_fd, slave_fd = pty.openpty()
+        log.debug("opening pty")
+        master_fd, slave_fd = pty.openpty()
 
-    log.debug("starting process")
-    child = subprocess.Popen(
-        cmd, 
-        stdin=slave_fd, 
-        stdout=slave_fd, 
-        stderr=slave_fd
-    )
+        log.debug("starting process")
+        child = subprocess.Popen(
+            cmd, 
+            stdin=slave_fd, 
+            stdout=slave_fd, 
+            stderr=slave_fd
+        )
 
-    log.debug("adding process details to session")
-    session.child = child
-    session.fd = master_fd
-    session.master_fd = master_fd
-    session.slave_fd = slave_fd
+        log.debug("adding process details to session")
+        session.child = child
+        session.fd = master_fd
+        session.master_fd = master_fd
+        session.slave_fd = slave_fd
 
-    log.debug("setting window size")
-    set_winsize(master_fd, 50, 50)
+        log.debug("setting window size")
+        set_winsize(master_fd, 50, 50)
 
-    log.debug("starting background task")
-    socketio.start_background_task(
-        read_and_forward_pty_output, 
-        fd=master_fd, 
-        sid=request.sid,
-        child=child,
-    )
-    log.debug("ipython terminal backend started")
+        log.debug("starting background task")
+        socketio.start_background_task(
+            read_and_forward_pty_output, 
+            fd=master_fd, 
+            sid=request.sid,
+            child=child,
+        )
+        log.debug("ipython terminal backend started")
+    else:
+        log.debug("ipython terminal not available")
 
 
 def assert_running_interpreter(start_if_required=False, child=None):
@@ -541,6 +545,3 @@ def run(ctx, *args, **kwargs):
     session.commit()
 
     socketio.run(app, *args, **kwargs)
-
-
-
