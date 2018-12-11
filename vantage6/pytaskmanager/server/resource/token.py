@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 import logging
 
-from flask import request, jsonify
+from flask import request, jsonify, g
 from flask_restful import Resource
 from flask_jwt_extended import jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
 from flasgger import swag_from
@@ -15,6 +15,7 @@ from pathlib import Path
 
 from pytaskmanager import server
 from pytaskmanager.server import db
+from pytaskmanager.server.resource import with_node
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -36,6 +37,13 @@ def setup(api, api_base):
         RefreshToken,
         path+'/refresh',
         endpoint='refresh_token',
+        methods=('POST',)
+    )
+
+    api.add_resource(
+        ContainerToken,
+        path+'/container',
+        endpoint='container_token',
         methods=('POST',)
     )
 
@@ -144,3 +152,47 @@ class RefreshToken(Resource):
         ret = {'access_token': create_access_token(user_or_node)}
 
         return ret, HTTPStatus.OK
+
+class ContainerToken(Resource):
+    
+    @with_node
+    @swag_from(str(Path(r"swagger/post_token_container.yaml")), endpoint='container_token')
+    def post(self):
+        """Create a token for a container running on a node."""
+        log.debug("POST /token/container")
+        
+        data = request.get_json()
+        
+        task_id = data.get("task_id")
+        db_task = db.Task.get(task_id)
+        claim_image = data.get("image")
+
+        # verify that task the token is requested for exists
+        if claim_image != db_task.image:
+            log.warning(f"node {g.node.id} attemts to generate key for image {claim_image} \
+                        that does not belong to task {task_id}")
+            return {"msg": "image and task do no match"}, HTTPStatus.UNAUTHORIZED
+        
+        # check if the node is in the collaboration to which the task is enlisted
+        if g.node.collaboration_id != db_task.collaboration_id:
+            log.warning(f"node {g.node.id} attemts to generate key for task {task_id} \
+                        which he doesn't own")
+            return {"msg": "you do not own that task"}, HTTPStatus.UNAUTHORIZED
+        
+        # validate that the task not has been finished yet
+        if db_task.complete():
+            log.warning(f"node {g.node.id} attempts to generate a key for completed \
+            task {task_id}")
+            return {"msg": "task is already finished!"}, HTTPStatus.BAD_REQUEST
+        
+        # container token can be identified by its node_id, 
+        # task_id, collaboration_id and image_id
+        container = {
+            "node": g.node.id,
+            "collaboration": g.node.collaboration_id,
+            "task": task_id,
+            "image": claim_image
+        }
+
+        return {'container_token': create_access_token(container)}, HTTPStatus.OK
+        
