@@ -200,6 +200,7 @@ class Authenticatable(Base):
     type = Column(String(50))
     ip = Column(String)
     last_seen = Column(DateTime)
+    status = Column(String)
 
 
     __mapper_args__ = {

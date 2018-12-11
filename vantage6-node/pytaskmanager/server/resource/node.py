@@ -66,7 +66,9 @@ class Node(Resource):
                 return {"msg": "you are not allowed to see this node"}, HTTPStatus.FORBIDDEN  # 403
         else:
             # only the nodes of the users organization are returned
-            if g.user.roles != 'admin':
+            if g.user.roles in ['root', 'admin']:
+                nodes = [node for node in nodes]
+            elif g.user.roles != 'admin':
                 nodes = [node for node in nodes if node.organization_id == g.user.organization_id]
 
         return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
