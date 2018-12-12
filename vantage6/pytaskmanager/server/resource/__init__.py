@@ -10,7 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt_claims
 
 import datetime
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__.split('.')[-1])
 
 from .. import db
 from functools import wraps
@@ -19,94 +19,56 @@ from functools import wraps
 # ------------------------------------------------------------------------------
 # Helpfer functions/decoraters ... 
 # ------------------------------------------------------------------------------
-def with_user_or_node(fn):
-    @wraps(fn)
-    def decorator(*args, **kwargs):
-        user_or_node_id = get_jwt_identity()
-        claims = get_jwt_claims()
+def only_for(types = ['user', 'node', 'container']):
+    """JWT endpoint protection decorator"""
+    def protection_decorator(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
 
-        # log.info('decorator - user_or_node_id: {}'.format(user_or_node_id))
-        # log.info(claims)
-        user_or_node = db.Authenticatable.get(user_or_node_id)
-        user_or_node.last_seen = datetime.datetime.utcnow()
-        user_or_node.ip = request.remote_addr
-        user_or_node.save()
+            # decode JWT-token
+            identity = get_jwt_identity()
+            claims = get_jwt_claims()
 
-        g.type = user_or_node.type
+            # check that identity has access to endpoint            
+            g.type = claims["type"]
+            log.debug(f"Endpoint accessed as {g.type}")
+            if g.type not in types:
+                log.warning(f"Illegal attempt from {g.type} to access endpoint")
+                raise Exception(f"{g.type}'s are not allowed!")
 
-        if g.type == 'user':
-            g.user = user_or_node
-            g.node = None
-        elif g.type == 'node':
-            g.node = user_or_node
-            g.user = None
-        else:
-            raise Exception('Unknown user/node type!?')
+            # do some specific stuff per identity
+            if g.type == 'user':
+                user = get_and_update_authenticable_info(identity)
+                g.user = user
+                assert g.user.type == g.type
+            elif g.type == 'node':
+                node = get_and_update_authenticable_info(identity)
+                g.node = node
+                assert g.node.type == g.type
+            elif g.type == 'container':
+                g.container = identity
+            else:
+                raise Exception(f"Unknown entity: {g.type}")
 
-        return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
+        return jwt_required(decorator)
+    return protection_decorator
 
-    return jwt_required(decorator)
+def get_and_update_authenticable_info(auth_id):
+    """Get DB entity from ID and update info."""
+    auth = db.Authenticatable.get(auth_id)
+    auth.last_seen = datetime.datetime.utcnow()
+    auth.ip = request.remote_addr
+    auth.save()
+    return auth
 
-
-def with_user(fn):
-    @wraps(fn)
-    def decorator(*args, **kwargs):
-        user_or_node_id = get_jwt_identity()
-        claims = get_jwt_claims()
-
-        # log.info('decorator - user_or_node_id: {}'.format(user_or_node_id))
-        # log.info(claims)
-
-        user_or_node = db.Authenticatable.get(user_or_node_id)
-        user_or_node.last_seen = datetime.datetime.utcnow()
-        user_or_node.ip = request.remote_addr
-        user_or_node.save()
-
-        g.type = user_or_node.type
-
-        if g.type == 'user':
-            g.user = user_or_node
-        else:
-            raise Exception("Not authenticated as user!?")
-
-        return fn(*args, **kwargs)
-
-    return jwt_required(decorator)
-
-
-def with_node(fn):
-    @wraps(fn)
-    def decorator(*args, **kwargs):
-        user_or_node_id = get_jwt_identity()
-        claims = get_jwt_claims()
-
-        # log.info('decorator - user_or_node_id: {}'.format(user_or_node_id))
-        # log.info(claims)
-
-        user_or_node = db.Authenticatable.get(user_or_node_id)
-        user_or_node.last_seen = datetime.datetime.utcnow()
-        user_or_node.ip = request.remote_addr
-        user_or_node.save()
-
-        g.type = user_or_node.type
-
-        if g.type == 'node':
-            g.node = user_or_node
-        else:
-            raise Exception("Not authenticated as node!?")
-
-        return fn(*args, **kwargs)
-
-    return jwt_required(decorator)
-
-
+# create alias decorators
+with_user_or_node = only_for(["user", "node"])
+with_user = only_for(["user"])
+with_node = only_for(["node"])
+with_container = only_for(["container"])
 
 def parse_datetime(dt=None, default=None):
     if dt:
         return datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
-
     return default
-
-
-
-

@@ -14,7 +14,7 @@ from flasgger import swag_from
 from pathlib import Path
 
 from pytaskmanager.server import db
-from pytaskmanager.server.resource import with_user
+from pytaskmanager.server.resource import with_user, only_for
 from pytaskmanager.server.resource._schema import UserSchema
 
 module_name = __name__.split('.')[-1]
@@ -47,7 +47,7 @@ class User(Resource):
 
     user_schema = UserSchema()
 
-    @with_user
+    @only_for(['user'])
     @swag_from(str(Path(r"swagger/get_user_with_id.yaml")), endpoint='user_with_id')
     @swag_from(str(Path(r"swagger/get_user_without_id.yaml")), endpoint='user_without_id')
     def get(self, user_id=None):
@@ -55,7 +55,7 @@ class User(Resource):
         all_users = db.User.get(user_id)
 
         if not user_id:
-            if "admin" in g.user.roles:
+            if "admin" or "root" in g.user.roles:
                 return self.user_schema.dump(all_users, many=True).data
             else:
                 return self.user_schema.dump(
