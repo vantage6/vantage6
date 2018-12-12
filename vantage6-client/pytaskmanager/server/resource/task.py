@@ -7,7 +7,7 @@ import json
 
 from flask import g, request, url_for
 from flask_restful import Resource
-from . import with_user_or_node, with_user
+from . import with_user_or_node, with_user, only_for
 from ._schema import TaskSchema, TaskIncludedSchema
 from http import HTTPStatus
 from flasgger import swag_from
@@ -53,7 +53,7 @@ class Task(Resource):
     task_schema = TaskSchema()
     task_result_schema = TaskIncludedSchema()
 
-    # @with_user_or_node
+    @only_for(["user", "node"])
     @swag_from(str(Path(r"swagger/get_task_with_id.yaml")), endpoint='task_with_id')
     @swag_from(str(Path(r"swagger/get_task_without_id.yaml")), endpoint='task_without_id')
     def get(self, id=None):
@@ -64,7 +64,7 @@ class Task(Resource):
         s = self.task_result_schema if request.args.get('include') == 'results' else self.task_schema
         return s.dump(task, many=not id).data, HTTPStatus.OK
 
-    @with_user
+    @only_for(["user", "container"])
     @swag_from(str(Path(r"swagger/post_task_without_id.yaml")), endpoint='task_without_id')
     def post(self):
         """Create a new Task."""
@@ -118,32 +118,7 @@ class Task(Resource):
 
         return self.task_schema.dump(task, many=False)
 
-    # @with_user_or_node
-    # def patch(self, id=None):
-    #     # TODO not sure if this is such a good idea?
-    #     if not id:
-    #         return {"msg": "no task id is specified"}, HTTPStatus.BAD_REQUEST
-    #
-    #     task = db.Task.get(id)
-    #     if not task:
-    #         return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-    #
-    #     data = request.get_json()
-    #     if 'name' in data:
-    #         task.name = data['name']
-    #     if 'description' in data:
-    #         task.description = data['description']
-    #     if 'image' in data:
-    #         task.image = data['image']
-    #     if 'status' in data:
-    #         task.status = data['status']
-    #     if 'input' in data:
-    #         input_ = data['input']
-    #         if not isinstance(input_, str):
-    #             input_ = json.dumps(input_)
-    #         task.input = input_
-
-    @with_user
+    @only_for(['user'])
     @swag_from(str(Path(r"swagger/delete_task_with_id.yaml")), endpoint='task_with_id')
     def delete(self, id):
         """Deletes a task"""
@@ -160,7 +135,7 @@ class Task(Resource):
 class TaskResult(Resource):
     """Resource for /api/task/<int:id>/result"""
 
-    @with_user_or_node
+    @only_for(['user', 'container'])
     @swag_from(str(Path(r"swagger/get_task_result.yaml")), endpoint='task_result')
     def get(self, id):
         """Return results for task."""
