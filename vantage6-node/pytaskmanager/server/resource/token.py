@@ -15,7 +15,7 @@ from pathlib import Path
 
 from pytaskmanager import server
 from pytaskmanager.server import db
-from pytaskmanager.server.resource import with_node
+from pytaskmanager.server.resource import with_node, only_for
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -155,7 +155,10 @@ class RefreshToken(Resource):
 
 class ContainerToken(Resource):
     
-    @with_node
+    
+    # @with_node
+    
+    @only_for(['node'])
     @swag_from(str(Path(r"swagger/post_token_container.yaml")), endpoint='container_token')
     def post(self):
         """Create a token for a container running on a node."""
@@ -185,12 +188,13 @@ class ContainerToken(Resource):
             task {task_id}")
             return {"msg": "task is already finished!"}, HTTPStatus.BAD_REQUEST
         
-        # container token can be identified by its node_id, 
+        # container identity consists of its node_id, 
         # task_id, collaboration_id and image_id
         container = {
-            "node": g.node.id,
-            "collaboration": g.node.collaboration_id,
-            "task": task_id,
+            "type": "container",
+            "node_id": g.node.id,
+            "collaboration_id": g.node.collaboration_id,
+            "task_id": task_id,
             "image": claim_image
         }
 

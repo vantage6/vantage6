@@ -168,15 +168,18 @@ ma = Marshmallow(app)
 app.config['JWT_SECRET_KEY'] = 'f8a87430-fe18-11e7-a7b2-a45e60d00d91'
 jwt = JWTManager(app)
 
-
 @jwt.user_claims_loader
-def user_claims_loader(user_or_node):
-    if isinstance(user_or_node, db.User):
+def user_claims_loader(identity):
+    roles = []
+    if isinstance(identity, db.User):
         type_ = 'user'
-        roles = user_or_node.roles.split(',')
-    else:
+        roles = identity.roles.split(',')
+    elif isinstance(identity, db.Node):
         type_ = 'node'
-        roles = []
+    elif isinstance(identity, dict):
+        type_ = 'container'
+    else:
+        log.error(f"could not create claims from {str(identity)}")
     
     claims = {
         'type': type_,
@@ -185,21 +188,23 @@ def user_claims_loader(user_or_node):
 
     return claims
 
-
 @jwt.user_identity_loader
-def user_identity_loader(user_or_node):
-    if isinstance(user_or_node, db.Authenticatable):
-        return user_or_node.id
-    
-    msg = "Could not create a JSON serializable identity from '{}'"
-    msg = msg.format(user_or_node)
-    log.error(msg)
-    return None
+def user_identity_loader(identity):
 
+    if isinstance(identity, db.Authenticatable):
+        return identity.id
+    if isinstance(identity, dict):
+        return identity
+
+    log.error(f"Could not create a JSON serializable identity \
+                from '{str(identity)}'")
 
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
-    return db.Authenticatable.get(identity)
+    if isinstance(identity, int):
+        return db.Authenticatable.get(identity)
+    else:
+        return identity
 
 
 # ------------------------------------------------------------------------------
