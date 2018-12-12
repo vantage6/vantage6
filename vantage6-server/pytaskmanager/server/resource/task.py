@@ -68,21 +68,46 @@ class Task(Resource):
     @swag_from(str(Path(r"swagger/post_task_without_id.yaml")), endpoint='task_without_id')
     def post(self):
         """Create a new Task."""
+        if not request.is_json:
+            return {"msg": "No JSON body found..."}, HTTPStatus.BAD_REQUEST
         data = request.get_json()
-        collaboration_id = data.get('collaboration_id')
 
-        if not collaboration_id:
-            log.error("JSON causing the error:\n{}".format(data))
-            return {"msg": "JSON should contain 'collaboration_id'"}, HTTPStatus.BAD_REQUEST
-
-        collaboration = db.Collaboration.get(collaboration_id)
+        collaboration_id = data.get('collaboration_id', None)
+        collaboration = db.Collaboration.get(collaboration_id, None)
         if not collaboration:
-            return {"msg": "collaboration id={} not found".format(collaboration_id)}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration id={collaboration_id} not found"},\
+            HTTPStatus.NOT_FOUND
 
-        task = db.Task(collaboration=collaboration)
-        task.name = data.get('name', '')
-        task.description = data.get('description', '')
-        task.image = data.get('image', '')
+        # create new task
+        task = db.Task(
+            collaboration=collaboration,
+            name=data.get('name', ''),
+            description=data.get('description', ''),
+            image=data.get('image', '')
+        )
+
+        # in case of a container we have to be extra carefull
+        if g.type == "container":
+            if g.container["image"] != task.image:
+                log.warning(f"Container from node={g.container['node_id']} \
+                    attemts to post a task using illegal image={task.image}")
+                return {"msg": f"You do not have permission to use image={task.image}"},\
+                    HTTPStatus.UNAUTHORIZED
+
+            # check master task is not completed yet
+            if db.Task.get(g.container["task_id"]).complete:
+                log.warning((f"Container from node={g.container['node_id']} attempts \
+                    to start sub-task for a completed task={g.container['task_id']}"))
+                return {"msg": f"Master task={g.container['task_id']} is already completed"},\
+                    HTTPStatus.BAD_REQUEST
+
+            # # check that node id is indeed part of the collaboration
+            if not g.container["collaboration_id"] == collaboration_id:
+                log.warning(f"Container attempts to create a task outside its collaboration!")
+                return {"msg": f"You cannot create tasks in collaboration_id={collaboration_id}"},\
+                    HTTPStatus.BAD_REQUEST
+
+        # TODO check that organization of the user is in the collaboration!
 
         input_ = data.get('input', '')
         if not isinstance(input_, str):
@@ -93,7 +118,11 @@ class Task(Resource):
         task.save()
 
         log.info(f"New task created for collaboration '{task.collaboration.name}'")
-        log.debug(f" created by: '{g.user.username}'")
+        if g.type == 'user':
+            log.debug(f" created by: '{g.user.username}'")
+        else:
+            log.debug((f" created by container on node_id={g.container['node_id']}"
+                       f" for (master) task_id={g.container['task_id']}"))
         log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
         log.debug(f" name: '{task.name}'")
         log.debug(f" image: '{task.image}'")
