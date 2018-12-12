@@ -2,19 +2,20 @@
 """
 Resources ... 
 """
-import sys
-import os, os.path
-
-from flask import g, request
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt_claims
-
 import datetime
 import logging
-log = logging.getLogger(__name__.split('.')[-1])
+import os
+import os.path
+import sys
 
-from .. import db
 from functools import wraps
 
+from flask import g, request
+from flask_jwt_extended import get_jwt_claims, get_jwt_identity, jwt_required
+
+from pytaskmanager.server import db
+
+log = logging.getLogger(__name__.split('.')[-1])
 
 # ------------------------------------------------------------------------------
 # Helpfer functions/decoraters ... 
@@ -38,11 +39,11 @@ def only_for(types = ['user', 'node', 'container']):
 
             # do some specific stuff per identity
             if g.type == 'user':
-                user = get_and_update_authenticable_info(identity)
+                user = get_and_update_authenticatable_info(identity)
                 g.user = user
                 assert g.user.type == g.type
             elif g.type == 'node':
-                node = get_and_update_authenticable_info(identity)
+                node = get_and_update_authenticatable_info(identity)
                 g.node = node
                 assert g.node.type == g.type
             elif g.type == 'container':
@@ -54,7 +55,7 @@ def only_for(types = ['user', 'node', 'container']):
         return jwt_required(decorator)
     return protection_decorator
 
-def get_and_update_authenticable_info(auth_id):
+def get_and_update_authenticatable_info(auth_id):
     """Get DB entity from ID and update info."""
     auth = db.Authenticatable.get(auth_id)
     auth.last_seen = datetime.datetime.utcnow()
