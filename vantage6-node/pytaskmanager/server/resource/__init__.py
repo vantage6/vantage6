@@ -38,6 +38,7 @@ def only_for(types = ['user', 'node', 'container']):
                 raise Exception(f"{g.type}'s are not allowed!")
 
             # do some specific stuff per identity
+            g.user = g.container = g.node = None
             if g.type == 'user':
                 user = get_and_update_authenticatable_info(identity)
                 g.user = user
