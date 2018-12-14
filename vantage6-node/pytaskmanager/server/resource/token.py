@@ -27,16 +27,16 @@ def setup(api, api_base):
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
-        Token,
-        path,
-        endpoint='token',
+        UserToken,
+        path+'/user',
+        endpoint='user_token',
         methods=('POST',)
     )
 
     api.add_resource(
-        RefreshToken,
-        path+'/refresh',
-        endpoint='refresh_token',
+        NodeToken,
+        path+'/node',
+        endpoint='node_token',
         methods=('POST',)
     )
 
@@ -47,78 +47,53 @@ def setup(api, api_base):
         methods=('POST',)
     )
 
+    api.add_resource(
+        RefreshToken,
+        path+'/refresh',
+        endpoint='refresh_token',
+        methods=('POST',)
+    )
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Token(Resource):
+class UserToken(Resource):
     """resource for api/token"""
 
-    @staticmethod
-    @swag_from(str(Path(r"swagger/post_token.yaml")), endpoint='token')
-    def post():
+    @swag_from(str(Path(r"swagger/post_user_token.yaml")), endpoint='user_token')
+    def post(self):
         """Authenticate user or node"""
-        log.debug("POST /token")
+        log.debug("Authenticate user using username and password")
 
         if not request.is_json:
-            log.warning('POST request without JSON body.')
+            log.warning('Authentication failed because no JSON body was provided!')
             return {"msg": "Missing JSON in request"}, HTTPStatus.BAD_REQUEST
 
-        # log.debug("got some json:")
-        # log.debug(request.json)
-        # log.debug("can print it too")
-
+        # Check JSON body
         username = request.json.get('username', None)
         password = request.json.get('password', None)
-        api_key = request.json.get('api_key', None)
-
-        log.debug(f"username: '{username}'")
-        # log.debug(f"api_key: '{api_key}'")
-
-        if username and password:
-            log.debug(f"trying to login {username}")
-            user, code = Token.user_login(username, password)
-            if code is not HTTPStatus.OK:  # login failed
-                log.error(f"Could not login user '{username}'")
-                return user, code
-
-            token = create_access_token(user)
-            ret = {
-                'access_token': token,
-                'refresh_token': create_refresh_token(user),
-                'user_url': server.api.url_for(server.resource.user.User, user_id=user.id),
-                'refresh_url': server.api.url_for(RefreshToken),
-            }
-
-            return ret, HTTPStatus.OK, {'jwt-token': token}
-
-        elif api_key:
-            log.debug("trying to authenticate node with api_key")
-
-            node = db.Node.get_by_api_key(api_key)
-
-            if node:
-                ret = {
-                    'access_token': create_access_token(node),
-                    'refresh_token': create_refresh_token(node),
-                    'node_url': server.api.url_for(server.resource.node.Node, id=node.id),
-                    'refresh_url': server.api.url_for(RefreshToken),
-                }
-                log.info("Authenticated as node '{}' ({})".format(node.id, node.name))
-                return ret, HTTPStatus.OK
-
-            else:
-                msg = "Invalid API-key!"
-                log.error(msg)
-                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-
-        else:
-            msg = "no API key or user/password combination provided"
+        if not username or password:
+            msg = "Username and/or password missing in JSON body"
             log.error(msg)
-            return {"msg": msg}, 400
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        log.error("this can't be right ...")
+        log.debug(f"Trying to login {username}")
+        user, code = self.user_login(username, password)
+        if code is not HTTPStatus.OK:  # login failed
+            log.error(f"Incorrect username/password combination for user='{username}'")
+            return user, code
 
+        token = create_access_token(user)
+        ret = {
+            'access_token': token,
+            'refresh_token': create_refresh_token(user),
+            'user_url': server.api.url_for(server.resource.user.User, user_id=user.id),
+            'refresh_url': server.api.url_for(RefreshToken),
+        }
+
+        log.info(f"Succesfull login from {username}")
+        return ret, HTTPStatus.OK, {'jwt-token': token}
 
     @staticmethod
     def user_login(username, password):
@@ -139,24 +114,43 @@ class Token(Resource):
         log.info("Successful login for '{}'".format(username))
         return user, HTTPStatus.OK
 
-
-class RefreshToken(Resource):
-
-    @jwt_refresh_token_required
-    @swag_from(str(Path(r"swagger/post_token_refresh.yaml")), endpoint='refresh_token')
+class NodeToken(Resource):
+    
+    @swag_from(str(Path(r"swagger/post_user_token.yaml")), endpoint='node_token')
     def post(self):
-        """Create a token from a refresh token."""
-        user_or_node_id = get_jwt_identity()
-        log.info('Refreshing token for user or node "{}"'.format(user_or_node_id))
-        user_or_node = db.Authenticatable.get(user_or_node_id)
-        ret = {'access_token': create_access_token(user_or_node)}
+        """Authenticate as Node."""
+        log.debug("Authenticate Node using api key")
 
-        return ret, HTTPStatus.OK
+        if not request.is_json:
+            log.warning('Authentication failed because no JSON body was provided!')
+            return {"msg": "Missing JSON in request"}, HTTPStatus.BAD_REQUEST
+
+        # Check JSON body
+        api_key = request.json.get('api_key', None)
+        if not api_key:
+            msg = "api_key missing in JSON body"
+            log.error(msg)
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
+        node = db.Node.get_by_api_key(api_key)
+        
+        if not node:  # login failed
+            log.error(f"Api key is not recognised")
+            return {"msg": "Api key is not recognised!"}
+
+        token = create_access_token(node)
+        ret = {
+            'access_token': create_access_token(node),
+            'refresh_token': create_refresh_token(node),
+            'node_url': server.api.url_for(server.resource.node.Node, id=node.id),
+            'refresh_url': server.api.url_for(RefreshToken),
+        }
+
+        log.info("Succesfull login as node '{}' ({})".format(node.id, node.name))
+        return ret, HTTPStatus.OK, {'jwt-token': token}
+
 
 class ContainerToken(Resource):
-    
-    
-    # @with_node
     
     @only_for(['node'])
     @swag_from(str(Path(r"swagger/post_token_container.yaml")), endpoint='container_token')
@@ -203,4 +197,18 @@ class ContainerToken(Resource):
         }
 
         return {'container_token': create_access_token(container)}, HTTPStatus.OK
+
+
+class RefreshToken(Resource):
+
+    @jwt_refresh_token_required
+    @swag_from(str(Path(r"swagger/post_token_refresh.yaml")), endpoint='refresh_token')
+    def post(self):
+        """Create a token from a refresh token."""
+        user_or_node_id = get_jwt_identity()
+        log.info('Refreshing token for user or node "{}"'.format(user_or_node_id))
+        user_or_node = db.Authenticatable.get(user_or_node_id)
+        ret = {'access_token': create_access_token(user_or_node)}
+
+        return ret, HTTPStatus.OK
         

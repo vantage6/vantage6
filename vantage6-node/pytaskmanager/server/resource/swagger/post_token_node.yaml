@@ -1,0 +1,20 @@
+summary: Login node
+
+description:
+  Allows for node sign-in using a unique api-key.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+          $ref: '#/components/schemas/Node'
+        example:
+          $ref: '#/components/schemas/Node/example'
+
+responses:
+  200:
+    description: Ok, authenticated
+  400:
+    description: No or wrong JSON-body, or invalid api-key provided
+
+tags: ["Authentication"]

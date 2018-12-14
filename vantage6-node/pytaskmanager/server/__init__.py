@@ -95,6 +95,9 @@ template = {
                 }
             },
             "Node": {
+                "example": {
+                    "api_key": "unique-string"
+                },
                 "properties": {
                     "api_key": {
                         "type": "string"
