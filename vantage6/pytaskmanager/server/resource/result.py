@@ -9,7 +9,7 @@ from flask_restful import Resource, abort
 from requests import codes as rqc # todo remove and use HTTPStatus
 from http import HTTPStatus
 from . import parse_datetime
-from . import with_user_or_node, with_node
+from . import with_user_or_node, with_node, only_for
 from ._schema import *
 from flasgger import swag_from
 from http import HTTPStatus
@@ -51,7 +51,7 @@ result_inc_schema = ResultTaskIncludedSchema()
 class Result(Resource):
     """Resource for /api/task"""
 
-    @with_user_or_node
+    @only_for(['node', 'user', 'container'])
     @swag_from(str(Path(r"swagger/get_result_with_id.yaml")),endpoint="result_with_id")
     @swag_from(str(Path(r"swagger/get_result_without_id.yaml")), endpoint="result_without_id")
     def get(self, id=None):
