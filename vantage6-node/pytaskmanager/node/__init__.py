@@ -16,10 +16,11 @@ import queue
 
 from requests.compat import urljoin
 from pprint import pprint
-from threading import Thread
+from threading import Thread, Event
 from socketIO_client import SocketIO, SocketIONamespace
 
 from pytaskmanager import util
+from pytaskmanager.node.FlaskIO import ClientNodeProtocol
 
 def name():
     return __name__.split('.')[-1]
@@ -51,155 +52,41 @@ class NodeNamespace(SocketIONamespace):
         else:
             self.log.critical('Task Master Node reference not set is socket namespace')
 
-# ------------------------------------------------------------------------------
-class AuthenticationError(Exception):
-
-    def __init__(self, message):
-        self.message = message
 
 # ------------------------------------------------------------------------------
 class NodeBase(object):
-    """Base class for Node and TaskMasterNode. Provides the interface to the
+    """Base class for Node and Node. Provides the interface to the
     ppDLI server."""
     
-    def __init__(self, host, api_path='/api'):
+    def __init__(self, host='localhost', port=5000, api_path='/api'):
         """Initialize a ClientBase instance."""
-
         self.log = logging.getLogger(name())
-
-        self._HOST = host
-
-        if api_path.endswith('/') and len(api_path) > 1:
-            self._API_PATH = self._API_PATH.rstrip('/')
-        elif api_path:
-            self._API_PATH = api_path
-        else:
-            self._API_PATH = '/'
-
-        self._REFRESH_URL = None
-        self._ACCESS_TOKEN = None
-        self._REFRESH_TOKEN = None
-
-    def get_url(self, path):
-        return self._HOST + path if path.startswith('/') else \
-          self._HOST + self._API_PATH + '/' + path 
         
-    def authenticate(self, api_key=None):
-        """Authenticate with the server as a Node."""
-
-        # get url where token can be obtained.
-        url = self.get_url('token')
-
-        # request a token from the server.
-        response = requests.post(url, json={'api_key': api_key})
-        response_data = response.json()
-
-        # handle authentication problems
-        if response.status_code != 200:
-            msg = response_data.get('msg')
-            raise AuthenticationError(msg)
-        self.log.info("Authenticated")
-
-        # Process the response
-        self._ACCESS_TOKEN = response_data['access_token']
-        self._REFRESH_TOKEN = response_data['refresh_token']
-        self._REFRESH_URL = response_data['refresh_url']
-
-        decoded_token = jwt.decode(self._ACCESS_TOKEN, verify=False)
-        
-        return response_data, decoded_token
-
-    def refresh_token(self):
-        if self._REFRESH_URL is None:
-            raise AuthenticationError('Not authenticated!')
-
-        self.log.info('Refreshing token')
-
-        url = '{}{}'.format(self._HOST, self._REFRESH_URL)
-        response = requests.post(url, headers={'Authorization': 'Bearer ' + self._REFRESH_TOKEN})
-        response_data = response.json()
-
-        if response.status_code != 200:
-            msg = response_data.get('msg')
-            raise AuthenticationError(msg)
-
-        self._ACCESS_TOKEN = response_data['access_token']
-
-    def request(self, path, json_data=None, method='get'):
-        """Performs a PUT by default is json_data is provided without method."""
-        method = method.lower()
-
-        if json_data and method == 'get':
-            method = 'put'
-
-        headers = {
-            'Authorization': 'Bearer ' + self._ACCESS_TOKEN,
-        }
-
-        url = self.get_url(path)
-        self.log.debug(f"{method} | {url}")
-
-        if method == 'put':
-            response = requests.put(url, json=json_data, headers=headers)
-        elif method=='patch':
-            response = requests.patch(url, json=json_data, headers=headers)
-        elif method == 'post':
-            response = requests.post(url, json=json_data, headers=headers)
-        else:
-            response = requests.get(url, headers=headers)
-
-        response_data = response.json()
-
-        # TODO only do this when token is expired!
-        if response.status_code != 200:
-            msg = response_data.get('msg')
-            self.log.warning('Request failed: {}'.format(msg))
-            self.refresh_token()
-            self.log.info('Retrying ...')
-            return self.request(path, json_data, method)
-
-        return response_data
-
-    def get_collaboration(self, collaboration_id=None):
-        if collaboration_id:
-            return self.request('collaboration/{}'.format(collaboration_id))
-
-        return self.request('collaboration')
-
-    def get_task(self, task_id, include=''):
-        url = 'task/{}?include={}'.format(task_id, include)
-        return self.request(url)
-
-    def create_task(self, name, image, collaboration_id,  input_='', description=''):
-        task = {
-            "name": name,
-            "image": image, 
-            "collaboration_id": collaboration_id,
-            "input": input_,
-            "description": description,
-        }        
-
-        return self.request('task', json_data=task, method='post')
+        # initialize Node connection
+        self.flaskIO = ClientNodeProtocol(
+            host=host, 
+            port=port, 
+            path=api_path
+        )
 
 
 # ------------------------------------------------------------------------------
-class TaskMasterNode(NodeBase):
+class NodeWorker(NodeBase):
     """Automated node that checks for tasks and executes them."""
 
     def __init__(self, ctx):
         """Initialize a new TaskMasterNode instance."""
 
         self.ctx = ctx
-        self.name = ctx.instance_name
         self.config = ctx.config
 
         super().__init__(
-            self.config['server_url'], 
-            self.config['api_path']
+            host=self.config.get('server_url'), 
+            port=self.config.get('port'),
+            api_path=self.config.get('api_path')
         )
 
-        self.node_id = None
-        self.log.info(f"Using server: {self._HOST}")
+        self.log.info(f"Connecting server: {self.flaskIO.base_path}")
 
         # Authenticate to the DL server, obtaining a JWT
         # authorization token.
@@ -227,26 +114,24 @@ class TaskMasterNode(NodeBase):
         
         while True:
             try:
-                response_data, decoded_token = super().authenticate(
-                    api_key=self.config['api_key'])
+                self.flaskIO.authenticate(api_key=self.config.get("api_key"))
                 break # authenticated, leave loop
             except Exception as e:
-                self.log.warning('Connection refused by server, server might be offline')
-                self.log.info('trying again in 10 seconds')
+                self.log.warning('Connection refused by server, server might be offline. Retrying in 10 seconds!')
                 self.log.debug(e)
                 time.sleep(10)
         
-        self.node_id = decoded_token['identity']
-
-        node = self.request(response_data['node_url'])
-        self.log.info("Node name: '{name}'".format(**node))
+        self.log.info(f"Node name: {self.flaskIO.name}")
 
     def get_task_and_add_to_queue(self, task_id):
         
-        # fetch (empty) result for the node with the task_id
-        url = f'result?state=open&include=task&task_id={task_id}&node_id={self.node_id}'
-        tasks = self.request(url)
-
+        # fetch (open) result for the node with the task_id
+        tasks = self.flaskIO.get_results(
+            include_task=True,
+            state='open',
+            task_id=task_id
+        )
+        
         # in the current setup, only a single result for a single node in a task exists.
         for task in tasks:
             self.queue.put(task)
@@ -254,14 +139,27 @@ class TaskMasterNode(NodeBase):
     def run_forever(self):
         """Connect to the server to obtain and execute tasks forever"""
         
-        while True:
-            # blocking untill a task comes available
-            task = self.queue.get()
-            try:
-                self.__execute_task(task)
-            except Exception as e:
-                self.log.exception(e)
+        try:
+            while True:
+                # blocking untill a task comes available
+                # time out specified, else Keyboard interupts are ignored
+                self.log.info("Waiting for new tasks....")
+                while True:
+                    try:
+                        task = self.queue.get(timeout=1)
+                        break
+                    except queue.Empty:
+                        pass
+                    
+                try:
+                    self.__execute_task(task)
+                except Exception as e:
+                    self.log.exception(e)
 
+        except KeyboardInterrupt:
+            self.log.debug("Catched a keyboard interupt, gracefully shutting down...")
+            self.socketIO.disconnect()
+            sys.exit()
     
     def __sync_task_que_with_server(self):
         """Get all unprocessed tasks from the server"""
@@ -270,8 +168,8 @@ class TaskMasterNode(NodeBase):
         self.queue = queue.Queue()
 
         # request open tasks from the server
-        url = f'result?state=open&include=task&node_id={self.node_id}'
-        for task in self.request(url):
+        tasks = self.flaskIO.get_results(state="open",include_task=True)
+        for task in tasks:
             self.queue.put(task)
 
         self.log.info(f"received {self.queue._qsize()} tasks" )
@@ -290,13 +188,8 @@ class TaskMasterNode(NodeBase):
         self.log.info("Starting task {id} - {name}".format(**task))
         self.log.info("-" * 80)
 
-        # notify the server we've started the task. 
-        result_data = {
-            'started_at': datetime.datetime.now().isoformat(),
-        }
-        path = taskresult['_id']
-        response = self.request(path, json_data=result_data, method='patch')
-        self.log.debug(f"server response = {response}")
+        # notify that we are processing this task
+        self.flaskIO.set_task_start_time(taskresult['id'])
 
         # create directory to put files into
         task_dir = self.__make_task_dir(task)
@@ -308,23 +201,19 @@ class TaskMasterNode(NodeBase):
         inputFilePath = os.path.join(task_dir, "input.txt")
         outputFilePath = os.path.join(task_dir, "output.txt")
 
+        # execute algorithm 
         result_text, log_data = self.__docker_run(task, inputFilePath, outputFilePath)
 
-        result_data = {
+        # Do an HTTP PATCH to send back result (response)
+        self.flaskIO.patch_results(id=taskresult['id'], result={
             'result': result_text,
             'log': log_data,
             'finished_at': datetime.datetime.now().isoformat(),
-        }
-
-        # Do an HTTP PATCH to send back result (response)
-        self.log.info('PATCHing result to server')
-        response = self.request(path, json_data=result_data, method='patch')
-        self.log.debug(f"server response = {response}")
-
+        })
+        
         self.log.info("-" * 80)
         self.log.info("Finished task {id} - {name}".format(**task))
         self.log.info("-" * 80)
-        self.log.info('')
 
     def __make_task_dir(self, task):
         task_dir = self.ctx.get_file_location('data', "task-{0:09d}".format(task['id']))
@@ -379,6 +268,7 @@ class TaskMasterNode(NodeBase):
 
         # Prepare shell statement for running the docker image
         dockerParams  = "--rm " # container should be removed after execution
+        # TODO let's docker!
         dockerParams += "-v " + inputFilePath.replace(' ', '\ ') + ":/app/input.txt "   # mount input file
         dockerParams += "-v " + outputFilePath.replace(' ', '\ ') + ":/app/output.txt " # mount output file
 
@@ -422,31 +312,22 @@ class TaskMasterNode(NodeBase):
         return result_text, log_data
 
     def __connect_to_socket(self, action_handler=None):
-        headers = {
-            "Authorization": f"Bearer {self._ACCESS_TOKEN}",
-        }
         
-        # seperate host and port.
-        host_and_port = self._HOST.split(':')
-        host = host_and_port[0]+':'+host_and_port[1]
-        port = int(host_and_port[2])
-        
-        # establish connection.
         self.socketIO = SocketIO(
-            host, 
-            port=port, 
-            # Namespace=action_handler,
-            headers=headers,
+            self.flaskIO.host, 
+            port=self.flaskIO.port, 
+            headers=self.flaskIO.headers,
             wait_for_connection=True
         )
         
-        event_namespace = self.socketIO.define(action_handler, '/tasks')
-
-
+        self.socketIO.define(action_handler, '/tasks')
+        
         if self.socketIO.connected:
-            self.log.info(f'connected to host <{host}> on port <{port}>')
+            self.log.info(f'connected to host={self.flaskIO.host} \
+                on port={self.flaskIO.port}')
         else:
-            self.log.critical(f'could not connect to <{host}> on port <{port}>')
+            self.log.critical(f'could not connect to {self.flaskIO.host} on \
+                port <{self.flaskIO.port}>')
         
     def __listening_worker(self):
         """routine that is in a seperate thread and listens for
@@ -467,7 +348,7 @@ def run(ctx):
     logging.getLogger("requests").setLevel(logging.WARNING)
     
     # initialize node, connect to the server using websockets
-    tmc = TaskMasterNode(ctx)
+    tmc = NodeWorker(ctx)
 
     # reference to tmc in to give call-back functions
     # access to the node methods.
@@ -475,7 +356,3 @@ def run(ctx):
 
     # put the node to work, executing tasks that are in the que
     tmc.run_forever()
-
-
-
-
