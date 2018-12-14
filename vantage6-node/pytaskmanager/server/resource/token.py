@@ -73,7 +73,7 @@ class UserToken(Resource):
         # Check JSON body
         username = request.json.get('username', None)
         password = request.json.get('password', None)
-        if not username or password:
+        if not username and password:
             msg = "Username and/or password missing in JSON body"
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
