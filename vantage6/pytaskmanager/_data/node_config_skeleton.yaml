@@ -1,6 +1,7 @@
 application:
   api_key: 
   server_url: https://api.distributedlearning.ai
+  port:
   api_path: ''
   server_entry_point: /token
   delay: 30 # seconds
