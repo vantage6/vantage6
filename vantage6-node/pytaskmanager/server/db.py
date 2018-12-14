@@ -8,6 +8,7 @@ import json
 import bcrypt
 
 from sqlalchemy import *
+from sqlalchemy import func
 from sqlalchemy.sql import exists
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
@@ -267,12 +268,6 @@ class User(Authenticatable):
         res = session.query(exists().where(cls.username == username)).scalar()
         return res
 
-    # @classmethod
-    # def remove_user(cls, username):
-    #     session = Session()
-    #     session.query(cls).filter_by(username=username).delete()
-    #     session.commit()
-
 
 # ------------------------------------------------------------------------------
 class Node(Authenticatable):
@@ -297,7 +292,7 @@ class Node(Authenticatable):
     @property
     def open_tasks(self):
         # return [result for result in self.taskresults if result.finished_at is None]
-        print(self.taskresults, type(self.taskresults))
+        # print(self.taskresults, type(self.taskresults))
 
         values = list()
         for r in self.taskresults:
@@ -316,8 +311,6 @@ class Node(Authenticatable):
             return None
 
 
-
-
 # ------------------------------------------------------------------------------
 class Task(Base):
     """Central definition of a single task."""
@@ -326,12 +319,25 @@ class Task(Base):
     image = Column(String)
     input = Column(Text)
 
+    run_id = Column(Integer) # multiple tasks can belong to a single run
+    parent_task_id = Column(Integer) # a task can be a subtask 
+
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='tasks')
+
 
     @hybrid_property
     def complete(self):
         return all([r.finished_at for r in self.results])
+
+    @classmethod
+    def next_run_id(cls):
+        session = Session()
+        max_run_id = session.query(func.max(cls.run_id)).scalar()
+        if not max_run_id:
+            return 1
+        else:
+            return max_run_id + 1
 
 
 # ------------------------------------------------------------------------------

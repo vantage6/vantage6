@@ -68,6 +68,7 @@ class Task(Resource):
     @swag_from(str(Path(r"swagger/post_task_without_id.yaml")), endpoint='task_without_id')
     def post(self):
         """Create a new Task."""
+        #TODO split container/node into sepperate endpoints.. 
         if not request.is_json:
             return {"msg": "No JSON body found..."}, HTTPStatus.BAD_REQUEST
         data = request.get_json()
@@ -86,8 +87,13 @@ class Task(Resource):
             image=data.get('image', '')
         )
 
-        # in case of a container we have to be extra carefull
-        if g.type == "container":
+        
+        if g.user:# a user is considered to be the seed of the task
+
+            task.run_id = task.next_run_id()
+            log.debug(f"New run_id {task.run_id}")
+        
+        elif g.container: # in case of a container we have to be extra carefull
             if g.container["image"] != task.image:
                 log.warning(f"Container from node={g.container['node_id']} \
                     attemts to post a task using illegal image={task.image}")
@@ -106,6 +112,11 @@ class Task(Resource):
                 log.warning(f"Container attempts to create a task outside its collaboration!")
                 return {"msg": f"You cannot create tasks in collaboration_id={collaboration_id}"},\
                     HTTPStatus.BAD_REQUEST
+            
+            # container tasks are always sub-tasks
+            task.parent_task_id = g.container["task_id"]
+            task.run_id = db.Task.get(g.container["task_id"]).run_id
+            log.debug(f"Sub task from parent_task_id={task.parent_task_id}")
 
         # TODO check that organization of the user is in the collaboration!
 
