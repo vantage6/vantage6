@@ -1,6 +1,6 @@
-summary: Container token
+summary: Container login
 description:
-  Create access token for a master container.
+  Allows for token-generation for a specific task, image and collaboration.
 
 requestBody:
   content:
@@ -12,8 +12,8 @@ responses:
   200:
     description: Container token generated
   400:
-    description: Task already completed
+    description: Task does not excist or is already completed
   401:
-    description: Unauthorized
+    description: Key request for invalid image or task
 
 tags: ["Authentication"]
