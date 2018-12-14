@@ -167,26 +167,30 @@ class ContainerToken(Resource):
         data = request.get_json()
         
         task_id = data.get("task_id")
-        db_task = db.Task.get(task_id)
         claim_image = data.get("image")
-
+        db_task = db.Task.get(task_id)
+        if not db_task:
+            log.warning(f"Node {g.node.id} attempts to generate key for task {task_id} "\
+                        "that does not excist")
+            return {"msg": "Master task does not excist!"}, HTTPStatus.BAD_REQUEST
+        
         # verify that task the token is requested for exists
         if claim_image != db_task.image:
-            log.warning(f"node {g.node.id} attemts to generate key for image {claim_image} \
-                        that does not belong to task {task_id}")
-            return {"msg": "image and task do no match"}, HTTPStatus.UNAUTHORIZED
+            log.warning(f"Node {g.node.id} attemts to generate key for image {claim_image} "\
+                        "that does not belong to task {task_id}")
+            return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
         
         # check if the node is in the collaboration to which the task is enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
-            log.warning(f"node {g.node.id} attemts to generate key for task {task_id} \
-                        which he doesn't own")
-            return {"msg": "you do not own that task"}, HTTPStatus.UNAUTHORIZED
+            log.warning(f"Node {g.node.id} attemts to generate key for task {task_id} "\
+                        "which he doesn't own")
+            return {"msg": "You do not own that task"}, HTTPStatus.UNAUTHORIZED
         
         # validate that the task not has been finished yet
         if db_task.complete:
-            log.warning(f"node {g.node.id} attempts to generate a key for completed \
-            task {task_id}")
-            return {"msg": "task is already finished!"}, HTTPStatus.BAD_REQUEST
+            log.warning(f"Node {g.node.id} attempts to generate a key for completed "\
+                        "task {task_id}")
+            return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
         
         # container identity consists of its node_id, 
         # task_id, collaboration_id and image_id
