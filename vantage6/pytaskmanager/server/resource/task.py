@@ -84,7 +84,8 @@ class Task(Resource):
             collaboration=collaboration,
             name=data.get('name', ''),
             description=data.get('description', ''),
-            image=data.get('image', '')
+            image=data.get('image', ''),
+            database=data.get('database', '')
         )
 
         

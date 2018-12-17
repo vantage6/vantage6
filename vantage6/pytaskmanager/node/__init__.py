@@ -27,7 +27,7 @@ def name():
 
 
 class NodeNamespace(SocketIONamespace):
-    """Class that handles incomming websocket events."""
+    """Class that handles incoming websocket events."""
 
     # reference to the node objects, so a call-back can edit the 
     # node instance.
@@ -54,36 +54,38 @@ class NodeNamespace(SocketIONamespace):
 
 
 # ------------------------------------------------------------------------------
-class NodeBase(object):
-    """Base class for Node and Node. Provides the interface to the
-    ppDLI server."""
+# class NodeBase(object):
+#     """Base class for Node and Node. Provides the interface to the
+#     ppDLI server."""
     
-    def __init__(self, host='localhost', port=5000, api_path='/api'):
-        """Initialize a ClientBase instance."""
-        self.log = logging.getLogger(name())
+#     def __init__(self, host='localhost', port=5000, api_path='/api'):
+#         """Initialize a ClientBase instance."""
+#         self.log = logging.getLogger(name())
         
-        # initialize Node connection
-        self.flaskIO = ClientNodeProtocol(
-            host=host, 
-            port=port, 
-            path=api_path
-        )
+#         # initialize Node connection
+#         self.flaskIO = ClientNodeProtocol(
+#             host=host, 
+#             port=port, 
+#             path=api_path
+#         )
 
 
 # ------------------------------------------------------------------------------
-class NodeWorker(NodeBase):
+class NodeWorker(object):
     """Automated node that checks for tasks and executes them."""
 
     def __init__(self, ctx):
         """Initialize a new TaskMasterNode instance."""
+        self.log = logging.getLogger(name())
 
         self.ctx = ctx
         self.config = ctx.config
-
-        super().__init__(
+        
+        # initialize Node connection
+        self.flaskIO = ClientNodeProtocol(
             host=self.config.get('server_url'), 
             port=self.config.get('port'),
-            api_path=self.config.get('api_path')
+            path=self.config.get('api_path')
         )
 
         self.log.info(f"Connecting server: {self.flaskIO.base_path}")
@@ -97,10 +99,10 @@ class NodeWorker(NodeBase):
         self.log.debug("create socket connection with the server")
         self.__connect_to_socket(action_handler=NodeNamespace)
 
-        # listen forever for incomming messages, tasks are stored in
+        # listen forever for incoming messages, tasks are stored in
         # the queue.
         self.queue = queue.Queue()
-        self.log.debug("start thread for incomming messages (tasks)")
+        self.log.debug("start thread for incoming messages (tasks)")
         t = Thread(target=self.__listening_worker, daemon=True)
         t.start()
 
@@ -138,7 +140,6 @@ class NodeWorker(NodeBase):
 
     def run_forever(self):
         """Connect to the server to obtain and execute tasks forever"""
-        
         try:
             while True:
                 # blocking untill a task comes available
@@ -157,7 +158,7 @@ class NodeWorker(NodeBase):
                     self.log.exception(e)
 
         except KeyboardInterrupt:
-            self.log.debug("Catched a keyboard interupt, gracefully shutting down...")
+            self.log.debug("Caught a keyboard interupt, shutting down...")
             self.socketIO.disconnect()
             sys.exit()
     
@@ -237,11 +238,11 @@ class NodeWorker(NodeBase):
         self.log.info(f"Pulling latest version of docker image '{image}'")
         self.log.info(f"Command: '{cmd}'")
         
-        p = subprocess.Popen(cmd, subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
         out, err = p.communicate()
         
-        self.log.info(out)
-        self.log.debug(err)
+        # self.log.info(f'out: {out}')
+        # self.log.debug(f'err: {err}')
 
     def __docker_run(self, task, inputFilePath, outputFilePath):
         """
@@ -272,7 +273,12 @@ class NodeWorker(NodeBase):
         dockerParams += "-v " + inputFilePath.replace(' ', '\ ') + ":/app/input.txt "   # mount input file
         dockerParams += "-v " + outputFilePath.replace(' ', '\ ') + ":/app/output.txt " # mount output file
 
-        DATABASE_URI = self.config['database_uri']
+        if (task['database'] 
+            and self.config.get('databases') 
+            and task['database'] in self.config['databases']):
+            DATABASE_URI = self.config['databases'][task['database']]
+        else:
+            DATABASE_URI = self.config['database_uri']
 
         if DATABASE_URI:
             if pathlib.Path(self.config['database_uri']).is_file():
@@ -288,7 +294,7 @@ class NodeWorker(NodeBase):
 
         dockerParams += "--add-host dockerhost:%s" % self.config['docker_host']
 
-        dockerExecLine = "docker run  " + dockerParams + ' ' + task['image']
+        dockerExecLine = "docker run " + dockerParams + ' ' + task['image']
         self.log.info("Executing docker: {}".format(dockerExecLine))
 
         # FIXME: consider using subprocess.run(...)
@@ -330,12 +336,13 @@ class NodeWorker(NodeBase):
                 port <{self.flaskIO.port}>')
         
     def __listening_worker(self):
-        """routine that is in a seperate thread and listens for
-        incomming messages from the server"""
-        
-        self.log.debug("listening for incomming messages")
+        """Listen for incoming (websocket) messages from the server.
+
+        Runs in a separate thread.
+        """
+        self.log.debug("listening for incoming messages")
         while True:
-            # incomming messages are handled by the action_handler instance which 
+            # incoming messages are handled by the action_handler instance which 
             # is attached when the socked connection was made. wait is blocking 
             # forever (if no time is specified).
             self.socketIO.wait()
@@ -343,13 +350,14 @@ class NodeWorker(NodeBase):
 # ------------------------------------------------------------------------------
 def run(ctx):
     """Run the node."""
-
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
     
     # initialize node, connect to the server using websockets
     tmc = NodeWorker(ctx)
 
+    # FIXME: this should be done in Node.__init__() and preferably 
+    #        not as a class variable.
     # reference to tmc in to give call-back functions
     # access to the node methods.
     NodeNamespace.task_master_node_ref = tmc
