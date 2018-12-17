@@ -96,17 +96,19 @@ class Task(Resource):
         
         elif g.container: # in case of a container we have to be extra carefull
             if g.container["image"] != task.image:
-                log.warning(f"Container from node={g.container['node_id']} \
-                    attemts to post a task using illegal image={task.image}")
-                return {"msg": f"You do not have permission to use image={task.image}"},\
-                    HTTPStatus.UNAUTHORIZED
+                msg = f"Container from node={g.container['node_id']} attempts to post a task using illegal image={task.image}"
+                log.warning(msg)
+
+                msg = f"You do not have permission to use image={task.image}"
+                return {"msg": msg,HTTPStatus.UNAUTHORIZED}
 
             # check master task is not completed yet
             if db.Task.get(g.container["task_id"]).complete:
-                log.warning((f"Container from node={g.container['node_id']} attempts \
-                    to start sub-task for a completed task={g.container['task_id']}"))
-                return {"msg": f"Master task={g.container['task_id']} is already completed"},\
-                    HTTPStatus.BAD_REQUEST
+                msg = f"Container from node={g.container['node_id']} attempts to start sub-task for a completed task={g.container['task_id']}"
+                log.warning(msg)
+
+                msg = f"Master task={g.container['task_id']} is already completed"
+                return {"msg": msg, HTTPStatus.BAD_REQUEST}
 
             # # check that node id is indeed part of the collaboration
             if not g.container["collaboration_id"] == collaboration_id:
