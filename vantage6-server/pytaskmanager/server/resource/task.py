@@ -83,7 +83,8 @@ class Task(Resource):
             collaboration=collaboration,
             name=data.get('name', ''),
             description=data.get('description', ''),
-            image=data.get('image', '')
+            image=data.get('image', ''),
+            database=data.get('database', '')
         )
 
         # in case of a container we have to be extra carefull
