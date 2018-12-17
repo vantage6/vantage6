@@ -140,6 +140,40 @@ class Base(object):
         session.delete(self)
         session.commit()
 
+    def update(self, include=None, exclude=None, **kwargs):
+        """Update this instance using a dictionary."""
+
+        # Get a list of attributes available to this class.
+        # This should exclude relationships!
+        inst = inspect(self)
+        cols = [c_attr.key for c_attr in inst.mapper.column_attrs]
+        cols = set(cols)
+
+        # Cast the list of attributes we're trying to update to a set.
+        keys = set(kwargs.keys())
+
+        # Only *keep* keys listed in `include`
+        if include:
+            if type(include) != type([]):
+                include = [include, ]
+
+            include = set(include)
+            keys = keys & include
+
+        # Remove any keys that are in `exclude`
+        if exclude:
+            if type(exclude) != type([]):
+                exclude = [exclude, ]
+
+            exclude = set(exclude)
+            keys = keys - exclude
+
+        # Keep only those keys that are proper attributes
+        attrs = cols.intersection(keys)
+
+        for attr in attrs:
+            setattr(self, attr, kwargs[attr])
+
 
 Base = declarative_base(cls=Base)
 
@@ -283,6 +317,7 @@ class Node(Authenticatable):
     
     name = Column(String)
     api_key = Column(String)
+    state = Column(Text)
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='nodes')
@@ -316,8 +351,6 @@ class Node(Authenticatable):
             return None
 
 
-
-
 # ------------------------------------------------------------------------------
 class Task(Base):
     """Central definition of a single task."""
@@ -325,6 +358,7 @@ class Task(Base):
     description = Column(String)
     image = Column(String)
     input = Column(Text)
+    database = Column(String)
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='tasks')
