@@ -25,18 +25,20 @@ class ClientBaseProtocol(object):
     
     def generate_path_to(self, endpoint: str):
         """Generate URL from host port and endpoint"""
-        path = (self.base_path + endpoint) if endpoint.startswith('/') else \
-            self.base_path + '/' + endpoint
+        if endpoint.startswith('/'):
+            path = self.base_path + endpoint
+        else:
+            path = self.base_path + '/' + endpoint
+
         self.log.debug(f"Generated path to {path}")
         return path
     
     def request(self, endpoint: str, json: dict=None, method: str='get', params=None):
-        """Execute (protected) HTTP request to the server with payload, paremets
+        """Execute (protected) HTTP request to the server with payload, parameters
         
         raise an error if status code > 200
         return JSON formatted data
         """
-        
         assert self.__access_token
 
         # get appropiate method 
@@ -62,7 +64,7 @@ class ClientBaseProtocol(object):
             self.refresh_token()
             return self.request(endpoint, json=json, method=method)
 
-        self.log.debug(f"Response data={response.json()}")
+        # self.log.debug(f"Response data={response.json()}")
         return response.json()
     
     def authenticate(self, credentials: dict, path="token/user"):
@@ -150,7 +152,8 @@ class ClientBaseProtocol(object):
 
     @property
     def base_path(self):
-        return self.host + ':' + str(self.port) + self.__api_path
+        return f"{self.host}:{self.port}{self.__api_path}"
+        # return self.host + ':' + str(self.port) + self.__api_path
 
 
 class ClientUserProtocol(ClientBaseProtocol):
@@ -202,8 +205,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
         self.id = jwt.decode(self.token, verify=False)['identity']
 
         # set instance name
-        self.name = self.request(f"node/{self.id}").get("name")
-        
+        self.name = self.request(f"node/{self.id}").get("name")     
         
     def request_token_for_container(self, task_id: int, image: str):
         """Generate a token that can be used by a docker container"""
@@ -228,5 +230,5 @@ class ClientNodeProtocol(ClientBaseProtocol):
         })
 
     def patch_results(self, id: int, result: dict):
-        self.log.debug(f"patching results={result}")
+        # self.log.debug(f"patching results={result}")
         return self.request(f"result/{id}", json=result, method='patch')
