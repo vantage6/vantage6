@@ -100,7 +100,7 @@ class Task(Resource):
                 log.warning(msg)
 
                 msg = f"You do not have permission to use image={task.image}"
-                return {"msg": msg,HTTPStatus.UNAUTHORIZED}
+                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
             # check master task is not completed yet
             if db.Task.get(g.container["task_id"]).complete:
@@ -108,13 +108,14 @@ class Task(Resource):
                 log.warning(msg)
 
                 msg = f"Master task={g.container['task_id']} is already completed"
-                return {"msg": msg, HTTPStatus.BAD_REQUEST}
+                return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
             # # check that node id is indeed part of the collaboration
             if not g.container["collaboration_id"] == collaboration_id:
                 log.warning(f"Container attempts to create a task outside its collaboration!")
-                return {"msg": f"You cannot create tasks in collaboration_id={collaboration_id}"},\
-                    HTTPStatus.BAD_REQUEST
+
+                msg = f"You cannot create tasks in collaboration_id={collaboration_id}"
+                return {"msg": msg}, HTTPStatus.BAD_REQUEST
             
             # container tasks are always sub-tasks
             task.parent_task_id = g.container["task_id"]
