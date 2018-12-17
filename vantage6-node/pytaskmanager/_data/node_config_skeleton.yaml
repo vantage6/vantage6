@@ -7,7 +7,11 @@ application:
   delay: 30 # seconds
   task_dir: tasks
   docker_host: 127.0.0.1
+  
   database_uri: 
+  databases:
+    default: 
+
   logging:
       level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
       file:         node.log               # Filename of logfile
