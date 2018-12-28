@@ -38,6 +38,7 @@ setup(
         'appdirs',
         'bcrypt',
         'click',
+        'docker',
         'eventlet',
         'flask',
         'flask-cors',

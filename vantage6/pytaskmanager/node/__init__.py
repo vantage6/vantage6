@@ -13,6 +13,7 @@ import subprocess
 import logging
 import jwt
 import queue
+import docker 
 
 from requests.compat import urljoin
 from pprint import pprint
@@ -20,6 +21,7 @@ from threading import Thread, Event
 from socketIO_client import SocketIO, SocketIONamespace
 
 from pytaskmanager import util
+from pytaskmanager.node.DockerManager import DockerManager
 from pytaskmanager.node.FlaskIO import ClientNodeProtocol
 
 def name():
@@ -31,7 +33,7 @@ class NodeNamespace(SocketIONamespace):
 
     # reference to the node objects, so a call-back can edit the 
     # node instance.
-    task_master_node_ref = None
+    node_worker_ref = None
 
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(name())
@@ -46,8 +48,8 @@ class NodeNamespace(SocketIONamespace):
     def on_new_task(self, task_id):
         """Call back to fetch new available tasks."""
 
-        if self.task_master_node_ref:
-            self.task_master_node_ref.get_task_and_add_to_queue(task_id)
+        if self.node_worker_ref:
+            self.node_worker_ref.get_task_and_add_to_queue(task_id)
             self.log.info(f'New task has been added task_id={task_id}')
         else:
             self.log.critical('Task Master Node reference not set is socket namespace')
@@ -108,6 +110,15 @@ class NodeWorker(NodeBase):
         self.log.debug("fetching tasks that were posted while offline")
         self.__sync_task_que_with_server() 
 
+        # TODO read allowed repositories from the config file
+        self.__docker = DockerManager(
+            allowed_repositories=[], tasks_dir=self.ctx.data_dir)
+
+        # send results to the server when they come available.
+        self.log.debug("Start thread for sending messages (results)")
+        t = Thread(target=self.__speaking_worker, daemon=True)
+        t.start()
+
     def authenticate(self):
         """Authenticate with the server using the api-key. If the server
         rejects for any reason we keep trying."""
@@ -146,13 +157,16 @@ class NodeWorker(NodeBase):
                 self.log.info("Waiting for new tasks....")
                 while True:
                     try:
+                        
                         task = self.queue.get(timeout=1)
                         break
+
                     except queue.Empty:
                         pass
-                    
+
+                # if task comes available, attempt to execute it
                 try:
-                    self.__execute_task(task)
+                    self.__start_task(task)
                 except Exception as e:
                     self.log.exception(e)
 
@@ -162,7 +176,7 @@ class NodeWorker(NodeBase):
             sys.exit()
     
     def __sync_task_que_with_server(self):
-        """Get all unprocessed tasks from the server"""
+        """Get all unprocessed tasks from the server."""
 
         # make sure we do not add the same job twice. 
         self.queue = queue.Queue()
@@ -174,142 +188,19 @@ class NodeWorker(NodeBase):
 
         self.log.info(f"received {self.queue._qsize()} tasks" )
 
-    def __execute_task(self, taskresult):
+    def __start_task(self, taskresult):
         """
-        Execute a single task and uploads result to server.
+        """
 
-        :param taskresult: dict that contains the (empty) result details as well
-                           as the details of the task itself.
-        :raises Exception: raises an exception if ... 
-        """
         task = taskresult['task']
-
-        self.log.info("-" * 80)
         self.log.info("Starting task {id} - {name}".format(**task))
-        self.log.info("-" * 80)
 
         # notify that we are processing this task
         self.flaskIO.set_task_start_time(taskresult['id'])
 
-        # create directory to put files into
-        task_dir = self.__make_task_dir(task)
+        # start docker container in the background
+        self.__docker.run(taskresult["id"], task["image"], task["input"])
 
-        # pull the image for updates or download
-        self.__docker_pull(task['image'])
-
-        # Files are used for input and output
-        inputFilePath = os.path.join(task_dir, "input.txt")
-        outputFilePath = os.path.join(task_dir, "output.txt")
-
-        # execute algorithm 
-        result_text, log_data = self.__docker_run(task, inputFilePath, outputFilePath)
-
-        # Do an HTTP PATCH to send back result (response)
-        self.flaskIO.patch_results(id=taskresult['id'], result={
-            'result': result_text,
-            'log': log_data,
-            'finished_at': datetime.datetime.now().isoformat(),
-        })
-        
-        self.log.info("-" * 80)
-        self.log.info("Finished task {id} - {name}".format(**task))
-        self.log.info("-" * 80)
-
-    def __make_task_dir(self, task):
-        task_dir = self.ctx.get_file_location('data', "task-{0:09d}".format(task['id']))
-        self.log.info("Using '{}' for task".format(task_dir))
-        if os.path.exists(task_dir):
-            self.log.warning("Task directory already exists: '{}'".format(task_dir))
-
-        else:
-            try:
-                os.makedirs(task_dir)
-            except Exception as e:
-                self.log.error("Could not create task directory: {}".format(task_dir))
-                self.log.exception(e)
-                raise
-
-        return task_dir
-
-    def __docker_pull(self, image):
-        
-        cmd = "docker pull " + image
-        self.log.info(f"Pulling latest version of docker image '{image}'")
-        self.log.info(f"Command: '{cmd}'")
-        
-        p = subprocess.Popen(cmd, subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-        out, err = p.communicate()
-        
-        self.log.info(out)
-        self.log.debug(err)
-
-    def __docker_run(self, task, inputFilePath, outputFilePath):
-        """
-        Run the docker container for the task and provide it with IO.
-
-        :param task: dict containing the task details
-        :param inputFilePath: path to the file used for input
-        :param outputFilePath: path to the file used for output
-        :returns: tuple of output (contents of outputFilePath after execution) 
-                  and STDOUT
-        :raises Exception: raises an exception if docker cannot be run.
-        """
-        # FIXME: need to check for running docker daemon and/or other error messages!
-        # FIXME: switch to package 'docker' instead
-
-        # Prepare files for input/output.
-        with open(inputFilePath, 'w') as fp:
-            fp.write(task['input'] or '')
-            fp.write('\n')
-
-        with open(outputFilePath, 'w') as fp:
-            fp.write('')
-
-
-        # Prepare shell statement for running the docker image
-        dockerParams  = "--rm " # container should be removed after execution
-        # TODO let's docker!
-        dockerParams += "-v " + inputFilePath.replace(' ', '\ ') + ":/app/input.txt "   # mount input file
-        dockerParams += "-v " + outputFilePath.replace(' ', '\ ') + ":/app/output.txt " # mount output file
-
-        DATABASE_URI = self.config['database_uri']
-
-        if DATABASE_URI:
-            if pathlib.Path(self.config['database_uri']).is_file():
-                dockerParams += "-v " + DATABASE_URI.replace(' ', '\ ') + ":/app/database " # mount data store
-                DATABASE_URI = "/app/database"
-            else:
-                self.log.warning("'{}' is not a file!".format(self.config['database_uri']))
-        else:
-            self.log.warning('no database file specified')
-
-
-        dockerParams += "-e DATABASE_URI=%s " % DATABASE_URI
-
-        dockerParams += "--add-host dockerhost:%s" % self.config['docker_host']
-
-        dockerExecLine = "docker run  " + dockerParams + ' ' + task['image']
-        self.log.info("Executing docker: {}".format(dockerExecLine))
-
-        # FIXME: consider using subprocess.run(...)
-        #        or use the python package that provides an API for docker
-        # https://docs.python.org/3/library/subprocess.html#module-subprocess
-        p = subprocess.Popen(dockerExecLine, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-
-        # This blocks until the process finishes.
-        out, err = p.communicate()
-        log_data = out.decode("utf-8") # + "\r\n" + err.decode("utf-8") 
-        # log.info(log_data)
-
-        if p.returncode:
-            raise Exception('did not succeed in running docker!?')
-
-
-        with open(outputFilePath) as fp:
-            result_text = fp.read()
-            # log.info(result_text)
-
-        return result_text, log_data
 
     def __connect_to_socket(self, action_handler=None):
         
@@ -330,15 +221,30 @@ class NodeWorker(NodeBase):
                 port <{self.flaskIO.port}>')
         
     def __listening_worker(self):
-        """routine that is in a seperate thread and listens for
+        """Routine that is in a seperate thread and listens for
         incomming messages from the server"""
         
-        self.log.debug("listening for incomming messages")
+        self.log.debug("Listening for incomming messages")
         while True:
             # incomming messages are handled by the action_handler instance which 
             # is attached when the socked connection was made. wait is blocking 
             # forever (if no time is specified).
             self.socketIO.wait()
+
+    def __speaking_worker(self):
+        """Routine that is in a seperate thread sending results
+        to the server when they come available."""
+        
+        self.log.debug("Waiting for results to send to the server")
+
+        while True:
+            results = self.__docker.get_result()
+            self.log.info(f"Results from result {results.result_id} are send to the server!")
+            self.flaskIO.patch_results(id=results.result_id, result={
+                'result': results.data,
+                'log': results.logs,
+                'finished_at': datetime.datetime.now().isoformat(),
+            })
 
 # ------------------------------------------------------------------------------
 def run(ctx):
@@ -352,7 +258,7 @@ def run(ctx):
 
     # reference to tmc in to give call-back functions
     # access to the node methods.
-    NodeNamespace.task_master_node_ref = tmc
+    NodeNamespace.node_worker_ref = tmc
 
     # put the node to work, executing tasks that are in the que
     tmc.run_forever()
