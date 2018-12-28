@@ -7,9 +7,9 @@ requestBody:
   content:
     application/json:
       schema:
-          $ref: '#/components/schemas/Node'
-        example:
-          $ref: '#/components/schemas/Node/example'
+        $ref: '#/components/schemas/Node'
+      example:
+        $ref: '#/components/schemas/Node/example'
 
 responses:
   200:
