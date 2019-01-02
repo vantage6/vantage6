@@ -155,6 +155,12 @@ association_table_organization_collaboration = Table(
     Column('collaboration_id', Integer, ForeignKey('collaboration.id'))
 )
 
+association_table_organization_task = Table(
+    'association_table_organization_task',
+    Base.metadata,
+    Column('task_id', Integer, ForeignKey('task.id')),
+    Column('organization_id', Integer, ForeignKey('organization.id'))
+)
 
 # ------------------------------------------------------------------------------
 class Organization(Base):
@@ -185,6 +191,11 @@ class Collaboration(Base):
     def get_task_ids(self):
         return [task.id for task in self.tasks]
 
+    def get_nodes_from_organizations(self, ids):
+        """Returns a subset of nodes"""
+        return list(filter(lambda node: node.organization_id in ids, self.nodes))
+
+    # TODO rename to 'find_by_name'
     @classmethod
     def get_collaboration_by_name(cls, name):
         session = Session()
@@ -325,6 +336,12 @@ class Task(Base):
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='tasks')
 
+    # tasks can be for a specific organization
+    organizations = relationship(
+        'Organization', 
+        secondary=association_table_organization_task, 
+        backref='tasks'
+    )
 
     @hybrid_property
     def complete(self):
@@ -334,10 +351,7 @@ class Task(Base):
     def next_run_id(cls):
         session = Session()
         max_run_id = session.query(func.max(cls.run_id)).scalar()
-        if not max_run_id:
-            return 1
-        else:
-            return max_run_id + 1
+        return max_run_id + 1 or 1
 
 
 # ------------------------------------------------------------------------------

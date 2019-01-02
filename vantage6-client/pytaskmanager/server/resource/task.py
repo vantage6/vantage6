@@ -68,7 +68,7 @@ class Task(Resource):
     @swag_from(str(Path(r"swagger/post_task_without_id.yaml")), endpoint='task_without_id')
     def post(self):
         """Create a new Task."""
-        #TODO split container/node into sepperate endpoints.. 
+        
         if not request.is_json:
             return {"msg": "No JSON body found..."}, HTTPStatus.BAD_REQUEST
         data = request.get_json()
@@ -79,54 +79,66 @@ class Task(Resource):
             return {"msg": f"collaboration id={collaboration_id} not found"},\
             HTTPStatus.NOT_FOUND
 
+        # check that the organization ids are within the collaboration
+        org_ids = data.get('organization_ids', [])
+        db_ids = collaboration.get_organization_ids()
+        if not all([org_id in db_ids for org_id in org_ids]):
+            return {"msg": f"At least one of the supplied organizations in not within the collaboration"},\
+            HTTPStatus.BAD_REQUEST
+        
+        input_ = data.get('input', '')
+        if not isinstance(input_, str):
+            input_ = json.dumps(input_)
+        
         # create new task
         task = db.Task(
             collaboration=collaboration,
             name=data.get('name', ''),
             description=data.get('description', ''),
-            image=data.get('image', '')
+            image=data.get('image', ''),
+            organizations=[
+                db.Organization.get(org_id) for org_id in org_ids if db.Organization.get(org_id)
+            ],
+            input=input_
         )
 
-        
-        if g.user:# a user is considered to be the seed of the task
+        if g.user:
+            
+            if not self.__verify_user_permissions(g.user, task):
+                return {"msg": "You lack the permission to do that!"}, HTTPStatus.UNAUTHORIZED
 
+            # user can only create master-tasks (it is not required to have sub-tasks)
             task.run_id = task.next_run_id()
             log.debug(f"New run_id {task.run_id}")
-        
-        elif g.container: # in case of a container we have to be extra carefull
-            if g.container["image"] != task.image:
-                log.warning(f"Container from node={g.container['node_id']} \
-                    attemts to post a task using illegal image={task.image}")
-                return {"msg": f"You do not have permission to use image={task.image}"},\
-                    HTTPStatus.UNAUTHORIZED
-
-            # check master task is not completed yet
-            if db.Task.get(g.container["task_id"]).complete:
-                log.warning((f"Container from node={g.container['node_id']} attempts \
-                    to start sub-task for a completed task={g.container['task_id']}"))
-                return {"msg": f"Master task={g.container['task_id']} is already completed"},\
-                    HTTPStatus.BAD_REQUEST
-
-            # # check that node id is indeed part of the collaboration
-            if not g.container["collaboration_id"] == collaboration_id:
-                log.warning(f"Container attempts to create a task outside its collaboration!")
-                return {"msg": f"You cannot create tasks in collaboration_id={collaboration_id}"},\
-                    HTTPStatus.BAD_REQUEST
             
+        elif g.container: 
+
+            # verify that the container has permissions to create the task
+            if not self.__verify_container_permissions(g.container, task):
+                return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
+
             # container tasks are always sub-tasks
             task.parent_task_id = g.container["task_id"]
             task.run_id = db.Task.get(g.container["task_id"]).run_id
             log.debug(f"Sub task from parent_task_id={task.parent_task_id}")
-
-        # TODO check that organization of the user is in the collaboration!
-
-        input_ = data.get('input', '')
-        if not isinstance(input_, str):
-            input_ = json.dumps(input_)
-
-        task.input = input_
-        task.status = "open"
+        
+        # permissions ok, save to DB
         task.save()
+
+        # select nodes which should receive the task
+        nodes = collaboration.get_nodes_from_organizations(org_ids) if org_ids else collaboration.nodes
+        log.debug(f"Assigning task to {len(nodes)} nodes")
+        for node in nodes:
+            log.debug(f"   Assigning task to '{node.name}'")
+            db.TaskResult(task=task, node=node).save()
+
+        # notify nodes a new task available (only to online nodes)
+        socketio.emit(
+            'new_task', 
+            task.id, 
+            room='collaboration_'+str(task.collaboration_id),
+            namespace='/tasks'
+        )
 
         log.info(f"New task created for collaboration '{task.collaboration.name}'")
         if g.type == 'user':
@@ -137,26 +149,42 @@ class Task(Resource):
         log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
         log.debug(f" name: '{task.name}'")
         log.debug(f" image: '{task.image}'")
-        log.debug(f"Assigning task to {len(collaboration.nodes)} nodes")
-
-
-        # a collaboration can include multiple nodes
-        for c in collaboration.nodes:
-            log.debug(f"   Assigning task to '{c.name}'")
-            db.TaskResult(task=task, node=c)
-
-        task.save()
-
-        # if the node is connected send a socket message that there
-        # is a new task available
-        socketio.emit(
-            'new_task', 
-            task.id, 
-            room='collaboration_'+str(task.collaboration_id),
-            namespace='/tasks'
-        )
 
         return self.task_schema.dump(task, many=False)
+
+    @staticmethod
+    def __verify_user_permissions(user, task):
+        """Verify that user is permitted to create task"""
+
+        # I have the power!
+        if "root" in g.user.roles:
+            return True
+
+        # user is within organization that is part of the collaboration
+        return g.user.organization_id in task.collaboration.get_organization_ids()
+
+    @staticmethod
+    def __verify_container_permissions(container, task):
+        """Validates that the container is allowed to create the task."""
+        
+        # check that the image is allowed
+        if container["image"] != task.image:
+            log.warning(f"Container from node={container['node_id']} \
+                attemts to post a task using illegal image={task.image}")
+            return False
+
+        # check master task is not completed yet
+        if db.Task.get(container["task_id"]).complete:
+            log.warning((f"Container from node={container['node_id']} attempts \
+                to start sub-task for a completed task={container['task_id']}"))
+            return False
+
+        # check that node id is indeed part of the collaboration
+        if not container["collaboration_id"] == task.collaboration_id:
+            log.warning(f"Container attempts to create a task outside its collaboration!")
+            return False
+
+        return True
 
     @only_for(['user'])
     @swag_from(str(Path(r"swagger/delete_task_with_id.yaml")), endpoint='task_with_id')
