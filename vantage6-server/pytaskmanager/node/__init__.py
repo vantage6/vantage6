@@ -237,11 +237,11 @@ class NodeWorker(NodeBase):
         self.socketIO.define(action_handler, '/tasks')
         
         if self.socketIO.connected:
-            self.log.info(f'connected to host={self.flaskIO.host} \
-                on port={self.flaskIO.port}')
+            self.log.info(f'connected to host={self.flaskIO.host} ' \
+                f'on port={self.flaskIO.port}')
         else:
-            self.log.critical(f'could not connect to {self.flaskIO.host} \ 
-                on port <{self.flaskIO.port}>')
+            self.log.critical(f'could not connect to {self.flaskIO.host} ' \
+                f'on port={self.flaskIO.port}')
         
     def __listening_worker(self):
         """Routine that is in a seperate thread and listens for
