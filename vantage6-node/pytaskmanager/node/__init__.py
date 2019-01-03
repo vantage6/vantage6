@@ -52,10 +52,11 @@ class NodeNamespace(SocketIONamespace):
             self.node_worker_ref.get_task_and_add_to_queue(task_id)
             self.log.info(f'New task has been added task_id={task_id}')
         else:
-            self.log.critical('Task Master Node reference not set is socket namespace')
+            self.log.critical(
+                'Task Master Node reference not set is socket namespace'
+            )
 
 
-# ------------------------------------------------------------------------------
 class NodeBase(object):
     """Base class for Node and Node. Provides the interface to the
     ppDLI server."""
@@ -72,7 +73,6 @@ class NodeBase(object):
         )
 
 
-# ------------------------------------------------------------------------------
 class NodeWorker(NodeBase):
     """Automated node that checks for tasks and executes them."""
 
@@ -125,17 +125,21 @@ class NodeWorker(NodeBase):
         
         while True:
             try:
-                self.flaskIO.authenticate(api_key=self.config.get("api_key"))
+                self.flaskIO.authenticate(
+                    api_key=self.config.get("api_key"))
                 break # authenticated, leave loop
             except Exception as e:
-                self.log.warning('Connection refused by server, server might be offline. Retrying in 10 seconds!')
+                self.log.warning(
+                    'Authentication failed. Retrying in 10 seconds!')
                 self.log.debug(e)
                 time.sleep(10)
         
         self.log.info(f"Node name: {self.flaskIO.name}")
 
     def get_task_and_add_to_queue(self, task_id):
-        
+        """Fetches (open) task with task_id from the server. The task_id
+        is usually delivered by the websocket-connection."""
+
         # fetch (open) result for the node with the task_id
         tasks = self.flaskIO.get_results(
             include_task=True,
@@ -143,17 +147,22 @@ class NodeWorker(NodeBase):
             task_id=task_id
         )
         
-        # in the current setup, only a single result for a single node in a task exists.
+        # in the current setup, only a single result for a single node 
+        # in a task exists.
         for task in tasks:
             self.queue.put(task)
 
     def run_forever(self):
-        """Connect to the server to obtain and execute tasks forever"""
+        """Get and start tasks from queue forever. If a tasks fails it
+        it will discard the task and move on to the next one."""
+        # TODO the server will send the failed task again when te node
+        # logs in again (it fetches all open results). We should 
+        # somehow notify the server that the task has failed. #24
         
         try:
             while True:
                 # blocking untill a task comes available
-                # time out specified, else Keyboard interupts are ignored
+                # timeout specified, else Keyboard interupts are ignored
                 self.log.info("Waiting for new tasks....")
                 while True:
                     try:
@@ -171,12 +180,14 @@ class NodeWorker(NodeBase):
                     self.log.exception(e)
 
         except KeyboardInterrupt:
-            self.log.debug("Catched a keyboard interupt, gracefully shutting down...")
+            self.log.debug(
+                "Catched a keyboard interupt, gracefully shutting down."
+            )
             self.socketIO.disconnect()
             sys.exit()
     
     def __sync_task_que_with_server(self):
-        """Get all unprocessed tasks from the server."""
+        """Get all unprocessed tasks from the server for this node."""
 
         # make sure we do not add the same job twice. 
         self.queue = queue.Queue()
@@ -189,20 +200,32 @@ class NodeWorker(NodeBase):
         self.log.info(f"received {self.queue._qsize()} tasks" )
 
     def __start_task(self, taskresult):
-        """
-        """
+        """Start the docker image and notify the server that the task 
+        has been started."""
 
         task = taskresult['task']
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.flaskIO.set_task_start_time(taskresult['id'])
+        self.flaskIO.set_task_start_time(taskresult["id"])
+
+        # TODO possibly we want to limit the token handout
+        token = self.flaskIO.request_token_for_container(
+            task["id"], 
+            task["image"]
+        )["container-token"]
 
         # start docker container in the background
-        self.__docker.run(taskresult["id"], task["image"], task["input"])
+        self.__docker.run(
+            taskresult["id"], 
+            task["image"], 
+            task["input"], 
+            token=token)
 
 
     def __connect_to_socket(self, action_handler=None):
+        """Create long-lasting websocket connection with the server to 
+        receive status updates."""
         
         self.socketIO = SocketIO(
             self.flaskIO.host, 
@@ -217,8 +240,8 @@ class NodeWorker(NodeBase):
             self.log.info(f'connected to host={self.flaskIO.host} \
                 on port={self.flaskIO.port}')
         else:
-            self.log.critical(f'could not connect to {self.flaskIO.host} on \
-                port <{self.flaskIO.port}>')
+            self.log.critical(f'could not connect to {self.flaskIO.host} \ 
+                on port <{self.flaskIO.port}>')
         
     def __listening_worker(self):
         """Routine that is in a seperate thread and listens for
@@ -226,9 +249,9 @@ class NodeWorker(NodeBase):
         
         self.log.debug("Listening for incomming messages")
         while True:
-            # incomming messages are handled by the action_handler instance which 
-            # is attached when the socked connection was made. wait is blocking 
-            # forever (if no time is specified).
+            # incomming messages are handled by the action_handler 
+            # instance which is attached when the socked connection was 
+            # made. wait is blocking forever (if no time is specified).
             self.socketIO.wait()
 
     def __speaking_worker(self):
@@ -239,7 +262,8 @@ class NodeWorker(NodeBase):
 
         while True:
             results = self.__docker.get_result()
-            self.log.info(f"Results from result {results.result_id} are send to the server!")
+            self.log.info(
+                f"Results (id={results.result_id}) are send to the server!")
             self.flaskIO.patch_results(id=results.result_id, result={
                 'result': results.data,
                 'log': results.logs,
