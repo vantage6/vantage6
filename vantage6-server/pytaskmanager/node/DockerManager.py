@@ -5,24 +5,19 @@ import os
 from typing import NamedTuple
 
 class Result(NamedTuple):
-    """Data class to return the docker results."""
+    """Data class to store the result of the docker image."""
     result_id: int
     logs: str
     data: str
 
-class DockerDirs(NamedTuple):
-    result_id: int
-    input_dir: str
-    output_dir: str
-
-
 class DockerManager(object):
     """Wrapper for the docker module, to be used specifically for ppDLI.
     
-    It handles docker images names to results `run(image)`. It manages docker images, 
-    files (input, output, logs). Docker images run in detached mode, which allows
-    to run multiple docker containers at the same time. Results (async) can be retrieved 
-    through `get_result()` which returns the first available result.
+    It handles docker images names to results `run(image)`. It manages 
+    docker images, files (input, output, token, logs). Docker images run 
+    in detached mode, which allows to run multiple docker containers at 
+    the same time. Results (async) can be retrieved through 
+    `get_result()` which returns the first available result.
     """
 
     log = logging.getLogger(__name__.split('.')[-1])
@@ -31,11 +26,12 @@ class DockerManager(object):
     # TODO authenticate to docker repository... from the config-file
 
     def __init__(self, allowed_repositories=[], tasks_dir=None):
-        """Setups the docker service.
+        """Initialization of DockerManager creates docker connection and
+        sets some default values.
         
-        :param allowed_repositories: allowed urls for docker-images. Empty list
-            means all repositoies are allowed.
-        :returns: None
+        :param allowed_repositories: allowed urls for docker-images. 
+            Empty list implies that all repositoies are allowed.
+        :param tasks_dir: folder to store task related data.
         """
 
         self.log.debug("Initializing DockerManager")
@@ -46,19 +42,29 @@ class DockerManager(object):
         self.__allowed_repositories = allowed_repositories
         self.__tasks_dir = tasks_dir
         
-    def run(self, result_id: int,  image: str="hello-world", docker_input: str="", token: str= ""):
-        """Runs the docker-image in detached mode."""
+    def run(self, result_id: int,  image: str="hello-world", 
+        docker_input: str="", token: str= ""):
+        """Runs the docker-image in detached mode.
+        
+        :param result_id: server result identifyer.
+        :param image: docker image name.
+        :param docker_input: input that can be read by docker container.
+        :param token: Bearer token that the container can use.
+        """
         
         # create I/O files for docker
         mounts = []
         input_path = self.__create_file("input.txt", result_id, docker_input)
-        mounts.append(docker.types.Mount("/app/input.txt", input_path.replace(' ', '\ '), type="bind"))
+        mounts.append(docker.types.Mount("/app/input.txt", 
+            input_path.replace(' ', r'\ '), type="bind"))
 
         output_path = self.__create_file("output.txt", result_id, "")
-        mounts.append(docker.types.Mount("/app/output.txt", output_path.replace(' ', '\ '), type="bind"))
+        mounts.append(docker.types.Mount("/app/output.txt", 
+            output_path.replace(' ', r'\ '), type="bind"))
     
         token_path = self.__create_file("token.txt", result_id, token)
-        mounts.append(docker.types.Mount("/app/token.txt", token_path.replace(' ', '\ '), type="bind"))
+        mounts.append(docker.types.Mount("/app/token.txt", 
+            token_path.replace(' ', r'\ '), type="bind"))
 
         # attempt to pull the latest image
         try:
@@ -89,15 +95,23 @@ class DockerManager(object):
         return True
 
     def get_result(self):
-        """Returns the oldest finished docker container and removes it from the manager.
-        If no result is available this function is blocking untill one comes available."""
+        """Returns the oldest (FIFO) finished docker container.
+        
+        This is a blocking method until a finished container shows up.
+        Once the container is obtained and the results are red, the 
+        container is removed from the docker enviroment."""
 
         # get finished results and get the first one, if no result is available this is blocking
         while True:
             self.__refresh_container_statuses()
             try:
-                finished_task = next(filter(lambda task: task["container"].status == "exited", self.tasks))
-                self.log.debug(f"Result id={finished_task['result_id']} is finished")
+                finished_task = next(
+                    filter(
+                        lambda task: task["container"].status == "exited", 
+                        self.tasks)
+                )
+                self.log.debug(
+                    f"Result id={finished_task['result_id']} is finished")
                 break
             except StopIteration:
                 continue
@@ -116,15 +130,18 @@ class DockerManager(object):
         with open(finished_task["output_file"]) as fp:
             results = fp.read()
         
-        return Result(result_id=finished_task["result_id"], logs=log, data=results)
+        return Result(
+            result_id=finished_task["result_id"], 
+            logs=log, 
+            data=results)
 
     def __refresh_container_statuses(self):
+        """Refreshes the states of the containers."""
         for task in self.tasks:
             task["container"].reload()
-        # map(lambda task: task["container"].reload(), self.tasks)
-
+        
     def __create_file(self, filename: str, result_id: int, content: str):
-        """Creates input.txt (containing docker_input) and output.txt."""
+        """Creates a file in the tasks_dir for a specific task."""
         
         # generate file paths
         task_dir = self.__make_task_dir(result_id)
@@ -137,6 +154,7 @@ class DockerManager(object):
         return path
 
     def __make_task_dir(self, result_id: int):
+        """Creates a task directory for a specific result."""
         
         task_dir = os.path.join(self.__tasks_dir, "task-{0:09d}".format(result_id))
         self.log.info(f"Using '{task_dir}' for task")
