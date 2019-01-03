@@ -40,6 +40,7 @@ from . import db
 from pytaskmanager import util
 from pytaskmanager import APPNAME
 from pytaskmanager.server.websockets import DefaultSocketNamespace
+from .resource.swagger import swagger_template
 
 
 # ------------------------------------------------------------------------------
@@ -54,89 +55,13 @@ app = Flask(APPNAME)
 # TODO app.config
 app.config['JWT_AUTH_URL_RULE'] ='/api/token'
 
-# '#/components/schemas/Pet'
-template = {
-    "components":{
-        "securitySchemes":{
-            "bearerAuth":{
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": " JWT"
-            }
-        },
-        "schemas":{
-            "Task":{
-                "properties":{
-                    "description":{
-                        "type": "string"
-                    },
-                    "image":{
-                        "type": "string",
-                    },
-                    "input":{
-                        "type": "string"
-                    },
-                    "name":{
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "image"
-                ]
-            },
-            "Collaboration": {
-                "properties": {
-                    "collaboration_id": {
-                        "type": "integer"
-                    }
-                },
-                "example":{
-                    "collaboration_id": 1
-                }
-            },
-            "Node": {
-                "example": {
-                    "api_key": "unique-string"
-                },
-                "properties": {
-                    "api_key": {
-                        "type": "string"
-                    }
-                }
-            },
-            "User": {
-                "example": {
-                    "password": "secret!", 
-                    "username": "yourname"
-                }, 
-                "properties": {
-                    "password": {"type": "string"}, 
-                    "username": {"type": "string"}
-                }
-            },
-            "ContainerToken": {
-                "properties": {
-                    "task_id": {"type": "string"},
-                    "image": {"type": "string"}
-                },
-                "example": {
-                    "task_id": 1,
-                    "image": "hello-world"
-                }
-            }
-        }
-    },
-    "security": [
-        {"bearerAuth": []}
-    ]
-}
-
+# Open Api Specification (f.k.a. swagger)
 app.config['SWAGGER'] = {
     'title': 'PyTaskManager',
     'uiversion': 3,
     'openapi': '3.0.0',
 }
-swagger = Swagger(app, template=template)
+swagger = Swagger(app, template=swagger_template)
 
 # Enable cross-origin resource sharing
 CORS(app)
