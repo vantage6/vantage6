@@ -61,7 +61,7 @@ def setup(api, api_base):
 class UserToken(Resource):
     """resource for api/token"""
 
-    @swag_from(str(Path(r"swagger/post_user_token.yaml")), endpoint='user_token')
+    @swag_from(str(Path(r"swagger/post_token_user.yaml")), endpoint='user_token')
     def post(self):
         """Authenticate user or node"""
         log.debug("Authenticate user using username and password")
@@ -116,7 +116,7 @@ class UserToken(Resource):
 
 class NodeToken(Resource):
     
-    @swag_from(str(Path(r"swagger/post_user_token.yaml")), endpoint='node_token')
+    @swag_from(str(Path(r"swagger/post_token_node.yaml")), endpoint='node_token')
     def post(self):
         """Authenticate as Node."""
         log.debug("Authenticate Node using api key")
