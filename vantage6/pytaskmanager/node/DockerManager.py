@@ -46,13 +46,19 @@ class DockerManager(object):
         self.__allowed_repositories = allowed_repositories
         self.__tasks_dir = tasks_dir
         
-    def run(self, result_id: int,  image: str="hello-world", docker_input: str=""):
+    def run(self, result_id: int,  image: str="hello-world", docker_input: str="", token: str= ""):
         """Runs the docker-image in detached mode."""
         
         # create I/O files for docker
-        input_file, output_file = self.__prepare_IO_files(result_id, docker_input)
-        input_mount = docker.types.Mount("/app/input.txt", input_file.replace(' ', '\ '), type="bind")
-        output_mount = docker.types.Mount("/app/output.txt", output_file.replace(' ', '\ '), type="bind")
+        mounts = []
+        input_path = self.__create_file("input.txt", result_id, docker_input)
+        mounts.append(docker.types.Mount("/app/input.txt", input_path.replace(' ', '\ '), type="bind"))
+
+        output_path = self.__create_file("output.txt", result_id, "")
+        mounts.append(docker.types.Mount("/app/output.txt", output_path.replace(' ', '\ '), type="bind"))
+    
+        token_path = self.__create_file("token.txt", result_id, token)
+        mounts.append(docker.types.Mount("/app/token.txt", token_path.replace(' ', '\ '), type="bind"))
 
         # attempt to pull the latest image
         try:
@@ -67,7 +73,7 @@ class DockerManager(object):
             container = self.client.containers.run(
                 image, 
                 detach=True, 
-                mounts=[input_mount, output_mount]
+                mounts=mounts
             )
         except Exception as e:
             self.log.debug(e)
@@ -77,7 +83,7 @@ class DockerManager(object):
         self.tasks.append({
             "result_id": result_id,
             "container": container,
-            "output_file": output_file
+            "output_file": output_path
         })
 
         return True
@@ -117,21 +123,18 @@ class DockerManager(object):
             task["container"].reload()
         # map(lambda task: task["container"].reload(), self.tasks)
 
-    def __prepare_IO_files(self, result_id: int, docker_input: str):
+    def __create_file(self, filename: str, result_id: int, content: str):
         """Creates input.txt (containing docker_input) and output.txt."""
         
         # generate file paths
         task_dir = self.__make_task_dir(result_id)
-        input_file = os.path.join(task_dir, "input.txt")
-        output_file = os.path.join(task_dir, "output.txt")
-
+        path = os.path.join(task_dir, filename)
+        
         # create files
-        with open(input_file, 'w') as fp:
-            fp.write(docker_input + "\n")
-        with open(output_file, 'w') as fp:
-            fp.write("")
+        with open(path, 'w') as fp:
+            fp.write(content + "\n")
 
-        return input_file, output_file
+        return path
 
     def __make_task_dir(self, result_id: int):
         
@@ -139,7 +142,7 @@ class DockerManager(object):
         self.log.info(f"Using '{task_dir}' for task")
         
         if os.path.exists(task_dir):
-            self.log.warning(f"Task directory already exists: '{task_dir}'")
+            self.log.debug(f"Task directory already exists: '{task_dir}'")
         else:
             try:
                 os.makedirs(task_dir)

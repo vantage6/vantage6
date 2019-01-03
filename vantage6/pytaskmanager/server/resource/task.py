@@ -153,7 +153,7 @@ class Task(Resource):
         return self.task_schema.dump(task, many=False)
 
     @staticmethod
-    def __verify_user_permissions(user, task):
+    def __verify_user_permissions(user, task: db.Task):
         """Verify that user is permitted to create task"""
 
         # I have the power!
@@ -166,22 +166,24 @@ class Task(Resource):
     @staticmethod
     def __verify_container_permissions(container, task):
         """Validates that the container is allowed to create the task."""
-        
+
         # check that the image is allowed
         if container["image"] != task.image:
-            log.warning(f"Container from node={container['node_id']} \
-                attemts to post a task using illegal image={task.image}")
+            log.warning((f"Container from node={container['node_id']} " 
+                f"attemts to post a task using illegal image={task.image}"))
             return False
 
         # check master task is not completed yet
         if db.Task.get(container["task_id"]).complete:
-            log.warning((f"Container from node={container['node_id']} attempts \
-                to start sub-task for a completed task={container['task_id']}"))
+            log.warning((f"Container from node={container['node_id']} attempts "
+                f"to start sub-task for a completed task={container['task_id']}"))
             return False
 
         # check that node id is indeed part of the collaboration
-        if not container["collaboration_id"] == task.collaboration_id:
-            log.warning(f"Container attempts to create a task outside its collaboration!")
+        if not container["collaboration_id"] == task.collaboration.id:
+            log.warning((f"Container attempts to create a task outside "
+                f"collaboration_id={container['collaboration_id']} in "
+                f"collaboration_id={task.collaboration_id}!"))
             return False
 
         return True
