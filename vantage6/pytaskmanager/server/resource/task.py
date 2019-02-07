@@ -99,11 +99,11 @@ class Task(Resource):
             organizations=[
                 db.Organization.get(org_id) for org_id in org_ids if db.Organization.get(org_id)
             ],
-            input=input_
+            input=input_,
+            database=data.get('database', '')
         )
 
         if g.user:
-            
             if not self.__verify_user_permissions(g.user, task):
                 return {"msg": "You lack the permission to do that!"}, HTTPStatus.UNAUTHORIZED
 
@@ -112,7 +112,6 @@ class Task(Resource):
             log.debug(f"New run_id {task.run_id}")
             
         elif g.container: 
-
             # verify that the container has permissions to create the task
             if not self.__verify_container_permissions(g.container, task):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
