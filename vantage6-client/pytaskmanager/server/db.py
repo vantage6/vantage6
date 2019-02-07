@@ -227,7 +227,7 @@ class Collaboration(Base):
 
     def get_nodes_from_organizations(self, ids):
         """Returns a subset of nodes"""
-        return list(filter(lambda node: node.organization_id in ids, self.nodes))
+        return [n for n in self.nodes if n.organization.id in ids]
 
     # TODO rename to 'find_by_name'
     @classmethod

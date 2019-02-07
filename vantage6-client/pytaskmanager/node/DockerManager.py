@@ -126,7 +126,7 @@ class DockerManager(object):
             else:
                 self.log.warning("'{}' is not a file!".format(database_uri))
         else:
-            self.log.warning('no database file specified')
+            self.log.warning('no database specified')
 
 
         # attempt to pull the latest image

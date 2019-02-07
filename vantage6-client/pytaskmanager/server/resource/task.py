@@ -53,7 +53,7 @@ class Task(Resource):
     task_schema = TaskSchema()
     task_result_schema = TaskIncludedSchema()
 
-    @only_for(["user", "node"])
+    @only_for(["user", "node", "container"])
     @swag_from(str(Path(r"swagger/get_task_with_id.yaml")), endpoint='task_with_id')
     @swag_from(str(Path(r"swagger/get_task_without_id.yaml")), endpoint='task_without_id')
     def get(self, id=None):
@@ -64,17 +64,19 @@ class Task(Resource):
         s = self.task_result_schema if request.args.get('include') == 'results' else self.task_schema
         return s.dump(task, many=not id).data, HTTPStatus.OK
 
+
     @only_for(["user", "container"])
     @swag_from(str(Path(r"swagger/post_task_without_id.yaml")), endpoint='task_without_id')
     def post(self):
-        """Create a new Task."""
-        
+        """Create a new Task."""        
         if not request.is_json:
             return {"msg": "No JSON body found..."}, HTTPStatus.BAD_REQUEST
+
         data = request.get_json()
 
-        collaboration_id = data.get('collaboration_id', None)
-        collaboration = db.Collaboration.get(collaboration_id, None)
+        collaboration_id = data['collaboration_id']
+        collaboration = db.Collaboration.get(collaboration_id)
+
         if not collaboration:
             return {"msg": f"collaboration id={collaboration_id} not found"},\
             HTTPStatus.NOT_FOUND
@@ -82,6 +84,7 @@ class Task(Resource):
         # check that the organization ids are within the collaboration
         org_ids = data.get('organization_ids', [])
         db_ids = collaboration.get_organization_ids()
+
         if not all([org_id in db_ids for org_id in org_ids]):
             return {"msg": f"At least one of the supplied organizations in not within the collaboration"},\
             HTTPStatus.BAD_REQUEST
@@ -125,17 +128,25 @@ class Task(Resource):
         task.save()
 
         # select nodes which should receive the task
-        nodes = collaboration.get_nodes_from_organizations(org_ids) if org_ids else collaboration.nodes
+        if org_ids:            
+            nodes = collaboration.get_nodes_from_organizations(org_ids) 
+        else:
+            nodes = collaboration.nodes
+
         log.debug(f"Assigning task to {len(nodes)} nodes")
+
         for node in nodes:
             log.debug(f"   Assigning task to '{node.name}'")
-            db.TaskResult(task=task, node=node).save()
+            db.TaskResult(task=task, node=node)
+
+        # commit the new TaskResult(s)
+        task.save()
 
         # notify nodes a new task available (only to online nodes)
         socketio.emit(
             'new_task', 
             task.id, 
-            room='collaboration_'+str(task.collaboration_id),
+            room='collaboration_' + str(task.collaboration_id),
             namespace='/tasks'
         )
 
@@ -169,7 +180,7 @@ class Task(Resource):
         # check that the image is allowed
         if container["image"] != task.image:
             log.warning((f"Container from node={container['node_id']} " 
-                f"attemts to post a task using illegal image={task.image}"))
+                f"attempts to post a task using illegal image={task.image}"))
             return False
 
         # check master task is not completed yet
