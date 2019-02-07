@@ -283,7 +283,7 @@ class NodeWorker(object):
         while True:
             results = self.__docker.get_result()
             self.log.info(
-                f"Results (id={results.result_id}) are send to the server!")
+                f"Results (id={results.result_id}) are sent to the server!")
             self.flaskIO.patch_results(id=results.result_id, result={
                 'result': results.data,
                 'log': results.logs,
