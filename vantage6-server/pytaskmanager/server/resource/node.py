@@ -6,6 +6,8 @@ Resources below '/<api_base>/node'
 import logging
 import uuid
 
+import json
+
 from flask import g, request
 from flask_restful import Resource, reqparse
 from http import HTTPStatus
@@ -59,10 +61,14 @@ class Node(Resource):
         nodes = db.Node.get(id)
         user_or_node = g.user or g.node
 
+        is_root = False
+        if g.user:
+            is_root = g.user.roles == 'root'
+
         if id:
             if not nodes:
                 return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
-            if nodes.organization_id != user_or_node.organization_id and g.user.roles != 'admin':
+            if (not is_root) and (nodes.organization_id != user_or_node.organization_id) and (g.user.roles != 'admin'):
                 return {"msg": "you are not allowed to see this node"}, HTTPStatus.FORBIDDEN  # 403
         else:
             # only the nodes of the users organization are returned
@@ -126,52 +132,52 @@ class Node(Resource):
 
         return {"msg": "successfully deleted node id={}".format(id)}, HTTPStatus.OK  # 200
 
-    @with_user
+    @with_user_or_node
     @swag_from(str(Path(r"swagger/patch_node_with_node_id.yaml")), endpoint='node_with_node_id')
     def patch(self, id):
         """update existing node"""
-        parser = reqparse.RequestParser()
-        parser.add_argument(
-            'collaboration_id',
-            type=int,
-            required=True,
-            help="This field cannot be left blank!"
-        )
-        data = parser.parse_args()
-
         node = db.Node.get(id)
 
-        # create new node
+        # do not create new nodes here
         if not node:
-            collaboration = db.Collaboration.get(data['collaboration_id'])
+            return {"msg": "Use POST to create a new node"}, HTTPStatus.FORBIDDEN  # 403            
 
-            # check that the collaboration exists
-            if not collaboration:
-                return {"msg": "collaboration_id '{}' does not exist".format(
-                    data['collaboration_id'])}, HTTPStatus.NOT_FOUND  # 404
+        data = request.get_json()
+        if 'state' in data:
+            data['state'] = json.dumps(data['state'])
 
-            # new api-key which node can use to authenticate
-            api_key = str(uuid.uuid1())
-
-            # store the new node
-            # TODO an admin does not have to belong to an organization?
-            organization = g.user.organization
-            node = db.Node(
-                id=id,
-                name="{} - {} Node".format(organization.name, collaboration.name),
-                collaboration=collaboration,
-                organization=organization,
-                api_key=api_key
-            )
-            node.save()
-        else:  # update node
-            if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
+        if g.node:
+            if g.node.id == node.id:
+                log.debug("Hey! It's me! I got this!")
+                node.update(include=['status', 'state'], **data)
+            else:
+                log.debug("This doesn't seem right! You don't look like me!?")
                 return {"msg": "you are not allowed to edit this node"}, HTTPStatus.FORBIDDEN  # 403
 
-            node.collaboration_id = data['collaboration_id']
-            node.save()
+        if g.user:
+            is_root = g.user.roles = 'root'
 
-        return self.node_schema.dump(node).data, HTTPStatus.OK  # 200
+            if is_root:
+                # root can do everything ... he's really cool
+                log.debug('root is making changes!')
+                node.update(**data)
+                node.save()
+
+            else:
+                # Ok, so we're not root ...
+                incorrect_organization = node.organization_id != g.user.organization_id
+                incorrect_role = g.user.roles != 'admin'
+
+                if (incorrect_organization or incorrect_role):
+                    return {"msg": "you are not allowed to edit this node"}, HTTPStatus.FORBIDDEN  # 403
+
+                # We've established you're an admin for your organisation. Feel free
+                # to make some changes to the api_key, name or status.
+                allowed_attrs = ['name', 'api_key', 'status', 'state']
+                node.update(include=allowed_attrs, **data)
+                node.save()
+
+        return self.node_schema.dump(node)  # 200
 
 
 class NodeTasks(Resource):
