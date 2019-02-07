@@ -141,6 +141,40 @@ class Base(object):
         session.delete(self)
         session.commit()
 
+    def update(self, include=None, exclude=None, **kwargs):
+        """Update this instance using a dictionary."""
+
+        # Get a list of attributes available to this class.
+        # This should exclude relationships!
+        inst = inspect(self)
+        cols = [c_attr.key for c_attr in inst.mapper.column_attrs]
+        cols = set(cols)
+
+        # Cast the list of attributes we're trying to update to a set.
+        keys = set(kwargs.keys())
+
+        # Only *keep* keys listed in `include`
+        if include:
+            if type(include) != type([]):
+                include = [include, ]
+
+            include = set(include)
+            keys = keys & include
+
+        # Remove any keys that are in `exclude`
+        if exclude:
+            if type(exclude) != type([]):
+                exclude = [exclude, ]
+
+            exclude = set(exclude)
+            keys = keys - exclude
+
+        # Keep only those keys that are proper attributes
+        attrs = cols.intersection(keys)
+
+        for attr in attrs:
+            setattr(self, attr, kwargs[attr])
+
 
 Base = declarative_base(cls=Base)
 
@@ -289,6 +323,7 @@ class Node(Authenticatable):
     
     name = Column(String)
     api_key = Column(String)
+    state = Column(Text)
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='nodes')
@@ -329,6 +364,7 @@ class Task(Base):
     description = Column(String)
     image = Column(String)
     input = Column(Text)
+    database = Column(String)
 
     run_id = Column(Integer) # multiple tasks can belong to a single run
     parent_task_id = Column(Integer) # a task can be a subtask 
@@ -351,7 +387,10 @@ class Task(Base):
     def next_run_id(cls):
         session = Session()
         max_run_id = session.query(func.max(cls.run_id)).scalar()
-        return max_run_id + 1 or 1
+        if max_run_id:
+            return max_run_id + 1
+        else:
+            return 1
 
 
 # ------------------------------------------------------------------------------
