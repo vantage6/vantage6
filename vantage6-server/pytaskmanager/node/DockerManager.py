@@ -43,7 +43,7 @@ class DockerManager(object):
         self.__tasks_dir = tasks_dir
         
     def run(self, result_id: int,  image: str="hello-world", 
-        docker_input: str="", token: str= ""):
+        docker_input: str="", database_file: str=None, token: str= ""):
         """Runs the docker-image in detached mode.
         
         :param result_id: server result identifyer.
@@ -58,13 +58,18 @@ class DockerManager(object):
         mounts.append(docker.types.Mount("/app/input.txt", 
             input_path.replace(' ', r'\ '), type="bind"))
 
-        output_path = self.__create_file("output.txt", result_id, "")
+        output_path = self.__create_file("output.txt", result_id, "test")
         mounts.append(docker.types.Mount("/app/output.txt", 
-            output_path.replace(' ', r'\ '), type="bind"))
+            output_path.replace(' ', r'\ '), read_only=False, type="bind"))
     
         token_path = self.__create_file("token.txt", result_id, token)
         mounts.append(docker.types.Mount("/app/token.txt", 
             token_path.replace(' ', r'\ '), type="bind"))
+
+        # mount database file, and set enviroment variable.
+        mounts.append(docker.types.Mount("/app/database.csv", 
+            database_file.replace(' ', r'\ '), type="bind")
+        )
 
         # attempt to pull the latest image
         try:
@@ -79,7 +84,9 @@ class DockerManager(object):
             container = self.client.containers.run(
                 image, 
                 detach=True, 
-                mounts=mounts
+                mounts=mounts,
+                environment=["DATABASE_URI=/app/database.csv"],
+                network_mode="host" #TODO for local debugging
             )
         except Exception as e:
             self.log.debug(e)

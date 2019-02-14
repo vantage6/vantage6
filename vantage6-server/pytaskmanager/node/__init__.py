@@ -213,14 +213,19 @@ class NodeWorker(NodeBase):
         token = self.flaskIO.request_token_for_container(
             task["id"], 
             task["image"]
-        )["container-token"]
+        )["container_token"]
+
+        # dataset file-location
+        database_uri = self.config.get("database_uri")
 
         # start docker container in the background
         self.__docker.run(
-            taskresult["id"], 
-            task["image"], 
-            task["input"], 
-            token=token)
+            result_id=taskresult["id"], 
+            image=task["image"], 
+            docker_input=task["input"], 
+            database_file=database_uri,
+            token=token
+        )
 
 
     def __connect_to_socket(self, action_handler=None):
