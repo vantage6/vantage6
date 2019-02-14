@@ -61,7 +61,6 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def package_data_dir(cls):
-
         return os.path.join(cls.package_directory(), '_data')
 
     @property
