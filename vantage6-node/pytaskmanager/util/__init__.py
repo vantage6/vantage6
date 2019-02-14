@@ -61,7 +61,6 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def package_data_dir(cls):
-
         return os.path.join(cls.package_directory(), '_data')
 
     @property
@@ -90,65 +89,42 @@ class AppContext(metaclass=Singleton):
         """Return true if a config file is available."""
         return os.path.exists(self.config_file)
 
-    def init(self, config_file, environment=None):
+    def init(self, config_file, environment=None, setup_logging=True):
         """Load the configuration from disk and setup logging."""
-        self.environment = environment if environment else 'test'
-        print(f"argument enviroment={environment}")
+        self.environment = environment 
 
         # Load configuration
-        config = self.load_config(config_file)
+        self.load_config(config_file, environment)
 
-        # FIXME: this is a hack!
-        # TODO we changed the config file, app is no longer used as 
-        # all is enviroment specific
-        cfg_app = config['application']
-        cfg_env = config['application']['environments'][self.environment]
-        # cfg_env = config.get('environments', {}).get(environment)
+        # Override default locations based on OS defaults if defined in 
+        # configuration file
+        if self.config.get('data_dir'):
+            self.dirs['data_dir'] = self.config.get('data_dir')
 
-        self.config = {
-            'app': cfg_app,
-            'env': cfg_env,
-        }
+        if self.config.get('log_dir'):
+            self.dirs['log_dir'] = self.config.get('log_dir')
 
-        if environment is None:
-            # Use 'application' rather than the configuration in a specific environment
-            # Override default locations based on OS defaults if defined in 
-            # configuration file
-            if self.config.get('data_dir'):
-                self.dirs['data_dir'] = cfg_app.get('data_dir')
-
-            if self.config.get('log_dir'):
-                self.dirs['log_dir'] = cfg_app.get('log_dir')
-        else:
-            # Apparently we're running a server (why else use an environment)
-            # Override default locations based on OS defaults if defined in 
-            # configuration file
-            if self.config.get('data_dir'):
-                self.dirs['data_dir'] = cfg_env.get('data_dir')
-
-            if self.config.get('log_dir'):
-                self.dirs['log_dir'] = cfg_env.get('log_dir')
-
-        # Setup logging
-        log_file = self.setup_logging()
-        
-        # Create a logger
-        module_name = __name__.split('.')[-1]
-        log = logging.getLogger(module_name)
-        
-        # Make some history
-        log.info("#" * 80)
-        log.info('#{:^78}#'.format(self.application))
-        log.info("#" * 80)
-        log.info("Started application '%s' with environment '%s'" % (self.application, environment))
-        log.info("Current working directory is '%s'" % os.getcwd())
-        log.info("Succesfully loaded configuration from '%s'" % config_file)
-        log.info("Logging to '%s'" % log_file)
+        if setup_logging:
+            # Setup logging
+            log_file = self.setup_logging()
+            
+            # Create a logger
+            module_name = __name__.split('.')[-1]
+            log = logging.getLogger(module_name)
+            
+            # Make some history
+            log.info("#" * 80)
+            log.info('#{:^78}#'.format(self.application))
+            log.info("#" * 80)
+            log.info("Started application '%s' with environment '%s'" % (self.application, environment))
+            log.info("Current working directory is '%s'" % os.getcwd())
+            log.info("Succesfully loaded configuration from '%s'" % config_file)
+            log.info("Logging to '%s'" % log_file)
 
         # Return the configuration for the current application.            
         return self.config
 
-    def load_config(self, config_file):
+    def load_config(self, config_file, environment=None):
         """Load configuration from disk."""
         try:
             config = yaml.load( open(config_file) )
@@ -157,17 +133,14 @@ class AppContext(metaclass=Singleton):
             print(msg.format(config_file))
             raise
         
-        return config
+        if environment:
+            self.config = config.get('environments', {}).get(environment)
+        else:
+            self.config = config.get('application')
 
     def setup_logging(self):
         """Setup a basic logging mechanism."""
-        if self.environment is None:
-            print(f"no environment found")
-            config = self.config['app']
-        else:
-            config = self.config['env']
-            print(f"enviroment found {self.environment}")
-        print(self.config)
+        config = self.config
 
         if ('logging' not in config) or (config["logging"]["level"].upper() == 'NONE'):
             return
@@ -239,7 +212,7 @@ class AppContext(metaclass=Singleton):
         return filename
 
     def get_database_location(self):
-        uri = self.config['env']['uri']
+        uri = self.config['uri']
         URL = make_url(uri)
 
         if (URL.host is None) and (not os.path.isabs(URL.database)):

@@ -15,20 +15,7 @@ requestBody:
   content:
     application/json:
       schema:
-        properties:
-          name:
-            type: string
-            description: Human readable label
-          description:
-            type: string
-            description: Human readable description of the task
-          image:
-            type: string
-            description: docker-image identifier that contains the task
-            required: true
-          input:
-            type: string
-            description: input which is stored in input.txt which is supplied to the docker image
+        $ref: '#/components/schemas/Task'
 
 responses:
   200:

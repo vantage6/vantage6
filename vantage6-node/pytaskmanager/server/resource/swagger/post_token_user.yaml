@@ -1,0 +1,18 @@
+summary: Login user
+
+description:
+  Allows for user sign-in, by supplying a username and password in the body.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/User'
+
+responses:
+  200:
+    description: Ok, authenticated
+  400:
+    description: No or wrong body specified, or username/password combination unknown
+
+tags: ["Authentication"]

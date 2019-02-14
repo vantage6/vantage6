@@ -1,18 +1,20 @@
 import logging
 
 from pytaskmanager.server import db
+from pytaskmanager import server
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from flask_socketio import join_room, send, leave_room, emit, Namespace
-from flask import session, request
+from flask import g, session, request
 
 
 class DefaultSocketNamespace(Namespace):
-    """ Class to define the different actions of the websocket.
-    Needs to be attached to a SocketIO class which manages the
-    connections.
+    """Handlers for SocketIO events are different than handlers for routes and that 
+    introduces a lot of confusion around what can and cannot be done in a SocketIO handler. 
+    The main difference is that all the SocketIO events generated for a client occur in 
+    the context of a single long running request.
     """
 
-    log = logging.getLogger("socket.io")
+    log = logging.getLogger(__name__)
 
     def on_connect(self):
         """New incomming connections are authenticated using their
@@ -30,10 +32,18 @@ class DefaultSocketNamespace(Namespace):
         except Exception as e:
             self.log.error("Could not connect client! No or Invalid JWT token?")
             self.log.exception(e)
+            raise
 
         # get identity from token.
         user_or_node_id = get_jwt_identity()
-        auth = db.Authenticatable.get(user_or_node_id)
+        session.auth = auth = db.Authenticatable.get(user_or_node_id)
+        session.auth.status = 'online'
+        session.auth.save()
+
+        # It appears to be necessary to use the root socketio instance
+        # otherwise events cannot be sent outside the current namespace.
+        # In this case, only events to '/tasks' can be emitted otherwise.
+        server.socketio.emit('node-status-changed', namespace='/admin')
 
         # define socket-session variables.
         session.type = auth.type
@@ -43,14 +53,29 @@ class DefaultSocketNamespace(Namespace):
         # join appropiate rooms, nodes join a specific collaboration room.
         # users do not belong to specific collaborations. 
         session.rooms = ['all_connections', 'all_'+session.type+'s']
+        
         if session.type == 'node':
             session.rooms.append('collaboration_' + str(auth.collaboration_id))
+        elif session.type == 'user':
+             session.rooms.append('user_'+str(auth.id))
+
         for room in session.rooms:
             self.__join_room_and_notify(room)
+
 
     def on_disconnect(self):
         for room in session.rooms:
             self.__leave_room_and_notify(room)
+
+        session.auth.status = 'offline'
+        session.auth.save()
+
+        # It appears to be necessary to use the root socketio instance
+        # otherwise events cannot be sent outside the current namespace.
+        # In this case, only events to '/tasks' can be emitted otherwise.
+        self.log.warning('emitting to /admin')
+        server.socketio.emit('node-status-changed', namespace='/admin')
+
         self.log.info(f'{session.name} disconnected')
 
     def on_message(self, message):
@@ -58,6 +83,9 @@ class DefaultSocketNamespace(Namespace):
 
     def on_error(self, e):
         self.log.error(e)
+    
+    def on_join_room(self, room):
+        self.__join_room_and_notify(room)
 
     def __join_room_and_notify(self, room):
         join_room(room)
@@ -70,3 +98,6 @@ class DefaultSocketNamespace(Namespace):
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
         emit('message', msg, room=room)
+
+
+        

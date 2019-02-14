@@ -38,20 +38,25 @@ setup(
         'appdirs',
         'bcrypt',
         'click',
+        'docker',
+        'eventlet',
         'flask',
         'flask-cors',
         'flask-jwt-extended',
         'flask-restful',
         'flask-sqlalchemy',
         'flask-marshmallow',
-        'flasgger',
+        'flask-socketio',
+        'socketIO_client',
         'marshmallow',
         'marshmallow-sqlalchemy',
         'pyyaml',
+        'psutil',
         'psycopg2',
         'requests',
         'termcolor',
         'sqlalchemy',
+        'flasgger==0.9.3.dev0' # flassger OAS 3+ support
     ],
     package_data={  
         'pytaskmanager': [
@@ -66,4 +71,7 @@ setup(
             'ptm=pytaskmanager.cli.cli:cli',
         ],
     },
+    dependency_links=[
+        'https://github.com/IKNL/flasgger/archive/0.9.3.tar.gz#egg=flasgger-0.9.3.dev0'
+    ]
 )
