@@ -1,6 +1,9 @@
+import time
 import logging
 import docker
 import os
+import pathlib
+
 
 from typing import NamedTuple
 
@@ -25,7 +28,7 @@ class DockerManager(object):
     # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
-    def __init__(self, allowed_repositories=[], tasks_dir=None):
+    def __init__(self, allowed_repositories, tasks_dir):
         """Initialization of DockerManager creates docker connection and
         sets some default values.
         
@@ -33,7 +36,6 @@ class DockerManager(object):
             Empty list implies that all repositoies are allowed.
         :param tasks_dir: folder to store task related data.
         """
-
         self.log.debug("Initializing DockerManager")
         self.client = docker.from_env()
 
@@ -41,9 +43,18 @@ class DockerManager(object):
 
         self.__allowed_repositories = allowed_repositories
         self.__tasks_dir = tasks_dir
-        
-    def run(self, result_id: int,  image: str="hello-world", 
-        docker_input: str="", database_file: str=None, token: str= ""):
+    
+    def create_bind(self, filename, result_id, filecontents):
+        input_path = self.__create_file(filename, result_id, filecontents)
+
+        return docker.types.Mount(
+            f"/app/{filename}", 
+            input_path, 
+            type="bind"
+        )
+
+    def run(self, result_id: int,  image: str, database_uri: str, 
+                docker_input: str, token: str):
         """Runs the docker-image in detached mode.
         
         :param result_id: server result identifyer.
@@ -54,22 +65,67 @@ class DockerManager(object):
         
         # create I/O files for docker
         mounts = []
-        input_path = self.__create_file("input.txt", result_id, docker_input)
-        mounts.append(docker.types.Mount("/app/input.txt", 
-            input_path.replace(' ', r'\ '), type="bind"))
 
-        output_path = self.__create_file("output.txt", result_id, "test")
-        mounts.append(docker.types.Mount("/app/output.txt", 
-            output_path.replace(' ', r'\ '), read_only=False, type="bind"))
+        """
+            # files = [
+            #     ('input.txt', docker_input), 
+            #     ('output.txt', ''), 
+            #     ('token.txt', token), 
+            # ]
+
+            # for (filename, contents) in files:
+            #     bind = self.create_bind(filename, result_id, contents)
+            #     mounts.append(bind)
+        """
+
+        input_path = self.__create_file("input.txt", result_id, docker_input)
+        self.log.info(f'input_path: {input_path}')
+        mounts.append(
+            docker.types.Mount(
+                "/app/input.txt", 
+                input_path,
+                type="bind"
+            )
+        )
+
+        output_path = self.__create_file("output.txt", result_id, "")
+        self.log.info(f'output_path: {output_path}')
+        mounts.append(
+            docker.types.Mount(
+                "/app/output.txt", 
+                output_path, 
+                type="bind"
+            )
+        )
     
         token_path = self.__create_file("token.txt", result_id, token)
-        mounts.append(docker.types.Mount("/app/token.txt", 
-            token_path.replace(' ', r'\ '), type="bind"))
-
-        # mount database file, and set enviroment variable.
-        mounts.append(docker.types.Mount("/app/database.csv", 
-            database_file.replace(' ', r'\ '), type="bind")
+        self.log.info(f'token_path: {token_path}')
+        mounts.append(
+            docker.types.Mount(
+                "/app/token.txt", 
+                token_path, 
+                type="bind"
+            )
         )
+
+        # If the provided database URI is a file, we need to mount
+        # it at a predefined path and update the environment variable
+        # that's passed to the container.
+        if database_uri:
+            if pathlib.Path(database_uri).is_file():
+                mounts.append(
+                    docker.types.Mount(
+                        "/app/database", 
+                        database_uri, 
+                        type="bind"
+                    )
+                )
+                database_uri = "/app/database"
+
+            else:
+                self.log.warning("'{}' is not a file!".format(database_uri))
+        else:
+            self.log.warning('no database specified')
 
         # attempt to pull the latest image
         try:
@@ -85,14 +141,13 @@ class DockerManager(object):
                 image, 
                 detach=True, 
                 mounts=mounts,
-                environment=["DATABASE_URI=/app/database.csv"],
-                network_mode="host" #TODO for local debugging
+                environment={'DATABASE_URI': database_uri}
             )
         except Exception as e:
             self.log.debug(e)
             return False
 
-        # keep track of the containers
+        # keep track of the container
         self.tasks.append({
             "result_id": result_id,
             "container": container,
@@ -106,31 +161,40 @@ class DockerManager(object):
         
         This is a blocking method until a finished container shows up.
         Once the container is obtained and the results are red, the 
-        container is removed from the docker enviroment."""
+        container is removed from the docker environment."""
 
         # get finished results and get the first one, if no result is available this is blocking
         while True:
             self.__refresh_container_statuses()
             try:
+                # FIXME: Use list comprehension instead? e.g.
+                #   finished_tasks = [t for t in self.tasks if t['container'].status == 'exited']
                 finished_task = next(
                     filter(
                         lambda task: task["container"].status == "exited", 
-                        self.tasks)
+                        self.tasks
+                    )
                 )
                 self.log.debug(
-                    f"Result id={finished_task['result_id']} is finished")
+                    f"Result id={finished_task['result_id']} is finished"
+                )
                 break
+
             except StopIteration:
+                # FIXME: without sleeping, this will burn CPU cycles!
+                time.sleep(1)
                 continue
         
         # get all info from the container and cleanup
         container = finished_task["container"]
         log = container.logs().decode('utf8')
+
         try:
             container.remove()
         except Exception as e:
             self.log.error(f"Failed to remove container {container}")
             self.log.debug(e)
+
         self.tasks.remove(finished_task)
         
         # retrieve results from file        
@@ -140,7 +204,8 @@ class DockerManager(object):
         return Result(
             result_id=finished_task["result_id"], 
             logs=log, 
-            data=results)
+            data=results
+        )
 
     def __refresh_container_statuses(self):
         """Refreshes the states of the containers."""
