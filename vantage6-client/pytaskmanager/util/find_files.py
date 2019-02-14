@@ -44,7 +44,7 @@ def get_config_location(ctx, config, force_create):
             
             # update logging filename for all enviroments
             for environment in cfg['environments'].items():
-                cfg['application'][environment]['logging']['file'] = ctx.instance_name + '.log'
+                cfg[environment]['logging']['file'] = ctx.instance_name + '.log'
 
             # write back to the config
             with open(dst, 'w') as fp:

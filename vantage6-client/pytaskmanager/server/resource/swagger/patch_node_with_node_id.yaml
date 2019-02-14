@@ -17,7 +17,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/definitions/Collaboration'
+        $ref: '#/components/schemas/Collaboration'
 
 responses:
   200:
@@ -28,8 +28,6 @@ responses:
     description: Unauthorized
 
 security:
-  type: http
-  scheme: bearer
-  bearerFormat: JWT
+  - bearerAuth: []
 
 tags: ["Node"]
