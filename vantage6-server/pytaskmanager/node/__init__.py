@@ -19,8 +19,8 @@ from threading import Thread, Event
 from socketIO_client import SocketIO, SocketIONamespace
 
 from pytaskmanager import util
-from DockerManager import DockerManager
-from FlaskIO import ClientNodeProtocol
+from pytaskmanager.node.DockerManager import DockerManager
+from pytaskmanager.node.FlaskIO import ClientNodeProtocol
 
 def name():
     return __name__.split('.')[-1]
@@ -102,6 +102,7 @@ class NodeWorker(object):
         self.__docker = DockerManager(
             allowed_repositories=[], 
             tasks_dir=self.ctx.data_dir,
+            server_api_url=self.flaskIO.host
         )
 
         # send results to the server when they come available.
