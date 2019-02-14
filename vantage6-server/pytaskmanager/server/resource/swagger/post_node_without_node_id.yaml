@@ -6,7 +6,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/definitions/Collaboration'
+        $ref: '#/components/schemas/Collaboration'
 responses:
   201:
     description: new node-account created

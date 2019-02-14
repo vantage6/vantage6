@@ -83,6 +83,24 @@ class CollaborationSchema(ModelSchema):
 
 
 # ------------------------------------------------------------------------------
+class CollaborationSchemaSimple(ModelSchema):
+
+    nodes = fields.Nested(
+        'NodeSchemaSimple', 
+        many=True, 
+        exclude=['nodes', 'tasks', 'collaboration']
+    )
+
+    class Meta:
+        model = db.Collaboration
+        exclude = [
+            'tasks',
+            'organizations',
+            # 'nodes',
+        ]
+
+
+# ------------------------------------------------------------------------------
 class NodeSchema(ModelSchema):
     organization = ma.HyperlinkRelated('organization_with_id')
     collaboration = ma.HyperlinkRelated('collaboration_with_id')
@@ -90,6 +108,44 @@ class NodeSchema(ModelSchema):
     class Meta:
         model = db.Node
 
+
+# ------------------------------------------------------------------------------
+class NodeSchemaSimple(ModelSchema):
+
+    # collaboration = fields.Nested(
+    #     'CollaborationSchema', 
+    #     many=False, 
+    #     exclude=['organizations', 'nodes', 'tasks']
+    # )
+
+    organization = fields.Nested(
+        'OrganizationSchema', 
+        many=False, 
+        exclude=[
+            '_id', 
+            'id', 
+            'domain', 
+            'address1', 
+            'address2', 
+            'zipcode', 
+            'country',
+            'nodes', 
+            'collaborations', 
+            'users',
+            ]
+    )
+
+
+    class Meta:
+        model = db.Node
+        exclude = [
+            # 'id', 
+            # 'organization', 
+            # 'collaboration', 
+            'taskresults', 
+            'api_key', 
+            'type', 
+        ]
 
 # ------------------------------------------------------------------------------
 class UserSchema(ModelSchema):

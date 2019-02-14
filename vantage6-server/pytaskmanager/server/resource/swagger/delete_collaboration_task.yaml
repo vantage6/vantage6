@@ -11,14 +11,14 @@ parameters:
     description: collaboration id
     required: true
 
-requestBody:
-  content:
-    application/json:
-      schema:
-        properties:
-          task_id:
-            type: integer
-            description: task id which needs to be removed
+# requestBody:
+#   content:
+#     application/json:
+#       schema:
+#         properties:
+#           task_id:
+#             type: integer
+#             description: task id which needs to be removed
 
 responses:
   200:
