@@ -8,6 +8,7 @@ import json
 import bcrypt
 
 from sqlalchemy import *
+from sqlalchemy import func
 from sqlalchemy.sql import exists
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
@@ -140,6 +141,40 @@ class Base(object):
         session.delete(self)
         session.commit()
 
+    def update(self, include=None, exclude=None, **kwargs):
+        """Update this instance using a dictionary."""
+
+        # Get a list of attributes available to this class.
+        # This should exclude relationships!
+        inst = inspect(self)
+        cols = [c_attr.key for c_attr in inst.mapper.column_attrs]
+        cols = set(cols)
+
+        # Cast the list of attributes we're trying to update to a set.
+        keys = set(kwargs.keys())
+
+        # Only *keep* keys listed in `include`
+        if include:
+            if type(include) != type([]):
+                include = [include, ]
+
+            include = set(include)
+            keys = keys & include
+
+        # Remove any keys that are in `exclude`
+        if exclude:
+            if type(exclude) != type([]):
+                exclude = [exclude, ]
+
+            exclude = set(exclude)
+            keys = keys - exclude
+
+        # Keep only those keys that are proper attributes
+        attrs = cols.intersection(keys)
+
+        for attr in attrs:
+            setattr(self, attr, kwargs[attr])
+
 
 Base = declarative_base(cls=Base)
 
@@ -154,6 +189,12 @@ association_table_organization_collaboration = Table(
     Column('collaboration_id', Integer, ForeignKey('collaboration.id'))
 )
 
+association_table_organization_task = Table(
+    'association_table_organization_task',
+    Base.metadata,
+    Column('task_id', Integer, ForeignKey('task.id')),
+    Column('organization_id', Integer, ForeignKey('organization.id'))
+)
 
 # ------------------------------------------------------------------------------
 class Organization(Base):
@@ -184,6 +225,11 @@ class Collaboration(Base):
     def get_task_ids(self):
         return [task.id for task in self.tasks]
 
+    def get_nodes_from_organizations(self, ids):
+        """Returns a subset of nodes"""
+        return [n for n in self.nodes if n.organization.id in ids]
+
+    # TODO rename to 'find_by_name'
     @classmethod
     def get_collaboration_by_name(cls, name):
         session = Session()
@@ -200,6 +246,7 @@ class Authenticatable(Base):
     type = Column(String(50))
     ip = Column(String)
     last_seen = Column(DateTime)
+    status = Column(String)
 
 
     __mapper_args__ = {
@@ -266,12 +313,6 @@ class User(Authenticatable):
         res = session.query(exists().where(cls.username == username)).scalar()
         return res
 
-    # @classmethod
-    # def remove_user(cls, username):
-    #     session = Session()
-    #     session.query(cls).filter_by(username=username).delete()
-    #     session.commit()
-
 
 # ------------------------------------------------------------------------------
 class Node(Authenticatable):
@@ -282,6 +323,7 @@ class Node(Authenticatable):
     
     name = Column(String)
     api_key = Column(String)
+    state = Column(Text)
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='nodes')
@@ -296,7 +338,7 @@ class Node(Authenticatable):
     @property
     def open_tasks(self):
         # return [result for result in self.taskresults if result.finished_at is None]
-        print(self.taskresults, type(self.taskresults))
+        # print(self.taskresults, type(self.taskresults))
 
         values = list()
         for r in self.taskresults:
@@ -315,8 +357,6 @@ class Node(Authenticatable):
             return None
 
 
-
-
 # ------------------------------------------------------------------------------
 class Task(Base):
     """Central definition of a single task."""
@@ -324,13 +364,33 @@ class Task(Base):
     description = Column(String)
     image = Column(String)
     input = Column(Text)
+    database = Column(String)
+
+    run_id = Column(Integer) # multiple tasks can belong to a single run
+    parent_task_id = Column(Integer) # a task can be a subtask 
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='tasks')
 
+    # tasks can be for a specific organization
+    organizations = relationship(
+        'Organization', 
+        secondary=association_table_organization_task, 
+        backref='tasks'
+    )
+
     @hybrid_property
     def complete(self):
         return all([r.finished_at for r in self.results])
+
+    @classmethod
+    def next_run_id(cls):
+        session = Session()
+        max_run_id = session.query(func.max(cls.run_id)).scalar()
+        if max_run_id:
+            return max_run_id + 1
+        else:
+            return 1
 
 
 # ------------------------------------------------------------------------------
@@ -351,6 +411,9 @@ class TaskResult(Base):
 
     node_id = Column(Integer, ForeignKey('node.id'))
     node = relationship('Node', backref='taskresults')
+
+    # collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
+    # collaboration = relationship('Collaboration', backref='taskresults')
 
     @hybrid_property
     def isComplete(self):
