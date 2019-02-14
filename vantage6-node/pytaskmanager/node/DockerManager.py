@@ -28,7 +28,7 @@ class DockerManager(object):
     # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
-    def __init__(self, allowed_repositories, tasks_dir):
+    def __init__(self, allowed_repositories, tasks_dir, server_api_url):
         """Initialization of DockerManager creates docker connection and
         sets some default values.
         
@@ -43,6 +43,9 @@ class DockerManager(object):
 
         self.__allowed_repositories = allowed_repositories
         self.__tasks_dir = tasks_dir
+
+        # master container need to know where they can post tasks to
+        self.__server_url = server_api_url
     
     def create_bind(self, filename, result_id, filecontents):
         input_path = self.__create_file(filename, result_id, filecontents)
@@ -134,6 +137,13 @@ class DockerManager(object):
         except Exception as e:
             self.log.error(e)
         
+        # define enviroment variables for the docker-container
+        environment_variables = {
+            "DATABASE_URI": database_uri,
+            "HOST": self.__server_url
+        }
+        self.log.debug(f"Environment={environment_variables}")
+
         # attempt to run the image
         try:
             self.log.info(f"Run docker image={image}")
@@ -141,7 +151,7 @@ class DockerManager(object):
                 image, 
                 detach=True, 
                 mounts=mounts,
-                environment={'DATABASE_URI': database_uri}
+                environment=environment_variables
             )
         except Exception as e:
             self.log.debug(e)
