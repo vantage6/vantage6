@@ -4,7 +4,15 @@ import time
 import jwt
 import datetime
 
+from typing import NamedTuple
+
 module_name = __name__.split('.')[1]
+
+class ServerInfo(NamedTuple):
+    """Data-class to store the server info"""
+    host: str
+    port: int 
+    path: str
 
 class ClientBaseProtocol(object):
     """Implemention base protocols for communicating with server instance"""
@@ -155,6 +163,10 @@ class ClientBaseProtocol(object):
     @property
     def port(self):
         return self.__port
+
+    @property
+    def path(self):
+        return self.__api_path
 
     @property
     def base_path(self):

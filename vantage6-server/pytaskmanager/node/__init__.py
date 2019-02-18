@@ -20,7 +20,7 @@ from socketIO_client import SocketIO, SocketIONamespace
 
 from pytaskmanager import util
 from pytaskmanager.node.DockerManager import DockerManager
-from pytaskmanager.node.FlaskIO import ClientNodeProtocol
+from pytaskmanager.node.FlaskIO import ClientNodeProtocol, ServerInfo
 
 def name():
     return __name__.split('.')[-1]
@@ -98,11 +98,17 @@ class NodeWorker(object):
         self.log.debug("fetching tasks that were posted while offline")
         self.__sync_task_que_with_server() 
 
+        server_info = ServerInfo(
+            host=self.flaskIO.host, 
+            port=self.flaskIO.port, 
+            path=self.flaskIO.path
+        )
+
         # TODO read allowed repositories from the config file
         self.__docker = DockerManager(
             allowed_repositories=[], 
             tasks_dir=self.ctx.data_dir,
-            server_api_url=self.flaskIO.host
+            server_info=server_info
         )
 
         # send results to the server when they come available.
