@@ -56,7 +56,7 @@ setup(
         'requests',
         'termcolor',
         'sqlalchemy',
-        'package @ git+https://github.com/IKNL/flasgger@master#egg=flasgger' # flassger OAS 3+ support
+        'package @ git+https://github.com/IKNL/flasgger@master#egg=0.9.2-IKNL-0.0.1' # flassger OAS 3+ support
     ],
     package_data={  
         'pytaskmanager': [
