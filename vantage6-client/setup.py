@@ -56,7 +56,7 @@ setup(
         'requests',
         'termcolor',
         'sqlalchemy',
-        'flasgger==0.9.3.dev0' # flassger OAS 3+ support
+        'package @ git+https://github.com/IKNL/flasgger@master' # flassger OAS 3+ support
     ],
     package_data={  
         'pytaskmanager': [
@@ -70,8 +70,5 @@ setup(
         'console_scripts': [
             'ptm=pytaskmanager.cli.cli:cli',
         ],
-    },
-    dependency_links=[
-        'https://github.com/IKNL/flasgger/archive/0.9.3.tar.gz#egg=flasgger-0.9.3.dev0'
-    ]
+    }
 )
