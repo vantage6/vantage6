@@ -162,7 +162,7 @@ class ClientBaseProtocol(object):
 
     @property
     def base_path(self):
-        if self/__port:
+        if self.__port:
             return f"{self.host}:{self.port}{self.__api_path}"
 
         return f"{self.host}{self.__api_path}"
