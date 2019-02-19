@@ -4,6 +4,7 @@ import logging
 from functools import wraps
 from pytaskmanager import server
 from pytaskmanager.server import db
+from pytaskmanager.server import shell
 from pytaskmanager import util
 from pytaskmanager.util.find_files import get_config_location
 from pytaskmanager.server import fixtures
@@ -91,6 +92,19 @@ def cli_server_load_fixtures(ctx):
     fixtures.init(ctx)
     fixtures.create()
 
+
+@cli_server.command(name='shell')
+@set_context(return_context=True)  # adds options (--name, --config, --environment)
+def cli_server_shell(ctx):
+    """Run a shell ..."""
+    # shell.init(ctx.environment)
+    import IPython
+    from traitlets.config import get_config
+    c = get_config()
+    c.InteractiveShellEmbed.colors = "Linux"
+
+    print()
+    IPython.embed(config=c)
 
 # user
 @cli_server.command(name='add_user')
