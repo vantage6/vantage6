@@ -24,12 +24,11 @@ from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, emit, send,join_room, leave_room
 import flask_socketio
 
-
-
 from flasgger import Swagger
 
 import datetime
 import logging
+import uuid
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -93,7 +92,6 @@ ma = Marshmallow(app)
 # ------------------------------------------------------------------------------
 # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
 # ------------------------------------------------------------------------------
-app.config['JWT_SECRET_KEY'] = 'f8a87430-fe18-11e7-a7b2-a45e60d00d91'
 jwt = JWTManager(app)
 
 @jwt.user_claims_loader
@@ -470,6 +468,8 @@ def run(ctx, *args, **kwargs):
 
     environment = ctx.config.get('type')
     app.config['environment'] = environment
+
+    app.config['JWT_SECRET_KEY'] = ctx.config.get('jwt_secret_key', str(uuid.uuid1()))
 
     # Set an extra long expiration time on access tokens for testing
     if environment == 'test':
