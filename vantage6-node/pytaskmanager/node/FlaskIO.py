@@ -104,7 +104,11 @@ class ClientBaseProtocol(object):
         assert self.__refresh_url
 
         # send request to server
-        url = f"{self.__host}:{self.__port}{self.__refresh_url}"
+        if self.__port:
+            url = f"{self.__host}:{self.__port}{self.__refresh_url}"
+        else:
+            url = f"{self.__host}{self.__refresh_url}"
+
         response = requests.post(url, headers={
             'Authorization': 'Bearer ' + self.__refresh_token})
 
@@ -170,7 +174,10 @@ class ClientBaseProtocol(object):
 
     @property
     def base_path(self):
-        return f"{self.host}:{self.port}{self.__api_path}"
+        if self.__port:
+            return f"{self.host}:{self.port}{self.__api_path}"
+
+        return f"{self.host}{self.__api_path}"
         # return self.host + ':' + str(self.port) + self.__api_path
 
 
