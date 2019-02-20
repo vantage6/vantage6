@@ -16,7 +16,7 @@ termcolor
 sqlalchemy
 click
 apispec
-git+git@github.com:IKNL/flasgger.git#egg=flasgger
+git+git@github.com:IKNL/flasgger.git
 flask_socketio
 socketIO_client
 
