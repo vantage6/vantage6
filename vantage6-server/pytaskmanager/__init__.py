@@ -140,7 +140,8 @@ def cli_server_start(name, config, environment, ip, port, debug, force_create):
 @click.option('-n', '--name', default='default', help='server instance to use')
 def cli_server_configlocation(name):
     """Print the location of the default config file."""
-    ctx = util.AppContext(APPNAME, 'server', name)
+    # ctx = util.AppContext(APPNAME, 'server', name)
+    ctx = util.ServerContext(APPNAME, 'default')
     cfg_filename = get_config_location(ctx, config=None, force_create=False)
     click.echo('{}'.format(cfg_filename))
 
@@ -183,7 +184,8 @@ def cli_server_passwd(name, config, environment, password):
 def cli_server_load_fixtures(name, environment, config):
     """Load fixtures for testing."""
     click.echo("Loading fixtures.")
-    ctx = util.AppContext(APPNAME, 'server', name)
+    # ctx = util.AppContext(APPNAME, 'server', name)
+    ctx = util.ServerContext(APPNAME, 'default')
 
     # Load configuration and initialize logging system
     cfg_filename = get_config_location(ctx, config, force_create=False)
