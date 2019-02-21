@@ -56,7 +56,7 @@ app.config['JWT_AUTH_URL_RULE'] ='/api/token'
 
 # Open Api Specification (f.k.a. swagger)
 app.config['SWAGGER'] = {
-    'title': 'PyTaskManager',
+    'title': 'ppDLI API',
     'uiversion': 3,
     'openapi': '3.0.0',
 }
