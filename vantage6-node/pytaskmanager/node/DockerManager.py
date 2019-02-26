@@ -4,7 +4,6 @@ import docker
 import os
 import pathlib
 
-
 from typing import NamedTuple
 
 class Result(NamedTuple):
@@ -28,7 +27,7 @@ class DockerManager(object):
     # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
-    def __init__(self, allowed_repositories, tasks_dir, server_api_url):
+    def __init__(self, allowed_repositories, tasks_dir, server_info):
         """Initialization of DockerManager creates docker connection and
         sets some default values.
         
@@ -45,7 +44,7 @@ class DockerManager(object):
         self.__tasks_dir = tasks_dir
 
         # master container need to know where they can post tasks to
-        self.__server_url = server_api_url
+        self.__server_info = server_info
     
     def create_bind(self, filename, result_id, filecontents):
         input_path = self.__create_file(filename, result_id, filecontents)
@@ -140,7 +139,9 @@ class DockerManager(object):
         # define enviroment variables for the docker-container
         environment_variables = {
             "DATABASE_URI": database_uri,
-            "HOST": self.__server_url
+            "HOST": self.__server_info.host,
+            "PORT": self.__server_info.port,
+            "API_PATH": self.__server_info.path 
         }
         self.log.debug(f"Environment={environment_variables}")
 
