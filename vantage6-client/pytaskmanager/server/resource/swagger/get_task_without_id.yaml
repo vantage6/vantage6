@@ -1,0 +1,17 @@
+summary: List tasks
+
+description:
+  Returns the task specified by the id
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: Task not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Task"]

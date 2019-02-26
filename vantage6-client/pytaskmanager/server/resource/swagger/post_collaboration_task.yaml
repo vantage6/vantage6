@@ -1,0 +1,31 @@
+summary: Add task to collaboration
+
+description:
+  Adds a single task to a collaboration.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Task'
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized
+  404:
+    description: specified collaboration does not exists
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

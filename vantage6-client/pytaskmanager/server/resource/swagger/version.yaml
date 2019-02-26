@@ -1,0 +1,10 @@
+summary: Get version
+
+description:
+  Return the version of the server instance
+
+responses:
+  200:
+    description: Ok
+
+tags: ["Other"]

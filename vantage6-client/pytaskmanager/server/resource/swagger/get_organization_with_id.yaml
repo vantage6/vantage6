@@ -1,0 +1,25 @@
+summary: Get organization
+
+description:
+  Returns the organization specified by the id
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: organization id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: organization not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Organization"]

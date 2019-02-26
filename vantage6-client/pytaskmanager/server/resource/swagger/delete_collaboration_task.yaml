@@ -1,0 +1,36 @@
+summary: Remove task from collaboration
+
+description:
+  Removes a single task from a collaboration.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+# requestBody:
+#   content:
+#     application/json:
+#       schema:
+#         properties:
+#           task_id:
+#             type: integer
+#             description: task id which needs to be removed
+
+responses:
+  200:
+    description: Ok
+  400:
+    description: task does not belong to this collaboration
+  401:
+    description: Unauthorized
+  404:
+    description: specified collaboration or task does not exists
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

@@ -5,6 +5,7 @@ import sys
 import os, os.path
 import pprint
 
+import pytaskmanager.util.Colorer
 import logging
 import logging.handlers
 
@@ -24,20 +25,23 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+
+
 # ------------------------------------------------------------------------------
 class AppContext(metaclass=Singleton):
 
     def __init__(self, application, instance_type, instance_name='', version=None):
         """Initialize a new instance.
 
-            instance_type: {'server', 'client', 'unittest', 'fixtures'}
-            instance_name: only relevant for clients/servers
+            instance_type: {'server', 'node', 'unittest', 'fixtures'}
+            instance_name: only relevant for nodes/servers
         """
-        instance_types = ('server', 'client', 'unittest')
+        instance_types = ('server', 'node', 'unittest')
         msg = "instance_type should be one of {}".format(instance_types)
         assert instance_type in instance_types, msg
 
         self.application = application
+        self.environment = None
         self.instance_type = instance_type
         self.instance_name = instance_name
         self.version = version
@@ -49,6 +53,15 @@ class AppContext(metaclass=Singleton):
             'log': d.user_log_dir,
             'config': d.user_config_dir,
         }
+
+    @staticmethod
+    def package_directory():
+        here = os.path.abspath(os.path.dirname(__file__))
+        return os.path.normpath(os.path.join(here, '../'))
+
+    @classmethod
+    def package_data_dir(cls):
+        return os.path.join(cls.package_directory(), '_data')
 
     @property
     def data_dir(self):
@@ -65,7 +78,7 @@ class AppContext(metaclass=Singleton):
     @property
     def config_file(self):
         if self.instance_type == 'unittest':
-            filename = 'unittest.yaml'
+            filename = 'unittest_config.yaml'
         else:
             filename = self.instance_name + '.yaml'
 
@@ -76,47 +89,42 @@ class AppContext(metaclass=Singleton):
         """Return true if a config file is available."""
         return os.path.exists(self.config_file)
 
-    def init(self, config_file, environment=None):
+    def init(self, config_file, environment=None, setup_logging=True):
         """Load the configuration from disk and setup logging."""
-        
-        # Load configuration
-        config = self.load_config(config_file)
-        cfg_app = config['application']
-        cfg_env = config.get('environments', {}).get(environment)
+        self.environment = environment 
 
-        self.config = {
-            'app': cfg_app,
-            'env': cfg_env,
-        }
+        # Load configuration
+        self.load_config(config_file, environment)
 
         # Override default locations based on OS defaults if defined in 
         # configuration file
-        if cfg_app.get('data_dir'):
-            self.dirs['data_dir'] = cfg_app.get('data_dir')
+        if self.config.get('data_dir'):
+            self.dirs['data_dir'] = self.config.get('data_dir')
 
-        if cfg_app.get('log_dir'):
-            self.dirs['log_dir'] = cfg_app.get('log_dir')
+        if self.config.get('log_dir'):
+            self.dirs['log_dir'] = self.config.get('log_dir')
 
-        # Setup logging
-        log_file = self.setup_logging()
-        
-        # Create a logger
-        module_name = __name__.split('.')[-1]
-        log = logging.getLogger(module_name)
-        
-        # Make some history
-        log.info("#" * 80)
-        log.info('#{:^78}#'.format(self.application))
-        log.info("#" * 80)
-        log.info("Started application '%s' with environment '%s'" % (self.application, environment))
-        log.info("Current working directory is '%s'" % os.getcwd())
-        log.info("Succesfully loaded configuration from '%s'" % config_file)
-        log.info("Logging to '%s'" % log_file)
+        if setup_logging:
+            # Setup logging
+            log_file = self.setup_logging()
+            
+            # Create a logger
+            module_name = __name__.split('.')[-1]
+            log = logging.getLogger(module_name)
+            
+            # Make some history
+            log.info("#" * 80)
+            log.info('#{:^78}#'.format(self.application))
+            log.info("#" * 80)
+            log.info("Started application '%s' with environment '%s'" % (self.application, environment))
+            log.info("Current working directory is '%s'" % os.getcwd())
+            log.info("Succesfully loaded configuration from '%s'" % config_file)
+            log.info("Logging to '%s'" % log_file)
 
         # Return the configuration for the current application.            
         return self.config
 
-    def load_config(self, config_file):
+    def load_config(self, config_file, environment=None):
         """Load configuration from disk."""
         try:
             config = yaml.load( open(config_file) )
@@ -125,11 +133,14 @@ class AppContext(metaclass=Singleton):
             print(msg.format(config_file))
             raise
         
-        return config
+        if environment:
+            self.config = config.get('environments', {}).get(environment)
+        else:
+            self.config = config.get('application')
 
     def setup_logging(self):
         """Setup a basic logging mechanism."""
-        config = self.config['app']
+        config = self.config
 
         if ('logging' not in config) or (config["logging"]["level"].upper() == 'NONE'):
             return
@@ -186,7 +197,7 @@ class AppContext(metaclass=Singleton):
         if self.instance_type in ('unittest', ):
             filename = os.path.join(self.dirs[filetype], filename)
 
-        elif self.instance_type in ('server', 'client'):
+        elif self.instance_type in ('server', 'node'):
             elements = [
                 self.dirs[filetype], 
                 self.instance_type
@@ -201,7 +212,7 @@ class AppContext(metaclass=Singleton):
         return filename
 
     def get_database_location(self):
-        uri = self.config['env']['uri']
+        uri = self.config['uri']
         URL = make_url(uri)
 
         if (URL.host is None) and (not os.path.isabs(URL.database)):
@@ -216,7 +227,7 @@ class ServerContext(AppContext):
     def __init__(self, application, instance_name='', version=None):
         """Initialize a new instance.
 
-            instance_name: only relevant for clients/servers
+            instance_name: only relevant for nodes/servers
         """
         super().__init__(application, 'server', instance_name, version=version)
 
@@ -250,7 +261,7 @@ class ServerContext(AppContext):
 
 
 
-class ClientContext(AppContext):
+class NodeContext(AppContext):
     pass
 
 
@@ -259,6 +270,19 @@ class FixturesContext(AppContext):
 
 
 class TestContext(AppContext):
-    pass
+    def __init__(self):
+        super().__init__('unittest', 'unittest')
+
+    def get_file_location(self, filetype, filename):
+        """
+        filetype: ('config', log', 'data')
+        """
+        if os.path.isabs(filename):
+            return filename
+
+        if filetype == 'config':
+            return os.path.join(self.package_data_dir(), filename)
+
+        return super().get_file_location(filetype, filename)
 
     
