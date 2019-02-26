@@ -1,0 +1,27 @@
+summary: Delete node
+
+description:
+  Delete node from organization. Only users that belong to the organization of the node can delete it.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "unique node identifier"
+    required: true
+
+responses:
+  200:
+    description: Ok, node is deleted
+  404:
+    description: node with specified id is not found
+  403:
+    description: you do not have permission to delete this node
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+tags: ["Node"]

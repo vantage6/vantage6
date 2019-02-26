@@ -1,0 +1,31 @@
+summary: Remove organization from collaboration
+
+description:
+  Removes a single organization from an existing collaboration.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+# requestBody:
+#   content:
+#     application/json:
+#       schema:
+#         properties:
+#           id:
+#             type: integer
+#             description: organization id which needs to be removed
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: specified collaboration or organization does not exists
+  401:
+    description: Unauthorized
+
+tags: ["Collaboration"]

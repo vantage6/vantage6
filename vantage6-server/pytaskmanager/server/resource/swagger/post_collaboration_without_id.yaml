@@ -1,0 +1,31 @@
+summary: Create collaboration
+
+description:
+  Creates a new collaboration between organizations.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          name:
+            type: string
+            description: human readable name for collaboration
+          organization_ids:
+            type: array
+            items:
+              type: integer
+            description: list of organization ids which form the collaboration
+
+responses:
+  200:
+    description: Ok
+  400:
+    description: Request body is not correct
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

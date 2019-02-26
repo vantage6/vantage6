@@ -1,0 +1,22 @@
+summary: List nodes in collaboration
+
+description:
+  Returns a list of node which belong to the specified collaboration
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration not found
+  401:
+    description: Unauthorized
+
+tags: ["Collaboration"]
