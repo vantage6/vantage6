@@ -1,0 +1,27 @@
+summary: Delete collaboration
+
+description:
+  Removes the collaboration from the database entirely.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration with specified id is not found
+#  403:
+#    description: you do not have permission to view this collaboration
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

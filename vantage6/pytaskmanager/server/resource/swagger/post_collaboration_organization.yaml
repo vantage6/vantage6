@@ -1,0 +1,34 @@
+summary: Add organization to collaboration
+
+description:
+  Adds a single organization to a existing collaboration.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          id:
+            type: integer
+            description: organization id which needs to be added
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: specified collaboration or organization does not exists
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

@@ -1,26 +1,24 @@
 # -*- coding: utf-8 -*-
-# Standard library
-import sys
 import os
 import logging
-import datetime, time
+import datetime
 
 import enum
 import json
 import bcrypt
 
-
-#  SQLAlchemy
-import sqlalchemy
 from sqlalchemy import *
+from sqlalchemy import func
+from sqlalchemy.sql import exists
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
+from sqlalchemy.orm import scoped_session, sessionmaker, relationship
+from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm.exc import NoResultFound
 
-
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
 
 # ------------------------------------------------------------------------------
 # Helper functions
@@ -38,6 +36,7 @@ def init(URI='sqlite:////tmp/test.db', drop_all=False):
     log.debug("  database: {}".format(url.database))
     log.debug("  username: {}".format(url.username))
 
+    # TODO is this really necessary
     from . import db
     db.URI = URI
 
@@ -112,9 +111,12 @@ class Base(object):
         session = Session()
 
         if id_ is None:
-            result =  session.query(cls).all()    
+            result = session.query(cls).all()
         else:
-            result = session.query(cls).filter_by(id=id_).one()
+            try:
+                result = session.query(cls).filter_by(id=id_).one()
+            except NoResultFound:
+                result = None
 
         if with_session:
             return result, session
@@ -126,9 +128,52 @@ class Base(object):
             session = Session()
             session.add(self)
         else:
-            session = object_session(self)
+            session = Session.object_session(self)
 
         session.commit()
+
+    def delete(self):
+        if not self.id:
+            session = Session()
+        else:
+            session = Session.object_session(self)
+
+        session.delete(self)
+        session.commit()
+
+    def update(self, include=None, exclude=None, **kwargs):
+        """Update this instance using a dictionary."""
+
+        # Get a list of attributes available to this class.
+        # This should exclude relationships!
+        inst = inspect(self)
+        cols = [c_attr.key for c_attr in inst.mapper.column_attrs]
+        cols = set(cols)
+
+        # Cast the list of attributes we're trying to update to a set.
+        keys = set(kwargs.keys())
+
+        # Only *keep* keys listed in `include`
+        if include:
+            if type(include) != type([]):
+                include = [include, ]
+
+            include = set(include)
+            keys = keys & include
+
+        # Remove any keys that are in `exclude`
+        if exclude:
+            if type(exclude) != type([]):
+                exclude = [exclude, ]
+
+            exclude = set(exclude)
+            keys = keys - exclude
+
+        # Keep only those keys that are proper attributes
+        attrs = cols.intersection(keys)
+
+        for attr in attrs:
+            setattr(self, attr, kwargs[attr])
 
 
 Base = declarative_base(cls=Base)
@@ -144,6 +189,12 @@ association_table_organization_collaboration = Table(
     Column('collaboration_id', Integer, ForeignKey('collaboration.id'))
 )
 
+association_table_organization_task = Table(
+    'association_table_organization_task',
+    Base.metadata,
+    Column('task_id', Integer, ForeignKey('task.id')),
+    Column('organization_id', Integer, ForeignKey('organization.id'))
+)
 
 # ------------------------------------------------------------------------------
 class Organization(Base):
@@ -156,10 +207,10 @@ class Organization(Base):
     country = Column(String)
 
 
-
 # ------------------------------------------------------------------------------
 class Collaboration(Base):
     """Combination of 2 or more Organizations."""
+
     name = Column(String)
 
     organizations = relationship(
@@ -167,6 +218,25 @@ class Collaboration(Base):
         secondary=association_table_organization_collaboration, 
         backref='collaborations'
     )
+
+    def get_organization_ids(self):
+        return [organization.id for organization in self.organizations]
+
+    def get_task_ids(self):
+        return [task.id for task in self.tasks]
+
+    def get_nodes_from_organizations(self, ids):
+        """Returns a subset of nodes"""
+        return [n for n in self.nodes if n.organization.id in ids]
+
+    # TODO rename to 'find_by_name'
+    @classmethod
+    def get_collaboration_by_name(cls, name):
+        session = Session()
+        try:
+            return session.query(cls).filter_by(name=name).one()
+        except NoResultFound:
+            return None
 
 
 # ------------------------------------------------------------------------------
@@ -176,6 +246,7 @@ class Authenticatable(Base):
     type = Column(String(50))
     ip = Column(String)
     last_seen = Column(DateTime)
+    status = Column(String)
 
 
     __mapper_args__ = {
@@ -204,6 +275,15 @@ class User(Authenticatable):
         'polymorphic_identity':'user',
     }
 
+    # TODO init method not required
+    def __init__(self, username=None, password='password',
+                 firstname=None, lastname=None, organization_id=None, roles='Administrator'):
+        self.username = username
+        self.set_password(password)
+        self.firstname = firstname
+        self.lastname = lastname
+        self.roles = roles
+        self.organization_id = organization_id
 
     # Copied from https://docs.pylonsproject.org/projects/pyramid/en/master/tutorials/wiki2/definingmodels.html
     def set_password(self, pw):
@@ -222,10 +302,20 @@ class User(Authenticatable):
         session = Session()
         return session.query(cls).filter_by(username=username).one()
 
+    @classmethod
+    def get_user_list(cls, filters=None):
+        session = Session()
+        return session.query(cls).all()
+
+    @classmethod
+    def username_exists(cls, username):
+        session = Session()
+        res = session.query(exists().where(cls.username == username)).scalar()
+        return res
 
 
 # ------------------------------------------------------------------------------
-class Client(Authenticatable):
+class Node(Authenticatable):
     """Application that executes Tasks."""
     _hidden_attributes = ['api_key']
 
@@ -233,33 +323,38 @@ class Client(Authenticatable):
     
     name = Column(String)
     api_key = Column(String)
+    state = Column(Text)
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
-    collaboration = relationship('Collaboration', backref='clients')
+    collaboration = relationship('Collaboration', backref='nodes')
 
     organization_id = Column(Integer, ForeignKey('organization.id'))
-    organization = relationship('Organization', backref='clients')
+    organization = relationship('Organization', backref='nodes')
 
     __mapper_args__ = {
-        'polymorphic_identity':'client',
+        'polymorphic_identity': 'node',
     }
-
-
-    @classmethod
-    def getByApiKey(cls, api_key):
-        session = Session()
-        return session.query(cls).filter_by(api_key=api_key).one()
 
     @property
     def open_tasks(self):
         # return [result for result in self.taskresults if result.finished_at is None]
-        print(self.taskresults, type(self.taskresults))
+        # print(self.taskresults, type(self.taskresults))
 
         values = list()
         for r in self.taskresults:
             values.append(r)
 
         return values
+
+    @classmethod
+    def get_by_api_key(cls, api_key):
+        """returns Node based on the provided API key"""
+        session = Session()
+
+        try:
+            return session.query(cls).filter_by(api_key=api_key).one()
+        except NoResultFound:
+            return None
 
 
 # ------------------------------------------------------------------------------
@@ -269,22 +364,42 @@ class Task(Base):
     description = Column(String)
     image = Column(String)
     input = Column(Text)
+    database = Column(String)
+
+    run_id = Column(Integer) # multiple tasks can belong to a single run
+    parent_task_id = Column(Integer) # a task can be a subtask 
 
     collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
     collaboration = relationship('Collaboration', backref='tasks')
+
+    # tasks can be for a specific organization
+    organizations = relationship(
+        'Organization', 
+        secondary=association_table_organization_task, 
+        backref='tasks'
+    )
 
     @hybrid_property
     def complete(self):
         return all([r.finished_at for r in self.results])
 
+    @classmethod
+    def next_run_id(cls):
+        session = Session()
+        max_run_id = session.query(func.max(cls.run_id)).scalar()
+        if max_run_id:
+            return max_run_id + 1
+        else:
+            return 1
+
 
 # ------------------------------------------------------------------------------
 class TaskResult(Base):
-    """Result of a Task as executed by a Client.
+    """Result of a Task as executed by a Node.
 
-    Unfinished TaskResults constitute a Client's todo list.
+    Unfinished TaskResults constitute a Node's todo list.
     """
-    result =  Column(Text)
+    result = Column(Text)
 
     assigned_at = Column(DateTime, default=datetime.datetime.utcnow)
     started_at = Column(DateTime)
@@ -294,8 +409,11 @@ class TaskResult(Base):
     task_id = Column(Integer, ForeignKey('task.id'))
     task = relationship('Task', backref='results')
 
-    client_id = Column(Integer, ForeignKey('client.id'))
-    client = relationship('Client', backref='taskresults')
+    node_id = Column(Integer, ForeignKey('node.id'))
+    node = relationship('Node', backref='taskresults')
+
+    # collaboration_id = Column(Integer, ForeignKey('collaboration.id'))
+    # collaboration = relationship('Collaboration', backref='taskresults')
 
     @hybrid_property
     def isComplete(self):

@@ -3,110 +3,152 @@
 Resources below '/<api_base>/organization'
 """
 from __future__ import print_function, unicode_literals
-import os, os.path
+
+import logging
 
 from flask import request
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, jwt_refresh_token_required, create_access_token, create_refresh_token, get_jwt_identity
+from flasgger import swag_from
+from http import HTTPStatus
+from pathlib import Path
 
-import logging
-module_name = __name__.split('.')[-1]
-log = logging.getLogger(module_name)
-
-from .. import db
-
-from . import with_user_or_client, with_client
+from pytaskmanager.server.resource import with_user_or_node, with_user
 from ._schema import *
 
 
-def setup(api, API_BASE):
-    module_name = __name__.split('.')[-1]
-    path = os.path.join(API_BASE, module_name)
-    log.info('Setting up "{}" and subdirectories'.format(path))
-    
-    api.add_resource(Organization,
-        path,
-        path + '/<int:id>',
-        endpoint='organization'
-    )
-    api.add_resource(OrganizationCollaboration,
-        path + '/<int:id>',
-        path + '/<int:id>/<int:collaboration_id>',
-    )
-    api.add_resource(OrganizationClient,
-        path + '/<int:id>/client',
-        path + '/<int:id>/client/<int:client_id>',
-    )
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
 
-# Schemas
-org_schema = OrganizationSchema()
+
+def setup(api, API_BASE):
+
+    path = "/".join([API_BASE, module_name])
+    log.info('Setting up "{}" and subdirectories'.format(path))
+
+    api.add_resource(
+        Organization,
+        path,
+        endpoint='organization_without_id',
+        methods=('GET', 'POST')
+     )
+    api.add_resource(
+        Organization,
+        path + '/<int:id>',
+        endpoint='organization_with_id',
+        methods=('GET',)
+    )
+    api.add_resource(
+        OrganizationCollaboration,
+        path + '/<int:id>/collaboration',
+        endpoint='organization_collaboration',
+        methods=('GET',)
+    )
+    api.add_resource(
+        OrganizationNode,
+        path + '/<int:id>/node',
+        endpoint='organization_node',
+        methods=('GET',)
+    )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Organization(Resource):
-    
-    @jwt_required
-    def get(self, id=None):
-        orgs = db.Organization.get(id)
-        return org_schema.dump(orgs, many=not id)
 
-    @jwt_required
+    org_schema = OrganizationSchema()
+
+    @with_user
+    @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")), endpoint='organization_with_id')
+    @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")), endpoint='organization_without_id')
+    def get(self, id=None):
+        organization = db.Organization.get(id)
+        if not organization:
+            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+
+        return self.org_schema.dump(organization, many=not id).data, HTTPStatus.OK
+
+    @with_user
+    @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")), endpoint='organization_without_id')
     def post(self):
         """Create a new organization."""
+
         data = request.get_json()
-        org = db.Organization()
+        organization = db.Organization(
+            name=data.get('name', ''),
+            address1=data.get('address1', ''),
+            address2=data.get('address2' ''),
+            zipcode=data.get('zipcode', ''),
+            country=data.get('country', '')
+        )
+        organization.save()
+        return self.org_schema.dump(organization, many=False).data, HTTPStatus.CREATED
 
-        for p in ['name', 'address1', 'address2', 'zipcode', 'country']:
-            setattr(org, p, data.get(p, ''))
-
-        org.save()
-
-        return org
+    # TODO patch?
 
 
 class OrganizationCollaboration(Resource):
     """Collaborations for a specific organization."""
 
-    @jwt_required
+    col_schema = CollaborationSchema()
+
+    @with_user_or_node
+    @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")), endpoint='organization_collaboration')
     def get(self, id):
         organization = db.Organization.get(id)
-        return organization.collaborations
+        if not organization:
+            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
 
-    @jwt_required
-    def post(self, id):
-        data = request.get_json()
+        return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
+
+    # @with_user
+    # def post(self, id):
+    #     organization = db.Organization.get(id)
+    #     if not organization:
+    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+    #
+    #     data = request.get_json()
+    #     collaboration = db.Collaboration.get(data['id'])
+    #     if not collaboration:
+    #         return {"msg": "collaboration id={} is not found".format(data['id'])}, HTTPStatus.NOT_FOUND
+    #
+    #     organization.collaborations.append(collaboration)
+    #     organization.save()
+    #     return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
+
+
+class OrganizationNode(Resource):
+    """Resource for /api/organization/<int:id>/node."""
+
+    nod_schema = NodeSchema()
+
+    @with_user_or_node
+    @swag_from(str(Path(r"swagger/get_organization_node.yaml")), endpoint='organization_node')
+    def get(self, id):
+        """Return a list of Nodes."""
         organization = db.Organization.get(id)
-        collaboration = db.Collaboration.get(data['id'])
-        organization.collaborations.append(collaboration)
-        organization.save()
-        return organization.collaborations
+        if not organization:
+            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
 
+        return self.nod_schema.dump(organization.nodes, many=True).data, HTTPStatus.OK
 
-class OrganizationClient(Resource):
-    """Resource for /api/organization/<int:id>/client."""
-
-    @jwt_required
-    def get(self, id, client_id=None):
-        """Return a list of Clients."""
-        organization = db.Organization.get(id)
-
-        if client_id is not None:
-            client = db.Client.get(client_id)
-            if client in organization.clients:
-                return client
-
-        return organization.clients     
-
-    @jwt_required
-    def post(self, id):
-        """Create new client"""
-        data = request.get_json()
-        data['id'] = id
-        client = db.Client.fromDict(data)
-        client.save()
-
-        return client
+    # @with_user
+    # def post(self, id):
+    #     """Create new node"""
+    #     organization = db.Organization.get(id)
+    #     if not organization:
+    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+    #
+    #     data = request.get_json()
+    #
+    #     db.Node(
+    #         name="{} - {} Node".format(organization.name, collaboration.name),
+    #         collaboration=collaboration,
+    #         organization=organization,
+    #         api_key=api_key
+    #     )
+    #     node.save()
+    #
+    #     return node
 
 

@@ -1,0 +1,25 @@
+summary: Get task result
+
+description:
+  Returns the task result specified by the id
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: task id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: Task not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Task"]

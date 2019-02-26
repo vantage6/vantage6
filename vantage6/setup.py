@@ -29,7 +29,7 @@ setup(
     version=__version__,
     description='Package and utilities for distributed learning',
     long_description=long_description,
-    url='https://github.com/mellesies/pytaskmanager',
+    url='https://github.com/IKNL/ppDLI',
     # author='Maastro/IKNL',
     # author_email='',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
@@ -38,29 +38,37 @@ setup(
         'appdirs',
         'bcrypt',
         'click',
+        'docker',
+        'eventlet',
         'flask',
         'flask-cors',
         'flask-jwt-extended',
         'flask-restful',
         'flask-sqlalchemy',
         'flask-marshmallow',
+        'flask-socketio',
+        'socketIO_client',
         'marshmallow',
         'marshmallow-sqlalchemy',
         'pyyaml',
+        'psutil',
+        'psycopg2',
         'requests',
         'termcolor',
         'sqlalchemy',
+        'flasgger @ git+https://github.com/IKNL/flasgger.git' # flassger OAS 3+ support
     ],
     package_data={  
         'pytaskmanager': [
             'server/server.wsgi', 
             'VERSION', 
             '_data/*.yaml',
+            'server/resource/swagger/*.yaml'
         ],
     },
     entry_points={
         'console_scripts': [
-            'ptm=pytaskmanager:cli',
+            'ptm=pytaskmanager.cli.cli:cli',
         ],
-    },
+    }
 )
