@@ -1,0 +1,62 @@
+# get a node having specified id
+summary: Get node
+description:
+  Returns the node by the specified id.
+  Only returns the node if the user or node has the required permission.
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "unique node identifier"
+    required: true
+responses:
+  200:
+    description: Ok
+  404:
+    description: node with specified id is not found
+  403:
+    description: you do not have permission to view this node
+  401:
+    description: Unauthorized
+security:
+  - bearerAuth: []
+tags: ["Node"]
+
+
+#components:
+#  schemas:
+#    Node:
+#      properties:
+#       id:
+#         type: integer
+#         description: unique node identifier
+#       api_key:
+#         type: string
+#         description: api-key used by the node to authenticate
+#       collaboration:
+#         type: string
+#         description: path to collaboration endpoint
+#       last_seen:
+#         type: integer
+#         description: timestamp when the last action was performed from the node instance
+#       name:
+#         type: string
+#         description: human readable label
+#       organiztion:
+#         type: string
+#         description: path to organization endpoint
+#       type:
+#         type: string
+#         description: in this case it should always return node
+#       taskresults:
+#         type: array
+#         items:
+#           type: string
+#         default: []
+#         description: list of endpoints containing task results from this node
+#       ip:
+#         type: string
+#         description: string containing the ip-address from which the node authenticated the last time
+#         default: null

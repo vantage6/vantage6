@@ -1,0 +1,159 @@
+/* Fonts */
+@font-face {
+    font-family: fira_mono;
+    src: url('../fonts/fira_mono.woff2');
+}
+
+@font-face {
+    font-family: united_sans_light;
+    src: url('../fonts/united_sans_light.woff2');
+}
+
+@font-face {
+    font-family: united_sans_medium;
+    src: url('../fonts/united_sans_medium.woff2');
+}
+
+
+/* general */
+html, body {
+    width: 100%; 
+    height: 100%;
+
+    font-family: united_sans_light;
+}
+
+body {
+    /*background-color: white;*/
+    background-color: #121831;
+    color: white;
+
+    /*padding: 10px;*/
+}
+
+h1, h2, h3, h4 {
+    margin-top: 20px;
+    margin-bottom: 2px;
+}
+
+.right {
+    float:right;
+}
+
+.green {
+    color: green;
+}
+
+.red {
+    color: red;
+}
+
+span.logout {
+    float: right;
+}
+
+.form-control {
+    background-color: #afafaf;
+}
+
+.centered {
+    margin: 0 auto;
+}
+
+.dialog {
+    border: 1px solid #7e9295;
+    border-radius: 5px;
+    background-color: #272743; 
+    padding: 10px;
+}
+
+/* main div, defined in index.html */
+#main {
+    height: 100%;
+}
+
+/* login */
+#login-form {
+    /*display: none;*/
+    width: 400px;
+
+    background-color: #272743;
+
+    border: 1px solid cyan;
+    border-radius: 10px;
+
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.login-content {
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;    
+}
+
+/* dashboard */
+#dashboard-dialog-connecting {
+    display: none;
+
+    animation-name: color;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes color {
+  0% {
+    background-color: #121831;
+  }
+  50% {
+    background-color: #393961;
+  }
+  100% {
+    background-color: #121831;
+  }
+}
+
+.dashboard-outer {
+    /*border: 1px solid red;*/
+}
+
+.dashboard-nav {
+    border-bottom: 1px solid #7e9295;
+    background-color: #0e1326;
+    padding: 2px 15px;
+}
+
+.dashboard-content {
+    /*display: none;*/
+    margin: 10px;
+    padding: 5px 15px;
+}
+
+.dashboard-header {
+    font-family: united_sans_medium;
+    border-bottom: 1px solid #7e9295;
+    text-transform: uppercase;
+    /*padding: 2px 0px;*/
+}
+
+
+.dashboard-collaboration {
+    /*margin-top: 10px;*/
+}
+
+#globe {
+    height: 350px;
+    background-color: #121831;
+}
+
+/* for later ... */
+#terminal, #log {
+    width: 100%; 
+    height: 350px;
+
+    border-bottom: 1px solid #7e9295;
+    /*background-color: black;*/
+    /*padding: 2px;*/
+}

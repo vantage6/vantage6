@@ -1,0 +1,31 @@
+summary: Get tasks from node
+
+description:
+  Returns a list of task that belong to a node specified by id.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "Unique node identifier"
+    required: true
+  - in: query
+    name: state
+    schema:
+      type: string
+    description: "Select only tasks with the specified state"
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: node with specified id is not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Node"]

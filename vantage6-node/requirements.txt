@@ -1,5 +1,6 @@
 appdirs
 bcrypt
+docker
 flask
 flask-cors
 flask-jwt-extended
@@ -13,3 +14,9 @@ pyyaml
 requests
 termcolor
 sqlalchemy
+click
+apispec
+flasgger @ git+https://github.com/IKNL/flasgger@master
+flask_socketio
+socketIO_client
+

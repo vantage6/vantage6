@@ -1,0 +1,32 @@
+summary: Create new organization
+
+description:
+  Creates a new organization from the specified values
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          name:
+            type: string
+            description: Organizations name
+          address1:
+            type: string
+          address2:
+            type: string
+          zipcode:
+            type: string
+          country:
+            type: string
+
+responses:
+  201:
+    description: Ok
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Organization"]

@@ -12,13 +12,14 @@ from werkzeug.utils import cached_property
 import json
 
 from pytaskmanager import server
+from pytaskmanager import util
 from pytaskmanager.server import db
 from pytaskmanager.server import fixtures
 
 log = logging.getLogger(__name__.split('.')[-1])
 
 # def load_tests(loader, tests, ignore):
-#     # tests.addTests(doctest.DocTestSuite(fhir.client))
+#     # tests.addTests(doctest.DocTestSuite(fhir.node))
 #     return tests
 
 
@@ -28,12 +29,12 @@ class Response(BaseResponse):
         return json.loads(self.data)
 
 
-class TestClient(FlaskClient):
+class TestNode(FlaskClient):
     def open(self, *args, **kwargs):
         if 'json' in kwargs:
             kwargs['data'] = json.dumps(kwargs.pop('json'))
             kwargs['content_type'] = 'application/json'
-        return super(TestClient, self).open(*args, **kwargs)
+        return super(TestNode, self).open(*args, **kwargs)
 
 
 
@@ -62,8 +63,11 @@ class TestResources(unittest.TestCase):
 
         server.app.testing = True
         server.app.response_class = Response
-        server.app.test_client_class = TestClient
-        server.init_resources()
+        server.app.test_client_class = TestNode
+
+        ctx = util.TestContext()
+        ctx.init(ctx.config_file)
+        server.init_resources(ctx)
 
         self.app = server.app.test_client()
 
@@ -141,6 +145,6 @@ class TestResources(unittest.TestCase):
         headers = self.login()
 
         collaborations = self.app.get('/api/collaboration', headers=headers).json
-        self.assertEqual(len(collaborations), 2)
+        self.assertEqual(len(collaborations), 3)
         
 

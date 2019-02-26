@@ -1,0 +1,17 @@
+summary: List organizations
+
+description:
+  Returns a list of organizations
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: organization not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Organization"]
