@@ -16,7 +16,7 @@ from pathlib import Path
 
 from pytaskmanager.server import db
 from pytaskmanager.server.resource._schema import CollaborationSchema, TaskSchema
-from pytaskmanager.server.resource import with_user_or_node, with_user
+from pytaskmanager.server.resource import with_user_or_node, with_user, only_for
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -163,7 +163,7 @@ class Collaboration(Resource):
 class CollaborationOrganization(Resource):
     """Resource for /api/collaboration/<int:id>/organization."""
 
-    @with_user
+    @only_for(["node","user","container"])
     @swag_from(str(Path(r"swagger/get_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
     def get(self, id):
         """Return organizations for a specific collaboration."""
