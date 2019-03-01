@@ -5,6 +5,7 @@ python:
 
 install:
   - pip install coverage
+  - pip install python-coveralls
   - pip install -e .
 
 script:
