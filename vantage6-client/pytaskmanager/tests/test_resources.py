@@ -64,6 +64,7 @@ class TestResources(unittest.TestCase):
         server.app.testing = True
         server.app.response_class = Response
         server.app.test_client_class = TestNode
+        server.app.secret_key = "test-secret"
 
         ctx = util.TestContext()
         ctx.init(ctx.config_file)
@@ -77,7 +78,7 @@ class TestResources(unittest.TestCase):
         }
 
     def login(self):
-        tokens = self.app.post('/api/token', json=self.credentials).json
+        tokens = self.app.post('/api/token/user', json=self.credentials).json
         headers = {
             'Authorization': 'Bearer {}'.format(tokens['access_token'])
         }
@@ -91,7 +92,7 @@ class TestResources(unittest.TestCase):
 
 
     def test_token(self):
-        tokens = self.app.post('/api/token', json=self.credentials).json
+        tokens = self.app.post('/api/token/user', json=self.credentials).json
         self.assertIn('access_token', tokens)
         self.assertIn('refresh_token', tokens)
 
