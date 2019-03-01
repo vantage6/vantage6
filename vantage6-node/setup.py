@@ -25,7 +25,7 @@ with open(path.join(here, 'pytaskmanager', 'VERSION')) as fp:
 
 # Setup the package
 setup(
-    name='pytaskmanager',
+    name='ppDLI',
     version=__version__,
     description='Package and utilities for distributed learning',
     long_description=long_description,
@@ -56,7 +56,7 @@ setup(
         'requests',
         'termcolor',
         'sqlalchemy',
-        'flasgger @ git+https://github.com/IKNL/flasgger.git' # flassger OAS 3+ support
+        'iknl-flasgger'
     ],
     package_data={  
         'pytaskmanager': [
