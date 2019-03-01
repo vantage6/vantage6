@@ -9,7 +9,8 @@ install:
   - pip install -e .
 
 script:
-  - coverage run --source=ppdli pytaskmanager/utest.py
+  - cd ..
+  - coverage run --source=ppdli ppDLI/pytaskmanager/utest.py
 
 after_success:
   - coveralls
