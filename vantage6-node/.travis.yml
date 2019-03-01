@@ -4,7 +4,11 @@ python:
   - 3.6
 
 install:
+  - pip install coverage
   - pip install -e .
 
 script:
-  - python pytaskmanager/utest.py
+  - coverage run --source=ppdli pytaskmanager/utest.py
+
+after_success:
+  - coveralls
