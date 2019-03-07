@@ -56,7 +56,8 @@ setup(
         'requests',
         'termcolor',
         'sqlalchemy',
-        'iknl-flasgger'
+        'iknl-flasgger',
+        'schema'
     ],
     package_data={  
         'pytaskmanager': [
