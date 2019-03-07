@@ -1,9 +1,7 @@
 import click
 import yaml
 
-from pytaskmanager import util, node
-
-APPNAME = 'pytaskmanager'
+from pytaskmanager import util, node, APPNAME
 from pytaskmanager.util.context import get_config_location
 
 

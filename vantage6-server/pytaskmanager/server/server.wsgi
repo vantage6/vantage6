@@ -12,10 +12,9 @@ from pytaskmanager.util.context import get_config_location
 
 
 #FIXME: this is a temporary solution to proof uWSGI works ... 
-APPNAME = 'pytaskmanager'
 env = 'test'
 name = 'default'
-ctx = util.AppContext(APPNAME, 'server', name)
+ctx = util.AppContext(ptm.APPNAME, 'server', name)
 
 # load configuration and initialize logging system
 cfg_filename = get_config_location(ctx, None, force_create=False)
