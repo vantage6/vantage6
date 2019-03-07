@@ -11,7 +11,9 @@ import logging.handlers
 
 import appdirs
 import yaml
+
 from sqlalchemy.engine.url import make_url
+from pytaskmanager.util.context import validate_configuration
 
 CONFIG_FILE = 'config.yaml'
 
@@ -95,6 +97,12 @@ class AppContext(metaclass=Singleton):
 
         # Load configuration
         self.load_config(config_file, environment)
+        
+        # validate (and cast types of) loaded configuration
+        self.config = validate_configuration(
+            self.config, 
+            self.instance_type
+        )
 
         # Override default locations based on OS defaults if defined in 
         # configuration file
