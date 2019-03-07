@@ -36,8 +36,7 @@ log = logging.getLogger(module_name)
 import json
 
 from . import db
-from pytaskmanager import util
-from pytaskmanager import APPNAME
+from pytaskmanager import util, APPNAME
 from pytaskmanager.server.websockets import DefaultSocketNamespace
 from .resource.swagger import swagger_template
 
