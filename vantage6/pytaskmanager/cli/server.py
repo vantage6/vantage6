@@ -2,16 +2,8 @@ import click
 import logging
 
 from functools import wraps
-from pytaskmanager import server
-from pytaskmanager.server import db
-from pytaskmanager.server import shell
-from pytaskmanager import util
-from pytaskmanager.server import fixtures
-
-
-# TODO maybe make a constants/settings file? and put this fellow in there
-APPNAME = 'pytaskmanager'
-
+from pytaskmanager import server, util, APPNAME
+from pytaskmanager.server import db, shell, fixtures
 from pytaskmanager.util.context import get_config_location
 
 # ------------------------------------------------------------------------------
