@@ -8,7 +8,7 @@ import pytaskmanager as ptm
 import pytaskmanager.server
 from pytaskmanager.server import db
 import pytaskmanager.util as util
-from pytaskmanager.util.find_files import get_config_location
+from pytaskmanager.util.context import get_config_location
 
 
 #FIXME: this is a temporary solution to proof uWSGI works ... 
