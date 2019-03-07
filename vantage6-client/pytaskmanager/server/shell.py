@@ -2,7 +2,7 @@ import sys
 
 from pytaskmanager.server import db, APPNAME
 from pytaskmanager import util
-from pytaskmanager.util.find_files import get_config_location
+from pytaskmanager.util.context import get_config_location
 
 from sqlalchemy.engine.url import make_url
 
