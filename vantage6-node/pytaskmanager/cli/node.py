@@ -2,9 +2,9 @@ import click
 import yaml
 
 from pytaskmanager import util, node
-from pytaskmanager.util.find_files import get_config_location
 
 APPNAME = 'pytaskmanager'
+from pytaskmanager.util.context import get_config_location
 
 
 # ------------------------------------------------------------------------------
