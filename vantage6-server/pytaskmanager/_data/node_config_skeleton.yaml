@@ -3,12 +3,7 @@ application:
   server_url: https://api.distributedlearning.ai
   port:
   api_path: ''
-  server_entry_point: /token
-  delay: 30 # seconds
   task_dir: tasks
-  docker_host: 127.0.0.1
-  
-  database_uri: 
   databases:
     default: 
 
@@ -27,10 +22,7 @@ application:
 #     api_key: 
 #     server_url: https://api.distributedlearning.ai
 #     api_path: ''
-#     server_entry_point: /token
-#     delay: 30 # seconds
 #     task_dir: tasks
-#     docker_host: 127.0.0.1
 #     database_uri: 
 
 #     logging:
