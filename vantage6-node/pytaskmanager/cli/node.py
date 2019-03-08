@@ -129,7 +129,7 @@ def cli_node_start(name, config, environment):
         click.echo(f"Configation file {cfg_file} does not exist.")
         if click.confirm("Do you want to create this config now?"):
             # start commandline questionaire to gen. config file
-            configuration_wizard(ctx, cfg_file)
+            configuration_wizard(ctx, cfg_file, environment=environment)
         else:
             click.echo(f"Exiting {APPNAME}.")
             sys.exit(0)
