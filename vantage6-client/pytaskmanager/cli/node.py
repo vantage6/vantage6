@@ -32,7 +32,11 @@ def cli_node_list():
 #
 @cli_node.command(name="new")
 @click.argument("name", default=None, required=False)
-def cli_node_new_configuration(name):
+@click.option('-e', '--environment', 
+    default=None, 
+    help='configuration environment to use'
+)
+def cli_node_new_configuration(name, environment):
     """Create a new configation file.
     
     Checks if the configuration already exists. If this is not the case
@@ -49,15 +53,19 @@ def cli_node_new_configuration(name):
         sys.exit(0)
 
     # create config in ctx location
-    configuration_wizard(ctx)
-    click.echo("New configuration created.")
+    cfg_file = configuration_wizard(ctx, environment=environment)
+    click.echo(f"New configuration created: {cfg_file}")
 
 #
 #   files
 #
 @cli_node.command(name="files")
 @click.argument("name", default=None, required=False)
-def cli_node_files(name):
+@click.option('-e', '--environment', 
+    default=None, 
+    help='configuration environment to use'
+)
+def cli_node_files(name, environment):
     """Print out the paths of important files.
     
     If the specified configuration cannot be found, it exits. Otherwise
@@ -66,7 +74,7 @@ def cli_node_files(name):
     # select configuration name if none supplied
     name = name if name else select_configuration_questionaire('node') 
 
-    # create new configuration
+    # create default node context
     ctx = util.NodeContext(APPNAME, name)
 
     # check if config file exists, if not create it in the ctx location
@@ -74,7 +82,8 @@ def cli_node_files(name):
         click.echo(f"Configuration cannot be found. Exiting {APPNAME}.")
         sys.exit(0)
     
-    ctx.init(ctx.config_file)
+    # inject context with the user specified configuration
+    ctx.init(ctx.config_file, environment)
     
     # return path of the configuration
     click.echo(f"Configuration file = {ctx.config_file}")
@@ -92,7 +101,11 @@ def cli_node_files(name):
     default=None, 
     help='absolute path to configuration-file; overrides NAME'
 )
-def cli_node_start(name, config):
+@click.option('-e', '--environment', 
+    default=None, 
+    help='configuration environment to use'
+)
+def cli_node_start(name, config, environment):
     """Start the node instance.
     
     If no name or config is specified the default.yaml configuation is used. 
@@ -123,7 +136,7 @@ def cli_node_start(name, config):
         
         
     # load configuration and initialize logging system
-    ctx.init(cfg_file)
+    ctx.init(cfg_file, environment)
 
     # run the node application
     node.run(ctx)
