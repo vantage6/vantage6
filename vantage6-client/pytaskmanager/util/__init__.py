@@ -12,7 +12,9 @@ import logging.handlers
 import appdirs
 import yaml
 
+from schema import SchemaError
 from sqlalchemy.engine.url import make_url
+
 from pytaskmanager.util.context import validate_configuration
 
 CONFIG_FILE = 'config.yaml'
@@ -74,6 +76,11 @@ class AppContext(metaclass=Singleton):
         return self.get_file_location('log', '')
 
     @property
+    def log_file(self):
+        filename = self.instance_name + '.log'
+        return os.path.join(self.log_dir, filename)
+
+    @property
     def config_dir(self):
         return self.get_file_location('config', '')
 
@@ -99,10 +106,15 @@ class AppContext(metaclass=Singleton):
         self.load_config(config_file, environment)
         
         # validate (and cast types of) loaded configuration
-        self.config = validate_configuration(
-            self.config, 
-            self.instance_type
-        )
+        err = False
+        try:
+            self.config = validate_configuration(
+                self.config, 
+                self.instance_type
+            )
+        except SchemaError as e:
+            print("Configuration schema malformed. Attemting to continue..")
+            err = e
 
         # Override default locations based on OS defaults if defined in 
         # configuration file
@@ -128,6 +140,8 @@ class AppContext(metaclass=Singleton):
             log.info("Current working directory is '%s'" % os.getcwd())
             log.info("Succesfully loaded configuration from '%s'" % config_file)
             log.info("Logging to '%s'" % log_file)
+            if err:
+                log.error(err)
 
         # Return the configuration for the current application.            
         return self.config
@@ -149,7 +163,7 @@ class AppContext(metaclass=Singleton):
     def setup_logging(self):
         """Setup a basic logging mechanism."""
         config = self.config
-
+        
         if ('logging' not in config) or (config["logging"]["level"].upper() == 'NONE'):
             return
 
@@ -195,6 +209,7 @@ class AppContext(metaclass=Singleton):
 
         return filename
 
+    #TODO This should move to ServerContext, is already there partly
     def get_file_location(self, filetype, filename):
         """
         filetype: ('config', log', 'data')
@@ -218,7 +233,8 @@ class AppContext(metaclass=Singleton):
             filename = os.path.join(*elements)
 
         return filename
-
+    
+    #TODO This should move to ServerContext
     def get_database_location(self):
         uri = self.config['uri']
         URL = make_url(uri)
@@ -270,7 +286,14 @@ class ServerContext(AppContext):
 
 
 class NodeContext(AppContext):
-    pass
+
+    def __init__(self, application, instance_name="", version=None):
+        super().__init__(application, 'node', instance_name, version=version)
+    
+    @property
+    def database_files(self):
+        assert self.config, "configuration not loaded"
+        return self.config.get("databases")
 
 
 class FixturesContext(AppContext):

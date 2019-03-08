@@ -69,7 +69,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'ptm=pytaskmanager.cli.cli:cli',
+            'ppdli=pytaskmanager.cli.cli:cli',
         ],
     }
 )
