@@ -51,6 +51,9 @@ class AppContext(metaclass=Singleton):
         self.version = version
         self.config = None
 
+        # can be used after the config has been loaded
+        self.log = None
+
         d = appdirs.AppDirs(application, '', version=version)
         self.dirs = {
             'data': d.user_data_dir,
@@ -130,18 +133,18 @@ class AppContext(metaclass=Singleton):
             
             # Create a logger
             module_name = __name__.split('.')[-1]
-            log = logging.getLogger(module_name)
+            self.log = logging.getLogger(module_name)
             
             # Make some history
-            log.info("#" * 80)
-            log.info('#{:^78}#'.format(self.application))
-            log.info("#" * 80)
-            log.info("Started application '%s' with environment '%s'" % (self.application, environment))
-            log.info("Current working directory is '%s'" % os.getcwd())
-            log.info("Succesfully loaded configuration from '%s'" % config_file)
-            log.info("Logging to '%s'" % log_file)
+            self.log.info("#" * 80)
+            self.log.info('#{:^78}#'.format(self.application))
+            self.log.info("#" * 80)
+            self.log.info("Started application '%s' with environment '%s'" % (self.application, environment))
+            self.log.info("Current working directory is '%s'" % os.getcwd())
+            self.log.info("Succesfully loaded configuration from '%s'" % config_file)
+            self.log.info("Logging to '%s'" % log_file)
             if err:
-                log.error(err)
+                self.log.error(err)
 
         # Return the configuration for the current application.            
         return self.config
@@ -155,10 +158,21 @@ class AppContext(metaclass=Singleton):
             print(msg.format(config_file))
             raise
         
+        # if an environment has been specified attemt to load this first. If it 
+        # cannot be found or no environment has been specified the application
+        # key is used.
         if environment:
             self.config = config.get('environments', {}).get(environment)
-        else:
-            self.config = config.get('application')
+            if self.config:
+                return 
+            else:
+                self.log.warn(
+                    f"Environment {environment} not found in the configuration"
+                    f" file. Attemting to load the (default) application key"
+                    f" from the configuration file..."
+                )
+
+        self.config = config.get('application')
 
     def setup_logging(self):
         """Setup a basic logging mechanism."""

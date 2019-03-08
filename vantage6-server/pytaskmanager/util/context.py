@@ -87,23 +87,27 @@ def node_configuration_questionaire(ctx):
         "datefmt": "%H:%M:%S"
     }
 
-    return {"application": config}
+    return config
 
 def server_configuration_questionaire(ctx):
     return {"application": None}
 
-def configuration_wizard(ctx, ex_cfg_file=None):
+def configuration_wizard(ctx, ex_cfg_file=None, environment=None):
     
     if ctx.instance_type == "node":
         config = node_configuration_questionaire(ctx)
     elif ctx.instance_type == "server":
         config = server_configuration_questionaire(ctx)
     
+    # environment of application config
+    config = {"environments":{environment:config}} if environment \
+        else {"application":config} 
+    
     cfg_file = ex_cfg_file if ex_cfg_file else ctx.config_file
     with open(cfg_file, 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
-    return config
+    return cfg_file
 
 def validate_configuration(configuration, instance_type):
     """Check that the configuration is valid for ppDLI.
