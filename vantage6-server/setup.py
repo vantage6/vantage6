@@ -57,7 +57,8 @@ setup(
         'termcolor',
         'sqlalchemy',
         'iknl-flasgger',
-        'schema'
+        'schema',
+        'questionary'
     ],
     package_data={  
         'pytaskmanager': [
