@@ -2,6 +2,7 @@ import click
 import yaml
 import os
 import sys
+import appdirs
 import questionary as q
 
 from pathlib import Path
@@ -19,13 +20,32 @@ def cli_node():
 # 
 #   list
 #
+import datetime
 @cli_node.command(name="list")
 def cli_node_list():
     """Lists all nodes in the default configuration directory."""
-    ctx = util.NodeContext(APPNAME)
-    files = Path(ctx.config_dir).glob("*.yaml")
-    click.echo("Node instances")
-    [click.echo(f" - {file_.stem}") for file_ in files]
+    
+    # get user/system application directories
+    d = appdirs.AppDirs(APPNAME,"")
+    system_folder = Path(d.site_config_dir) / "node"
+    user_folder = Path(d.user_config_dir) / "node"
+
+    # check for files in the user-directories
+    user_files = user_folder.glob("*.yaml")
+    system_files = system_folder.glob("*.yaml")
+
+    click.echo("\nName"+(12*" ")+"Environments"+(14*" ")+"Application"+(5*" ")+"System/User"+(5*" ")+"Time")
+    click.echo("-"*100)
+
+    for env in ["user", "system"]:
+        files = eval(env+"_files")
+        for file_ in files:
+            config = yaml.safe_load(open(file_))
+            envs = "".join(config.get('environments', {}).keys()) or "-"
+            app = ("yes" if config.get('application', False) else "no") 
+            time = datetime.datetime.fromtimestamp(file_.stat().st_mtime)
+            folder = env 
+            click.echo(f"{file_.stem:16}{str(envs):25} {app:15} {folder:15} {time}")
 
 #
 #   new
@@ -102,10 +122,12 @@ def cli_node_files(name, environment):
     help='absolute path to configuration-file; overrides NAME'
 )
 @click.option('-e', '--environment', 
-    default=None, 
+    default="application", 
     help='configuration environment to use'
 )
-def cli_node_start(name, config, environment):
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=False)
+def cli_node_start(name, config, environment, system_folders):
     """Start the node instance.
     
     If no name or config is specified the default.yaml configuation is used. 
@@ -114,29 +136,30 @@ def cli_node_start(name, config, environment):
     specify specific environments for the configuration (e.g. test, 
     prod, acc). 
     """
-
-    # select configuration name if none supplied
-    name = name if name else select_configuration_questionaire('node') 
-
-    # create dummy node context
-    ctx = util.NodeContext(APPNAME, name)
     
-    # check if config file excists
-    cfg_file = config if config else ctx.config_file
-    if not os.path.exists(cfg_file):
+    # in case a configuration file is given, we by pass all the helper
+    # stuff since you know what you are doing
+    if config:
+        ctx = util.NodeContext.from_external_config_file(config, environment, 
+            system_folders)
+    else:
         
-        # user decides not to create config file
-        click.echo(f"Configation file {cfg_file} does not exist.")
-        if click.confirm("Do you want to create this config now?"):
-            # start commandline questionaire to gen. config file
-            configuration_wizard(ctx, cfg_file, environment=environment)
-        else:
-            click.echo(f"Exiting {APPNAME}.")
-            sys.exit(0)
+        # in case no nanem is supplied, ask user to select one
+        name = name if name else select_configuration_questionaire('node') 
+                
+        # check that config exists in the APP, if not a questionaire will
+        # be invoked
+        if not util.NodeContext.config_exists(name,environment,system_folders):
+            if q.confirm(f"Configuration {name} does not exists. "
+                "Do you want to create this config now?").ask():
+                configuration_wizard("node", name, environment=environment, 
+                    system_folders=system_folders)
+            else:
+                click.echo(f"Exiting {APPNAME}.")
+                sys.exit(0)
         
+        # create dummy node context
+        ctx = util.NodeContext(name, environment, system_folders)
         
-    # load configuration and initialize logging system
-    ctx.init(cfg_file, environment)
-
     # run the node application
     node.run(ctx)
