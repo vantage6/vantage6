@@ -10,8 +10,9 @@ from schema import Schema, And, Or, Use, Optional
 
 from pytaskmanager import APPNAME
 from pytaskmanager import util
+from pytaskmanager.util.Configuration import ConfigurationManager, NodeConfigurationManager, ServerConfigurationManager
 
-def node_configuration_questionaire(ctx):
+def node_configuration_questionaire(dirs, instance_name):
     """Questionary to generate a config file for the node instance."""
 
     config = q.prompt([
@@ -42,7 +43,7 @@ def node_configuration_questionaire(ctx):
             "type": "text", 
             "name": "task_dir",
             "message": "Task directory path:",
-            "default": ctx.data_dir
+            "default": str(dirs["data"])
         }
     ])
 
@@ -79,7 +80,7 @@ def node_configuration_questionaire(ctx):
 
     config["logging"] = {
         "level": res,
-        "file": f"{ctx.instance_name}.log",
+        "file": f"{instance_name}.log",
         "use_console": True,
         "backup_count":5,
         "max_size": 1024,
@@ -89,25 +90,41 @@ def node_configuration_questionaire(ctx):
 
     return config
 
-def server_configuration_questionaire(ctx):
-    return {"application": None}
+def server_configuration_questionaire(dirs, instance_name):
+    raise NotImplementedError
 
-def configuration_wizard(ctx, ex_cfg_file=None, environment=None):
-    
-    if ctx.instance_type == "node":
-        config = node_configuration_questionaire(ctx)
-    elif ctx.instance_type == "server":
-        config = server_configuration_questionaire(ctx)
-    
-    # environment of application config
-    config = {"environments":{environment:config}} if environment \
-        else {"application":config} 
-    
-    cfg_file = ex_cfg_file if ex_cfg_file else ctx.config_file
-    with open(cfg_file, 'w') as f:
-        yaml.dump(config, f, default_flow_style=False)
+def configuration_wizard(instance_type, instance_name, 
+    environment="application", system_folders=False):
 
-    return cfg_file
+    # for defaults and where to save the config
+    dirs = util.NodeContext.instance_folders(instance_type, 
+        instance_name, system_folders)
+    
+    if instance_type == "node":
+        config = node_configuration_questionaire(dirs, instance_name)
+    else:
+        config = server_configuration_questionaire(dirs, instance_name)
+    
+    # in the case of an environment we need to add it to the current 
+    # configuration. In the case of application we can simply overwrite this 
+    # key (although there might be environments present)
+    config_file = Path(dirs.get("config")) / (instance_name + ".yaml")
+    conf_class = NodeConfigurationManager if instance_name == "node" else \
+        ServerConfigurationManager
+    
+    if Path(config_file).exists():
+        config_manager = conf_class.from_file(config_file)
+    else:
+        config_manager = conf_class(instance_name)
+
+    config_manager.put(environment, config)
+    config_manager.save(config_file)
+
+def validate_configuration_file(file):
+    pass
+    # check for application 
+
+    # check for environments
 
 def validate_configuration(configuration, instance_type):
     """Check that the configuration is valid for ppDLI.
