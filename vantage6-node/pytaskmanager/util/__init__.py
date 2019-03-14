@@ -1,333 +1,217 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals, print_function
-
 import sys
 import os, os.path
 import pprint
-
 import pytaskmanager.util.Colorer
 import logging
 import logging.handlers
-
 import appdirs
 import yaml
 
 from schema import SchemaError
+from pathlib import Path
 from sqlalchemy.engine.url import make_url
+from weakref import WeakValueDictionary
 
+from pytaskmanager import APPNAME
 from pytaskmanager.util.context import validate_configuration
+from pytaskmanager.util.Configuration import ( ConfigurationManager, 
+    ServerConfigurationManager, NodeConfigurationManager ) 
 
-CONFIG_FILE = 'config.yaml'
 
-# ------------------------------------------------------------------------------
 class Singleton(type):
-    _instances = {}
+    _instances = WeakValueDictionary()
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            instance = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = instance
         return cls._instances[cls]
 
 
-
-
-# ------------------------------------------------------------------------------
 class AppContext(metaclass=Singleton):
 
-    def __init__(self, application, instance_type, instance_name='', version=None):
-        """Initialize a new instance.
+    INST_CONFIG_MANAGER = ConfigurationManager
+    
+    def __init__(self, instance_type, instance_name, system_folders=False,
+        environment="application"):
+        """instance name is equal to the config-filename..."""
 
-            instance_type: {'server', 'node', 'unittest', 'fixtures'}
-            instance_name: only relevant for nodes/servers
-        """
-        instance_types = ('server', 'node', 'unittest')
-        msg = "instance_type should be one of {}".format(instance_types)
-        assert instance_type in instance_types, msg
+        # lookup system / user directories
+        self.set_folders(instance_type, instance_name, system_folders)
 
-        self.application = application
-        self.environment = None
-        self.instance_type = instance_type
-        self.instance_name = instance_name
-        self.version = version
-        self.config = None
-
-        # can be used after the config has been loaded
-        self.log = None
-
-        d = appdirs.AppDirs(application, '', version=version)
-        self.dirs = {
-            'data': d.user_data_dir,
-            'log': d.user_log_dir,
-            'config': d.user_config_dir,
-        }
-
-    @staticmethod
-    def package_directory():
-        here = os.path.abspath(os.path.dirname(__file__))
-        return os.path.normpath(os.path.join(here, '../'))
-
-    @classmethod
-    def package_data_dir(cls):
-        return os.path.join(cls.package_directory(), '_data')
-
-    @property
-    def data_dir(self):
-        return self.get_file_location('data', '')
-
-    @property
-    def log_dir(self):
-        return self.get_file_location('log', '')
-
-    @property
-    def log_file(self):
-        filename = self.instance_name + '.log'
-        return os.path.join(self.log_dir, filename)
-
-    @property
-    def config_dir(self):
-        return self.get_file_location('config', '')
-
-    @property
-    def config_file(self):
-        if self.instance_type == 'unittest':
-            filename = 'unittest_config.yaml'
-        else:
-            filename = self.instance_name + '.yaml'
-
-        return os.path.join(self.config_dir, filename)
-
-    @property
-    def config_available(self):
-        """Return true if a config file is available."""
-        return os.path.exists(self.config_file)
-
-    def init(self, config_file, environment=None, setup_logging=True):
-        """Load the configuration from disk and setup logging."""
-        self.environment = environment 
-
-        # Load configuration
-        self.load_config(config_file, environment)
+        # configuration environment, load a single configuration from 
+        # entire confiration file (which can contain multiple environments) 
+        self.config_file = self.config_dir / (instance_name + ".yaml")
         
-        # validate (and cast types of) loaded configuration
-        err = False
-        try:
-            self.config = validate_configuration(
-                self.config, 
-                self.instance_type
-            )
-        except SchemaError as e:
-            print("Configuration schema malformed. Attemting to continue..")
-            err = e
+        # will load a specific environment in the config_file, this 
+        # triggers to set the logging as this is env dependant
+        self.environment = environment
 
-        # Override default locations based on OS defaults if defined in 
-        # configuration file
-        if self.config.get('data_dir'):
-            self.dirs['data_dir'] = self.config.get('data_dir')
-
-        if self.config.get('log_dir'):
-            self.dirs['log_dir'] = self.config.get('log_dir')
-
-        if setup_logging:
-            # Setup logging
-            log_file = self.setup_logging()
-            
-            # Create a logger
-            module_name = __name__.split('.')[-1]
-            self.log = logging.getLogger(module_name)
-            
-            # Make some history
-            self.log.info("#" * 80)
-            self.log.info('#{:^78}#'.format(self.application))
-            self.log.info("#" * 80)
-            self.log.info("Started application '%s' with environment '%s'" % (self.application, environment))
-            self.log.info("Current working directory is '%s'" % os.getcwd())
-            self.log.info("Succesfully loaded configuration from '%s'" % config_file)
-            self.log.info("Logging to '%s'" % log_file)
-            if err:
-                self.log.error(err)
-
-        # Return the configuration for the current application.            
-        return self.config
-
-    def load_config(self, config_file, environment=None):
-        """Load configuration from disk."""
-        try:
-            config = yaml.load( open(config_file) )
-        except:
-            msg = "Could not load configuration from '{}'"
-            print(msg.format(config_file))
-            raise
+    def set_folders(self, instance_type, instance_name, system_folders):
+        dirs = self.instance_folders(instance_type, instance_name, 
+            system_folders)
+        self.log_dir = dirs.get("log")
+        self.data_dir = dirs.get("data")
+        self.config_dir = dirs.get("config")
         
-        # if an environment has been specified attemt to load this first. If it 
-        # cannot be found or no environment has been specified the application
-        # key is used.
-        if environment:
-            self.config = config.get('environments', {}).get(environment)
-            if self.config:
-                return 
-            else:
-                self.log.warn(
-                    f"Environment {environment} not found in the configuration"
-                    f" file. Attemting to load the (default) application key"
-                    f" from the configuration file..."
-                )
-
-        self.config = config.get('application')
-
     def setup_logging(self):
         """Setup a basic logging mechanism."""
-        config = self.config
-        
-        if ('logging' not in config) or (config["logging"]["level"].upper() == 'NONE'):
-            return
+     
+        log_config = self.config["logging"]
+             
+        level = getattr(logging, log_config["level"].upper())
+        format_ = log_config["format"] 
+        datefmt = log_config.get("datefmt", "")
 
-        level = config["logging"]["level"]        
-        level = getattr(logging, level.upper())
-        
-        filename = config["logging"]["file"]
-        filename = self.get_file_location('log', filename)
-
-        format = config["logging"]["format"]
-        bytes = config["logging"]["max_size"]
-        backup_count = config["logging"]["backup_count"]
-        datefmt = config["logging"].get("datefmt", "")
-
-        # print("trying to create directory '{}'".format(filename))
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        # make sure the log-file exists
+        os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
         
         # Create the root logger
         logger = logging.getLogger()
         logger.setLevel(level)
-        
+    
         # Create RotatingFileHandler
-        rfh = logging.handlers.RotatingFileHandler(filename, 
-                                                   maxBytes=1024*bytes, 
-                                                   backupCount=backup_count)
+        rfh = logging.handlers.RotatingFileHandler(
+            self.log_file, 
+            maxBytes=1024*log_config["max_size"], 
+            backupCount=log_config["backup_count"]
+        )
         rfh.setLevel(level)
-        rfh.setFormatter(logging.Formatter(format, datefmt))
+        rfh.setFormatter(logging.Formatter(format_, datefmt))
         logger.addHandler(rfh)
         
         # Check what to do with the console output ...
-        if config["logging"]["use_console"]:
+        if log_config["use_console"]:
             ch = logging.StreamHandler(sys.stdout)
             ch.setLevel(level)
-            ch.setFormatter(logging.Formatter(format, datefmt))
+            ch.setFormatter(logging.Formatter(format_, datefmt))
             logger.addHandler(ch)
             
-            from pytaskmanager import util
-            util.using_console_for_logging = True
-          
-        
         # Finally, capture all warnings using the logging mechanism.
         logging.captureWarnings(True)
 
-        return filename
-
-    #TODO This should move to ServerContext, is already there partly
-    def get_file_location(self, filetype, filename):
-        """
-        filetype: ('config', log', 'data')
-        """
-        if os.path.isabs(filename):
-            return filename
-
-        if self.instance_type in ('unittest', ):
-            filename = os.path.join(self.dirs[filetype], filename)
-
-        elif self.instance_type in ('server', 'node'):
-            elements = [
-                self.dirs[filetype], 
-                self.instance_type
-            ]
-
-            if filetype == 'data':
-                elements.append(self.instance_name)
-            
-            elements.append(filename)
-            filename = os.path.join(*elements)
-
-        return filename
-    
-    #TODO This should move to ServerContext
-    def get_database_location(self):
-        uri = self.config['uri']
-        URL = make_url(uri)
-
-        if (URL.host is None) and (not os.path.isabs(URL.database)):
-            # We're dealing with a relative path here.
-            URL.database = self.get_file_location('data', URL.database)
-            uri = str(URL)
-
-        return uri
-
-
-class ServerContext(AppContext):
-    def __init__(self, application, instance_name='', version=None):
-        """Initialize a new instance.
-
-            instance_name: only relevant for nodes/servers
-        """
-        super().__init__(application, 'server', instance_name, version=version)
-
-        d = appdirs.AppDirs(application, version=version)
-        self.dirs = {
-            'data': d.site_data_dir,
-            'log': d.site_data_dir,
-            'config': d.site_config_dir,
-        }
-
-
-    def get_file_location(self, filetype, filename):
-        """
-        filetype: ('config', log', 'data')
-        """
-        if os.path.isabs(filename):
-            return filename
-
-        elements = [
-            self.dirs[filetype], 
-            self.instance_type
-        ]
-
-        if filetype == 'data':
-            elements.append(self.instance_name)
+        module_name = __name__.split('.')[-1]
+        log = logging.getLogger(module_name)
         
-        elements.append(filename)
-        filename = os.path.join(*elements)
+        # Make some history
+        log.info("#" * 80)
+        log.info(f'#{APPNAME:^78}#')
+        log.info("#" * 80)
+        log.info(f"Started application {APPNAME} with environment {self.environment}")
+        log.info("Current working directory is '%s'" % os.getcwd())
+        log.info("Succesfully loaded configuration from '%s'" % self.config_file)
+        log.info("Logging to '%s'" % self.log_file)
 
-        return filename
+    @property
+    def log_file(self):
+        return self.log_dir / (self.config_manager.name + ".log")
+
+    @property
+    def config_file(self):
+        return self.__config_file
+    
+    @config_file.setter
+    def config_file(self, path):
+        assert Path(path).exists(), f"config {path} not found" 
+        self.__config_file = Path(path)
+        self.config_manager = self.INST_CONFIG_MANAGER.from_file(path)
+        
+    @property
+    def environment(self):
+        return self.__environment
+    
+    @environment.setter
+    def environment(self, env):
+        assert self.config_manager, \
+            "Environment set before ConfigurationManager is initialized..."
+        assert env in self.config_manager.available_environments, \
+            f"Requested environment {env} is not found in the configuration"
+        self.__environment = env
+        self.config = self.config_manager.get(env)
+        self.setup_logging()
+
+    @classmethod
+    def from_external_config_file(cls, path, instance_type, 
+        environment="application", system_folders=False):
+        instance_name = Path(path).stem
+        self = cls.__new__(cls)
+        self.set_folders(instance_type, instance_name, system_folders)
+        self.config_dir = Path(path).parent
+        self.config_file = path
+        self.environment = environment
+        return self
+
+    @classmethod
+    def config_exists(cls, instance_type, instance_name, environment="application", 
+        system_folders=False):
+        
+        # obtain location of config file
+        d = appdirs.AppDirs(APPNAME, "")
+        config_dir = d.site_config_dir if system_folders else d.user_config_dir
+        config_file = Path(config_dir) / instance_type / (instance_name+".yaml")
+        if not Path(config_file).exists():
+            return False
+
+        # check that environment is present in config-file
+        config_manager = cls.INST_CONFIG_MANAGER.from_file(config_file)
+        return bool(getattr(config_manager, environment))
+
+    @staticmethod
+    def instance_folders(instance_type, instance_name, system_folders):
+        d = appdirs.AppDirs(APPNAME, "")
+        if system_folders:
+            return {
+                "log":Path(d.site_data_dir) / instance_type,
+                "data":Path(d.site_data_dir) / instance_type / instance_name,
+                "config":Path(d.site_config_dir) / instance_type
+            }
+        else:
+            return {
+                "log":Path(d.user_log_dir) / instance_type,
+                "data":Path(d.user_data_dir) / instance_type / instance_name,
+                "config":Path(d.user_config_dir) / instance_type
+            }
 
 
 
 class NodeContext(AppContext):
-
-    def __init__(self, application, instance_name="", version=None):
-        super().__init__(application, 'node', instance_name, version=version)
     
-    @property
-    def database_files(self):
-        assert self.config, "configuration not loaded"
-        return self.config.get("databases")
+    INST_CONFIG_MANAGER = NodeConfigurationManager
 
-
-class FixturesContext(AppContext):
-    pass
-
-
-class TestContext(AppContext):
-    def __init__(self):
-        super().__init__('unittest', 'unittest')
-
-    def get_file_location(self, filetype, filename):
-        """
-        filetype: ('config', log', 'data')
-        """
-        if os.path.isabs(filename):
-            return filename
-
-        if filetype == 'config':
-            return os.path.join(self.package_data_dir(), filename)
-
-        return super().get_file_location(filetype, filename)
-
+    def __init__(self, instance_name, environment="application", system_folders=False):
+        super().__init__("node", instance_name, environment=environment, 
+            system_folders=system_folders)
     
+    def get_database_uri(self, label="default"):
+        return self.config["databases"][label]
+
+    @classmethod
+    def from_external_config_file(cls, path, environment="application", system_folders=False):
+        return super().from_external_config_file(
+            path, "node", environment, system_folders
+        )
+
+    @staticmethod
+    def config_exists(instance_name, environment="application", system_folders=False):
+        return AppContext.config_exists("node", 
+            instance_name, environment= environment, system_folders=system_folders)
+        
+
+class ServerContext(AppContext):
+    
+    INST_CONFIG_MANAGER = ServerConfigurationManager
+
+    def __init__(self, instance_name, environment="prod", system_folders=True):
+        super().__init__("node", instance_name, environment=environment, 
+            system_folders=system_folders)
+    
+    @classmethod
+    def from_external_config_file(cls, path, environment="prod", system_folders=True):
+        return super().from_external_config_file(
+            path, "server", environment, system_folders
+        )
+
+    @staticmethod
+    def config_exists(instance_name, environment="prod", system_folders=False):
+        return AppContext.config_exists("server", 
+            instance_name, environment= environment, system_folders=system_folders)
