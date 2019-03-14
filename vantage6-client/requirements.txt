@@ -20,3 +20,4 @@ iknl-flasgger
 flask_socketio
 socketIO_client
 schema
+questionary
