@@ -1,7 +1,7 @@
 application:
     api_path: '/api'
     logging:
-        level:        NONE                   # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'; 'NONE' disables logging.
+        level:        CRITICAL                   # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'; 'NONE' disables logging.
         file:         unittest.log           # Filename of logfile
         use_console:  False                  # Log output to the console?
         backup_count: 5                      # Number of logs to keep
