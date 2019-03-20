@@ -12,10 +12,13 @@ from pathlib import Path
 from sqlalchemy.engine.url import make_url
 from weakref import WeakValueDictionary
 
+import pytaskmanager.settings as settings
+
 from pytaskmanager import APPNAME
 from pytaskmanager.util.context import validate_configuration
 from pytaskmanager.util.Configuration import ( ConfigurationManager, 
-    ServerConfigurationManager, NodeConfigurationManager ) 
+    ServerConfigurationManager, NodeConfigurationManager, 
+    TestingConfigurationManager ) 
 
 
 class Singleton(type):
@@ -33,7 +36,7 @@ class AppContext(metaclass=Singleton):
     INST_CONFIG_MANAGER = ConfigurationManager
     
     def __init__(self, instance_type, instance_name, system_folders=False,
-        environment="application"):
+        environment=settings.DEFAULT_NODE_ENVIRONMENT):
         """instance name is equal to the config-filename..."""
 
         # lookup system / user directories
@@ -46,6 +49,8 @@ class AppContext(metaclass=Singleton):
         # will load a specific environment in the config_file, this 
         # triggers to set the logging as this is env dependant
         self.environment = environment
+
+        self.log = None
 
     def set_folders(self, instance_type, instance_name, system_folders):
         dirs = self.instance_folders(instance_type, instance_name, 
@@ -101,9 +106,12 @@ class AppContext(metaclass=Singleton):
         log.info("Current working directory is '%s'" % os.getcwd())
         log.info("Succesfully loaded configuration from '%s'" % self.config_file)
         log.info("Logging to '%s'" % self.log_file)
+        self.log = log
 
     @property
     def log_file(self):
+        assert self.config_manager, \
+            "Log file unkown as configuration manager not initialized"
         return self.log_dir / (self.config_manager.name + ".log")
 
     @property
@@ -132,7 +140,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def from_external_config_file(cls, path, instance_type, 
-        environment="application", system_folders=False):
+        environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         instance_name = Path(path).stem
         self = cls.__new__(cls)
         self.set_folders(instance_type, instance_name, system_folders)
@@ -142,7 +150,7 @@ class AppContext(metaclass=Singleton):
         return self
 
     @classmethod
-    def config_exists(cls, instance_type, instance_name, environment="application", 
+    def config_exists(cls, instance_type, instance_name, environment=settings.DEFAULT_NODE_ENVIRONMENT, 
         system_folders=False):
         
         # obtain location of config file
@@ -171,47 +179,107 @@ class AppContext(metaclass=Singleton):
                 "data":Path(d.user_data_dir) / instance_type / instance_name,
                 "config":Path(d.user_config_dir) / instance_type
             }
+    
+    @classmethod
+    def available_configurations(cls, instance_type, system_folders):
+        """Returns a list of configuration managers."""
+        
+        folders =  cls.instance_folders(instance_type, "", system_folders)
+        
+        # potential configuration files
+        config_files = Path(folders["config"]).glob("*.yaml")
+        
+        configs = []
+        for file_ in config_files:
+            try:
+                conf_manager = cls.INST_CONFIG_MANAGER.from_file(file_)
+                configs.append(conf_manager)
+            except Exception:
+                print(f"Ignoring invalid config={file_}")
 
-
+        return configs
 
 class NodeContext(AppContext):
     
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
-    def __init__(self, instance_name, environment="application", system_folders=False):
+    def __init__(self, instance_name, environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         super().__init__("node", instance_name, environment=environment, 
             system_folders=system_folders)
     
     def get_database_uri(self, label="default"):
         return self.config["databases"][label]
+    
+    @property
+    def databases(self):
+        return self.config["databases"]
 
     @classmethod
-    def from_external_config_file(cls, path, environment="application", system_folders=False):
+    def from_external_config_file(cls, path, environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         return super().from_external_config_file(
             path, "node", environment, system_folders
         )
 
     @staticmethod
-    def config_exists(instance_name, environment="application", system_folders=False):
+    def config_exists(instance_name, environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         return AppContext.config_exists("node", 
             instance_name, environment= environment, system_folders=system_folders)
+    
+    @classmethod
+    def available_configurations(cls, system_folders=settings.DEFAULT_NODE_SYSTEM_FOLDERS):
+        return super().available_configurations("node", system_folders)
         
 
 class ServerContext(AppContext):
     
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
-    def __init__(self, instance_name, environment="prod", system_folders=True):
+    def __init__(self, instance_name, 
+        environment=settings.DEFAULT_SERVER_ENVIRONMENT, 
+        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+    
         super().__init__("node", instance_name, environment=environment, 
             system_folders=system_folders)
     
     @classmethod
-    def from_external_config_file(cls, path, environment="prod", system_folders=True):
+    def from_external_config_file(cls, path, 
+        environment=settings.DEFAULT_SERVER_ENVIRONMENT, 
+        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+
         return super().from_external_config_file(
             path, "server", environment, system_folders
         )
 
     @staticmethod
-    def config_exists(instance_name, environment="prod", system_folders=False):
+    def config_exists(instance_name, 
+        environment=settings.DEFAULT_SERVER_ENVIRONMENT, 
+        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+
         return AppContext.config_exists("server", 
             instance_name, environment= environment, system_folders=system_folders)
+
+    @classmethod
+    def available_configurations(cls, 
+        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+        
+        return super().available_configurations("server", system_folders)
+        
+
+class TestContext(AppContext):
+
+    INST_CONFIG_MANAGER = TestingConfigurationManager
+    
+    @classmethod
+    def from_external_config_file(cls, path):
+        return super().from_external_config_file(
+            cls.test_config_location(), 
+            "unittest", "application", True
+        )
+
+    @staticmethod
+    def test_config_location():
+        return (Path(__file__).parent / ".." / "_data" / "unittest_config.yaml")
+
+    @staticmethod
+    def test_data_location():
+        return (Path(__file__).parent / ".." / "_data" )
