@@ -161,7 +161,7 @@ def create():
 
 
 def init(ctx):
-    uri = ctx.get_database_location()
+    uri = ctx.get_database_uri()
     db.init(uri, drop_all=True)
 
 

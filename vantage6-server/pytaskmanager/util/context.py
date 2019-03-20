@@ -201,6 +201,10 @@ def select_configuration_questionaire(instance_type, system_folders):
                 title=f"{config_collection.name:25} {env}",
                 value=(config_collection.name, env)))
     
+    
+    if not choices:
+        raise Exception("No configurations could be found!")
+    
     # pop the question
     name, env = q.select("Select the configuration you want to use:",
         choices=choices).ask()
