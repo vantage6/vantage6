@@ -10,7 +10,9 @@ from schema import Schema, And, Or, Use, Optional
 
 from pytaskmanager import APPNAME
 from pytaskmanager import util
-from pytaskmanager.util.Configuration import ConfigurationManager, NodeConfigurationManager, ServerConfigurationManager
+# from pytaskmanager.util import AppContext
+from pytaskmanager.util.Configuration import ( ConfigurationManager, 
+    NodeConfigurationManager, ServerConfigurationManager ) 
 
 def node_configuration_questionaire(dirs, instance_name):
     """Questionary to generate a config file for the node instance."""
@@ -120,6 +122,8 @@ def configuration_wizard(instance_type, instance_name,
     config_manager.put(environment, config)
     config_manager.save(config_file)
 
+    return config_file
+
 def validate_configuration_file(file):
     pass
     # check for application 
@@ -178,13 +182,27 @@ def get_config_location(ctx, config, force_create):
     """Ensure configuration file exists and return its location."""
     return config if config else ctx.config_file
     
-def select_configuration_questionaire(instance_type):
+def select_configuration_questionaire(instance_type, system_folders):
     """Asks which configuration the user want to use
     
     It shows only configurations that are in the default folder.
     """
-    ctx = util.AppContext(APPNAME, instance_type)
-    files = Path(ctx.config_dir).glob("*.yaml")
-    name = q.select("Select the configuration you want to use:",
-        choices=[file_.stem for file_ in files]).ask()
-    return name
+    Context = util.NodeContext if instance_type == "node" else \
+        util.ServerContext
+    configs = Context.available_configurations(system_folders)
+
+    # each collection (file) can contain multiple configs. (e.g. test, 
+    # dev)
+    choices = []
+    for config_collection in configs:
+        envs = config_collection.available_environments
+        for env in envs:
+            choices.append(q.Choice(
+                title=f"{config_collection.name:25} {env}",
+                value=(config_collection.name, env)))
+    
+    # pop the question
+    name, env = q.select("Select the configuration you want to use:",
+        choices=choices).ask()
+    
+    return name, env
