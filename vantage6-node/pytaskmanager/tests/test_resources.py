@@ -66,8 +66,10 @@ class TestResources(unittest.TestCase):
         server.app.test_client_class = TestNode
         server.app.secret_key = "test-secret"
 
-        ctx = util.TestContext()
-        ctx.init(ctx.config_file)
+        
+        ctx = util.TestContext.from_external_config_file(
+            "unittest_config.yaml")
+
         server.init_resources(ctx)
 
         self.app = server.app.test_client()
@@ -91,11 +93,10 @@ class TestResources(unittest.TestCase):
         self.assertIn('version', r) 
 
 
-    def test_token(self):
+    def test_token_root_user(self):
         tokens = self.app.post('/api/token/user', json=self.credentials).json
         self.assertIn('access_token', tokens)
         self.assertIn('refresh_token', tokens)
-
 
     def test_organization(self):
         headers = self.login()
