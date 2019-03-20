@@ -52,6 +52,7 @@ class ServerConfiguration(Configuration):
         }
     }
     
+
 class NodeConfiguration(Configuration):
     
     VALIDATORS = {
@@ -59,10 +60,25 @@ class NodeConfiguration(Configuration):
         "server_url": Use(str),
         "port": Use(int),
         "task_dir": Use(str),
-        "databases": {Use(str):os.path.exists},
+        "databases": {Use(str):Use(str)},
         "api_path": Use(str),
         "logging": {
             "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
+            "file": Use(str),
+            "use_console": Use(bool),
+            "backup_count": And(Use(int), lambda n: n > 0),
+            "max_size": And(Use(int), lambda b: b > 16),
+            "format": Use(str),
+            "datefmt": Use(str)
+        }
+    }
+
+class TestConfiguration(Configuration):
+
+    VALIDATORS = {
+        "api_key": And(Use(str), len),
+        "logging": {
+            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NONE")),
             "file": Use(str),
             "use_console": Use(bool),
             "backup_count": And(Use(int), lambda n: n > 0),
@@ -101,7 +117,7 @@ class ConfigurationManager(object):
         self.acc = ""
         self.test = ""
         self.dev = ""
-
+    
         self.name = name
         self.conf_class = conf_class
         
@@ -147,6 +163,7 @@ class ConfigurationManager(object):
     @classmethod
     def from_file(cls, path, conf_class=Configuration):
         name = Path(path).stem
+        assert name, f"Name could not be extracted from filepath={path}"
         conf = cls(name=name, conf_class=Configuration)
         conf.load(path)
         return conf
@@ -161,21 +178,31 @@ class ConfigurationManager(object):
             yaml.dump(config, f, default_flow_style=False)
 
 
-
-    def __str__(self):
-        return (
-            f"{self.name:15}"
-            f"{self.available_environments:25}"
-            f"{self.has_application}"
-        )
-
 class NodeConfigurationManager(ConfigurationManager):
     
     def __init__(self, name, *args, **kwargs):
         super().__init__(conf_class=NodeConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path):
+        return super().from_file(path, conf_class=NodeConfiguration)
 
 
 class ServerConfigurationManager(ConfigurationManager):
     
     def __init__(self, name, *args, **kwargs):
         super().__init__(conf_class=ServerConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path):
+        return super().from_file(path, conf_class=ServerConfiguration)
+
+
+class TestingConfigurationManager(ConfigurationManager):
+
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(conf_class=TestConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path):
+        return super().from_file(path, conf_class=TestConfiguration)
