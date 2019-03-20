@@ -1,0 +1,181 @@
+import click
+import yaml
+import os
+import sys
+import appdirs
+import questionary as q
+import errno
+
+from pathlib import Path
+
+import pytaskmanager.settings as settings
+
+from pytaskmanager import util, node, APPNAME
+from pytaskmanager.util.context import (
+    configuration_wizard, select_configuration_questionaire)
+
+
+@click.group(name="node")
+def cli_node():
+    """Subcommand `ppdli node`."""
+    pass
+
+# 
+#   list
+#
+import datetime
+@cli_node.command(name="list")
+def cli_node_list():
+    """Lists all nodes in the default configuration directory."""
+    
+    click.echo("\nName"+(12*" ")+"Environments"+(30*" ")+"System/User")
+    click.echo("-"*100)
+    
+    configs = util.NodeContext.available_configurations(system_folders=True)
+    for config in configs:
+        click.echo(f"{config.name:16}{str(config.available_environments):14} System ") 
+
+    configs = util.NodeContext.available_configurations(system_folders=False)
+    for config in configs:
+        click.echo(f"{config.name:16}{str(config.available_environments):41} User   ") 
+
+#
+#   new
+#
+@cli_node.command(name="new")
+@click.option("-n", "--name", default=None)
+@click.option('-e', '--environment', 
+    default=settings.DEFAULT_NODE_ENVIRONMENT, 
+    help='configuration environment to use'
+)
+@click.option('--system', 'system_folders', 
+    flag_value=True
+)
+@click.option('--user', 'system_folders', 
+    flag_value=False, 
+    default=settings.DEFAULT_NODE_SYSTEM_FOLDERS
+)
+def cli_node_new_configuration(name, environment, system_folders):
+    """Create a new configation file.
+    
+    Checks if the configuration already exists. If this is not the case
+    a questionaire is invoked to create a new configuration file.
+    """
+    # select configuration name if none supplied
+    if not name:
+        name = q.text("Please enter a configuration-name:").ask()
+    
+    # check that this config does not exist
+    if util.NodeContext.config_exists(name,environment,system_folders):
+        raise FileExistsError(f"Configuration {name} and environment" 
+            f"{environment} already exists!")
+
+    # create config in ctx location
+    cfg_file = configuration_wizard("node", name, environment=environment)
+    click.echo(f"New configuration created: {cfg_file}")
+
+#
+#   files
+#
+@cli_node.command(name="files")
+@click.option("-n", "--name", 
+    default=None, 
+    help="configuration name"
+)
+@click.option('-e', '--environment', 
+    default=settings.DEFAULT_NODE_ENVIRONMENT, 
+    help='configuration environment to use'
+)
+@click.option('--system', 'system_folders', 
+    flag_value=True
+)
+@click.option('--user', 'system_folders', 
+    flag_value=False, 
+    default=settings.DEFAULT_NODE_SYSTEM_FOLDERS
+)
+def cli_node_files(name, environment, system_folders):
+    """Print out the paths of important files.
+    
+    If the specified configuration cannot be found, it exits. Otherwise
+    it returns the absolute path to the output. 
+    """
+    # select configuration name if none supplied
+    name, environment = (name, environment) if name else \
+        select_configuration_questionaire('node', system_folders)
+    
+    # check if config file exists, if not create it in the ctx location
+    if not util.NodeContext.config_exists(name,environment,system_folders):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
+    
+    # create default node context
+    ctx = util.NodeContext(name,environment=environment, 
+        system_folders=system_folders)
+
+    # return path of the configuration
+    click.echo(f"Configuration file = {ctx.config_file}")
+    click.echo(f"Log file           = {ctx.log_file}")
+    click.echo(f"Database labels and files")
+    for label, path in ctx.databases.items():
+        click.echo(f" - {label:15} = {path}")
+
+#
+#   start
+#
+@cli_node.command(name='start')
+@click.option("-n","--name", 
+    default=None,
+    help="configuration name"
+)
+@click.option("-c", "--config", 
+    default=None, 
+    help='absolute path to configuration-file; overrides NAME'
+)
+@click.option('-e', '--environment', 
+    default=settings.DEFAULT_NODE_ENVIRONMENT, 
+    help='configuration environment to use'
+)
+@click.option('--system', 'system_folders', 
+    flag_value=True
+)
+@click.option('--user', 'system_folders', 
+    flag_value=False, 
+    default=settings.DEFAULT_NODE_SYSTEM_FOLDERS
+)
+def cli_node_start(name, config, environment, system_folders):
+    """Start the node instance.
+    
+    If no name or config is specified the default.yaml configuation is used. 
+    In case the configuration file not excists, a questionaire is
+    invoked to create one. Note that in this case it is not possible to
+    specify specific environments for the configuration (e.g. test, 
+    prod, acc). 
+    """
+    
+    # in case a configuration file is given, we by pass all the helper
+    # stuff since you know what you are doing
+    if config:
+        ctx = util.NodeContext.from_external_config_file(config, environment, 
+            system_folders)
+    else:
+        
+        # in case no name is supplied, ask user to select one
+        name, environment = (name, environment) if name else select_configuration_questionaire(
+            'node', system_folders) 
+                
+        # check that config exists in the APP, if not a questionaire will
+        # be invoked
+        if not util.NodeContext.config_exists(name,environment,system_folders):
+            if q.confirm(f"Configuration {name} using environment "
+                f"{environment} does not exists. Do you want to create "
+                f"this config now?").ask():
+                configuration_wizard("node", name, environment=environment, 
+                    system_folders=system_folders)
+            else:
+                click.echo(f"Exiting {APPNAME}.")
+                sys.exit(0)
+        
+        # create dummy node context
+        ctx = util.NodeContext(name, environment, system_folders)
+        
+    # run the node application
+    node.run(ctx)
