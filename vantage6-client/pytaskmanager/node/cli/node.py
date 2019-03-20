@@ -103,11 +103,11 @@ def cli_node_files(name, environment, system_folders):
     name, environment = (name, environment) if name else \
         select_configuration_questionaire('node', system_folders)
     
-    # check if config file exists, if not create it in the ctx location
+    # raise error if config could not be found
     if not util.NodeContext.config_exists(name,environment,system_folders):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
     
-    # create default node context
+    # create node context
     ctx = util.NodeContext(name,environment=environment, 
         system_folders=system_folders)
 

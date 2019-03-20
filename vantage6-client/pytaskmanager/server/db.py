@@ -7,8 +7,9 @@ import enum
 import json
 import bcrypt
 
-from sqlalchemy import *
-from sqlalchemy import func
+import sqlalchemy as sql
+from sqlalchemy import ( Column, Text, Table, Integer, String, ForeignKey, 
+    DateTime )
 from sqlalchemy.sql import exists
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
@@ -27,25 +28,25 @@ def init(URI='sqlite:////tmp/test.db', drop_all=False):
     """Initialize the database."""
     module_name = __name__.split('.')[-1]
     log = logging.getLogger(module_name)
-
-    url = make_url(URI)
+    URL = make_url(URI)
+    
     log.info("Initializing the database")
-    log.debug("  driver:   {}".format(url.drivername))
-    log.debug("  host:     {}".format(url.host))
-    log.debug("  port:     {}".format(url.port))
-    log.debug("  database: {}".format(url.database))
-    log.debug("  username: {}".format(url.username))
+    log.debug("  driver:   {}".format(URL.drivername))
+    log.debug("  host:     {}".format(URL.host))
+    log.debug("  port:     {}".format(URL.port))
+    log.debug("  database: {}".format(URL.database))
+    log.debug("  username: {}".format(URL.username))
 
     # TODO is this really necessary
     from . import db
     db.URI = URI
 
     # Make sure that the director for the file database exists.
-    URL = make_url(URI)
+    
     if URL.host is None and URL.database:        
         os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
-    db.engine = create_engine(URI, convert_unicode=True)
+    db.engine = sql.create_engine(URI, convert_unicode=True)
     db.Session = scoped_session(sessionmaker(autocommit=False, autoflush=False))
     db.object_session = Session.object_session
 
@@ -66,7 +67,7 @@ def jsonable(value):
 
     elif isinstance(value, Base):
         retval = dict()
-        mapper = inspect(value.__class__)
+        mapper = sql.inspect(value.__class__)
 
         columns = [c.key for c in mapper.columns if c.key not in value._hidden_attributes]
 
@@ -104,7 +105,7 @@ class Base(object):
         return cls.__name__.lower()
     
     # Primay key, internal use only
-    id = Column(Integer, primary_key=True)
+    id = sql.Column(sql.Integer, primary_key=True)
 
     @classmethod
     def get(cls, id_=None, with_session=False):
@@ -146,7 +147,7 @@ class Base(object):
 
         # Get a list of attributes available to this class.
         # This should exclude relationships!
-        inst = inspect(self)
+        inst = sql.inspect(self)
         cols = [c_attr.key for c_attr in inst.mapper.column_attrs]
         cols = set(cols)
 
@@ -182,14 +183,14 @@ Base = declarative_base(cls=Base)
 # ------------------------------------------------------------------------------
 # Real model/table definitions start here.
 # ------------------------------------------------------------------------------
-association_table_organization_collaboration = Table(
+association_table_organization_collaboration = sql.Table(
     'association_table_organization_collaboration', 
     Base.metadata,
     Column('organization_id', Integer, ForeignKey('organization.id')),
     Column('collaboration_id', Integer, ForeignKey('collaboration.id'))
 )
 
-association_table_organization_task = Table(
+association_table_organization_task = sql.Table(
     'association_table_organization_task',
     Base.metadata,
     Column('task_id', Integer, ForeignKey('task.id')),
@@ -386,7 +387,7 @@ class Task(Base):
     @classmethod
     def next_run_id(cls):
         session = Session()
-        max_run_id = session.query(func.max(cls.run_id)).scalar()
+        max_run_id = session.query(sql.func.max(cls.run_id)).scalar()
         if max_run_id:
             return max_run_id + 1
         else:
