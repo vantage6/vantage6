@@ -11,3 +11,4 @@ pytaskmanager.egg-info
 node_modules
 build/
 dist/
+ppDLI.egg-info
