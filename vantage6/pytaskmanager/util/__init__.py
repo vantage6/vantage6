@@ -238,8 +238,19 @@ class ServerContext(AppContext):
         environment=settings.DEFAULT_SERVER_ENVIRONMENT, 
         system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
     
-        super().__init__("node", instance_name, environment=environment, 
+        super().__init__("server", instance_name, environment=environment, 
             system_folders=system_folders)
+
+    def get_database_uri(self):
+        uri = self.config['uri']
+        URL = make_url(uri)
+
+        if (URL.host is None) and (not os.path.isabs(URL.database)):
+            # We're dealing with a relative path here.
+            URL.database = str(self.data_dir / URL.database)
+            uri = str(URL)
+
+        return uri
     
     @classmethod
     def from_external_config_file(cls, path, 
