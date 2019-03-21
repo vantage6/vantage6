@@ -8,10 +8,9 @@ import errno
 
 from pathlib import Path
 
-import pytaskmanager.settings as settings
+import pytaskmanager.constants as constants
 
 from pytaskmanager import util, node
-from pytaskmanager.settings import APPNAME
 from pytaskmanager.util.context import (
     configuration_wizard, select_configuration_questionaire)
 
@@ -46,7 +45,7 @@ def cli_node_list():
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None)
 @click.option('-e', '--environment', 
-    default=settings.DEFAULT_NODE_ENVIRONMENT, 
+    default=constants.DEFAULT_NODE_ENVIRONMENT, 
     help='configuration environment to use'
 )
 @click.option('--system', 'system_folders', 
@@ -54,7 +53,7 @@ def cli_node_list():
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=settings.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
 )
 def cli_node_new_configuration(name, environment, system_folders):
     """Create a new configation file.
@@ -84,7 +83,7 @@ def cli_node_new_configuration(name, environment, system_folders):
     help="configuration name"
 )
 @click.option('-e', '--environment', 
-    default=settings.DEFAULT_NODE_ENVIRONMENT, 
+    default=constants.DEFAULT_NODE_ENVIRONMENT, 
     help='configuration environment to use'
 )
 @click.option('--system', 'system_folders', 
@@ -92,7 +91,7 @@ def cli_node_new_configuration(name, environment, system_folders):
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=settings.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
 )
 def cli_node_files(name, environment, system_folders):
     """Print out the paths of important files.
@@ -132,7 +131,7 @@ def cli_node_files(name, environment, system_folders):
     help='absolute path to configuration-file; overrides NAME'
 )
 @click.option('-e', '--environment', 
-    default=settings.DEFAULT_NODE_ENVIRONMENT, 
+    default=constants.DEFAULT_NODE_ENVIRONMENT, 
     help='configuration environment to use'
 )
 @click.option('--system', 'system_folders', 
@@ -140,7 +139,7 @@ def cli_node_files(name, environment, system_folders):
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=settings.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
 )
 def cli_node_start(name, config, environment, system_folders):
     """Start the node instance.
@@ -172,7 +171,7 @@ def cli_node_start(name, config, environment, system_folders):
                 configuration_wizard("node", name, environment=environment, 
                     system_folders=system_folders)
             else:
-                click.echo(f"Exiting {APPNAME}.")
+            
                 sys.exit(0)
         
         # create dummy node context
