@@ -1,7 +1,7 @@
 import sys
 
 from pytaskmanager.server import db
-from pytaskmanager.settings import APPNAME
+from pytaskmanager.constants import APPNAME
 from pytaskmanager import util
 from pytaskmanager.util.context import get_config_location
 
