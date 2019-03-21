@@ -41,10 +41,4 @@ class Version(Resource):
     def get(self):
         """Return the version of this server."""
         
-        version_file = Path(constants.PACAKAGE_FOLDER) / \
-            constants.APPNAME / "VERSION"
-
-        with open(version_file) as f:
-            version = f.read()
-
-        return {"version": version}
+        return {"version": constants.VERSION}
