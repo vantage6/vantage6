@@ -14,7 +14,7 @@ from pytaskmanager import server, util, constants
 from pytaskmanager.server import db, shell
 from pytaskmanager.server.controllers import fixture
 from pytaskmanager.util.context import ( get_config_location, 
-    select_configuration_questionaire ) 
+    select_configuration_questionaire, configuration_wizard ) 
 
 
 def click_insert_context(func):
@@ -89,7 +89,7 @@ def cli_server_start(ctx, ip, port, debug):
 #   list
 #
 @cli_server.command(name='list')
-def cli_server_configlocation():
+def cli_server_configuration_list():
     """Print the location of the default config file."""
     
     
@@ -109,7 +109,47 @@ def cli_server_configlocation():
 #
 #   files
 #
-# TODO
+@cli_server.command(name='files')
+@click_insert_context
+def cli_server_files(ctx):
+    """List file location of the server instance."""
+    click.echo(f"Configuration file = {ctx.config_file}")
+    click.echo(f"Log file           = {ctx.log_file}")
+    click.echo(f"Database           = {ctx.get_database_uri()}")
+    
+#
+#   new
+#
+@cli_server.command(name='new')
+@click.option('-n','--name', 
+    default=None,
+    help="name of the configutation you want to use."
+)
+@click.option('-e', '--environment',
+    default=constants.DEFAULT_SERVER_ENVIRONMENT,
+    help='configuration environment to use'
+)
+@click.option('--system', 'system_folders', 
+    flag_value=True
+)
+@click.option('--user', 'system_folders', 
+    flag_value=False, 
+    default=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
+)
+def cli_server_new(name, environment, system_folders):
+    """Create new configuration file."""
+
+    if not name:
+        name = q.text("Please enter a configuration-name:").ask()
+
+    # check that this config does not exist
+    if util.ServerContext.config_exists(name,environment,system_folders):
+        raise FileExistsError(f"Configuration {name} and environment" 
+            f"{environment} already exists!")
+
+    # create config in ctx location
+    cfg_file = configuration_wizard("server", name, environment=environment)
+    click.echo(f"New configuration created: {cfg_file}")
 
 #
 #   import
@@ -118,8 +158,11 @@ def cli_server_configlocation():
 @click.argument('file_', type=click.Path(exists=True))
 @click.option('--drop-all', is_flag=True, default=False)
 @click_insert_context
-def cli_server_load_fixtures(ctx, file_, drop_all):
-    """Import fixtures (intented for testing purposes)."""
+def cli_server_import(ctx, file_, drop_all):
+    """Import organizations/collaborations/users and tasks.
+    
+    Especially usefull for testing purposes.
+    """
     
     with open(file_) as f:
         entities = yaml.safe_load(f.read())
