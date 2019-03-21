@@ -1,14 +1,19 @@
 **/virt*
-**/__pycache__
 **/*.sqlite
 *.vpp
+
+# Python
+.ipynb_checkpoints
+**/__pycache__
+**/.coverage
+
+# IDE's
+.idea/
 *.sublime-project
 *.sublime-workspace
-master/logs
-pytaskmanager.egg-info
-.ipynb_checkpoints
-.idea/
-node_modules
+.vscode/
+
+# Python build
 build/
 dist/
 ppDLI.egg-info
