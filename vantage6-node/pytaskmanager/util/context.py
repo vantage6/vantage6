@@ -92,7 +92,60 @@ def node_configuration_questionaire(dirs, instance_name):
     return config
 
 def server_configuration_questionaire(dirs, instance_name):
-    raise NotImplementedError
+    """Questionary to generate a config file for the node instance."""
+
+    config = q.prompt([
+        {
+            "type": "text",
+            "name": "description",
+            "message": "Enter a human-readable description:"
+        },
+        {
+            "type": "text",
+            "name": "ip",
+            "message": "ip:",
+            "default": "127.0.0.1"
+        },
+        {
+            "type": "text", 
+            "name": "port",
+            "message": "Enter port to which the server listens:",
+            "default": "5000"
+        },
+        {
+            "type": "text", 
+            "name": "api_path",
+            "message": "Path of the api:",
+            "default": "/api"
+        },
+        {
+            "type": "text", 
+            "name": "uri",
+            "message": "Database URI:"
+        },
+        {
+            "type": "select", 
+            "name": "allow_drop_all",
+            "message": "Allowed to drop all tables: ",
+            "choices": ["True", "False"]
+        }
+    ])
+
+    res = q.select("Which level of logging would you like?",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"]
+    ).ask()
+
+    config["logging"] = {
+        "level": res,
+        "file": f"{instance_name}.log",
+        "use_console": True,
+        "backup_count":5,
+        "max_size": 1024,
+        "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
+        "datefmt": "%H:%M:%S"
+    }
+
+    return config
 
 def configuration_wizard(instance_type, instance_name, 
     environment="application", system_folders=False):
@@ -188,7 +241,7 @@ def select_configuration_questionaire(instance_type, system_folders):
     """
     Context = util.NodeContext if instance_type == "node" else \
         util.ServerContext
-    configs = Context.available_configurations(system_folders)
+    configs, f = Context.available_configurations(system_folders)
 
     # each collection (file) can contain multiple configs. (e.g. test, 
     # dev)
