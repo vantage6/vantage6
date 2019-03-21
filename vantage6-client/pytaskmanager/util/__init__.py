@@ -189,14 +189,15 @@ class AppContext(metaclass=Singleton):
         config_files = Path(folders["config"]).glob("*.yaml")
         
         configs = []
+        failed = []
         for file_ in config_files:
             try:
                 conf_manager = cls.INST_CONFIG_MANAGER.from_file(file_)
                 configs.append(conf_manager)
             except Exception:
-                print(f"Ignoring invalid config={file_}")
+                failed.append(file_)
 
-        return configs
+        return configs, failed
 
 class NodeContext(AppContext):
     

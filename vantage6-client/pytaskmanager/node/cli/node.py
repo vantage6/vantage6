@@ -28,17 +28,19 @@ import datetime
 def cli_node_list():
     """Lists all nodes in the default configuration directory."""
     
-    click.echo("\nName"+(12*" ")+"Environments"+(30*" ")+"System/User")
-    click.echo("-"*100)
+    click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
+    click.echo("-"*70)
     
-    configs = util.NodeContext.available_configurations(system_folders=True)
+    configs, f1 = util.NodeContext.available_configurations(system_folders=True)
     for config in configs:
-        click.echo(f"{config.name:16}{str(config.available_environments):14} System ") 
+        click.echo(f"{config.name:25}{str(config.available_environments):32} System ") 
 
-    configs = util.NodeContext.available_configurations(system_folders=False)
+    configs, f2 = util.NodeContext.available_configurations(system_folders=False)
     for config in configs:
-        click.echo(f"{config.name:16}{str(config.available_environments):41} User   ") 
+        click.echo(f"{config.name:25}{str(config.available_environments):32} User   ") 
 
+    click.echo("-"*70)
+    click.echo(f"Number of failed imports: {len(f1)+len(f2)}")
 #
 #   new
 #
