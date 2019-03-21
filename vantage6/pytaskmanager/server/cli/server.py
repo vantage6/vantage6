@@ -9,7 +9,7 @@ from functools import wraps
 from pathlib import Path
 from traitlets.config import get_config
 
-from pytaskmanager import server, util, settings
+from pytaskmanager import server, util, constants
 from pytaskmanager.server import db, shell, fixtures
 from pytaskmanager.util.context import get_config_location, select_configuration_questionaire
 
@@ -30,7 +30,7 @@ def set_context(func):
         help='absolute path to configuration-file; overrides NAME'
     )
     @click.option('-e', '--environment',
-        default=settings.DEFAULT_SERVER_ENVIRONMENT,
+        default=constants.DEFAULT_SERVER_ENVIRONMENT,
         help='configuration environment to use'
     )
     @click.option('--system', 'system_folders', 
@@ -38,7 +38,7 @@ def set_context(func):
     )
     @click.option('--user', 'system_folders', 
         flag_value=False, 
-        default=settings.DEFAULT_SERVER_SYSTEM_FOLDERS
+        default=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
     )
     @wraps(func)
     def func_with_context(name, config, environment, system_folders, *args, **kwargs):

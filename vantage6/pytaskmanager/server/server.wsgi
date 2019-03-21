@@ -8,7 +8,7 @@ import pytaskmanager as ptm
 import pytaskmanager.server
 from pytaskmanager.server import db
 import pytaskmanager.util as util
-from pytaskmanager.settings import APPNAME
+from pytaskmanager.constants import APPNAME
 from pytaskmanager.util.context import get_config_location
 
 
