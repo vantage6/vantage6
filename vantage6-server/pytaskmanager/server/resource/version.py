@@ -10,6 +10,8 @@ from flask_restful import Resource, abort
 from flasgger import swag_from
 from pathlib import Path
 
+from pytaskmanager import constants
+
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
@@ -38,4 +40,11 @@ class Version(Resource):
     @swag_from(str(Path(r"swagger/version.yaml")), endpoint='version')
     def get(self):
         """Return the version of this server."""
-        return {"version": "0.1dev2"}
+        
+        version_file = Path(constants.PACAKAGE_FOLDER) / \
+            constants.APPNAME / "VERSION"
+
+        with open(version_file) as f:
+            version = f.read()
+
+        return {"version": version}

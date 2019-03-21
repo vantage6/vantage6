@@ -12,9 +12,8 @@ from pathlib import Path
 from sqlalchemy.engine.url import make_url
 from weakref import WeakValueDictionary
 
-import pytaskmanager.settings as settings
+import pytaskmanager.constants as constants
 
-from pytaskmanager.settings import APPNAME
 from pytaskmanager.util.context import validate_configuration
 from pytaskmanager.util.Configuration import ( ConfigurationManager, 
     ServerConfigurationManager, NodeConfigurationManager, 
@@ -36,7 +35,7 @@ class AppContext(metaclass=Singleton):
     INST_CONFIG_MANAGER = ConfigurationManager
     
     def __init__(self, instance_type, instance_name, system_folders=False,
-        environment=settings.DEFAULT_NODE_ENVIRONMENT):
+        environment=constants.DEFAULT_NODE_ENVIRONMENT):
         """instance name is equal to the config-filename..."""
 
         # lookup system / user directories
@@ -100,9 +99,9 @@ class AppContext(metaclass=Singleton):
         
         # Make some history
         log.info("#" * 80)
-        log.info(f'#{APPNAME:^78}#')
+        log.info(f'#{constants.APPNAME:^78}#')
         log.info("#" * 80)
-        log.info(f"Started application {APPNAME} with environment {self.environment}")
+        log.info(f"Started application {constants.APPNAME} with environment {self.environment}")
         log.info("Current working directory is '%s'" % os.getcwd())
         log.info("Succesfully loaded configuration from '%s'" % self.config_file)
         log.info("Logging to '%s'" % self.log_file)
@@ -140,7 +139,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def from_external_config_file(cls, path, instance_type, 
-        environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
+        environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         instance_name = Path(path).stem
         self = cls.__new__(cls)
         self.set_folders(instance_type, instance_name, system_folders)
@@ -150,11 +149,11 @@ class AppContext(metaclass=Singleton):
         return self
 
     @classmethod
-    def config_exists(cls, instance_type, instance_name, environment=settings.DEFAULT_NODE_ENVIRONMENT, 
+    def config_exists(cls, instance_type, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, 
         system_folders=False):
         
         # obtain location of config file
-        d = appdirs.AppDirs(APPNAME, "")
+        d = appdirs.AppDirs(constants.APPNAME, "")
         config_dir = d.site_config_dir if system_folders else d.user_config_dir
         config_file = Path(config_dir) / instance_type / (instance_name+".yaml")
         if not Path(config_file).exists():
@@ -166,7 +165,7 @@ class AppContext(metaclass=Singleton):
 
     @staticmethod
     def instance_folders(instance_type, instance_name, system_folders):
-        d = appdirs.AppDirs(APPNAME, "")
+        d = appdirs.AppDirs(constants.APPNAME, "")
         if system_folders:
             return {
                 "log":Path(d.site_data_dir) / instance_type,
@@ -203,7 +202,7 @@ class NodeContext(AppContext):
     
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
-    def __init__(self, instance_name, environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
+    def __init__(self, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         super().__init__("node", instance_name, environment=environment, 
             system_folders=system_folders)
     
@@ -215,18 +214,18 @@ class NodeContext(AppContext):
         return self.config["databases"]
 
     @classmethod
-    def from_external_config_file(cls, path, environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
+    def from_external_config_file(cls, path, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         return super().from_external_config_file(
             path, "node", environment, system_folders
         )
 
     @staticmethod
-    def config_exists(instance_name, environment=settings.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
+    def config_exists(instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         return AppContext.config_exists("node", 
             instance_name, environment= environment, system_folders=system_folders)
     
     @classmethod
-    def available_configurations(cls, system_folders=settings.DEFAULT_NODE_SYSTEM_FOLDERS):
+    def available_configurations(cls, system_folders=constants.DEFAULT_NODE_SYSTEM_FOLDERS):
         return super().available_configurations("node", system_folders)
         
 
@@ -235,8 +234,8 @@ class ServerContext(AppContext):
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
     def __init__(self, instance_name, 
-        environment=settings.DEFAULT_SERVER_ENVIRONMENT, 
-        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+        environment=constants.DEFAULT_SERVER_ENVIRONMENT, 
+        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
     
         super().__init__("server", instance_name, environment=environment, 
             system_folders=system_folders)
@@ -254,8 +253,8 @@ class ServerContext(AppContext):
     
     @classmethod
     def from_external_config_file(cls, path, 
-        environment=settings.DEFAULT_SERVER_ENVIRONMENT, 
-        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+        environment=constants.DEFAULT_SERVER_ENVIRONMENT, 
+        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
 
         return super().from_external_config_file(
             path, "server", environment, system_folders
@@ -263,15 +262,15 @@ class ServerContext(AppContext):
 
     @staticmethod
     def config_exists(instance_name, 
-        environment=settings.DEFAULT_SERVER_ENVIRONMENT, 
-        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+        environment=constants.DEFAULT_SERVER_ENVIRONMENT, 
+        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
 
         return AppContext.config_exists("server", 
             instance_name, environment= environment, system_folders=system_folders)
 
     @classmethod
     def available_configurations(cls, 
-        system_folders=settings.DEFAULT_SERVER_SYSTEM_FOLDERS):
+        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
         
         return super().available_configurations("server", system_folders)
         
