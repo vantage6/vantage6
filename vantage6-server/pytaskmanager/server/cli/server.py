@@ -9,7 +9,7 @@ from functools import wraps
 from pathlib import Path
 from traitlets.config import get_config
 
-from pytaskmanager import server, util, settings, APPNAME
+from pytaskmanager import server, util, settings
 from pytaskmanager.server import db, shell, fixtures
 from pytaskmanager.util.context import get_config_location, select_configuration_questionaire
 

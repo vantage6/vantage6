@@ -8,7 +8,6 @@ import questionary as q
 from pathlib import Path
 from schema import Schema, And, Or, Use, Optional
 
-from pytaskmanager import APPNAME
 from pytaskmanager import util
 # from pytaskmanager.util import AppContext
 from pytaskmanager.util.Configuration import ( ConfigurationManager, 
