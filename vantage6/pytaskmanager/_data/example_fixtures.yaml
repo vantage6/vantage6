@@ -1,0 +1,78 @@
+organizations:
+  
+  - name:       IKNL
+    domain:     iknl.nl
+    address1:   Godebaldkwartier 419
+    address2:   
+    zipcode:    3511DT
+    country:    Netherlands
+    users:
+      - username: root
+        firstname: root
+        lastname: robot
+        password: password
+        roles: "root"
+      - username: frank@iknl.nl
+        firstname: Frank
+        lastname: Martin
+        password: password
+        roles: "admin"
+      - username: melle@iknl.nl
+        firstname: Melle
+        lastname: Sieswerda
+        password: password
+
+  - name:       Small Organization
+    domain:     small-organization.example
+    address1:   Big Ambitions Drive 4
+    address2:   
+    zipcode:    1234AB
+    country:    Nowhereland
+    users:
+      - username: admin@small-organization.example
+        firstname: admin
+        lastname: robot
+        password: password
+        roles: "admin"
+      - username: stan
+        firstname: Stan
+        lastname: the man
+        password: password
+        roles: "user"
+      
+  - name:       Big Organization
+    domain:     big-organization.example
+    address1:   Offshore Accounting Drive 19
+    address2:   
+    zipcode:    54331
+    country:    Nowhereland
+    users:
+      - username: admin@big-organization.example
+        firstname: admin
+        lastname: robot
+        password: password
+        roles: "admin"
+
+collaborations:
+
+  - name: ZEPPELIN
+    participants:
+      - IKNL
+      - Small Organization
+      - Big Organization
+    tasks: ["hello-world"]
+  
+  - name: PIPELINE
+    participants:
+      - IKNL
+      - Big Organization
+    tasks: ["hello-world"]
+
+  - name: SLIPPERS
+    participants:
+      - Small Organization
+      - Big Organization
+    tasks: ["hello-world", "hello-world"]
+
+
+

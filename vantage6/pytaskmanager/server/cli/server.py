@@ -4,21 +4,20 @@ import questionary as q
 import IPython
 import os
 import errno
+import yaml
 
 from functools import wraps
 from pathlib import Path
 from traitlets.config import get_config
 
 from pytaskmanager import server, util, constants
-from pytaskmanager.server import db, shell, fixtures
-from pytaskmanager.util.context import get_config_location, select_configuration_questionaire
+from pytaskmanager.server import db, shell
+from pytaskmanager.server.controllers import fixture
+from pytaskmanager.util.context import ( get_config_location, 
+    select_configuration_questionaire ) 
 
-# ------------------------------------------------------------------------------
-# context decorator
-# see: https://github.com/pallets/click/issues/108
-# ------------------------------------------------------------------------------
-# TODO do we need the force_create to be an option too?
-def set_context(func):
+
+def click_insert_context(func):
 
     # add option decorators
     @click.option('-n','--name', 
@@ -41,7 +40,8 @@ def set_context(func):
         default=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
     )
     @wraps(func)
-    def func_with_context(name, config, environment, system_folders, *args, **kwargs):
+    def func_with_context(name, config, environment, system_folders, 
+        *args, **kwargs):
         
         # select configuration if none supplied
         name, environment = (name, environment) if name else \
@@ -73,7 +73,7 @@ def cli_server():
 @click.option('--ip', default=None, help='ip address to listen on')
 @click.option('-p', '--port', type=int, help='port to listen on')
 @click.option('--debug', is_flag=True, help='run server in debug mode (auto-restart)')
-@set_context
+@click_insert_context
 def cli_server_start(ctx, ip, port, debug):
     """Start the server."""
     
@@ -99,18 +99,23 @@ def cli_server_configlocation(name):
 #
 #   import
 #
-@cli_server.command(name='load_fixtures')
-@set_context
-def cli_server_load_fixtures(ctx):
-    """Load fixtures for testing."""
-    fixtures.init(ctx)
-    fixtures.create()
+@cli_server.command(name='import')
+@click.argument('file_', type=click.Path(exists=True))
+@click.option('--drop-all', is_flag=True, default=False)
+@click_insert_context
+def cli_server_load_fixtures(ctx, file_, drop_all):
+    """Import fixtures (intented for testing purposes)."""
+    
+    with open(file_) as f:
+        entities = yaml.safe_load(f.read())
+    
+    fixture.load(ctx, entities, drop_all=drop_all)
 
 #
 #   shell
 #
 @cli_server.command(name='shell')
-@set_context
+@click_insert_context
 def cli_server_shell(ctx):
     """Run a shell ..."""
     # shell.init(ctx.environment)
