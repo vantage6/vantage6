@@ -207,6 +207,14 @@ class Organization(Base):
     zipcode = Column(String)
     country = Column(String)
 
+    @classmethod
+    def get_by_name(cls, name):
+        session = Session()
+        try:
+            return session.query(cls).filter_by(name=name).first()
+        except NoResultFound:
+            return None
+
 
 # ------------------------------------------------------------------------------
 class Collaboration(Base):
@@ -233,9 +241,13 @@ class Collaboration(Base):
     # TODO rename to 'find_by_name'
     @classmethod
     def get_collaboration_by_name(cls, name):
+        """Find collaboration by its name. 
+        
+        If multiple collaborations share the same name, the first 
+        collaboration found is returned."""
         session = Session()
         try:
-            return session.query(cls).filter_by(name=name).one()
+            return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
             return None
 
