@@ -17,6 +17,9 @@ DEFAULT_SERVER_ENVIRONMENT = "prod"
 #
 #   INSTALLATION SETTINGS
 #
-PACAKAGE_FOLDER = str(Path(__file__).parent.parent)
+PACAKAGE_FOLDER = Path(__file__).parent.parent
 
 APPNAME = "pytaskmanager"
+
+with open(Path(PACAKAGE_FOLDER) / APPNAME / "VERSION") as f:
+    VERSION = f.read()
