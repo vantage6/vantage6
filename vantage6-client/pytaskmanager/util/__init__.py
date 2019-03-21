@@ -14,7 +14,7 @@ from weakref import WeakValueDictionary
 
 import pytaskmanager.settings as settings
 
-from pytaskmanager import APPNAME
+from pytaskmanager.settings import APPNAME
 from pytaskmanager.util.context import validate_configuration
 from pytaskmanager.util.Configuration import ( ConfigurationManager, 
     ServerConfigurationManager, NodeConfigurationManager, 

@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pytaskmanager.settings as settings
 
-from pytaskmanager import util, node, APPNAME
+from pytaskmanager import util, node
+from pytaskmanager.settings import APPNAME
 from pytaskmanager.util.context import (
     configuration_wizard, select_configuration_questionaire)
 
