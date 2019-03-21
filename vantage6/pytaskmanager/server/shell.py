@@ -1,6 +1,7 @@
 import sys
 
-from pytaskmanager.server import db, APPNAME
+from pytaskmanager.server import db
+from pytaskmanager.settings import APPNAME
 from pytaskmanager import util
 from pytaskmanager.util.context import get_config_location
 
@@ -9,8 +10,7 @@ from sqlalchemy.engine.url import make_url
 def init(environment):
 
     ctx = util.AppContext(
-        application=APPNAME, 
-        instance_type='server', 
+        "server",
         instance_name='default'
     )
 
