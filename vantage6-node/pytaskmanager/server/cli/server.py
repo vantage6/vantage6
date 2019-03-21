@@ -86,15 +86,30 @@ def cli_server_start(ctx, ip, port, debug):
     server.run(ctx, ip, port, debug=debug)
 
 #
+#   list
+#
+@cli_server.command(name='list')
+def cli_server_configlocation():
+    """Print the location of the default config file."""
+    
+    
+    click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
+    click.echo("-"*70)
+    
+    sys_configs, f1 = util.ServerContext.available_configurations(system_folders=True)
+    for config in sys_configs:
+        click.echo(f"{config.name:25}{str(config.available_environments):32} System ") 
+
+    usr_configs, f2 = util.ServerContext.available_configurations(system_folders=False)
+    for config in usr_configs:
+        click.echo(f"{config.name:25}{str(config.available_environments):32} User   ") 
+    click.echo("-"*70)
+    click.echo(f"Number of failed imports: {len(f1)+len(f2)}")
+
+#
 #   files
 #
-@cli_server.command(name='config_location')
-@click.option('-n', '--name', default='default', help='server instance to use')
-def cli_server_configlocation(name):
-    """Print the location of the default config file."""
-    ctx = util.ServerContext(name,"test", False)
-    cfg_filename = get_config_location(ctx, config=None, force_create=False)
-    click.echo('{}'.format(cfg_filename))
+# TODO
 
 #
 #   import
