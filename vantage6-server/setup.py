@@ -58,7 +58,8 @@ setup(
         'sqlalchemy',
         'iknl-flasgger',
         'schema',
-        'questionary'
+        'questionary',
+        'ipython'
     ],
     package_data={  
         'pytaskmanager': [
