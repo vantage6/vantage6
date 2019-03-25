@@ -1,0 +1,42 @@
+organizations:
+  
+  - name:       A
+    domain:     a.example
+    address1:   Yet another lane 1
+    address2:   
+    zipcode:    1234AB
+    country:    Moon
+    users:
+      - username: root
+        firstname: root
+        lastname: robot
+        password: password
+        roles: "root"
+
+  - name:       B
+    domain:     b.example
+    address1:   Yet another lane 2
+    address2:   
+    zipcode:    1234AB
+    country:    Mars
+    users:
+      - username: admin@b.example
+        firstname: admin
+        lastname: robot
+        password: password
+        roles: "admin"
+
+collaborations:
+  - name: SINGLE
+    participants:
+      - {name: A, api-key: 'demo-key-node1'}
+    tasks: ["hello-world"]
+  
+  - name: DOUBLE
+    participants:
+      - {name: A, api-key: 'demo-key-node2'}
+      - {name: B, api-key: 'demo-key-node3'}
+    tasks: ["hello-world"]
+
+
+

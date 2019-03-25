@@ -71,7 +71,8 @@ setup(
     entry_points={
         'console_scripts': [
             'ppnode=pytaskmanager.node.cli.node:cli_node',
-            'ppserver=pytaskmanager.server.cli.server:cli_server'
+            'ppserver=pytaskmanager.server.cli.server:cli_server',
+            'ppdev=pytaskmanager.util.cli.develop:cli_develop'
         ],
     }
 )
