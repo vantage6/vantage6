@@ -174,6 +174,8 @@ class ConfigurationManager(object):
         config = {"application": dict(self.application), "environments": {
             "prod": dict(self.prod), "acc": dict(self.acc), "test": dict(self.test), 
             "dev": dict(self.dev)}}
+    
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)
 
