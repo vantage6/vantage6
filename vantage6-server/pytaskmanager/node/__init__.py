@@ -222,7 +222,7 @@ class NodeWorker(object):
             and task['database'] in self.config['databases']):
             database_uri = self.config['databases'][task['database']]
         else:
-            database_uri = self.config['database_uri']
+            database_uri = self.config['databases']["default"]
 
         # start docker container in the background
         self.__docker.run(
