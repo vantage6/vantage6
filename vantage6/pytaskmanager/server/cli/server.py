@@ -44,16 +44,20 @@ def click_insert_context(func):
         *args, **kwargs):
         
         # select configuration if none supplied
-        name, environment = (name, environment) if name else \
-            select_configuration_questionaire("server", system_folders)
-        
-        # raise error if config could not be found
-        if not util.ServerContext.config_exists(name,environment, system_folders):
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
+        if config:
+            ctx = util.ServerContext.from_external_config_file(config,
+                environment, system_folders)
+        else:    
+            name, environment = (name, environment) if name else \
+                select_configuration_questionaire("server", system_folders)
+            
+            # raise error if config could not be found
+            if not util.ServerContext.config_exists(name,environment, system_folders):
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
 
-        # create server context, and initialize db
-        ctx = util.ServerContext(name,environment=environment, 
-            system_folders=system_folders)
+            # create server context, and initialize db
+            ctx = util.ServerContext(name,environment=environment, 
+                system_folders=system_folders)
         db.init(ctx.get_database_uri())
 
         return func(ctx, *args, **kwargs)
@@ -148,7 +152,8 @@ def cli_server_new(name, environment, system_folders):
             f"{environment} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard("server", name, environment=environment)
+    cfg_file = configuration_wizard("server", name, environment=environment,
+        system_folders=system_folders)
     click.echo(f"New configuration created: {cfg_file}")
 
 #
