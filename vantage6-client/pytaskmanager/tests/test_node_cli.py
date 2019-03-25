@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from prompt_toolkit.input.defaults import create_pipe_input
 
 from pytaskmanager.util import NodeContext, TestContext
-from pytaskmanager.cli.node import ( cli_node_files, cli_node_list, 
+from pytaskmanager.node.cli.node import ( cli_node_files, cli_node_list, 
     cli_node_new_configuration, cli_node_start )
 
 # log = logging.getLogger(__name__.split(".")[-1])
