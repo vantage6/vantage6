@@ -21,3 +21,4 @@ flask_socketio
 socketIO_client
 schema
 questionary
+ipython
