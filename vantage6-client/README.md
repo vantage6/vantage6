@@ -5,7 +5,7 @@
 # Introduction
 The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is difficult due to patient privacy and data protection needs. Privacy preserving distributed learning technology has the potential to overcome these limitations. In this setting organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data safely on site and undisclosed. This repository contains software (and instructions) to setup a distributed learning infrastructure.
 
-For an overview of the architecture and information on how to use the infrastructure, please see [https://distributedlearning.ai](https://distributedlearning.ai).
+For an overview of the architecture and information on how to use the infrastructure, please see [https://distributedlearning.ai](https://distributedlearning.ai). For the developers documentation please see [https://distributedlearning.readme.io](https://distributedlearning.readme.io)
 
 ## Hardware and software requirements
 ### Server
