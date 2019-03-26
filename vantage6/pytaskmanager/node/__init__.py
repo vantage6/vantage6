@@ -90,7 +90,6 @@ class NodeWorker(object):
         # the queue.
         self.queue = queue.Queue()
         self.log.debug("start thread for incoming messages (tasks)")
-        # FIXME: should we be doing this "daemon=True" thing?
         t = Thread(target=self.__listening_worker, daemon=True)
         t.start()
 
@@ -113,7 +112,6 @@ class NodeWorker(object):
 
         # send results to the server when they come available.
         self.log.debug("Start thread for sending messages (results)")
-        # FIXME: should we be doing this "daemon=True" thing?
         t = Thread(target=self.__speaking_worker, daemon=True)
         t.start()
 

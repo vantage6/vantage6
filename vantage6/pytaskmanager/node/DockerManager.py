@@ -67,48 +67,21 @@ class DockerManager(object):
         
         # create I/O files for docker
         mounts = []
-
-        """
-            # files = [
-            #     ('input.txt', docker_input), 
-            #     ('output.txt', ''), 
-            #     ('token.txt', token), 
-            # ]
-
-            # for (filename, contents) in files:
-            #     bind = self.create_bind(filename, result_id, contents)
-            #     mounts.append(bind)
-        """
-
-        input_path = self.__create_file("input.txt", result_id, docker_input)
-        self.log.info(f'input_path: {input_path}')
-        mounts.append(
-            docker.types.Mount(
-                "/app/input.txt", 
-                input_path,
+        mount_files = [
+            ('input', docker_input), 
+            ('output', ''), 
+            ('token', token), 
+        ]
+        files = {}
+        for (filename, contents) in mount_files:
+            input_path = self.__create_file(filename+".txt", result_id, 
+                contents)
+            mounts.append(docker.types.Mount(
+                f"/app/{filename}.txt", 
+                input_path, 
                 type="bind"
-            )
-        )
-
-        output_path = self.__create_file("output.txt", result_id, "")
-        self.log.info(f'output_path: {output_path}')
-        mounts.append(
-            docker.types.Mount(
-                "/app/output.txt", 
-                output_path, 
-                type="bind"
-            )
-        )
-    
-        token_path = self.__create_file("token.txt", result_id, token)
-        self.log.info(f'token_path: {token_path}')
-        mounts.append(
-            docker.types.Mount(
-                "/app/token.txt", 
-                token_path, 
-                type="bind"
-            )
-        )
+            ))
+            files[filename+"_file"] = input_path
 
         # If the provided database URI is a file, we need to mount
         # it at a predefined path and update the environment variable
@@ -162,7 +135,7 @@ class DockerManager(object):
         self.tasks.append({
             "result_id": result_id,
             "container": container,
-            "output_file": output_path
+            "output_file": files["output_file"]
         })
 
         return True
@@ -174,28 +147,23 @@ class DockerManager(object):
         Once the container is obtained and the results are red, the 
         container is removed from the docker environment."""
 
-        # get finished results and get the first one, if no result is available this is blocking
-        while True:
+        # get finished results and get the first one, if no result is available 
+        # this is blocking
+        finished_tasks = []
+        while not finished_tasks:
             self.__refresh_container_statuses()
-            try:
-                # FIXME: Use list comprehension instead? e.g.
-                #   finished_tasks = [t for t in self.tasks if t['container'].status == 'exited']
-                finished_task = next(
-                    filter(
-                        lambda task: task["container"].status == "exited", 
-                        self.tasks
-                    )
-                )
-                self.log.debug(
-                    f"Result id={finished_task['result_id']} is finished"
-                )
-                break
-
-            except StopIteration:
-                # FIXME: without sleeping, this will burn CPU cycles!
-                time.sleep(1)
-                continue
+            
+            finished_tasks = [t for t in self.tasks \
+                if t['container'].status == 'exited']
+            
+            time.sleep(1)
         
+        # at least one task is finished
+        finished_task = finished_tasks.pop()
+        self.log.debug(
+            f"Result id={finished_task['result_id']} is finished"
+        )
+
         # get all info from the container and cleanup
         container = finished_task["container"]
         log = container.logs().decode('utf8')
@@ -239,7 +207,8 @@ class DockerManager(object):
     def __make_task_dir(self, result_id: int):
         """Creates a task directory for a specific result."""
         
-        task_dir = os.path.join(self.__tasks_dir, "task-{0:09d}".format(result_id))
+        task_dir = os.path.join(
+            self.__tasks_dir, "task-{0:09d}".format(result_id))
         self.log.info(f"Using '{task_dir}' for task")
         
         if os.path.exists(task_dir):
