@@ -228,7 +228,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
         return
     def refresh_token(self):
         """Containers cannot refresh their token."""
-        #TODO we might want to nitofy node/server about this...
+        #TODO we might want to notify node/server about this...
         raise Exception("Containers cannot refresh!")
 
     def get_results(self, task_id: int):
@@ -264,6 +264,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
         # server properties from this instance
         self.id = None
         self.name = None
+        self.collaboration_id = None
     
     def authenticate(self, api_key: str):
         """Nodes authenticate using an API-key"""
@@ -273,8 +274,10 @@ class ClientNodeProtocol(ClientBaseProtocol):
         # obtain the server authenticatable id
         self.id = jwt.decode(self.token, verify=False)['identity']
 
-        # set instance name
-        self.name = self.request(f"node/{self.id}").get("name")     
+        # get info on how the server sees me
+        node = self.request(f"node/{self.id}")
+        self.name = node.get("name")
+        self.collaboration_id = node.get("collaboration")
         
     def request_token_for_container(self, task_id: int, image: str):
         """Generate a token that can be used by a docker container"""

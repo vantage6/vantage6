@@ -11,6 +11,7 @@ class Result(NamedTuple):
     result_id: int
     logs: str
     data: str
+    status_code: int
 
 class DockerManager(object):
     """Wrapper for the docker module, to be used specifically for ppDLI.
@@ -160,18 +161,25 @@ class DockerManager(object):
         
         # at least one task is finished
         finished_task = finished_tasks.pop()
+
         self.log.debug(
             f"Result id={finished_task['result_id']} is finished"
         )
+        
+        # report if the container has a different status than 0
+        status_code = finished_task["container"].attrs["State"]["ExitCode"]
+        if status_code:
+            self.log.error(f"Received not 0 exitcode={status_code}")
 
         # get all info from the container and cleanup
         container = finished_task["container"]
+        
         log = container.logs().decode('utf8')
 
         try:
             container.remove()
         except Exception as e:
-            self.log.error(f"Failed to remove container {container}")
+            self.log.error(f"Failed to remove container {container.name}")
             self.log.debug(e)
 
         self.tasks.remove(finished_task)
@@ -183,7 +191,8 @@ class DockerManager(object):
         return Result(
             result_id=finished_task["result_id"], 
             logs=log, 
-            data=results
+            data=results,
+            status_code=status_code
         )
 
     def __refresh_container_statuses(self):
