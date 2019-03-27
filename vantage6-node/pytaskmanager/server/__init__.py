@@ -51,8 +51,11 @@ WEB_BASE = '/app'
 
 # Create Flask app
 app = Flask(APPNAME)
-# TODO app.config
+
 app.config['JWT_AUTH_URL_RULE'] ='/api/token'
+
+# False means refresh tokens never expire
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = False
 
 # Open Api Specification (f.k.a. swagger)
 app.config['SWAGGER'] = {
