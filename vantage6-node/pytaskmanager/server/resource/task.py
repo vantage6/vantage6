@@ -85,6 +85,14 @@ class Task(Resource):
         org_ids = data.get('organization_ids', [])
         db_ids = collaboration.get_organization_ids()
 
+        # TODO what happens if user's organization does not have a node that
+        # is part of a the collaboration
+        # if the 'master'-flag is set to true the (master) task is executed on 
+        # a node in the collaboration from the organization to which the user 
+        # belongs. If also organization_ids are supplied, then these are ignored.
+        if data.get("master", False) and g.user:            
+            org_ids = [g.user.organization_id]
+
         if not all([org_id in db_ids for org_id in org_ids]):
             return {"msg": f"At least one of the supplied organizations in not within the collaboration"},\
             HTTPStatus.BAD_REQUEST
