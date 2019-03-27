@@ -1,30 +1,18 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 import sys
 import os
-import pathlib
-import json
-import requests
 import time
 import datetime
-import subprocess
 import logging
-import jwt
 import queue
-import docker 
 
-from requests.compat import urljoin
-from pprint import pprint
-from threading import Thread, Event
+from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 
-from pytaskmanager import util
 from pytaskmanager.node.DockerManager import DockerManager
 from pytaskmanager.node.FlaskIO import ClientNodeProtocol, ServerInfo
 
 def name():
     return __name__.split('.')[-1]
-
 
 class NodeTaskNamespace(SocketIONamespace):
     """Class that handles incoming websocket events."""
@@ -56,6 +44,13 @@ class NodeTaskNamespace(SocketIONamespace):
         else:
             msg = 'Task Master Node reference not set is socket namespace'
             self.log.critical(msg)
+
+    def on_container_failed(self, run_id):
+        self.log.critical(
+            f"A container on a node within your collaboration part of run_id="
+            f"{run_id} has exited with a non-zero status_code"
+        )
+    #     #TODO handle run sequence on this node
 
 # ------------------------------------------------------------------------------
 class NodeWorker(object):
@@ -246,8 +241,8 @@ class NodeWorker(object):
         )
         
         # define() returns the instantiated action_handler 
-        namespace = self.socketIO.define(NodeTaskNamespace, '/tasks')
-        namespace.setNodeWorker(self)
+        self.socket_tasks = self.socketIO.define(NodeTaskNamespace, '/tasks')
+        self.socket_tasks.setNodeWorker(self)
 
         # Log the outcome
         if self.socketIO.connected:
@@ -287,8 +282,20 @@ class NodeWorker(object):
 
         while True:
             results = self.__docker.get_result()
+            
+            # notify all of a crashed container
+            if results.status_code: 
+                self.socket_tasks.emit(
+                    'container_failed', 
+                    self.flaskIO.id,
+                    results.status_code,
+                    results.result_id,
+                    self.flaskIO.collaboration_id
+                )
+                
             self.log.info(
                 f"Results (id={results.result_id}) are sent to the server!")
+
             self.flaskIO.patch_results(id=results.result_id, result={
                 'result': results.data,
                 'log': results.logs,
