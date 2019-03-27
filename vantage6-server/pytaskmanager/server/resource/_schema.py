@@ -102,8 +102,8 @@ class CollaborationSchemaSimple(ModelSchema):
 
 # ------------------------------------------------------------------------------
 class NodeSchema(ModelSchema):
-    organization = ma.HyperlinkRelated('organization_with_id')
-    collaboration = ma.HyperlinkRelated('collaboration_with_id')
+    # organization = ma.HyperlinkRelated('organization_with_id')
+    # collaboration = ma.HyperlinkRelated('collaboration_with_id')
 
     class Meta:
         model = db.Node

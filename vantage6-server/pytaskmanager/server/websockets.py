@@ -6,7 +6,6 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from flask_socketio import join_room, send, leave_room, emit, Namespace
 from flask import g, session, request
 
-
 class DefaultSocketNamespace(Namespace):
     """Handlers for SocketIO events are different than handlers for routes and that 
     introduces a lot of confusion around what can and cannot be done in a SocketIO handler. 
@@ -86,6 +85,19 @@ class DefaultSocketNamespace(Namespace):
     
     def on_join_room(self, room):
         self.__join_room_and_notify(room)
+
+    def on_container_failed(self, node_id, status_code, result_id, collaboration_id):
+        run_id = db.TaskResult.get(result_id).task.run_id
+        self.log.critical(
+            f"A container in for run_id={run_id} and result_id={result_id}"
+            f" within collaboration_id={collaboration_id} on node_id={node_id}"
+            f" exited with status_code={status_code}."
+        )
+        # emit('message', "somewhere in the universe a container has crashed", room='all_connections')
+        # print("collaboration_"+str(collaboration_id))
+        
+        room = "collaboration_"+str(collaboration_id)
+        emit("container_failed", run_id, room=room)
 
     def __join_room_and_notify(self, room):
         join_room(room)

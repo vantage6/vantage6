@@ -43,7 +43,7 @@ def cli_develop_start():
     node_b_config = dev_folder / "node_b.yaml"
     server_config = dev_folder / "server.yaml"
     server_fixtures = dev_folder / "fixtures.yaml"
-    print(str(server_fixtures))
+    
     # subprocess.call(["start", "ppserver", "start", "--name", "Test 3, we are going to make it happen"])
     
     subprocess.call(["ppserver", "import", str(server_fixtures), "--config", str(server_config), "--drop-all"], shell=False)
