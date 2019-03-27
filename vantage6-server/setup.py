@@ -64,7 +64,7 @@ setup(
         'pytaskmanager': [
             'server/server.wsgi', 
             'VERSION', 
-            '_data/*.yaml',
+            '_data/**/*.yaml',
             'server/resource/swagger/*.yaml'
         ],
     },
