@@ -58,7 +58,8 @@ setup(
         'iknl-flasgger',
         'schema',
         'questionary',
-        'ipython'
+        'ipython',
+        'cryptography'
     ],
     package_data={  
         'pytaskmanager': [
