@@ -11,11 +11,11 @@ For an overview of the architecture and information on how to use the infrastruc
 ### Server
 Running the central server requires a (virtual) machine that:
 * is accessible from the internet
-* has Python 3.6+ and the ppdli package installed (`pip install ppdli`)
+* has Python 3.6+ and the joey package installed (`pip install joey`)
 
 ### Node
 Running a node/site requires a (virtual) machine that has:
-* Python 3.6+ and the ppdli package installed (`pip install ppdli`)
+* Python 3.6+ and the joey package installed (`pip install joey`)
 * Docker CE installed (the user running the node software needs to have the proper permissions to perform docker commands)
 * Access to a local data store
 * Access to the internet and/or central server
