@@ -22,3 +22,4 @@ socketIO_client
 schema
 questionary
 ipython
+cryptography
