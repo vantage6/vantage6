@@ -1,0 +1,17 @@
+Metadata-Version: 1.2
+Name: ppDLI
+Version: 0.2.0.dev1
+Summary: Package and utilities for distributed learning
+Home-page: https://github.com/IKNL/ppDLI
+License: UNKNOWN
+Description: pytaskmanager
+        =======================
+        
+        Python package to facillitate distributed learning.
+        
+        `The source for this project is available here
+        <https://github.com/mellesies/pytaskmanager>`_.
+        
+        
+Platform: UNKNOWN
+Requires-Python: >=3

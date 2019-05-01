@@ -19,18 +19,18 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 
 # Read the API version from disk 
-with open(path.join(here, 'pytaskmanager', 'VERSION')) as fp:
+with open(path.join(here, 'joey', 'VERSION')) as fp:
     __version__ = fp.read()
 
 
 # Setup the package
 setup(
-    name='ppDLI',
+    name='joey',
     version=__version__,
     description='Package and utilities for distributed learning',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/IKNL/ppDLI',
+    url='https://github.com/IKNL/joey',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     python_requires='>=3',
     install_requires=[
@@ -62,7 +62,7 @@ setup(
         'cryptography'
     ],
     package_data={  
-        'pytaskmanager': [
+        'joey': [
             'server/server.wsgi', 
             'VERSION', 
             '_data/**/*.yaml',
@@ -71,9 +71,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'ppnode=pytaskmanager.node.cli.node:cli_node',
-            'ppserver=pytaskmanager.server.cli.server:cli_server',
-            'ppdev=pytaskmanager.util.cli.develop:cli_develop'
+            'ppnode=joey.node.cli.node:cli_node',
+            'ppserver=joey.server.cli.server:cli_server',
+            'ppdev=joey.util.cli.develop:cli_develop'
         ],
     }
 )
