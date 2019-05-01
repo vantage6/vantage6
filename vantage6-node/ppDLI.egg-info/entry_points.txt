@@ -1,0 +1,5 @@
+[console_scripts]
+ppdev = pytaskmanager.util.cli.develop:cli_develop
+ppnode = pytaskmanager.node.cli.node:cli_node
+ppserver = pytaskmanager.server.cli.server:cli_server
+
