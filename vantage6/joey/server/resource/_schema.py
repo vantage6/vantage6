@@ -31,7 +31,7 @@ class TaskResultSchema(ModelSchema):
     node = ma.HyperlinkRelated('node_with_node_id')
 
     class Meta:
-        model = db.TaskResult
+        model = db.Result
 
 
 # ------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ class ResultSchema(ModelSchema):
     task = ma.HyperlinkRelated('task_with_id')
 
     class Meta:
-        model = db.TaskResult
+        model = db.Result
 
 class ResultTaskIncludedSchema(ResultSchema):
     task = fields.Nested('TaskSchema', many=False)
