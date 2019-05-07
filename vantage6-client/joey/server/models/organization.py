@@ -31,8 +31,6 @@ class Organization(Base):
     task_assignment = relationship("TaskAssignment", 
         back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
-    task_assignment = relationship("TaskAssignment", 
-        back_populates="organization")
     users = relationship("User", back_populates="organization")
 
     @classmethod

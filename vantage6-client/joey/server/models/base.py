@@ -9,6 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
+
 
 from joey.util import Singleton
 
@@ -23,7 +25,6 @@ class Database(metaclass=Singleton):
         self.object_session = None
 
     def drop_all(self):
-        log.warn("Dropping existing tables!")
         Base.metadata.drop_all(self.engine)
         Base.metadata.create_all(bind=self.engine)
 

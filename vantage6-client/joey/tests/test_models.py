@@ -1,34 +1,269 @@
 import logging
 import unittest
-
-# from pathlib import Path
-# from click.testing import CliRunner
-# from prompt_toolkit.input.defaults import create_pipe_input
-
-# from joey.util import NodeContext, TestContext
+import yaml
+import bcrypt
+import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+
+from joey.server.controllers.fixture import load
+from joey.server.models.base import Database, Base
+from joey.constants import PACAKAGE_FOLDER, APPNAME
+
 from joey.server.models import (
     Base,
-    User
+    User,
+    Organization,
+    Collaboration,
+    Task,
+    TaskAssignment,
+    Result,
+    Node
 )
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.DEBUG
 
-class TestQuery(unittest.TestCase):
+class TestUserModel(unittest.TestCase):
 
     def setUp(self):
-        self.engine = create_engine('sqlite:///:memory:')
-        self.session = Session(self.engine)
-        Base.metadata.create_all(self.engine)
-        # self.panel = Panel(1, 'ion torrent', 'start')
-        # self.session.add(self.panel)
-        self.session.commit()
-    
+        Database().connect("sqlite:////:memory:")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
     def trearDown(self):
-        Base.metadata.drop_all(self.engine)
+        Database().drop_all()
 
-    def test_files_using_name(self):
-        assert 1 == 1
+    def test_relations(self):
+        organization = self.entities.get("organizations")[0]
+        user = organization.get("users")[0]
+        db_user = User.get(1)
+        assert db_user.organization.name == organization.get("name"), "incorrect organization"
+
+    def test_read(self):
+        for org in self.entities.get("organizations"):
+            for user in org.get("users"):
+                db_user = User.getByUsername(user["username"])
+                assert db_user.username == user["username"], "incorrect username"
+                assert db_user.firstname == user["firstname"], "incorrect firstname"
+                assert db_user.lastname == user["lastname"], "incorrect lastname"
+                assert db_user.check_password(user["password"]) , "incorrect password"
+    
+    def test_insert(self):
+        db_organization = Organization.get(1)
+        user = User(
+            username="unit",
+            firstname="un",
+            lastname="it",
+            roles="admin",
+            organization=db_organization
+        )
+        user.set_password("unit_pass")
+        user.save()
+        db_user = User.getByUsername("unit")
+        assert db_user, "user is not saved at all?"
+        assert db_user.username == "unit", "username incorrect"
+        assert db_user.firstname == "un", "firstname incorrect"
+        assert db_user.lastname == "it", "lastname incorrect"
+        assert db_user.roles == "admin", "roles incorrect"
+        assert db_user.organization == db_organization, "organization incorrect"
+
+    def test_methods(self):
+        user = self.entities.get("organizations")[0].get("users")[0]
+        assert User.getByUsername(user.get("username"))
+        assert User.username_exists(user.get("username"))
+        assert User.get_user_list()
+
+
+class TestCollaborationModel(unittest.TestCase):
+    def setUp(self):
+        Database().connect("sqlite:////:memory:")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
+    def trearDown(self):
+        Database().drop_all()
+
+    def test_read(self):
+        for col in self.entities.get("collaborations"):
+            db_collaboration = Collaboration.get_collaboration_by_name(col.get("name"))
+            assert db_collaboration.name == col.get("name"), "incorrect name"
+
+    def test_insert(self):
+        col = Collaboration(
+            name="unit_collaboration"
+        )
+        col.save()
+        db_col = Collaboration.get_collaboration_by_name("unit_collaboration")
+        assert db_col == col, "Collaboration not correct stored in the database"
+
+    def test_methods(self):
+        db_col = Collaboration.get(1)
+        org_ids = db_col.get_organization_ids()
+        self.assertIsInstance(org_ids, list)
+        self.assertIsInstance(db_col.get_task_ids(), list)
+        for node in db_col.get_nodes_from_organizations(org_ids):
+            self.assertIsInstance(node, Node)
+    
+    def test_relations(self):
+        db_col = Collaboration.get(1)
+        for node in db_col.nodes:
+            self.assertIsInstance(node,Node)
+        for organization in db_col.organizations:
+            self.assertIsInstance(organization, Organization)
+
+
+class TestNodeModel(unittest.TestCase):
+    def setUp(self):
+        Database().connect("sqlite:////:memory:")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
+    def trearDown(self):
+        Database().drop_all()
+
+    def test_read(self):
+        for node in Node.get():
+            self.assertIsInstance(node.name, str)
+            self.assertIsInstance(node.api_key, str)
+
+    def test_insert(self):
+        collaboration = Collaboration.get(1)
+        organization = collaboration.organizations[0]
+        node = Node(
+            name="unit_node",
+            api_key="that-we-never-use",
+            collaboration=collaboration,
+            organization=organization
+        )
+        node.save()
+
+        node = Node.get_by_api_key("that-we-never-use")
+        self.assertIsNotNone(node)
+        self.assertIsInstance(node,Node)
+        self.assertEqual(node.name, "unit_node", "names do not match")
+        self.assertEqual(node.api_key, "that-we-never-use", "api-keys are messed up")
+        self.assertEqual(node.collaboration, collaboration, "collaboration do not match")
+        self.assertEqual(node.organization, organization, "names do not match")
+
+    def test_methods(self):
+        node = Node.get()[0]
+        self.assertIsInstance(Node.get_by_api_key(node.api_key), Node)
+    
+    def test_relations(self):
+        node = Node.get()[0]
+        self.assertIsNotNone(node)
+        self.assertIsInstance(node.organization, Organization)
+        self.assertIsInstance(node.collaboration, Collaboration)
+        for organization in node.collaboration.organizations:
+            self.assertIsInstance(organization, Organization)
+            for user in organization.users:
+                self.assertIsInstance(user, User)
+
+class TestOrganizationModel(unittest.TestCase):
+    def setUp(self):
+        Database().connect("sqlite:////:memory:")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
+    def trearDown(self):
+        Database().drop_all()
+
+    def test_read(self):
+        for organization in self.entities.get("organizations"):
+            org = Organization.get_by_name(organization.get("name"))
+            self.assertEqual(org.name, organization.get("name"))
+            self.assertEqual(org.domain, organization.get("domain"))
+            self.assertEqual(org.address1, organization.get("address1"))
+            self.assertEqual(org.address2, organization.get("address2"))
+            self.assertEqual(org.zipcode, str(organization.get("zipcode")))
+            self.assertEqual(org.country, organization.get("country"))
+
+            for user in organization.get("users"):
+                db_user = User.getByUsername(user.get("username"))
+                self.assertIsNotNone(db_user)
+                self.assertEqual(db_user.organization.name, organization.get("name"))
+
+    def test_insert(self):
+        col = Collaboration.get()
+        org = Organization(
+            name="unit_organization",
+            domain="testers.com",
+            address1="memorylane 1",
+            zipcode="bla",
+            country="RAM",
+            public_key="nonsense",
+            collaborations=col
+        )
+        org.save()
+
+        db_org = Organization.get_by_name("unit_organization")
+        self.assertEqual(db_org, org)
+
+    def test_methods(self):
+        name = self.entities.get("organizations")[0].get("name")
+        self.assertIsNotNone(Organization.get_by_name(name))
+
+    def test_relations(self):
+        for organization in Organization.get():
+            for node in organization.nodes:
+                self.assertIsInstance(node, Node)
+            for collaboration in organization.collaborations:
+                self.assertIsInstance(collaboration, Collaboration)
+            for user in organization.users:
+                self.assertIsInstance(user, User)
+            for assignment in organization.task_assignment:
+                self.assertIsInstance(assignment, TaskAssignment)
+
+
+class TestResultModel(unittest.TestCase):
+    def setUp(self):
+        Database().connect("sqlite:////:memory:")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
+    def trearDown(self):
+        Database().drop_all()
+
+    def test_read(self):
+        for result in Result.get():
+            self.assertIsInstance(result, Result)
+            self.assertIsNone(result.result)
+            self.assertIsInstance(result.assigned_at, datetime.datetime)
+            self.assertIsNone(result.started_at)
+            self.assertIsNone(result.finished_at)
+
+    def test_insert(self):
+        task = Task(name="unit_task")
+        task_assignment = TaskAssignment(
+            task=task,
+            organization=Organization.get()[0]
+        )
+        result = Result(
+            task_assignment = task_assignment
+        )
+        result.save()
+        self.assertEqual(task_assignment.result, result)
+
+
+    def test_methods(self):
+        for result in Result.get():
+            self.assertFalse(result.complete)
+
+    def test_relations(self):
+        result = Result.get()[0]
+        self.assertIsInstance(result.task_assignment.organization, Organization)
+        for user in result.task_assignment.organization.users:
+            self.assertIsInstance(user, User)
+        self.assertIsInstance(result.task_assignment.task, Task)
