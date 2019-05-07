@@ -1,6 +1,6 @@
 import bcrypt 
 
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, exists
 from sqlalchemy.orm import relationship
 
 from .base import Database
@@ -31,15 +31,15 @@ class User(Authenticatable):
     # relationships
     organization = relationship("Organization", back_populates="users")
 
-    # TODO init method not required
-    def __init__(self, username=None, password='password',
-                 firstname=None, lastname=None, organization_id=None, roles='Administrator'):
-        self.username = username
-        self.set_password(password)
-        self.firstname = firstname
-        self.lastname = lastname
-        self.roles = roles
-        self.organization_id = organization_id
+    # # TODO init method not required
+    # def __init__(self, username=None, password='password',
+    #              firstname=None, lastname=None, organization_id=None, roles='Administrator'):
+    #     self.username = username
+    #     self.set_password(password)
+    #     self.firstname = firstname
+    #     self.lastname = lastname
+    #     self.roles = roles
+    #     self.organization_id = organization_id
 
     # Copied from https://docs.pylonsproject.org/projects/pyramid/en/master/tutorials/wiki2/definingmodels.html
     def set_password(self, pw):
@@ -48,8 +48,8 @@ class User(Authenticatable):
 
     # Copied from https://docs.pylonsproject.org/projects/pyramid/en/master/tutorials/wiki2/definingmodels.html
     def check_password(self, pw):
-        if self.password_hash is not None:
-            expected_hash = self.password_hash.encode('utf8')
+        if self.password is not None:
+            expected_hash = self.password.encode('utf8')
             return bcrypt.checkpw(pw.encode('utf8'), expected_hash)
         return False
 

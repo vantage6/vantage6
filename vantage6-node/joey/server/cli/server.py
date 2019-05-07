@@ -179,7 +179,7 @@ def cli_server_import(ctx, file_, drop_all):
     with open(file_) as f:
         entities = yaml.safe_load(f.read())
     
-    fixture.load(ctx, entities, drop_all=drop_all)
+    fixture.load(entities, drop_all=drop_all)
 
 #
 #   shell

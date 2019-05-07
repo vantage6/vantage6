@@ -7,9 +7,10 @@ from joey.server.models.base import Database
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-def load(ctx, fixtures, drop_all=False):
-
-    if drop_all:
+def load(fixtures, drop_all=False):
+    # TODO we are not sure the DB is connected here....
+    
+    if drop_all:    
         Database().drop_all()
 
     log.info("Create Organizations and Users")
@@ -24,6 +25,7 @@ def load(ctx, fixtures, drop_all=False):
         # create users
         for usr in org.get("users",{}):
             user = db.User(**usr)
+            user.set_password(usr.get("password"))
             user.organization_id=organization.id
             user.save()
             log.debug(f"processed user={user.username}")
