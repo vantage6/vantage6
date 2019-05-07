@@ -35,7 +35,8 @@ log = logging.getLogger(module_name)
 
 import json
 
-from . import db
+from joey.server import db
+
 from joey import util
 from joey.constants import APPNAME
 from joey.server.websockets import DefaultSocketNamespace
@@ -77,9 +78,9 @@ api = Api(app)
 @api.representation('application/json')
 def output_json(data, code, headers=None):
 
-    if isinstance(data, db.Base):
+    if isinstance(data, models.Base):
         data = db.jsonable(data)
-    elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
+    elif isinstance(data, list) and len(data) and isinstance(data[0], models.Base):
         data = db.jsonable(data)
 
     resp = make_response(json.dumps(data), code)
@@ -100,10 +101,10 @@ jwt = JWTManager(app)
 @jwt.user_claims_loader
 def user_claims_loader(identity):
     roles = []
-    if isinstance(identity, db.User):
+    if isinstance(identity, models.User):
         type_ = 'user'
         roles = identity.roles.split(',')
-    elif isinstance(identity, db.Node):
+    elif isinstance(identity, models.Node):
         type_ = 'node'
     elif isinstance(identity, dict):
         type_ = 'container'
@@ -120,7 +121,7 @@ def user_claims_loader(identity):
 @jwt.user_identity_loader
 def user_identity_loader(identity):
 
-    if isinstance(identity, db.Authenticatable):
+    if isinstance(identity, models.Authenticatable):
         return identity.id
     if isinstance(identity, dict):
         return identity
@@ -131,7 +132,7 @@ def user_identity_loader(identity):
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
     if isinstance(identity, int):
-        return db.Authenticatable.get(identity)
+        return models.Authenticatable.get(identity)
     else:
         return identity
 
@@ -252,9 +253,9 @@ def connect_pty():
         # At this point we're sure that the user/client/whatever 
         # checks out
         user_or_node_id = get_jwt_identity()
-        auth = db.Authenticatable.get(user_or_node_id)
+        auth = models.Authenticatable.get(user_or_node_id)
 
-        if not isinstance(auth, db.User):
+        if not isinstance(auth, models.User):
             log.error("Sorry, but only users can use this websocket")
             return False
 
@@ -327,9 +328,9 @@ def connect_admin():
         # At this point we're sure that the user/client/whatever 
         # checks out
         user_or_node_id = get_jwt_identity()
-        auth = db.Authenticatable.get(user_or_node_id)
+        auth = models.Authenticatable.get(user_or_node_id)
 
-        if not isinstance(auth, db.User):
+        if not isinstance(auth, models.User):
             log.error("Sorry, but only users can use this websocket")
             return False
 
@@ -485,7 +486,7 @@ def run(ctx, *args, **kwargs):
 
     # Actually start the server
     # app.run(*args, **kwargs)
-    nodes, session = db.Node.get(with_session=True)
+    nodes, session = models.Node.get(with_session=True)
     for node in nodes:
         node.status = 'offline'
     session.commit()
