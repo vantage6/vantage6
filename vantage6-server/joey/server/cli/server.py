@@ -6,15 +6,22 @@ import os
 import errno
 import yaml
 
+# for shell python
+import joey.server.models as db
+
 from functools import wraps
 from pathlib import Path
 from traitlets.config import get_config
 
+from joey.server.models.base import Database
+
 from joey import server, util, constants
-from joey.server import db, shell
+from joey.server import shell
+
 from joey.server.controllers import fixture
 from joey.util.context import ( get_config_location, 
     select_configuration_questionaire, configuration_wizard ) 
+
 
 
 def click_insert_context(func):
@@ -58,7 +65,7 @@ def click_insert_context(func):
             # create server context, and initialize db
             ctx = util.ServerContext(name,environment=environment, 
                 system_folders=system_folders)
-        db.init(ctx.get_database_uri())
+        Database().connect(ctx.get_database_uri())
 
         return func(ctx, *args, **kwargs)
         
