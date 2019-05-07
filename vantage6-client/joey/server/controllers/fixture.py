@@ -1,15 +1,16 @@
 import uuid
 import logging
 
-from joey.server import db
+import joey.server.models as db
+from joey.server.models.base import Database
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-def load(ctx, fixtures, drop_all=True):
+def load(ctx, fixtures, drop_all=False):
 
-    uri = ctx.get_database_uri()
-    db.init(uri, drop_all=drop_all)
+    if drop_all:
+        Database().drop_all()
 
     log.info("Create Organizations and Users")
     for org in fixtures.get("organizations", {}):
@@ -61,18 +62,24 @@ def load(ctx, fixtures, drop_all=True):
         collaboration.save()
 
         # append dummy tasks to the collaboration
+        log.debug("Processing Task Assignments")
         for image in col.get("tasks",{}):
             task = db.Task(
                 name=f"Example task",
                 image=image,
-                collaboration=collaboration,
-                input="something"
+                collaboration=collaboration
             )
-            for node in collaboration.nodes:
-                task_result = db.TaskResult(
-                    node=node,
-                    task=task
+
+            for organization in collaboration.organizations:
+                task_assignment = db.TaskAssignment(
+                    input="something",
+                    task=task,
+                    organization=organization
                 )
+                task_result = db.Result(
+                    task_assignment=task_assignment
+                )
+
             task.save()
             log.debug(f"Processed task {task.name}")
 

@@ -21,7 +21,7 @@ from joey.util.Configuration import ( ConfigurationManager,
 
 
 class Singleton(type):
-    _instances = WeakValueDictionary()
+    _instances = {} #WeakValueDictionary()
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
