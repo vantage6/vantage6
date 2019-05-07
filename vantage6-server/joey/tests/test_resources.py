@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 import types
-
+import yaml
 import unittest
 import doctest
 import logging
+import json
 
 from flask import Flask, Response as BaseResponse, json
 from flask.testing import FlaskClient
 from werkzeug.utils import cached_property
 
-import json
-
 from joey import server
 from joey import util
 from joey.server import db
-from joey.server import fixtures
+from joey.constants import APPNAME, PACAKAGE_FOLDER
+from joey.server.controllers.fixture import load
+from joey.server.models.base import Database
 
 log = logging.getLogger(__name__.split('.')[-1])
 
@@ -57,10 +58,12 @@ class TestResources(unittest.TestCase):
 
     def setUp(self):
         """Called immediately before running a test method."""
-        # Use an in-memory database
-        db.init('sqlite://')
-        fixtures.create()
-
+        Database().connect("sqlite:////:memory:")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
         server.app.testing = True
         server.app.response_class = Response
         server.app.test_client_class = TestNode
@@ -76,7 +79,7 @@ class TestResources(unittest.TestCase):
 
         self.credentials = {
             'username': 'root',
-            'password': 'admin'
+            'password': 'password'
         }
 
     def login(self):

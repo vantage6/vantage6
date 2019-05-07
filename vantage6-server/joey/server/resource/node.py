@@ -155,7 +155,7 @@ class Node(Resource):
                 return {"msg": "you are not allowed to edit this node"}, HTTPStatus.FORBIDDEN  # 403
 
         if g.user:
-            is_root = g.user.roles = 'root'
+            is_root = g.user.roles == 'root'
 
             if is_root:
                 # root can do everything ... he's really cool
