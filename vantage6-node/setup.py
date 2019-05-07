@@ -71,9 +71,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'ppnode=joey.node.cli.node:cli_node',
-            'ppserver=joey.server.cli.server:cli_server',
-            'ppdev=joey.util.cli.develop:cli_develop'
+            'jnode=joey.node.cli.node:cli_node',
+            'jserver=joey.server.cli.server:cli_server',
+            'jdev=joey.util.cli.develop:cli_develop'
         ],
     }
 )
