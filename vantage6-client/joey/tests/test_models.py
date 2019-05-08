@@ -361,6 +361,3 @@ class TestTaskAssignment(unittest.TestCase):
         self.assertIsInstance(task_assignment.task, Task)
         self.assertIsInstance(task_assignment.organization, Organization)
         self.assertIsInstance(task_assignment.result, Result)
-
-    def test_travis_build_fail(self):
-        assert False, "Failing test, Travis build should fail"
