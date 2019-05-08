@@ -21,7 +21,7 @@ class TaskAssignment(Base):
     organization_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships
-    task = relationship("Task", back_populates="task_assignment")
+    task = relationship("Task", back_populates="task_assignments")
     organization = relationship("Organization", 
         back_populates="task_assignment")
     result = relationship("Result", uselist=False, back_populates="task_assignment")

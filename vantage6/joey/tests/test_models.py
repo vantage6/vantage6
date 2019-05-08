@@ -28,7 +28,7 @@ log.level = logging.DEBUG
 class TestUserModel(unittest.TestCase):
 
     def setUp(self):
-        Database().connect("sqlite:////:memory:")
+        Database().connect("sqlite://")
         file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
@@ -40,17 +40,17 @@ class TestUserModel(unittest.TestCase):
     def test_relations(self):
         organization = self.entities.get("organizations")[0]
         user = organization.get("users")[0]
-        db_user = User.get(1)
-        assert db_user.organization.name == organization.get("name"), "incorrect organization"
+        db_user = User.getByUsername(user.get("username"))
+        self.assertEqual(db_user.organization.name, organization["name"])
 
     def test_read(self):
         for org in self.entities.get("organizations"):
             for user in org.get("users"):
                 db_user = User.getByUsername(user["username"])
-                assert db_user.username == user["username"], "incorrect username"
-                assert db_user.firstname == user["firstname"], "incorrect firstname"
-                assert db_user.lastname == user["lastname"], "incorrect lastname"
-                assert db_user.check_password(user["password"]) , "incorrect password"
+                self.assertEqual(db_user.username, user["username"])
+                self.assertEqual(db_user.firstname, user["firstname"])
+                self.assertEqual(db_user.lastname, user["lastname"])
+                self.assertTrue(db_user.check_password(user["password"]))
     
     def test_insert(self):
         db_organization = Organization.get(1)
@@ -64,12 +64,7 @@ class TestUserModel(unittest.TestCase):
         user.set_password("unit_pass")
         user.save()
         db_user = User.getByUsername("unit")
-        assert db_user, "user is not saved at all?"
-        assert db_user.username == "unit", "username incorrect"
-        assert db_user.firstname == "un", "firstname incorrect"
-        assert db_user.lastname == "it", "lastname incorrect"
-        assert db_user.roles == "admin", "roles incorrect"
-        assert db_user.organization == db_organization, "organization incorrect"
+        self.assertEqual(db_user, user)
 
     def test_methods(self):
         user = self.entities.get("organizations")[0].get("users")[0]
@@ -80,7 +75,7 @@ class TestUserModel(unittest.TestCase):
 
 class TestCollaborationModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite:////:memory:")
+        Database().connect("sqlite://")
         file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
@@ -120,7 +115,7 @@ class TestCollaborationModel(unittest.TestCase):
 
 class TestNodeModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite:////:memory:")
+        Database().connect("sqlite://")
         file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
@@ -167,9 +162,10 @@ class TestNodeModel(unittest.TestCase):
             for user in organization.users:
                 self.assertIsInstance(user, User)
 
+
 class TestOrganizationModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite:////:memory:")
+        Database().connect("sqlite://")
         file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
@@ -227,7 +223,7 @@ class TestOrganizationModel(unittest.TestCase):
 
 class TestResultModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite:////:memory:")
+        Database().connect("sqlite://")
         file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
@@ -267,3 +263,102 @@ class TestResultModel(unittest.TestCase):
         for user in result.task_assignment.organization.users:
             self.assertIsInstance(user, User)
         self.assertIsInstance(result.task_assignment.task, Task)
+
+
+class TestTaskModel(unittest.TestCase):
+    def setUp(self):
+        Database().connect("sqlite://")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
+    def trearDown(self):
+        Database().drop_all()
+
+    def test_read(self):
+        db_tasks = Task.get()
+        for task in db_tasks:
+            self.assertIsInstance(task, Task)
+            self.assertIsInstance(task.name, str)
+            # self.assertIsInstance(task.description, str)
+            self.assertIsInstance(task.image, str)
+            self.assertIsInstance(task.collaboration, Collaboration)
+            self.assertIsInstance(task.run_id, int)
+            # self.assertIsInstance(task.database, str)
+            for task_assignment in task.task_assignments:
+                self.assertIsInstance(task_assignment, TaskAssignment)
+
+    def test_insert(self):
+        task = Task(name="unit_task")
+        task.save()
+        for task in Task.get():
+            if task.name == "unit_task":
+                db_task = task
+                break                
+        self.assertEqual(task, db_task)
+
+    def test_methods(self):
+        highest_id = 0
+        for task in Task.get():
+            if task.id > highest_id:
+                highest_id = task.id
+
+    def test_relations(self):
+        db_task = Task.get()
+        for task in db_task:
+            self.assertIsInstance(task, Task)
+            self.assertIsInstance(task.collaboration, Collaboration)
+            for task_assignment in task.task_assignments:
+                self.assertIsInstance(task_assignment, TaskAssignment)
+            self.assertIsInstance(task.task_assignments[0].result, Result)
+            for user in task.collaboration.organizations[0].users:
+                self.assertIsInstance(user, User)
+
+class TestTaskAssignment(unittest.TestCase):
+    def setUp(self):
+        Database().connect("sqlite://")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        with open(file_) as f:
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities, drop_all=True)
+        
+    def trearDown(self):
+        Database().drop_all()
+
+    def test_read(self):
+        db_task_assignments = TaskAssignment.get()
+        for task_assignment in db_task_assignments:
+            self.assertIsInstance(task_assignment, TaskAssignment)
+            self.assertIsInstance(task_assignment.input, str)
+            self.assertIsInstance(task_assignment.task, Task)
+            self.assertIsInstance(task_assignment.organization, Organization)
+            self.assertIsInstance(task_assignment.result, Result)
+        
+    def test_insert(self):
+        result = Result()
+        organization = Organization.get()[0]
+        task = Task.get()[0]
+        task_assignment = TaskAssignment(
+            organization=organization,
+            task=task,
+            result=result
+        )
+        task_assignment.save()
+        
+        for db_task_assignment in TaskAssignment.get():
+            if db_task_assignment.id == task_assignment.id:
+                db_ta = db_task_assignment
+                break
+        
+        self.assertEqual(task_assignment, db_ta)
+
+    def test_methods(self):
+        pass
+        
+    def test_relations(self):
+        task_assignment = TaskAssignment.get()[0]
+        self.assertIsInstance(task_assignment.task, Task)
+        self.assertIsInstance(task_assignment.organization, Organization)
+        self.assertIsInstance(task_assignment.result, Result)
+
