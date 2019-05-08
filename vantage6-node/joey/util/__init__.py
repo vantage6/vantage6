@@ -296,3 +296,16 @@ class TestContext(AppContext):
     def test_data_location():
         return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
             "_data" )
+
+    @environment.setter
+    def environment(self, env):
+        """Logging should be disabled in the test-context. Which was 
+        triggered in this setter.
+        """
+        assert self.config_manager, \
+            "Environment set before ConfigurationManager is initialized..."
+        assert env in self.config_manager.available_environments, \
+            f"Requested environment {env} is not found in the configuration"
+        self.__environment = env
+        self.config = self.config_manager.get(env)
+    
