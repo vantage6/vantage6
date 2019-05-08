@@ -33,7 +33,8 @@ class Singleton(type):
 class AppContext(metaclass=Singleton):
 
     INST_CONFIG_MANAGER = ConfigurationManager
-    
+    LOGGING_ENABLED = True
+
     def __init__(self, instance_type, instance_name, system_folders=False,
         environment=constants.DEFAULT_NODE_ENVIRONMENT):
         """instance name is equal to the config-filename..."""
@@ -135,7 +136,8 @@ class AppContext(metaclass=Singleton):
             f"Requested environment {env} is not found in the configuration"
         self.__environment = env
         self.config = self.config_manager.get(env)
-        self.setup_logging()
+        if self.LOGGING_ENABLED:
+            self.setup_logging()
 
     @classmethod
     def from_external_config_file(cls, path, instance_type, 
@@ -279,6 +281,7 @@ class ServerContext(AppContext):
 class TestContext(AppContext):
 
     INST_CONFIG_MANAGER = TestingConfigurationManager
+    LOGGING_ENABLED = False
     
     @classmethod
     def from_external_config_file(cls, path):
@@ -296,16 +299,4 @@ class TestContext(AppContext):
     def test_data_location():
         return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
             "_data" )
-
-    @environment.setter
-    def environment(self, env):
-        """Logging should be disabled in the test-context. Which was 
-        triggered in this setter.
-        """
-        assert self.config_manager, \
-            "Environment set before ConfigurationManager is initialized..."
-        assert env in self.config_manager.available_environments, \
-            f"Requested environment {env} is not found in the configuration"
-        self.__environment = env
-        self.config = self.config_manager.get(env)
-    
+        
