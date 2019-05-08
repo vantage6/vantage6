@@ -138,7 +138,7 @@ def run_tests(suites):
     # Setting verbosity=1 will display dots instead.
     result = TestRunner(log, verbosity=2).run(suites)
     log.info(result)
-    print()
+    sys.exit(not result.wasSuccessful())
 
 
 # ------------------------------------------------------------------------------
