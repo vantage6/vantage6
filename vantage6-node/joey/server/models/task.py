@@ -1,10 +1,9 @@
-from sqlalchemy import Column, String, Text, ForeignKey, Integer
+from sqlalchemy import Column, String, Text, ForeignKey, Integer, sql
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from .base import Base, Database
 from .collaboration import Collaboration
-
 
 
 class Task(Base):
@@ -27,7 +26,7 @@ class Task(Base):
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
-    task_assignment = relationship("TaskAssignment", back_populates="task")
+    task_assignments = relationship("TaskAssignment", back_populates="task")
 
     @hybrid_property
     def complete(self):
