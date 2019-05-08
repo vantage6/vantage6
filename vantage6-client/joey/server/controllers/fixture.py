@@ -69,7 +69,8 @@ def load(fixtures, drop_all=False):
             task = db.Task(
                 name=f"Example task",
                 image=image,
-                collaboration=collaboration
+                collaboration=collaboration,
+                run_id=db.Task.next_run_id()
             )
 
             for organization in collaboration.organizations:
@@ -81,6 +82,7 @@ def load(fixtures, drop_all=False):
                 task_result = db.Result(
                     task_assignment=task_assignment
                 )
+                task_result.save()
 
             task.save()
             log.debug(f"Processed task {task.name}")

@@ -58,7 +58,7 @@ class TestResources(unittest.TestCase):
 
     def setUp(self):
         """Called immediately before running a test method."""
-        Database().connect("sqlite:////:memory:")
+        Database().connect("sqlite://")
         file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
