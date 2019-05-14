@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound
 
 from .base import Database
 from .authenticable import Authenticatable

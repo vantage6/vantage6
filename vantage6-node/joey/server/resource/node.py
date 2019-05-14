@@ -15,6 +15,9 @@ from flasgger.utils import swag_from
 from . import with_user_or_node, with_user
 from pathlib import Path
 
+
+from joey.server.models.base import Database
+
 from ._schema import *
 
 module_name = __name__.split('.')[-1]
@@ -55,8 +58,10 @@ class Node(Resource):
     node_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_node_with_node_id.yaml")), endpoint='node_with_node_id')
-    @swag_from(str(Path(r"swagger/get_node_without_node_id.yaml")), endpoint='node_without_node_id')
+    @swag_from(str(Path(r"swagger/get_node_with_node_id.yaml")), 
+        endpoint='node_with_node_id')
+    @swag_from(str(Path(r"swagger/get_node_without_node_id.yaml")), 
+        endpoint='node_without_node_id')
     def get(self, id=None):
         nodes = db.Node.get(id)
         user_or_node = g.user or g.node
@@ -67,15 +72,20 @@ class Node(Resource):
 
         if id:
             if not nodes:
-                return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
-            if (not is_root) and (nodes.organization_id != user_or_node.organization_id) and (g.user.roles != 'admin'):
-                return {"msg": "you are not allowed to see this node"}, HTTPStatus.FORBIDDEN  # 403
+                return {"msg": "node with id={} not found".format(id)}, \
+                    HTTPStatus.NOT_FOUND  # 404
+            if (not is_root) \
+                and (nodes.organization_id != user_or_node.organization_id) \
+                and (g.user.roles != 'admin'):
+                return {"msg": "you are not allowed to see this node"}, \
+                    HTTPStatus.FORBIDDEN  # 403
         else:
             # only the nodes of the users organization are returned
             if g.user.roles in ['root', 'admin']:
                 nodes = [node for node in nodes]
-            elif g.user.roles != 'admin':
-                nodes = [node for node in nodes if node.organization_id == g.user.organization_id]
+            else:
+                nodes = [node for node in nodes \
+                    if node.organization_id == g.user.organization_id]
 
         return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
 
@@ -105,6 +115,7 @@ class Node(Resource):
 
         # store the new node
         # TODO an admin does not have to belong to an organization?
+        # TODO we need to check that the organization belongs to the collaboration
         organization = g.user.organization
         node = db.Node(
             name="{} - {} Node".format(organization.name, collaboration.name),
@@ -203,16 +214,20 @@ class NodeTasks(Resource):
         If the query parameter 'state' equals 'open' the list is
         filtered to return only tasks without result.
         """
-
         # get tasks that belong to node <id>
         node = db.Node.get(id)
         if not node:
             return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
 
-        # filter tasks if a specific state is requested
-        if request.args.get('state') == 'open':
-            results = [result for result in node.taskresults if not result.finished_at]
-            return self.task_result_schema.dump(results, many=True), HTTPStatus.OK  # 200
-
-        results = [result for result in node.taskresults]
-        return results, HTTPStatus.OK  # 200
+        # select tasks from organization that are within the collaboration
+        # of the node
+        results = []
+        for ta in node.organization.task_assignments:
+            results_for_node = ta.task.results(node)
+            if request.args.get('state') == 'open':
+                results.extend([result for result in results_for_node \
+                    if result.complete])
+            else:
+                results.extend(results_for_node)
+            
+        return self.task_result_schema.dump(results, many=True), HTTPStatus.OK  # 200
