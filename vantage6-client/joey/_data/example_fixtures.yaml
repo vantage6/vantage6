@@ -21,6 +21,7 @@ organizations:
         firstname: Melle
         lastname: Sieswerda
         password: password
+        roles: "researcher"
 
   - name:       Small Organization
     domain:     small-organization.example

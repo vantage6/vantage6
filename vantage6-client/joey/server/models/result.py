@@ -3,8 +3,10 @@ import datetime
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
+# from sqlalchemy.ext.associationproxy import association_proxy
 
-from .base import Base
+from .base import Base, Database
+from .node import Node
 
 
 class Result(Base):
@@ -30,9 +32,19 @@ class Result(Base):
     def complete(self):
         return self.finished_at is not None
 
+    @property
+    def node(self):
+        collaboration = self.task_assignment.task.collaboration
+        nodes = self.task_assignment.organization.nodes
+        for node in nodes:
+            if node.collaboration == collaboration:
+                return node
+        return None
+
     def __repr__(self):
-        return (
-            f"<task:{self.task_assignment.task.name}, "
+        return ("<"
+            f"Result task:{self.task_assignment.task.name}, "
             f"organization: {self.task_assignment.organization.name}, "
-            f"is_complete: {self.complete}>"
-        )
+            f"collaboration: {self.task_assignment.task.collaboration.name}, "
+            f"is_complete: {self.complete}"
+        ">")

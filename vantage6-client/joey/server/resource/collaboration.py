@@ -313,13 +313,18 @@ class CollaborationTask(Resource):
             description=data.get('description', ''),
             image=data.get('image', ''),
             input=data.get('input', '') if isinstance(data.get('input', ''), str) else json.dumps(data.get('input')),
-            status="open"
         )
-
-        for node in collaboration.nodes:
-            db.TaskResult(task=task, node=node)
-
         task.save()
+
+        for organization in collaboration.organizations:
+            task_assignment = db.TaskAssignment(
+                organization=organization,
+                task = task
+            )
+            task_assignment.save()    
+            result = db.Result(task_assignment=task_assignment)
+            result.save()
+
         return tasks_schema.dump(collaboration.tasks, many=True)
 
     @with_user
