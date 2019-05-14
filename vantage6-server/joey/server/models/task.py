@@ -30,7 +30,15 @@ class Task(Base):
 
     @hybrid_property
     def complete(self):
-        return all([r.result.complete() for r in self.task_assignment])
+        return all([r.result.complete() for r in self.task_assignments])
+    
+    def results(self, node=None):
+        if node:
+            return [ta.result for ta in self.task_assignments if \
+                ta.task.collaboration==node.collaboration and \
+                ta.organization==node.organization ]
+        
+        return [ta.result for ta in self.task_assignments]
 
     @classmethod
     def next_run_id(cls):
@@ -42,4 +50,7 @@ class Task(Base):
             return 1
 
     def __repr__(self):
-        return f"<name:{self.name}, collaboration:{self.collaboration.name}>"
+        return (f"<Task "
+            f"name:{self.name}, "
+            f"collaboration:{self.collaboration.name}"
+        ">")

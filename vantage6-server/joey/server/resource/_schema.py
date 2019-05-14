@@ -27,8 +27,8 @@ class TaskIncludedSchema(TaskSchema):
 class TaskResultSchema(ModelSchema):
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
     _id = ma.URLFor('result_with_id', id='<id>')
-    task = ma.HyperlinkRelated('task_with_id')
-    node = ma.HyperlinkRelated('node_with_node_id')
+    # task = ma.HyperlinkRelated('task_with_id')
+    # node = ma.HyperlinkRelated('node_with_node_id')
 
     class Meta:
         model = db.Result

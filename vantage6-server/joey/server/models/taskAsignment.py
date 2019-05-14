@@ -23,8 +23,8 @@ class TaskAssignment(Base):
     # relationships
     task = relationship("Task", back_populates="task_assignments")
     organization = relationship("Organization", 
-        back_populates="task_assignment")
+        back_populates="task_assignments")
     result = relationship("Result", uselist=False, back_populates="task_assignment")
 
     def __repr__(self):
-        return f"<task:{self.task.name}, organization:{self.organization.name}>"
+        return f"<TaskAssignment task:{self.task.name}, organization:{self.organization.name}>"

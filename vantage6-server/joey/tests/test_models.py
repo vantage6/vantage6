@@ -256,6 +256,8 @@ class TestResultModel(unittest.TestCase):
     def test_methods(self):
         for result in Result.get():
             self.assertFalse(result.complete)
+            self.assertIsInstance(result.node, Node)
+        
 
     def test_relations(self):
         result = Result.get()[0]

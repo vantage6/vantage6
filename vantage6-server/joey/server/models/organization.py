@@ -28,7 +28,7 @@ class Organization(Base):
     # relations
     collaborations = relationship("Collaboration", secondary="Member",
         back_populates="organizations")
-    task_assignment = relationship("TaskAssignment", 
+    task_assignments = relationship("TaskAssignment", 
         back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
