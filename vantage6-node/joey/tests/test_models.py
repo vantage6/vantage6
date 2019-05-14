@@ -217,7 +217,7 @@ class TestOrganizationModel(unittest.TestCase):
                 self.assertIsInstance(collaboration, Collaboration)
             for user in organization.users:
                 self.assertIsInstance(user, User)
-            for assignment in organization.task_assignment:
+            for assignment in organization.task_assignments:
                 self.assertIsInstance(assignment, TaskAssignment)
 
 
