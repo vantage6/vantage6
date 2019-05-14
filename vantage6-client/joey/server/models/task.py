@@ -30,7 +30,7 @@ class Task(Base):
 
     @hybrid_property
     def complete(self):
-        return all([r.result.complete() for r in self.task_assignments])
+        return all([r.result.complete for r in self.task_assignments])
     
     def results(self, node=None):
         if node:

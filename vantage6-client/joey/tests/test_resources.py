@@ -270,6 +270,11 @@ class TestResources(unittest.TestCase):
         result = self.app.get("/api/result", headers=headers)
         self.assertEqual(result.status_code, 200)
     
+    def test_task_with_id(self):
+        headers = self.login("root")
+        result = self.app.get("/api/task/1", headers=headers)
+        self.assertEqual(result.status_code, 200)
+
     def test_task_witout_id(self):
         headers = self.login("root")
         result = self.app.get("/api/task", headers=headers)
