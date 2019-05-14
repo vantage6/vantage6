@@ -8,7 +8,7 @@ import json
 import flask
 from flask import g, request, url_for
 from flask_restful import Resource
-from . import with_user_or_node, with_user
+from . import with_user_or_node, with_user, only_for
 from ._schema import *
 from http import HTTPStatus
 from flasgger import swag_from
@@ -39,10 +39,10 @@ def setup(api, API_BASE):
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Stats(Resource):
-    """Resource for /api/task"""
+    """Resource for /api/stats"""
 
     # stats_schema = StatsSchema()
-    @with_user_or_node
+    @only_for(["user", "node"])
     def get(self, id=None):
         schema = CollaborationSchemaSimple(many=True)
 

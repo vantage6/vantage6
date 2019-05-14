@@ -15,7 +15,10 @@ from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
-from joey.server import db, socketio, api
+from joey.server import socketio, api
+from joey.server.models import ( Result as db_Result, Node, TaskAssignment,
+    Task, Collaboration, Organization )
+from joey.server.models.base import Database
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -49,27 +52,31 @@ result_inc_schema = ResultTaskIncludedSchema()
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Result(Resource):
-    """Resource for /api/task"""
+    """Resource for /api/result"""
 
     @only_for(['node', 'user', 'container'])
     @swag_from(str(Path(r"swagger/get_result_with_id.yaml")),endpoint="result_with_id")
     @swag_from(str(Path(r"swagger/get_result_without_id.yaml")), endpoint="result_without_id")
     def get(self, id=None):
         if id:
-            t = db.TaskResult.get(id)
+            t = db_Result.get(id)
         else:
-            session = db.Session()
-            q = session.query(db.TaskResult)
+            
+            session = Database().Session
+            q = session.query(db_Result)
 
             if request.args.get('state') == 'open':
-                q = q.filter(db.TaskResult.finished_at == None)
+                q = q.filter(db_Result.finished_at == None)
 
-            if request.args.get('node_id'):
-                q = q.filter_by(node_id=request.args.get('node_id'))
-            
+            q = q.join(TaskAssignment)
             if request.args.get('task_id'):
-                q = q.filter_by(task_id=request.args.get('task_id'))
+             q = q.filter_by(task_id=request.args.get('task_id'))
 
+            q = q.join(Organization).join(Node).join(Task).join(Collaboration)
+            if request.args.get('node_id'):
+                q = q.filter(db.Node.id==request.args.get('node_id'))\
+                    .filter(db.Collaboration.id==db.Node.collaboration_id)
+            
             t = q.all()
 
         if request.args.get('include') == 'task':
@@ -84,7 +91,7 @@ class Result(Resource):
     def patch(self, id):
         """Update a Result."""
         data = request.get_json()
-        result = db.TaskResult.get(id)
+        result = db_Result.get(id)
 
         if result.node_id != g.node.id:
             return {"msg": "This is not your result to PATCH!"}, HTTPStatus.UNAUTHORIZED

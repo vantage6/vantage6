@@ -145,7 +145,7 @@ class Task(Resource):
 
         for node in nodes:
             log.debug(f"   Assigning task to '{node.name}'")
-            db.TaskResult(task=task, node=node)
+            db.Result(task=task, node=node)
 
         # commit the new TaskResult(s)
         task.save()

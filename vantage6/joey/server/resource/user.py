@@ -63,6 +63,7 @@ class User(Resource):
                 ).data
 
         else:
+            # TODO check if this user can be viewed
             if not all_users:
                 return {"msg": "user id={} is not found".format(user_id)}, HTTPStatus.NOT_FOUND
             else:
