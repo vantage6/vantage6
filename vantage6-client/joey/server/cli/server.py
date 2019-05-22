@@ -18,7 +18,7 @@ from joey.server.models.base import Database
 from joey import server, util, constants
 from joey.server import shell
 
-from joey.server.controllers import fixture
+from joey.server.controller import fixture
 from joey.util.context import ( get_config_location, 
     select_configuration_questionaire, configuration_wizard ) 
 
