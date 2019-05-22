@@ -7,7 +7,7 @@ import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from joey.server.controllers.fixture import load
+from joey.server.controller.fixture import load
 from joey.server.models.base import Database, Base
 from joey.constants import PACAKAGE_FOLDER, APPNAME
 
