@@ -8,7 +8,7 @@ import json
 from flask import g, request, url_for
 from flask_restful import Resource
 from . import with_user_or_node, with_user, only_for
-from ._schema import TaskSchema, TaskIncludedSchema
+from ._schema import TaskSchema, TaskIncludedSchema, TaskResultSchema
 from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
@@ -223,6 +223,8 @@ class Task(Resource):
 class TaskResult(Resource):
     """Resource for /api/task/<int:id>/result"""
 
+    task_result_schema = TaskResultSchema()
+
     @only_for(['user', 'container'])
     @swag_from(str(Path(r"swagger/get_task_result.yaml")), endpoint='task_result')
     def get(self, id):
@@ -231,5 +233,5 @@ class TaskResult(Resource):
         if not task:
             return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
 
-        return task.results, HTTPStatus.OK
+        return self.task_result_schema.dump(task.results, many=True).data, HTTPStatus.OK
 

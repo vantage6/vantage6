@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Text, ForeignKey, Integer, sql
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from .node import Node
 from .base import Base, Database
 from .collaboration import Collaboration
 
@@ -32,14 +33,16 @@ class Task(Base):
     def complete(self):
         return all([r.result.complete for r in self.task_assignments])
     
-    def results(self, node=None):
-        if node:
-            return [ta.result for ta in self.task_assignments if \
-                ta.task.collaboration==node.collaboration and \
-                ta.organization==node.organization ]
-        
+    @hybrid_property
+    def results(self):
         return [ta.result for ta in self.task_assignments]
 
+    def results_for_node(self, node):
+        assert isinstance(node, Node), "Should be a node..."
+        return [ta.result for ta in self.task_assignments if \
+            ta.task.collaboration==node.collaboration and \
+            ta.organization==node.organization ]
+    
     @classmethod
     def next_run_id(cls):
         session = Database().Session

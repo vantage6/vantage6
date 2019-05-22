@@ -31,16 +31,6 @@ class User(Authenticatable):
     # relationships
     organization = relationship("Organization", back_populates="users")
 
-    # # TODO init method not required
-    # def __init__(self, username=None, password='password',
-    #              firstname=None, lastname=None, organization_id=None, roles='Administrator'):
-    #     self.username = username
-    #     self.set_password(password)
-    #     self.firstname = firstname
-    #     self.lastname = lastname
-    #     self.roles = roles
-    #     self.organization_id = organization_id
-
     # Copied from https://docs.pylonsproject.org/projects/pyramid/en/master/tutorials/wiki2/definingmodels.html
     def set_password(self, pw):
         pwhash = bcrypt.hashpw(pw.encode('utf8'), bcrypt.gensalt())
@@ -66,11 +56,11 @@ class User(Authenticatable):
     @classmethod
     def username_exists(cls, username):
         session = Database().Session
-        res = session.query(exists().where(cls.username == username)).scalar()
-        return res
+        return session.query(exists().where(cls.username == username)).scalar()
 
     def __repr__(self):
-        return (
+        return ( f"<User "
             f"<{self.id}, username:'{self.username}', roles='{self.roles}', "
-            f"organization='{self.organization.name}'>"
+            f"organization='{self.organization.name}'"
+            f">"
         )

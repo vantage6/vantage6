@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import Session, relationship
+from sqlalchemy.orm.exc import NoResultFound
 
 from .base import Base, Database
 
@@ -25,6 +26,12 @@ class Collaboration(Base):
     def get_nodes_from_organizations(self, ids):
         """Returns a subset of nodes"""
         return [n for n in self.nodes if n.organization.id in ids]
+    
+    def get_node_from_organization(self, organization):
+        for node in self.nodes:
+            if node.organization.id == organization.id:
+                return node
+        return None
 
     # TODO rename to 'find_by_name'
     @classmethod
@@ -42,7 +49,7 @@ class Collaboration(Base):
     def __repr__(self):
         number_of_organizations = len(self.organizations)
         number_of_tasks = len(self.tasks)
-        return ("<"
+        return ("<Collaboration "
             f"number of tasks: {number_of_tasks}, "
             f"number of organizations: {number_of_organizations}"
         ">")

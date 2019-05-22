@@ -223,7 +223,7 @@ class NodeTasks(Resource):
         # of the node
         results = []
         for ta in node.organization.task_assignments:
-            results_for_node = ta.task.results(node)
+            results_for_node = ta.task.results_for_node(node)
             if request.args.get('state') == 'open':
                 results.extend([result for result in results_for_node \
                     if result.complete])
