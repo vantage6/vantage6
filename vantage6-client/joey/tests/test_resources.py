@@ -372,4 +372,3 @@ class TestResources(unittest.TestCase):
             "username": "root2"
         })
         self.assertEqual(result.status_code, 403)
-    

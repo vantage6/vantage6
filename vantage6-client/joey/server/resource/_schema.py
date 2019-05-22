@@ -7,28 +7,25 @@ from .. import ma
 from .. import db
 
 
-# ------------------------------------------------------------------------------
+# /task/{id}
 class TaskSchema(ModelSchema):
-    _id = ma.URLFor('task_with_id', id='<id>')
-    # results = ma.List(ma.HyperlinkRelated('result_with_id'))
-    # collaboration = ma.HyperlinkRelated('collaboration_without_id')
-
+    """Return the Task and the status of this task."""
     complete = fields.Boolean()
-
     class Meta:
         model = db.Task
 
+# /task/{id}?include=result
 class TaskIncludedSchema(TaskSchema):
+    """Returns the TaskSchema plus the correspoding results."""
     results = fields.Nested('TaskResultSchema', many=True, exclude=['task'])
 
-
-
-# ------------------------------------------------------------------------------
+# /task/{id}/result
 class TaskResultSchema(ModelSchema):
+    """Return a list of results belong to the task."""
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
-    _id = ma.URLFor('result_with_id', id='<id>')
+    # _id = ma.URLFor('result_with_id', id='<id>')
     # task = ma.HyperlinkRelated('task_with_id')
-    # node = ma.HyperlinkRelated('node_with_node_id')
+    node = ma.HyperlinkRelated('node_with_node_id')
 
     class Meta:
         model = db.Result
@@ -36,7 +33,6 @@ class TaskResultSchema(ModelSchema):
 
 # ------------------------------------------------------------------------------
 class ResultSchema(ModelSchema):
-    # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
     _id = ma.URLFor('result_with_id', id='<id>')
     task = ma.HyperlinkRelated('task_with_id')
 
