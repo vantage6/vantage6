@@ -5,8 +5,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 # from sqlalchemy.ext.associationproxy import association_proxy
 
-from .base import Base, Database
-from .node import Node
+from . import Collaboration, Organization, Base, Node, Task, TaskAssignment
+from .base import Database
 
 
 class Result(Base):
@@ -31,18 +31,9 @@ class Result(Base):
     @hybrid_property
     def complete(self):
         return self.finished_at is not None
-
-    @property
-    def node(self):
-        collaboration = self.task_assignment.task.collaboration
-        nodes = self.task_assignment.organization.nodes
-        for node in nodes:
-            if node.collaboration == collaboration:
-                return node
-        return None
-
+        
     def __repr__(self):
-        return ("<"
+        return ("<Result "
             f"Result task:{self.task_assignment.task.name}, "
             f"organization: {self.task_assignment.organization.name}, "
             f"collaboration: {self.task_assignment.task.collaboration.name}, "
