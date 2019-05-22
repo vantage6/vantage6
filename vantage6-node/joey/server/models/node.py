@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from .base import Database
 from .authenticable import Authenticatable
-
 
 class Node(Authenticatable):
     """Application that executes Tasks."""
@@ -40,8 +40,27 @@ class Node(Authenticatable):
         except NoResultFound:
             return None
 
+    @hybrid_property
+    def tasks(self):
+        """A node belongs to a single collaboration. Therefore the node
+        only executes task for the organization and collaboration  is 
+        belongs to.
+        
+        Tasks can be assigned to many nodes but are only assigned to 
+        as single collaboration. """
+        from . import Task
+        session = Database().Session
+        tasks = session.query(Task)\
+            .join("Collaboration")\
+            .join("Node")\
+            .filter_by(collabotation_id=self.collaboration_id)\
+            .filter(Node==self.id)\
+            .all()
+
+        return tasks
+
     def __repr__(self):
-        return ("<"
+        return ("<Node "
             f"name: {self.name}, "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.collaboration.name}, "

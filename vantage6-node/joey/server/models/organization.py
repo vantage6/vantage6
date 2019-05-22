@@ -43,7 +43,7 @@ class Organization(Base):
 
     def __repr__(self):
         number_of_users = len(self.users)
-        return ("<"
+        return ("<Organization "
             f"name:{self.name}, "
             f"domain:{self.domain}, "
             f"users:{number_of_users}"
