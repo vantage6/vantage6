@@ -6,7 +6,6 @@ from .base import Base, Database
 
 class Collaboration(Base):
     """Combination of 2 or more Organizations."""
-    __tablename__ = "collaboration"
     
     # fields
     name = Column(String)
