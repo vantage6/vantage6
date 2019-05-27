@@ -31,13 +31,13 @@ def setup(api, api_base):
     api.add_resource(
         Node,
         path,
-        endpoint='node_without_node_id',
+        endpoint='node_without_id',
         methods=('GET', 'POST')
     )
     api.add_resource(
         Node,
         path + '/<int:id>',
-        endpoint='node_with_node_id',
+        endpoint='node_with_id',
         methods=('GET', 'DELETE', 'PATCH')
     )
     api.add_resource(
@@ -58,10 +58,10 @@ class Node(Resource):
     node_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_node_with_node_id.yaml")), 
-        endpoint='node_with_node_id')
-    @swag_from(str(Path(r"swagger/get_node_without_node_id.yaml")), 
-        endpoint='node_without_node_id')
+    @swag_from(str(Path(r"swagger/get_node_with_id.yaml")), 
+        endpoint='node_with_id')
+    @swag_from(str(Path(r"swagger/get_node_without_id.yaml")), 
+        endpoint='node_without_id')
     def get(self, id=None):
         nodes = db.Node.get(id)
         user_or_node = g.user or g.node
@@ -90,7 +90,7 @@ class Node(Resource):
         return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")), endpoint='node_without_node_id')
+    @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")), endpoint='node_without_id')
     def post(self):
 
         parser = reqparse.RequestParser()
@@ -128,7 +128,7 @@ class Node(Resource):
         return self.node_schema.dump(node).data, HTTPStatus.CREATED  # 201
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    @swag_from(str(Path(r"swagger/delete_node_with_id.yaml")), endpoint='node_with_id')
     def delete(self, id):
         """delete node account"""
         node = db.Node.get(id)
@@ -144,7 +144,7 @@ class Node(Resource):
         return {"msg": "successfully deleted node id={}".format(id)}, HTTPStatus.OK  # 200
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/patch_node_with_node_id.yaml")), endpoint='node_with_node_id')
+    @swag_from(str(Path(r"swagger/patch_node_with_id.yaml")), endpoint='node_with_id')
     def patch(self, id):
         """update existing node"""
         node = db.Node.get(id)
