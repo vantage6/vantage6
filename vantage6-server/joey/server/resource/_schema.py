@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from joey.server import api
 from marshmallow import fields
 from marshmallow_sqlalchemy import (
     ModelSchema, 
@@ -44,11 +44,16 @@ class HATEOASModelSchema(ModelSchema):
         hateos = list()
         for elem in getattr(obj, name+"s"):
             _id = elem.id
-            try: 
-                url = url_for(name+"_with_id", id=_id)
-                hateos.append({"id":_id, "link":url})
-            except  BuildError:
-                Exception("Make sure <endpoint>_with_id exists!")    
+            endpoint = name+"_with_id"
+            if not api.owns_endpoint(endpoint):
+                Exception("Make sure <endpoint>_with_id exists!")
+            
+            verbs = list(api.app.url_map._rules_by_endpoint[endpoint][0].methods)
+            verbs.remove("HEAD")
+            verbs.remove("OPTIONS")
+            url = url_for(endpoint, id=_id)
+            hateos.append({"id":_id, "link":url, "methods": verbs})
+            
         return hateos
 
 
@@ -110,14 +115,10 @@ class CollaborationSchema(HATEOASModelSchema):
     class Meta:
         model = db.Collaboration
 
+    # convert fk to HATEOAS
     organizations = fields.Method("organizations")
     nodes = fields.Method("nodes")
     tasks = fields.Method("tasks")    
-
-    
-
-    
-
 
 # ------------------------------------------------------------------------------
 class CollaborationSchemaSimple(HATEOASModelSchema):
