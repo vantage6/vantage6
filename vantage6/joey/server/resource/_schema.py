@@ -1,18 +1,64 @@
 # -*- coding: utf-8 -*-
 
 from marshmallow import fields
-from marshmallow_sqlalchemy import ModelSchema, field_for
+from marshmallow_sqlalchemy import (
+    ModelSchema, 
+    field_for, 
+    ModelConverter
+)
+from flask import url_for, Flask
+from flask_marshmallow.sqla import HyperlinkRelated
+from flask_marshmallow import Schema
+from marshmallow.fields import List, Integer
+from werkzeug.routing import BuildError
 
 from .. import ma
 from .. import db
 
+# class CustomModelConverter(ModelConverter):
+    
+#     def add_link_field(self, links):
+
+class HATEOASModelSchema(ModelSchema):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # define HATEOAS methods for different entities
+        setattr(self, "nodes", 
+            lambda obj: self.hateos("node", obj))
+        setattr(self, "organizations", 
+            lambda obj: self.hateos("organization", obj))
+        setattr(self, "collaborations", 
+            lambda obj: self.hateos("collaboration", obj))
+        setattr(self, "users", 
+            lambda obj: self.hateos("user", obj))
+        setattr(self, "results", 
+            lambda obj: self.hateos("result", obj))
+        setattr(self, "tasks", 
+            lambda obj: self.hateos("task", obj))
+        setattr(self, "task_assignments", 
+            lambda obj: self.hateos("task_assignment", obj))
+    
+    def hateos(self, name, obj):
+        hateos = list()
+        for elem in getattr(obj, name+"s"):
+            _id = elem.id
+            try: 
+                url = url_for(name+"_with_id", id=_id)
+                hateos.append({"id":_id, "link":url})
+            except  BuildError:
+                Exception("Make sure <endpoint>_with_id exists!")    
+        return hateos
+
 
 # /task/{id}
-class TaskSchema(ModelSchema):
+class TaskSchema(HATEOASModelSchema):
     """Return the Task and the status of this task."""
     complete = fields.Boolean()
     class Meta:
         model = db.Task
+    
 
 # /task/{id}?include=result
 class TaskIncludedSchema(TaskSchema):
@@ -20,7 +66,7 @@ class TaskIncludedSchema(TaskSchema):
     results = fields.Nested('TaskResultSchema', many=True, exclude=['task'])
 
 # /task/{id}/result
-class TaskResultSchema(ModelSchema):
+class TaskResultSchema(HATEOASModelSchema):
     """Return a list of results belong to the task."""
     # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
     # _id = ma.URLFor('result_with_id', id='<id>')
@@ -32,7 +78,7 @@ class TaskResultSchema(ModelSchema):
 
 
 # ------------------------------------------------------------------------------
-class ResultSchema(ModelSchema):
+class ResultSchema(HATEOASModelSchema):
     _id = ma.URLFor('result_with_id', id='<id>')
     task = ma.HyperlinkRelated('task_with_id')
 
@@ -45,7 +91,7 @@ class ResultTaskIncludedSchema(ResultSchema):
 
 
 # ------------------------------------------------------------------------------
-class OrganizationSchema(ModelSchema):
+class OrganizationSchema(HATEOASModelSchema):
     # collaborations = fields.Nested(
     #     'CollaborationSchema', 
     #     many=True, 
@@ -60,26 +106,21 @@ class OrganizationSchema(ModelSchema):
         model = db.Organization
 
 # ------------------------------------------------------------------------------
-class CollaborationSchema(ModelSchema):
-    # organizations = fields.Nested(
-    #     'OrganizationSchema', 
-    #     many=True, 
-    #     exclude=['collaborations', 'users', 'nodes', 'tasks']
-    # )
-    # _links = ma.Hyperlinks({
-    #     'self': ma.URLFor('collaboration', id='<id>'),
-    # })
-
-    organizations = ma.List(ma.HyperlinkRelated('organization_with_id'))
-    tasks = ma.List(ma.HyperlinkRelated('task_with_id'))
-    nodes = ma.List(ma.HyperlinkRelated('node_with_node_id'))
-
+class CollaborationSchema(HATEOASModelSchema):
     class Meta:
         model = db.Collaboration
 
+    organizations = fields.Method("organizations")
+    nodes = fields.Method("nodes")
+    tasks = fields.Method("tasks")    
+
+    
+
+    
+
 
 # ------------------------------------------------------------------------------
-class CollaborationSchemaSimple(ModelSchema):
+class CollaborationSchemaSimple(HATEOASModelSchema):
 
     nodes = fields.Nested(
         'NodeSchemaSimple', 
@@ -88,7 +129,7 @@ class CollaborationSchemaSimple(ModelSchema):
     )
 
     class Meta:
-        model = db.Collaboration
+        table = db.Collaboration.__table__
         exclude = [
             'tasks',
             'organizations',
@@ -97,7 +138,7 @@ class CollaborationSchemaSimple(ModelSchema):
 
 
 # ------------------------------------------------------------------------------
-class NodeSchema(ModelSchema):
+class NodeSchema(HATEOASModelSchema):
     # organization = ma.HyperlinkRelated('organization_with_id')
     # collaboration = ma.HyperlinkRelated('collaboration_with_id')
 
@@ -106,7 +147,7 @@ class NodeSchema(ModelSchema):
 
 
 # ------------------------------------------------------------------------------
-class NodeSchemaSimple(ModelSchema):
+class NodeSchemaSimple(HATEOASModelSchema):
 
     # collaboration = fields.Nested(
     #     'CollaborationSchema', 
@@ -144,7 +185,7 @@ class NodeSchemaSimple(ModelSchema):
         ]
 
 # ------------------------------------------------------------------------------
-class UserSchema(ModelSchema):
+class UserSchema(HATEOASModelSchema):
     
     class Meta:
         model = db.User
