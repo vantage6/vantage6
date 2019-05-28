@@ -16,7 +16,7 @@ from http import HTTPStatus
 from pathlib import Path
 
 from joey.server import socketio, api
-from joey.server.models import ( Result as db_Result, Node, TaskAssignment,
+from joey.server.models import ( Result as db_Result, Node,
     Task, Collaboration, Organization )
 from joey.server.models.base import Database
 
@@ -68,7 +68,7 @@ class Result(Resource):
             if request.args.get('state') == 'open':
                 q = q.filter(db_Result.finished_at == None)
 
-            q = q.join(TaskAssignment)
+            # q = q.join(db_Result)
             if request.args.get('task_id'):
              q = q.filter_by(task_id=request.args.get('task_id'))
 

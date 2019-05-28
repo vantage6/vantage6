@@ -317,12 +317,10 @@ class CollaborationTask(Resource):
         task.save()
 
         for organization in collaboration.organizations:
-            task_assignment = db.TaskAssignment(
-                organization=organization,
-                task = task
+            result = db.Result(
+                task=task,
+                organization=organization
             )
-            task_assignment.save()    
-            result = db.Result(task_assignment=task_assignment)
             result.save()
 
         return tasks_schema.dump(collaboration.tasks, many=True)
