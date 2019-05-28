@@ -88,7 +88,7 @@ class UserToken(Resource):
         ret = {
             'access_token': token,
             'refresh_token': create_refresh_token(user),
-            'user_url': server.api.url_for(server.resource.user.User, user_id=user.id),
+            'user_url': server.api.url_for(server.resource.user.User, id=user.id),
             'refresh_url': server.api.url_for(RefreshToken),
         }
 
