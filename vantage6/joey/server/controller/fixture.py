@@ -74,15 +74,12 @@ def load(fixtures, drop_all=False):
             )
 
             for organization in collaboration.organizations:
-                task_assignment = db.TaskAssignment(
-                    input="something",
+                result = db.Result(
                     task=task,
+                    input="something",
                     organization=organization
                 )
-                task_result = db.Result(
-                    task_assignment=task_assignment
-                )
-                task_result.save()
+                result.save()
 
             task.save()
             log.debug(f"Processed task {task.name}")
