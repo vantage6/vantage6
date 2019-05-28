@@ -9,7 +9,7 @@ import json
 import sqlalchemy as sql
 
 from .models import ( Base, User, Organization, Authenticatable, Node, Task, 
-    TaskAssignment, Member, Result, Collaboration)
+    Member, Result, Collaboration)
 
 
 def jsonable(value):

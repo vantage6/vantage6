@@ -217,17 +217,21 @@ class NodeTasks(Resource):
         # get tasks that belong to node <id>
         node = db.Node.get(id)
         if not node:
-            return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
+            return {"msg": "node with id={} not found".format(id)}, \
+                HTTPStatus.NOT_FOUND  # 404
 
         # select tasks from organization that are within the collaboration
         # of the node
         results = []
-        for ta in node.organization.task_assignments:
-            results_for_node = ta.task.results_for_node(node)
-            if request.args.get('state') == 'open':
-                results.extend([result for result in results_for_node \
-                    if result.complete])
-            else:
-                results.extend(results_for_node)
+        for result in node.organization.results:
             
-        return self.task_result_schema.dump(results, many=True), HTTPStatus.OK  # 200
+            if node.collaboration == result.task.collaboration:
+                # result belongs to node
+                if request.args.get('state') == 'open':
+                    if result.complete:
+                        results.append(result)
+                else:
+                    results.append(result)
+            
+        return self.task_result_schema.dump(results, many=True), \
+            HTTPStatus.OK  # 200

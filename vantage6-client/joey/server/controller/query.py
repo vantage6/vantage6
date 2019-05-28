@@ -4,7 +4,6 @@ from joey.server.models import (
     Node, 
     Collaboration, 
     Task,
-    TaskAssignment,
     Organization,
     Result,
     User,
@@ -13,25 +12,24 @@ from joey.server.models import (
 from joey.server.models.base import Database
 
 
-def get_node(self, assignment: TaskAssignment):
+def get_node(self, result: Result):
     """A node is assigned by an organization to an collaboration.
     Tasks, that is responsible for a set of Results, are assigned 
     to these collaborations.
     
     A Result is therefore directly related to a single node by it's
     organization and collaboration. Organization can be directly 
-    derived from the TaskAssignment while the collaboration can be 
-    found from the originating task. 
+    derived from the Result while the collaboration can be found from 
+    the originating task. 
     """
     session = Database().Session
     node = session.query(Node)\
         .join(Collaboration)\
         .join(Task)\
-        .join(TaskAssignment)\
         .join(Organization)\
         .join(Result)\
-        .filter_by(assignment_id=assignment.id)\
-        .filter(TaskAssignment.organization_id == Node.organization_id)\
+        .filter_by(result_id=result.id)\
+        .filter(Task.organization_id == Node.organization_id)\
         .filter(Task.collaboration_id == Node.collaboration_id)\
         .one()
 

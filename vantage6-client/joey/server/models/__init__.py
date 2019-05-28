@@ -6,5 +6,4 @@ from .base import Base
 from .member import Member
 from .node import Node
 from .task import Task
-from .taskAsignment import TaskAssignment
 from .result import Result

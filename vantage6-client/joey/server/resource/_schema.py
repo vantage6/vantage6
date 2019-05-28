@@ -15,102 +15,125 @@ from werkzeug.routing import BuildError
 from .. import ma
 from .. import db
 
-# class CustomModelConverter(ModelConverter):
-    
-#     def add_link_field(self, links):
 
 class HATEOASModelSchema(ModelSchema):
+    """Convert foreign-key fields to HATEOAS specification."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # define HATEOAS methods for different entities
-        setattr(self, "nodes", 
+        # to one relationship
+        setattr(self, "node",
             lambda obj: self.hateos("node", obj))
-        setattr(self, "organizations", 
+        setattr(self, "organization",
             lambda obj: self.hateos("organization", obj))
-        setattr(self, "collaborations", 
+        setattr(self, "collaboration",
             lambda obj: self.hateos("collaboration", obj))
-        setattr(self, "users", 
+        setattr(self, "user",
             lambda obj: self.hateos("user", obj))
-        setattr(self, "results", 
+        setattr(self, "result",
             lambda obj: self.hateos("result", obj))
-        setattr(self, "tasks", 
+        setattr(self, "task",
             lambda obj: self.hateos("task", obj))
-        setattr(self, "task_assignments", 
-            lambda obj: self.hateos("task_assignment", obj))
-    
+        
+        # to many relationship
+        setattr(self, "nodes", 
+            lambda obj: self.hateos_list("node", obj))
+        setattr(self, "organizations", 
+            lambda obj: self.hateos_list("organization", obj))
+        setattr(self, "collaborations", 
+            lambda obj: self.hateos_list("collaboration", obj))
+        setattr(self, "users", 
+            lambda obj: self.hateos_list("user", obj))
+        setattr(self, "results", 
+            lambda obj: self.hateos_list("result", obj))
+        setattr(self, "tasks", 
+            lambda obj: self.hateos_list("task", obj))
+
+        # special cases
+        
+    def many_hateos_from_secondary(self, first, second, obj):
+        hateos_list = list()
+        for elem in getattr(obj, first):
+            hateos_list.append(
+                self._hateos_from_related(getattr(elem, second), second)
+            )
+        return hateos_list
+            
+    def hateos_from_secondairy_model(self, first, second, obj):
+        first_elem = getattr(obj, first)
+        second_elem = getattr(first_elem, second)
+        return self._hateos_from_related(second_elem, second)
+
     def hateos(self, name, obj):
-        hateos = list()
+        elem = getattr(obj, name)
+        return self._hateos_from_related(elem, name)
+    
+    def hateos_list(self, name, obj):
+        hateos_list = list()
         for elem in getattr(obj, name+"s"):
-            _id = elem.id
-            endpoint = name+"_with_id"
-            if not api.owns_endpoint(endpoint):
-                Exception("Make sure <endpoint>_with_id exists!")
-            
-            verbs = list(api.app.url_map._rules_by_endpoint[endpoint][0].methods)
-            verbs.remove("HEAD")
-            verbs.remove("OPTIONS")
-            url = url_for(endpoint, id=_id)
-            hateos.append({"id":_id, "link":url, "methods": verbs})
-            
-        return hateos
+            hateos = self._hateos_from_related(elem, name)
+            hateos_list.append(hateos)
+        return hateos_list
+    
+    def _hateos_from_related(self, elem, name):
+        _id = elem.id
+        endpoint = name+"_with_id"
+        if not api.owns_endpoint(endpoint):
+            Exception(f"Make sure {endpoint} exists!")
+        
+        verbs = list(api.app.url_map._rules_by_endpoint[endpoint][0].methods)
+        verbs.remove("HEAD")
+        verbs.remove("OPTIONS")
+        url = url_for(endpoint, id=_id)
+        return {"id":_id, "link":url, "methods": verbs}
 
 
 # /task/{id}
 class TaskSchema(HATEOASModelSchema):
-    """Return the Task and the status of this task."""
-    complete = fields.Boolean()
     class Meta:
         model = db.Task
-    
+
+    complete = fields.Boolean()
+    collaboration = fields.Method("collaboration")
+    results = fields.Method("results")
+
 
 # /task/{id}?include=result
 class TaskIncludedSchema(TaskSchema):
     """Returns the TaskSchema plus the correspoding results."""
     results = fields.Nested('TaskResultSchema', many=True, exclude=['task'])
 
+
 # /task/{id}/result
 class TaskResultSchema(HATEOASModelSchema):
-    """Return a list of results belong to the task."""
-    # task = fields.Nested('TaskSchema', many=False, exclude=['results'])
-    # _id = ma.URLFor('result_with_id', id='<id>')
-    # task = ma.HyperlinkRelated('task_with_id')
-    node = ma.HyperlinkRelated('node_with_node_id')
-
     class Meta:
         model = db.Result
 
 
-# ------------------------------------------------------------------------------
 class ResultSchema(HATEOASModelSchema):
-    _id = ma.URLFor('result_with_id', id='<id>')
-    task = ma.HyperlinkRelated('task_with_id')
-
     class Meta:
         model = db.Result
+    
+    organization = fields.Method("organization")
+    task = fields.Method("task")
+
 
 class ResultTaskIncludedSchema(ResultSchema):
-    task = fields.Nested('TaskSchema', many=False)
+    task = fields.Nested('TaskSchema', many=False, exclude=["results"])
 
 
-
-# ------------------------------------------------------------------------------
 class OrganizationSchema(HATEOASModelSchema):
-    # collaborations = fields.Nested(
-    #     'CollaborationSchema', 
-    #     many=True, 
-    #     exclude=['organizations', 'nodes', 'tasks']
-    # )
-    _id = ma.URLFor('organization_with_id', id='<id>')
-    collaborations = ma.List(ma.HyperlinkRelated('collaboration_with_id'))
-    tasks = ma.List(ma.HyperlinkRelated('task_with_id'))
-    node = ma.List(ma.HyperlinkRelated('node_with_node_id'))
-
     class Meta:
         model = db.Organization
+    
+    # convert fk to HATEOAS
+    collaborations = fields.Method("collaborations")
+    nodes = fields.Method("nodes")
+    users = fields.Method("users")
+    tasks = fields.Method("tasks")
+    
 
-# ------------------------------------------------------------------------------
 class CollaborationSchema(HATEOASModelSchema):
     class Meta:
         model = db.Collaboration
@@ -118,7 +141,7 @@ class CollaborationSchema(HATEOASModelSchema):
     # convert fk to HATEOAS
     organizations = fields.Method("organizations")
     nodes = fields.Method("nodes")
-    tasks = fields.Method("tasks")    
+    tasks = fields.Method("tasks")
 
 # ------------------------------------------------------------------------------
 class CollaborationSchemaSimple(HATEOASModelSchema):

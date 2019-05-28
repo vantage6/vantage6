@@ -17,7 +17,6 @@ from joey.server.models import (
     Organization,
     Collaboration,
     Task,
-    TaskAssignment,
     Result,
     Node
 )
@@ -217,8 +216,8 @@ class TestOrganizationModel(unittest.TestCase):
                 self.assertIsInstance(collaboration, Collaboration)
             for user in organization.users:
                 self.assertIsInstance(user, User)
-            for assignment in organization.task_assignments:
-                self.assertIsInstance(assignment, TaskAssignment)
+            for result in organization.results:
+                self.assertIsInstance(result, Result)
 
 
 class TestResultModel(unittest.TestCase):
@@ -242,15 +241,13 @@ class TestResultModel(unittest.TestCase):
 
     def test_insert(self):
         task = Task(name="unit_task")
-        task_assignment = TaskAssignment(
-            task=task,
-            organization=Organization.get()[0]
-        )
         result = Result(
-            task_assignment = task_assignment
+            task = task,
+            organization=Organization.get()[0],
+            input="something"
         )
         result.save()
-        self.assertEqual(task_assignment.result, result)
+        self.assertEqual(result, result)
 
 
     def test_methods(self):
@@ -259,10 +256,10 @@ class TestResultModel(unittest.TestCase):
 
     def test_relations(self):
         result = Result.get()[0]
-        self.assertIsInstance(result.task_assignment.organization, Organization)
-        for user in result.task_assignment.organization.users:
+        self.assertIsInstance(result.organization, Organization)
+        for user in result.organization.users:
             self.assertIsInstance(user, User)
-        self.assertIsInstance(result.task_assignment.task, Task)
+        self.assertIsInstance(result.task, Task)
 
 
 class TestTaskModel(unittest.TestCase):
@@ -286,8 +283,8 @@ class TestTaskModel(unittest.TestCase):
             self.assertIsInstance(task.collaboration, Collaboration)
             self.assertIsInstance(task.run_id, int)
             # self.assertIsInstance(task.database, str)
-            for task_assignment in task.task_assignments:
-                self.assertIsInstance(task_assignment, TaskAssignment)
+            for result in task.results:
+                self.assertIsInstance(result, Result)
 
     def test_insert(self):
         task = Task(name="unit_task")
@@ -309,55 +306,9 @@ class TestTaskModel(unittest.TestCase):
         for task in db_task:
             self.assertIsInstance(task, Task)
             self.assertIsInstance(task.collaboration, Collaboration)
-            for task_assignment in task.task_assignments:
-                self.assertIsInstance(task_assignment, TaskAssignment)
-            self.assertIsInstance(task.task_assignments[0].result, Result)
+            for result in task.results:
+                self.assertIsInstance(result, Result)
+            for result in task.results:
+                self.assertIsInstance(result, Result)
             for user in task.collaboration.organizations[0].users:
                 self.assertIsInstance(user, User)
-
-class TestTaskAssignment(unittest.TestCase):
-    def setUp(self):
-        Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
-        with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
-        
-    def trearDown(self):
-        Database().drop_all()
-
-    def test_read(self):
-        db_task_assignments = TaskAssignment.get()
-        for task_assignment in db_task_assignments:
-            self.assertIsInstance(task_assignment, TaskAssignment)
-            self.assertIsInstance(task_assignment.input, str)
-            self.assertIsInstance(task_assignment.task, Task)
-            self.assertIsInstance(task_assignment.organization, Organization)
-            self.assertIsInstance(task_assignment.result, Result)
-        
-    def test_insert(self):
-        result = Result()
-        organization = Organization.get()[0]
-        task = Task.get()[0]
-        task_assignment = TaskAssignment(
-            organization=organization,
-            task=task,
-            result=result
-        )
-        task_assignment.save()
-        
-        for db_task_assignment in TaskAssignment.get():
-            if db_task_assignment.id == task_assignment.id:
-                db_ta = db_task_assignment
-                break
-        
-        self.assertEqual(task_assignment, db_ta)
-
-    def test_methods(self):
-        pass
-        
-    def test_relations(self):
-        task_assignment = TaskAssignment.get()[0]
-        self.assertIsInstance(task_assignment.task, Task)
-        self.assertIsInstance(task_assignment.organization, Organization)
-        self.assertIsInstance(task_assignment.result, Result)
