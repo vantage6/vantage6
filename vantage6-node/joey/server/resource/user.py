@@ -34,7 +34,7 @@ def setup(api, API_BASE):
     )
     api.add_resource(
         User,
-        path + '/<int:user_id>',
+        path + '/<int:id>',
         endpoint='user_with_id',
         methods=('GET', 'PATCH', 'DELETE')
     )
@@ -50,11 +50,11 @@ class User(Resource):
     @only_for(['user'])
     @swag_from(str(Path(r"swagger/get_user_with_id.yaml")), endpoint='user_with_id')
     @swag_from(str(Path(r"swagger/get_user_without_id.yaml")), endpoint='user_without_id')
-    def get(self, user_id=None):
+    def get(self, id=None):
         """Return user details."""
-        all_users = db.User.get(user_id)
+        all_users = db.User.get(id)
 
-        if not user_id:
+        if not id:
             if "admin" or "root" in g.user.roles:
                 return self.user_schema.dump(all_users, many=True).data
             else:
@@ -65,7 +65,7 @@ class User(Resource):
         else:
             # TODO check if this user can be viewed
             if not all_users:
-                return {"msg": "user id={} is not found".format(user_id)}, HTTPStatus.NOT_FOUND
+                return {"msg": "user id={} is not found".format(id)}, HTTPStatus.NOT_FOUND
             else:
                 return self.user_schema.dump(all_users, many=False)
 
@@ -99,14 +99,14 @@ class User(Resource):
 
     @with_user
     @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")), endpoint='user_with_id')
-    def patch(self, user_id):
+    def patch(self, id):
 
-        user = db.User.get(user_id)
+        user = db.User.get(id)
 
         if not user:
-            return {"msg": "user id={} not found".format(user_id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "user id={} not found".format(id)}, HTTPStatus.NOT_FOUND
         if user.organization_id != g.user.organization_id and g.user.roles != "admin":
-            return {"msg": "you do not have permission to modify user id={}".format(user_id)}, HTTPStatus.FORBIDDEN
+            return {"msg": "you do not have permission to modify user id={}".format(id)}, HTTPStatus.FORBIDDEN
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=False, help="This field is required")
@@ -132,11 +132,11 @@ class User(Resource):
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")), endpoint='user_with_id')
-    def delete(self, user_id):
+    def delete(self, id):
 
-        user = db.User.get(user_id)
+        user = db.User.get(id)
         if not user:
-            return {"msg": "user id={} not found".format(user_id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "user id={} not found".format(id)}, HTTPStatus.NOT_FOUND
         if user.organization_id != g.user.organization_id and g.user.roles != "admin":
             log.warning(
                 "user {} has tried to delete user {} but does not have the required permissions".format(
@@ -144,8 +144,8 @@ class User(Resource):
                     user.id
                 )
             )
-            return {"msg": "you do not have permission to modify user id={}".format(user_id)}, HTTPStatus.FORBIDDEN
+            return {"msg": "you do not have permission to modify user id={}".format(id)}, HTTPStatus.FORBIDDEN
 
         user.delete()
-        log.info("user id={} is removed from the database".format(user_id))
-        return {"msg": "user id={} is removed from the database".format(user_id)}, HTTPStatus.OK
+        log.info("user id={} is removed from the database".format(id))
+        return {"msg": "user id={} is removed from the database".format(id)}, HTTPStatus.OK
