@@ -24,7 +24,7 @@ requestBody:
 
 parameters:
   - in: path
-    name: user_id
+    name: id
     schema:
       type: integer
     description: user id
