@@ -4,6 +4,9 @@ application:
   port: 5000
   api_path: '/api'
   task_dir: tasks
+  encryption:
+    disabled: False # optional, default set to false, only for debugging
+    private_key: # optional, has default app location
   databases:
     default: 
 
