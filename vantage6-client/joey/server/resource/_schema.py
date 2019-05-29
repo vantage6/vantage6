@@ -166,6 +166,9 @@ class NodeSchema(HATEOASModelSchema):
     # organization = ma.HyperlinkRelated('organization_with_id')
     # collaboration = ma.HyperlinkRelated('collaboration_with_id')
 
+    organization = fields.Method("organization")
+    collaboration = fields.Method("collaboration")
+
     class Meta:
         model = db.Node
 

@@ -74,7 +74,7 @@ class Task(Resource):
 
         data = request.get_json()
 
-        collaboration_id = data['collaboration_id']
+        collaboration_id = data.get('collaboration_id')
         collaboration = db.Collaboration.get(collaboration_id)
 
         if not collaboration:
@@ -82,7 +82,8 @@ class Task(Resource):
             HTTPStatus.NOT_FOUND
 
         # check that the organization ids are within the collaboration
-        org_ids = data.get('organization_ids', [])
+        organizations_json_list = data.get('organizations')
+        org_ids = [org.get("id") for org in organizations_json_list]
         db_ids = collaboration.get_organization_ids()
 
         # TODO what happens if user's organization does not have a node that
@@ -94,12 +95,10 @@ class Task(Resource):
             org_ids = [g.user.organization_id]
 
         if not all([org_id in db_ids for org_id in org_ids]):
-            return {"msg": f"At least one of the supplied organizations in not within the collaboration"},\
-            HTTPStatus.BAD_REQUEST
-        
-        input_ = data.get('input', '')
-        if not isinstance(input_, str):
-            input_ = json.dumps(input_)
+            return {"msg": ( 
+                f"At least one of the supplied organizations in not within "
+                f"the collaboration"
+            )}, HTTPStatus.BAD_REQUEST
         
         # create new task
         task = db.Task(
@@ -110,7 +109,6 @@ class Task(Resource):
             organizations=[
                 db.Organization.get(org_id) for org_id in org_ids if db.Organization.get(org_id)
             ],
-            input=input_,
             database=data.get('database', '')
         )
 
@@ -134,21 +132,22 @@ class Task(Resource):
         
         # permissions ok, save to DB
         task.save()
+        
+        organizations = [db.Organization.get(id_) for id_ in org_ids]
+        log.debug(f"Assigning task to {len(organizations)} nodes.")
+        for organization in organizations:
+            log.debug(f"Assigning task to '{organization.name}'.")
 
-        # select nodes which should receive the task
-        if org_ids:            
-            nodes = collaboration.get_nodes_from_organizations(org_ids) 
-        else:
-            nodes = collaboration.nodes
+            # get organization specific encrypted input
+            input_ = [org.get("input") for org in organizations_json_list \
+                if org.get("id")==organization.id]
 
-        log.debug(f"Assigning task to {len(nodes)} nodes")
-
-        for node in nodes:
-            log.debug(f"   Assigning task to '{node.name}'")
-            db.Result(task=task, node=node)
-
-        # commit the new TaskResult(s)
-        task.save()
+            result = db.Result(
+                task=task, 
+                organization=organization,
+                input=input_,
+            )
+            result.save()
 
         # notify nodes a new task available (only to online nodes)
         socketio.emit(
