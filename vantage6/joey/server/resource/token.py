@@ -165,20 +165,21 @@ class ContainerToken(Resource):
         db_task = db.Task.get(task_id)
         if not db_task:
             log.warning(f"Node {g.node.id} attempts to generate key for task {task_id} "\
-                        "that does not excist")
-            return {"msg": "Master task does not excist!"}, HTTPStatus.BAD_REQUEST
+                        "that does not exist")
+            return {"msg": "Master task does not exist!"}, HTTPStatus.BAD_REQUEST
         
         # verify that task the token is requested for exists
         if claim_image != db_task.image:
             log.warning(f"Node {g.node.id} attemts to generate key for image {claim_image} "\
-                        "that does not belong to task {task_id}")
+                        f"that does not belong to task {task_id}.")
             return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
         
         # check if the node is in the collaboration to which the task is enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
             log.warning(f"Node {g.node.id} attemts to generate key for task {task_id} "\
-                        "which he doesn't own")
-            return {"msg": "You do not own that task"}, HTTPStatus.UNAUTHORIZED
+                        f"which is outside its collaboration ({g.node.collaboration_id}/{db_task.collaboration_id}).")
+            return {"msg": "You are not within the collaboration of this task"}, \
+                HTTPStatus.UNAUTHORIZED
         
         # validate that the task not has been finished yet
         if db_task.complete:

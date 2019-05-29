@@ -93,7 +93,11 @@ class Result(Resource):
         data = request.get_json()
         result = db_Result.get(id)
 
-        if result.node_id != g.node.id:
+        if result.organization_id != g.node.organization_id:
+            log.info(
+                f"{g.node.name} tries to update a result that does not belong "
+                f"to him. ({result.organization_id}/{g.node.organization_id})"
+            )
             return {"msg": "This is not your result to PATCH!"}, HTTPStatus.UNAUTHORIZED
 
         if result.finished_at is not None:

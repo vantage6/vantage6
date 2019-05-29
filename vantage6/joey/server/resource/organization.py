@@ -12,7 +12,7 @@ from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
-from joey.server.resource import with_user_or_node, with_user
+from joey.server.resource import with_user_or_node, with_user, only_for
 from ._schema import *
 
 
@@ -29,7 +29,7 @@ def setup(api, API_BASE):
         Organization,
         path,
         endpoint='organization_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST', 'PATCH')
      )
     api.add_resource(
         Organization,
@@ -58,18 +58,23 @@ class Organization(Resource):
 
     org_schema = OrganizationSchema()
 
-    @with_user
-    @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")), endpoint='organization_with_id')
-    @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")), endpoint='organization_without_id')
+    @only_for(["user", "node"])
+    @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")), 
+        endpoint='organization_with_id')
+    @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")), 
+        endpoint='organization_without_id')
     def get(self, id=None):
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": f"organization id={id} not found"}, \
+                HTTPStatus.NOT_FOUND
 
-        return self.org_schema.dump(organization, many=not id).data, HTTPStatus.OK
+        return self.org_schema.dump(organization, many=not id).data, \
+            HTTPStatus.OK
 
-    @with_user
-    @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")), endpoint='organization_without_id')
+    @only_for(["user"])
+    @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")), 
+        endpoint='organization_without_id')
     def post(self):
         """Create a new organization."""
 
@@ -79,20 +84,36 @@ class Organization(Resource):
             address1=data.get('address1', ''),
             address2=data.get('address2' ''),
             zipcode=data.get('zipcode', ''),
-            country=data.get('country', '')
+            country=data.get('country', ''),
+            public_key=data.get('public_key', '')
         )
         organization.save()
         return self.org_schema.dump(organization, many=False).data, HTTPStatus.CREATED
 
-    # TODO patch?
-
+    def patch(self, id):
+        """Update organization."""
+        
+        organization = db.Organization.get(id)
+        if not organization:
+            return {"msg": f"Organization with id {id} not found"}, \
+                HTTPStatus.NOT_FOUND
+        
+        data = request.get_json()
+        fields = ["name", "address1", "address2", "zipcode", "country", \
+            "public_key"]
+        for field in fields:
+            if data.get(field):
+                setattr(organization, field, data.get(field))
+        
+        organization.save()
+        return organization, HTTPStatus.OK
 
 class OrganizationCollaboration(Resource):
     """Collaborations for a specific organization."""
 
     col_schema = CollaborationSchema()
 
-    @with_user_or_node
+    @only_for(["user", "node"])
     @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")), endpoint='organization_collaboration')
     def get(self, id):
         organization = db.Organization.get(id)
