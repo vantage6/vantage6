@@ -32,7 +32,7 @@ class Task(Base):
 
     @hybrid_property
     def complete(self):
-        return all([r.complete for r in self.tasks])
+        return all([r.complete for r in self.results])
     
     def results_for_node(self, node):
         assert isinstance(node, Node), "Should be a node..."
