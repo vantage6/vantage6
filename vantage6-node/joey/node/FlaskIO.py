@@ -3,21 +3,41 @@ import requests
 import time
 import jwt
 import datetime
+import typing
 
-from typing import NamedTuple
+from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
+from joey.node.encryption import Cryptor
 
 module_name = __name__.split('.')[1]
 
-class ServerInfo(NamedTuple):
+class ServerInfo(typing.NamedTuple):
     """Data-class to store the server info"""
     host: str
     port: int 
     path: str
 
-class ClientBaseProtocol(object):
+
+class WhoAmI(typing.NamedTuple):
+    """Data-class to store Authenticable information in."""
+    type_: str
+    id_: int
+    name: str
+    organization_name: str
+    organization_id: int
+
+    def __repr__(self) -> str:
+        return (f"<WhoAmI " 
+            f"name={self.name}, "
+            f"type={self.type_}, "
+            f"organization={self.organization_name}"
+        ">")
+
+
+class ClientBaseProtocol:
     """Implemention base protocols for communicating with server instance"""
 
-    def __init__(self, host: str, port: int, path: str='/api'):
+    def __init__(self, host: str, port: int, path: str='/api', 
+        private_key_file:str=None):
         """Set connection parameters"""
         self.log = logging.getLogger(module_name)
 
@@ -30,6 +50,9 @@ class ClientBaseProtocol(object):
         self._access_token = None
         self.__refresh_token = None
         self.__refresh_url = None
+
+        self.cryptor = None
+        self.whoami = None
     
     def generate_path_to(self, endpoint: str):
         """Generate URL from host port and endpoint"""
@@ -68,8 +91,8 @@ class ClientBaseProtocol(object):
         if response.status_code > 200:
             # self.log.debug(f"Server did respond code={response.status_code}\
             #     and message={response.get('msg', 'None')}")
-            self.log.error(f'Server responded with error code: {response.status_code}')
-            self.log.debug(response)
+            self.log.error(f'Server responded with error code: {response.status_code} ')
+            self.log.debug(response.json().get("msg",""))
 
             # FIXME: this should happen only *once* to prevent infinite recursion!
             # refresh token and try again
@@ -79,6 +102,29 @@ class ClientBaseProtocol(object):
         # self.log.debug(f"Response data={response.json()}")
         return response.json()
     
+    def setup_encryption(self, private_key_file) -> Cryptor:
+        assert self._access_token, \
+            "Encryption can only be setup after authentication"
+        assert self.whoami.organization_id, \
+            "Organization unknown... Did you authenticate?"
+
+        disable = False if private_key_file else True
+        cryptor = Cryptor(private_key_file, disable)
+
+        # check if the public-key is the same on the server. If this is not the
+        # case, this node will not be able to read any messages that are send
+        # to him!
+        organization = self.request(
+            f"organization/{self.whoami.organization_id}")
+        if cryptor.verify_public_key(organization.get("public_key")):
+            self.log.critical(
+                "Local public key does not match server public key. "
+                "You will not able to read any messages that are intended "
+                "for you!"
+            )
+
+        self.cryptor = cryptor
+
     def authenticate(self, credentials: dict, path="token/user"):
         """Authenticate using credentials"""
         self.log.debug(f"Authenticating using {credentials}")
@@ -119,15 +165,27 @@ class ClientBaseProtocol(object):
         
         self._access_token = response.json()["_access_token"]
 
-    def post_task(self, name, image, collaboration_id, input_='', 
-        description='', organization_ids :list=[]):
+    def post_task(self, name:str, image:str, collaboration_id:int, 
+        input_:str='', description='', organization_ids:list=[]) -> dict:
+        assert self.cryptor, "Encryption has not yet been setup!"
+
+        organization_json_list = []
+        for org_id in organization_ids:
+            pub_key = self.request(f"organization/{org_id}").get("public_key")
+            organization_json_list.append(
+                {
+                    "id": org_id,
+                    "input": self.cryptor.encrypt(input_, pub_key)
+                }
+            )
+
         return self.request('task', method='post', json={
             "name": name,
             "image": image, 
             "collaboration_id": collaboration_id,
             "input": input_,
             "description": description,
-            "organization_ids": organization_ids
+            "organizations": organization_json_list
         })
 
     def get_results(self, id=None, state=None, include_task=False, task_id=None, node_id=None):
@@ -144,11 +202,21 @@ class ClientBaseProtocol(object):
             params['node_id'] = node_id
         
         self.log.debug(f"obtaining results using params={params}")
-        return self.request(
+        results = self.request(
             endpoint='result' if not id else f'result/{id}', 
             params=params
         )
-    
+        results_unencrypted = []
+        if not id:
+            for result in results:
+                result["input"] = self.cryptor.decrypt(result["input"])
+                results_unencrypted.append(result)
+            return results_unencrypted
+        else:
+            results["input"] = self.cryptor.decrypt(results["input"])
+            return results
+
+
     @property
     def headers(self):
         if self._access_token:
@@ -186,7 +254,6 @@ class ClientUserProtocol(ClientBaseProtocol):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.id = None
 
     def authenticate(self, username: str, password: str):
         super(ClientUserProtocol, self).authenticate({
@@ -195,9 +262,26 @@ class ClientUserProtocol(ClientBaseProtocol):
         }, path="token/user")
 
         # obtain the server authenticatable id
-        self.id = jwt.decode(self.token, verify=False)['identity']
-    
-    
+        
+        type_ = "user"
+        id_ = jwt.decode(self.token, verify=False)['identity']
+        
+        user = self.request(f"user/{id_}")
+        
+        name = user.get("firstname")
+        
+        organization_id = user.get("organization").get("id")
+        organization = self.request(f"organization/{organization_id}")
+        organization_name = organization.get("name")
+
+        self.whoami = WhoAmI(
+            type_=type_,
+            id_=id_,
+            name=name,
+            organization_id=organization_id,
+            organization_name=organization_name
+        )
+
 
 class ClientContainerProtocol(ClientBaseProtocol):
     """Specific commands for the container"""
@@ -211,6 +295,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
         # obtain the identity from the token
         container_identity = jwt.decode(token, verify=False)['identity']
         self.image =  container_identity.get("image")
+        
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
 
@@ -226,6 +311,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
     def authenticate(self):
         """Containers obtain their key via their host Node."""
         return
+    
     def refresh_token(self):
         """Containers cannot refresh their token."""
         #TODO we might want to notify node/server about this...
@@ -272,13 +358,25 @@ class ClientNodeProtocol(ClientBaseProtocol):
             {"api_key": api_key}, path="token/node")
 
         # obtain the server authenticatable id
-        self.id = jwt.decode(self.token, verify=False)['identity']
+        id_ = jwt.decode(self.token, verify=False)['identity']
 
         # get info on how the server sees me
-        node = self.request(f"node/{self.id}")
-        self.name = node.get("name")
+        node = self.request(f"node/{id_}")
+        name = node.get("name")
         self.collaboration_id = node.get("collaboration")
         
+        organization_id = node.get("organization").get("id")
+        organization = self.request(f"organization/{organization_id}")
+        organization_name = organization.get("name")
+
+        self.whoami = WhoAmI(
+            type_="node",
+            id_=id_,
+            name=name,
+            organization_id=organization_id,
+            organization_name=organization_name
+        )
+
     def request_token_for_container(self, task_id: int, image: str):
         """Generate a token that can be used by a docker container"""
         self.log.debug
@@ -294,7 +392,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
             state=state,
             include_task=include_task,
             task_id=task_id,
-            node_id=self.id
+            node_id=self.whoami.id_
         )
 
     def set_task_start_time(self, id: int):
@@ -304,4 +402,5 @@ class ClientNodeProtocol(ClientBaseProtocol):
 
     def patch_results(self, id: int, result: dict):
         # self.log.debug(f"patching results={result}")
+        # result["result"] = self.cryptor.encrypt(result["result"])
         return self.request(f"result/{id}", json=result, method='patch')

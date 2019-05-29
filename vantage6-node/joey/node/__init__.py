@@ -4,89 +4,20 @@ import time
 import datetime
 import logging
 import queue
+import typing
 
 from pathlib import Path
 from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 import joey.constants as cs
+from joey.node.encryption import Cryptor
 from joey.node.DockerManager import DockerManager
 from joey.node.FlaskIO import ClientNodeProtocol, ServerInfo
 
 def name():
     return __name__.split('.')[-1]
 
-class Cryptor:
-
-    def __init__(self, private_key_file=None, disabled=False):
-        self.log = logging.getLogger(name())
-        if disabled:
-            self.log.warning(
-                "Encrpytion disabled! Use this only for debugging")
-        self.disabled = disabled
-        self.private_key = self.__load_private_key(private_key_file)
-
-    def __load_private_key(self, private_key_file=None):
-        if not private_key_file:
-            self.log.debug(f"No private key file specified, using default.")
-            rsa_file = cs.DATA_FOLDER / "private_key.pem"
-            
-        if not rsa_file.exists():
-            self.log.warning(
-                f"No default private key found. Now generating one. "
-                f"This is normal if you run {cs.APPNAME} for the first "
-                f"time."
-            )
-            self.__create_new_rsa_key(rsa_file)
-        
-        return self.__load_rsa_key(rsa_file)
-        
-    def __create_new_rsa_key(self, path: Path):
-        """Creates a new RSA key for E2EE."""
-        self.log.info(f"Generating RSA-key at {path}")
-        private_key = rsa.generate_private_key(
-            backend=default_backend(),
-            key_size=4096,
-            public_exponent=65537
-        )
-        path.write_bytes(private_key)
-        
-    def __load_rsa_key(self, path: Path):
-        """Load RSA private key from file."""
-        self.log.info(f"Loading RSA-key from {path}")
-        return path.read_bytes()
-
-    def encrypt(self, msg, organization_id):
-        """Encrypt a message for a specific organization."""
-        if self.disabled:
-            return msg
-        # TODO this should be the public key of the other organization
-        encrypted_msg = self.private_key.public_key().encrypt(
-            msg,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
-        return encrypted_msg
-    
-    def decrypt(self, msg):
-        """Decrpyt a message that is destined for us."""
-        if self.disabled:
-            return msg
-        decrypted_msg = self.private_key.decrypt(
-            msg,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
-        return decrypted_msg
 
 class NodeTaskNamespace(SocketIONamespace):
     """Class that handles incoming websocket events."""
@@ -151,6 +82,11 @@ class NodeWorker(object):
         self.log.debug("authenticating")
         self.authenticate()
 
+        # after we authenticated we setup encryption
+        key = None if self.config.get("encryption").get("disabled") else \
+            self.config.get("encryption").get("private_key")
+        self.flaskIO.setup_encryption(key)
+
         # Create a long-lasting websocket connection.
         self.log.debug("creating socket connection with the server")
         self.__connect_to_socket()
@@ -184,14 +120,6 @@ class NodeWorker(object):
         t = Thread(target=self.__speaking_worker, daemon=True)
         t.start()
 
-        # setup encryption module for inputs and outputs of the algorithms
-        encryption_settings = self.config.get("encryption")
-        self.cryptor = Cryptor(
-            encryption_settings.get("private_key"),
-            encryption_settings.get("disabled")
-        )
-        
-    
     def authenticate(self):
         """Authenticate with the server using the api-key. If the server
         rejects for any reason we keep trying."""
@@ -232,7 +160,7 @@ class NodeWorker(object):
         # in a task exists.
         for task in tasks:
             # decrypt task
-            tasks["input"] = self.cryptor.decrypt(task["input"])
+            # tasks["input"] = self.cryptor.decrypt(task["input"])
             self.queue.put(task)
 
     def run_forever(self):
@@ -306,7 +234,7 @@ class NodeWorker(object):
             result_id=taskresult["id"], 
             image=task["image"],
             database_uri=database_uri,
-            docker_input=task["input"],
+            docker_input=taskresult['input'],
             token=token
         )
 
@@ -382,7 +310,7 @@ class NodeWorker(object):
 
             self.flaskIO.patch_results(id=results.result_id, result={
                 # TODO organization id for encryption needs to be added
-                'result': self.cryptor.encrypt(results.data, None),
+                'result': results.data,
                 'log': results.logs,
                 'finished_at': datetime.datetime.now().isoformat(),
             })
