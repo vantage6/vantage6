@@ -31,6 +31,7 @@ class Organization(Base):
     results = relationship("Result", back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
+    created_tasks = relationship("Task", back_populates="initiator")
 
     @classmethod
     def get_by_name(cls, name):

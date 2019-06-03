@@ -13,7 +13,8 @@ class Task(Base):
     A task can assigned in the Result for multiple organizations. The input
     of the task is different for each organization (due to the encryption). 
     Therefore the input for the task is encrypted for each organization 
-    seperately. 
+    seperately. The task originates from an organization to which the results
+    need to be encrypted, therefore the originating organization is also logged
     """
 
     # fields
@@ -24,11 +25,13 @@ class Task(Base):
     run_id = Column(Integer) 
     parent_id = Column(Integer, ForeignKey("task.id"))
     database = Column(String)
+    initiator_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
     results = relationship("Result", back_populates="task")
+    initiator = relationship("Organization", back_populates="created_tasks")
 
     @hybrid_property
     def complete(self):
