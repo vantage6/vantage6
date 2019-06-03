@@ -8,10 +8,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from joey.server.controller.fixture import load
-from joey.server.models.base import Database, Base
+from joey.server.model.base import Database, Base
 from joey.constants import PACAKAGE_FOLDER, APPNAME
 
-from joey.server.models import (
+from joey.server.model import (
     Base,
     User,
     Organization,
