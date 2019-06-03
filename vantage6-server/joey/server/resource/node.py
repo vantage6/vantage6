@@ -16,7 +16,7 @@ from . import with_user_or_node, with_user
 from pathlib import Path
 
 
-from joey.server.models.base import Database
+from joey.server.model.base import Database
 
 from ._schema import *
 

@@ -16,9 +16,9 @@ from http import HTTPStatus
 from pathlib import Path
 
 from joey.server import socketio, api
-from joey.server.models import ( Result as db_Result, Node,
+from joey.server.model import ( Result as db_Result, Node,
     Task, Collaboration, Organization )
-from joey.server.models.base import Database
+from joey.server.model.base import Database
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
