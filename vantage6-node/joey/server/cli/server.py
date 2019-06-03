@@ -7,13 +7,13 @@ import errno
 import yaml
 
 # for shell python
-import joey.server.models as db
+import joey.server.model as db
 
 from functools import wraps
 from pathlib import Path
 from traitlets.config import get_config
 
-from joey.server.models.base import Database
+from joey.server.model.base import Database
 
 from joey import server, util, constants
 from joey.server import shell
