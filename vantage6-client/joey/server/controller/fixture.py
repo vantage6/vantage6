@@ -1,8 +1,8 @@
 import uuid
 import logging
 
-import joey.server.models as db
-from joey.server.models.base import Database
+import joey.server.model as db
+from joey.server.model.base import Database
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)

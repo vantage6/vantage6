@@ -1,6 +1,6 @@
 """Temporary file for storing queries that were in the DB-models"""
 
-from joey.server.models import ( 
+from joey.server.model import ( 
     Node, 
     Collaboration, 
     Task,
@@ -9,7 +9,7 @@ from joey.server.models import (
     User,
     Authenticatable
 )
-from joey.server.models.base import Database
+from joey.server.model.base import Database
 
 
 def get_node(self, result: Result):

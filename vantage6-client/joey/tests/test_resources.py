@@ -15,7 +15,7 @@ from joey import util
 from joey.server import db
 from joey.constants import APPNAME, PACAKAGE_FOLDER, VERSION
 from joey.server.controller.fixture import load
-from joey.server.models.base import Database
+from joey.server.model.base import Database
 
 log = logging.getLogger(__name__.split('.')[-1])
 

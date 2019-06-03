@@ -8,7 +8,7 @@ import json
 
 import sqlalchemy as sql
 
-from .models import ( Base, User, Organization, Authenticatable, Node, Task, 
+from .model import ( Base, User, Organization, Authenticatable, Node, Task, 
     Member, Result, Collaboration)
 
 
