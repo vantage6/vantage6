@@ -72,7 +72,7 @@ class Result(Resource):
             if request.args.get('task_id'):
              q = q.filter_by(task_id=request.args.get('task_id'))
 
-            q = q.join(Organization).join(Node).join(Task).join(Collaboration)
+            q = q.join(Organization).join(Node).join(Task, db_Result.task).join(Collaboration)
             if request.args.get('node_id'):
                 q = q.filter(db.Node.id==request.args.get('node_id'))\
                     .filter(db.Collaboration.id==db.Node.collaboration_id)
