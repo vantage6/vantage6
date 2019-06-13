@@ -100,6 +100,11 @@ class Task(Resource):
                 f"the collaboration"
             )}, HTTPStatus.BAD_REQUEST
         
+        if g.user:
+            initiator = g.user.organization
+        else: 
+            initiator = None
+
         # create new task
         task = db.Task(
             collaboration=collaboration,
@@ -109,7 +114,8 @@ class Task(Resource):
             organizations=[
                 db.Organization.get(org_id) for org_id in org_ids if db.Organization.get(org_id)
             ],
-            database=data.get('database', '')
+            database=data.get('database', ''),
+            initiator=initiator
         )
 
         if g.user:
