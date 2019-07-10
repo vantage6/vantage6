@@ -29,6 +29,9 @@ from joey import util, node
 from joey.util.context import (
     configuration_wizard, select_configuration_questionaire)
 
+from colorama import init
+init()
+
 
 @click.group(name="node")
 def cli_node():
@@ -246,5 +249,33 @@ def cli_node_stop(name):
     container.kill()
     container.remove()
     click.echo(f"Node {name} stopped.")
+
+@cli_node.command(name='attach')
+@click.option("-n","--name", 
+    default=None,
+    help="configuration name"
+)
+def cli_node_attach(name):
+    client = docker.from_env()
+    running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
+    running_node_names = [node.name for node in running_nodes]
+    
+    if not name:
+        name = q.select("Select the node you wish to inspect:",
+            choices=running_node_names).ask()
+
+    if name in running_node_names:
+        container = client.containers.get(name)
+        logs = container.attach(stream=True)
+        for log in logs:
+            print(log.decode("ascii"))
+        # while True:
+        #     print(container.logs().decode("ascii"))
+        #     import time
+        #     time.sleep(1)
+        #     if container.status == "exited":
+        #         break
+
+
     
     
