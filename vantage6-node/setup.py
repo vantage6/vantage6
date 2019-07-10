@@ -72,7 +72,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'jnode=joey.node.cli.node:cli_node',
+            'jnode=joey.node_manager.cli.node_manager:cli_node',
             'jserver=joey.server.cli.server:cli_server',
             'jdev=joey.util.cli.develop:cli_develop'
         ],

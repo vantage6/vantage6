@@ -1,11 +1,8 @@
 # poc that we can dockerize the node-instance
-FROM python:3
+FROM ppdli-base
 
 # copy all files to app folder
-COPY . /app
+COPY "/joey/node" "/app"
 
-# install the app
-RUN pip install /app
-
-# mount the config file
-CMD jnode start --config /input/config.yaml
+# create entrypoint
+ENTRYPOINT [ "python", "/app/start.py"]

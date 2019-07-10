@@ -41,23 +41,7 @@ class Node(Authenticatable):
             return None
 
     @hybrid_property
-    def tasks(self):
-        """A node belongs to a single collaboration. Therefore the node
-        only executes task for the organization and collaboration  is 
-        belongs to.
-        
-        Tasks can be assigned to many nodes but are only assigned to 
-        as single collaboration. """
-        from . import Task
-        session = Database().Session
-        tasks = session.query(Task)\
-            .join("Collaboration")\
-            .join("Node")\
-            .filter_by(collabotation_id=self.collaboration_id)\
-            .filter(Node==self.id)\
-            .all()
-
-        return tasks
+    
 
     def __repr__(self):
         return ("<Node "
