@@ -115,6 +115,10 @@ class AppContext(metaclass=Singleton):
         return self.log_dir / (self.config_manager.name + ".log")
 
     @property
+    def config_file_name(self):
+        return self.__config_file.stem
+
+    @property
     def config_file(self):
         return self.__config_file
     
@@ -143,12 +147,12 @@ class AppContext(metaclass=Singleton):
     def from_external_config_file(cls, path, instance_type, 
         environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         instance_name = Path(path).stem
-        self = cls.__new__(cls)
-        self.set_folders(instance_type, instance_name, system_folders)
-        self.config_dir = Path(path).parent
-        self.config_file = path
-        self.environment = environment
-        return self
+        self_ = cls.__new__(cls)
+        self_.set_folders(instance_type, instance_name, system_folders)
+        self_.config_dir = Path(path).parent
+        self_.config_file = path
+        self_.environment = environment
+        return self_
 
     @classmethod
     def config_exists(cls, instance_type, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, 
@@ -202,9 +206,11 @@ class AppContext(metaclass=Singleton):
         return configs, failed
 
 class NodeContext(AppContext):
+    """Node context on the host machine (used by the CLI). See 
+    DockerNodeContext for the node instance mounts on the docker deamon"""
     
     INST_CONFIG_MANAGER = NodeConfigurationManager
-
+    
     def __init__(self, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
         super().__init__("node", instance_name, environment=environment, 
             system_folders=system_folders)
@@ -230,7 +236,23 @@ class NodeContext(AppContext):
     @classmethod
     def available_configurations(cls, system_folders=constants.DEFAULT_NODE_SYSTEM_FOLDERS):
         return super().available_configurations("node", system_folders)
+
+class DockerNodeContext(NodeContext):
+    """Node context for the dockerized version of the node."""
+
+    @staticmethod
+    def instance_folders(instance_type, instance_name, system_folders):
+        """Log, data and config folders are allways mounted mounted. The
+        node manager should take care of this. """
         
+        mnt = Path("/mnt")
+
+        return {
+            "log": mnt / "log",
+            "data": mnt / "data",
+            "config": mnt / "config"
+        }
+
 
 class ServerContext(AppContext):
     

@@ -1,3 +1,17 @@
+"""Node Manager Command Line Interface
+
+The node manager is responsible for: 
+1) Creating, updating and deleting configurations (=nodes).
+2) Starting, Stopping nodes 
+
+Configuration Commands
+* node new 
+* node list --all/--running
+* node files 
+* node start
+* node stop
+* node inspect
+"""
 import click
 import yaml
 import os
@@ -5,6 +19,7 @@ import sys
 import appdirs
 import questionary as q
 import errno
+import docker
 
 from pathlib import Path
 
@@ -23,23 +38,32 @@ def cli_node():
 # 
 #   list
 #
-import datetime
 @cli_node.command(name="list")
 def cli_node_list():
     """Lists all nodes in the default configuration directory."""
     
-    click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
-    click.echo("-"*70)
+    client = docker.from_env()
+    running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
+    running_node_names = []
+    for node in running_nodes:
+        running_node_names.append(node.name)
+
+    click.echo("\nName"+(21*" ")+"Environments"+(20*" ")+"Status"+(10*" ")+"System/User")
+    click.echo("-"*85)
     
     configs, f1 = util.NodeContext.available_configurations(system_folders=True)
     for config in configs:
-        click.echo(f"{config.name:25}{str(config.available_environments):32} System ") 
+        status = "Running" if config.name+"_user" in running_node_names \
+            else "Stopped" 
+        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:15} System ") 
 
     configs, f2 = util.NodeContext.available_configurations(system_folders=False)
     for config in configs:
-        click.echo(f"{config.name:25}{str(config.available_environments):32} User   ") 
+        status = "Running" if config.name+"_user" in running_node_names \
+            else "Stopped"
+        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:15} User   ") 
 
-    click.echo("-"*70)
+    click.echo("-"*85)
     click.echo(f"Number of failed imports: {len(f1)+len(f2)}")
 #
 #   new
@@ -173,11 +197,54 @@ def cli_node_start(name, config, environment, system_folders):
                 configuration_wizard("node", name, environment=environment, 
                     system_folders=system_folders)
             else:
-            
                 sys.exit(0)
-        
-        # create dummy node context
+
+        util.NodeContext.LOGGING_ENABLED = False
         ctx = util.NodeContext(name, environment, system_folders)
-        
-    # run the node application
-    node.run(ctx)
+    
+    # TODO make sure the task dir exists
+    mounts = [
+        docker.types.Mount("/mnt/log", str(ctx.log_dir), type="bind"),
+        docker.types.Mount("/mnt/data", str(ctx.data_dir), type="bind"),
+        docker.types.Mount("/mnt/config", str(ctx.config_dir), type="bind")
+    ]
+    
+    # TODO maybe we only should mount the config and log file
+    docker_client = docker.from_env()
+    
+    docker_client.containers.run(
+        "super-node", 
+        [ctx.config_file_name, ctx.environment],
+        mounts=mounts,
+        detach=True,
+        labels={
+            "ppdli-type": "node", 
+            "system": str(system_folders), 
+            "name": ctx.config_file_name
+        },
+        name=str(ctx.config_file_name) + ("_system" if system_folders \
+            else "_user")
+    )
+
+@cli_node.command(name='stop')
+@click.option("-n","--name", 
+    default=None,
+    help="configuration name"
+)
+def cli_node_stop(name):
+    client = docker.from_env()
+    running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
+    
+    if not running_nodes:
+        click.echo("No nodes are currently running.")
+        return 
+
+    running_node_names = [node.name for node in running_nodes]
+    name = q.select("Select the node you would like to stop:",
+        choices=running_node_names).ask()
+    container = client.containers.get(name)
+    container.kill()
+    container.remove()
+    click.echo(f"Node {name} stopped.")
+    
+    
