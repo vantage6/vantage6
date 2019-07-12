@@ -29,7 +29,7 @@ from joey import util, node
 from joey.util.context import (
     configuration_wizard, select_configuration_questionaire)
 
-from colorama import init
+from colorama import init, Fore, Back, Style
 init()
 
 
@@ -54,20 +54,25 @@ def cli_node_list():
     click.echo("\nName"+(21*" ")+"Environments"+(20*" ")+"Status"+(10*" ")+"System/User")
     click.echo("-"*85)
     
+    running = Fore.GREEN + "Running" + Style.RESET_ALL
+    stopped = Fore.RED + "Stopped" + Style.RESET_ALL
+
     configs, f1 = util.NodeContext.available_configurations(system_folders=True)
     for config in configs:
-        status = "Running" if config.name+"_user" in running_node_names \
-            else "Stopped" 
-        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:15} System ") 
+        status = running if config.name+"_system" in running_node_names \
+            else stopped
+        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:25} System ") 
 
     configs, f2 = util.NodeContext.available_configurations(system_folders=False)
     for config in configs:
-        status = "Running" if config.name+"_user" in running_node_names \
-            else "Stopped"
-        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:15} User   ") 
+        status = running if config.name+"_user" in running_node_names \
+            else stopped
+        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:25} User   ") 
 
     click.echo("-"*85)
-    click.echo(f"Number of failed imports: {len(f1)+len(f2)}")
+    if len(f1)+len(f2):
+        click.echo(Fore.RED + f"Failed imports: {len(f1)+len(f2)}" + Style.RESET_ALL)
+
 #
 #   new
 #
@@ -205,18 +210,20 @@ def cli_node_start(name, config, environment, system_folders):
         util.NodeContext.LOGGING_ENABLED = False
         ctx = util.NodeContext(name, environment, system_folders)
     
-    # TODO make sure the task dir exists
+    # make sure the (local)task dir exists
+    ctx.data_dir.mkdir(parents=True, exist_ok=True)
+
+    # specify mount-points 
     mounts = [
         docker.types.Mount("/mnt/log", str(ctx.log_dir), type="bind"),
         docker.types.Mount("/mnt/data", str(ctx.data_dir), type="bind"),
-        docker.types.Mount("/mnt/config", str(ctx.config_dir), type="bind")
+        docker.types.Mount("/mnt/config", str(ctx.config_dir), type="bind"),
+        docker.types.Mount("/var/run/docker.sock", "//var/run/docker.sock", type="bind")
     ]
     
-    # TODO maybe we only should mount the config and log file
     docker_client = docker.from_env()
-    
-    docker_client.containers.run(
-        "super-node", 
+    id_ = docker_client.containers.run(
+        "docker-registry.distributedlearning.ai/ppdli-node", 
         [ctx.config_file_name, ctx.environment],
         mounts=mounts,
         detach=True,
@@ -226,15 +233,26 @@ def cli_node_start(name, config, environment, system_folders):
             "name": ctx.config_file_name
         },
         name=str(ctx.config_file_name) + ("_system" if system_folders \
-            else "_user")
+            else "_user"),
+        auto_remove=True
     )
+    click.echo(f"Running, container id = {id_}")
 
 @cli_node.command(name='stop')
 @click.option("-n","--name", 
     default=None,
     help="configuration name"
 )
-def cli_node_stop(name):
+@click.option('--system', 'system_folders', 
+    flag_value=True
+)
+@click.option('--user', 'system_folders', 
+    flag_value=False, 
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
+)
+def cli_node_stop(name, system_folders):
+    """Stop a running container. """
+
     client = docker.from_env()
     running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
     
@@ -243,19 +261,34 @@ def cli_node_stop(name):
         return 
 
     running_node_names = [node.name for node in running_nodes]
-    name = q.select("Select the node you would like to stop:",
-        choices=running_node_names).ask()
-    container = client.containers.get(name)
-    container.kill()
-    container.remove()
-    click.echo(f"Node {name} stopped.")
+    if not name:
+        name = q.select("Select the node you wish to stop:",
+            choices=running_node_names).ask()
+    else: 
+        name + ("_system" if system_folders else "_user") 
+    
+    if name in running_node_names:
+        container = client.containers.get(name)
+        container.kill()
+        click.echo(f"Node {name} stopped.")
+    else: 
+        click.echo(Fore.RED + f"{name} was not running!?")
 
 @cli_node.command(name='attach')
 @click.option("-n","--name", 
     default=None,
     help="configuration name"
 )
-def cli_node_attach(name):
+@click.option('--system', 'system_folders', 
+    flag_value=True
+)
+@click.option('--user', 'system_folders', 
+    flag_value=False, 
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
+)
+def cli_node_attach(name, system_folders):
+    """Attach the logs from the docker container to the terminal."""
+
     client = docker.from_env()
     running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
     running_node_names = [node.name for node in running_nodes]
@@ -263,19 +296,13 @@ def cli_node_attach(name):
     if not name:
         name = q.select("Select the node you wish to inspect:",
             choices=running_node_names).ask()
+    else: 
+        name + ("_system" if system_folders else "_user") 
 
     if name in running_node_names:
         container = client.containers.get(name)
         logs = container.attach(stream=True)
         for log in logs:
             print(log.decode("ascii"))
-        # while True:
-        #     print(container.logs().decode("ascii"))
-        #     import time
-        #     time.sleep(1)
-        #     if container.status == "exited":
-        #         break
-
-
-    
-    
+    else:
+        click.echo(Fore.RED + f"{name} was not running!?")
