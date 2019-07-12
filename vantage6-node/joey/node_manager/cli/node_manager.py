@@ -6,7 +6,7 @@ The node manager is responsible for:
 
 Configuration Commands
 * node new 
-* node list --all/--running
+* node list
 * node files 
 * node start
 * node stop
