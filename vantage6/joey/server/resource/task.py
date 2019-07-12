@@ -111,9 +111,6 @@ class Task(Resource):
             name=data.get('name', ''),
             description=data.get('description', ''),
             image=data.get('image', ''),
-            organizations=[
-                db.Organization.get(org_id) for org_id in org_ids if db.Organization.get(org_id)
-            ],
             database=data.get('database', ''),
             initiator=initiator
         )
