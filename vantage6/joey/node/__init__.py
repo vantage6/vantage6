@@ -1,3 +1,16 @@
+"""Node that is responsible for retreiving tasks and executing them.
+
+It uses 4 threads: 
+    * main thread, waits for new tasks to be added to the queue and 
+        run the tasks
+    * listening thread, listens for incommin websocket messages. Which 
+        are handled by NodeTaskNamespace.
+    * speaking thread, waits for results from docker to return and posts
+        them at the central server
+    * proxy server thread, provides an interface for master containers
+        to post tasks and retrieve results
+
+"""
 import sys
 import os
 import time
@@ -71,13 +84,13 @@ class NodeWorker(object):
         self.config = ctx.config
         
         # initialize Node connection to the server
-        self.flaskIO = ClientNodeProtocol(
+        self.server_io = ClientNodeProtocol(
             host=self.config.get('server_url'), 
             port=self.config.get('port'),
             path=self.config.get('api_path')
         )
 
-        self.log.info(f"Connecting server: {self.flaskIO.base_path}")
+        self.log.info(f"Connecting server: {self.server_io.base_path}")
 
         # Authenticate to the DL server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
@@ -87,7 +100,7 @@ class NodeWorker(object):
         # after we authenticated we setup encryption
         key = None if self.config.get("encryption").get("disabled") else \
             self.config.get("encryption").get("private_key")
-        self.flaskIO.setup_encryption(key)
+        self.server_io.setup_encryption(key)
 
         # Create a long-lasting websocket connection.
         self.log.debug("creating socket connection with the server")
@@ -105,12 +118,13 @@ class NodeWorker(object):
         self.__sync_task_que_with_server() 
 
         server_info = ServerInfo(
-            host=self.flaskIO.host, 
-            port=self.flaskIO.port, 
-            path=self.flaskIO.path
+            host=self.server_io.host, 
+            port=self.server_io.port, 
+            path=self.server_io.path
         )
 
         # TODO read allowed repositories from the config file
+        self.log.debug("setup the docker manager")
         self.__docker = DockerManager(
             allowed_repositories=[], 
             tasks_dir=self.ctx.data_dir,
@@ -118,21 +132,24 @@ class NodeWorker(object):
         )
 
         # send results to the server when they come available.
-        self.log.debug("Start thread for sending messages (results)")
+        self.log.debug("start thread for sending messages (results)")
         t = Thread(target=self.__speaking_worker, daemon=True)
         t.start()
 
-        self.log.info("Setting up proxy server")
+        # proxy server for algorithm containers, so they can communicate
+        # with the central server.
+        self.log.info("setting up proxy server")
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
+
         # after here, you should/could call self.run_forever()
     
     def __proxy_server_worker(self):
         
         # set environment vars
-        os.environ["SERVER_URL"] = self.flaskIO.host
-        os.environ["SERVER_PORT"] = self.flaskIO.port
-        os.environ["SERVER_PATH"] = self.flaskIO.path
+        os.environ["SERVER_URL"] = self.server_io.host
+        os.environ["SERVER_PORT"] = self.server_io.port
+        os.environ["SERVER_PATH"] = self.server_io.path
 
         http_server = WSGIServer(('', 5001), app)
         http_server.serve_forever()
@@ -145,7 +162,7 @@ class NodeWorker(object):
         keep_trying = True
         while keep_trying:
             try:
-                self.flaskIO.authenticate(api_key)
+                self.server_io.authenticate(api_key)
 
             except Exception as e:
                 msg = 'Authentication failed. Retrying in 10 seconds!'
@@ -158,7 +175,7 @@ class NodeWorker(object):
                 keep_trying = False 
 
         # At this point, we shoud be connnected.
-        self.log.info(f"Node name: {self.flaskIO.name}")
+        self.log.info(f"Node name: {self.server_io.name}")
 
     def get_task_and_add_to_queue(self, task_id):
         """Fetches (open) task with task_id from the server. 
@@ -167,7 +184,7 @@ class NodeWorker(object):
         """
 
         # fetch (open) result for the node with the task_id
-        tasks = self.flaskIO.get_results(
+        tasks = self.server_io.get_results(
             include_task=True,
             state='open',
             task_id=task_id
@@ -213,7 +230,7 @@ class NodeWorker(object):
         self.queue = queue.Queue()
 
         # request open tasks from the server
-        tasks = self.flaskIO.get_results(state="open", include_task=True)
+        tasks = self.server_io.get_results(state="open", include_task=True)
         for task in tasks:
             self.queue.put(task)
 
@@ -227,10 +244,10 @@ class NodeWorker(object):
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.flaskIO.set_task_start_time(taskresult["id"])
+        self.server_io.set_task_start_time(taskresult["id"])
 
         # TODO possibly we want to limit the token handout
-        token = self.flaskIO.request_token_for_container(
+        token = self.server_io.request_token_for_container(
             task["id"], 
             task["image"]
         )
@@ -262,9 +279,9 @@ class NodeWorker(object):
         """
         
         self.socketIO = SocketIO(
-            self.flaskIO.host, 
-            port=self.flaskIO.port, 
-            headers=self.flaskIO.headers,
+            self.server_io.host, 
+            port=self.server_io.port, 
+            headers=self.server_io.headers,
             wait_for_connection=True
         )
         
@@ -276,16 +293,16 @@ class NodeWorker(object):
         if self.socketIO.connected:
             msg = 'connected to host={host} on port={port}'
             msg = msg.format(
-                host=self.flaskIO.host, 
-                port=self.flaskIO.port
+                host=self.server_io.host, 
+                port=self.server_io.port
             )
             self.log.info(msg)
 
         else:
             msg = 'could *not* connect to {host} on port={port}'
             msg = msg.format(
-                host=self.flaskIO.host, 
-                port=self.flaskIO.port
+                host=self.server_io.host, 
+                port=self.server_io.port
             )
             self.log.critical(msg)
         
@@ -315,16 +332,16 @@ class NodeWorker(object):
             if results.status_code: 
                 self.socket_tasks.emit(
                     'container_failed', 
-                    self.flaskIO.id,
+                    self.server_io.id,
                     results.status_code,
                     results.result_id,
-                    self.flaskIO.collaboration_id
+                    self.server_io.collaboration_id
                 )
                 
             self.log.info(
                 f"Results (id={results.result_id}) are sent to the server!")
 
-            self.flaskIO.patch_results(id=results.result_id, result={
+            self.server_io.patch_results(id=results.result_id, result={
                 # TODO organization id for encryption needs to be added
                 'result': results.data,
                 'log': results.logs,
