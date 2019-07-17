@@ -4,5 +4,8 @@ FROM ppdli-base
 # copy all files to app folder
 COPY "/joey/node" "/app"
 
+# expose the proxy server port
+EXPOSE 5001
+
 # create entrypoint
 ENTRYPOINT [ "python", "/app/start.py"]
