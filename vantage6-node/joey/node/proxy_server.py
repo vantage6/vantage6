@@ -7,6 +7,8 @@ from joey.node.server_io import ClientNodeProtocol
 
 app = Flask(__name__)
 
+# TODO attach bearer header
+
 def server_info():
     """Retrieves environment variables set by the node.
     """
@@ -19,15 +21,6 @@ def server_info():
     # assert path, "path not set in the environment variable"
     return f"{url}:{port}{path}"
 
-def rest_method(method):
-    return {
-        'get': requests.get,
-        'post': requests.post,
-        'put': requests.put,
-        'patch': requests.patch,
-        'delete': requests.delete
-    }.get(method.lower(), 'get')
-
 @app.route('/')
 def info():
     info = server_info()
@@ -35,30 +28,17 @@ def info():
 
 @app.route('/proxy/<path:central_server_path>')
 def proxy(central_server_path):
-    """ 
-    {
-        "method": "POST",
-        "endpoint": "/task/...",
-        "header": { ... }
-        "body": { ... }
-    }
-    """
-    return jsonify({"path":central_server_path, "method":request.method})
+    return jsonify({
+        "path":central_server_path, 
+        "method":request.method, 
+        "args": request.args,
+        "body": request.get_json(),
+        "headers":dict(request.headers)
+    })
 
-    # data = request.get_json()
-    
-    # method = data.get("method")
-    # endpoint = data.get("endpoint")
-    # headers = data.get("header")
-    # params = data.get("params",None)
-    # json_body = data.get("json_body")
-    
-    # call = rest_method(method)
-    # full_server_url = server_info()
-    
-    # return call(
-    #     full_server_url+endpoint, 
-    #     json=json_body, 
-    #     headers=headers,
-    #     params=params
-    # )
+@app.route('/test/<path:central_server_path>')
+def test(central_server_path):
+    url = server_info()
+    # return f"{url}/{central_server_path}"
+    response = requests.get(url+"/"+central_server_path)
+    return jsonify(response.json())
