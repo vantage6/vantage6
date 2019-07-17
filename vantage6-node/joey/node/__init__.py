@@ -128,6 +128,12 @@ class NodeWorker(object):
         # after here, you should/could call self.run_forever()
     
     def __proxy_server_worker(self):
+        
+        # set environment vars
+        os.environ["SERVER_URL"] = self.flaskIO.host
+        os.environ["SERVER_PORT"] = self.flaskIO.port
+        os.environ["SERVER_PATH"] = self.flaskIO.path
+
         http_server = WSGIServer(('', 5001), app)
         http_server.serve_forever()
 
