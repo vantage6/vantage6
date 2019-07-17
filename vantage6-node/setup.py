@@ -59,7 +59,8 @@ setup(
         'schema',
         'questionary',
         'ipython',
-        'cryptography'
+        'cryptography',
+        'gevent'
     ],
     package_data={  
         'joey': [
@@ -78,3 +79,4 @@ setup(
         ],
     }
 )
+

@@ -175,6 +175,7 @@ def cli_node_files(name, environment, system_folders):
     flag_value=False, 
     default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
 )
+# @click.option("")
 def cli_node_start(name, config, environment, system_folders):
     """Start the node instance.
     
@@ -222,7 +223,8 @@ def cli_node_start(name, config, environment, system_folders):
     ]
     
     docker_client = docker.from_env()
-    id_ = docker_client.containers.run(
+    
+    container = docker_client.containers.run(
         "docker-registry.distributedlearning.ai/ppdli-node", 
         [ctx.config_file_name, ctx.environment],
         mounts=mounts,
@@ -236,7 +238,8 @@ def cli_node_start(name, config, environment, system_folders):
             else "_user"),
         auto_remove=True
     )
-    click.echo(f"Running, container id = {id_}")
+    
+    click.echo(f"Running, container id = {container}")
 
 @cli_node.command(name='stop')
 @click.option("-n","--name", 
