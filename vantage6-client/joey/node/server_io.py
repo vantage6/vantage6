@@ -140,7 +140,7 @@ class ClientBaseProtocol:
             raise Exception("Failed to authenticate")
 
         # store tokens
-        self.log.info("successfully authenticated")
+        self.log.info("Successfully authenticated")
         self._access_token = data.get("access_token")
         self.__refresh_token = data.get("refresh_token")
         self.__refresh_url = data.get("refresh_url")
@@ -362,6 +362,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
 
         # get info on how the server sees me
         node = self.request(f"node/{id_}")
+
         name = node.get("name")
         self.collaboration_id = node.get("collaboration")
         

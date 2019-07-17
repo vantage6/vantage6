@@ -13,7 +13,7 @@ from socketIO_client import SocketIO, SocketIONamespace
 import joey.constants as cs
 from joey.node.encryption import Cryptor
 from joey.node.DockerManager import DockerManager
-from joey.node.FlaskIO import ClientNodeProtocol, ServerInfo
+from joey.node.server_io import ClientNodeProtocol, ServerInfo
 
 def name():
     return __name__.split('.')[-1]
@@ -68,7 +68,7 @@ class NodeWorker(object):
         self.ctx = ctx
         self.config = ctx.config
         
-        # initialize Node connection
+        # initialize Node connection to the server
         self.flaskIO = ClientNodeProtocol(
             host=self.config.get('server_url'), 
             port=self.config.get('port'),
@@ -120,12 +120,14 @@ class NodeWorker(object):
         t = Thread(target=self.__speaking_worker, daemon=True)
         t.start()
 
+        # after here, you should/could call self.run_forever()
+
     def authenticate(self):
         """Authenticate with the server using the api-key. If the server
         rejects for any reason we keep trying."""
         api_key = self.config.get("api_key")
+        
         keep_trying = True
-
         while keep_trying:
             try:
                 self.flaskIO.authenticate(api_key)
@@ -172,7 +174,6 @@ class NodeWorker(object):
                 self.log.info("Waiting for new tasks....")
                 while True:
                     try:
-                        
                         task = self.queue.get(timeout=1)
                         break
 

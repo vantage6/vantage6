@@ -58,7 +58,7 @@ class NodeConfiguration(Configuration):
     VALIDATORS = {
         "api_key": And(Use(str), len),
         "server_url": Use(str),
-        "port": Use(int),
+        "port": Or(Use(int), None),
         "task_dir": Use(str),
         "databases": {Use(str):Use(str)},
         "api_path": Use(str),
