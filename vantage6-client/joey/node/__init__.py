@@ -9,11 +9,13 @@ import typing
 from pathlib import Path
 from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
+from gevent.pywsgi import WSGIServer
 
 import joey.constants as cs
 from joey.node.encryption import Cryptor
 from joey.node.DockerManager import DockerManager
 from joey.node.server_io import ClientNodeProtocol, ServerInfo
+from joey.node.proxy_server import app 
 
 def name():
     return __name__.split('.')[-1]
@@ -120,7 +122,14 @@ class NodeWorker(object):
         t = Thread(target=self.__speaking_worker, daemon=True)
         t.start()
 
+        self.log.info("Setting up proxy server")
+        t = Thread(target=self.__proxy_server_worker, daemon=True)
+        t.start()
         # after here, you should/could call self.run_forever()
+    
+    def __proxy_server_worker(self):
+        http_server = WSGIServer(('', 5001), app)
+        http_server.serve_forever()
 
     def authenticate(self):
         """Authenticate with the server using the api-key. If the server
