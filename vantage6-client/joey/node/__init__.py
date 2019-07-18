@@ -265,8 +265,9 @@ class NodeWorker(object):
         else:
             database_uri = self.config['databases']["default"]
 
-        # create a temporary volume for each run_id
+        # create a temporary volume for each run_id (tmp_{run_id})
         self.__docker.create_temporary_volume(task["run_id"])
+        # self.__docker.client.containers.get(self.ctx.docker_container_name)
 
         # start docker container in the background
         self.__docker.run(
