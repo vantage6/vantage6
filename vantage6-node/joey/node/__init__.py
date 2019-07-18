@@ -117,19 +117,18 @@ class NodeWorker(object):
         self.log.debug("fetching tasks that were posted while offline")
         self.__sync_task_que_with_server() 
 
-        server_info = ServerInfo(
-            host=self.server_io.host, 
-            port=self.server_io.port, 
-            path=self.server_io.path
-        )
-
         # TODO read allowed repositories from the config file
         self.log.debug("setup the docker manager")
         self.__docker = DockerManager(
             allowed_repositories=[], 
             tasks_dir=self.ctx.data_dir,
-            server_info=server_info,
-            isolated_network_name=f"ppdli-{self.ctx.name}-{self.ctx.scope}"
+            isolated_network_name=ctx.docker_network_name
+        )
+
+        # connect itself to the isolated algorithm network
+        self.__docker.isolated_network.connect(
+            ctx.docker_container_name, 
+            aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
         )
 
         # send results to the server when they come available.
@@ -147,12 +146,12 @@ class NodeWorker(object):
     
     def __proxy_server_worker(self):
         
-        # set environment vars
+        # supply the proxy server with a destination
         os.environ["SERVER_URL"] = self.server_io.host
         os.environ["SERVER_PORT"] = self.server_io.port
         os.environ["SERVER_PATH"] = self.server_io.path
 
-        http_server = WSGIServer(('', 5001), app)
+        http_server = WSGIServer(('', 80), app)
         http_server.serve_forever()
 
     def authenticate(self):

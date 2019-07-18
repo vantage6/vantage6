@@ -6,6 +6,8 @@ import pathlib
 
 from typing import NamedTuple
 
+import joey.constants as cs
+
 class Result(NamedTuple):
     """Data class to store the result of the docker image."""
     result_id: int
@@ -28,7 +30,7 @@ class DockerManager(object):
     # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
-    def __init__(self, allowed_repositories, tasks_dir, server_info, 
+    def __init__(self, allowed_repositories, tasks_dir, 
         isolated_network_name: str) -> None:
         """Initialization of DockerManager creates docker connection and
         sets some default values.
@@ -42,7 +44,7 @@ class DockerManager(object):
         # TODO this is no longer needed, as the local proxy server 
         # handles this.
         # master container need to know where they can post tasks to
-        self.__server_info = server_info
+        # self.__server_info = server_info
 
         self.client = docker.from_env()
 
@@ -147,9 +149,9 @@ class DockerManager(object):
         # define enviroment variables for the docker-container
         environment_variables = {
             "DATABASE_URI": database_uri,
-            "HOST": self.__server_info.host,
-            "PORT": self.__server_info.port,
-            "API_PATH": self.__server_info.path 
+            "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
+            "PORT": 80,
+            "API_PATH": "/",
         }
         self.log.debug(f"Environment={environment_variables}")
 
