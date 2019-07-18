@@ -151,7 +151,7 @@ class NodeWorker(object):
         os.environ["SERVER_PORT"] = self.server_io.port
         os.environ["SERVER_PATH"] = self.server_io.path
 
-        http_server = WSGIServer(('', 80), app)
+        http_server = WSGIServer(('', os.environ["PROXY_SERVER_PORT"]), app)
         http_server.serve_forever()
 
     def authenticate(self):
