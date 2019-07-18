@@ -26,7 +26,7 @@ from gevent.pywsgi import WSGIServer
 
 import joey.constants as cs
 from joey.node.encryption import Cryptor
-from joey.node.DockerManager import DockerManager
+from joey.node.docker_manager import DockerManager
 from joey.node.server_io import ClientNodeProtocol, ServerInfo
 from joey.node.proxy_server import app 
 
@@ -128,7 +128,8 @@ class NodeWorker(object):
         self.__docker = DockerManager(
             allowed_repositories=[], 
             tasks_dir=self.ctx.data_dir,
-            server_info=server_info
+            server_info=server_info,
+            isolated_network_name=f"ppdli-{self.ctx.name}-{self.ctx.scope}"
         )
 
         # send results to the server when they come available.
