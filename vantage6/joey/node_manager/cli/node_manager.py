@@ -234,14 +234,10 @@ def cli_node_start(name, config, environment, system_folders):
             "system": str(system_folders), 
             "name": ctx.config_file_name
         },
-        name=str(ctx.config_file_name) + ("_system" if system_folders \
-            else "_user"),
+        name=ctx.docker_container_name,
         auto_remove=True
     )
 
-    # connect to the isolated algorithm network
-    network = docker_client.networks.get("ppdli-config-name")
-    network.connect(container, aliases=["proxyserver"])
     
     click.echo(f"Running, container id = {container}")
 
