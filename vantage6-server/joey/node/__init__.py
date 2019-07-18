@@ -151,7 +151,10 @@ class NodeWorker(object):
         os.environ["SERVER_PORT"] = self.server_io.port
         os.environ["SERVER_PATH"] = self.server_io.path
 
-        http_server = WSGIServer(('', os.environ["PROXY_SERVER_PORT"]), app)
+        http_server = WSGIServer(
+            ('', os.environ["PROXY_SERVER_PORT"]), 
+            app
+        )
         http_server.serve_forever()
 
     def authenticate(self):
@@ -262,12 +265,16 @@ class NodeWorker(object):
         else:
             database_uri = self.config['databases']["default"]
 
+        # create a temporary volume for each run_id
+        self.__docker.create_temporary_volume(task["run_id"])
+
         # start docker container in the background
         self.__docker.run(
             result_id=taskresult["id"], 
             image=task["image"],
             database_uri=database_uri,
             docker_input=taskresult['input'],
+            run_id=task["run_id"],
             token=token
         )
 
