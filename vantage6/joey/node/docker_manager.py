@@ -67,11 +67,10 @@ class DockerManager(object):
 
         :param name: name of the internal network
         """
-        network = self.client.networks.get(name)
-        
-        if network:
+        try:
+            network = self.client.networks.get(name)
             self.log.debug(f"Network {name} already exists.")
-        else: 
+        except docker.errors.NotFound:
             self.log.debug(f"Creating docker-network {name}")
             network = self.client.networks.create(
                 name, 
@@ -91,9 +90,18 @@ class DockerManager(object):
             input_path, 
             type="bind"
         )
+    
+    def create_temporary_volume(self, run_id:int):
+        volume_name = f"tmp_{run_id}"
+        try:
+            self.client.volumes.get(volume_name)
+            self.log.debug(f"Volume {volume_name} already exists.")
+        except docker.errors.NotFound:
+            self.log.debug(f"Creating volume {volume_name}")
+            self.client.volumes.create(volume_name)
 
     def run(self, result_id: int,  image: str, database_uri: str, 
-                docker_input: str, token: str) -> bool:
+                docker_input: str, run_id: int, token: str) -> bool:
         """Runs the docker-image in detached mode.
         
         :param result_id: server result identifyer.
@@ -146,7 +154,9 @@ class DockerManager(object):
         except Exception as e:
             self.log.error(e)
         
-        # define enviroment variables for the docker-container
+        # define enviroment variables for the docker-container, the 
+        # host, port and api_path are from the local proxy server to 
+        # facilitate indirect communication with the central server
         environment_variables = {
             "DATABASE_URI": database_uri,
             "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
@@ -163,7 +173,13 @@ class DockerManager(object):
                 detach=True, 
                 mounts=mounts,
                 environment=environment_variables,
-                network=self.isolated_network.name
+                network=self.isolated_network.name,
+                volumes={
+                    f"tmp_{run_id}":{
+                        "bind":"/mnt/tmp",
+                        "mode": "rw"
+                    }
+                }
             )
         except Exception as e:
             self.log.debug(e)
