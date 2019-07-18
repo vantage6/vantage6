@@ -28,7 +28,8 @@ class DockerManager(object):
     # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
-    def __init__(self, allowed_repositories, tasks_dir, server_info):
+    def __init__(self, allowed_repositories, tasks_dir, server_info, 
+        isolated_network_name: str) -> None:
         """Initialization of DockerManager creates docker connection and
         sets some default values.
         
@@ -37,17 +38,50 @@ class DockerManager(object):
         :param tasks_dir: folder to store task related data.
         """
         self.log.debug("Initializing DockerManager")
-        self.client = docker.from_env()
-
-        self.tasks = []
-
-        self.__allowed_repositories = allowed_repositories
         self.__tasks_dir = tasks_dir
-
+        # TODO this is no longer needed, as the local proxy server 
+        # handles this.
         # master container need to know where they can post tasks to
         self.__server_info = server_info
+
+        self.client = docker.from_env()
+
+        # keep track of the running containers
+        self.active_tasks = []
+
+        # TODO this still needs to be checked
+        self.__allowed_repositories = allowed_repositories
+        
+        # create / get isolated network to which algorithm containers 
+        # can attach
+        self.isolated_network = \
+            self.create_isolated_network(isolated_network_name)
     
-    def create_bind(self, filename, result_id, filecontents):
+    def create_isolated_network(self, name: str) \
+        -> docker.models.networks.Network:
+        """Create an internal network 
+        
+        Used by algorithm containers to communicate with the node API.
+
+        :param name: name of the internal network
+        """
+        network = self.client.networks.get(name)
+        
+        if network:
+            self.log.debug(f"Network {name} already exists.")
+        else: 
+            self.log.debug(f"Creating docker-network {name}")
+            network = self.client.networks.create(
+                name, 
+                driver="bridge",
+                internal=True,
+                scope="local"
+            )
+
+        return network
+
+    def create_bind(self, filename: str, result_id: int, filecontents) \
+        -> docker.types.services.Mount:
         input_path = self.__create_file(filename, result_id, filecontents)
 
         return docker.types.Mount(
@@ -57,7 +91,7 @@ class DockerManager(object):
         )
 
     def run(self, result_id: int,  image: str, database_uri: str, 
-                docker_input: str, token: str):
+                docker_input: str, token: str) -> bool:
         """Runs the docker-image in detached mode.
         
         :param result_id: server result identifyer.
@@ -126,14 +160,15 @@ class DockerManager(object):
                 image, 
                 detach=True, 
                 mounts=mounts,
-                environment=environment_variables
+                environment=environment_variables,
+                network=self.isolated_network.name
             )
         except Exception as e:
             self.log.debug(e)
             return False
 
         # keep track of the container
-        self.tasks.append({
+        self.active_tasks.append({
             "result_id": result_id,
             "container": container,
             "output_file": files["output_file"]
@@ -154,7 +189,7 @@ class DockerManager(object):
         while not finished_tasks:
             self.__refresh_container_statuses()
             
-            finished_tasks = [t for t in self.tasks \
+            finished_tasks = [t for t in self.active_tasks \
                 if t['container'].status == 'exited']
             
             time.sleep(1)
@@ -182,7 +217,7 @@ class DockerManager(object):
             self.log.error(f"Failed to remove container {container.name}")
             self.log.debug(e)
 
-        self.tasks.remove(finished_task)
+        self.active_tasks.remove(finished_task)
         
         # retrieve results from file        
         with open(finished_task["output_file"]) as fp:
@@ -197,7 +232,7 @@ class DockerManager(object):
 
     def __refresh_container_statuses(self):
         """Refreshes the states of the containers."""
-        for task in self.tasks:
+        for task in self.active_tasks:
             task["container"].reload()
         
     def __create_file(self, filename: str, result_id: int, content: str):

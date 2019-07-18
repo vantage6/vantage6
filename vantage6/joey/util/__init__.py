@@ -40,6 +40,8 @@ class AppContext(metaclass=Singleton):
         """instance name is equal to the config-filename..."""
 
         # lookup system / user directories
+        self.name = instance_name
+        self.scope = "system" if system_folders else "user"
         self.set_folders(instance_type, instance_name, system_folders)
 
         # configuration environment, load a single configuration from 
