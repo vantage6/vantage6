@@ -21,6 +21,8 @@ PACAKAGE_FOLDER = Path(__file__).parent.parent
 
 APPNAME = "joey"
 
+NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+
 DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
 
 with open(Path(PACAKAGE_FOLDER) / APPNAME / "VERSION") as f:

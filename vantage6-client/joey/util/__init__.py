@@ -111,6 +111,14 @@ class AppContext(metaclass=Singleton):
         self.log = log
 
     @property
+    def docker_container_name(self):
+        return f"{constants.APPNAME}-{self.name}-{self.scope}"
+
+    @property
+    def docker_network_name(self):
+        return f"{constants.APPNAME}-{self.name}-{self.scope}"
+
+    @property
     def log_file(self):
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
