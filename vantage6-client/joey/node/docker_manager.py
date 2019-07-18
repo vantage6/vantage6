@@ -150,8 +150,8 @@ class DockerManager(object):
         environment_variables = {
             "DATABASE_URI": database_uri,
             "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
-            "PORT": 80,
-            "API_PATH": "/",
+            "PORT": os.environ["PROXY_SERVER_PORT"],
+            "API_PATH": "",
         }
         self.log.debug(f"Environment={environment_variables}")
 

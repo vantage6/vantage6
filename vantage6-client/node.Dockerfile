@@ -5,7 +5,9 @@ FROM ppdli-base
 COPY "/joey/node" "/app"
 
 # expose the proxy server port
-EXPOSE 80
+ARG port=80
+EXPOSE ${port}
+ENV PROXY_SERVER_PORT ${port}
 
 # create entrypoint
 ENTRYPOINT [ "python", "/app/start.py"]
