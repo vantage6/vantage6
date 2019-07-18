@@ -13,9 +13,9 @@ Attributes:
 Todo:
     * bearer token from the node needs to be inserted
     * limit the endpoints a container can reach, maybe add a arg and
-        check for it at the server
+        check for it at the server or we could reuse the container token
     * encrypt input and result field
-    
+
 """
 import requests
 import os
