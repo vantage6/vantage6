@@ -26,6 +26,7 @@ from pathlib import Path
 import joey.constants as constants
 
 from joey import util, node
+
 from joey.util.context import (
     configuration_wizard, select_configuration_questionaire)
 
@@ -46,7 +47,7 @@ def cli_node_list():
     """Lists all nodes in the default configuration directory."""
     
     client = docker.from_env()
-    running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
+    running_nodes = client.containers.list(filters={"label":f"{constants.APPNAME}-type=node"})
     running_node_names = []
     for node in running_nodes:
         running_node_names.append(node.name)
@@ -59,13 +60,13 @@ def cli_node_list():
 
     configs, f1 = util.NodeContext.available_configurations(system_folders=True)
     for config in configs:
-        status = running if config.name+"_system" in running_node_names \
+        status = running if f"{constants.APPNAME}-{config.name}-system" in running_node_names \
             else stopped
         click.echo(f"{config.name:25}{str(config.available_environments):32}{status:25} System ") 
 
     configs, f2 = util.NodeContext.available_configurations(system_folders=False)
     for config in configs:
-        status = running if config.name+"_user" in running_node_names \
+        status = running if f"{constants.APPNAME}-{config.name}-user" in running_node_names \
             else stopped
         click.echo(f"{config.name:25}{str(config.available_environments):32}{status:25} User   ") 
 
@@ -148,6 +149,7 @@ def cli_node_files(name, environment, system_folders):
     # return path of the configuration
     click.echo(f"Configuration file = {ctx.config_file}")
     click.echo(f"Log file           = {ctx.log_file}")
+    click.echo(f"data folders       = {ctx.data_dir}")
     click.echo(f"Database labels and files")
     for label, path in ctx.databases.items():
         click.echo(f" - {label:15} = {path}")
@@ -230,9 +232,14 @@ def cli_node_start(name, config, environment, system_folders):
         mounts=mounts,
         detach=True,
         labels={
-            "ppdli-type": "node", 
+            f"{constants.APPNAME}-type": "node", 
             "system": str(system_folders), 
             "name": ctx.config_file_name
+        },
+        environment={
+            # "HOST_LOG_DIR": str(ctx.log_dir),
+            "HOST_DATA_DIR": str(ctx.data_dir),
+            # "HOST_CONFIG_DIR": str(ctx.config_dir)
         },
         name=ctx.docker_container_name,
         auto_remove=True
@@ -257,7 +264,7 @@ def cli_node_stop(name, system_folders):
     """Stop a running container. """
 
     client = docker.from_env()
-    running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
+    running_nodes = client.containers.list(filters={"label":f"{constants.APPNAME}-type=node"})
     
     if not running_nodes:
         click.echo("No nodes are currently running.")

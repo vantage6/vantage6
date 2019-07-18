@@ -83,7 +83,7 @@ class DockerManager(object):
 
     def create_bind(self, filename: str, result_id: int, filecontents) \
         -> docker.types.services.Mount:
-        input_path = self.__create_file(filename, result_id, filecontents)
+        input_path = self.__create_file_on_host(filename, result_id, filecontents)
 
         return docker.types.Mount(
             f"/app/{filename}", 
@@ -109,7 +109,7 @@ class DockerManager(object):
         :param docker_input: input that can be read by docker container.
         :param token: Bearer token that the container can use.
         """
-        
+
         # create I/O files for docker
         mounts = []
         mount_files = [
@@ -119,11 +119,11 @@ class DockerManager(object):
         ]
         files = {}
         for (filename, contents) in mount_files:
-            input_path = self.__create_file(filename+".txt", result_id, 
+            input_path, host_input_path = self.__create_file_on_host(filename+".txt", result_id, 
                 contents)
             mounts.append(docker.types.Mount(
                 f"/app/{filename}.txt", 
-                input_path, 
+                host_input_path,
                 type="bind"
             ))
             files[filename+"_file"] = input_path
@@ -253,7 +253,7 @@ class DockerManager(object):
         for task in self.active_tasks:
             task["container"].reload()
         
-    def __create_file(self, filename: str, result_id: int, content: str):
+    def __create_file_on_host(self, filename: str, result_id: int, content: str):
         """Creates a file in the tasks_dir for a specific task."""
         
         # generate file paths
@@ -264,7 +264,13 @@ class DockerManager(object):
         with open(path, 'w') as fp:
             fp.write(content + "\n")
 
-        return path
+        # convert to host path
+        # TODO windows only solution!
+        host_input_path = path.replace("/mnt/data", os.environ["HOST_DATA_DIR"])
+        host_input_path = host_input_path.replace("C:","/c")
+        host_input_path = host_input_path.replace("\\","/")
+
+        return path, host_input_path
 
     def __make_task_dir(self, result_id: int):
         """Creates a task directory for a specific result."""
