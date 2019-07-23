@@ -70,7 +70,7 @@ class DockerManager(object):
         try:
             network = self.client.networks.get(name)
             self.log.debug(f"Network {name} already exists.")
-        except docker.errors.NotFound:
+        except:
             self.log.debug(f"Creating docker-network {name}")
             network = self.client.networks.create(
                 name, 
