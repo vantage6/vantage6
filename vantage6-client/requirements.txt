@@ -23,3 +23,7 @@ schema
 questionary
 ipython
 cryptography
+eventlet
+psutil
+psycopg2-binary
+gevent
