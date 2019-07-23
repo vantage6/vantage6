@@ -1,5 +1,5 @@
-FROM python:3
+FROM python:3.7
 
-COPY . /joey
+COPY requirements.txt /tmp/
 
-RUN pip install /joey 
+RUN pip install -r /tmp/requirements.txt
