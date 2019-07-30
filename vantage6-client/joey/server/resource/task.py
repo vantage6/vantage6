@@ -142,8 +142,12 @@ class Task(Resource):
             log.debug(f"Assigning task to '{organization.name}'.")
 
             # get organization specific encrypted input
+            # TODO make this cleaner...
             input_ = [org.get("input") for org in organizations_json_list \
-                if org.get("id")==organization.id]
+                if org.get("id")==organization.id].pop()
+
+            if not isinstance(input_, str):
+                input_ = json.dumps(input_)
 
             result = db.Result(
                 task=task, 
