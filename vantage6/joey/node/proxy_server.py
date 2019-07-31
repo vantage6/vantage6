@@ -11,19 +11,20 @@ Attributes:
     app (FlaskApp): contains the flask application
 
 Todo:
-    * bearer token from the node needs to be inserted
-    * limit the endpoints a container can reach, maybe add a arg and
-        check for it at the server or we could reuse the container token
     * encrypt input and result field
 
 """
 import requests
 import os
+import logging
 
 from flask import Flask, request, jsonify
 from joey.node.server_io import ClientNodeProtocol
+from joey.util import logger_name
 
 app = Flask(__name__)
+
+log = logging.getLogger(logger_name(__name__))
 
 def server_info():
     """Retrieves environment variables set by the node."""
@@ -32,16 +33,59 @@ def server_info():
     path = os.environ["SERVER_PATH"]
     return f"{url}:{port}{path}"
 
-@app.route('/<path:central_server_path>')
-def proxy(central_server_path):
-    """Endpoint that will forward everything to the central server."""
-    return jsonify({
-        "path":central_server_path, 
-        "method":request.method, 
-        "args": request.args,
-        "body": request.get_json(),
-        "headers":dict(request.headers)
-    })
+@app.route("/task", methods=["POST"])
+def proxy_task():
+    """Create new task at the server instance"""
+    
+    url = server_info()
+    
+    auth = request.headers['Authorization']
+    log.debug(f"container token = {auth}")
+    
+    try:
+        response = requests.post(
+            f"{url}/task",
+            headers={'Authorization': auth},
+            json=request.get_json()
+        )
+
+    except Exception as e:
+        log.error("Proxyserver was unable to retreive results...")
+        log.debug(e)
+
+    return jsonify(response.json())
+
+@app.route('/result/<int:id>', methods=["GET"])
+def proxy_results(id):
+    """Obtain results from the server"""
+    
+    url = server_info()
+
+    auth = request.headers['Authorization']
+    log.debug(f"container token = {auth}")
+    
+    try:
+        response = requests.get(
+            f"{url}/result/{id}",
+            headers={'Authorization': auth}
+        )
+    except Exception as e:
+        log.error("Proxyserver was unable to retreive results...")
+        log.debug(e)
+
+    return jsonify(response.json())
+
+# This is an idea...
+# @app.route('/<path:central_server_path>')
+# def proxy(central_server_path):
+#     """Endpoint that will forward everything to the central server."""
+#     return jsonify({
+#         "path":central_server_path, 
+#         "method":request.method, 
+#         "args": request.args,
+#         "body": request.get_json(),
+#         "headers":dict(request.headers)
+#     })
 
 @app.route('/test/<path:central_server_path>')
 def test(central_server_path):
