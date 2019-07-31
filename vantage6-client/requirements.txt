@@ -27,3 +27,4 @@ eventlet
 psutil
 psycopg2-binary
 gevent
+watchdog

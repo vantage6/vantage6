@@ -8,6 +8,8 @@ from typing import NamedTuple
 
 import joey.constants as cs
 
+from joey.util import logger_name
+
 class Result(NamedTuple):
     """Data class to store the result of the docker image."""
     result_id: int
@@ -25,13 +27,13 @@ class DockerManager(object):
     `get_result()` which returns the first available result.
     """
 
-    log = logging.getLogger(__name__.split('.')[-1])
+    log = logging.getLogger(logger_name(__name__))
     
     # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
     def __init__(self, allowed_repositories, tasks_dir, 
-        isolated_network_name: str) -> None:
+        docker_socket_path, isolated_network_name: str) -> None:
         """Initialization of DockerManager creates docker connection and
         sets some default values.
         
@@ -46,7 +48,7 @@ class DockerManager(object):
         # master container need to know where they can post tasks to
         # self.__server_info = server_info
 
-        self.client = docker.from_env()
+        self.client = docker.DockerClient(base_url=docker_socket_path)
 
         # keep track of the running containers
         self.active_tasks = []
@@ -71,27 +73,17 @@ class DockerManager(object):
             network = self.client.networks.get(name)
             self.log.debug(f"Network {name} already exists.")
         except:
-            self.log.debug(f"Creating docker-network {name}")
+            self.log.debug(f"Creating isolated docker-network {name}")
             network = self.client.networks.create(
                 name, 
                 driver="bridge",
-                internal=True,
+                internal=False,
                 scope="local"
             )
 
         return network
 
-    def create_bind(self, filename: str, result_id: int, filecontents) \
-        -> docker.types.services.Mount:
-        input_path = self.__create_file_on_host(filename, result_id, filecontents)
-
-        return docker.types.Mount(
-            f"/app/{filename}", 
-            input_path, 
-            type="bind"
-        )
-    
-    def create_temporary_volume(self, run_id:int):
+    def create_temporary_volume(self, run_id: int):
         volume_name = f"tmp_{run_id}"
         try:
             self.client.volumes.get(volume_name)
@@ -99,6 +91,10 @@ class DockerManager(object):
         except docker.errors.NotFound:
             self.log.debug(f"Creating volume {volume_name}")
             self.client.volumes.create(volume_name)
+
+    def create_data_volume(self, name: str, path):
+        self.log.debug(f"creating volume {name}")
+        self.client.volumes.create(name)
 
     def run(self, result_id: int,  image: str, database_uri: str, 
                 docker_input: str, run_id: int, token: str) -> bool:
@@ -111,41 +107,28 @@ class DockerManager(object):
         """
 
         # create I/O files for docker
-        mounts = []
-        mount_files = [
+        self.log.debug("prepare IO files in docker volume")
+        io_files = [
             ('input', docker_input), 
             ('output', ''), 
             ('token', token), 
         ]
-        files = {}
-        for (filename, contents) in mount_files:
-            input_path, host_input_path = self.__create_file_on_host(filename+".txt", result_id, 
-                contents)
-            mounts.append(docker.types.Mount(
-                f"/app/{filename}.txt", 
-                host_input_path,
-                type="bind"
-            ))
-            files[filename+"_file"] = input_path
-
-        # If the provided database URI is a file, we need to mount
-        # it at a predefined path and update the environment variable
-        # that's passed to the container.
-        if database_uri:
-            if pathlib.Path(database_uri).is_file():
-                mounts.append(
-                    docker.types.Mount(
-                        "/app/database", 
-                        database_uri, 
-                        type="bind"
-                    )
-                )
-                database_uri = "/app/database"
-
-            else:
-                self.log.warning("'{}' is not a file!".format(database_uri))
-        else:
-            self.log.warning('no database specified')
+        
+        # the data-volume is shared amongst all algorithm containers,
+        # therefore there should be no sensitive information in here. 
+        # FIXME ideally we should have a seperate mount/volume for this
+        # this was not possible yet as mounting volumes from containers
+        # is terrible when working from windows (as you have to convert
+        # from windows to unix sevral times...). This is a potential leak
+        # as containers might access other container keys, which allows
+        # them to post tasks in different collaborations.
+        folder_name = "task-{0:09d}".format(result_id)
+        io_path = pathlib.Path("/mnt/data-volume") / folder_name
+        os.makedirs(io_path, exist_ok=True)
+        for (filename, contents) in io_files:
+            path =  io_path / f"{filename}.txt"
+            with open(path, 'w') as fp:
+                fp.write(contents + "\n")
 
         # attempt to pull the latest image
         try:
@@ -158,6 +141,9 @@ class DockerManager(object):
         # host, port and api_path are from the local proxy server to 
         # facilitate indirect communication with the central server
         environment_variables = {
+            "INPUT_FILE": str(io_path / "input.txt"),
+            "OUTPUT_FILE": str(io_path / "output.txt"),
+            "TOKEN_FILE": str(io_path / "token.txt"),
             "DATABASE_URI": database_uri,
             "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
             "PORT": os.environ["PROXY_SERVER_PORT"],
@@ -171,12 +157,15 @@ class DockerManager(object):
             container = self.client.containers.run(
                 image, 
                 detach=True, 
-                mounts=mounts,
                 environment=environment_variables,
                 network=self.isolated_network.name,
                 volumes={
                     f"tmp_{run_id}":{
                         "bind":"/mnt/tmp",
+                        "mode": "rw"
+                    },
+                    os.environ["DATA_VOLUME_NAME"]:{
+                        "bind": "/mnt/data-volume", 
                         "mode": "rw"
                     }
                 }
@@ -189,7 +178,7 @@ class DockerManager(object):
         self.active_tasks.append({
             "result_id": result_id,
             "container": container,
-            "output_file": files["output_file"]
+            "output_file": io_path / "output.txt"
         })
 
         return True
@@ -253,25 +242,6 @@ class DockerManager(object):
         for task in self.active_tasks:
             task["container"].reload()
         
-    def __create_file_on_host(self, filename: str, result_id: int, content: str):
-        """Creates a file in the tasks_dir for a specific task."""
-        
-        # generate file paths
-        task_dir = self.__make_task_dir(result_id)
-        path = os.path.join(task_dir, filename)
-        
-        # create files
-        with open(path, 'w') as fp:
-            fp.write(content + "\n")
-
-        # convert to host path
-        # TODO windows only solution!
-        host_input_path = path.replace("/mnt/data", os.environ["HOST_DATA_DIR"])
-        host_input_path = host_input_path.replace("C:","/c")
-        host_input_path = host_input_path.replace("\\","/")
-
-        return path, host_input_path
-
     def __make_task_dir(self, result_id: int):
         """Creates a task directory for a specific result."""
         
