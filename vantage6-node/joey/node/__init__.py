@@ -18,6 +18,8 @@ import datetime
 import logging
 import queue
 import typing
+import shutil
+import requests
 
 from pathlib import Path
 from threading import Thread
@@ -25,14 +27,12 @@ from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
 import joey.constants as cs
+
 from joey.node.encryption import Cryptor
 from joey.node.docker_manager import DockerManager
 from joey.node.server_io import ClientNodeProtocol, ServerInfo
 from joey.node.proxy_server import app 
-
-def name():
-    return __name__.split('.')[-1]
-
+from joey.util import logger_name
 
 class NodeTaskNamespace(SocketIONamespace):
     """Class that handles incoming websocket events."""
@@ -44,7 +44,7 @@ class NodeTaskNamespace(SocketIONamespace):
     def __init__(self, *args, **kwargs):
         """Create a new handler for a socket namespace."""
         super().__init__(*args, **kwargs)
-        self.log = logging.getLogger(name())
+        self.log = logging.getLogger(logger_name(__name__))
         self.node_worker_ref = None
 
     def setNodeWorker(self, node_worker):
@@ -78,7 +78,7 @@ class NodeWorker(object):
 
     def __init__(self, ctx):
         """Initialize a new TaskMasterNode instance."""
-        self.log = logging.getLogger(name())
+        self.log = logging.getLogger(logger_name(__name__))
 
         self.ctx = ctx
         self.config = ctx.config
@@ -121,11 +121,19 @@ class NodeWorker(object):
         self.log.debug("setup the docker manager")
         self.__docker = DockerManager(
             allowed_repositories=[], 
+            docker_socket_path="unix://var/run/docker.sock",
             tasks_dir=self.ctx.data_dir,
-            isolated_network_name=ctx.docker_network_name
+            isolated_network_name=f"{ctx.docker_network_name}-net"
         )
 
+        # copy data to Volume /mnt/data-volume from /mnt/data to populate
+        # the volume for use in the algorithm containers (which can not access
+        # the host directly)
+        self.log.debug("copying data files to volume")
+        shutil.copy2("/mnt/database.csv", "/mnt/data-volume", follow_symlinks=True)
+
         # connect itself to the isolated algorithm network
+        self.log.debug("connect to isolated algorithm network")
         self.__docker.isolated_network.connect(
             ctx.docker_container_name, 
             aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
@@ -142,20 +150,38 @@ class NodeWorker(object):
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
 
+        # time.sleep(3)
+        # response = requests.get("http://localhost:5000/test/version")
+        # self.log.info(response.json())
+        
+
         # after here, you should/could call self.run_forever()
     
     def __proxy_server_worker(self):
         
-        # supply the proxy server with a destination
+        # supply the proxy server with a destination (the central server)
+        # we might want to not use enviroment vars
         os.environ["SERVER_URL"] = self.server_io.host
         os.environ["SERVER_PORT"] = self.server_io.port
         os.environ["SERVER_PATH"] = self.server_io.path
-
+        
+        port = int(os.environ["PROXY_SERVER_PORT"])
+        
+        app.debug = True
         http_server = WSGIServer(
-            ('', os.environ["PROXY_SERVER_PORT"]), 
+            ('0.0.0.0', port), 
             app
         )
-        http_server.serve_forever()
+
+        self.log.debug(
+            f"proxyserver host={cs.NODE_PROXY_SERVER_HOSTNAME} port={port}")
+        
+        try:
+            http_server.serve_forever()
+        except Exception as e:
+            self.log.critical("proxyserver crashed!...")
+            self.log.debug(e)
+
 
     def authenticate(self):
         """Authenticate with the server using the api-key. If the server

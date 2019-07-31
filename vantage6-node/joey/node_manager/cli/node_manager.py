@@ -20,8 +20,10 @@ import appdirs
 import questionary as q
 import errno
 import docker
+import time
 
 from pathlib import Path
+from threading import Thread
 
 import joey.constants as constants
 
@@ -47,32 +49,52 @@ def cli_node_list():
     """Lists all nodes in the default configuration directory."""
     
     client = docker.from_env()
-    running_nodes = client.containers.list(filters={"label":f"{constants.APPNAME}-type=node"})
+    running_nodes = client.containers.list(
+        filters={"label":f"{constants.APPNAME}-type=node"})
     running_node_names = []
     for node in running_nodes:
         running_node_names.append(node.name)
 
-    click.echo("\nName"+(21*" ")+"Environments"+(20*" ")+"Status"+(10*" ")+"System/User")
-    click.echo("-"*85)
+    header = \
+        "\nName"+(21*" ") + \
+        "Environments"+(20*" ") + \
+        "Status"+(10*" ") + \
+        "System/User"
+    
+    click.echo(header)
+    click.echo("-"*len(header))
     
     running = Fore.GREEN + "Running" + Style.RESET_ALL
     stopped = Fore.RED + "Stopped" + Style.RESET_ALL
 
-    configs, f1 = util.NodeContext.available_configurations(system_folders=True)
+    # system folders
+    configs, f1 = util.NodeContext.available_configurations(
+        system_folders=True)
     for config in configs:
-        status = running if f"{constants.APPNAME}-{config.name}-system" in running_node_names \
-            else stopped
-        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:25} System ") 
+        status = running if f"{constants.APPNAME}-{config.name}-system" in \
+            running_node_names else stopped
+        click.echo(
+            f"{config.name:25}"
+            f"{str(config.available_environments):32}"
+            f"{status:25} System "
+        ) 
 
-    configs, f2 = util.NodeContext.available_configurations(system_folders=False)
+    # user folders
+    configs, f2 = util.NodeContext.available_configurations(
+        system_folders=False)
     for config in configs:
-        status = running if f"{constants.APPNAME}-{config.name}-user" in running_node_names \
-            else stopped
-        click.echo(f"{config.name:25}{str(config.available_environments):32}{status:25} User   ") 
+        status = running if f"{constants.APPNAME}-{config.name}-user" in \
+            running_node_names else stopped
+        click.echo(
+            f"{config.name:25}"
+            f"{str(config.available_environments):32}"
+            f"{status:25} User   "
+        ) 
 
     click.echo("-"*85)
     if len(f1)+len(f2):
-        click.echo(Fore.RED + f"Failed imports: {len(f1)+len(f2)}" + Style.RESET_ALL)
+        click.echo(
+            Fore.RED + f"Failed imports: {len(f1)+len(f2)}" + Style.RESET_ALL)
 
 #
 #   new
@@ -177,8 +199,9 @@ def cli_node_files(name, environment, system_folders):
     flag_value=False, 
     default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
 )
+@click.option('--develop', is_flag=True)
 # @click.option("")
-def cli_node_start(name, config, environment, system_folders):
+def cli_node_start(name, config, environment, system_folders, develop):
     """Start the node instance.
     
     If no name or config is specified the default.yaml configuation is used. 
@@ -196,8 +219,8 @@ def cli_node_start(name, config, environment, system_folders):
     else:
         
         # in case no name is supplied, ask user to select one
-        name, environment = (name, environment) if name else select_configuration_questionaire(
-            'node', system_folders) 
+        name, environment = (name, environment) if name else \
+            select_configuration_questionaire('node', system_folders) 
                 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
@@ -216,20 +239,50 @@ def cli_node_start(name, config, environment, system_folders):
     # make sure the (local)task dir exists
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
 
+    docker_client = docker.from_env()
+    
     # specify mount-points 
+    # TODO multiple database support
     mounts = [
+        docker.types.Mount("/mnt/database.csv", str(ctx.databases["default"]),
+            type="bind"),
         docker.types.Mount("/mnt/log", str(ctx.log_dir), type="bind"),
         docker.types.Mount("/mnt/data", str(ctx.data_dir), type="bind"),
         docker.types.Mount("/mnt/config", str(ctx.config_dir), type="bind"),
-        docker.types.Mount("/var/run/docker.sock", "//var/run/docker.sock", type="bind")
+        docker.types.Mount("/var/run/docker.sock", "//var/run/docker.sock", 
+            type="bind"),
+        
     ]
+
+    # in case a development environment is run, we need to do a few extra things
+    # and run a devcon container (see develop.Dockerfile)
+    if develop:
+        # TODO watchdog is disabled as this does not work with Windows
+        # mounts.append(
+        #     docker.types.Mount("/src", 
+        #     r"path/to/repository", type="bind")
+        # )
+        container_image = "devcon"
+        # attach proxy server for debugging to the host machine
+        port = {"80/tcp":("127.0.0.1",8080)}
+        print("proxy-server attached to host on port 8888")
+    else:
+        port = None
+        container_image = "docker-registry.distributedlearning.ai/ppdli-node"
+
     
-    docker_client = docker.from_env()
+    # create data volume which can be used by this node instance
+    data_volume = docker_client.volumes.create(
+        f"{ctx.docker_container_name}-vol"
+    )
     
     container = docker_client.containers.run(
-        "docker-registry.distributedlearning.ai/ppdli-node", 
-        [ctx.config_file_name, ctx.environment],
+        container_image,
+        command=[ctx.config_file_name, ctx.environment],
         mounts=mounts,
+        volumes={data_volume.name: 
+            {'bind': '/mnt/data-volume', 'mode': 'rw'}
+        },
         detach=True,
         labels={
             f"{constants.APPNAME}-type": "node", 
@@ -237,15 +290,13 @@ def cli_node_start(name, config, environment, system_folders):
             "name": ctx.config_file_name
         },
         environment={
-            # "HOST_LOG_DIR": str(ctx.log_dir),
-            "HOST_DATA_DIR": str(ctx.data_dir),
-            # "HOST_CONFIG_DIR": str(ctx.config_dir)
+            "DATA_VOLUME_NAME": data_volume.name,
         },
+        ports = port,
         name=ctx.docker_container_name,
         auto_remove=True
     )
 
-    
     click.echo(f"Running, container id = {container}")
 
 @cli_node.command(name='stop')
@@ -264,7 +315,8 @@ def cli_node_stop(name, system_folders):
     """Stop a running container. """
 
     client = docker.from_env()
-    running_nodes = client.containers.list(filters={"label":f"{constants.APPNAME}-type=node"})
+    running_nodes = client.containers.list(
+        filters={"label":f"{constants.APPNAME}-type=node"})
     
     if not running_nodes:
         click.echo("No nodes are currently running.")
@@ -275,7 +327,8 @@ def cli_node_stop(name, system_folders):
         name = q.select("Select the node you wish to stop:",
             choices=running_node_names).ask()
     else: 
-        name + ("_system" if system_folders else "_user") 
+        post_fix = "system" if system_folders else "user"
+        name = f"{constants.APPNAME}-{name}-{post_fix}" 
     
     if name in running_node_names:
         container = client.containers.get(name)
@@ -300,19 +353,30 @@ def cli_node_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
 
     client = docker.from_env()
-    running_nodes = client.containers.list(filters={"label":"ppdli-type=node"})
+    running_nodes = client.containers.list(
+        filters={"label":f"{constants.APPNAME}-type=node"})
     running_node_names = [node.name for node in running_nodes]
     
     if not name:
         name = q.select("Select the node you wish to inspect:",
             choices=running_node_names).ask()
     else: 
-        name + ("_system" if system_folders else "_user") 
+        post_fix = "system" if system_folders else "user"
+        name = f"{constants.APPNAME}-{name}-{post_fix}" 
 
     if name in running_node_names:
         container = client.containers.get(name)
-        logs = container.attach(stream=True)
-        for log in logs:
-            print(log.decode("ascii"))
+        logs = container.attach(stream=True, logs=True)
+        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                exit(0)
     else:
         click.echo(Fore.RED + f"{name} was not running!?")
+
+def print_log_worker(logs_stream):
+    for log in logs_stream:
+        print(log.decode("ascii"))
+

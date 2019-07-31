@@ -20,6 +20,12 @@ from joey.util.Configuration import ( ConfigurationManager,
     TestingConfigurationManager ) 
 
 
+def logger_name(special__name__):
+    log_name = special__name__.split('.')[-1]
+    if len(log_name) > 14:
+        log_name = log_name[:11] + ".."
+    return log_name
+
 class Singleton(type):
     _instances = {} #WeakValueDictionary()
 
