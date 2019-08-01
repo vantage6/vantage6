@@ -80,7 +80,7 @@ class ClientBaseProtocol:
             'put': requests.put,
             'patch': requests.patch,
             'delete': requests.delete
-        }.get(method.lower(), 'get')
+        }.get(method.lower(), requests.get)
 
         # send request to server
         url = self.generate_path_to(endpoint)
@@ -325,6 +325,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
         )
         
     def create_new_task(self, input_, organization_ids=[]):
+        self.log.debug(f"create new task for {organization_ids}")
         return self.post_task(
             name="subtask",
             description=f"task from container on node_id={self.host_node_id}",
@@ -339,6 +340,32 @@ class ClientContainerProtocol(ClientBaseProtocol):
             f"collaboration/{self.collaboration_id}/organization")
         return organizations
         # return list(map(lambda organization: organization.id, organizations))
+
+    def post_task(self, name:str, image:str, collaboration_id:int, 
+        input_:str='', description='', organization_ids:list=[]) -> dict:
+        """Post tasks from a container does not require encryption
+        
+        Encryption is handled by the local proxy server.
+        """
+        self.log.debug("post task without encryption (is handled by proxy)")
+        organization_json_list = []
+        for org_id in organization_ids:
+            # pub_key = self.request(f"organization/{org_id}").get("public_key")
+            organization_json_list.append(
+                {
+                    "id": org_id,
+                    "input": input_
+                }
+            )
+
+        return self.request('task', method='post', json={
+            "name": name,
+            "image": image, 
+            "collaboration_id": collaboration_id,
+            "input": input_,
+            "description": description,
+            "organizations": organization_json_list
+        })
 
 
 class ClientNodeProtocol(ClientBaseProtocol):
