@@ -62,7 +62,6 @@ def proxy_results(id):
     url = server_info()
 
     auth = request.headers['Authorization']
-    log.debug(f"container token = {auth}")
     
     try:
         response = requests.get(
@@ -75,17 +74,42 @@ def proxy_results(id):
 
     return jsonify(response.json())
 
-# This is an idea...
-# @app.route('/<path:central_server_path>')
-# def proxy(central_server_path):
-#     """Endpoint that will forward everything to the central server."""
-#     return jsonify({
-#         "path":central_server_path, 
-#         "method":request.method, 
-#         "args": request.args,
-#         "body": request.get_json(),
-#         "headers":dict(request.headers)
-#     })
+@app.route('/<path:central_server_path>')
+def proxy(central_server_path):
+    """Endpoint that will forward everything to the central server."""
+    url = server_info()
+
+    method_name = request.method.lower()
+    method = {
+        "get": requests.get,
+        "post": requests.post,
+        "patch": requests.patch,
+        "put": requests.put,
+        "delete": requests.delete
+    }.get(method_name, requests.get)
+
+    # auth = None
+    # if "Authorization" in request.headers:
+    auth = request.headers['Authorization']
+    auth_found = bool(auth)
+    log.debug(f"method = {method_name}, auth = {auth_found}")
+    
+    try:
+        response = method(
+            f"{url}/{central_server_path}",
+            json=request.get_json(),
+            params=request.args,
+            headers={'Authorization': auth}
+        )
+    except Exception as e:
+        log.error("Proxyserver was unable to retreive endpoint...")
+        log.debug(e)
+    
+    if response.status_code > 200:
+        log.error(f"server response code {response.status_code}")
+        log.debug(response.json().get("msg","no description..."))
+    
+    return jsonify(response.json())
 
 @app.route('/test/<path:central_server_path>')
 def test(central_server_path):

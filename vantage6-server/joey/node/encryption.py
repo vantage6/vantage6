@@ -36,8 +36,9 @@ class Cryptor(metaclass=Singleton):
 
     def __load_private_key(self, private_key_file=None):
         if not private_key_file:
-            self.log.debug(f"No private key file specified, using default.")
             rsa_file = cs.DATA_FOLDER / "private_key.pem"
+            self.log.debug(
+                f"No private key file specified, using default: {rsa_file}")
             
         if not rsa_file.exists():
             self.log.warning(

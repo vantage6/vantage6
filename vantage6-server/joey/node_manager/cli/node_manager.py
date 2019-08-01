@@ -257,15 +257,14 @@ def cli_node_start(name, config, environment, system_folders, develop):
     # in case a development environment is run, we need to do a few extra things
     # and run a devcon container (see develop.Dockerfile)
     if develop:
-        # TODO watchdog is disabled as this does not work with Windows
-        # mounts.append(
-        #     docker.types.Mount("/src", 
-        #     r"path/to/repository", type="bind")
-        # )
+        mounts.append(
+            docker.types.Mount("/src", 
+            r"C:\Users\FMa1805.36838\Repositories\ppDLI", type="bind")
+        )
         container_image = "devcon"
         # attach proxy server for debugging to the host machine
         port = {"80/tcp":("127.0.0.1",8080)}
-        print("proxy-server attached to host on port 8888")
+        print(f"proxy-server attached {port}")
     else:
         port = None
         container_image = "docker-registry.distributedlearning.ai/ppdli-node"
