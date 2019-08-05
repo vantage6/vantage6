@@ -90,13 +90,21 @@ def proxy(central_server_path):
 
     # auth = None
     # if "Authorization" in request.headers:
-    auth = request.headers['Authorization']
-    auth_found = bool(auth)
+    try:
+        auth = request.headers['Authorization']
+        auth_found = True
+    except Exception as e:
+        log.info("No authorization header found, this could lead to errors")
+        auth = None
+        auth_found = False
+    
     log.debug(f"method = {method_name}, auth = {auth_found}")
     
+    api_url = f"{url}/{central_server_path}"
+    log.info(f"{method_name} | {api_url}")
     try:
         response = method(
-            f"{url}/{central_server_path}",
+            api_url,
             json=request.get_json(),
             params=request.args,
             headers={'Authorization': auth}
