@@ -87,7 +87,8 @@ class DefaultSocketNamespace(Namespace):
         self.__join_room_and_notify(room)
 
     def on_container_failed(self, node_id, status_code, result_id, collaboration_id):
-        run_id = db.TaskResult.get(result_id).task.run_id
+        run_id = db.Result.get(result_id).task.run_id
+
         self.log.critical(
             f"A container in for run_id={run_id} and result_id={result_id}"
             f" within collaboration_id={collaboration_id} on node_id={node_id}"
