@@ -29,13 +29,13 @@ def setup(api, API_BASE):
         Organization,
         path,
         endpoint='organization_without_id',
-        methods=('GET', 'POST', 'PATCH')
+        methods=('GET', 'POST')
      )
     api.add_resource(
         Organization,
         path + '/<int:id>',
         endpoint='organization_with_id',
-        methods=('GET',)
+        methods=('GET', 'PATCH')
     )
     api.add_resource(
         OrganizationCollaboration,
@@ -90,6 +90,7 @@ class Organization(Resource):
         organization.save()
         return self.org_schema.dump(organization, many=False).data, HTTPStatus.CREATED
 
+    @only_for(["user", "node"])
     def patch(self, id):
         """Update organization."""
         
