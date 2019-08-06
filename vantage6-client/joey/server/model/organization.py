@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, LargeBinary
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -23,7 +23,7 @@ class Organization(Base):
     address2 = Column(String)
     zipcode = Column(String)
     country = Column(String)
-    public_key = Column(String)
+    public_key = Column(LargeBinary)
 
     # relations
     collaborations = relationship("Collaboration", secondary="Member",
