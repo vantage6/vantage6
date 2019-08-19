@@ -102,26 +102,31 @@ class ClientBaseProtocol:
         # self.log.debug(f"Response data={response.json()}")
         return response.json()
     
-    def setup_encryption(self, private_key_file) -> Cryptor:
+    def setup_encryption(self, private_key_file, disabled=False) -> Cryptor:
         assert self._access_token, \
             "Encryption can only be setup after authentication"
         assert self.whoami.organization_id, \
             "Organization unknown... Did you authenticate?"
 
-        disable = False if private_key_file else True
-        cryptor = Cryptor(private_key_file, disable)
-
+        cryptor = Cryptor(private_key_file, disabled)
+        
         # check if the public-key is the same on the server. If this is not the
         # case, this node will not be able to read any messages that are send
         # to him!
         organization = self.request(
             f"organization/{self.whoami.organization_id}")
-        if cryptor.verify_public_key(organization.get("public_key")):
+        if not cryptor.verify_public_key(organization.get("public_key")):
             self.log.critical(
                 "Local public key does not match server public key. "
                 "You will not able to read any messages that are intended "
                 "for you!"
             )
+
+            # upload current key to the server
+            json_data = {
+                "public_key": cryptor.public_key_str
+            }
+            self.request("organization", json=json_data, method="patch")
 
         self.cryptor = cryptor
 
@@ -163,7 +168,7 @@ class ClientBaseProtocol:
             self.log.critical("Could not refresh token")
             raise Exception("Authentication Error!")
         
-        self._access_token = response.json()["_access_token"]
+        self._access_token = response.json()["access_token"]
 
     def post_task(self, name:str, image:str, collaboration_id:int, 
         input_:str='', description='', organization_ids:list=[]) -> dict:
@@ -250,7 +255,14 @@ class ClientBaseProtocol:
 
 
 class ClientUserProtocol(ClientBaseProtocol):
-    """Specific commands for the user"""
+    """Specific commands for the user
+    
+    Arguments:
+        host
+        port
+        path, 
+        private_key_file
+    """
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
