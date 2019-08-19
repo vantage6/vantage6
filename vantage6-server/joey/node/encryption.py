@@ -1,4 +1,5 @@
 import logging
+import base64
 
 from pathlib import Path
 
@@ -70,14 +71,29 @@ class Cryptor(metaclass=Singleton):
         
     @property
     def public_key_bytes(self):
-        return self.private_key.public_key()
+        return self.private_key.public_key().public_bytes(
+           encoding=serialization.Encoding.PEM,
+           format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+    @property
+    def public_key_str(self):
+        return base64.b64encode(self.public_key_bytes).decode('ascii')
+
+    def encrypt_using_base64(self, msg, public_key_base64):
+        # TODO we should retreive all keys once... and store them in the node
+
+        # decode the b64, ascii key to bytes
+        public_key_bytes = base64.b64decode(public_key_base64)
+        
+        # encode message using this key
+        return self.decrypt(self, msg, public_key_bytes)
 
     def encrypt(self, msg, public_key_bytes):
         """Encrypt a message for a specific organization."""
         if self.disabled:
             return msg
         
-        # TODO we should retreive all keys once... and store them in the node
         pub_key = load_pem_public_key(
             public_key_bytes,
             backend=default_backend()
@@ -91,12 +107,23 @@ class Cryptor(metaclass=Singleton):
                 label=None
             )
         )
-        return encrypted_msg
+
+        safe_chars_encoded_msg = base64.encodebytes(encrypted_msg)\
+            .decode("ascii")
+
+        return safe_chars_encoded_msg
     
-    def decrypt(self, msg):
+    def decrypt_base64(self, msg):
+        # msg is base64 ascii 
+        msg_bytes = base64.b64decode(msg)
+        return decrypt_bytes(msg_bytes)
+
+    def decrypt_bytes(self, msg):
         """Decrpyt a message that is destined for us."""
+        
         if self.disabled:
             return msg
+        
         decrypted_msg = self.private_key.decrypt(
             msg,
             padding.OAEP(
@@ -105,6 +132,8 @@ class Cryptor(metaclass=Singleton):
                 label=None
             )
         )
+
+        # return unencrypted and default unencoded msg
         return decrypted_msg
 
 

@@ -5,6 +5,7 @@ Resources below '/<api_base>/organization'
 from __future__ import print_function, unicode_literals
 
 import logging
+import base64
 
 from flask import request
 from flask_restful import Resource
