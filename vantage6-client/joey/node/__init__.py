@@ -98,9 +98,10 @@ class NodeWorker(object):
         self.authenticate()
 
         # after we authenticated we setup encryption
-        key = None if self.config.get("encryption").get("disabled") else \
-            self.config.get("encryption").get("private_key")
-        self.server_io.setup_encryption(key)
+        self.server_io.setup_encryption(
+            self.config.get("encryption").get("private_key"),
+            self.config.get("encryption").get("disabled")
+        )
 
         # Create a long-lasting websocket connection.
         self.log.debug("creating socket connection with the server")

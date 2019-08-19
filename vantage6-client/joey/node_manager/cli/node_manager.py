@@ -200,8 +200,9 @@ def cli_node_files(name, environment, system_folders):
     default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
 )
 @click.option('--develop', is_flag=True)
+@click.option('--attach', is_flag=True)
 # @click.option("")
-def cli_node_start(name, config, environment, system_folders, develop):
+def cli_node_start(name, config, environment, system_folders, develop, attach):
     """Start the node instance.
     
     If no name or config is specified the default.yaml configuation is used. 
@@ -282,7 +283,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
         volumes={data_volume.name: 
             {'bind': '/mnt/data-volume', 'mode': 'rw'}
         },
-        detach=True,
+        detach=not attach,
         labels={
             f"{constants.APPNAME}-type": "node", 
             "system": str(system_folders), 
@@ -293,7 +294,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
         },
         ports = port,
         name=ctx.docker_container_name,
-        auto_remove=True
+        auto_remove=not attach
     )
 
     click.echo(f"Running, container id = {container}")

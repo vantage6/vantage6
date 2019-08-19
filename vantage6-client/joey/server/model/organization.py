@@ -1,3 +1,5 @@
+import base64 
+
 from sqlalchemy import Column, String, LargeBinary
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.orm.exc import NoResultFound
@@ -23,7 +25,7 @@ class Organization(Base):
     address2 = Column(String)
     zipcode = Column(String)
     country = Column(String)
-    public_key = Column(LargeBinary)
+    _public_key = Column(LargeBinary)
 
     # relations
     collaborations = relationship("Collaboration", secondary="Member",
@@ -40,6 +42,15 @@ class Organization(Base):
             return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
             return None
+
+    @hybrid_property
+    def public_key(self):
+        return base64.encodebytes(self._public_key).encode("ascii")
+
+    @public_key.setter
+    def public_key(self, public_key_b64):
+        """Assumes that the public key is in b64-encoded."""
+        self._public_key = base64.b64decode(public_key_b64)
 
     def __repr__(self):
         number_of_users = len(self.users)
