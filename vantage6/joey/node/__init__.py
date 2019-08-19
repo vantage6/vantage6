@@ -28,7 +28,6 @@ from gevent.pywsgi import WSGIServer
 
 import joey.constants as cs
 
-from joey.node.encryption import Cryptor
 from joey.node.docker_manager import DockerManager
 from joey.node.server_io import ClientNodeProtocol, ServerInfo
 from joey.node.proxy_server import app 
@@ -103,6 +102,7 @@ class NodeWorker(object):
             self.config.get("encryption").get("disabled")
         )
 
+
         # Create a long-lasting websocket connection.
         self.log.debug("creating socket connection with the server")
         self.__connect_to_socket()
@@ -151,12 +151,8 @@ class NodeWorker(object):
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
 
-        # time.sleep(3)
-        # response = requests.get("http://localhost:5000/test/version")
-        # self.log.info(response.json())
-        
-
-        # after here, you should/could call self.run_forever()
+        # after here, you should/could call self.run_forever(). This 
+        # could be done in a seperate Thread 
     
     def __proxy_server_worker(self):
         
@@ -168,7 +164,8 @@ class NodeWorker(object):
         
         port = int(os.environ["PROXY_SERVER_PORT"])
         
-        app.debug = True
+        # app.debug = True
+        app.config["SERVER_IO"] = self.server_io
         http_server = WSGIServer(
             ('0.0.0.0', port), 
             app
@@ -212,6 +209,7 @@ class NodeWorker(object):
 
         The task_id is delivered by the websocket-connection.
         """
+        assert self.server_io.cryptor, "Encrpytion has not been setup"
 
         # fetch (open) result for the node with the task_id
         tasks = self.server_io.get_results(
@@ -223,9 +221,38 @@ class NodeWorker(object):
         # in the current setup, only a single result for a single node 
         # in a task exists.
         for task in tasks:
-            # decrypt task
-            # tasks["input"] = self.cryptor.decrypt(task["input"])
+    
+            try:
+                task["input"] = self.server_io.cryptor.decrypt(task["input"])
+            except ValueError as e:
+                self.log.error(
+                    "Unable to decrypt input, assuming it was unencrypted")
+                self.log.debug(e)
+
             self.queue.put(task)
+
+    def __sync_task_que_with_server(self):
+        """Get all unprocessed tasks from the server for this node."""
+        assert self.server_io.cryptor, "Encrpytion has not been setup"
+
+        # make sure we do not add the same job twice. 
+        self.queue = queue.Queue()
+
+        # request open tasks from the server
+        tasks = self.server_io.get_results(state="open", include_task=True)
+        for task in tasks:
+            
+            try:
+                task["input"] = self.server_io.cryptor.decrypt(task["input"])
+            except ValueError as e:
+                self.log.error(
+                    "Unable to decrypt message, assuming it was unencrypted"
+                )
+                self.log.debug(e)
+
+            self.queue.put(task)
+
+        self.log.info(f"received {self.queue._qsize()} tasks" )
 
     def run_forever(self):
         """Connect to the server to obtain and execute tasks forever"""
@@ -253,19 +280,6 @@ class NodeWorker(object):
             self.socketIO.disconnect()
             sys.exit()
     
-    def __sync_task_que_with_server(self):
-        """Get all unprocessed tasks from the server for this node."""
-
-        # make sure we do not add the same job twice. 
-        self.queue = queue.Queue()
-
-        # request open tasks from the server
-        tasks = self.server_io.get_results(state="open", include_task=True)
-        for task in tasks:
-            self.queue.put(task)
-
-        self.log.info(f"received {self.queue._qsize()} tasks" )
-
     def __start_task(self, taskresult):
         """Start the docker image and notify the server that the task 
         has been started."""

@@ -78,10 +78,13 @@ api = Api(app)
 @api.representation('application/json')
 def output_json(data, code, headers=None):
 
-    if isinstance(data, model.Base):
+    if isinstance(data, db.Base):
         data = db.jsonable(data)
-    elif isinstance(data, list) and len(data) and isinstance(data[0], model.Base):
+        log.debug("json-proofed")
+    elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
         data = db.jsonable(data)
+        log.debug("json-list-proofed")
+    log.debug(f"finished preparing {data}, lets send")
 
     resp = make_response(json.dumps(data), code)
     resp.headers.extend(headers or {})
