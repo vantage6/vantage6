@@ -51,7 +51,7 @@ class Organization(Base):
     @public_key.setter
     def public_key(self, public_key_b64):
         """Assumes that the public key is in b64-encoded."""
-        self._public_key = base64.b64decode(public_key_b64)
+        self._public_key = base64.b64decode(public_key_b64).encode("ascii")
 
     def __repr__(self):
         number_of_users = len(self.users)
