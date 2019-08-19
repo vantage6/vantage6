@@ -264,7 +264,7 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
         )
         container_image = "devcon"
         # attach proxy server for debugging to the host machine
-        port = {"80/tcp":("127.0.0.1",8080)}
+        port = {"80/tcp":("127.0.0.1",8081)}
         print(f"proxy-server attached {port}")
     else:
         port = None

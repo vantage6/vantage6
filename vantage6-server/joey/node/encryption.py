@@ -12,35 +12,33 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 import joey.constants as cs
-from joey.util import Singleton
+from joey.util import Singleton, logger_name
 
 class Cryptor(metaclass=Singleton):
 
     def __init__(self, private_key_file=None, disabled=False):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(logger_name(__name__))
         if disabled:
             self.log.warning(
                 "Encrpytion disabled! Use this only for debugging")
         self.disabled = disabled
         self.private_key = self.__load_private_key(private_key_file)
 
-        # verify key with the key at the server. Also make sure that
-        # a key is stored at the server
-
     def verify_public_key(self, server_public_key_bytes):
         
-        local_bytes = self.private_key.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
-        return local_bytes == server_public_key_bytes
+        local_bytes = self.public_key_bytes
+        self.log.debug(self.public_key_bytes)
+        self.log.debug(server_public_key_bytes)
+        self.log.debug(self.public_key_bytes == server_public_key_bytes)
+        return self.public_key_bytes == server_public_key_bytes
 
     def __load_private_key(self, private_key_file=None):
         if not private_key_file:
             rsa_file = cs.DATA_FOLDER / "private_key.pem"
             self.log.debug(
                 f"No private key file specified, using default: {rsa_file}")
-            
+        else:
+            rsa_file = Path(private_key_file)
         if not rsa_file.exists():
             self.log.warning(
                 f"No default private key found. Now generating one. "
@@ -72,6 +70,7 @@ class Cryptor(metaclass=Singleton):
     @property
     def public_key_bytes(self):
         return self.private_key.public_key().public_bytes(
+<<<<<<< Updated upstream
            encoding=serialization.Encoding.PEM,
            format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
@@ -88,6 +87,11 @@ class Cryptor(metaclass=Singleton):
         
         # encode message using this key
         return self.decrypt(self, msg, public_key_bytes)
+=======
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+>>>>>>> Stashed changes
 
     def encrypt(self, msg, public_key_bytes):
         """Encrypt a message for a specific organization."""
@@ -95,12 +99,12 @@ class Cryptor(metaclass=Singleton):
             return msg
         
         pub_key = load_pem_public_key(
-            public_key_bytes,
+            public_key_bytes.encode("utf-8"),
             backend=default_backend()
         )
 
         encrypted_msg = pub_key.encrypt(
-            msg,
+            msg.encode("utf-8"),
             padding.OAEP(
                 mgf=padding.MGF1(algorithm=hashes.SHA256()),
                 algorithm=hashes.SHA256(),
@@ -135,5 +139,3 @@ class Cryptor(metaclass=Singleton):
 
         # return unencrypted and default unencoded msg
         return decrypted_msg
-
-

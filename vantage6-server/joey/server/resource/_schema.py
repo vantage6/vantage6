@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from joey.server import api
+import logging
+
 from marshmallow import fields
 from marshmallow_sqlalchemy import (
     ModelSchema, 
@@ -12,8 +13,12 @@ from flask_marshmallow import Schema
 from marshmallow.fields import List, Integer
 from werkzeug.routing import BuildError
 
+from joey.server import api
+from joey.util import logger_name
 from .. import ma
 from .. import db
+
+log = logging.getLogger(logger_name(__name__))
 
 
 class HATEOASModelSchema(ModelSchema):
@@ -71,6 +76,7 @@ class HATEOASModelSchema(ModelSchema):
     
     def hateos_list(self, name, obj):
         hateos_list = list()
+        type_ = type(obj)
         for elem in getattr(obj, name+"s"):
             hateos = self._hateos_from_related(elem, name)
             hateos_list.append(hateos)
@@ -132,6 +138,9 @@ class OrganizationSchema(HATEOASModelSchema):
     nodes = fields.Method("nodes")
     users = fields.Method("users")
     tasks = fields.Method("tasks")
+    
+    # make sure 
+    public_key = fields.Str()
     
 
 class CollaborationSchema(HATEOASModelSchema):
@@ -216,3 +225,5 @@ class UserSchema(HATEOASModelSchema):
     
     class Meta:
         model = db.User
+
+    organization = fields.Method("organization")

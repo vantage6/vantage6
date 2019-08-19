@@ -113,14 +113,33 @@ class ClientBaseProtocol:
         # check if the public-key is the same on the server. If this is not the
         # case, this node will not be able to read any messages that are send
         # to him!
+        #TODO cleanup...
         organization = self.request(
             f"organization/{self.whoami.organization_id}")
-        if not cryptor.verify_public_key(organization.get("public_key")):
-            self.log.critical(
-                "Local public key does not match server public key. "
-                "You will not able to read any messages that are intended "
-                "for you!"
+        pub_key = organization.get("public_key")
+        upload_pub_key = False
+        if pub_key:
+            if cryptor.verify_public_key(pub_key.encode("utf-8")):
+                self.log.info("Public key matches the server key! Good to go!")
+            else: 
+                self.log.critical(
+                    "Local public key does not match server public key. "
+                    "You will not able to read any messages that are intended "
+                    "for you!"
+                )
+                upload_pub_key = True
+        else: 
+            upload_pub_key = True
+        
+        if upload_pub_key:
+            self.request(
+                f"organization/{self.whoami.organization_id}", 
+                method="patch", 
+                json={
+                    "public_key": cryptor.public_key_bytes.decode("utf-8")
+                }
             )
+            self.log.info("We updated the public key on the server!")
 
             # upload current key to the server
             json_data = {
@@ -180,7 +199,7 @@ class ClientBaseProtocol:
             organization_json_list.append(
                 {
                     "id": org_id,
-                    "input": self.cryptor.encrypt(input_, pub_key)
+                    "input": str(self.cryptor.encrypt(input_, pub_key))
                 }
             )
 
@@ -214,11 +233,24 @@ class ClientBaseProtocol:
         results_unencrypted = []
         if not id:
             for result in results:
-                result["input"] = self.cryptor.decrypt(result["input"])
+                try:
+                    result["input"] = self.cryptor.decrypt(result["input"])
+                except ValueError as e:
+                    self.log.error(
+                        "Could not decrypt input."
+                        "Assuming input was not encrypted"
+                    )
+                    
                 results_unencrypted.append(result)
             return results_unencrypted
         else:
-            results["input"] = self.cryptor.decrypt(results["input"])
+            try:
+                results["input"] = self.cryptor.decrypt(results["input"])
+            except ValueError as e:
+                self.log.error(
+                    "Could not decrypt input."
+                    "Assuming input was not encrypted"
+                )
             return results
 
 
