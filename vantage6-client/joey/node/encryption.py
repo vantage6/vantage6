@@ -70,7 +70,6 @@ class Cryptor(metaclass=Singleton):
     @property
     def public_key_bytes(self):
         return self.private_key.public_key().public_bytes(
-<<<<<<< Updated upstream
            encoding=serialization.Encoding.PEM,
            format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
@@ -87,11 +86,6 @@ class Cryptor(metaclass=Singleton):
         
         # encode message using this key
         return self.decrypt(self, msg, public_key_bytes)
-=======
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
->>>>>>> Stashed changes
 
     def encrypt(self, msg, public_key_bytes):
         """Encrypt a message for a specific organization."""
