@@ -19,12 +19,14 @@ import os
 import logging
 
 from flask import Flask, request, jsonify
-from joey.node.server_io import ClientNodeProtocol
+
 from joey.util import logger_name
+from joey.node.server_io import ClientNodeProtocol
+from joey.node.encryption import Cryptor
 
 app = Flask(__name__)
-
 log = logging.getLogger(logger_name(__name__))
+app.config["SERVER_IO"] = None
 
 def server_info():
     """Retrieves environment variables set by the node."""
@@ -36,17 +38,50 @@ def server_info():
 @app.route("/task", methods=["POST"])
 def proxy_task():
     """Create new task at the server instance"""
-    
+    assert app.config["SERVER_IO"], "Server IO not initialized"
+
     url = server_info()
     
     auth = request.headers['Authorization']
-    log.debug(f"container token = {auth}")
+    # log.debug(f"container token = {auth}")
+        
+    server_io = app.config["SERVER_IO"]
+    unencrypted = request.get_json()
+    organizations = unencrypted.get("organizations", None)
+    if not organizations:
+        log.error("No organizations found?!")
+        return
+    n_organizations = len(organizations)
+    log.debug(f"found {n_organizations}, attemping to encrypt")
+    encrypted_organizations = []
+    for organization in organizations:
+        input_ = organization.get("input", None)
+        if not input_:
+            log.error("No input for organization?!")
+            return
+        
+        organization_id = organization.get("id", None)
+        log.debug(f"retreiving public key of org={organization_id}")
+
+        # TODO let's centralize the pub-key retrieval
+        response = requests.get(
+            f"{url}/organization/{organization_id}"
+        )
+        public_key = response.json().get("public_key")
+        encrypted_input = server_io.cryptor.encrypt(input_, public_key)
+        log.debug(f"should be unreadable={encrypted_input}")
+        organization["input"] = encrypted_input
+        encrypted_organizations.append(organization)
+        log.debug("Message succesfully encrypted!")
     
-    try:
+    unencrypted["organizations"] = encrypted_organizations
+    json_data = unencrypted
+    
+    try:    
         response = requests.post(
             f"{url}/task",
             headers={'Authorization': auth},
-            json=request.get_json()
+            json=json_data
         )
 
     except Exception as e:
@@ -58,7 +93,7 @@ def proxy_task():
 @app.route('/result/<int:id>', methods=["GET"])
 def proxy_results(id):
     """Obtain results from the server"""
-    
+    assert app.config["SERVER_IO"], "Server IO not initialized"
     url = server_info()
 
     auth = request.headers['Authorization']
