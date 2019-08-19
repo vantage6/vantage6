@@ -2,6 +2,7 @@ import base64
 
 from sqlalchemy import Column, String, LargeBinary
 from sqlalchemy.orm import Session, relationship
+from sqlalchemy.ext.hybrid import hybrid_property 
 from sqlalchemy.orm.exc import NoResultFound
 
 from .base import Base, Database
