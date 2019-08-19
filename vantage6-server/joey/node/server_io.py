@@ -88,7 +88,7 @@ class ClientBaseProtocol:
         response = rest_method(url, json=json, headers=self.headers, params=params)
 
         # server says no!
-        if response.status_code > 200:
+        if response.status_code > 210:
             # self.log.debug(f"Server did respond code={response.status_code}\
             #     and message={response.get('msg', 'None')}")
             self.log.error(f'Server responded with error code: {response.status_code} ')
