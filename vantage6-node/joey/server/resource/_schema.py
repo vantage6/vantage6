@@ -144,7 +144,7 @@ class OrganizationSchema(HATEOASModelSchema):
     
     # make sure 
     public_key = fields.Function(
-        lambda obj: base64.b64encode(obj._public_key).encode("ascii") if \
+        lambda obj: base64.b64encode(obj._public_key).decode("ascii") if \
             obj._public_key else ""
     ) 
 
