@@ -46,7 +46,10 @@ class Organization(Base):
 
     @hybrid_property
     def public_key(self):
-        return base64.encodebytes(self._public_key).encode("ascii")
+        if self._public_key:
+            return base64.encodebytes(self._public_key).encode("ascii")
+        else:
+            return ""
 
     @public_key.setter
     def public_key(self, public_key_b64):
