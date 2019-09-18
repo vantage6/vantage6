@@ -134,6 +134,7 @@ class OrganizationSchema(HATEOASModelSchema):
     class Meta:
         model = db.Organization
         exclude = ('_public_key',)
+        # include = ('public_key',)
     
     # convert fk to HATEOAS
     collaborations = fields.Method("collaborations")
@@ -143,7 +144,8 @@ class OrganizationSchema(HATEOASModelSchema):
     
     # make sure 
     public_key = fields.Function(
-        lambda obj: base64.b64encode(obj._public_key).encode("ascii")
+        lambda obj: base64.b64encode(obj._public_key).decode("ascii") if \
+            obj._public_key else ""
     ) 
 
 

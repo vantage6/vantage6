@@ -47,7 +47,7 @@ def node_configuration_questionaire(dirs, instance_name):
             "default": str(dirs["data"])
         }
     ])
-
+    
     config["databases"] = q.prompt([
         {
             "type": "text",
