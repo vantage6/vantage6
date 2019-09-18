@@ -76,13 +76,15 @@ class Cryptor(metaclass=Singleton):
 
     @property
     def public_key_str(self):
-        return base64.b64encode(self.public_key_bytes).decode('ascii')
-
+        return self.__prepare_bytes_for_transport(self.public_key_bytes)
+        
     def encrypt_using_base64(self, msg, public_key_base64):
         # TODO we should retreive all keys once... and store them in the node
 
         # decode the b64, ascii key to bytes
-        public_key_bytes = base64.b64decode(public_key_base64)
+        public_key_bytes = self.__unpack_bytes_from_transport(
+            public_key_base64
+        )
         
         # encode message using this key
         return self.decrypt(self, msg, public_key_bytes)
@@ -93,12 +95,12 @@ class Cryptor(metaclass=Singleton):
             return msg
         
         pub_key = load_pem_public_key(
-            public_key_bytes.encode("utf-8"),
+            public_key_bytes.encode("ascii"),
             backend=default_backend()
         )
 
         encrypted_msg = pub_key.encrypt(
-            msg.encode("utf-8"),
+            msg.encode("ascii"),
             padding.OAEP(
                 mgf=padding.MGF1(algorithm=hashes.SHA256()),
                 algorithm=hashes.SHA256(),
@@ -133,3 +135,9 @@ class Cryptor(metaclass=Singleton):
 
         # return unencrypted and default unencoded msg
         return decrypted_msg
+
+    def __prepare_bytes_for_transport(bytes_):
+        return base64.b64encode(bytes_).decode("ascii")
+
+    def __unpack_bytes_from_transport(bytes_string):
+        return base64.b64decode(bytes_string.encode("ascii"))
