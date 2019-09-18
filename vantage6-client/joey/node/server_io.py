@@ -119,7 +119,7 @@ class ClientBaseProtocol:
         pub_key = organization.get("public_key")
         upload_pub_key = False
         if pub_key:
-            if cryptor.verify_public_key(pub_key.encode("utf-8")):
+            if cryptor.verify_public_key(pub_key):
                 self.log.info("Public key matches the server key! Good to go!")
             else: 
                 self.log.critical(
@@ -136,16 +136,10 @@ class ClientBaseProtocol:
                 f"organization/{self.whoami.organization_id}", 
                 method="patch", 
                 json={
-                    "public_key": cryptor.public_key_bytes.decode("utf-8")
+                    "public_key": cryptor.public_key_str
                 }
             )
-            self.log.info("We updated the public key on the server!")
-
-            # upload current key to the server
-            json_data = {
-                "public_key": cryptor.public_key_str
-            }
-            self.request("organization", json=json_data, method="patch")
+            self.log.info("The public key on the server is updated!")
 
         self.cryptor = cryptor
 
