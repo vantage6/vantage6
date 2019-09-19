@@ -1,3 +1,9 @@
+"""Encryption
+
+Module to provide async encrpytion between organizations. All input and 
+result fields should be encrypted. 
+
+"""
 import logging
 import base64
 
@@ -31,6 +37,9 @@ class Cryptor(metaclass=Singleton):
 
     def verify_public_key(self, server_public_key_bytes):
         
+        server_public_key_bytes = unpack_bytes_from_transport(
+            server_public_key_bytes
+        )
         local_bytes = self.public_key_bytes
         self.log.debug(self.public_key_bytes)
         self.log.debug(server_public_key_bytes)
