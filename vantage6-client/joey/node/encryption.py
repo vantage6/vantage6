@@ -12,7 +12,12 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 import joey.constants as cs
-from joey.util import Singleton, logger_name
+from joey.util import (
+    Singleton, 
+    logger_name, 
+    prepare_bytes_for_transport, 
+    unpack_bytes_from_transport
+)
 
 class Cryptor(metaclass=Singleton):
 
@@ -76,18 +81,18 @@ class Cryptor(metaclass=Singleton):
 
     @property
     def public_key_str(self):
-        return self.__prepare_bytes_for_transport(self.public_key_bytes)
+        return prepare_bytes_for_transport(self.public_key_bytes)
         
     def encrypt_using_base64(self, msg, public_key_base64):
         # TODO we should retreive all keys once... and store them in the node
 
         # decode the b64, ascii key to bytes
-        public_key_bytes = self.__unpack_bytes_from_transport(
+        public_key_bytes = unpack_bytes_from_transport(
             public_key_base64
         )
         
         # encode message using this key
-        return self.decrypt(self, msg, public_key_bytes)
+        return self.encrypt(msg, public_key_bytes)
 
     def encrypt(self, msg, public_key_bytes):
         """Encrypt a message for a specific organization."""
@@ -95,7 +100,7 @@ class Cryptor(metaclass=Singleton):
             return msg
         
         pub_key = load_pem_public_key(
-            public_key_bytes.encode("ascii"),
+            public_key_bytes,
             backend=default_backend()
         )
 
@@ -107,16 +112,19 @@ class Cryptor(metaclass=Singleton):
                 label=None
             )
         )
-
-        safe_chars_encoded_msg = base64.encodebytes(encrypted_msg)\
-            .decode("ascii")
+        
+        safe_chars_encoded_msg = prepare_bytes_for_transport(
+            encrypted_msg
+        )
 
         return safe_chars_encoded_msg
     
     def decrypt_base64(self, msg):
-        # msg is base64 ascii 
-        msg_bytes = base64.b64decode(msg)
-        return decrypt_bytes(msg_bytes)
+        if msg:
+            msg_bytes = unpack_bytes_from_transport(msg)
+            return self.decrypt_bytes(msg_bytes)
+        else:
+            return b""
 
     def decrypt_bytes(self, msg):
         """Decrpyt a message that is destined for us."""
@@ -135,9 +143,3 @@ class Cryptor(metaclass=Singleton):
 
         # return unencrypted and default unencoded msg
         return decrypted_msg
-
-    def __prepare_bytes_for_transport(bytes_):
-        return base64.b64encode(bytes_).decode("ascii")
-
-    def __unpack_bytes_from_transport(bytes_string):
-        return base64.b64decode(bytes_string.encode("ascii"))
