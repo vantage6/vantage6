@@ -6,6 +6,7 @@ import logging
 import logging.handlers
 import appdirs
 import yaml
+import base64
 
 from schema import SchemaError
 from pathlib import Path
@@ -337,4 +338,9 @@ class TestContext(AppContext):
     def test_data_location():
         return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
             "_data" )
-        
+
+def prepare_bytes_for_transport(bytes_):
+    return base64.b64encode(bytes_).decode("ascii")
+
+def unpack_bytes_from_transport(bytes_string):
+    return base64.b64decode(bytes_string.encode("ascii"))

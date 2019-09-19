@@ -6,7 +6,9 @@ import datetime
 import typing
 
 from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
+
 from joey.node.encryption import Cryptor
+from joey.util import prepare_bytes_for_transport, unpack_bytes_from_transport
 
 module_name = __name__.split('.')[1]
 
@@ -190,6 +192,8 @@ class ClientBaseProtocol:
         organization_json_list = []
         for org_id in organization_ids:
             pub_key = self.request(f"organization/{org_id}").get("public_key")
+            pub_key = unpack_bytes_from_transport(pub_key)
+
             organization_json_list.append(
                 {
                     "id": org_id,
@@ -228,23 +232,27 @@ class ClientBaseProtocol:
         if not id:
             for result in results:
                 try:
-                    result["input"] = self.cryptor.decrypt(result["input"])
+                    result["input"] = self.cryptor.decrypt_base64(result["input"])
+                    result["result"] = self.cryptor.decrypt_base64(result["result"]).decode("ascii")
                 except ValueError as e:
-                    self.log.error(
+                    self.log.warn(
                         "Could not decrypt input."
                         "Assuming input was not encrypted"
                     )
+                    self.log.debug(e)
                     
                 results_unencrypted.append(result)
             return results_unencrypted
         else:
             try:
-                results["input"] = self.cryptor.decrypt(results["input"])
+                results["input"] = self.cryptor.decrypt_base64(results["input"])
+                results["result"] = self.cryptor.decrypt_base64(results["result"]).decode("ascii")
             except ValueError as e:
-                self.log.error(
+                self.log.warn(
                     "Could not decrypt input."
                     "Assuming input was not encrypted"
                 )
+                self.log.debug(e)
             return results
 
 
@@ -466,7 +474,21 @@ class ClientNodeProtocol(ClientBaseProtocol):
             "started_at": datetime.datetime.now().isoformat()
         })
 
-    def patch_results(self, id: int, result: dict):
+    def patch_results(self, id: int, initiator_id: int, result: dict):
         # self.log.debug(f"patching results={result}")
         # result["result"] = self.cryptor.encrypt(result["result"])
+
+        self.log.debug(
+            f"retrieving public key from organization={initiator_id}"
+        )
+        public_key = self.request(f"organization/{initiator_id}")\
+            .get("public_key")
+        # public_key = unpack_bytes_from_transport(public_key)
+        self.log.debug(public_key)
+
+        result["result"] = self.cryptor.encrypt_using_base64(
+            result["result"], public_key
+        )
+
+        self.log.debug("Sending encrypted results to server")
         return self.request(f"result/{id}", json=result, method='patch')

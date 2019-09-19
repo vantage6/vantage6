@@ -102,7 +102,6 @@ class NodeWorker(object):
             self.config.get("encryption").get("disabled")
         )
 
-
         # Create a long-lasting websocket connection.
         self.log.debug("creating socket connection with the server")
         self.__connect_to_socket()
@@ -390,12 +389,21 @@ class NodeWorker(object):
             self.log.info(
                 f"Results (id={results.result_id}) are sent to the server!")
 
-            self.server_io.patch_results(id=results.result_id, result={
-                # TODO organization id for encryption needs to be added
-                'result': results.data,
-                'log': results.logs,
-                'finished_at': datetime.datetime.now().isoformat(),
-            })
+            #TODO change to a single request, might need to reconsider the flow
+            response = self.server_io.request(f"result/{results.result_id}")
+            task_id = response.get("task_id")
+            response = self.server_io.request(f"task/{task_id}")
+            initiator_id = response.get("initiator_id")
+
+            self.server_io.patch_results(
+                id=results.result_id,
+                initiator_id=initiator_id,
+                result={
+                    'result': results.data,
+                    'log': results.logs,
+                    'finished_at': datetime.datetime.now().isoformat(),
+                }
+            )
 
 # ------------------------------------------------------------------------------
 def run(ctx):
