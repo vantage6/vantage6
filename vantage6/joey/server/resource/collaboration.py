@@ -86,13 +86,21 @@ class Collaboration(Resource):
             required=True,
             action='append'
         )
+        parser.add_argument(
+            'encrypted',
+            type=int,
+            required=False
+        )
         data = parser.parse_args()
 
+        encrypted = True if data["encrypted"] == 1 else False
+            
         collaboration = db.Collaboration(
             name=data['name'],
             organizations=[
                 db.Organization.get(org_id) for org_id in data['organization_ids'] if db.Organization.get(org_id)
-            ]
+            ],
+            encrypted=encrypted
         )
 
         collaboration.save()
