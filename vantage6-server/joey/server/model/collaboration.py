@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Boolean
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -9,6 +9,7 @@ class Collaboration(Base):
     
     # fields
     name = Column(String)
+    encrypted = Column(Boolean)
 
     # relationships
     organizations = relationship("Organization", secondary="Member", 
@@ -32,9 +33,8 @@ class Collaboration(Base):
                 return node
         return None
 
-    # TODO rename to 'find_by_name'
     @classmethod
-    def get_collaboration_by_name(cls, name):
+    def find_by_name(cls, name):
         """Find collaboration by its name. 
         
         If multiple collaborations share the same name, the first 

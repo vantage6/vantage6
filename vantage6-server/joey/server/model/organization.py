@@ -47,7 +47,11 @@ class Organization(Base):
     @hybrid_property
     def public_key(self):
         if self._public_key:
-            return base64.b64decode(self._public_key).decode("ascii")
+            # TODO this should be fixed properly
+            try:
+                return base64.b64decode(self._public_key).decode("ascii")
+            except:
+                return ""
         else:
             return ""
 
