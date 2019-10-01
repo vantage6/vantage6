@@ -21,4 +21,4 @@ Running a node/site requires a (virtual) machine that has:
 * Access to the internet and/or central server
 
 ## Installation
-See the [readme.io](https://distributedlearning.readme.io/) for detailed instructions on how to install the server and nodes. 
+See the [documentation](https://docs.distributedlearning.ai/) for detailed instructions on how to install the server and nodes. 
