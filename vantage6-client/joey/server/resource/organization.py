@@ -89,7 +89,10 @@ class Organization(Resource):
             public_key=data.get('public_key', '')
         )
         organization.save()
-        return self.org_schema.dump(organization, many=False).data, HTTPStatus.CREATED
+
+        return self.org_schema.dump(
+            organization, many=False
+        ).data, HTTPStatus.CREATED
 
     @only_for(["user", "node"])
     def patch(self, id):

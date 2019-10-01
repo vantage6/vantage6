@@ -85,7 +85,7 @@ class TestCollaborationModel(unittest.TestCase):
 
     def test_read(self):
         for col in self.entities.get("collaborations"):
-            db_collaboration = Collaboration.get_collaboration_by_name(col.get("name"))
+            db_collaboration = Collaboration.find_by_name(col.get("name"))
             assert db_collaboration.name == col.get("name"), "incorrect name"
 
     def test_insert(self):
@@ -93,7 +93,7 @@ class TestCollaborationModel(unittest.TestCase):
             name="unit_collaboration"
         )
         col.save()
-        db_col = Collaboration.get_collaboration_by_name("unit_collaboration")
+        db_col = Collaboration.find_by_name("unit_collaboration")
         assert db_col == col, "Collaboration not correct stored in the database"
 
     def test_methods(self):
@@ -196,7 +196,6 @@ class TestOrganizationModel(unittest.TestCase):
             address1="memorylane 1",
             zipcode="bla",
             country="RAM",
-            public_key="nonsense",
             collaborations=col
         )
         org.save()
