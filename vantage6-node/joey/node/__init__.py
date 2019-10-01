@@ -76,7 +76,7 @@ class NodeWorker(object):
     """Automated node that checks for tasks and executes them."""
 
     def __init__(self, ctx):
-        """Initialize a new TaskMasterNode instance."""
+        """ Initialize a new TaskMasterNode instance."""
         self.log = logging.getLogger(logger_name(__name__))
 
         self.ctx = ctx
@@ -97,9 +97,9 @@ class NodeWorker(object):
         self.authenticate()
 
         # after we authenticated we setup encryption
+        
         self.server_io.setup_encryption(
-            self.config.get("encryption").get("private_key"),
-            self.config.get("encryption").get("disabled")
+            self.config.get("encryption").get("private_key")
         )
 
         # Create a long-lasting websocket connection.

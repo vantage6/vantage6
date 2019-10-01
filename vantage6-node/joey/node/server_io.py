@@ -453,8 +453,8 @@ class ClientNodeProtocol(ClientBaseProtocol):
 
     def request_token_for_container(self, task_id: int, image: str):
         """Generate a token that can be used by a docker container"""
-        self.log.debug
-        (f"requesting container token for task_id={task_id} and image={image}")
+        self.log.debug(
+            f"requesting container token for task_id={task_id} and image={image}")
         return self.request('/token/container', method="post", json={
             "task_id": task_id,
             "image": image
@@ -467,6 +467,16 @@ class ClientNodeProtocol(ClientBaseProtocol):
             include_task=include_task,
             task_id=task_id,
             node_id=self.whoami.id_
+        )
+    
+    def is_encrypted_collaboration(self):
+        response = self.request(f"collaboration/{self.collaboration_id}")
+        return response.get("encrypted") == 1
+
+    def setup_encryption(self, private_key_file) -> Cryptor:
+        super().setup_encryption(
+            private_key_file, 
+            not self.is_encrypted_collaboration()
         )
 
     def set_task_start_time(self, id: int):
@@ -486,7 +496,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
         # public_key = unpack_bytes_from_transport(public_key)
         self.log.debug(public_key)
 
-        result["result"] = self.cryptor.encrypt_using_base64(
+        result["result"] = self.cryptor.encrypt_base64(
             result["result"], public_key
         )
 

@@ -18,13 +18,13 @@ class Result(NamedTuple):
     status_code: int
 
 class DockerManager(object):
-    """Wrapper for the docker module, to be used specifically for joey.
+    """ Wrapper for the docker module, to be used specifically for joey.
     
-    It handles docker images names to results `run(image)`. It manages 
-    docker images, files (input, output, token, logs). Docker images run 
-    in detached mode, which allows to run multiple docker containers at 
-    the same time. Results (async) can be retrieved through 
-    `get_result()` which returns the first available result.
+        It handles docker images names to results `run(image)`. It manages 
+        docker images, files (input, output, token, logs). Docker images run 
+        in detached mode, which allows to run multiple docker containers at 
+        the same time. Results (async) can be retrieved through 
+        `get_result()` which returns the first available result.
     """
 
     log = logging.getLogger(logger_name(__name__))
@@ -34,12 +34,12 @@ class DockerManager(object):
 
     def __init__(self, allowed_repositories, tasks_dir, 
         docker_socket_path, isolated_network_name: str) -> None:
-        """Initialization of DockerManager creates docker connection and
-        sets some default values.
-        
-        :param allowed_repositories: allowed urls for docker-images. 
-            Empty list implies that all repositoies are allowed.
-        :param tasks_dir: folder to store task related data.
+        """ Initialization of DockerManager creates docker connection and
+            sets some default values.
+            
+            :param allowed_repositories: allowed urls for docker-images. 
+                Empty list implies that all repositoies are allowed.
+            :param tasks_dir: folder to store task related data.
         """
         self.log.debug("Initializing DockerManager")
         self.__tasks_dir = tasks_dir
