@@ -1,3 +1,13 @@
+""" Docker manager
+
+The docker manager is responsible for communicating with the docker-
+deamon and is a wrapper arround the docker module. It has methods
+for creating docker networks, docker volumes, start containers
+and retreive results from finisched containers
+
+TODO the task folder is also created by this class. This folder needs
+to be cleaned at some point.
+"""
 import time
 import logging
 import docker
@@ -11,7 +21,8 @@ import joey.constants as cs
 from joey.util import logger_name
 
 class Result(NamedTuple):
-    """Data class to store the result of the docker image."""
+    """ Data class to store the result of the docker image.
+    """
     result_id: int
     logs: str
     data: str
@@ -43,11 +54,8 @@ class DockerManager(object):
         """
         self.log.debug("Initializing DockerManager")
         self.__tasks_dir = tasks_dir
-        # TODO this is no longer needed, as the local proxy server 
-        # handles this.
-        # master container need to know where they can post tasks to
-        # self.__server_info = server_info
 
+        # Connect to docker deamon
         self.client = docker.DockerClient(base_url=docker_socket_path)
 
         # keep track of the running containers
@@ -63,11 +71,11 @@ class DockerManager(object):
     
     def create_isolated_network(self, name: str) \
         -> docker.models.networks.Network:
-        """Create an internal network 
+        """ Create an internal (docker) network 
         
-        Used by algorithm containers to communicate with the node API.
+            Used by algorithm containers to communicate with the node API.
 
-        :param name: name of the internal network
+            :param name: name of the internal network
         """
         try:
             network = self.client.networks.get(name)
@@ -84,6 +92,14 @@ class DockerManager(object):
         return network
 
     def create_temporary_volume(self, run_id: int):
+        """ Create a temporary volume for a single run.
+
+            A single run can consist of multiple algorithm containers. 
+            It is important to note that all algorithm containers having 
+            the same run_id have access to this container.
+
+            :param run_id: integer representing the run_id
+        """
         volume_name = f"tmp_{run_id}"
         try:
             self.client.volumes.get(volume_name)
@@ -92,18 +108,20 @@ class DockerManager(object):
             self.log.debug(f"Creating volume {volume_name}")
             self.client.volumes.create(volume_name)
 
-    def create_data_volume(self, name: str, path):
-        self.log.debug(f"creating volume {name}")
-        self.client.volumes.create(name)
-
     def run(self, result_id: int,  image: str, database_uri: str, 
                 docker_input: str, run_id: int, token: str) -> bool:
-        """Runs the docker-image in detached mode.
+        """ Runs the docker-image in detached mode.
+
+            It will will attach all mounts (input, output and datafile)
+            to the docker image. And will supply some environment
+            variables ()
         
-        :param result_id: server result identifyer.
-        :param image: docker image name.
-        :param docker_input: input that can be read by docker container.
-        :param token: Bearer token that the container can use.
+            :param result_id: server result identifyer
+            :param image: docker image name
+            :param database_uri: URI of data file
+            :param docker_input: input that can be read by docker container
+            :param run_id: identifieer of the run sequence
+            :param token: Bearer token that the container can use
         """
 
         # create I/O files for docker
@@ -184,11 +202,12 @@ class DockerManager(object):
         return True
 
     def get_result(self):
-        """Returns the oldest (FIFO) finished docker container.
+        """ Returns the oldest (FIFO) finished docker container.
         
-        This is a blocking method until a finished container shows up.
-        Once the container is obtained and the results are red, the 
-        container is removed from the docker environment."""
+            This is a blocking method until a finished container shows up.
+            Once the container is obtained and the results are red, the 
+            container is removed from the docker environment.
+        """
 
         # get finished results and get the first one, if no result is available 
         # this is blocking
@@ -238,15 +257,21 @@ class DockerManager(object):
         )
 
     def __refresh_container_statuses(self):
-        """Refreshes the states of the containers."""
+        """ Refreshes the states of the containers.
+        """
         for task in self.active_tasks:
             task["container"].reload()
         
     def __make_task_dir(self, result_id: int):
-        """Creates a task directory for a specific result."""
+        """ Creates a task directory for a specific result.
+
+            :param result_id: unique result id for which the folder is
+                intended
+        """
         
         task_dir = os.path.join(
-            self.__tasks_dir, "task-{0:09d}".format(result_id))
+            self.__tasks_dir, "task-{0:09d}".format(result_id)
+        )
         self.log.info(f"Using '{task_dir}' for task")
         
         if os.path.exists(task_dir):

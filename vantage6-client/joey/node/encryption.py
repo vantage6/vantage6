@@ -1,4 +1,4 @@
-"""Encryption
+"""Encryption between organizations
 
 Module to provide async encrpytion between organizations. All input and 
 result fields should be encrypted when communicating to the central 
@@ -11,8 +11,6 @@ private key.
 In the case we are sending messages (input/results) we need to encrypt
 it using the public key of the receiving organization. (retreiving
 these public keys is outside the scope of this module).
-
-All en
 
 TODO handle disabled encryption
 TODO handle no public key from other organization (should that happen here)
@@ -86,6 +84,9 @@ class Cryptor(metaclass=Singleton):
 
     @property
     def public_key_bytes(self):
+        """ Returns the public key bytes from the organization.
+        """
+        # TODO what needs to be returned if encryption is disabled
         if not self.disabled:
             return self.private_key.public_key().public_bytes(
                 encoding=serialization.Encoding.PEM,
@@ -95,9 +96,17 @@ class Cryptor(metaclass=Singleton):
 
     @property
     def public_key_str(self):
+        """ Returns a JSON safe public key, used for the API interface.
+        """
         return prepare_bytes_for_transport(self.public_key_bytes)
         
     def encrypt_base64(self, msg, public_key_base64):
+        """ Encrypt a mesage using a public key
+
+            :param msg: message to be encrypted
+            :param public_key_base64: public key base64 decoded (directly 
+                from API transport)
+        """
         # TODO we should retreive all keys once... and store them in the node
 
         # decode the b64, ascii key to bytes
@@ -211,7 +220,8 @@ class Cryptor(metaclass=Singleton):
         )
 
     def __create_new_rsa_key(self, path: Path):
-        """ Creates a new RSA key for E2EE."""
+        """ Creates a new RSA key for E2EE.
+        """
         self.log.info(f"Generating RSA-key at {path}")
         private_key = rsa.generate_private_key(
             backend=default_backend(),
