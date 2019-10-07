@@ -1,15 +1,18 @@
-"""Node that is responsible for retreiving tasks and executing them.
+""" Node 
 
-It uses 4 threads: 
-    * main thread, waits for new tasks to be added to the queue and 
-        run the tasks
-    * listening thread, listens for incommin websocket messages. Which 
-        are handled by NodeTaskNamespace.
-    * speaking thread, waits for results from docker to return and posts
-        them at the central server
-    * proxy server thread, provides an interface for master containers
-        to post tasks and retrieve results
+A node in its simplest would retrieve a task from the central server by 
+an API call, run this task and finally return the results to the central
+server again.
 
+The node application is seperated in 4 threads: 
+- main thread, waits for new tasks to be added to the queue and 
+    run the tasks
+- listening thread, listens for incommin websocket messages. Which 
+    are handled by NodeTaskNamespace.
+- speaking thread, waits for results from docker to return and posts
+    them at the central server
+- proxy server thread, provides an interface for master containers
+    to post tasks and retrieve results
 """
 import sys
 import os
@@ -34,49 +37,79 @@ from joey.node.proxy_server import app
 from joey.util import logger_name
 
 class NodeTaskNamespace(SocketIONamespace):
-    """Class that handles incoming websocket events."""
+    """ Class that handles incoming websocket events.
+    """
 
     # reference to the node objects, so a callback can edit the 
     # node instance.
     node_worker_ref = None
 
     def __init__(self, *args, **kwargs):
-        """Create a new handler for a socket namespace."""
+        """ Handler for a websocket namespace.
+        """
         super().__init__(*args, **kwargs)
         self.log = logging.getLogger(logger_name(__name__))
         self.node_worker_ref = None
 
     def setNodeWorker(self, node_worker):
-        """Sets a reference to the NodeWorker that created this Namespace."""
+        """ Reference NodeWorker that created this Namespace.
+
+            This way we can call methods from the nodeworking, allowing
+            for actions to be taken.
+
+            :param node_worker: NodeWorker object 
+        """
         self.node_worker_ref = node_worker
 
     def on_disconnect(self):
-        """Callback when the server disconnects."""
-        self.log.debug('diconnected callback')
+        """ Server disconnects event.
+        """
         self.log.info('Disconnected from the server')
     
     def on_new_task(self, task_id):
-        """Callback to fetch new available tasks."""
+        """ New task event.
+        """
         if self.node_worker_ref:
             self.node_worker_ref.get_task_and_add_to_queue(task_id)
             self.log.info(f'New task has been added task_id={task_id}')
         else:
-            msg = 'Task Master Node reference not set is socket namespace'
-            self.log.critical(msg)
+            self.log.critical(
+                'Task Master Node reference not set is socket namespace'
+            )
 
     def on_container_failed(self, run_id):
+        """ A container in the collaboration has failed event.
+
+            TODO handle run sequence at this node. Maybe terminate all
+                containers with the same run_id?
+        """
         self.log.critical(
-            f"A container on a node within your collaboration part of run_id="
-            f"{run_id} has exited with a non-zero status_code"
+            f"A container on a node within your collaboration part of "
+            f"run_id={run_id} has exited with a non-zero status_code"
         )
-    #     #TODO handle run sequence on this node
 
 # ------------------------------------------------------------------------------
-class NodeWorker(object):
-    """Automated node that checks for tasks and executes them."""
+class NodeWorker:
+    """ Node to handle incomming computation requests.
+
+        The main steps this application follows: 1) retrieve (new) tasks
+        from the central server, 2) kick-off docker algorithm containers
+        based on this task and 3) retrieve the docker results and post
+        them to the central server.
+
+        TODO read allowed repositories from the config file
+    """
 
     def __init__(self, ctx):
-        """ Initialize a new TaskMasterNode instance."""
+        """ Initialize a new NodeWorker instance.
+
+            Authenticates to the central server, setup encrpytion, a
+            websocket connection, retrieving task that were posted while
+            offline, preparing dataset for usage and finally setup a 
+            local proxy server.
+
+            :param ctx: application context, see utils
+        """
         self.log = logging.getLogger(logger_name(__name__))
 
         self.ctx = ctx
@@ -117,7 +150,7 @@ class NodeWorker(object):
         self.log.debug("fetching tasks that were posted while offline")
         self.__sync_task_que_with_server() 
 
-        # TODO read allowed repositories from the config file
+        
         self.log.debug("setup the docker manager")
         self.__docker = DockerManager(
             allowed_repositories=[], 
@@ -154,7 +187,11 @@ class NodeWorker(object):
         # could be done in a seperate Thread 
     
     def __proxy_server_worker(self):
-        
+        """ Proxy algorithm container communcation.
+
+            A proxy for communication between algorithms and central 
+            server.
+        """
         # supply the proxy server with a destination (the central server)
         # we might want to not use enviroment vars
         os.environ["SERVER_URL"] = self.server_io.host
@@ -181,8 +218,11 @@ class NodeWorker(object):
 
 
     def authenticate(self):
-        """Authenticate with the server using the api-key. If the server
-        rejects for any reason we keep trying."""
+        """ Authenticate to the central server
+        
+            Authenticate with the server using the api-key. If the 
+            server rejects for any reason we keep trying.
+        """
         api_key = self.config.get("api_key")
         
         keep_trying = True
@@ -204,9 +244,9 @@ class NodeWorker(object):
         self.log.info(f"Node name: {self.server_io.name}")
 
     def get_task_and_add_to_queue(self, task_id):
-        """Fetches (open) task with task_id from the server. 
+        """ Fetches (open) task with task_id from the server. 
 
-        The task_id is delivered by the websocket-connection.
+            The `task_id` is delivered by the websocket-connection.
         """
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
@@ -231,7 +271,8 @@ class NodeWorker(object):
             self.queue.put(task)
 
     def __sync_task_que_with_server(self):
-        """Get all unprocessed tasks from the server for this node."""
+        """ Get all unprocessed tasks from the server for this node.
+        """
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
         # make sure we do not add the same job twice. 
@@ -254,7 +295,8 @@ class NodeWorker(object):
         self.log.info(f"received {self.queue._qsize()} tasks" )
 
     def run_forever(self):
-        """Connect to the server to obtain and execute tasks forever"""
+        """ Connect to the server to obtain and execute tasks forever
+        """
         try:
             while True:
                 # blocking untill a task comes available
@@ -280,8 +322,13 @@ class NodeWorker(object):
             sys.exit()
     
     def __start_task(self, taskresult):
-        """Start the docker image and notify the server that the task 
-        has been started."""
+        """ Start a task.
+        
+            Start the docker image and notify the server that the task 
+            has been started. 
+            
+            :param taskresult: an empty taskresult
+        """
 
         task = taskresult['task']
         self.log.info("Starting task {id} - {name}".format(**task))
@@ -320,10 +367,10 @@ class NodeWorker(object):
         )
 
     def __connect_to_socket(self):
-        """Create long-lasting websocket connection with the server. 
+        """ Create long-lasting websocket connection with the server. 
 
-        THe connection is used to receive status updates, such as 
-        new tasks.
+            The connection is used to receive status updates, such as 
+            new tasks.
         """
         
         self.socketIO = SocketIO(
@@ -355,10 +402,10 @@ class NodeWorker(object):
             self.log.critical(msg)
         
     def __listening_worker(self):
-        """Listen for incoming (websocket) messages from the server.
+        """ Listen for incoming (websocket) messages from the server.
 
-        Runs in a separate thread. Received events are dispatched
-        through the appropriate action_handler for a channel.
+            Runs in a separate thread. Received events are dispatched
+            through the appropriate action_handler for a channel.
         """
         self.log.debug("listening for incoming messages")
         while True:
@@ -368,8 +415,14 @@ class NodeWorker(object):
             self.socketIO.wait()
 
     def __speaking_worker(self):
-        """Routine that is in a seperate thread sending results
-        to the server when they come available."""
+        """ Sending messages to central server.
+        
+            Routine that is in a seperate thread sending results
+            to the server when they come available.
+        
+            TODO change to a single request, might need to reconsider 
+                the flow
+        """
         
         self.log.debug("Waiting for results to send to the server")
 
@@ -389,7 +442,6 @@ class NodeWorker(object):
             self.log.info(
                 f"Results (id={results.result_id}) are sent to the server!")
 
-            #TODO change to a single request, might need to reconsider the flow
             response = self.server_io.request(f"result/{results.result_id}")
             task_id = response.get("task_id")
             response = self.server_io.request(f"task/{task_id}")
@@ -407,7 +459,8 @@ class NodeWorker(object):
 
 # ------------------------------------------------------------------------------
 def run(ctx):
-    """Run the node."""
+    """ Start the node worker. 
+    """
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
     
