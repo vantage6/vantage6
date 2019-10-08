@@ -1,4 +1,4 @@
-"""Encryption between organizations
+""" Encryption between organizations
 
 Module to provide async encrpytion between organizations. All input and 
 result fields should be encrypted when communicating to the central 
@@ -100,15 +100,16 @@ class Cryptor(metaclass=Singleton):
         """
         return prepare_bytes_for_transport(self.public_key_bytes)
         
-    def encrypt_base64(self, msg, public_key_base64):
-        """ Encrypt a mesage using a public key
+    def encrypt_base64(self, msg: str, public_key_base64: str) -> str:
+        """ Encrypt a `msg` using `public_key_base64`.
 
             :param msg: message to be encrypted
-            :param public_key_base64: public key base64 decoded (directly 
-                from API transport)
+            :param public_key_base64: public key base64 decoded 
+                (directly from API transport)
+            
+            TODO we should retreive all keys once... and store them in 
+                the node
         """
-        # TODO we should retreive all keys once... and store them in the node
-
         # decode the b64, ascii key to bytes
         public_key_bytes = unpack_bytes_from_transport(
             public_key_base64
@@ -122,8 +123,8 @@ class Cryptor(metaclass=Singleton):
         # encode message using this key
         return safe_chars_encoded_msg
 
-    def encrypt(self, msg, public_key_bytes):
-        """ Encrypt a message for a using a public key.
+    def encrypt(self, msg: str, public_key_bytes: bytes) -> bytes:
+        """ Encrypt `msg` using a `public_key_bytes`.
         
             :param msg: string message to encrypt
             :param public_key_bytes: public key used to encrypt `msg`
@@ -147,7 +148,7 @@ class Cryptor(metaclass=Singleton):
         
         return encrypted_msg
     
-    def decrypt_base64(self, msg):
+    def decrypt_base64(self, msg: bytes) -> bytes:
         """ Decrypt bytes `msg` using our private key
 
             :param msg: string ascii encoded base64 encrypted msg
@@ -158,8 +159,15 @@ class Cryptor(metaclass=Singleton):
             return self.decrypt_bytes(msg_bytes)
         else:
             return b""
+
+    def decrypt_base64_to_str(self, msg: bytes) -> str:
+        """ Decrypt bytes `msg` using our private key
+
+            :param msg: string ascii encoded base64 encrypted msg
+        """
+        return self.decrypt_base64(msg).decode("ascii")
     
-    def decrypt_bytes(self, msg):
+    def decrypt_bytes(self, msg: bytes) -> bytes:
         """ Decrypt `msg` using our private key.
         
             :param msg: bytes message
@@ -190,6 +198,8 @@ class Cryptor(metaclass=Singleton):
 
             :param private_key_file: path to a private key file (or 
                 where you want to store one)
+
+            TODO consider making this a static function
         """
 
         # we use the default data folder, which is a folder in the 
