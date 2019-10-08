@@ -33,7 +33,7 @@ class TestUserModel(unittest.TestCase):
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
         
-    def trearDown(self):
+    def tearDown(self):
         Database().drop_all()
 
     def test_relations(self):
