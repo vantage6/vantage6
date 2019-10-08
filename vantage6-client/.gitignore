@@ -16,4 +16,4 @@
 # Python build
 build/
 dist/
-joey.egg-info
+*.egg-info
