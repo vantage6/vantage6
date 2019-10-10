@@ -40,7 +40,8 @@ def proxy_task():
 
         It expect a JSON body containing `input` and `organizations`. 
         The `input` is encrypted for the `organizations` using their
-        public key.
+        public key. The method expects that the setting SERVER_IO is 
+        set at the FLASK APP.
 
         TODO public_key retrieval should happen at node start-up however
             we might need to verify it at a later stage.
@@ -48,9 +49,8 @@ def proxy_task():
             only the `organizations`. Thus if the field `organizations`
             is unspecified, we send the message to all participating
             organizations.
-
-        The method expects that the setting SERVER_IO is set at the 
-        FLASK APP. 
+        TODO we might not want to use the SERVER_IO, as we only use the
+            encryption property of it
     """
     assert app.config["SERVER_IO"], "Server IO not initialized"
 
@@ -174,6 +174,7 @@ def proxy(central_server_path):
     except Exception as e:
         log.error("Proxyserver was unable to retreive endpoint...")
         log.debug(e)
+        return
     
     if response.status_code > 200:
         log.error(f"server response code {response.status_code}")

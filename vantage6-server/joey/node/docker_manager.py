@@ -71,7 +71,7 @@ class DockerManager(object):
     
     def create_isolated_network(self, name: str) \
         -> docker.models.networks.Network:
-        """ Create an internal (docker) network 
+        """ Creates an internal (docker) network 
         
             Used by algorithm containers to communicate with the node API.
 
