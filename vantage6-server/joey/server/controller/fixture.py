@@ -18,7 +18,7 @@ def load(fixtures, drop_all=False):
         
         # create organization
         organization = db.Organization(**{k:org[k] for k in ["name", "domain",\
-            "address1", "address2", "zipcode", "country"]})
+            "address1", "address2", "zipcode", "country", "public_key"]})
         organization.save()
         log.debug(f"processed organization={organization.name}")
 

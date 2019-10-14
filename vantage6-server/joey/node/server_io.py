@@ -739,3 +739,14 @@ class ClientNodeProtocol(ClientBaseProtocol):
 
         self.log.debug("Sending encrypted results to server")
         return self.request(f"result/{id}", json=result, method='patch')
+
+# class ClientTestProtocol:
+
+#     def __init__(self, host: str, port: int, path: str='/api', 
+#         private_key_file:str=None):
+        
+#         super().__init__(
+#             "127.0.0.1", 
+#         )
+
+#     pass
