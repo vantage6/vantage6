@@ -42,6 +42,7 @@ def test_central_server():
     from joey.server.controller.fixture import load
 
     Database().connect("sqlite://")
+    
     file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
     with open(file_) as f:
         entities = yaml.safe_load(f.read())
@@ -55,6 +56,7 @@ def test_central_server():
     server.init_resources(ctx)
     ip = '127.0.0.1'
     port = 5000
+    
     server.run(ctx, ip, port, debug=False)
     
 class TestProxyServer(unittest.TestCase):
@@ -71,7 +73,7 @@ class TestProxyServer(unittest.TestCase):
         # ).start()
 
         # set the place where it needs to go to
-        os.environ["SERVER_URL"] = "http://127.0.0.1"
+        os.environ["SERVER_URL"] = "http://localhost"
         os.environ["SERVER_PORT"] = "5000"
         os.environ["SERVER_PATH"] = "/api"
 
@@ -105,16 +107,11 @@ class TestProxyServer(unittest.TestCase):
                 "password": "password"
             }
         }
-        print("INIT TESTS")
-        self.headers = None
         
-
-    
+        self.headers = None
         
     def tearDown(self):
         self.server.terminate()
-
-        
 
     def login(self, type_='root'):
         
@@ -122,7 +119,6 @@ class TestProxyServer(unittest.TestCase):
             'token/user',
             json=self.credentials[type_]
         ).get_json()
-        print(tokens)
         
         headers = {
             'Authorization': 'Bearer {}'.format(tokens['access_token'])
@@ -130,7 +126,6 @@ class TestProxyServer(unittest.TestCase):
         self.headers = headers
 
     def test_version(self):
-        print(self.app.get("version"))
         proxy_version = self.app.get("version").get_json()
         self.assertEqual(
             proxy_version.get("version"),
@@ -138,14 +133,12 @@ class TestProxyServer(unittest.TestCase):
         )
 
     def test_login(self):
-        print(self.headers)
         if not self.headers:
             self.login()
         self.assertIn("Authorization", self.headers)
         self.assertIsInstance(self.headers["Authorization"], str)
     
     def test_task(self):
-        print(self.headers)
         if not self.headers:
             self.login()
 
@@ -167,7 +160,6 @@ class TestProxyServer(unittest.TestCase):
         self.assertIn("results", proxy_test)
 
     def test_result(self):
-        print(self.headers)
         if not self.headers:
             self.login()
 
