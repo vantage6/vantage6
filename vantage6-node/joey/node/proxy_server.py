@@ -51,6 +51,8 @@ def proxy_task():
             organizations.
         TODO we might not want to use the SERVER_IO, as we only use the
             encryption property of it
+        TODO if no public key is present, we should have some sort of 
+            faalback
     """
     assert app.config["SERVER_IO"], "Server IO not initialized"
 
@@ -86,10 +88,13 @@ def proxy_task():
 
         # retrieve public key of the organization
         response = requests.get(
-            f"{url}/organization/{organization_id}"
+            f"{url}/organization/{organization_id}",
+            headers={'Authorization': auth}
         )
+        
         public_key = response.json().get("public_key")
-        encrypted_input = server_io.cryptor.encrypt(input_, public_key)
+        
+        encrypted_input = server_io.cryptor.encrypt_base64(input_, public_key)
         log.debug(f"should be unreadable={encrypted_input}")
         organization["input"] = encrypted_input
         encrypted_organizations.append(organization)
@@ -117,6 +122,8 @@ def proxy_results(id):
     """ Obtain result `id` from the server.
 
         :param id: the id of the result to retrieve
+
+        TODO decrypt the results
     """
     url = server_info()
 
@@ -133,7 +140,7 @@ def proxy_results(id):
 
     return jsonify(response.json())
 
-@app.route('/<path:central_server_path>')
+@app.route('/<path:central_server_path>',methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
 def proxy(central_server_path):
     """ Generic endpoint that will forward everything to the central server.
 
@@ -173,6 +180,7 @@ def proxy(central_server_path):
         )
     except Exception as e:
         log.error("Proxyserver was unable to retreive endpoint...")
+        print(e)
         log.debug(e)
         return
     
@@ -180,14 +188,4 @@ def proxy(central_server_path):
         log.error(f"server response code {response.status_code}")
         log.debug(response.json().get("msg","no description..."))
     
-    return jsonify(response.json())
-
-@app.route('/test/<path:central_server_path>')
-def test(central_server_path):
-    """ Test endpoint, to be removed.
-
-        :param central_server_path: the endpoint path to call
-    """
-    url = server_info()
-    response = requests.get(url+"/"+central_server_path)
     return jsonify(response.json())
