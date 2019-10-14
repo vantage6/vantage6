@@ -5,6 +5,7 @@ import bcrypt
 import datetime
 import os
 import threading
+import multiprocessing
 
 from flask.testing import FlaskClient
 from flask import Flask, Response as BaseResponse, json
@@ -12,8 +13,10 @@ from werkzeug.utils import cached_property
 
 from joey.node.proxy_server import app
 from joey import server
+from joey.node.server_io import ClientBaseProtocol
+from joey.node.encryption import Cryptor
 
-from joey.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER
+from joey.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER, VERSION
 from joey.util import unpack_bytes_from_transport
 
 
@@ -33,58 +36,153 @@ class TestCentralServer(FlaskClient):
             kwargs['content_type'] = 'application/json'
         return super().open(*args, **kwargs)
 
+def test_central_server():
+    from joey import util
+    from joey.server.model.base import Database
+    from joey.server.controller.fixture import load
+
+    Database().connect("sqlite://")
+    file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+    with open(file_) as f:
+        entities = yaml.safe_load(f.read())
+    load(entities, drop_all=True)
+    
+    server.app.secret_key = "test-secret"
+
+    ctx = util.TestContext.from_external_config_file(
+        "unittest_config.yaml"           
+    )
+    server.init_resources(ctx)
+    ip = '127.0.0.1'
+    port = 5000
+    server.run(ctx, ip, port, debug=False)
+    
 class TestProxyServer(unittest.TestCase):
 
     def setUp(self):
         # start local server
-        # threading.Thread(
+        self.server = multiprocessing.Process(
+            target=test_central_server
+        )
+        self.server.start()
+        # self.server = threading.Thread(
         #     target=self.__test_central_server,
         #     daemon=True
         # ).start()
 
-        # import requests
-        # requests.get("http://127.0.0.1:5000/version")
+        # set the place where it needs to go to
+        os.environ["SERVER_URL"] = "http://127.0.0.1"
+        os.environ["SERVER_PORT"] = "5000"
+        os.environ["SERVER_PATH"] = "/api"
 
-        # # set the place where it needs to go to
-        # os.environ["SERVER_URL"] = "http://127.0.0.1"
-        # os.environ["SERVER_PORT"] = "5000"
-        # os.environ["SERVER_PATH"] = ""
-        # # app.config["SERVER_IO"] = 
-
-        # # attach proxy to this local service
-        # app.testing = True
-        # app.response_class = Response
-        # app.test_client_class = TestCentralServer
-        # app.secret_key = "super-secret!"
-        # self.app = app.test_client()
-        pass
-
-    def __test_central_server(self):
-        # from joey import util
-        # from joey.server.model.base import Database
-        # from joey.server.controller.fixture import load
-
-        # Database().connect("sqlite://")
-        # file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
-        # with open(file_) as f:
-        #     self.entities = yaml.safe_load(f.read())
-        # load(self.entities, drop_all=True)
+        # load encryption module
+        server_io = ClientBaseProtocol(
+            "127.0.0.1", 5000
+        )
+        server_io.cryptor = Cryptor(
+            DATA_FOLDER / "private_key.pem", False
+        )
         
-        # server.app.secret_key = "test-secret"
+        # attach proxy to this local service
+        app.testing = True
+        app.response_class = Response
+        app.test_client_class = TestCentralServer
+        app.secret_key = "super-secret!"
+        app.config["SERVER_IO"] = server_io
+        self.app = app.test_client()
 
-        # ctx = util.TestContext.from_external_config_file(
-        #     "unittest_config.yaml"           
-        # )
-        # server.init_resources(ctx)
-        # ip = '127.0.0.1'
-        # port = 5000
-        # server.run(ctx, ip, port, debug=False)
-        # print("done!")
-        pass
+        self.credentials = {
+            "root":{
+                "username": "root",
+                "password": "password"
+            },
+            "admin":{
+                "username": "frank@iknl.nl",
+                "password": "password"
+            },
+            "user":{
+                "username": "melle@iknl.nl",
+                "password": "password"
+            }
+        }
+        print("INIT TESTS")
+        self.headers = None
+        
+
+    
         
     def tearDown(self):
-        pass
+        self.server.terminate()
 
-    def test_start_proxy(self):
-        pass
-        # print(self.app.get("/version"))
+        
+
+    def login(self, type_='root'):
+        
+        tokens = self.app.post(
+            'token/user',
+            json=self.credentials[type_]
+        ).get_json()
+        print(tokens)
+        
+        headers = {
+            'Authorization': 'Bearer {}'.format(tokens['access_token'])
+        }
+        self.headers = headers
+
+    def test_version(self):
+        print(self.app.get("version"))
+        proxy_version = self.app.get("version").get_json()
+        self.assertEqual(
+            proxy_version.get("version"),
+            VERSION
+        )
+
+    def test_login(self):
+        print(self.headers)
+        if not self.headers:
+            self.login()
+        self.assertIn("Authorization", self.headers)
+        self.assertIsInstance(self.headers["Authorization"], str)
+    
+    def test_task(self):
+        print(self.headers)
+        if not self.headers:
+            self.login()
+
+        proxy_test = self.app.post(
+            "task", 
+            headers=self.headers,
+            json={
+                "organizations":[{
+                    "id":1,
+                    "input": "bla"
+                }],
+                "image": "some-image",
+                "collaboration_id": 1
+            }
+        ).get_json()
+
+        # if we receive results, we assume that all has been returned
+        # extensive testing of the API happens in test_resources
+        self.assertIn("results", proxy_test)
+
+    def test_result(self):
+        print(self.headers)
+        if not self.headers:
+            self.login()
+
+        proxy_test = self.app.get(
+            "result/1", 
+            headers=self.headers,
+        ).get_json()
+
+        # if we receive input, we assume that all has been returned
+        # extensive testing of the API happens in test_resources
+        self.assertIn("input", proxy_test)
+
+
+    
+    
+    
+
+        
