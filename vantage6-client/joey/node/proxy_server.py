@@ -170,6 +170,8 @@ def proxy(central_server_path):
     log.debug(f"method = {method_name}, auth = {auth_found}")
     
     api_url = f"{url}/{central_server_path}"
+    # print("*************")
+    # print(api_url)
     log.info(f"{method_name} | {api_url}")
     try:
         response = method(

@@ -57,7 +57,7 @@ def test_central_server():
     ip = '127.0.0.1'
     port = 5000
     
-    server.run(ctx, ip, port, debug=False)
+    server.run(ctx=ctx, host=ip, port=port, debug=False)
     
 class TestProxyServer(unittest.TestCase):
 
@@ -73,9 +73,13 @@ class TestProxyServer(unittest.TestCase):
         # ).start()
 
         # set the place where it needs to go to
-        os.environ["SERVER_URL"] = "http://localhost"
+        os.environ["SERVER_URL"] = "http://127.0.0.1"
         os.environ["SERVER_PORT"] = "5000"
         os.environ["SERVER_PATH"] = "/api"
+
+        # import requests
+        # print(requests.get("http://localhost:5000/api/version"))
+        # print(requests.get("http://127.0.0.1:5000/api/version"))
 
         # load encryption module
         server_io = ClientBaseProtocol(
@@ -111,6 +115,7 @@ class TestProxyServer(unittest.TestCase):
         self.headers = None
         
     def tearDown(self):
+        #   return
         self.server.terminate()
 
     def login(self, type_='root'):
@@ -160,6 +165,7 @@ class TestProxyServer(unittest.TestCase):
         self.assertIn("results", proxy_test)
 
     def test_result(self):
+
         if not self.headers:
             self.login()
 
