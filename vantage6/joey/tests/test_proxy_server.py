@@ -67,6 +67,9 @@ class TestProxyServer(unittest.TestCase):
             target=test_central_server
         )
         cls.server.start()
+        import time
+        print("sleeping")
+        time.sleep(5)
 
     def setUp(self):
         # start local server
