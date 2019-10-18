@@ -61,15 +61,16 @@ def test_central_server():
     
 class TestProxyServer(unittest.TestCase):
 
-    def setUp(self):
-        # start local server
-        self.server = multiprocessing.Process(
+    @classmethod
+    def setUpClass(cls):
+        cls.server = multiprocessing.Process(
             target=test_central_server
         )
-        self.server.start()
-        import time 
-        # make sure the server has started
-        time.sleep(1)
+        cls.server.start()
+
+    def setUp(self):
+        # start local server
+        
         # self.server = threading.Thread(
         #     target=self.__test_central_server,
         #     daemon=True
@@ -116,10 +117,10 @@ class TestProxyServer(unittest.TestCase):
         }
         
         self.headers = None
-        
-    def tearDown(self):
-        #   return
-        self.server.terminate()
+    
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.terminate()
 
     def login(self, type_='root'):
         
