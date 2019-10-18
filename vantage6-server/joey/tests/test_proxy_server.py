@@ -67,6 +67,9 @@ class TestProxyServer(unittest.TestCase):
             target=test_central_server
         )
         self.server.start()
+        import time 
+        # make sure the server has started
+        time.sleep(1)
         # self.server = threading.Thread(
         #     target=self.__test_central_server,
         #     daemon=True
