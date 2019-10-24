@@ -8,7 +8,7 @@ ARG port=80
 EXPOSE ${port}
 ENV PROXY_SERVER_PORT ${port}
 
-COPY /joey/node/startup.sh /usr/local/bin/startup.sh
+COPY /vantage/node/startup.sh /usr/local/bin/startup.sh
 RUN chmod +x /usr/local/bin/startup.sh
 
 WORKDIR /
