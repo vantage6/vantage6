@@ -11,14 +11,14 @@ For an overview of the architecture and information on how to use the infrastruc
 ### Server
 Running the central server requires a (virtual) machine that:
 * is accessible from the internet
-* has Python 3.6+ and the joey package installed (`pip install joey`)
+* has Python 3.6+ and the vantage package installed (`pip install vantage`)
 
 ### Node
 Running a node/site requires a (virtual) machine that has:
-* Python 3.6+ and the joey package installed (`pip install joey`)
+* Python 3.6+ and the vantage package installed (`pip install vantage`)
 * Docker CE installed (the user running the node software needs to have the proper permissions to perform docker commands)
 * Access to a local data store
 * Access to the internet and/or central server
 
 ## Installation
-See the [readme.io](https://distributedlearning.readme.io/) for detailed instructions on how to install the server and nodes. 
+See the [readme.io](https://docs.distributedlearning.ai) for detailed instructions on how to install the server and nodes. 

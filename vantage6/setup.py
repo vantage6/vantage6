@@ -19,18 +19,18 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 
 # Read the API version from disk 
-with open(path.join(here, 'joey', 'VERSION')) as fp:
+with open(path.join(here, 'vantage', 'VERSION')) as fp:
     __version__ = fp.read()
 
 
 # Setup the package
 setup(
-    name='joey',
+    name='vantage',
     version=__version__,
     description='Package and utilities for distributed learning',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/IKNL/joey',
+    url='https://github.com/IKNL/vantage',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     python_requires='>=3',
     install_requires=[
@@ -64,7 +64,7 @@ setup(
         'gevent'
     ],
     package_data={  
-        'joey': [
+        'vantage': [
             'server/server.wsgi', 
             'VERSION', 
             '_data/**/*.yaml',
@@ -74,9 +74,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'jnode=joey.node_manager.cli.node_manager:cli_node',
-            'jserver=joey.server.cli.server:cli_server',
-            'jdev=joey.util.cli.develop:cli_develop'
+            'jnode=vantage.node_manager.cli.node_manager:cli_node',
+            'jserver=vantage.server.cli.server:cli_server',
+            'jdev=vantage.util.cli.develop:cli_develop'
         ],
     }
 )
