@@ -55,7 +55,7 @@ class User(Resource):
         all_users = db.User.get(id)
 
         if not id:
-            if "admin" or "root" in g.user.roles:
+            if "root" in g.user.roles:
                 return self.user_schema.dump(all_users, many=True).data
             else:
                 return self.user_schema.dump(

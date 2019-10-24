@@ -36,7 +36,7 @@ class TestCentralServer(FlaskClient):
             kwargs['content_type'] = 'application/json'
         return super().open(*args, **kwargs)
 
-def test_central_server():
+def test_central_server(): # pragma: no cover
     from joey import util
     from joey.server.model.base import Database
     from joey.server.controller.fixture import load
