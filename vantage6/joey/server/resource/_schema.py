@@ -230,5 +230,6 @@ class UserSchema(HATEOASModelSchema):
     
     class Meta:
         model = db.User
+        exclude = ('password',)
 
     organization = fields.Method("organization")
