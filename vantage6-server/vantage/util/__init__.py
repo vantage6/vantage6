@@ -129,7 +129,12 @@ class AppContext(metaclass=Singleton):
     def log_file(self):
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
-        return self.log_dir / (self.config_manager.name + ".log")
+            
+        if self.config.get("logging"):
+            if self.config.get("logging").get("file"):
+                return self.log_dir / self.config.get("logging").get("file")
+        file_ = f"{self.config_manager.name}-{self.environment}-{self.scope} + .log"
+        return self.log_dir / file_
 
     @property
     def config_file_name(self):
