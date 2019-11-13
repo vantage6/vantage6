@@ -92,7 +92,7 @@ class Cryptor(metaclass=Singleton):
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
-        return ""
+        return b""
 
     @property
     def public_key_str(self):
@@ -114,13 +114,20 @@ class Cryptor(metaclass=Singleton):
         public_key_bytes = unpack_bytes_from_transport(
             public_key_base64
         )
+        self.log.debug("Unpacked the public key")
+        self.log.debug(public_key_bytes)
+
         
         encrypted_msg = self.encrypt(msg, public_key_bytes)
+        self.log.debug("Message encrypted")
+        self.log.debug(encrypted_msg)
 
         safe_chars_encoded_msg = prepare_bytes_for_transport(
             encrypted_msg
         )
-        # encode message using this key
+        self.log.debug("Encrypted message packed for transport")
+        self.log.debug(encrypted_msg)
+        
         return safe_chars_encoded_msg
 
     def encrypt(self, msg: str, public_key_bytes: bytes) -> bytes:
@@ -130,13 +137,17 @@ class Cryptor(metaclass=Singleton):
             :param public_key_bytes: public key used to encrypt `msg`
         """
         if self.disabled:
-            return msg
+            self.log.warning(msg)
+            self.log.warning("Encryption disabled!")
+            return bytes(msg, "ascii")
         
         pub_key = load_pem_public_key(
             public_key_bytes,
             backend=default_backend()
         )
-
+        self.log.debug(f"public key loaded {pub_key}")
+        msg_ = msg.encode("ascii")
+        self.log.debug(f"Message before encryption={msg_}")
         encrypted_msg = pub_key.encrypt(
             msg.encode("ascii"),
             padding.OAEP(
@@ -145,6 +156,7 @@ class Cryptor(metaclass=Singleton):
                 label=None
             )
         )
+        self.log.debug(f"encrpyted message={encrypted_msg}")
         
         return encrypted_msg
     

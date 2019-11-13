@@ -104,10 +104,10 @@ jwt = JWTManager(app)
 @jwt.user_claims_loader
 def user_claims_loader(identity):
     roles = []
-    if isinstance(identity, model.User):
+    if isinstance(identity, db.User):
         type_ = 'user'
         roles = identity.roles.split(',')
-    elif isinstance(identity, model.Node):
+    elif isinstance(identity, db.Node):
         type_ = 'node'
     elif isinstance(identity, dict):
         type_ = 'container'
@@ -124,7 +124,7 @@ def user_claims_loader(identity):
 @jwt.user_identity_loader
 def user_identity_loader(identity):
 
-    if isinstance(identity, model.Authenticatable):
+    if isinstance(identity, db.Authenticatable):
         return identity.id
     if isinstance(identity, dict):
         return identity
@@ -135,7 +135,7 @@ def user_identity_loader(identity):
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
     if isinstance(identity, int):
-        return model.Authenticatable.get(identity)
+        return db.Authenticatable.get(identity)
     else:
         return identity
 
@@ -256,9 +256,9 @@ def connect_pty():
         # At this point we're sure that the user/client/whatever 
         # checks out
         user_or_node_id = get_jwt_identity()
-        auth = model.Authenticatable.get(user_or_node_id)
+        auth = db.Authenticatable.get(user_or_node_id)
 
-        if not isinstance(auth, model.User):
+        if not isinstance(auth, db.User):
             log.error("Sorry, but only users can use this websocket")
             return False
 
@@ -331,9 +331,9 @@ def connect_admin():
         # At this point we're sure that the user/client/whatever 
         # checks out
         user_or_node_id = get_jwt_identity()
-        auth = model.Authenticatable.get(user_or_node_id)
+        auth = db.Authenticatable.get(user_or_node_id)
 
-        if not isinstance(auth, model.User):
+        if not isinstance(auth, db.User):
             log.error("Sorry, but only users can use this websocket")
             return False
 
@@ -489,7 +489,7 @@ def run(ctx, *args, **kwargs):
 
     # Actually start the server
     # app.run(*args, **kwargs)
-    nodes, session = model.Node.get(with_session=True)
+    nodes, session = db.Node.get(with_session=True)
     for node in nodes:
         node.status = 'offline'
     session.commit()
