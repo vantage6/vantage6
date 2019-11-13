@@ -110,6 +110,9 @@ class Cryptor(metaclass=Singleton):
             TODO we should retreive all keys once... and store them in 
                 the node
         """
+        if self.disabled:
+            return msg
+
         # decode the b64, ascii key to bytes
         public_key_bytes = unpack_bytes_from_transport(
             public_key_base64
@@ -137,8 +140,6 @@ class Cryptor(metaclass=Singleton):
             :param public_key_bytes: public key used to encrypt `msg`
         """
         if self.disabled:
-            self.log.warning(msg)
-            self.log.warning("Encryption disabled!")
             return bytes(msg, "ascii")
         
         pub_key = load_pem_public_key(
@@ -164,6 +165,8 @@ class Cryptor(metaclass=Singleton):
         """ Decrypt bytes `msg` using our private key
 
             :param msg: string ascii encoded base64 encrypted msg
+
+            TODO elso clausule does not make a lot of sense
         """
         
         if msg:
@@ -229,7 +232,7 @@ class Cryptor(metaclass=Singleton):
         # `rsa_file`
         if not rsa_file.exists():
             self.log.warning(
-                f"No default private key found. Now generating one. "
+                f"Private key file {rsa_file} not found. Now generating one. "
                 f"This is normal if you run {cs.APPNAME} for the first "
                 f"time."
             )
