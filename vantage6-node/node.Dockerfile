@@ -8,7 +8,7 @@ LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 COPY . /vantage
 RUN pip install /vantage
 
-# copy all files to app folder
+# copy start file to app folder
 COPY /vantage/node/start.py /app/start.py
 
 # expose the proxy server port

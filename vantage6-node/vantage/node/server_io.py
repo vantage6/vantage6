@@ -625,7 +625,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
         node = self.request(f"node/{id_}")
 
         name = node.get("name")
-        self.collaboration_id = node.get("collaboration")
+        self.collaboration_id = node.get("collaboration").get("id")
         
         organization_id = node.get("organization").get("id")
         organization = self.request(f"organization/{organization_id}")
@@ -708,15 +708,18 @@ class ClientNodeProtocol(ClientBaseProtocol):
             started, and is waiting for restuls.
 
             :param id: id of the task to set the start-time of
+
+            TODO the initiator_id does not make sens here...
         """
-        self.patch_results(id, result={
+        self.patch_results(id, None, result={
             "started_at": datetime.datetime.now().isoformat()
         })
 
     def patch_results(self, id: int, initiator_id: int, result: dict):
         """ Update the results at the central server.
 
-            Typically used when to algorithm container is finished. 
+            Typically used when to algorithm container is finished or 
+            when a status-update is posted (started, finished) 
 
             :param id: id of the task to patch
             :param initiator_id: organization id of the origin of the 
@@ -724,20 +727,26 @@ class ClientNodeProtocol(ClientBaseProtocol):
                 results specifically for him
             
             TODO clean, does this actually already work?
+            TODO when encryption is disabled, we do not need to encrypt
+                the results either
+            TODO the key `results` is not always presend, for e.g. when
+                only the timestamps are updated
         """
-        self.log.debug(
-            f"retrieving public key from organization={initiator_id}"
-        )
-        public_key = self.request(f"organization/{initiator_id}")\
-            .get("public_key")
-        # public_key = unpack_bytes_from_transport(public_key)
-        self.log.debug(public_key)
 
-        result["result"] = self.cryptor.encrypt_base64(
-            result["result"], public_key
-        )
+        if "result" in result:
+            self.log.debug(
+                f"retrieving public key from organization={initiator_id}"
+            )
+            public_key = self.request(f"organization/{initiator_id}")\
+                .get("public_key")
+            
+            self.log.debug(public_key)
 
-        self.log.debug("Sending encrypted results to server")
+            result["result"] = self.cryptor.encrypt_base64(
+                result["result"], public_key
+            )
+            self.log.debug("Sending encrypted results to server")
+        
         return self.request(f"result/{id}", json=result, method='patch')
 
 # class ClientTestProtocol:
