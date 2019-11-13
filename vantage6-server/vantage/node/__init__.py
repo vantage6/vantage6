@@ -262,7 +262,7 @@ class NodeWorker:
         for task in tasks:
     
             try:
-                task["input"] = self.server_io.cryptor.decrypt(task["input"])
+                task["input"] = self.server_io.cryptor.decrypt_base64(task["input"])
             except ValueError as e:
                 self.log.error(
                     "Unable to decrypt input, assuming it was unencrypted")
@@ -283,7 +283,7 @@ class NodeWorker:
         for task in tasks:
             
             try:
-                task["input"] = self.server_io.cryptor.decrypt(task["input"])
+                task["input"] = self.server_io.cryptor.decrypt_base64(task["input"])
             except ValueError as e:
                 self.log.error(
                     "Unable to decrypt message, assuming it was unencrypted"
@@ -443,9 +443,21 @@ class NodeWorker:
                 f"Results (id={results.result_id}) are sent to the server!")
 
             response = self.server_io.request(f"result/{results.result_id}")
-            task_id = response.get("task_id")
+            task_id = response.get("task").get("id")
+            if not task_id:
+                self.log.error(
+                    f"task_id of result (id={results.result_id}) "
+                    f"could not be retrieved"
+                )
+                return
+
             response = self.server_io.request(f"task/{task_id}")
-            initiator_id = response.get("initiator_id")
+            initiator_id = response.get("initiator")
+            if not initiator_id:
+                self.log.error(
+                    f"Initiator id from task (id={task_id})could not be "
+                    f"retrieved"
+                )
 
             self.server_io.patch_results(
                 id=results.result_id,
