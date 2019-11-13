@@ -132,7 +132,8 @@ class NodeWorker:
         # after we authenticated we setup encryption
         
         self.server_io.setup_encryption(
-            self.config.get("encryption").get("private_key")
+            "/mnt/private_key.pem"
+            # self.config.get("encryption").get("private_key")
         )
 
         # Create a long-lasting websocket connection.

@@ -237,8 +237,9 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
         util.NodeContext.LOGGING_ENABLED = False
         ctx = util.NodeContext(name, environment, system_folders)
     
-    # make sure the (local)task dir exists
+    # make sure the (host)-task and -log dir exists
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
+    ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
     docker_client = docker.from_env()
     
@@ -252,8 +253,17 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
         docker.types.Mount("/mnt/config", str(ctx.config_dir), type="bind"),
         docker.types.Mount("/var/run/docker.sock", "//var/run/docker.sock", 
             type="bind"),
-        
     ]
+    
+    rsa_file = ctx.config.get("encryption", {}).get("private_key")
+    if rsa_file:
+        if Path(rsa_file).exists():
+            mounts.append(
+                docker.types.Mount("/mnt/private_key.pem", rsa_file, 
+                    type="bind")
+            )
+        else: 
+            print(f"private key file provided {rsa_file}, but does not exists")
 
     # in case a development environment is run, we need to do a few extra things
     # and run a devcon container (see develop.Dockerfile)
