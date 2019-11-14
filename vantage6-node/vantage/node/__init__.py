@@ -249,8 +249,7 @@ class NodeWorker:
 
             The `task_id` is delivered by the websocket-connection.
         """
-        assert self.server_io.cryptor, "Encrpytion has not been setup"
-
+        
         # fetch (open) result for the node with the task_id
         tasks = self.server_io.get_results(
             include_task=True,
@@ -261,14 +260,6 @@ class NodeWorker:
         # in the current setup, only a single result for a single node 
         # in a task exists.
         for task in tasks:
-    
-            try:
-                task["input"] = self.server_io.cryptor.decrypt_base64(task["input"])
-            except ValueError as e:
-                self.log.error(
-                    "Unable to decrypt input, assuming it was unencrypted")
-                self.log.debug(e)
-
             self.queue.put(task)
 
     def __sync_task_que_with_server(self):
@@ -281,18 +272,16 @@ class NodeWorker:
 
         # request open tasks from the server
         tasks = self.server_io.get_results(state="open", include_task=True)
+        self.log.debug(tasks)
         for task in tasks:
-            
-            try:
-                task["input"] = self.server_io.cryptor.decrypt_base64(task["input"])
-            except ValueError as e:
-                self.log.error(
-                    "Unable to decrypt message, assuming it was unencrypted"
-                )
-                self.log.debug(e)
-
+            # try:
+            #     task["input"] = self.server_io.cryptor.decrypt_base64(task["input"])
+            # except ValueError as e:
+            #     self.log.error(
+            #         "Unable to decrypt message, assuming it was unencrypted"
+            #     )
             self.queue.put(task)
-
+        
         self.log.info(f"received {self.queue._qsize()} tasks" )
 
     def run_forever(self):

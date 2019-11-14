@@ -18,7 +18,7 @@ import typing
 
 from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
 
-from vantage.node.encryption import Cryptor
+from vantage.node.encryption import Cryptor, NoCryptor
 from vantage.util import prepare_bytes_for_transport, unpack_bytes_from_transport
 
 module_name = __name__.split('.')[1]
@@ -124,7 +124,7 @@ class ClientBaseProtocol:
 
         # send request to server
         url = self.generate_path_to(endpoint)
-        self.log.debug(f'Making request: {method.upper()} | {url}')
+        self.log.debug(f'Making request: {method.upper()} | {url} | {params}')
         response = rest_method(url, json=json, headers=self.headers, params=params)
 
         # server says no!
@@ -165,7 +165,8 @@ class ClientBaseProtocol:
             "Organization unknown... Did you authenticate?"
 
         # en/decryption class
-        cryptor = Cryptor(private_key_file, disabled)
+        CRYPTOR_CLASS = NoCryptor if disabled else Cryptor
+        cryptor = CRYPTOR_CLASS(private_key_file)
         
         # check if the public-key is the same on the server. If this is 
         # not the case, this node will not be able to read any messages 
