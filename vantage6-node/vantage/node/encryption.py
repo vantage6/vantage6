@@ -146,7 +146,7 @@ class Cryptor(metaclass=Singleton):
         
         return encrypted_msg
     
-    def decrypt_base64(self, msg: bytes) -> bytes:
+    def decrypt_base64(self, msg: str) -> bytes:
         """ Decrypt bytes `msg` using our private key
 
             :param msg: string ascii encoded base64 encrypted msg

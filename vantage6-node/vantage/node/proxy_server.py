@@ -117,6 +117,34 @@ def proxy_task():
 
     return jsonify(response.json())
 
+@app.route('/task/<int:id>/result', methods=["GET"])
+def proxy_task_result(id):
+    url = server_info()
+
+    server_io = app.config["SERVER_IO"]
+
+    auth = request.headers['Authorization']
+    
+    try:
+        results = requests.get(
+            f"{url}/task/{id}/result",
+            headers={'Authorization': auth}
+        ).json()
+        unencrypted = []
+        for result in results:
+            result["result"] = server_io.cryptor.decrypt_base64(
+                result["result"]
+            ).decode("ascii")
+            unencrypted.append(result)
+
+        log.error(unencrypted)
+
+    except Exception as e:
+        log.error("Proxyserver was unable to retrieve results!")
+        log.debug(e)
+
+    return jsonify(unencrypted)
+
 @app.route('/result/<int:id>', methods=["GET"])
 def proxy_results(id):
     """ Obtain result `id` from the server.
@@ -127,6 +155,8 @@ def proxy_results(id):
     """
     url = server_info()
 
+    server_io = app.config["SERVER_IO"]
+
     auth = request.headers['Authorization']
     
     try:
@@ -134,6 +164,11 @@ def proxy_results(id):
             f"{url}/result/{id}",
             headers={'Authorization': auth}
         )
+        encrypted_input = response["result"]
+        response["result"] = server_io.cryptor.decrypt_base64(
+            response["result"]
+        )
+        log.error(response)
     except Exception as e:
         log.error("Proxyserver was unable to retrieve results!")
         log.debug(e)
