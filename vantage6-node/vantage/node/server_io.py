@@ -348,7 +348,13 @@ class ClientBaseProtocol:
             for result in results:
                 try:
                     result["input"] = self.cryptor.decrypt_base64(result["input"])
-                    result["result"] = self.cryptor.decrypt_base64(result["result"]).decode("ascii")
+                    # self.log.debug(result)
+                    # self.log.debug(result["result"])
+                    # self.log.debug(type(self.cryptor))
+                    # self.log.debug(self.cryptor.decrypt_base64(result["result"]))
+                    if result["result"]:
+                        result["result"] = self.cryptor.decrypt_base64(result["result"]).decode("ascii")
+                        
                 except ValueError as e:
                     self.log.warn(
                         "Could not decrypt input."

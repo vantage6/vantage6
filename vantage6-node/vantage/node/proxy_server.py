@@ -134,13 +134,13 @@ def proxy_task_result(id):
         for result in results:
             result["result"] = server_io.cryptor.decrypt_base64(
                 result["result"]
-            ).decode("ascii")
+            )#.decode("ascii") in case unencrypted
             unencrypted.append(result)
 
         log.error(unencrypted)
 
     except Exception as e:
-        log.error("Proxyserver was unable to retrieve results!")
+        log.error("Proxyserver was unable to retrieve results (1)!")
         log.debug(e)
 
     return jsonify(unencrypted)
@@ -170,7 +170,7 @@ def proxy_results(id):
         )
         log.error(response)
     except Exception as e:
-        log.error("Proxyserver was unable to retrieve results!")
+        log.error("Proxyserver was unable to retrieve results! (2)")
         log.debug(e)
 
     return jsonify(response.json())
