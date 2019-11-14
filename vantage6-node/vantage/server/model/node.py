@@ -40,9 +40,6 @@ class Node(Authenticatable):
         except NoResultFound:
             return None
 
-    @hybrid_property
-    
-
     def __repr__(self):
         return ("<Node "
             f"name: {self.name}, "
