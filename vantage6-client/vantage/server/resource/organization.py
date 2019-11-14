@@ -59,7 +59,7 @@ class Organization(Resource):
 
     org_schema = OrganizationSchema()
 
-    @only_for(["user", "node"])
+    @only_for(["user", "node", "container"])
     @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")), 
         endpoint='organization_with_id')
     @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")), 

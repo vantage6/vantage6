@@ -302,7 +302,7 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
         environment={
             "DATA_VOLUME_NAME": data_volume.name,
         },
-        ports = port,
+        ports=port,
         name=ctx.docker_container_name,
         auto_remove=not attach
     )

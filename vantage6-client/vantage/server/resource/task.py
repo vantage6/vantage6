@@ -102,7 +102,9 @@ class Task(Resource):
         
         if g.user:
             initiator = g.user.organization
-        else: 
+        elif g.container:
+            initiator = db.Node.get(g.container["node_id"]).organization
+        else:
             initiator = None
 
         # create new task
