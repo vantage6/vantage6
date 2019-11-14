@@ -37,6 +37,7 @@ from vantage.util import (
     unpack_bytes_from_transport
 )
 
+
 class Cryptor(metaclass=Singleton):
     """ Wrapper class for the cryptography package. 
     
@@ -54,18 +55,11 @@ class Cryptor(metaclass=Singleton):
         sending and receiving the public_key.
     """
 
-    def __init__(self, private_key_file=None, disabled=False):
+    def __init__(self, private_key_file=None):
         self.log = logging.getLogger(logger_name(__name__))
-        if disabled:
-            self.log.warning(
-                "Encrpytion disabled! Use this only for debugging")
-        self.disabled = disabled
+        self.private_key = self.__load_private_key(private_key_file)
 
-        # we dont need to load it...
-        if not self.disabled:
-            self.private_key = self.__load_private_key(private_key_file)
-
-    def verify_public_key(self, public_key_base64):
+    def verify_public_key(self, public_key_base64) -> bool:
         """ Verifies the public key.
             
             Compare the public key with the generated public key from 
@@ -86,14 +80,11 @@ class Cryptor(metaclass=Singleton):
     def public_key_bytes(self):
         """ Returns the public key bytes from the organization.
         """
-        # TODO what needs to be returned if encryption is disabled
-        if not self.disabled:
-            return self.private_key.public_key().public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
-            )
-        return b""
-
+        return self.private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        
     @property
     def public_key_str(self):
         """ Returns a JSON safe public key, used for the API interface.
@@ -110,26 +101,23 @@ class Cryptor(metaclass=Singleton):
             TODO we should retreive all keys once... and store them in 
                 the node
         """
-        if self.disabled:
-            return msg
-
         # decode the b64, ascii key to bytes
         public_key_bytes = unpack_bytes_from_transport(
             public_key_base64
         )
-        self.log.debug("Unpacked the public key")
-        self.log.debug(public_key_bytes)
+        # self.log.debug("Unpacked the public key")
+        # self.log.debug(public_key_bytes)
 
         
         encrypted_msg = self.encrypt(msg, public_key_bytes)
-        self.log.debug("Message encrypted")
-        self.log.debug(encrypted_msg)
+        # self.log.debug("Message encrypted")
+        # self.log.debug(encrypted_msg)
 
         safe_chars_encoded_msg = prepare_bytes_for_transport(
             encrypted_msg
         )
-        self.log.debug("Encrypted message packed for transport")
-        self.log.debug(encrypted_msg)
+        # self.log.debug("Encrypted message packed for transport")
+        # self.log.debug(encrypted_msg)
         
         return safe_chars_encoded_msg
 
@@ -139,9 +127,6 @@ class Cryptor(metaclass=Singleton):
             :param msg: string message to encrypt
             :param public_key_bytes: public key used to encrypt `msg`
         """
-        if self.disabled:
-            return bytes(msg, "ascii")
-        
         pub_key = load_pem_public_key(
             public_key_bytes,
             backend=default_backend()
@@ -187,10 +172,6 @@ class Cryptor(metaclass=Singleton):
         
             :param msg: bytes message
         """
-        
-        if self.disabled:
-            return msg
-        
         decrypted_msg = self.private_key.decrypt(
             msg,
             padding.OAEP(
@@ -258,3 +239,30 @@ class Cryptor(metaclass=Singleton):
             encryption_algorithm=serialization.NoEncryption()
         )
         path.write_bytes(private_key)
+
+
+class NoCryptor(Cryptor):
+    """ When the collaboration of which the node part is is unencrypted.
+
+        This overwrites all encryption / descryption methods to not 
+        use encryption, but does cenvert between str and bytes if needed
+    """
+    def __init__(self, private_key_file=None):
+        super().__init__(private_key_file=private_key_file)
+        self.log.warning(
+                "Encrpytion disabled! Use this only for debugging")
+
+    def encrypt_base64(self, msg: str, public_key_base64: str) -> str:
+        return msg
+
+    def encrypt(self, msg: str, public_key_bytes: bytes) -> bytes:
+        return bytes(msg, "ascii")
+        
+    def decrypt_base64(self, msg: bytes) -> bytes:
+        return msg
+
+    def decrypt_base64_to_str(self, msg: bytes) -> str:
+        return msg.decode("ascii")
+    
+    def decrypt_bytes(self, msg: bytes) -> bytes:
+        return msg

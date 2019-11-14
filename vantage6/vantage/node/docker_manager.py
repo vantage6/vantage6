@@ -125,6 +125,10 @@ class DockerManager(object):
         """
 
         # create I/O files for docker
+        # TODO i think this belongs to the decrpytion module...
+        if type(docker_input) == bytes:
+            docker_input = docker_input.decode("ascii")
+            docker_input = docker_input.replace("'", "\"")
         self.log.debug("prepare IO files in docker volume")
         io_files = [
             ('input', docker_input), 
@@ -144,7 +148,7 @@ class DockerManager(object):
         io_path = pathlib.Path("/mnt/data-volume") / folder_name
         os.makedirs(io_path, exist_ok=True)
         for (filename, contents) in io_files:
-            path =  io_path / f"{filename}.txt"
+            path = io_path / f"{filename}.txt"
             with open(path, 'w') as fp:
                 fp.write(contents + "\n")
 

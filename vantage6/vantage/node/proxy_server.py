@@ -94,7 +94,7 @@ def proxy_task():
         
         public_key = response.json().get("public_key")
         
-        encrypted_input = server_io.cryptor.encrypt_base64(input_, public_key)
+        encrypted_input = server_io.cryptor.encrypt_base64(str(input_), public_key)
         log.debug(f"should be unreadable={encrypted_input}")
         organization["input"] = encrypted_input
         encrypted_organizations.append(organization)
