@@ -253,12 +253,16 @@ class NoCryptor(Cryptor):
                 "Encrpytion disabled! Use this only for debugging")
 
     def encrypt_base64(self, msg: str, public_key_base64: str) -> str:
+        # safe_chars_encoded_msg = prepare_bytes_for_transport(
+        #     msg
+        # )
         return msg
 
     def encrypt(self, msg: str, public_key_bytes: bytes) -> bytes:
-        return bytes(msg, "ascii")
+        return msg.encode("ascii")
         
     def decrypt_base64(self, msg: bytes) -> bytes:
+        # msg_bytes = unpack_bytes_from_transport(msg)
         return msg
 
     def decrypt_base64_to_str(self, msg: bytes) -> str:
