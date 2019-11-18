@@ -32,6 +32,7 @@ from vantage import util, node
 
 from vantage.util.context import (
     configuration_wizard, select_configuration_questionaire)
+from vantage.constants import STRING_ENCODING
 
 from colorama import init, Fore, Back, Style
 init()
@@ -51,7 +52,7 @@ def cli_node_list():
     
     client = docker.from_env()
     check_if_docker_deamon_is_running(client)
-    
+
     running_nodes = client.containers.list(
         filters={"label":f"{constants.APPNAME}-type=node"})
     running_node_names = []
@@ -396,7 +397,7 @@ def cli_node_attach(name, system_folders):
 
 def print_log_worker(logs_stream):
     for log in logs_stream:
-        print(log.decode("ascii"))
+        print(log.decode(STRING_ENCODING))
 
 def check_if_docker_deamon_is_running(docker_client):
     try:
