@@ -22,6 +22,7 @@ import errno
 import docker
 import time
 
+from docker.errors import DockerException
 from pathlib import Path
 from threading import Thread
 
@@ -49,6 +50,8 @@ def cli_node_list():
     """Lists all nodes in the default configuration directory."""
     
     client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+    
     running_nodes = client.containers.list(
         filters={"label":f"{constants.APPNAME}-type=node"})
     running_node_names = []
@@ -242,6 +245,7 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
     docker_client = docker.from_env()
+    check_if_docker_deamon_is_running(docker_client)
     
     # specify mount-points 
     # TODO multiple database support
@@ -325,6 +329,8 @@ def cli_node_stop(name, system_folders):
     """Stop a running container. """
 
     client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+
     running_nodes = client.containers.list(
         filters={"label":f"{constants.APPNAME}-type=node"})
     
@@ -363,6 +369,8 @@ def cli_node_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
 
     client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+
     running_nodes = client.containers.list(
         filters={"label":f"{constants.APPNAME}-type=node"})
     running_node_names = [node.name for node in running_nodes]
@@ -390,3 +398,10 @@ def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode("ascii"))
 
+def check_if_docker_deamon_is_running(docker_client):
+    try:
+        docker_client.ping()
+    except Exception as e:
+        click.echo(
+            "Docker socket not found. Is Docker running? Exiting")
+        exit()
