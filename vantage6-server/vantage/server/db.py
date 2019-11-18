@@ -11,6 +11,7 @@ import sqlalchemy as sql
 from .model import ( Base, User, Organization, Authenticatable, Node, Task, 
     Member, Result, Collaboration)
 from vantage.util import logger_name
+from vantage.constants import STRING_ENCODING
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -36,7 +37,7 @@ def jsonable(value):
                 column_value = column_value.isoformat()
             elif isinstance(column_value, bytes):
                 log.debug(f"decoding bytes!")
-                column_value = column_value.decode("ascii")
+                column_value = column_value.decode(STRING_ENCODING)
 
             retval[column] = column_value
 
