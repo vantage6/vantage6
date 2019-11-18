@@ -162,7 +162,7 @@ class DockerManager(object):
             "INPUT_FILE": str(io_path / "input.txt"),
             "OUTPUT_FILE": str(io_path / "output.txt"),
             "TOKEN_FILE": str(io_path / "token.txt"),
-            "DATABASE_URI": database_uri,
+            "DATABASE_URI": "/mnt/data-volume/database.csv",
             "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
             "PORT": os.environ["PROXY_SERVER_PORT"],
             "API_PATH": "",
