@@ -51,7 +51,7 @@ class Cryptor(metaclass=Singleton):
         Communication between node and server requires serialization (and
         deserialization) of the encrypted messages (which are in bytes). 
         The API can not communicate bytes, therefore a base64 conversion 
-        needs to be executed (and also a ascii encoding needs to be applied
+        needs to be executed (and also a utf-8 encoding needs to be applied
         because of the way python implemented base64). The same goed for
         sending and receiving the public_key.
     """
@@ -103,7 +103,7 @@ class Cryptor(metaclass=Singleton):
         self, msg: str, public_key_base64: str) -> str:
         """ Encrypt string `msg` using `public_key_base64`.
         """
-        msg_bytes = msg.encode("ascii")
+        msg_bytes = msg.encode(cs.STRING_ENCODING)
         return self.encrypt_bytes_to_base64(msg_bytes, public_key_base64)
 
     def encrypt_bytes_to_base64(
@@ -117,7 +117,7 @@ class Cryptor(metaclass=Singleton):
             TODO we should retreive all keys once... and store them in 
                 the node
         """
-        # decode the b64, ascii key to bytes
+        # decode the b64, utf-8 key to bytes
         public_key_bytes = unpack_bytes_from_transport(
             public_key_base64
         )
@@ -187,7 +187,7 @@ class Cryptor(metaclass=Singleton):
     def decrypt_bytes_from_base64(self, msg: str) -> bytes:
         """ Decrypt bytes `msg` using our private key
 
-            :param msg: string ascii encoded base64 encrypted msg
+            :param msg: string utf-8 encoded base64 encrypted msg
 
             TODO elso clausule does not make a lot of sense
         """
@@ -201,15 +201,15 @@ class Cryptor(metaclass=Singleton):
     def decrypt_str_from_base64(self, msg: str) -> str:
         """ Decrypt base64 `msg` using our private key
 
-            :param msg: string ascii encoded base64 encrypted msg
+            :param msg: string utf-8 encoded base64 encrypted msg
         """
         msg_bytes = self.decrypt_bytes_from_base64(msg)
-        return msg_bytes.decode("ascii")
+        return msg_bytes.decode(cs.STRING_ENCODING)
 
     def decrypt_dict_from_base64(self, msg: str) -> dict:
         """ Decrypt base64 `msg` using our private key.
 
-            :param msg: dict ascii encoded base64 encrypted msg
+            :param msg: dict utf-8 encoded base64 encrypted msg
         """
         msg_str = self.decrypt_str_from_base64(msg)
         return json.loads(msg_str)
@@ -295,7 +295,7 @@ class NoCryptor(Cryptor):
 
     def encrypt_bytes_to_base64(
         self, msg: bytes, public_key_base64: str) -> str:
-        return msg.decode("ascii")
+        return msg.decode(cs.STRING_ENCODING)
 
     def encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
         return msg
@@ -304,7 +304,7 @@ class NoCryptor(Cryptor):
         return msg
 
     def decrypt_bytes_from_base64(self, msg: str) -> bytes:
-        return msg.encode("ascii")
+        return msg.encode(cs.STRING_ENCODING)
 
     def decrypt_str_from_base64(self, msg: str) -> str:
         return msg

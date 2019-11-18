@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session, relationship
 from sqlalchemy.ext.hybrid import hybrid_property 
 from sqlalchemy.orm.exc import NoResultFound
 
+from vantage.constants import STRING_ENCODING
+
 from .base import Base, Database
 from .member import Member
 from .collaboration import Collaboration
@@ -49,7 +51,7 @@ class Organization(Base):
         if self._public_key:
             # TODO this should be fixed properly
             try:
-                return base64.b64decode(self._public_key).decode("ascii")
+                return base64.b64decode(self._public_key).decode(STRING_ENCODING)
             except:
                 return ""
         else:
@@ -59,7 +61,7 @@ class Organization(Base):
     def public_key(self, public_key_b64):
         """Assumes that the public key is in b64-encoded."""
         self._public_key = base64.b64decode(
-            public_key_b64.encode("ascii")
+            public_key_b64.encode(STRING_ENCODING)
         )
 
     def __repr__(self):
