@@ -281,6 +281,12 @@ class ClientBaseProtocol:
         """
         assert self.cryptor, "Encryption has not yet been setup!"
 
+        encryption_method = self.cryptor.encrypt_dict_to_base64
+        if type(input_) == str:
+            encryption_method = self.cryptor.encrypt_str_to_base64
+        elif type(input_) == dict:
+            encryption_method = self.cryptor.encrypt_dict_to_base64
+
         organization_json_list = []
         for org_id in organization_ids:
             pub_key = self.request(f"organization/{org_id}").get("public_key")
@@ -288,7 +294,7 @@ class ClientBaseProtocol:
             organization_json_list.append(
                 {
                     "id": org_id,
-                    "input": str(self.cryptor.encrypt(input_, pub_key))
+                    "input": encryption_method(input_, pub_key)
                 }
             )
 
@@ -326,6 +332,9 @@ class ClientBaseProtocol:
                 than assuming that it is a not encrypted message. we 
                 need check this setting first at the server. But this 
                 might be better to do in the Cryptor class
+
+            TODO it is assumed that the output is json formatted.. We 
+                might want to use other types of output
         """
         # create formatted params
         params = dict()
@@ -347,13 +356,13 @@ class ClientBaseProtocol:
         if not id:
             for result in results:
                 try:
-                    result["input"] = self.cryptor.decrypt_base64(result["input"])
-                    # self.log.debug(result)
-                    # self.log.debug(result["result"])
-                    # self.log.debug(type(self.cryptor))
-                    # self.log.debug(self.cryptor.decrypt_base64(result["result"]))
+                    result["input"] = self.cryptor.decrypt_dict_from_base64(
+                        result["input"]
+                    )
                     if result["result"]:
-                        result["result"] = self.cryptor.decrypt_base64(result["result"]).decode("ascii")
+                        result["result"] = self.cryptor.decrypt_dict_from_base64(
+                            result["result"]
+                        )
                         
                 except ValueError as e:
                     self.log.warn(
@@ -366,8 +375,12 @@ class ClientBaseProtocol:
             return results_unencrypted
         else:
             try:
-                results["input"] = self.cryptor.decrypt_base64(results["input"])
-                results["result"] = self.cryptor.decrypt_base64(results["result"]).decode("ascii")
+                results["input"] = self.cryptor.decrypt_dict_from_base64(
+                    results["input"]
+                )
+                results["result"] = self.cryptor.decrypt_dict_from_base64(
+                    results["result"]
+                )
             except ValueError as e:
                 self.log.warn(
                     "Could not decrypt input."
@@ -749,7 +762,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
             
             self.log.debug(public_key)
 
-            result["result"] = self.cryptor.encrypt_base64(
+            result["result"] = self.cryptor.encrypt_dict_to_base64(
                 result["result"], public_key
             )
             self.log.debug("Sending encrypted results to server")
