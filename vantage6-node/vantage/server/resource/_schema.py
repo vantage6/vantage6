@@ -16,6 +16,7 @@ from werkzeug.routing import BuildError
 
 from vantage.server import api
 from vantage.util import logger_name
+from vantage.constants import STRING_ENCODING
 from .. import ma
 from .. import db
 
@@ -143,7 +144,7 @@ class OrganizationSchema(HATEOASModelSchema):
     
     # make sure 
     public_key = fields.Function(
-        lambda self: base64.b64encode(self._public_key).decode("ascii") if \
+        lambda self: base64.b64encode(self._public_key).decode(STRING_ENCODING) if \
             self._public_key else ""
     ) 
 
