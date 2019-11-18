@@ -282,21 +282,32 @@ class NoCryptor(Cryptor):
         self.log.warning(
                 "Encrpytion disabled! Use this only for debugging")
 
-    def encrypt_base64(self, msg: str, public_key_base64: str) -> str:
-        # safe_chars_encoded_msg = prepare_bytes_for_transport(
-        #     msg
-        # )
-        return msg
-
-    def encrypt(self, msg: str, public_key_bytes: bytes) -> bytes:
-        return msg.encode("ascii")
         
-    def decrypt_base64(self, msg: bytes) -> bytes:
-        # msg_bytes = unpack_bytes_from_transport(msg)
+    def encrypt_dict_to_base64(
+        self, msg: dict, public_key_base64: str) -> str:
+        """ Encrypt dictonairy `msg` using `public_key_base64`.
+        """
+        return json.dumps(msg)
+
+    def encrypt_str_to_base64(
+        self, msg: str, public_key_base64: str) -> str:
         return msg
 
-    def decrypt_base64_to_str(self, msg: bytes) -> str:
+    def encrypt_bytes_to_base64(
+        self, msg: bytes, public_key_base64: str) -> str:
         return msg.decode("ascii")
+
+    def encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
+        return msg
     
     def decrypt_bytes(self, msg: bytes) -> bytes:
         return msg
+
+    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
+        return msg.encode("ascii")
+
+    def decrypt_str_from_base64(self, msg: str) -> str:
+        return msg
+
+    def decrypt_dict_from_base64(self, msg: str) -> dict:
+        return json.loads(msg)
