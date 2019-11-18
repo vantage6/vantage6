@@ -336,6 +336,7 @@ class NodeWorker:
 
         # If the task has the variable 'database' set and its value corresponds
         # to a database defined in the configuration, we'll use that.
+        # TODO this is not working as this is going though a mount! 
         if (task['database'] 
             and self.config.get('databases') 
             and task['database'] in self.config['databases']):
