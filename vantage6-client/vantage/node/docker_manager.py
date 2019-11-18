@@ -125,10 +125,6 @@ class DockerManager(object):
         """
 
         # create I/O files for docker
-        # TODO i think this belongs to the decrpytion module...
-        if type(docker_input) == bytes:
-            docker_input = docker_input.decode("ascii")
-        docker_input = docker_input.replace("'", "\"")
         self.log.debug("prepare IO files in docker volume")
         io_files = [
             ('input', docker_input), 
@@ -150,7 +146,7 @@ class DockerManager(object):
         for (filename, contents) in io_files:
             path = io_path / f"{filename}.txt"
             with open(path, 'w') as fp:
-                fp.write(contents + "\n")
+                fp.write(contents)
 
         # attempt to pull the latest image
         try:
