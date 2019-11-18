@@ -23,6 +23,7 @@ import queue
 import typing
 import shutil
 import requests
+import json
 
 from pathlib import Path
 from threading import Thread
@@ -347,6 +348,8 @@ class NodeWorker:
         # self.__docker.client.containers.get(self.ctx.docker_container_name)
 
         # start docker container in the background
+        if type(taskresult['input']) == dict:
+            taskresult['input'] = json.dumps(taskresult['input'])
         self.__docker.run(
             result_id=taskresult["id"], 
             image=task["image"],

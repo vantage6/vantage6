@@ -18,6 +18,7 @@ TODO rename def, not all methods should be public
 """
 import logging
 import base64
+import json
 
 from pathlib import Path
 
@@ -91,7 +92,22 @@ class Cryptor(metaclass=Singleton):
         """
         return prepare_bytes_for_transport(self.public_key_bytes)
         
-    def encrypt_base64(self, msg: str, public_key_base64: str) -> str:
+    def encrypt_dict_to_base64(
+        self, msg: dict, public_key_base64: str) -> str:
+        """ Encrypt dictonairy `msg` using `public_key_base64`.
+        """
+        msg_str = json.dumps(msg)
+        return self.encrypt_str_to_base64(msg_str, public_key_base64)
+
+    def encrypt_str_to_base64(
+        self, msg: str, public_key_base64: str) -> str:
+        """ Encrypt string `msg` using `public_key_base64`.
+        """
+        msg_bytes = msg.encode("ascii")
+        return self.encrypt_bytes_to_base64(msg_bytes, public_key_base64)
+
+    def encrypt_bytes_to_base64(
+        self, msg: bytes, public_key_base64: str) -> str:
         """ Encrypt a `msg` using `public_key_base64`.
 
             :param msg: message to be encrypted
@@ -109,7 +125,7 @@ class Cryptor(metaclass=Singleton):
         # self.log.debug(public_key_bytes)
 
         
-        encrypted_msg = self.encrypt(msg, public_key_bytes)
+        encrypted_msg = self.encrypt_bytes(msg, public_key_bytes)
         # self.log.debug("Message encrypted")
         # self.log.debug(encrypted_msg)
 
@@ -121,51 +137,35 @@ class Cryptor(metaclass=Singleton):
         
         return safe_chars_encoded_msg
 
-    def encrypt(self, msg: str, public_key_bytes: bytes) -> bytes:
+    def encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
         """ Encrypt `msg` using a `public_key_bytes`.
         
             :param msg: string message to encrypt
             :param public_key_bytes: public key used to encrypt `msg`
         """
-        pub_key = load_pem_public_key(
-            public_key_bytes,
-            backend=default_backend()
-        )
-        self.log.debug(f"public key loaded {pub_key}")
-        msg_ = msg.encode("ascii")
-        self.log.debug(f"Message before encryption={msg_}")
-        encrypted_msg = pub_key.encrypt(
-            msg.encode("ascii"),
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
+        try:
+            pub_key = load_pem_public_key(
+                public_key_bytes,
+                backend=default_backend()
             )
-        )
-        self.log.debug(f"encrpyted message={encrypted_msg}")
-        
+        except Exception as e:
+            self.log.error("Unable to load public-key")
+            self.log.debug(e)
+
+        try:    
+            encrypted_msg = pub_key.encrypt(
+                msg,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+        except Exception as e:
+            self.log.error("Unable to encrypt message")
+            self.log.debug(e)
+
         return encrypted_msg
-    
-    def decrypt_base64(self, msg: str) -> bytes:
-        """ Decrypt bytes `msg` using our private key
-
-            :param msg: string ascii encoded base64 encrypted msg
-
-            TODO elso clausule does not make a lot of sense
-        """
-        
-        if msg:
-            msg_bytes = unpack_bytes_from_transport(msg)
-            return self.decrypt_bytes(msg_bytes)
-        else:
-            return b""
-
-    def decrypt_base64_to_str(self, msg: bytes) -> str:
-        """ Decrypt bytes `msg` using our private key
-
-            :param msg: string ascii encoded base64 encrypted msg
-        """
-        return self.decrypt_base64(msg).decode("ascii")
     
     def decrypt_bytes(self, msg: bytes) -> bytes:
         """ Decrypt `msg` using our private key.
@@ -183,6 +183,36 @@ class Cryptor(metaclass=Singleton):
 
         # return unencrypted and default unencoded msg
         return decrypted_msg
+
+    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
+        """ Decrypt bytes `msg` using our private key
+
+            :param msg: string ascii encoded base64 encrypted msg
+
+            TODO elso clausule does not make a lot of sense
+        """
+        
+        if msg:
+            msg_bytes = unpack_bytes_from_transport(msg)
+            return self.decrypt_bytes(msg_bytes)
+        else:
+            return b""
+
+    def decrypt_str_from_base64(self, msg: str) -> str:
+        """ Decrypt base64 `msg` using our private key
+
+            :param msg: string ascii encoded base64 encrypted msg
+        """
+        msg_bytes = self.decrypt_bytes_from_base64(msg)
+        return msg_bytes.decode("ascii")
+
+    def decrypt_dict_from_base64(self, msg: str) -> dict:
+        """ Decrypt base64 `msg` using our private key.
+
+            :param msg: dict ascii encoded base64 encrypted msg
+        """
+        msg_str = self.decrypt_str_from_base64(msg)
+        return json.loads(msg_str)
     
     def __load_private_key(self, private_key_file=None):
         """ Load a private key file into this instance.
