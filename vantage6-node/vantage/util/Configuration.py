@@ -74,7 +74,7 @@ class NodeConfiguration(Configuration):
             "datefmt": Use(str)
         },
         "encryption": {
-            "disabled": Use(bool),
+            "disabled": bool,
             "private_key": Use(str)
         }
     }
@@ -129,10 +129,12 @@ class ConfigurationManager(object):
         
     def put(self, env:str, config: dict):
         assert env in self.ENVS
-        configutarion = self.conf_class(config)
+        configuration = self.conf_class(config)
         # only set valid configs
-        if configutarion.is_valid:
-            self.__setattr__(env, configutarion)
+        if configuration.is_valid:
+            self.__setattr__(env, configuration)
+        # else:
+        #     print(f"config={config}")
         
     def get(self, env:str):
         assert env in self.ENVS
