@@ -176,58 +176,6 @@ def configuration_wizard(instance_type, instance_name,
 
     return config_file
 
-def validate_configuration_file(file):
-    pass
-    # check for application 
-
-    # check for environments
-
-def validate_configuration(configuration, instance_type):
-    """Check that the configuration is valid for vantage.
-    
-    A single configuration file can (optionally) have multiple 
-    environments in them. However when a configation is loaded only 
-    a single environment should be loaded. Therefore we only need 
-    to validate the loaded configuration.
-    """
-     
-    node_schema = {
-        "api_key": And(Use(str), len),
-        "server_url": Use(str),
-        "port": Or(Use(int), None),
-        "task_dir": Use(str),
-        "databases": {Use(str):os.path.exists},
-        "api_path": Use(str),
-        Optional("logging"): Use(dict)
-    }
-    
-    server_schema = {
-        "description": Use(str),
-        "type": Use(str),
-        "ip": Use(str),
-        "port": Use(int),
-        "api_path": Use(str),
-        "uri": Use(str),
-        "allow_drop_all": Use(bool),
-        Optional("logging"): {
-            "level": lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
-            "file": Use(str),
-            "use_console": Use(bool),
-            "backup_count": And(Use(int),lambda n: n>0),
-            "max_size": Use(int),
-            "format": Use(str),
-            "datefmt": Use(str)
-        }
-    }
-    
-    instance_schema = {
-        'server': server_schema,
-        'node': node_schema
-    }.get(instance_type)
-    schema = Schema(instance_schema, ignore_extra_keys=True)
-
-    return schema.validate(configuration)
-
 # TODO deprecated, still used by server instance, should be replaced
 # by some sort of questionaire
 def get_config_location(ctx, config, force_create):
