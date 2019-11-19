@@ -252,10 +252,10 @@ class NodeContext(AppContext):
             path, "node", environment, system_folders
         )
 
-    @staticmethod
-    def config_exists(instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
-        return AppContext.config_exists("node", 
-            instance_name, environment= environment, system_folders=system_folders)
+    @classmethod
+    def config_exists(cls, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
+        return super().config_exists("node", 
+            instance_name, environment=environment, system_folders=system_folders)
     
     @classmethod
     def available_configurations(cls, system_folders=constants.DEFAULT_NODE_SYSTEM_FOLDERS):
@@ -309,12 +309,12 @@ class ServerContext(AppContext):
             path, "server", environment, system_folders
         )
 
-    @staticmethod
-    def config_exists(instance_name, 
+    @classmethod
+    def config_exists(cls, instance_name, 
         environment=constants.DEFAULT_SERVER_ENVIRONMENT, 
         system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
 
-        return AppContext.config_exists("server", 
+        return super().config_exists("server", 
             instance_name, environment= environment, system_folders=system_folders)
 
     @classmethod
