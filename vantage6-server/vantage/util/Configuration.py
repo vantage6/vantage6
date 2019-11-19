@@ -37,7 +37,6 @@ class ServerConfiguration(Configuration):
 
     VALIDATORS = {
         "description": Use(str),
-        "type": Use(str),
         "ip": Use(str) ,
         "port": Use(int),  
         "api_path": Use(str),
@@ -146,7 +145,7 @@ class ConfigurationManager(object):
             or self.test or self.dev)
 
     @property
-    def environments(self):
+    def environments(self): 
         return {"prod":self.prod, "acc":self.acc, "test":self.test, 
             "dev":self.dev, "application": self.application}
 
