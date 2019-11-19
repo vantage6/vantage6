@@ -15,7 +15,6 @@ from weakref import WeakValueDictionary
 
 import vantage.constants as constants
 
-from vantage.util.context import validate_configuration
 from vantage.util.Configuration import ( ConfigurationManager, 
     ServerConfigurationManager, NodeConfigurationManager, 
     TestingConfigurationManager ) 
@@ -221,7 +220,10 @@ class AppContext(metaclass=Singleton):
         for file_ in config_files:
             try:
                 conf_manager = cls.INST_CONFIG_MANAGER.from_file(file_)
-                configs.append(conf_manager)
+                if conf_manager.is_empty:
+                    failed.append(file_)
+                else:
+                    configs.append(conf_manager)
             except Exception:
                 failed.append(file_)
 
