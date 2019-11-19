@@ -89,6 +89,17 @@ def node_configuration_questionaire(dirs, instance_name):
         "datefmt": "%H:%M:%S"
     }
 
+    disable_encryption = q.select("Disable encryption?", 
+        choices=["false", "true"]).ask()
+
+    private_key = "" if disable_encryption == "true" else \
+        q.text("Path to private key file:").ask()
+
+    config["encryption"] = {
+        "disabled": disable_encryption == "true",
+        "private_key": private_key
+    }
+
     return config
 
 def server_configuration_questionaire(dirs, instance_name):
@@ -163,7 +174,7 @@ def configuration_wizard(instance_type, instance_name,
     # configuration. In the case of application we can simply overwrite this 
     # key (although there might be environments present)
     config_file = Path(dirs.get("config")) / (instance_name + ".yaml")
-    conf_class = NodeConfigurationManager if instance_name == "node" else \
+    conf_class = NodeConfigurationManager if instance_type == "node" else \
         ServerConfigurationManager
     
     if Path(config_file).exists():
