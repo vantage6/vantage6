@@ -1,10 +1,10 @@
 import os
 import collections
 import yaml
+import logging
 
 from pathlib import Path
 from schema import Schema, And, Or, Use, Optional
-
 
 class Configuration(collections.UserDict):
     """Base to contains a single configuration."""
@@ -15,6 +15,8 @@ class Configuration(collections.UserDict):
         super().__init__(*args, **kwargs)
         
     def __setitem__(self, key, value):
+        """ Validation of a single item when put
+        """
         # assert key in self.VALIDATORS.keys(), "Invalid Key!"
         schema = Schema(self.VALIDATORS.get(key,lambda x: True), ignore_extra_keys=True)
         assert schema.is_valid(value), f"Invalid Value! {value} for {schema}"
@@ -28,7 +30,7 @@ class Configuration(collections.UserDict):
 
     @property
     def is_valid(self):
-        return all(key in self.VALIDATORS for key in self.data.keys())
+        return Schema(self.VALIDATORS).is_valid(self.data)
             
 
 class ServerConfiguration(Configuration):
@@ -70,6 +72,10 @@ class NodeConfiguration(Configuration):
             "max_size": And(Use(int), lambda b: b > 16),
             "format": Use(str),
             "datefmt": Use(str)
+        },
+        "encryption": {
+            "disabled": Use(bool),
+            "private_key": Use(str)
         }
     }
 
@@ -123,11 +129,19 @@ class ConfigurationManager(object):
         
     def put(self, env:str, config: dict):
         assert env in self.ENVS
-        self.__setattr__(env, self.conf_class(config))
-
+        configutarion = self.conf_class(config)
+        # only set valid configs
+        if configutarion.is_valid:
+            self.__setattr__(env, configutarion)
+        
     def get(self, env:str):
         assert env in self.ENVS
         return self.__getattribute__(env)
+
+    @property
+    def is_empty(self):
+        return not (self.application or self.prod or self.acc \
+            or self.test or self.dev)
 
     @property
     def environments(self):
@@ -164,7 +178,7 @@ class ConfigurationManager(object):
     def from_file(cls, path, conf_class=Configuration):
         name = Path(path).stem
         assert name, f"Name could not be extracted from filepath={path}"
-        conf = cls(name=name, conf_class=Configuration)
+        conf = cls(name=name, conf_class=conf_class)
         conf.load(path)
         return conf
 
