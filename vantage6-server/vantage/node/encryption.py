@@ -17,7 +17,6 @@ TODO handle no public key from other organization (should that happen here)
 TODO rename def, not all methods should be public
 """
 import logging
-import base64
 import json
 
 from pathlib import Path
@@ -26,31 +25,31 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.serialization import (
-    load_pem_private_key, 
-    load_pem_public_key 
+    load_pem_private_key,
+    load_pem_public_key
 )
 
 import vantage.constants as cs
 from vantage.util import (
-    Singleton, 
-    logger_name, 
-    prepare_bytes_for_transport, 
+    Singleton,
+    logger_name,
+    prepare_bytes_for_transport,
     unpack_bytes_from_transport
 )
 
 
 class Cryptor(metaclass=Singleton):
-    """ Wrapper class for the cryptography package. 
-    
+    """ Wrapper class for the cryptography package.
+
         It loads the private key, and has an interface to encrypt en decrypt
         messages. If no private key is found, it can generate one, and store
         it at the default location. The encrpytion can be done via a public
-        key from another organization, make sure the key is in the right 
+        key from another organization, make sure the key is in the right
         data-type.
 
         Communication between node and server requires serialization (and
-        deserialization) of the encrypted messages (which are in bytes). 
-        The API can not communicate bytes, therefore a base64 conversion 
+        deserialization) of the encrypted messages (which are in bytes).
+        The API can not communicate bytes, therefore a base64 conversion
         needs to be executed (and also a utf-8 encoding needs to be applied
         because of the way python implemented base64). The same goed for
         sending and receiving the public_key.
@@ -62,19 +61,18 @@ class Cryptor(metaclass=Singleton):
 
     def verify_public_key(self, public_key_base64) -> bool:
         """ Verifies the public key.
-            
-            Compare the public key with the generated public key from 
-            the private key that is stored in this instance. This is 
-            usefull for verifying that the public key stored on the 
+
+            Compare the public key with the generated public key from
+            the private key that is stored in this instance. This is
+            usefull for verifying that the public key stored on the
             server is derived from the currently used private key.
 
-            :param public_key_base64: public_key as returned from the 
+            :param public_key_base64: public_key as returned from the
                 server (still base64 encoded)
         """
         public_key_server = unpack_bytes_from_transport(
             public_key_base64
         )
-        local_bytes = self.public_key_bytes
         return self.public_key_bytes == public_key_server
 
     @property
@@ -85,29 +83,27 @@ class Cryptor(metaclass=Singleton):
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-        
+
     @property
     def public_key_str(self):
         """ Returns a JSON safe public key, used for the API interface.
         """
         return prepare_bytes_for_transport(self.public_key_bytes)
-        
-    def encrypt_dict_to_base64(
-        self, msg: dict, public_key_base64: str) -> str:
+
+    def encrypt_dict_to_base64(self, msg: dict, public_key_base64: str) -> str:
         """ Encrypt dictonairy `msg` using `public_key_base64`.
         """
         msg_str = json.dumps(msg)
         return self.encrypt_str_to_base64(msg_str, public_key_base64)
 
-    def encrypt_str_to_base64(
-        self, msg: str, public_key_base64: str) -> str:
+    def encrypt_str_to_base64(self, msg: str, public_key_base64: str) -> str:
         """ Encrypt string `msg` using `public_key_base64`.
         """
         msg_bytes = msg.encode(cs.STRING_ENCODING)
         return self.encrypt_bytes_to_base64(msg_bytes, public_key_base64)
 
     def encrypt_bytes_to_base64(
-        self, msg: bytes, public_key_base64: str) -> str:
+    self, msg: bytes, public_key_base64: str) -> str:
         """ Encrypt a `msg` using `public_key_base64`.
 
             :param msg: message to be encrypted
@@ -117,23 +113,19 @@ class Cryptor(metaclass=Singleton):
             TODO we should retreive all keys once... and store them in 
                 the node
         """
-        # decode the b64, utf-8 key to bytes
+        
+        # unpack public key
         public_key_bytes = unpack_bytes_from_transport(
             public_key_base64
         )
-        # self.log.debug("Unpacked the public key")
-        # self.log.debug(public_key_bytes)
-
         
+        # encrypt message using public key
         encrypted_msg = self.encrypt_bytes(msg, public_key_bytes)
-        # self.log.debug("Message encrypted")
-        # self.log.debug(encrypted_msg)
-
+        
+        # prepare message for transport
         safe_chars_encoded_msg = prepare_bytes_for_transport(
             encrypted_msg
         )
-        # self.log.debug("Encrypted message packed for transport")
-        # self.log.debug(encrypted_msg)
         
         return safe_chars_encoded_msg
 
@@ -189,7 +181,7 @@ class Cryptor(metaclass=Singleton):
 
             :param msg: string utf-8 encoded base64 encrypted msg
 
-            TODO elso clausule does not make a lot of sense
+            TODO else clausule does not make a lot of sense
         """
         
         if msg:
@@ -231,15 +223,13 @@ class Cryptor(metaclass=Singleton):
         # we use the default data folder, which is a folder in the 
         # package directory
         if not private_key_file:
-            # TODO this is the docker env
             rsa_file = Path("/mnt/data/private_key.pem")
-            host_path = cs.DATA_FOLDER / "private_key.pem"
             self.log.debug(
                 f"No private key file specified, " 
-                f"using default: {host_path}"
+                f"using default (located in the data folder)"
             )
         else:
-            rsa_file = Path("/mnt") / "private_key.pem"
+            rsa_file = private_key_file
         
         # this gets messy when python does not have access to the 
         # `rsa_file`

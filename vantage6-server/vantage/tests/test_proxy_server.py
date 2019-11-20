@@ -93,7 +93,7 @@ class TestProxyServer(unittest.TestCase):
             "127.0.0.1", 5000
         )
         server_io.cryptor = Cryptor(
-            DATA_FOLDER / "private_key.pem", False
+            DATA_FOLDER / "private_key.pem"
         )
         
         # attach proxy to this local service
