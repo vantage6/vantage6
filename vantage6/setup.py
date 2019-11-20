@@ -19,24 +19,25 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 
 # Read the API version from disk 
-with open(path.join(here, 'pytaskmanager', 'VERSION')) as fp:
+with open(path.join(here, 'vantage', 'VERSION')) as fp:
     __version__ = fp.read()
 
 
 # Setup the package
 setup(
-    name='ppDLI',
+    name='vantage',
     version=__version__,
     description='Package and utilities for distributed learning',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/IKNL/ppDLI',
+    url='https://github.com/IKNL/vantage',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     python_requires='>=3',
     install_requires=[
         'appdirs',
         'bcrypt',
         'click',
+        'colorama',
         'docker',
         'eventlet',
         'flask',
@@ -47,32 +48,36 @@ setup(
         'flask-marshmallow',
         'flask-socketio',
         'socketIO_client',
-        'marshmallow',
-        'marshmallow-sqlalchemy',
+        'marshmallow==2.16.3',
+        'marshmallow-sqlalchemy==0.15.0',
         'pyyaml',
         'psutil',
-        'psycopg2',
+        'psycopg2-binary',
         'requests',
         'termcolor',
         'sqlalchemy',
         'iknl-flasgger',
         'schema',
         'questionary',
-        'ipython'
+        'ipython',
+        'cryptography',
+        'gevent'
     ],
     package_data={  
-        'pytaskmanager': [
+        'vantage': [
             'server/server.wsgi', 
             'VERSION', 
             '_data/**/*.yaml',
+            '_data/*.yaml',
             'server/resource/swagger/*.yaml'
         ],
     },
     entry_points={
         'console_scripts': [
-            'ppnode=pytaskmanager.node.cli.node:cli_node',
-            'ppserver=pytaskmanager.server.cli.server:cli_server',
-            'ppdev=pytaskmanager.util.cli.develop:cli_develop'
+            'jnode=vantage.node_manager.cli.node_manager:cli_node',
+            'jserver=vantage.server.cli.server:cli_server',
+            'jdev=vantage.util.cli.develop:cli_develop'
         ],
     }
 )
+
