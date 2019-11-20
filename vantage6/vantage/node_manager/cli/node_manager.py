@@ -203,10 +203,11 @@ def cli_node_files(name, environment, system_folders):
     flag_value=False, 
     default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
 )
-@click.option('--develop', is_flag=True)
-@click.option('--attach', is_flag=True)
-# @click.option("")
-def cli_node_start(name, config, environment, system_folders, develop, attach):
+@click.option('-d', '--develop', 
+    default=False,
+    help="Source code for developer container"
+)
+def cli_node_start(name, config, environment, system_folders, develop):
     """ Start the node instance.
     
         If no name or config is specified the default.yaml configuation is used. 
@@ -249,8 +250,8 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
     check_if_docker_deamon_is_running(docker_client)
     
     # specify mount-points 
-    # TODO multiple database support
     mounts = [
+        # TODO multiple database support
         docker.types.Mount("/mnt/database.csv", str(ctx.databases["default"]),
             type="bind"),
         docker.types.Mount("/mnt/log", str(ctx.log_dir), type="bind"),
@@ -276,29 +277,27 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
     if develop:
         mounts.append(
             docker.types.Mount("/src", 
-            r"D:\Repositories\ppdli", type="bind")
+            develop, type="bind")
         )
-        container_image = "devcon"
+        container_image = "harbor.distributedlearning.ai/infrastructure/dev"
         # attach proxy server for debugging to the host machine
         port = {"80/tcp":("127.0.0.1",8081)}
         print(f"proxy-server attached {port}")
     else:
         port = None
-        container_image = "docker-registry.distributedlearning.ai/ppdli-node"
+        container_image = "harbor.distributedlearning.ai/infrastructure/node"
 
-    
     # create data volume which can be used by this node instance
     data_volume = docker_client.volumes.create(
         f"{ctx.docker_container_name}-vol"
     )
-    print(ctx)
-    print(ctx.docker_container_name)
+    
     container = docker_client.containers.run(
         container_image,
         command=[ctx.config_file_name, ctx.environment],
         mounts=mounts,
         volumes={data_volume.name: {'bind': '/mnt/data-volume', 'mode': 'rw'}},
-        detach=not attach,
+        detach=True,#not attach,
         labels={
             f"{constants.APPNAME}-type": "node", 
             "system": str(system_folders), 
@@ -309,7 +308,7 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
         },
         ports=port,
         name=ctx.docker_container_name,
-        auto_remove=not attach
+        auto_remove=True#not attach
     )
 
     click.echo(f"Running, container id = {container}")
