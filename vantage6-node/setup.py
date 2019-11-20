@@ -74,9 +74,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'jnode=vantage.node_manager.cli.node_manager:cli_node',
-            'jserver=vantage.server.cli.server:cli_server',
-            'jdev=vantage.util.cli.develop:cli_develop'
+            'vnode=vantage.node_manager.cli.node_manager:cli_node',
+            'vserver=vantage.server.cli.server:cli_server',
+            'vdev=vantage.util.cli.develop:cli_develop'
         ],
     }
 )
