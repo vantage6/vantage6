@@ -131,9 +131,11 @@ class NodeWorker:
         self.authenticate()
 
         # after we authenticated we setup encryption
-        
+        rsa_file = Path("/mnt") / "private_key.pem"
+        if not rsa_file.exists():
+            rsa_file = Path("/mnt/data/private_key.pem")
         self.server_io.setup_encryption(
-            self.config.get("encryption").get("private_key"), #TODO not used
+            rsa_file, 
             self.config.get("encryption").get("disabled")  
         )
 
