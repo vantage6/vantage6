@@ -68,8 +68,8 @@ def cli_node_list():
     click.echo(header)
     click.echo("-"*len(header))
     
-    running = Fore.GREEN + "Running" + Style.RESET_ALL
-    stopped = Fore.RED + "Stopped" + Style.RESET_ALL
+    running = Fore.GREEN + "Online" + Style.RESET_ALL
+    stopped = Fore.RED + "Offline" + Style.RESET_ALL
 
     # system folders
     configs, f1 = util.NodeContext.available_configurations(
@@ -207,13 +207,13 @@ def cli_node_files(name, environment, system_folders):
 @click.option('--attach', is_flag=True)
 # @click.option("")
 def cli_node_start(name, config, environment, system_folders, develop, attach):
-    """Start the node instance.
+    """ Start the node instance.
     
-    If no name or config is specified the default.yaml configuation is used. 
-    In case the configuration file not excists, a questionaire is
-    invoked to create one. Note that in this case it is not possible to
-    specify specific environments for the configuration (e.g. test, 
-    prod, acc). 
+        If no name or config is specified the default.yaml configuation is used. 
+        In case the configuration file not excists, a questionaire is
+        invoked to create one. Note that in this case it is not possible to
+        specify specific environments for the configuration (e.g. test, 
+        prod, acc). 
     """
     
     # in case a configuration file is given, we by pass all the helper
