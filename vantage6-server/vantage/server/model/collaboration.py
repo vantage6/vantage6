@@ -9,7 +9,7 @@ class Collaboration(Base):
     
     # fields
     name = Column(String)
-    encrypted = Column(Boolean)
+    encrypted = Column(Boolean, default=1)
 
     # relationships
     organizations = relationship("Organization", secondary="Member", 
