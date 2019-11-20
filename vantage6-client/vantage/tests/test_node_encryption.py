@@ -29,15 +29,14 @@ log.level = logging.DEBUG
 
 class TestCryptor(unittest.TestCase):
 
-    def setUp(self):
-        self.cryptor = Cryptor()
-        self.private_key_file = DATA_FOLDER / "unit_test_privkey.pem"
-        self.cryptor._Cryptor__create_new_rsa_key(
-            self.private_key_file
-        )
-        
-    def tearDown(self):
-        self.private_key_file.unlink()
+    @classmethod
+    def setUpClass(cls):
+        cls.private_key_file = DATA_FOLDER / "unit_test_privkey.pem"
+        cls.cryptor = Cryptor(cls.private_key_file)
+    
+    @classmethod
+    def tearDownClass(cls):
+        cls.private_key_file.unlink()
 
     def test_load_rsa_from_file(self):
         private_key = self.cryptor._Cryptor__load_private_key(
@@ -72,14 +71,14 @@ class TestCryptor(unittest.TestCase):
         )
 
     def test_encryption_decryption(self):
-        msg = "some message!"
-        encrypted = self.cryptor.encrypt_base64(
+        msg = {"msg":"some message!"}
+        encrypted = self.cryptor.encrypt_dict_to_base64(
             msg,
             self.cryptor.public_key_str
         )
         self.assertNotEqual(msg, encrypted)
         
-        unencrypted = self.cryptor.decrypt_base64_to_str(
+        unencrypted = self.cryptor.decrypt_dict_from_base64(
             encrypted
         )
         self.assertEqual(msg, unencrypted)

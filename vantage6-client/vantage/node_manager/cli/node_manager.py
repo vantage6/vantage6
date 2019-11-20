@@ -272,10 +272,11 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
 
     # in case a development environment is run, we need to do a few extra things
     # and run a devcon container (see develop.Dockerfile)
+    # TODO these filepaths need to be set int the config file
     if develop:
         mounts.append(
             docker.types.Mount("/src", 
-            r"C:\Users\FMa1805.36838\Repositories\ppDLI", type="bind")
+            r"D:\Repositories\ppdli", type="bind")
         )
         container_image = "devcon"
         # attach proxy server for debugging to the host machine
@@ -290,14 +291,13 @@ def cli_node_start(name, config, environment, system_folders, develop, attach):
     data_volume = docker_client.volumes.create(
         f"{ctx.docker_container_name}-vol"
     )
-    
+    print(ctx)
+    print(ctx.docker_container_name)
     container = docker_client.containers.run(
         container_image,
         command=[ctx.config_file_name, ctx.environment],
         mounts=mounts,
-        volumes={data_volume.name: 
-            {'bind': '/mnt/data-volume', 'mode': 'rw'}
-        },
+        volumes={data_volume.name: {'bind': '/mnt/data-volume', 'mode': 'rw'}},
         detach=not attach,
         labels={
             f"{constants.APPNAME}-type": "node", 

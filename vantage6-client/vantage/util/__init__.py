@@ -224,7 +224,7 @@ class AppContext(metaclass=Singleton):
                     failed.append(file_)
                 else:
                     configs.append(conf_manager)
-            except Exception:
+            except Exception:                
                 failed.append(file_)
 
         return configs, failed
