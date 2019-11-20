@@ -231,24 +231,27 @@ class Cryptor(metaclass=Singleton):
         # we use the default data folder, which is a folder in the 
         # package directory
         if not private_key_file:
-            rsa_file = cs.DATA_FOLDER / "private_key.pem"
+            # TODO this is the docker env
+            rsa_file = Path("/mnt/data/private_key.pem")
+            host_path = cs.DATA_FOLDER / "private_key.pem"
             self.log.debug(
                 f"No private key file specified, " 
-                f"using default: {rsa_file}"
+                f"using default: {host_path}"
             )
         else:
-            rsa_file = Path(private_key_file)
+            rsa_file = Path("/mnt") / "private_key.pem"
         
         # this gets messy when python does not have access to the 
         # `rsa_file`
         if not rsa_file.exists():
             self.log.warning(
                 f"Private key file {rsa_file} not found. Now generating one. "
-                f"This is normal if you run {cs.APPNAME} for the first "
+                f"This is could be normal if you run {cs.APPNAME} for the first "
                 f"time."
             )
             self.__create_new_rsa_key(rsa_file)
         
+        self.log.debug("Loading private key")
         return load_pem_private_key(
             rsa_file.read_bytes(), 
             password=None, 
