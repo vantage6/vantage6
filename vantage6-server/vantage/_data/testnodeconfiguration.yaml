@@ -1,0 +1,18 @@
+application:
+  api_key: key-to-hide
+  api_path: /api
+  databases:
+    default: null
+  logging:
+    backup_count: 5
+    datefmt: '%H:%M:%S'
+    file: node.log
+    format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+    level: CRITICAL
+    max_size: 1024
+    use_console: true
+  port: 5000
+  server_url: https://api.distributedlearning.ai
+  task_dir: tasks
+  encryption:
+    disabled: true

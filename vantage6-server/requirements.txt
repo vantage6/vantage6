@@ -7,14 +7,15 @@ flask-jwt-extended
 flask-restful
 flask-sqlalchemy
 flask-marshmallow
-marshmallow
-marshmallow-sqlalchemy
+marshmallow==2.16.3
+marshmallow-sqlalchemy==0.15.0
 pyjwt
 pyyaml
 requests
 termcolor
 sqlalchemy
 click
+colorama
 apispec
 iknl-flasgger
 flask_socketio
@@ -22,3 +23,9 @@ socketIO_client
 schema
 questionary
 ipython
+cryptography
+eventlet
+psutil
+psycopg2-binary
+gevent
+watchdog
