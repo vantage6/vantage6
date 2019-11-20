@@ -74,7 +74,7 @@ class NodeConfiguration(Configuration):
         },
         "encryption": {
             "disabled": bool,
-            "private_key": Use(str)
+            Optional("private_key"): Use(str)
         }
     }
 
