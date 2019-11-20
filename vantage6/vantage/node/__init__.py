@@ -133,7 +133,7 @@ class NodeWorker:
         # after we authenticated we setup encryption
         
         self.server_io.setup_encryption(
-            "/mnt/private_key.pem",
+            self.config.get("encryption").get("private_key"), #TODO not used
             self.config.get("encryption").get("disabled")  
         )
 
