@@ -158,10 +158,12 @@ class DockerManager(object):
         # define enviroment variables for the docker-container, the 
         # host, port and api_path are from the local proxy server to 
         # facilitate indirect communication with the central server
+        tmp_folder = "/mnt/tmp"
         environment_variables = {
             "INPUT_FILE": str(io_path / "input.txt"),
             "OUTPUT_FILE": str(io_path / "output.txt"),
             "TOKEN_FILE": str(io_path / "token.txt"),
+            "TEMPORARY_FOLDER": tmp_folder,
             "DATABASE_URI": "/mnt/data-volume/database.csv",
             "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
             "PORT": os.environ["PROXY_SERVER_PORT"],
@@ -179,12 +181,12 @@ class DockerManager(object):
                 network=self.isolated_network.name,
                 volumes={
                     f"tmp_{run_id}":{
-                        "bind":"/mnt/tmp",
+                        "bind":tmp_folder,
                         "mode": "rw"
                     },
                     os.environ["DATA_VOLUME_NAME"]:{
                         "bind": "/mnt/data-volume", 
-                        "mode": "rw"
+                        "mode": "r"
                     }
                 }
             )
