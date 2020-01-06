@@ -186,7 +186,7 @@ class DockerManager(object):
                     },
                     os.environ["DATA_VOLUME_NAME"]:{
                         "bind": "/mnt/data-volume", 
-                        "mode": "r"
+                        "mode": "ro"
                     }
                 }
             )
