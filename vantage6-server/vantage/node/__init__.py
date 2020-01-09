@@ -346,10 +346,10 @@ class NodeWorker:
         else:
             database_uri = self.config['databases']["default"]
 
-        # create a temporary volume for each run_id (tmp_{run_id})
-        self.__docker.create_temporary_volume(task["run_id"])
-        # self.__docker.client.containers.get(self.ctx.docker_container_name)
-
+        # create a temporary volume for each run_id       
+        vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
+        self.__docker.create_volume(vol_name)
+        
         # start docker container in the background
         if type(taskresult['input']) == dict:
             taskresult['input'] = json.dumps(taskresult['input'])
@@ -358,7 +358,7 @@ class NodeWorker:
             image=task["image"],
             database_uri=database_uri,
             docker_input=taskresult['input'],
-            run_id=task["run_id"],
+            tmp_vol_name=vol_name,
             token=token
         )
 
