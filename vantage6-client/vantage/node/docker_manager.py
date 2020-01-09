@@ -91,7 +91,7 @@ class DockerManager(object):
 
         return network
 
-    def create_temporary_volume(self, run_id: int):
+    def create_volume(self, volume_name: str):
         """ Create a temporary volume for a single run.
 
             A single run can consist of multiple algorithm containers. 
@@ -100,7 +100,6 @@ class DockerManager(object):
 
             :param run_id: integer representing the run_id
         """
-        volume_name = f"tmp_{run_id}"
         try:
             self.client.volumes.get(volume_name)
             self.log.debug(f"Volume {volume_name} already exists.")
@@ -109,7 +108,7 @@ class DockerManager(object):
             self.client.volumes.create(volume_name)
 
     def run(self, result_id: int,  image: str, database_uri: str, 
-                docker_input: str, run_id: int, token: str) -> bool:
+        docker_input: str, tmp_vol_name: int, token: str) -> bool:
         """ Runs the docker-image in detached mode.
 
             It will will attach all mounts (input, output and datafile)
@@ -158,7 +157,7 @@ class DockerManager(object):
         # define enviroment variables for the docker-container, the 
         # host, port and api_path are from the local proxy server to 
         # facilitate indirect communication with the central server
-        tmp_folder = "/mnt/tmp"
+        tmp_folder = "/mnt/tmp" # docker env
         environment_variables = {
             "INPUT_FILE": str(io_path / "input.txt"),
             "OUTPUT_FILE": str(io_path / "output.txt"),
@@ -180,7 +179,7 @@ class DockerManager(object):
                 environment=environment_variables,
                 network=self.isolated_network.name,
                 volumes={
-                    f"tmp_{run_id}":{
+                    tmp_vol_name:{
                         "bind":tmp_folder,
                         "mode": "rw"
                     },
