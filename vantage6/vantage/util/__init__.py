@@ -115,6 +115,12 @@ class AppContext(metaclass=Singleton):
         log.info("Succesfully loaded configuration from '%s'" % self.config_file)
         log.info("Logging to '%s'" % self.log_file)
         self.log = log
+    
+    def docker_temporary_volume_name(self, run_id):
+        return (
+            f"{constants.APPNAME}-{self.name}-{self.scope}"
+            f"-{run_id}-tmpvol"
+        )
 
     @property
     def docker_container_name(self):
