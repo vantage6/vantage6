@@ -197,7 +197,7 @@ class ContainerToken(Resource):
             "image": claim_image
         }
 
-        return {'container_token': create_access_token(container)}, HTTPStatus.OK
+        return {'container_token': create_access_token(container, expires_delta=False)}, HTTPStatus.OK
 
 
 class RefreshToken(Resource):
