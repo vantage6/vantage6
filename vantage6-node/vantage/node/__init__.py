@@ -298,10 +298,15 @@ class NodeWorker:
                 while True:
                     try:
                         task = self.queue.get(timeout=1)
+                        # if no item is returned, the Empty exception is
+                        # triggered, thus break statement is not reached
                         break
 
                     except queue.Empty:
                         pass
+
+                    except Exception as e:
+                        self.log.debug(e)
 
                 # if task comes available, attempt to execute it
                 try:
