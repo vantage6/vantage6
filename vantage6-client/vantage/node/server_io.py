@@ -137,7 +137,7 @@ class ClientBaseProtocol:
             # FIXME: this should happen only *once* to prevent infinite recursion!
             # refresh token and try again
             self.refresh_token()
-            return self.request(endpoint, json=json, method=method)
+            return self.request(endpoint, json=json, method=method, params=params)
 
         # self.log.debug(f"Response data={response.json()}")
         return response.json()
