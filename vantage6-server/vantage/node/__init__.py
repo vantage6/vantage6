@@ -89,6 +89,12 @@ class NodeTaskNamespace(SocketIONamespace):
             f"run_id={run_id} has exited with a non-zero status_code"
         )
 
+    def on_expired_token(self, msg):
+        self.log.critical("Your token is no longer valid... reconnect")
+        self.node_worker_ref.socketIO.disconnect()
+        self.node_worker_ref.server_io.refresh_token()
+        self.node_worker_ref.connect_to_socket()
+
 # ------------------------------------------------------------------------------
 class NodeWorker:
     """ Node to handle incomming computation requests.
@@ -131,7 +137,8 @@ class NodeWorker:
         self.authenticate()
 
         # after we authenticated we setup encryption
-        rsa_file = Path("/mnt") / "private_key.pem"
+        rsa_file = Path(
+            self.config.get("encryption").get("private_key"))
         if not rsa_file.exists():
             rsa_file = Path("/mnt/data/private_key.pem")
         self.server_io.setup_encryption(
@@ -141,7 +148,7 @@ class NodeWorker:
 
         # Create a long-lasting websocket connection.
         self.log.debug("creating socket connection with the server")
-        self.__connect_to_socket()
+        self.connect_to_socket()
 
         # listen forever for incoming messages, tasks are stored in
         # the queue.
@@ -367,7 +374,7 @@ class NodeWorker:
             token=token
         )
 
-    def __connect_to_socket(self):
+    def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server. 
 
             The connection is used to receive status updates, such as 
