@@ -31,7 +31,10 @@ class DefaultSocketNamespace(Namespace):
         except Exception as e:
             self.log.error("Could not connect client! No or Invalid JWT token?")
             self.log.exception(e)
-            raise
+            self.__join_room_and_notify(request.sid)
+            session.name = "no-sure-yet"
+            emit("expired_token", "", room=request.sid)
+            return
 
         # get identity from token.
         user_or_node_id = get_jwt_identity()
