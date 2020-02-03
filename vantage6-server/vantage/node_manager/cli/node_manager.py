@@ -132,7 +132,8 @@ def cli_node_new_configuration(name, environment, system_folders):
             f"{environment} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard("node", name, environment=environment)
+    cfg_file = configuration_wizard("node", name, environment, 
+        system_folders)
     click.echo(f"New configuration created: {cfg_file}")
 
 #
