@@ -142,10 +142,14 @@ class NodeWorker:
         self.authenticate()
 
         # after we authenticated we setup encryption
-        rsa_file = Path(
-            self.config.get("encryption").get("private_key"))
-        if not rsa_file.exists():
+        file_ = self.config.get("encryption").get("private_key")
+        if file_:
+            rsa_file = Path(file_)
+            if not rsa_file.exists():
+                rsa_file = Path("/mnt/data/private_key.pem")
+        else: 
             rsa_file = Path("/mnt/data/private_key.pem")
+        
         self.server_io.setup_encryption(
             rsa_file, 
             self.config.get("encryption").get("disabled")  
@@ -169,7 +173,7 @@ class NodeWorker:
         
         self.log.debug("setup the docker manager")
         self.__docker = DockerManager(
-            allowed_repositories=[], 
+            allowed_images=self.config.get("allowed_images"), 
             docker_socket_path="unix://var/run/docker.sock",
             tasks_dir=self.ctx.data_dir,
             isolated_network_name=f"{ctx.docker_network_name}-net"
