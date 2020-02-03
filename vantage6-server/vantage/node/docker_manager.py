@@ -13,6 +13,7 @@ import logging
 import docker
 import os
 import pathlib
+import re
 
 from typing import NamedTuple
 
@@ -43,7 +44,7 @@ class DockerManager(object):
     # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
-    def __init__(self, allowed_repositories, tasks_dir, 
+    def __init__(self, allowed_images, tasks_dir, 
         docker_socket_path, isolated_network_name: str) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
@@ -62,7 +63,7 @@ class DockerManager(object):
         self.active_tasks = []
 
         # TODO this still needs to be checked
-        self.__allowed_repositories = allowed_repositories
+        self._allowed_images = allowed_images
         
         # create / get isolated network to which algorithm containers 
         # can attach
@@ -107,13 +108,37 @@ class DockerManager(object):
             self.log.debug(f"Creating volume {volume_name}")
             self.client.volumes.create(volume_name)
 
+    def is_docker_image_allowed(self, docker_image_name: str):
+        """ Checks the docker image name.
+
+            Against a list of regular expressions as defined in the 
+            configuration file. If no expressions are defined, all 
+            docker images are accepted.
+
+            :param docker_image_name: uri to the docker image
+        """
+
+        # if no limits are declared
+        if not self._allowed_images:
+            self.log.warn("All docker images are allowed on this Node!")
+            return True
+
+        # check if it matches any of the regex cases
+        for regex_expr in self._allowed_images:
+            expr_ = re.compile(regex_expr)
+            if expr_.match(docker_image_name):
+                return True
+
+        # if not, it is considered an illegal image
+        return False
+
     def run(self, result_id: int,  image: str, database_uri: str, 
         docker_input: str, tmp_vol_name: int, token: str) -> bool:
         """ Runs the docker-image in detached mode.
 
             It will will attach all mounts (input, output and datafile)
             to the docker image. And will supply some environment
-            variables ()
+            variables.
         
             :param result_id: server result identifyer
             :param image: docker image name
@@ -122,6 +147,12 @@ class DockerManager(object):
             :param run_id: identifieer of the run sequence
             :param token: Bearer token that the container can use
         """
+
+        # verify that an allowed image is used
+        if not self.is_docker_image_allowed(image):
+            self.log.critical(
+                f"Docker image {image} is not allowed on this Node!")
+            return False
 
         # create I/O files for docker
         self.log.debug("prepare IO files in docker volume")
