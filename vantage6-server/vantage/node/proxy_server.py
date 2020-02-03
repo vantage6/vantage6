@@ -94,7 +94,7 @@ def proxy_task():
         
         public_key = response.json().get("public_key")
         
-        encrypted_input = server_io.cryptor.encrypt_dict_to_base64(
+        encrypted_input = server_io.cryptor.encrypt_obj_to_base64(
             input_, public_key)
         log.debug(f"should be unreadable={encrypted_input}")
         organization["input"] = encrypted_input
@@ -133,7 +133,7 @@ def proxy_task_result(id):
         ).json()
         unencrypted = []
         for result in results:
-            result["result"] = server_io.cryptor.decrypt_dict_from_base64(
+            result["result"] = server_io.cryptor.decrypt_obj_from_base64(
                 result["result"]
             )
             unencrypted.append(result)
@@ -166,7 +166,7 @@ def proxy_results(id):
             headers={'Authorization': auth}
         )
         encrypted_input = response["result"]
-        response["result"] = server_io.cryptor.decrypt_dict_from_base64(
+        response["result"] = server_io.cryptor.decrypt_obj_from_base64(
             response["result"]
         )
         log.error(response)
