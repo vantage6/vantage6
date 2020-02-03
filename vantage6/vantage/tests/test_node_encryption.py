@@ -72,13 +72,13 @@ class TestCryptor(unittest.TestCase):
 
     def test_encryption_decryption(self):
         msg = {"msg":"some message!"}
-        encrypted = self.cryptor.encrypt_dict_to_base64(
+        encrypted = self.cryptor.encrypt_obj_to_base64(
             msg,
             self.cryptor.public_key_str
         )
         self.assertNotEqual(msg, encrypted)
         
-        unencrypted = self.cryptor.decrypt_dict_from_base64(
+        unencrypted = self.cryptor.decrypt_obj_from_base64(
             encrypted
         )
         self.assertEqual(msg, unencrypted)
