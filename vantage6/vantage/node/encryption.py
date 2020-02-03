@@ -280,7 +280,8 @@ class NoCryptor(Cryptor):
         self, msg: dict, public_key_base64: str) -> str:
         """ Encrypt dictonairy `msg` using `public_key_base64`.
         """
-        return pickle.dumps(msg)
+        msg_ = prepare_bytes_for_transport(msg)
+        return pickle.dumps(msg_)
 
     def encrypt_str_to_base64(
         self, msg: str, public_key_base64: str) -> str:
@@ -303,4 +304,8 @@ class NoCryptor(Cryptor):
         return msg
 
     def decrypt_obj_from_base64(self, msg: str) -> dict:
-        return pickle.loads(msg)
+        if msg:
+            msg_ = unpack_bytes_from_transport(msg)
+            return pickle.loads(msg_)
+        else: 
+            return b""
