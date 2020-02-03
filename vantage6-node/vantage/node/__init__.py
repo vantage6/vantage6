@@ -52,7 +52,7 @@ class NodeTaskNamespace(SocketIONamespace):
         self.log = logging.getLogger(logger_name(__name__))
         self.node_worker_ref = None
 
-    def setNodeWorker(self, node_worker):
+    def set_node_worker(self, node_worker):
         """ Reference NodeWorker that created this Namespace.
 
             This way we can call methods from the nodeworking, allowing
@@ -90,10 +90,15 @@ class NodeTaskNamespace(SocketIONamespace):
         )
 
     def on_expired_token(self, msg):
-        self.log.critical("Your token is no longer valid... reconnect")
+        self.log.warning("Your token is no longer valid... reconnect")
         self.node_worker_ref.socketIO.disconnect()
+        self.log.debug("Old socket connection terminated")
         self.node_worker_ref.server_io.refresh_token()
+        self.log.debug("Token refreshed")
         self.node_worker_ref.connect_to_socket()
+        self.log.debug("Connected to socket")
+        self.node_worker_ref.__sync_task_que_with_server()
+        self.log.debug("Tasks synced again with the server...")
 
 # ------------------------------------------------------------------------------
 class NodeWorker:
@@ -390,7 +395,7 @@ class NodeWorker:
         
         # define() returns the instantiated action_handler 
         self.socket_tasks = self.socketIO.define(NodeTaskNamespace, '/tasks')
-        self.socket_tasks.setNodeWorker(self)
+        self.socket_tasks.set_node_worker(self)
 
         # Log the outcome
         if self.socketIO.connected:
