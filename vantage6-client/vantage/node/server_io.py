@@ -281,11 +281,11 @@ class ClientBaseProtocol:
         """
         assert self.cryptor, "Encryption has not yet been setup!"
 
-        encryption_method = self.cryptor.encrypt_dict_to_base64
+        encryption_method = self.cryptor.encrypt_obj_to_base64
         if type(input_) == str:
             encryption_method = self.cryptor.encrypt_str_to_base64
         elif type(input_) == dict:
-            encryption_method = self.cryptor.encrypt_dict_to_base64
+            encryption_method = self.cryptor.encrypt_obj_to_base64
 
         organization_json_list = []
         for org_id in organization_ids:
@@ -356,11 +356,11 @@ class ClientBaseProtocol:
         if not id:
             for result in results:
                 try:
-                    result["input"] = self.cryptor.decrypt_dict_from_base64(
+                    result["input"] = self.cryptor.decrypt_obj_from_base64(
                         result["input"]
                     )
                     if result["result"]:
-                        result["result"] = self.cryptor.decrypt_dict_from_base64(
+                        result["result"] = self.cryptor.decrypt_obj_from_base64(
                             result["result"]
                         )
                         
@@ -375,10 +375,10 @@ class ClientBaseProtocol:
             return results_unencrypted
         else:
             try:
-                results["input"] = self.cryptor.decrypt_dict_from_base64(
+                results["input"] = self.cryptor.decrypt_obj_from_base64(
                     results["input"]
                 )
-                results["result"] = self.cryptor.decrypt_dict_from_base64(
+                results["result"] = self.cryptor.decrypt_obj_from_base64(
                     results["result"]
                 )
             except ValueError as e:
@@ -792,7 +792,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
             
             self.log.debug(public_key)
 
-            result["result"] = self.cryptor.encrypt_dict_to_base64(
+            result["result"] = self.cryptor.encrypt_obj_to_base64(
                 result["result"], public_key
             )
             self.log.debug("Sending encrypted results to server")

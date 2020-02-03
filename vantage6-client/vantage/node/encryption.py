@@ -17,7 +17,7 @@ TODO handle no public key from other organization (should that happen here)
 TODO rename def, not all methods should be public
 """
 import logging
-import json
+import pickle
 
 from pathlib import Path
 
@@ -90,11 +90,11 @@ class Cryptor(metaclass=Singleton):
         """
         return prepare_bytes_for_transport(self.public_key_bytes)
 
-    def encrypt_dict_to_base64(self, msg: dict, public_key_base64: str) -> str:
+    def encrypt_obj_to_base64(self, msg: dict, public_key_base64: str) -> str:
         """ Encrypt dictonairy `msg` using `public_key_base64`.
         """
-        msg_str = json.dumps(msg)
-        return self.encrypt_str_to_base64(msg_str, public_key_base64)
+        msg_str = pickle.dumps(msg)
+        return self.encrypt_bytes_to_base64(msg_str, public_key_base64)
 
     def encrypt_str_to_base64(self, msg: str, public_key_base64: str) -> str:
         """ Encrypt string `msg` using `public_key_base64`.
@@ -198,13 +198,13 @@ class Cryptor(metaclass=Singleton):
         msg_bytes = self.decrypt_bytes_from_base64(msg)
         return msg_bytes.decode(cs.STRING_ENCODING)
 
-    def decrypt_dict_from_base64(self, msg: str) -> dict:
+    def decrypt_obj_from_base64(self, msg: str) -> dict:
         """ Decrypt base64 `msg` using our private key.
 
             :param msg: dict utf-8 encoded base64 encrypted msg
         """
-        msg_str = self.decrypt_str_from_base64(msg)
-        return json.loads(msg_str)
+        msg_str = self.decrypt_bytes_from_base64(msg)
+        return pickle.loads(msg_str)
     
     def __load_private_key(self, private_key_file=None):
         """ Load a private key file into this instance.
@@ -276,11 +276,11 @@ class NoCryptor(Cryptor):
                 "Encrpytion disabled! Use this only for debugging")
 
         
-    def encrypt_dict_to_base64(
+    def encrypt_obj_to_base64(
         self, msg: dict, public_key_base64: str) -> str:
         """ Encrypt dictonairy `msg` using `public_key_base64`.
         """
-        return json.dumps(msg)
+        return pickle.dumps(msg)
 
     def encrypt_str_to_base64(
         self, msg: str, public_key_base64: str) -> str:
@@ -302,5 +302,5 @@ class NoCryptor(Cryptor):
     def decrypt_str_from_base64(self, msg: str) -> str:
         return msg
 
-    def decrypt_dict_from_base64(self, msg: str) -> dict:
-        return json.loads(msg)
+    def decrypt_obj_from_base64(self, msg: str) -> dict:
+        return pickle.loads(msg)
