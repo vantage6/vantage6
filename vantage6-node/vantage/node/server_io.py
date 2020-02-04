@@ -264,7 +264,7 @@ class ClientBaseProtocol:
         self._access_token = response.json()["access_token"]
 
     def post_task(self, name:str, image:str, collaboration_id:int, 
-        input_:str='', description='', organization_ids:list=[]) -> dict:
+        input_:bytes=b'', description='', organization_ids:list=[]) -> dict:
         """ Post a new task at the server.
 
             It will also encrypt `input_` for each receiving 
@@ -281,12 +281,6 @@ class ClientBaseProtocol:
         """
         assert self.cryptor, "Encryption has not yet been setup!"
 
-        encryption_method = self.cryptor.encrypt_obj_to_base64
-        if type(input_) == str:
-            encryption_method = self.cryptor.encrypt_str_to_base64
-        elif type(input_) == dict:
-            encryption_method = self.cryptor.encrypt_obj_to_base64
-
         organization_json_list = []
         for org_id in organization_ids:
             pub_key = self.request(f"organization/{org_id}").get("public_key")
@@ -294,7 +288,8 @@ class ClientBaseProtocol:
             organization_json_list.append(
                 {
                     "id": org_id,
-                    "input": encryption_method(input_, pub_key)
+                    "input": self.cryptor.encrypt_bytes_to_base64(
+                        input_, pub_key)
                 }
             )
 
@@ -302,7 +297,7 @@ class ClientBaseProtocol:
             "name": name,
             "image": image, 
             "collaboration_id": collaboration_id,
-            "input": input_,
+            "input": input_, # TODO remove this
             "description": description,
             "organizations": organization_json_list
         })
@@ -673,7 +668,6 @@ class ClientNodeProtocol(ClientBaseProtocol):
                 container-token (a task results in a algorithm-
                 container at the node)
             :param image: image-name of the task
-        
         """
         self.log.debug(
             f"requesting container token for task_id={task_id} "
@@ -792,8 +786,11 @@ class ClientNodeProtocol(ClientBaseProtocol):
             
             self.log.debug(public_key)
 
-            result["result"] = self.cryptor.encrypt_obj_to_base64(
-                result["result"], public_key
+            results_unpacked = unpack_bytes_from_transport(
+                result["result"])
+            
+            result["result"] = self.cryptor.encrypt_bytes_to_base64(
+                results_unpacked, public_key
             )
             self.log.debug("Sending encrypted results to server")
         
