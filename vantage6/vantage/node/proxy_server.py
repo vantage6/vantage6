@@ -16,7 +16,11 @@ import logging
 
 from flask import Flask, request, jsonify
 
-from vantage.util import logger_name
+from vantage.util import (
+    logger_name, 
+    unpack_bytes_from_transport, 
+    prepare_bytes_for_transport
+)
 from vantage.node.server_io import ClientNodeProtocol
 from vantage.node.encryption import Cryptor
 
@@ -52,7 +56,7 @@ def proxy_task():
         TODO we might not want to use the SERVER_IO, as we only use the
             encryption property of it
         TODO if no public key is present, we should have some sort of 
-            faalback
+            fallback
     """
     assert app.config["SERVER_IO"], "Server IO not initialized"
 
@@ -78,7 +82,7 @@ def proxy_task():
     log.debug(f"{n_organizations} organizations, attemping to encrypt")
     encrypted_organizations = []
     for organization in organizations:
-        input_ = organization.get("input", None)
+        input_ = organization.get("input", b"")
         if not input_:
             log.error("No input for organization?!")
             return
@@ -94,8 +98,10 @@ def proxy_task():
         
         public_key = response.json().get("public_key")
         
-        encrypted_input = server_io.cryptor.encrypt_obj_to_base64(
-            input_, public_key)
+        input_unpacked = unpack_bytes_from_transport(input_)
+        encrypted_input = server_io.cryptor.encrypt_bytes_to_base64(
+            input_unpacked, public_key)
+
         log.debug(f"should be unreadable={encrypted_input}")
         organization["input"] = encrypted_input
         encrypted_organizations.append(organization)
