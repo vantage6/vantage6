@@ -247,21 +247,10 @@ class NoCryptor(Cryptor):
         self.log.warning(
                 "Encrpytion disabled! Use this only for debugging")
 
-        
-    def encrypt_obj_to_base64(
-        self, msg: dict, public_key_base64: str) -> str:
-        """ Encrypt dictonairy `msg` using `public_key_base64`.
-        """
-        msg_ = prepare_bytes_for_transport(msg)
-        return pickle.dumps(msg_)
-
-    def encrypt_str_to_base64(
-        self, msg: str, public_key_base64: str) -> str:
-        return msg
-
+    
     def encrypt_bytes_to_base64(
         self, msg: bytes, public_key_base64: str) -> str:
-        return msg.decode(cs.STRING_ENCODING)
+        return prepare_bytes_for_transport(msg)
 
     def encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
         return msg
@@ -270,14 +259,4 @@ class NoCryptor(Cryptor):
         return msg
 
     def decrypt_bytes_from_base64(self, msg: str) -> bytes:
-        return msg.encode(cs.STRING_ENCODING)
-
-    def decrypt_str_from_base64(self, msg: str) -> str:
-        return msg
-
-    def decrypt_obj_from_base64(self, msg: str) -> dict:
-        if msg:
-            msg_ = unpack_bytes_from_transport(msg)
-            return pickle.loads(msg_)
-        else: 
-            return b""
+        return unpack_bytes_from_transport(msg)
