@@ -351,11 +351,11 @@ class ClientBaseProtocol:
         if not id:
             for result in results:
                 try:
-                    result["input"] = self.cryptor.decrypt_obj_from_base64(
+                    result["input"] = self.cryptor.decrypt_bytes_from_base64(
                         result["input"]
                     )
                     if result["result"]:
-                        result["result"] = self.cryptor.decrypt_obj_from_base64(
+                        result["result"] = self.cryptor.decrypt_bytes_from_base64(
                             result["result"]
                         )
                         
@@ -370,10 +370,10 @@ class ClientBaseProtocol:
             return results_unencrypted
         else:
             try:
-                results["input"] = self.cryptor.decrypt_obj_from_base64(
+                results["input"] = self.cryptor.decrypt_bytes_from_base64(
                     results["input"]
                 )
-                results["result"] = self.cryptor.decrypt_obj_from_base64(
+                results["result"] = self.cryptor.decrypt_bytes_from_base64(
                     results["result"]
                 )
             except ValueError as e:
