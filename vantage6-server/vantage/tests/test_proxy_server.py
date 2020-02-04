@@ -17,7 +17,10 @@ from vantage.node.server_io import ClientBaseProtocol
 from vantage.node.encryption import Cryptor
 
 from vantage.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER, VERSION
-from vantage.util import unpack_bytes_from_transport
+from vantage.util import (
+    unpack_bytes_from_transport, 
+    prepare_bytes_for_transport
+)
 
 
 log = logging.getLogger(__name__.split(".")[-1])
@@ -154,13 +157,14 @@ class TestProxyServer(unittest.TestCase):
         if not self.headers:
             self.login()
 
+        input_ = prepare_bytes_for_transport("bla".encode("ascii"))
         proxy_test = self.app.post(
             "task", 
             headers=self.headers,
             json={
                 "organizations":[{
                     "id":1,
-                    "input": "bla"
+                    "input":  input_
                 }],
                 "image": "some-image",
                 "collaboration_id": 1

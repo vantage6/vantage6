@@ -90,20 +90,8 @@ class Cryptor(metaclass=Singleton):
         """
         return prepare_bytes_for_transport(self.public_key_bytes)
 
-    def encrypt_obj_to_base64(self, msg: dict, public_key_base64: str) -> str:
-        """ Encrypt dictonairy `msg` using `public_key_base64`.
-        """
-        msg_str = pickle.dumps(msg)
-        return self.encrypt_bytes_to_base64(msg_str, public_key_base64)
-
-    def encrypt_str_to_base64(self, msg: str, public_key_base64: str) -> str:
-        """ Encrypt string `msg` using `public_key_base64`.
-        """
-        msg_bytes = msg.encode(cs.STRING_ENCODING)
-        return self.encrypt_bytes_to_base64(msg_bytes, public_key_base64)
-
-    def encrypt_bytes_to_base64(
-    self, msg: bytes, public_key_base64: str) -> str:
+    def encrypt_bytes_to_base64(self, msg: bytes, 
+        public_key_base64: str) -> str:
         """ Encrypt a `msg` using `public_key_base64`.
 
             :param msg: message to be encrypted
@@ -189,22 +177,6 @@ class Cryptor(metaclass=Singleton):
             return self.decrypt_bytes(msg_bytes)
         else:
             return b""
-
-    def decrypt_str_from_base64(self, msg: str) -> str:
-        """ Decrypt base64 `msg` using our private key
-
-            :param msg: string utf-8 encoded base64 encrypted msg
-        """
-        msg_bytes = self.decrypt_bytes_from_base64(msg)
-        return msg_bytes.decode(cs.STRING_ENCODING)
-
-    def decrypt_obj_from_base64(self, msg: str) -> dict:
-        """ Decrypt base64 `msg` using our private key.
-
-            :param msg: dict utf-8 encoded base64 encrypted msg
-        """
-        msg_str = self.decrypt_bytes_from_base64(msg)
-        return pickle.loads(msg_str)
     
     def __load_private_key(self, private_key_file=None):
         """ Load a private key file into this instance.

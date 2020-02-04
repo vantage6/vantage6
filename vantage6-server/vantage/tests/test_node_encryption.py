@@ -3,6 +3,7 @@ import unittest
 import yaml
 import bcrypt
 import datetime
+import json
 
 # from sqlalchemy import create_engine
 # from sqlalchemy.orm import Session
@@ -71,14 +72,14 @@ class TestCryptor(unittest.TestCase):
         )
 
     def test_encryption_decryption(self):
-        msg = {"msg":"some message!"}
-        encrypted = self.cryptor.encrypt_obj_to_base64(
+        msg = json.dumps({"msg":"some message!"}).encode("ascii")
+        encrypted = self.cryptor.encrypt_bytes_to_base64(
             msg,
             self.cryptor.public_key_str
         )
         self.assertNotEqual(msg, encrypted)
         
-        unencrypted = self.cryptor.decrypt_obj_from_base64(
+        unencrypted = self.cryptor.decrypt_bytes_from_base64(
             encrypted
         )
         self.assertEqual(msg, unencrypted)
