@@ -139,7 +139,7 @@ def proxy_task_result(id):
         ).json()
         unencrypted = []
         for result in results:
-            result["result"] = server_io.cryptor.decrypt_obj_from_base64(
+            result["result"] = server_io.cryptor.decrypt_bytes_from_base64(
                 result["result"]
             )
             unencrypted.append(result)
@@ -172,7 +172,7 @@ def proxy_results(id):
             headers={'Authorization': auth}
         )
         encrypted_input = response["result"]
-        response["result"] = server_io.cryptor.decrypt_obj_from_base64(
+        response["result"] = server_io.cryptor.decrypt_bytes_from_base64(
             response["result"]
         )
         log.error(response)
