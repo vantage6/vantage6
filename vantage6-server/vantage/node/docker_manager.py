@@ -133,7 +133,7 @@ class DockerManager(object):
         return False
 
     def run(self, result_id: int,  image: str, database_uri: str, 
-        docker_input: str, tmp_vol_name: int, token: str) -> bool:
+        docker_input: bytes, tmp_vol_name: int, token: str) -> bool:
         """ Runs the docker-image in detached mode.
 
             It will will attach all mounts (input, output and datafile)
@@ -158,8 +158,8 @@ class DockerManager(object):
         self.log.debug("prepare IO files in docker volume")
         io_files = [
             ('input', docker_input), 
-            ('output', ''), 
-            ('token', token), 
+            ('output', b''), 
+            ('token', token.encode("ascii")), 
         ]
         
         # the data-volume is shared amongst all algorithm containers,
@@ -174,8 +174,8 @@ class DockerManager(object):
         io_path = pathlib.Path("/mnt/data-volume") / folder_name
         os.makedirs(io_path, exist_ok=True)
         for (filename, contents) in io_files:
-            path = io_path / f"{filename}.txt"
-            with open(path, 'w') as fp:
+            path = io_path / f"{filename}"
+            with open(path, 'wb') as fp:
                 fp.write(contents)
 
         # attempt to pull the latest image
@@ -190,9 +190,9 @@ class DockerManager(object):
         # facilitate indirect communication with the central server
         tmp_folder = "/mnt/tmp" # docker env
         environment_variables = {
-            "INPUT_FILE": str(io_path / "input.txt"),
-            "OUTPUT_FILE": str(io_path / "output.txt"),
-            "TOKEN_FILE": str(io_path / "token.txt"),
+            "INPUT_FILE": str(io_path / "input"),
+            "OUTPUT_FILE": str(io_path / "output"),
+            "TOKEN_FILE": str(io_path / "token"),
             "TEMPORARY_FOLDER": tmp_folder,
             "DATABASE_URI": "/mnt/data-volume/database.csv",
             "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
@@ -228,7 +228,7 @@ class DockerManager(object):
         self.active_tasks.append({
             "result_id": result_id,
             "container": container,
-            "output_file": io_path / "output.txt"
+            "output_file": io_path / "output"
         })
 
         return True
