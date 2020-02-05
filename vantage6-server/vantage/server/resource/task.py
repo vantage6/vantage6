@@ -15,6 +15,11 @@ from pathlib import Path
 
 from vantage.server import db
 from vantage.server import socketio
+from vantage.util import (
+    prepare_bytes_for_transport, 
+    unpack_bytes_from_transport
+)
+from vantage.constants import STRING_ENCODING
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -148,8 +153,10 @@ class Task(Resource):
             input_ = [org.get("input") for org in organizations_json_list \
                 if org.get("id")==organization.id].pop()
 
-            if not isinstance(input_, str):
-                input_ = json.dumps(input_)
+            if isinstance(input_, dict):
+                input_ = prepare_bytes_for_transport(
+                    json.dumps(input_).encode(STRING_ENCODING)
+                )
 
             result = db.Result(
                 task=task, 
