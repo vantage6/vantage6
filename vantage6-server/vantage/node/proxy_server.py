@@ -13,6 +13,7 @@ algorithm.
 import requests
 import os
 import logging
+import json
 
 from flask import Flask, request, jsonify
 
@@ -21,6 +22,7 @@ from vantage.util import (
     unpack_bytes_from_transport, 
     prepare_bytes_for_transport
 )
+from vantage.constants import STRING_ENCODING
 from vantage.node.server_io import ClientNodeProtocol
 from vantage.node.encryption import Cryptor
 
@@ -82,7 +84,7 @@ def proxy_task():
     log.debug(f"{n_organizations} organizations, attemping to encrypt")
     encrypted_organizations = []
     for organization in organizations:
-        input_ = organization.get("input", b"")
+        input_ = organization.get("input", {})
         if not input_:
             log.error("No input for organization?!")
             return
@@ -98,6 +100,12 @@ def proxy_task():
         
         public_key = response.json().get("public_key")
         
+        # Simple JSON (only for unencrypted collaborations)
+        if isinstance(input_, dict):
+            input_ = prepare_bytes_for_transport(
+                json.dumps(input_).encode(STRING_ENCODING)
+            )
+
         input_unpacked = unpack_bytes_from_transport(input_)
         encrypted_input = server_io.cryptor.encrypt_bytes_to_base64(
             input_unpacked, public_key)
@@ -142,7 +150,10 @@ def proxy_task_result(id):
             result["result"] = server_io.cryptor.decrypt_bytes_from_base64(
                 result["result"]
             )
-            unencrypted.append(result)
+            result["result"] = prepare_bytes_for_transport(result["result"])
+            unencrypted.append(
+                result
+            )
 
         log.error(unencrypted)
 
@@ -172,9 +183,11 @@ def proxy_results(id):
             headers={'Authorization': auth}
         )
         encrypted_input = response["result"]
-        response["result"] = server_io.cryptor.decrypt_bytes_from_base64(
-            response["result"]
-        )
+        response["result"] = prepare_bytes_for_transport(
+            server_io.cryptor.decrypt_bytes_from_base64(
+                response["result"]
+            )
+        ) 
         log.error(response)
     except Exception as e:
         log.error("Proxyserver was unable to retrieve results! (2)")
