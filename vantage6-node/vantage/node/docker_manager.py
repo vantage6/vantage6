@@ -278,12 +278,8 @@ class DockerManager(object):
         self.active_tasks.remove(finished_task)
         
         # retrieve results from file        
-        with open(finished_task["output_file"]) as fp:
+        with open(finished_task["output_file"], "rb") as fp:
             results = fp.read()
-        
-        import json
-        if results:
-            results = json.loads(results)
         
         return Result(
             result_id=finished_task["result_id"], 
