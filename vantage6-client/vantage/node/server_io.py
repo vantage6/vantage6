@@ -361,8 +361,8 @@ class ClientBaseProtocol:
                         
                 except ValueError as e:
                     self.log.warn(
-                        "Could not decrypt input."
-                        "Assuming input was not encrypted"
+                        "Could not decrypt (or unpack in case no encryption "
+                        "is used) input."
                     )
                     self.log.debug(e)
                     
@@ -770,13 +770,9 @@ class ClientNodeProtocol(ClientBaseProtocol):
                 task. This is required because we want to encrypt the 
                 results specifically for him
             
-            TODO clean, does this actually already work?
-            TODO when encryption is disabled, we do not need to encrypt
-                the results either
             TODO the key `results` is not always presend, for e.g. when
                 only the timestamps are updated
         """
-
         if "result" in result:
             self.log.debug(
                 f"retrieving public key from organization={initiator_id}"
@@ -784,13 +780,10 @@ class ClientNodeProtocol(ClientBaseProtocol):
             public_key = self.request(f"organization/{initiator_id}")\
                 .get("public_key")
             
-            self.log.debug(public_key)
+            # self.log.debug(public_key)
 
-            results_unpacked = unpack_bytes_from_transport(
-                result["result"])
-            
             result["result"] = self.cryptor.encrypt_bytes_to_base64(
-                results_unpacked, public_key
+                result["result"], public_key
             )
             self.log.debug("Sending encrypted results to server")
         
