@@ -244,6 +244,7 @@ class NoCryptor(Cryptor):
     """
     def __init__(self, private_key_file=None):
         # super().__init__(private_key_file=private_key_file)
+        self.log = logging.getLogger(logger_name(__name__))
         self.log.warning(
                 "Encrpytion disabled! Use this only for debugging")
 
