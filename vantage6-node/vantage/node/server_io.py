@@ -167,6 +167,8 @@ class ClientBaseProtocol:
         # en/decryption class
         CRYPTOR_CLASS = NoCryptor if disabled else Cryptor
         cryptor = CRYPTOR_CLASS(private_key_file)
+        if disabled:
+            return 
         
         # check if the public-key is the same on the server. If this is 
         # not the case, this node will not be able to read any messages 
