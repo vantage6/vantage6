@@ -299,7 +299,6 @@ class ClientBaseProtocol:
             "name": name,
             "image": image, 
             "collaboration_id": collaboration_id,
-            "input": input_, # TODO remove this
             "description": description,
             "organizations": organization_json_list
         })
