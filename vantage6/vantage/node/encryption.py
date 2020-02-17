@@ -243,7 +243,7 @@ class NoCryptor(Cryptor):
         use encryption, but does cenvert between str and bytes if needed
     """
     def __init__(self, private_key_file=None):
-        super().__init__(private_key_file=private_key_file)
+        # super().__init__(private_key_file=private_key_file)
         self.log.warning(
                 "Encrpytion disabled! Use this only for debugging")
 
