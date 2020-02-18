@@ -1,0 +1,33 @@
+# get a node having specified id
+summary: Update node
+
+description:
+  Update the node specified by the id. Only user that belong to the organization of the node are allowed to update it.
+  If the node does not exists it is created as a new node.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: "unique node identifier"
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Collaboration'
+
+responses:
+  200:
+    description: Ok, node is updated
+  403:
+    description: you do not have permission to alter this node
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Node"]
