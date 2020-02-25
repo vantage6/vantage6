@@ -100,6 +100,10 @@ class NodeTaskNamespace(SocketIONamespace):
         self.node_worker_ref.__sync_task_que_with_server()
         self.log.debug("Tasks synced again with the server...")
 
+    def on_pang(self, msg):
+        self.log.debug(f"Pong received, WS still connected <{msg}>")
+        self.node_worker_ref.socket_connected = True
+
 # ------------------------------------------------------------------------------
 class NodeWorker:
     """ Node to handle incomming computation requests.
@@ -203,6 +207,9 @@ class NodeWorker:
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
 
+        self.log.info("starting thread to check the socker connection")
+        t = Thread(target=self.__keep_socket_alive, daemon=True)
+        t.start()
         # after here, you should/could call self.run_forever(). This 
         # could be done in a seperate Thread 
     
@@ -485,6 +492,34 @@ class NodeWorker:
                     'finished_at': datetime.datetime.now().isoformat(),
                 }
             )
+    
+    def __keep_socket_alive(self):
+        
+        while True:
+            time.sleep(60)
+            
+            # send ping
+            self.socket_connected = False  
+            self.socket_tasks.emit("ping", self.server_io.whoami.id_)
+            
+            # wait for pong
+            max_waiting_time = 5
+            count = 0
+            while (not self.socket_connected) and count < max_waiting_time:
+                self.log.debug("Waiting for pong")
+                time.sleep(1)
+                count += 1
+            
+            if not self.socket_connected:
+                self.log.warn("WS seems disconnected, resetting")
+                self.socketIO.disconnect()
+                self.log.debug("Disconnecting WS")
+                self.server_io.refresh_token()
+                self.log.debug("Token refreshed")
+                self.connect_to_socket()
+                self.log.debug("Connected to socket")
+                self.__sync_task_que_with_server()
+
 
 # ------------------------------------------------------------------------------
 def run(ctx):
