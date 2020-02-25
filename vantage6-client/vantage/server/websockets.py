@@ -58,6 +58,7 @@ class DefaultSocketNamespace(Namespace):
         
         if session.type == 'node':
             session.rooms.append('collaboration_' + str(auth.collaboration_id))
+            session.rooms.append('node_' + str(auth.id))
         elif session.type == 'user':
              session.rooms.append('user_'+str(auth.id))
 
@@ -102,6 +103,11 @@ class DefaultSocketNamespace(Namespace):
         
         room = "collaboration_"+str(collaboration_id)
         emit("container_failed", run_id, room=room)
+
+    def on_ping(self, node_id):
+        # self.log.debug(f"ping from id={node_id}")
+        room = f"node_{node_id}"
+        emit("pang","success!", room=room)
 
     def __join_room_and_notify(self, room):
         join_room(room)
