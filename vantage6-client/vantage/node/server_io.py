@@ -168,6 +168,7 @@ class ClientBaseProtocol:
         CRYPTOR_CLASS = NoCryptor if disabled else Cryptor
         cryptor = CRYPTOR_CLASS(private_key_file)
         if disabled:
+            self.cryptor = cryptor
             return 
         
         # check if the public-key is the same on the server. If this is 
