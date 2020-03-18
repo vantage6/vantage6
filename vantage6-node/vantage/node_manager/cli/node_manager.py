@@ -57,6 +57,7 @@ def cli_node_list():
         filters={"label":f"{constants.APPNAME}-type=node"})
     running_node_names = []
     for node in running_nodes:
+        print("Your node is up and running.")
         running_node_names.append(node.name)
 
     header = \
@@ -167,6 +168,7 @@ def cli_node_files(name, environment, system_folders):
     
     # raise error if config could not be found
     if not util.NodeContext.config_exists(name,environment,system_folders):
+        print("The correct configuration could not be found.")
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
     
     # create node context
@@ -179,6 +181,7 @@ def cli_node_files(name, environment, system_folders):
     click.echo(f"data folders       = {ctx.data_dir}")
     click.echo(f"Database labels and files")
     for label, path in ctx.databases.items():
+        print("The correct label and path is as follows:")
         click.echo(f" - {label:15} = {path}")
 
 #
@@ -217,10 +220,11 @@ def cli_node_start(name, config, environment, system_folders, develop):
         specify specific environments for the configuration (e.g. test, 
         prod, acc). 
     """
-    
+    print("Please be patient.")
     # in case a configuration file is given, we by pass all the helper
     # stuff since you know what you are doing
     if config:
+        print("Reading External Config. file")
         ctx = util.NodeContext.from_external_config_file(config, environment, 
             system_folders)
     else:
@@ -238,6 +242,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
                 configuration_wizard("node", name, environment=environment, 
                     system_folders=system_folders)
             else:
+                print("Config file couldn't be loaded")
                 sys.exit(0)
 
         util.NodeContext.LOGGING_ENABLED = False
@@ -341,13 +346,16 @@ def cli_node_stop(name, system_folders):
 
     running_node_names = [node.name for node in running_nodes]
     if not name:
+        print("You will be asked for the name of the node you wish to stop.")
         name = q.select("Select the node you wish to stop:",
             choices=running_node_names).ask()
-    else: 
+    else:
+
         post_fix = "system" if system_folders else "user"
         name = f"{constants.APPNAME}-{name}-{post_fix}" 
     
     if name in running_node_names:
+        print("You've successfully stopped the node.")
         container = client.containers.get(name)
         container.kill()
         click.echo(f"Node {name} stopped.")
@@ -391,6 +399,7 @@ def cli_node_attach(name, system_folders):
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
+                print("Closing log file. Keyboard Interrupt found.")
                 exit(0)
     else:
         click.echo(Fore.RED + f"{name} was not running!?")
