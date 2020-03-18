@@ -40,7 +40,7 @@ init()
 
 @click.group(name="node")
 def cli_node():
-    """Subcommand `ppdli node`."""
+    """Subcommand `vnode node`."""
     pass
 
 # 
