@@ -74,7 +74,7 @@ def click_insert_context(func):
 
 @click.group(name='server')
 def cli_server():
-    """Subcommand `ptm server`."""
+    """Subcommand `vserver server`."""
     pass
 
 #
