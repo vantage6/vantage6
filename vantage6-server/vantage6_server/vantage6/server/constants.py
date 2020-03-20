@@ -19,7 +19,7 @@ STRING_ENCODING = "utf-8"
 #
 #   INSTALLATION SETTINGS
 #
-PACAKAGE_FOLDER = Path(__file__).parent.parent
+PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 APPNAME = "vantage6"
 

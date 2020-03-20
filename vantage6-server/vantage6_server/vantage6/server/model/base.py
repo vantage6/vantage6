@@ -12,7 +12,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from vantage6.util import Singleton
+from vantage6.server.util import Singleton
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)

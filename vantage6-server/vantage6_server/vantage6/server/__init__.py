@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 import os, sys
 import importlib
+import flask_socketio
+import datetime
+import logging
+import uuid
 
 TERMINAL_AVAILABLE = True
 try:
@@ -22,13 +26,9 @@ from flask_jwt_extended import JWTManager, get_jwt_identity, get_jwt_claims, get
 
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, emit, send,join_room, leave_room
-import flask_socketio
 
 from flasgger import Swagger
 
-import datetime
-import logging
-import uuid
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -37,8 +37,8 @@ import json
 
 from vantage6.server import db
 
-from vantage6 import util
-from vantage6.constants import APPNAME
+from vantage6.server import util
+from vantage6.server.constants import APPNAME
 from vantage6.server.websockets import DefaultSocketNamespace
 from .resource.swagger import swagger_template
 

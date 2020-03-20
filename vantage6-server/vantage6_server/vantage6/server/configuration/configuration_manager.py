@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from schema import Schema, And, Or, Use, Optional
 
+
 class Configuration(collections.UserDict):
     """Base to contains a single configuration."""
     
