@@ -17,9 +17,9 @@ import re
 
 from typing import NamedTuple
 
-import vantage.constants as cs
+import vantage6.constants as cs
 
-from vantage.util import logger_name
+from vantage6.util import logger_name
 
 class Result(NamedTuple):
     """ Data class to store the result of the docker image.
@@ -30,7 +30,7 @@ class Result(NamedTuple):
     status_code: int
 
 class DockerManager(object):
-    """ Wrapper for the docker module, to be used specifically for vantage.
+    """ Wrapper for the docker module, to be used specifically for vantage6.
     
         It handles docker images names to results `run(image)`. It manages 
         docker images, files (input, output, token, logs). Docker images run 

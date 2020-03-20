@@ -17,14 +17,14 @@ import json
 
 from flask import Flask, request, jsonify
 
-from vantage.util import (
+from vantage6.util import (
     logger_name, 
     unpack_bytes_from_transport, 
     prepare_bytes_for_transport
 )
-from vantage.constants import STRING_ENCODING
-from vantage.node.server_io import ClientNodeProtocol
-from vantage.node.encryption import Cryptor
+from vantage6.constants import STRING_ENCODING
+from vantage6.node.server_io import ClientNodeProtocol
+from vantage6.node.encryption import Cryptor
 
 # Setup FLASK
 app = Flask(__name__)

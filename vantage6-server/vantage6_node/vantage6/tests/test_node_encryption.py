@@ -5,25 +5,12 @@ import bcrypt
 import datetime
 import json
 
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import Session
+
 from cryptography.hazmat.primitives import hashes, serialization
+from vantage6.node.encryption import Cryptor
+from vantage6.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER
+from vantage6.util import unpack_bytes_from_transport
 
-from vantage.node.encryption import Cryptor
-# from vantage.server.controller.fixture import load
-# from vantage.server.model.base import Database, Base
-from vantage.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER
-from vantage.util import unpack_bytes_from_transport
-
-# from vantage.server.model import (
-#     Base,
-#     User,
-#     Organization,
-#     Collaboration,
-#     Task,
-#     Result,
-#     Node
-# )
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.DEBUG
