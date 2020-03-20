@@ -1,9 +1,9 @@
 import sys
 
-from vantage6.server import db
-from vantage6.constants import APPNAME
-from vantage6 import util
-from vantage6.util.context import get_config_location
+from vantage6.server import db, util
+from vantage6.server.constants import APPNAME
+from vantage6.server.configuration.configuration_wizard import (
+    get_config_location )
 
 from sqlalchemy.engine.url import make_url
 
