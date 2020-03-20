@@ -17,6 +17,7 @@ from vantage6.server.configuration.configuration_manager import (
     TestingConfigurationManager
 )
 
+
 class AppContext(metaclass=Singleton):
 
     INST_CONFIG_MANAGER = ConfigurationManager
@@ -216,6 +217,7 @@ class AppContext(metaclass=Singleton):
 
         return configs, failed
 
+
 class NodeContext(AppContext):
     """Node context on the host machine (used by the CLI). See 
     DockerNodeContext for the node instance mounts on the docker deamon"""
@@ -247,6 +249,7 @@ class NodeContext(AppContext):
     @classmethod
     def available_configurations(cls, system_folders=constants.DEFAULT_NODE_SYSTEM_FOLDERS):
         return super().available_configurations("node", system_folders)
+
 
 class DockerNodeContext(NodeContext):
     """Node context for the dockerized version of the node."""
