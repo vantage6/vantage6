@@ -11,13 +11,13 @@ from flask.testing import FlaskClient
 from flask import Flask, Response as BaseResponse, json
 from werkzeug.utils import cached_property
 
-from vantage.node.proxy_server import app
-from vantage import server
-from vantage.node.server_io import ClientBaseProtocol
-from vantage.node.encryption import Cryptor
+from vantage6.node.proxy_server import app
+from vantage6 import server
+from vantage6.node.server_io import ClientBaseProtocol
+from vantage6.node.encryption import Cryptor
 
-from vantage.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER, VERSION
-from vantage.util import (
+from vantage6.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER, VERSION
+from vantage6.util import (
     unpack_bytes_from_transport, 
     prepare_bytes_for_transport
 )
@@ -40,9 +40,9 @@ class TestCentralServer(FlaskClient):
         return super().open(*args, **kwargs)
 
 def test_central_server(): # pragma: no cover
-    from vantage import util
-    from vantage.server.model.base import Database
-    from vantage.server.controller.fixture import load
+    from vantage6 import util
+    from vantage6.server.model.base import Database
+    from vantage6.server.controller.fixture import load
 
     Database().connect("sqlite://")
     

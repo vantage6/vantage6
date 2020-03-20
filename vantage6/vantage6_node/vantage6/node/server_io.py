@@ -18,8 +18,8 @@ import typing
 
 from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
 
-from vantage.node.encryption import Cryptor, NoCryptor
-from vantage.util import prepare_bytes_for_transport, unpack_bytes_from_transport
+from vantage6.node.encryption import Cryptor, NoCryptor
+from vantage6.util import prepare_bytes_for_transport, unpack_bytes_from_transport
 
 module_name = __name__.split('.')[1]
 

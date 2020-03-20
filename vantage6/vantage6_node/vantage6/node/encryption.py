@@ -29,8 +29,8 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key
 )
 
-import vantage.constants as cs
-from vantage.util import (
+import vantage6.constants as cs
+from vantage6.util import (
     Singleton,
     logger_name,
     prepare_bytes_for_transport,
