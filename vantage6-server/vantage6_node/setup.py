@@ -29,7 +29,8 @@ setup(
         'socketIO-client==0.7.2',
         'docker==4.2.0',
         'cryptography==2.8',
-        'click==7.1.1'
+        'click==7.1.1',
+        'vantage6-client'
     ],
     extras_require={
         'dev':[
