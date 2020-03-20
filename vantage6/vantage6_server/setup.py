@@ -17,7 +17,7 @@ with open(path.join(here, 'vantage6', 'VERSION')) as fp:
 setup(
     name='vantage6-server',
     version=__version__,
-    description='Python client for vantage6',
+    description='Vantage6 server',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/IKNL/vantage6-server',
@@ -51,7 +51,10 @@ setup(
     },
     package_data={  
         'vantage6': [
-            'VERSION', 
+            'VERSION',
+            '_data/**/*.yaml',
+            '_data/*.yaml',
+            'server/resource/swagger/*.yaml'
         ],
     },
     entry_points={
