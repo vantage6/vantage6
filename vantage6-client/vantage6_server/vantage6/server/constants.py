@@ -1,11 +1,5 @@
 from pathlib import Path
 
-#
-#   NODE SETTINGS
-#
-DEFAULT_NODE_SYSTEM_FOLDERS = False
-
-DEFAULT_NODE_ENVIRONMENT = "application"
 
 #
 #   SERVER SETTINGS
@@ -22,8 +16,6 @@ STRING_ENCODING = "utf-8"
 PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 APPNAME = "vantage6"
-
-NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
 
