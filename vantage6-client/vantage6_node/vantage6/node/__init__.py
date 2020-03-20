@@ -30,12 +30,12 @@ from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
-import vantage6.constants as cs
-
+import vantage6.node.constants as cs
+from vantage6.client import ServerInfo
 from vantage6.node.docker_manager import DockerManager
-from vantage6.node.server_io import ClientNodeProtocol, ServerInfo
+from vantage6.node.server_io import ClientNodeProtocol
 from vantage6.node.proxy_server import app 
-from vantage6.util import logger_name
+from vantage6.node.util import logger_name
 
 class NodeTaskNamespace(SocketIONamespace):
     """ Class that handles incoming websocket events.
