@@ -15,13 +15,17 @@ from traitlets.config import get_config
 
 from vantage6.server.model.base import Database
 
-from vantage6 import server, util, constants
-from vantage6.server import shell
+from vantage6 import server
+from vantage6.server import shell, util, constants
 
 from vantage6.server.controller import fixture
-from vantage6.util.context import ( get_config_location, 
-    select_configuration_questionaire, configuration_wizard ) 
+from vantage6.server.configuration.configuration_wizard import ( 
+    get_config_location, 
+    select_configuration_questionaire, 
+    configuration_wizard
+)
 
+from vantage6.server.context import ServerContext
 
 
 def click_insert_context(func):
@@ -52,18 +56,18 @@ def click_insert_context(func):
         
         # select configuration if none supplied
         if config:
-            ctx = util.ServerContext.from_external_config_file(config,
+            ctx = ServerContext.from_external_config_file(config,
                 environment, system_folders)
         else:    
             name, environment = (name, environment) if name else \
-                select_configuration_questionaire("server", system_folders)
+                select_configuration_questionaire(system_folders)
             
             # raise error if config could not be found
-            if not util.ServerContext.config_exists(name,environment, system_folders):
+            if not ServerContext.config_exists(name,environment, system_folders):
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
 
             # create server context, and initialize db
-            ctx = util.ServerContext(name,environment=environment, 
+            ctx = ServerContext(name,environment=environment, 
                 system_folders=system_folders)
         Database().connect(ctx.get_database_uri())
 
@@ -74,7 +78,7 @@ def click_insert_context(func):
 
 @click.group(name='server')
 def cli_server():
-    """Subcommand `vserver server`."""
+    """Subcommand `vserver-server`."""
     pass
 
 #
@@ -93,7 +97,7 @@ def cli_server_start(ctx, ip, port, debug):
     
     # Run the server
     ip = ip or ctx.config['ip'] or '127.0.0.1'
-    port = port or ctx.config['port'] or 5000
+    port = port or int(ctx.config['port']) or 5000
     server.run(ctx, ip, port, debug=debug)
 
 #
@@ -159,7 +163,7 @@ def cli_server_new(name, environment, system_folders):
             f"{environment} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard("server", name, environment=environment,
+    cfg_file = configuration_wizard(name, environment=environment,
         system_folders=system_folders)
     click.echo(f"New configuration created: {cfg_file}")
 
