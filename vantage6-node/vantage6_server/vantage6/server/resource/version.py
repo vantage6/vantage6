@@ -10,7 +10,7 @@ from flask_restful import Resource, abort
 from flasgger import swag_from
 from pathlib import Path
 
-from vantage6 import constants
+from vantage6.server import constants
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)

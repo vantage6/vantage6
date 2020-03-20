@@ -15,8 +15,8 @@ from marshmallow.fields import List, Integer
 from werkzeug.routing import BuildError
 
 from vantage6.server import api
-from vantage6.util import logger_name
-from vantage6.constants import STRING_ENCODING
+from vantage6.server.util import logger_name
+from vantage6.server.constants import STRING_ENCODING
 from .. import ma
 from .. import db
 
