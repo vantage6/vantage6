@@ -26,13 +26,13 @@ from docker.errors import DockerException
 from pathlib import Path
 from threading import Thread
 
-import vantage.constants as constants
+import vantage6.constants as constants
 
-from vantage import util, node
+from vantage6 import util, node
 
-from vantage.util.context import (
+from vantage6.util.context import (
     configuration_wizard, select_configuration_questionaire)
-from vantage.constants import STRING_ENCODING
+from vantage6.constants import STRING_ENCODING
 
 from colorama import init, Fore, Back, Style
 init()
