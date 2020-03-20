@@ -29,8 +29,8 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key
 )
 
-import vantage6.constants as cs
-from vantage6.util import (
+from vantage6.client.constants import APPNAME
+from vantage6.client.util import (
     Singleton,
     logger_name,
     prepare_bytes_for_transport,
@@ -208,7 +208,7 @@ class Cryptor(metaclass=Singleton):
         if not rsa_file.exists():
             self.log.warning(
                 f"Private key file {rsa_file} not found. Now generating one. "
-                f"This is could be normal if you run {cs.APPNAME} for the first "
+                f"This is could be normal if you run {APPNAME} for the first "
                 f"time."
             )
             self.__create_new_rsa_key(rsa_file)
