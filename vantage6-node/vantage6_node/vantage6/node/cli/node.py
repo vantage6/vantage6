@@ -6,12 +6,14 @@ import appdirs
 import questionary as q
 import errno
 
-import vantage6.constants as constants
+import vantage6.node.constants as constants
 
 from pathlib import Path
 
-from vantage6 import util, node
-from vantage6.util.context import (
+from vantage6 import node
+from vantage6.node import util
+from vantage6.node.context import NodeContext
+from vantage6.node.configuration.configuration_wizard import (
     configuration_wizard, 
     select_configuration_questionaire
 )
@@ -33,11 +35,11 @@ def cli_node_list():
     click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
     click.echo("-"*70)
     
-    configs, f1 = util.NodeContext.available_configurations(system_folders=True)
+    configs, f1 = NodeContext.available_configurations(system_folders=True)
     for config in configs:
         click.echo(f"{config.name:25}{str(config.available_environments):32} System ") 
 
-    configs, f2 = util.NodeContext.available_configurations(system_folders=False)
+    configs, f2 = NodeContext.available_configurations(system_folders=False)
     for config in configs:
         click.echo(f"{config.name:25}{str(config.available_environments):32} User   ") 
 
@@ -70,12 +72,12 @@ def cli_node_new_configuration(name, environment, system_folders):
         name = q.text("Please enter a configuration-name:").ask()
     
     # check that this config does not exist
-    if util.NodeContext.config_exists(name,environment,system_folders):
+    if NodeContext.config_exists(name,environment,system_folders):
         raise FileExistsError(f"Configuration {name} and environment" 
             f"{environment} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard("node", name, environment=environment, 
+    cfg_file = configuration_wizard(name, environment=environment, 
         system_folders=system_folders)
     click.echo(f"New configuration created: {cfg_file}")
 
@@ -109,11 +111,11 @@ def cli_node_files(name, environment, system_folders):
         select_configuration_questionaire('node', system_folders)
     
     # raise error if config could not be found
-    if not util.NodeContext.config_exists(name,environment,system_folders):
+    if not NodeContext.config_exists(name,environment,system_folders):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
     
     # create node context
-    ctx = util.NodeContext(name,environment=environment, 
+    ctx = NodeContext(name,environment=environment, 
         system_folders=system_folders)
 
     # return path of the configuration
@@ -160,28 +162,28 @@ def cli_node_start(name, config, environment, system_folders):
     # in case a configuration file is given, we by pass all the helper
     # stuff since you know what you are doing
     if config:
-        ctx = util.NodeContext.from_external_config_file(config, environment, 
+        ctx = NodeContext.from_external_config_file(config, environment, 
             system_folders)
     else:
         
         # in case no name is supplied, ask user to select one
-        name, environment = (name, environment) if name else select_configuration_questionaire(
-            'node', system_folders) 
+        name, environment = (name, environment) if name \
+            else select_configuration_questionaire(system_folders) 
                 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
-        if not util.NodeContext.config_exists(name,environment,system_folders):
+        if not NodeContext.config_exists(name,environment,system_folders):
             if q.confirm(f"Configuration {name} using environment "
                 f"{environment} does not exists. Do you want to create "
                 f"this config now?").ask():
-                configuration_wizard("node", name, environment=environment, 
+                configuration_wizard(name, environment=environment, 
                     system_folders=system_folders)
             else:
             
                 sys.exit(0)
         
         # create dummy node context
-        ctx = util.NodeContext(name, environment, system_folders)
+        ctx = NodeContext(name, environment, system_folders)
         
     # run the node application
     node.run(ctx)
