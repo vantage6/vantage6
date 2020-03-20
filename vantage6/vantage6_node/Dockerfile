@@ -2,14 +2,14 @@
 FROM ppdli-base
 
 LABEL version="0.0.1"
-LABEL infrastructure_version = "0.3.0"
+LABEL infrastructure_version = "1.0.0"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
-COPY . /vantage
-RUN pip install /vantage
+COPY . /vantage6
+RUN pip install /vantage6
 
 # copy start file to app folder
-COPY /vantage/node/start.py /app/start.py
+COPY /vantage6/node/start.py /app/start.py
 
 # expose the proxy server port
 ARG port=80
