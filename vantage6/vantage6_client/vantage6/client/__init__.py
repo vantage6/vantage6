@@ -19,17 +19,12 @@ import typing
 from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
 
 from vantage6.client.encryption import Cryptor, NoCryptor
+from vantage6.client.util import (
+    prepare_bytes_for_transport, 
+    unpack_bytes_from_transport
+)
 
 module_name = __name__.split('.')[1]
-
-STRING_ENCODING = 'utf-8'
-
-def prepare_bytes_for_transport(bytes_):
-    return base64.b64encode(bytes_).decode(STRING_ENCODING)
-
-def unpack_bytes_from_transport(bytes_string):
-    return base64.b64decode(bytes_string.encode(STRING_ENCODING))
-
 
 class ServerInfo(typing.NamedTuple):
     """ Data-class to store the server info

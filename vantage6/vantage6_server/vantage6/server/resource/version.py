@@ -16,8 +16,6 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 from .. import db
-# from .. import __version__
-
 
 def setup(api, API_BASE):
 
