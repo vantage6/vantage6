@@ -1,3 +1,4 @@
+
 <img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" width=200 align="right">
 
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/ppDLI/badge.svg?branch=master)](https://coveralls.io/github/IKNL/ppDLI?branch=master)
@@ -11,18 +12,6 @@ The growing complexity of cancer diagnosis and treatment requires data sets that
 
 For an overview of the architecture and information on how to use the infrastructure, please see [https://vantage6.ai](https://vantage6.ai). For documentation, please see [https://docs.distributedlearning.ai/](https://docs.distributedlearning.ai/).
 
-## Hardware and software requirements
-### Server
-Running the central server requires a (virtual) machine that:
-* is accessible from the internet
-* has Python 3.6+ and the ppdli package installed (`pip install ppdli`)
-
-### Node
-Running a node/site requires a (virtual) machine that has:
-* Python 3.6+ and the ppdli package installed (`pip install ppdli`)
-* Docker CE installed (the user running the node software needs to have the proper permissions to perform docker commands)
-* Access to a local data store
-* Access to the internet and/or central server
-
 ## Installation
 See the [documentation](https://docs.distributedlearning.ai/) for detailed instructions on how to install the server and nodes. 
+

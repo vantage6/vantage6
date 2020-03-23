@@ -1,7 +1,9 @@
 language: python
 python:
   - 3.6
-  - 3.7-dev
+  - 3.7
+  - 3.8
+  - 3.8-dev
 
 install:
   - pip install coverage
@@ -9,10 +11,10 @@ install:
   - pip install -e .
 
 script:
-  - coverage run --source=pytaskmanager pytaskmanager/utest.py
+  - coverage run --source=vantage6 --omit="utest.py" vantage6/utest.py
 
 after_success:
   - coveralls
 
 notifications:
-  webhooks: https://outlook.office.com/webhook/5ecba249-8938-44bf-b500-29bed1621b7f@a5e4637f-71f0-40bb-b540-aabca71204f3/TravisCI/96fc417a344d46f7965dc918343af0b9/c44ed181-5baa-48fd-a8ba-bdb24d542224  
+  webhooks: https://outlook.office.com/webhook/5ecba249-8938-44bf-b500-29bed1621b7f@a5e4637f-71f0-40bb-b540-aabca71204f3/TravisCI/7550616fdf6e42139d556367161f2595/c44ed181-5baa-48fd-a8ba-bdb24d542224  
