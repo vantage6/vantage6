@@ -1,0 +1,25 @@
+summary: Get user
+
+description:
+  Returns the user specified by the id
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: user id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: User not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["User"]
