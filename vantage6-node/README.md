@@ -12,14 +12,8 @@ The growing complexity of cancer diagnosis and treatment requires data sets that
 For an overview of the architecture and information on how to use the infrastructure, please see [https://vantage6.ai](https://vantage6.ai). For documentation, please see [https://docs.distributedlearning.ai/](https://docs.distributedlearning.ai/).
 
 ## Hardware and software requirements
-### Server
-Running the central server requires a (virtual) machine that:
-* is accessible from the internet
-* has Python 3.6+ and the ppdli package installed (`pip install ppdli`)
-
-### Node
 Running a node/site requires a (virtual) machine that has:
-* Python 3.6+ and the ppdli package installed (`pip install ppdli`)
+* Python 3.6+ and the ppdli package installed (`pip install vantage6-node`)
 * Docker CE installed (the user running the node software needs to have the proper permissions to perform docker commands)
 * Access to a local data store
 * Access to the internet and/or central server
