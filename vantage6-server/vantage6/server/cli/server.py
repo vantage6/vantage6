@@ -16,7 +16,7 @@ from traitlets.config import get_config
 from vantage6.server.model.base import Database
 
 from vantage6 import server
-from vantage6.server import shell, util, constants
+from vantage6.server import shell, constants
 
 from vantage6.server.controller import fixture
 from vantage6.server.configuration.configuration_wizard import ( 
@@ -111,11 +111,11 @@ def cli_server_configuration_list():
     click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
     click.echo("-"*70)
     
-    sys_configs, f1 = util.ServerContext.available_configurations(system_folders=True)
+    sys_configs, f1 = ServerContext.available_configurations(system_folders=True)
     for config in sys_configs:
         click.echo(f"{config.name:25}{str(config.available_environments):32} System ") 
 
-    usr_configs, f2 = util.ServerContext.available_configurations(system_folders=False)
+    usr_configs, f2 = ServerContext.available_configurations(system_folders=False)
     for config in usr_configs:
         click.echo(f"{config.name:25}{str(config.available_environments):32} User   ") 
     click.echo("-"*70)
@@ -158,7 +158,7 @@ def cli_server_new(name, environment, system_folders):
         name = q.text("Please enter a configuration-name:").ask()
 
     # check that this config does not exist
-    if util.ServerContext.config_exists(name,environment,system_folders):
+    if ServerContext.config_exists(name,environment,system_folders):
         raise FileExistsError(f"Configuration {name} and environment" 
             f"{environment} already exists!")
 

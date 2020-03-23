@@ -1,22 +1,19 @@
+import os
 import sys
-import os, os.path
+import appdirs
 import logging
 import logging.handlers
-import appdirs
-import yaml
-import base64
 
-from schema import SchemaError
 from pathlib import Path
 from sqlalchemy.engine.url import make_url
 
-import vantage6.node.constants as constants
+import vantage6.server.constants as constants
 
-from vantage6.node.util import Singleton
-from vantage6.node.configuration.configuration_manager import (
+from vantage6.server.util import Singleton
+from vantage6.server.configuration.configuration_manager import (
     ConfigurationManager,
-    ServerConfigurationManager,
     NodeConfigurationManager,
+    ServerConfigurationManager,
     TestingConfigurationManager
 )
 
@@ -27,7 +24,7 @@ class AppContext(metaclass=Singleton):
     LOGGING_ENABLED = True
 
     def __init__(self, instance_type, instance_name, system_folders=False,
-        environment=constants.DEFAULT_NODE_ENVIRONMENT):
+        environment=constants.DEFAULT_SERVER_ENVIRONMENT):
         """instance name is equal to the config-filename..."""
 
         # lookup system / user directories
@@ -157,7 +154,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def from_external_config_file(cls, path, instance_type, 
-        environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
+        environment=constants.DEFAULT_SERVER_ENVIRONMENT, system_folders=False):
         instance_name = Path(path).stem
         self_ = cls.__new__(cls)
         self_.set_folders(instance_type, instance_name, system_folders)
@@ -167,7 +164,7 @@ class AppContext(metaclass=Singleton):
         return self_
 
     @classmethod
-    def config_exists(cls, instance_type, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, 
+    def config_exists(cls, instance_type, instance_name, environment=constants.DEFAULT_SERVER_ENVIRONMENT, 
         system_folders=False):
         
         # obtain location of config file
@@ -219,55 +216,6 @@ class AppContext(metaclass=Singleton):
                 failed.append(file_)
 
         return configs, failed
-
-class NodeContext(AppContext):
-    """Node context on the host machine (used by the CLI). See 
-    DockerNodeContext for the node instance mounts on the docker deamon"""
-    
-    INST_CONFIG_MANAGER = NodeConfigurationManager
-    
-    def __init__(self, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
-        super().__init__("node", instance_name, environment=environment, 
-            system_folders=system_folders)
-    
-    def get_database_uri(self, label="default"):
-        return self.config["databases"][label]
-    
-    @property
-    def databases(self):
-        return self.config["databases"]
-
-    @classmethod
-    def from_external_config_file(cls, path, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
-        return super().from_external_config_file(
-            path, "node", environment, system_folders
-        )
-
-    @classmethod
-    def config_exists(cls, instance_name, environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False):
-        return super().config_exists("node", 
-            instance_name, environment=environment, system_folders=system_folders)
-    
-    @classmethod
-    def available_configurations(cls, system_folders=constants.DEFAULT_NODE_SYSTEM_FOLDERS):
-        return super().available_configurations("node", system_folders)
-
-class DockerNodeContext(NodeContext):
-    """Node context for the dockerized version of the node."""
-
-    @staticmethod
-    def instance_folders(instance_type, instance_name, system_folders):
-        """Log, data and config folders are allways mounted mounted. The
-        node manager should take care of this. """
-        
-        mnt = Path("/mnt")
-
-        return {
-            "log": mnt / "log",
-            "data": mnt / "data",
-            "config": mnt / "config"
-        }
-
 
 class ServerContext(AppContext):
     
