@@ -16,4 +16,4 @@
 # Python build
 build/
 dist/
-ppDLI.egg-info
+*.egg-info
