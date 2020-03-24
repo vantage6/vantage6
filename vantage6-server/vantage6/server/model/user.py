@@ -1,4 +1,4 @@
-import bcrypt 
+import bcrypt
 
 from sqlalchemy import Column, String, Integer, ForeignKey, exists
 from sqlalchemy.orm import relationship
@@ -8,9 +8,9 @@ from .authenticable import Authenticatable
 
 class User(Authenticatable):
     """User (person) that can access the system.
-    
+
     Users always belong to an organization and can have certain
-    rights within an organization. 
+    rights within an organization.
     """
     _hidden_attributes = ['password']
 
@@ -21,13 +21,13 @@ class User(Authenticatable):
     }
 
     # fields
-    username = Column(String)    
+    username = Column(String, unique=True)
     password = Column(String)
     firstname = Column(String)
     lastname = Column(String)
     roles = Column(String)
     organization_id = Column(Integer, ForeignKey("organization.id"))
-   
+
     # relationships
     organization = relationship("Organization", back_populates="users")
 
