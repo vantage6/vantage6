@@ -10,7 +10,7 @@ import subprocess
 # from watchdog.observers import Observer
 # from watchdog.events import LoggingEventHandler, FileSystemEventHandler
 
-from vantage6 import util, node, constants
+from vantage6.node import util, node, constants
 
 
 # class ReloadEventHandler(FileSystemEventHandler):

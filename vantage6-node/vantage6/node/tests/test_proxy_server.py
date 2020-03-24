@@ -14,10 +14,14 @@ from werkzeug.utils import cached_property
 from vantage6.node.proxy_server import app
 from vantage6 import server
 from vantage6.node.server_io import ClientBaseProtocol
-from vantage6.node.encryption import Cryptor
-
-from vantage6.constants import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER, VERSION
-from vantage6.util import (
+from vantage6.client.encryption import Cryptor
+from vantage6.node.globals import (
+    PACAKAGE_FOLDER, 
+    APPNAME, 
+    DATA_FOLDER, 
+    VERSION
+)
+from vantage6.common import (
     unpack_bytes_from_transport, 
     prepare_bytes_for_transport
 )
@@ -40,7 +44,7 @@ class TestCentralServer(FlaskClient):
         return super().open(*args, **kwargs)
 
 def test_central_server(): # pragma: no cover
-    from vantage6 import util
+    from vantage6.node.context import TestContext
     from vantage6.server.model.base import Database
     from vantage6.server.controller.fixture import load
 
@@ -53,7 +57,7 @@ def test_central_server(): # pragma: no cover
     
     server.app.secret_key = "test-secret"
 
-    ctx = util.TestContext.from_external_config_file(
+    ctx = TestContext.from_external_config_file(
         "unittest_config.yaml"           
     )
     server.init_resources(ctx)

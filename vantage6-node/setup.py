@@ -30,11 +30,13 @@ setup(
         'docker==4.2.0',
         'cryptography==2.8',
         'click==7.1.1',
-        'vantage6-client'
+        # 'vantage6',
+        # 'vantage6-client'
     ],
     extras_require={
         'dev':[
-            'coverage==5.0.4'
+            'coverage==5.0.4',
+            'python-coveralls==2.9.3'
         ]
     },
     package_data={  

@@ -6,7 +6,7 @@ import appdirs
 import questionary as q
 import errno
 
-import vantage6.node.constants as constants
+import vantage6.node.globals as constants
 
 from pathlib import Path
 

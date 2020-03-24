@@ -22,7 +22,7 @@ from vantage6.node.util import (
     unpack_bytes_from_transport, 
     prepare_bytes_for_transport
 )
-from vantage6.node.constants import STRING_ENCODING
+from vantage6.node.globals import STRING_ENCODING
 from vantage6.node.server_io import ClientNodeProtocol
 from vantage6.client.encryption import Cryptor
 

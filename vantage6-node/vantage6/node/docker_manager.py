@@ -17,7 +17,7 @@ import re
 
 from typing import NamedTuple
 
-import vantage6.node.constants as cs
+import vantage6.node.globals as cs
 
 from vantage6.node.util import logger_name
 

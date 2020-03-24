@@ -30,7 +30,8 @@ from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
-import vantage6.node.constants as cs
+import vantage6.node.globals as cs
+
 from vantage6.client import ServerInfo
 from vantage6.node.docker_manager import DockerManager
 from vantage6.node.server_io import ClientNodeProtocol

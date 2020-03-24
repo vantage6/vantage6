@@ -6,12 +6,10 @@ python:
   - 3.8-dev
 
 install:
-  - pip install coverage
-  - pip install python-coveralls
-  - pip install -e .
+  - pip install -e .[dev]
 
 script:
-  - coverage run --source=vantage6 --omit="utest.py" vantage6/utest.py
+  - coverage run --source=vantage6 --omit="utest.py" vantage6/node/utest.py
 
 after_success:
   - coveralls
