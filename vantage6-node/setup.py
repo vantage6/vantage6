@@ -38,7 +38,12 @@ setup(
     extras_require={
         'dev':[
             'coverage==5.0.4',
-            'python-coveralls==2.9.3'
+            'python-coveralls==2.9.3',
+            'SQLAlchemy==1.3.15',
+            'schema==0.7.1',
+            'appdirs==1.4.3',
+            'PyJWT==1.7.1',
+            'Flask==1.1.1'
         ]
     },
     package_data={  
