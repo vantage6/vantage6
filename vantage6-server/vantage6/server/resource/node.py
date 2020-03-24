@@ -79,7 +79,7 @@ class Node(Resource):
 
             if is_root:
                 # Let's not make a fuss ...
-                return results
+                return self.node_schema.dump(results, many=False)
 
             if (results.organization_id != user_or_node.organization_id) \
                     and 'admin' not in g.user.roles:

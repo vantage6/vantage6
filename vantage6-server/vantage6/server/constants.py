@@ -17,7 +17,7 @@ PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 APPNAME = "vantage6"
 
-DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
+DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "server" / "_data"
 
-with open(Path(PACAKAGE_FOLDER) / APPNAME / "VERSION") as f:
+with open(Path(PACAKAGE_FOLDER) / APPNAME / "server" / "VERSION") as f:
     VERSION = f.read()

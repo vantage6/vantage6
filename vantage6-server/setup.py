@@ -9,8 +9,8 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# read the API version from disk 
-with open(path.join(here, 'vantage6', 'VERSION')) as fp:
+# read the API version from disk
+with open(path.join(here, 'vantage6', 'server', 'VERSION')) as fp:
     __version__ = fp.read()
 
 # setup the package
@@ -49,11 +49,11 @@ setup(
             'coverage==5.0.4'
         ]
     },
-    package_data={  
-        'vantage6': [
+    package_data={
+        'vantage6.server': [
             'VERSION',
             '_data/**/*.yaml',
-            '_data/*.yaml',
+            'server_data/*.yaml',
             'server/resource/swagger/*.yaml'
         ],
     },
