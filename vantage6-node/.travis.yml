@@ -7,9 +7,11 @@ python:
 
 install:
   - pip install -e .[dev]
+  - pip install git+https://github.com/IKNL/vantage6-common
+  - pip install git+https://github.com/IKNL/vantage6-client
 
 script:
-  - coverage run --source=vantage6 --omit="utest.py" vantage6/node/utest.py
+  - coverage run --source=vantage6 --omit="utest.py" utest.py
 
 after_success:
   - coveralls
