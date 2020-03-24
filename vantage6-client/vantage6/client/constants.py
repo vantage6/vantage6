@@ -6,9 +6,9 @@ STRING_ENCODING = "utf-8"
 #
 #   INSTALLATION SETTINGS
 #
-PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
+PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 APPNAME = "vantage6"
 
-with open(Path(PACAKAGE_FOLDER) / APPNAME / "VERSION") as f:
+with open(Path(PACKAGE_FOLDER) / APPNAME / "client" / "VERSION") as f:
     VERSION = f.read()

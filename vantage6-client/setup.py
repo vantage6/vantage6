@@ -9,8 +9,8 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# read the API version from disk 
-with open(path.join(here, 'vantage6', 'VERSION')) as fp:
+# read the API version from disk
+with open(path.join(here, 'vantage6', 'client', 'VERSION')) as fp:
     __version__ = fp.read()
 
 # setup the package
@@ -27,8 +27,8 @@ setup(
        'cryptography==2.8',
        'requests==2.23.0'
     ],
-    package_data={  
-        'vantage6': [
+    package_data={
+        'vantage6.client': [
             'VERSION'
         ],
     }
