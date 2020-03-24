@@ -54,7 +54,7 @@ setup(
             'VERSION',
             '_data/**/*.yaml',
             'server_data/*.yaml',
-            'server/resource/swagger/*.yaml'
+            'resource/swagger/*.yaml'
         ],
     },
     entry_points={
