@@ -105,7 +105,7 @@ def cli_server_start(ctx, ip, port, debug):
 #
 @cli_server.command(name='list')
 def cli_server_configuration_list():
-    """Print the location of the default config file."""
+    """Print the available configurations."""
     
     
     click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
@@ -158,9 +158,13 @@ def cli_server_new(name, environment, system_folders):
         name = q.text("Please enter a configuration-name:").ask()
 
     # check that this config does not exist
-    if ServerContext.config_exists(name,environment,system_folders):
-        raise FileExistsError(f"Configuration {name} and environment" 
-            f"{environment} already exists!")
+    try:
+        if ServerContext.config_exists(name,environment,system_folders):
+            raise FileExistsError(f"Configuration {name} and environment" 
+                f" {environment} already exists!")
+    except Exception as e:
+        print(e)
+        exit(0)
 
     # create config in ctx location
     cfg_file = configuration_wizard(name, environment=environment,
