@@ -24,6 +24,10 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
+        'appdirs==1.4.3',
+        'PyYAML==5.3.1',
+        'schema==0.7.1',
+        'termcolor==1.1.0'
     ],
     package_data={  
         'vantage6': [
