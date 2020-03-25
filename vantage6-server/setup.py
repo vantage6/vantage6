@@ -46,7 +46,7 @@ setup(
     extras_require={
         'dev':[
             'termcolor==1.1.0',
-            'coverage==5.0.4'
+            'coverage==4.5.4'
         ]
     },
     package_data={

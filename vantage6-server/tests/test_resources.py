@@ -377,3 +377,17 @@ class TestResources(unittest.TestCase):
             "username": "root2"
         })
         self.assertEqual(result.status_code, 403)
+
+    def test_root_username_forbidden(self):
+        headers = self.login("root")
+        results = self.app.post("/api/user", headers=headers, json={
+            "username": "root",
+            "firstname": "madman",
+            "lastname": "idiot",
+            "roles": "admin",
+            "password": "something-really-secure"
+        })
+        self.assertEqual(results.status_code, 400)
+
+    # test role != root
+    
