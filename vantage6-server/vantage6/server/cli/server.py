@@ -178,9 +178,18 @@ def cli_server_new(name, environment, system_folders):
 
     Database().connect(ctx.get_database_uri())
     root = db.User(username="root", roles="root")
-    root.set_password("root")
+    
+    again = True
+    while again:
+        password = q.password("Root password").ask()
+        repeat_password = q.password("Repeat root password").ask()
+        again = password != repeat_password
+        if again:
+            click.echo("!-> Passwords do not match, try again.")
+
+    root.set_password(password)
     root.save()
-    click.echo(f"--> root user created. username: root, password: root")
+    click.echo(f"--> root user created.")
 
 #
 #   import
