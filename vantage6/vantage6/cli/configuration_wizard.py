@@ -87,7 +87,7 @@ def node_configuration_questionaire(dirs, instance_name):
         "backup_count":5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
-        "datefmt": "%H:%M:%S"
+        "datefmt": "%Y-%m-%d %H:%M:%S"
     }
 
     disable_encryption = q.select("Disable encryption?", 
