@@ -10,11 +10,14 @@ from flask import Flask, Response as BaseResponse, json
 from flask.testing import FlaskClient
 from werkzeug.utils import cached_property
 
+from vantage6.common.globals import APPNAME, VERSION
+from vantage6.server.globals import PACAKAGE_FOLDER
 from vantage6 import server
-from vantage6.server import util
-from vantage6.server import db
-from vantage6.server import context
-from vantage6.server.constants import APPNAME, PACAKAGE_FOLDER, VERSION
+from vantage6.server import (
+    util,
+    db,
+    context
+)
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database
 
@@ -388,6 +391,3 @@ class TestResources(unittest.TestCase):
             "password": "something-really-secure"
         })
         self.assertEqual(results.status_code, 400)
-
-    # test role != root
-    

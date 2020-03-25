@@ -8,10 +8,8 @@ from schema import Schema, And, Or, Use, Optional
 
 from vantage6.common.configuration_manager import (
     Configuration, 
-    ConfigurationManager,
-    TestingConfigurationManager
+    ConfigurationManager
 )
-
 
 class ServerConfiguration(Configuration):
 
@@ -32,6 +30,9 @@ class ServerConfiguration(Configuration):
             "datefmt": Use(str)
         }
     }
+
+class TestConfiguration(Configuration):
+    VALIDATORS = {}
     
 
 class ServerConfigurationManager(ConfigurationManager):
@@ -42,3 +43,15 @@ class ServerConfigurationManager(ConfigurationManager):
     @classmethod
     def from_file(cls, path):
         return super().from_file(path, conf_class=ServerConfiguration)
+
+
+
+class TestingConfigurationManager(ConfigurationManager):
+
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(conf_class=TestConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path):
+        return super().from_file(path, conf_class=TestConfiguration)
+

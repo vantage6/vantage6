@@ -37,7 +37,7 @@ import json
 from vantage6.server import db
 
 from vantage6.server import util
-from vantage6.server.constants import APPNAME
+from vantage6.server.globals import APPNAME
 from vantage6.server.websockets import DefaultSocketNamespace
 from .resource.swagger import swagger_template
 

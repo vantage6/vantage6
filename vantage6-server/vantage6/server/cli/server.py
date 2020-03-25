@@ -16,7 +16,8 @@ from traitlets.config import get_config
 from vantage6.server.model.base import Database
 
 from vantage6 import server
-from vantage6.server import shell, constants
+from vantage6.server import shell
+import vantage6.server.globals as constants
 
 from vantage6.server.controller import fixture
 from vantage6.server.configuration.configuration_wizard import ( 

@@ -19,7 +19,7 @@ from vantage6.server.util import (
     prepare_bytes_for_transport, 
     unpack_bytes_from_transport
 )
-from vantage6.server.constants import STRING_ENCODING
+from vantage6.server.globals import STRING_ENCODING
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)

@@ -11,7 +11,7 @@ import sqlalchemy as sql
 from .model import ( Base, User, Organization, Authenticatable, Node, Task, 
     Member, Result, Collaboration)
 from vantage6.server.util import logger_name
-from vantage6.server.constants import STRING_ENCODING
+from vantage6.server.globals import STRING_ENCODING
 
 log = logging.getLogger(logger_name(__name__))
 

@@ -10,7 +10,7 @@ from flask_restful import Resource, abort
 from flasgger import swag_from
 from pathlib import Path
 
-from vantage6.server import constants
+from vantage6.server.globals import VERSION
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -39,4 +39,4 @@ class Version(Resource):
     def get(self):
         """Return the version of this server."""
         
-        return {"version": constants.VERSION}
+        return {"version": VERSION}

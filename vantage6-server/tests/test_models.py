@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database, Base
-from vantage6.server.constants import PACAKAGE_FOLDER, APPNAME
+from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
 
 from vantage6.server.model import (
     Base,

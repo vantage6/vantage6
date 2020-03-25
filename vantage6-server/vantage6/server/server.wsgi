@@ -8,7 +8,7 @@ import vantage6 as ptm
 import vantage6.server
 from vantage6.server import db
 import vantage6.server.util as util
-from vantage6.server.constants import APPNAME
+from vantage6.server.globals import APPNAME
 from vantage6.server.util.context import get_config_location
 
 

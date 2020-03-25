@@ -16,7 +16,7 @@ from werkzeug.routing import BuildError
 
 from vantage6.server import api
 from vantage6.server.util import logger_name
-from vantage6.server.constants import STRING_ENCODING
+from vantage6.server.globals import STRING_ENCODING
 from .. import ma
 from .. import db
 
