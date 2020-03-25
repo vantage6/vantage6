@@ -1,10 +1,16 @@
+import os 
+import sys
 import appdirs
+import logging
 
 from pathlib import Path
 
 from vantage6.common import Singleton
 from vantage6.common.globals import DEFAULT_ENVIRONMENT, APPNAME
-from vantage6.common.configuration_manager import ConfigurationManager
+from vantage6.common.configuration_manager import (
+    ConfigurationManager,
+    TestingConfigurationManager
+)
 
 class AppContext(metaclass=Singleton):
 
@@ -205,26 +211,26 @@ class AppContext(metaclass=Singleton):
 
         return configs, failed
 
+
+class TestContext(AppContext):
+
+    INST_CONFIG_MANAGER = TestingConfigurationManager
+    LOGGING_ENABLED = False
     
+    @classmethod
+    def from_external_config_file(cls, path):
+        return super().from_external_config_file(
+            cls.test_config_location(), 
+            "unittest", "application", True
+        )
 
-# class TestContext(AppContext):
+    @staticmethod
+    def test_config_location():
+        return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
+            "_data" / "unittest_config.yaml")
 
-#     INST_CONFIG_MANAGER = TestingConfigurationManager
-#     LOGGING_ENABLED = False
+    @staticmethod
+    def test_data_location():
+        return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
+            "_data" )
     
-#     @classmethod
-#     def from_external_config_file(cls, path):
-#         return super().from_external_config_file(
-#             cls.test_config_location(), 
-#             "unittest", "application", True
-#         )
-
-#     @staticmethod
-#     def test_config_location():
-#         return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
-#             "_data" / "unittest_config.yaml")
-
-#     @staticmethod
-#     def test_data_location():
-#         return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
-#             "_data" )
