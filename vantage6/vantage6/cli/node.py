@@ -218,7 +218,11 @@ def cli_node_files(name, environment, system_folders):
     default=False,
     help="Source code for developer container"
 )
-def cli_node_start(name, config, environment, system_folders, develop):
+@click.option('-t', '--tag', 
+    default="default",
+    help="Node Docker container tag to use"
+)
+def cli_node_start(name, config, environment, system_folders, develop, tag):
     """ Start the node instance.
     
         If no name or config is specified the default.yaml configuation is used. 
@@ -256,6 +260,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
     
     # make sure the (host)-task and -log dir exists
     click.echo("--> Checking that data and log dirs exist")
+    
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -300,12 +305,14 @@ def cli_node_start(name, config, environment, system_folders, develop):
         click.echo(f"proxy-server attached {port}")
     else:
         port = None
-        container_image = "harbor.distributedlearning.ai/infrastructure/node"
+        # 1) --tag, 2) config 3) latest
+        tag_ = tag if tag != "default" else ctx.config.get("tag", "latest")
+        container_image = f"harbor.distributedlearning.ai/infrastructure/node:{tag_}"
         click.echo(f"--> default container is used <{container_image}>")
     
     # pull the latest image 
     click.echo("--> Pulling latest node Docker image")
-    # res = docker_client.images.pull(container_image)
+    docker_client.images.pull(container_image)
 
     # create data volume which can be used by this node instance
     click.echo("--> Create Docker data volume")
@@ -330,7 +337,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
         },
         ports=port,
         name=ctx.docker_container_name,
-        auto_remove=False#not attach
+        auto_remove=True#not attach
     )
 
     click.echo(f"--> Running, container id = {container}")
@@ -371,10 +378,9 @@ def cli_node_stop(name, system_folders):
         name = f"{APPNAME}-{name}-{post_fix}" 
     
     if name in running_node_names:
-        click.echo("You've successfully stopped the node.")
         container = client.containers.get(name)
         container.kill()
-        click.echo(f"Node {name} stopped.")
+        click.echo(f"Node {name} is stopped.")
     else: 
         click.echo(Fore.RED + f"{name} was not running!?")
 
@@ -415,7 +421,7 @@ def cli_node_attach(name, system_folders):
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
-                print("Closing log file. Keyboard Interrupt found.")
+                print("Closing log file. Keyboard Interrupt.")
                 exit(0)
     else:
         click.echo(Fore.RED + f"{name} was not running!?")
