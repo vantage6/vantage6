@@ -170,7 +170,17 @@ def cli_server_new(name, environment, system_folders):
     # create config in ctx location
     cfg_file = configuration_wizard(name, environment=environment,
         system_folders=system_folders)
-    click.echo(f"New configuration created: {cfg_file}")
+    click.echo(f"--> New configuration created: {cfg_file}")
+    
+    # create root user
+    ctx = ServerContext(name,environment=environment, 
+                system_folders=system_folders)
+
+    Database().connect(ctx.get_database_uri())
+    root = db.User(username="root", roles="root")
+    root.set_password("root")
+    root.save()
+    click.echo(f"--> root user created. username: root, password: root")
 
 #
 #   import
