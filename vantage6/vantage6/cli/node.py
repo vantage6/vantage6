@@ -10,7 +10,7 @@ Configuration Commands
 * node files 
 * node start
 * node stop
-* node inspect
+* node attach
 """
 import click
 import yaml
@@ -26,21 +26,28 @@ from docker.errors import DockerException
 from pathlib import Path
 from threading import Thread
 
-import vantage6.constants as constants
-
-from vantage6 import util, node
-
-from vantage6.util.context import (
-    configuration_wizard, select_configuration_questionaire)
-from vantage6.constants import STRING_ENCODING
+from vantage6.common.globals import (
+    STRING_ENCODING,
+    APPNAME
+)
+from vantage6.cli.globals import (
+    DEFAULT_NODE_ENVIRONMENT,
+    DEFAULT_NODE_SYSTEM_FOLDERS
+)
+from vantage6.cli.context import NodeContext
+from vantage6.cli.configuration_wizard import (
+    configuration_wizard, 
+    select_configuration_questionaire
+)
 
 from colorama import init, Fore, Back, Style
+
 init()
 
 
 @click.group(name="node")
 def cli_node():
-    """Subcommand `vnode node`."""
+    """Subcommand `vnode`."""
     pass
 
 # 
@@ -54,7 +61,7 @@ def cli_node_list():
     check_if_docker_deamon_is_running(client)
 
     running_nodes = client.containers.list(
-        filters={"label":f"{constants.APPNAME}-type=node"})
+        filters={"label":f"{APPNAME}-type=node"})
     running_node_names = []
     for node in running_nodes:
         print("Your node is up and running.")
@@ -73,10 +80,10 @@ def cli_node_list():
     stopped = Fore.RED + "Offline" + Style.RESET_ALL
 
     # system folders
-    configs, f1 = util.NodeContext.available_configurations(
+    configs, f1 = NodeContext.available_configurations(
         system_folders=True)
     for config in configs:
-        status = running if f"{constants.APPNAME}-{config.name}-system" in \
+        status = running if f"{APPNAME}-{config.name}-system" in \
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
@@ -85,10 +92,10 @@ def cli_node_list():
         ) 
 
     # user folders
-    configs, f2 = util.NodeContext.available_configurations(
+    configs, f2 = NodeContext.available_configurations(
         system_folders=False)
     for config in configs:
-        status = running if f"{constants.APPNAME}-{config.name}-user" in \
+        status = running if f"{APPNAME}-{config.name}-user" in \
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
@@ -107,7 +114,7 @@ def cli_node_list():
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None)
 @click.option('-e', '--environment', 
-    default=constants.DEFAULT_NODE_ENVIRONMENT, 
+    default=DEFAULT_NODE_ENVIRONMENT, 
     help='configuration environment to use'
 )
 @click.option('--system', 'system_folders', 
@@ -115,7 +122,7 @@ def cli_node_list():
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=DEFAULT_NODE_SYSTEM_FOLDERS
 )
 def cli_node_new_configuration(name, environment, system_folders):
     """Create a new configation file.
@@ -128,7 +135,7 @@ def cli_node_new_configuration(name, environment, system_folders):
         name = q.text("Please enter a configuration-name:").ask()
     
     # check that this config does not exist
-    if util.NodeContext.config_exists(name,environment,system_folders):
+    if NodeContext.config_exists(name,environment,system_folders):
         raise FileExistsError(f"Configuration {name} and environment" 
             f"{environment} already exists!")
 
@@ -146,7 +153,7 @@ def cli_node_new_configuration(name, environment, system_folders):
     help="configuration name"
 )
 @click.option('-e', '--environment', 
-    default=constants.DEFAULT_NODE_ENVIRONMENT, 
+    default=DEFAULT_NODE_ENVIRONMENT, 
     help='configuration environment to use'
 )
 @click.option('--system', 'system_folders', 
@@ -154,7 +161,7 @@ def cli_node_new_configuration(name, environment, system_folders):
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=DEFAULT_NODE_SYSTEM_FOLDERS
 )
 def cli_node_files(name, environment, system_folders):
     """Print out the paths of important files.
@@ -167,12 +174,12 @@ def cli_node_files(name, environment, system_folders):
         select_configuration_questionaire('node', system_folders)
     
     # raise error if config could not be found
-    if not util.NodeContext.config_exists(name,environment,system_folders):
+    if not NodeContext.config_exists(name,environment,system_folders):
         print("The correct configuration could not be found.")
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
     
     # create node context
-    ctx = util.NodeContext(name,environment=environment, 
+    ctx = NodeContext(name,environment=environment, 
         system_folders=system_folders)
 
     # return path of the configuration
@@ -197,7 +204,7 @@ def cli_node_files(name, environment, system_folders):
     help='absolute path to configuration-file; overrides NAME'
 )
 @click.option('-e', '--environment', 
-    default=constants.DEFAULT_NODE_ENVIRONMENT, 
+    default=DEFAULT_NODE_ENVIRONMENT, 
     help='configuration environment to use'
 )
 @click.option('--system', 'system_folders', 
@@ -205,7 +212,7 @@ def cli_node_files(name, environment, system_folders):
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=DEFAULT_NODE_SYSTEM_FOLDERS
 )
 @click.option('-d', '--develop', 
     default=False,
@@ -220,12 +227,11 @@ def cli_node_start(name, config, environment, system_folders, develop):
         specify specific environments for the configuration (e.g. test, 
         prod, acc). 
     """
-    print("Please be patient.")
+    click.echo("Starting node...")
     # in case a configuration file is given, we by pass all the helper
     # stuff since you know what you are doing
     if config:
-        print("Reading External Config. file")
-        ctx = util.NodeContext.from_external_config_file(config, environment, 
+        ctx = NodeContext.from_external_config_file(config, environment, 
             system_folders)
     else:
         
@@ -235,27 +241,30 @@ def cli_node_start(name, config, environment, system_folders, develop):
                 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
-        if not util.NodeContext.config_exists(name,environment,system_folders):
+        if not NodeContext.config_exists(name,environment,system_folders):
             if q.confirm(f"Configuration {name} using environment "
                 f"{environment} does not exists. Do you want to create "
                 f"this config now?").ask():
                 configuration_wizard("node", name, environment=environment, 
                     system_folders=system_folders)
             else:
-                print("Config file couldn't be loaded")
+                click.echo("Config file couldn't be loaded")
                 sys.exit(0)
 
-        util.NodeContext.LOGGING_ENABLED = False
-        ctx = util.NodeContext(name, environment, system_folders)
+        NodeContext.LOGGING_ENABLED = False
+        ctx = NodeContext(name, environment, system_folders)
     
     # make sure the (host)-task and -log dir exists
+    click.echo("--> Checking that data and log dirs exist")
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
+    click.echo("--> Finding Docker Deamon")
     docker_client = docker.from_env()
     check_if_docker_deamon_is_running(docker_client)
     
     # specify mount-points 
+    click.echo("--> create mounts")
     mounts = [
         # TODO multiple database support
         docker.types.Mount("/mnt/database.csv", str(ctx.databases["default"]),
@@ -275,7 +284,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
                     type="bind")
             )
         else: 
-            print(f"private key file provided {rsa_file}, but does not exists")
+            click.echo(f"private key file provided {rsa_file}, but does not exists")
 
     # in case a development environment is run, we need to do a few extra things
     # and run a devcon container (see develop.Dockerfile)
@@ -288,16 +297,23 @@ def cli_node_start(name, config, environment, system_folders, develop):
         container_image = "harbor.distributedlearning.ai/infrastructure/dev"
         # attach proxy server for debugging to the host machine
         port = {"80/tcp":("127.0.0.1",8081)}
-        print(f"proxy-server attached {port}")
+        click.echo(f"proxy-server attached {port}")
     else:
         port = None
         container_image = "harbor.distributedlearning.ai/infrastructure/node"
+        click.echo(f"--> default container is used <{container_image}>")
+    
+    # pull the latest image 
+    click.echo("--> Pulling latest node Docker image")
+    # res = docker_client.images.pull(container_image)
 
     # create data volume which can be used by this node instance
+    click.echo("--> Create Docker data volume")
     data_volume = docker_client.volumes.create(
         f"{ctx.docker_container_name}-vol"
     )
     
+    click.echo("--> Run Docker container")
     container = docker_client.containers.run(
         container_image,
         command=[ctx.config_file_name, ctx.environment],
@@ -305,7 +321,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
         volumes={data_volume.name: {'bind': '/mnt/data-volume', 'mode': 'rw'}},
         detach=True,#not attach,
         labels={
-            f"{constants.APPNAME}-type": "node", 
+            f"{APPNAME}-type": "node", 
             "system": str(system_folders), 
             "name": ctx.config_file_name
         },
@@ -314,10 +330,10 @@ def cli_node_start(name, config, environment, system_folders, develop):
         },
         ports=port,
         name=ctx.docker_container_name,
-        auto_remove=True#not attach
+        auto_remove=False#not attach
     )
 
-    click.echo(f"Running, container id = {container}")
+    click.echo(f"--> Running, container id = {container}")
 
 @cli_node.command(name='stop')
 @click.option("-n","--name", 
@@ -329,7 +345,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=DEFAULT_NODE_SYSTEM_FOLDERS
 )
 def cli_node_stop(name, system_folders):
     """Stop a running container. """
@@ -338,7 +354,7 @@ def cli_node_stop(name, system_folders):
     check_if_docker_deamon_is_running(client)
 
     running_nodes = client.containers.list(
-        filters={"label":f"{constants.APPNAME}-type=node"})
+        filters={"label":f"{APPNAME}-type=node"})
     
     if not running_nodes:
         click.echo("No nodes are currently running.")
@@ -346,16 +362,16 @@ def cli_node_stop(name, system_folders):
 
     running_node_names = [node.name for node in running_nodes]
     if not name:
-        print("You will be asked for the name of the node you wish to stop.")
+        click.echo("You will be asked for the name of the node you wish to stop.")
         name = q.select("Select the node you wish to stop:",
             choices=running_node_names).ask()
     else:
 
         post_fix = "system" if system_folders else "user"
-        name = f"{constants.APPNAME}-{name}-{post_fix}" 
+        name = f"{APPNAME}-{name}-{post_fix}" 
     
     if name in running_node_names:
-        print("You've successfully stopped the node.")
+        click.echo("You've successfully stopped the node.")
         container = client.containers.get(name)
         container.kill()
         click.echo(f"Node {name} stopped.")
@@ -372,7 +388,7 @@ def cli_node_stop(name, system_folders):
 )
 @click.option('--user', 'system_folders', 
     flag_value=False, 
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
+    default=DEFAULT_NODE_SYSTEM_FOLDERS
 )
 def cli_node_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
@@ -381,7 +397,7 @@ def cli_node_attach(name, system_folders):
     check_if_docker_deamon_is_running(client)
 
     running_nodes = client.containers.list(
-        filters={"label":f"{constants.APPNAME}-type=node"})
+        filters={"label":f"{APPNAME}-type=node"})
     running_node_names = [node.name for node in running_nodes]
     
     if not name:
@@ -389,7 +405,7 @@ def cli_node_attach(name, system_folders):
             choices=running_node_names).ask()
     else: 
         post_fix = "system" if system_folders else "user"
-        name = f"{constants.APPNAME}-{name}-{post_fix}" 
+        name = f"{APPNAME}-{name}-{post_fix}" 
 
     if name in running_node_names:
         container = client.containers.get(name)

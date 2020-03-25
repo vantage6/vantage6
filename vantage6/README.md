@@ -14,4 +14,3 @@ For an overview of the architecture and information on how to use the infrastruc
 
 ## Installation
 See the [documentation](https://docs.distributedlearning.ai/) for detailed instructions on how to install the server and nodes. 
-

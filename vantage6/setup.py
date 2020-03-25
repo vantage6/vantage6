@@ -25,7 +25,8 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'docker==4.2.0',
-        'colorama==0.4.3'
+        'colorama==0.4.3',
+        # 'vantage6-common'
     ],
     extras_require={
         'dev':[
@@ -40,7 +41,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'vnode=vantage6.docker_cli.node:cli_node'
+            'vnode=vantage6.cli.node:cli_node'
             # 'vserver=vantage6.node.cli.node:cli_node'
         ]
     }
