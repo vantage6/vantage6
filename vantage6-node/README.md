@@ -2,7 +2,7 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/vantage6-node/badge.svg?branch=master)](https://coveralls.io/github/IKNL/vantage6-node?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/0f03092824814c5797224884fb65f048)](https://www.codacy.com/gh/IKNL/vantage6-node?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=IKNL/vantage6-node&amp;utm_campaign=Badge_Grade)
-[![PyPI version](https://badge.fury.io/py/ppDLI.svg)](https://badge.fury.io/py/ppDLI)
+<!--[![PyPI version](https://badge.fury.io/py/ppDLI.svg)](https://badge.fury.io/py/ppDLI)-->
 [![Build Status](https://api.travis-ci.org/IKNL/vantage6-node.svg?branch=master)](https://travis-ci.org/IKNL/vantage6-node)
 
 # Introduction
