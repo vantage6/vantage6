@@ -6,6 +6,7 @@ python:
   - 3.8-dev
 
 install:
+  - pip install git+https://github.com/IKNL/vantage6
   - pip install git+https://github.com/IKNL/vantage6-common
   - pip install git+https://github.com/IKNL/vantage6-client
   - pip install git+https://github.com/IKNL/vantage6-server
