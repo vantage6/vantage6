@@ -1,4 +1,4 @@
-import vantage6.server.util.colorer
+import vantage6.common.colorer
 
 
 def logger_name(special__name__):
