@@ -171,7 +171,7 @@ def cli_node_files(name, environment, system_folders):
     """
     # select configuration name if none supplied
     name, environment = (name, environment) if name else \
-        select_configuration_questionaire('node', system_folders)
+        select_configuration_questionaire(system_folders)
     
     # raise error if config could not be found
     if not NodeContext.config_exists(name,environment,system_folders):
@@ -237,7 +237,7 @@ def cli_node_start(name, config, environment, system_folders, develop):
         
         # in case no name is supplied, ask user to select one
         name, environment = (name, environment) if name else \
-            select_configuration_questionaire('node', system_folders) 
+            select_configuration_questionaire(system_folders) 
                 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
