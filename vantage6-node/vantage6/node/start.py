@@ -10,7 +10,8 @@ import subprocess
 # from watchdog.observers import Observer
 # from watchdog.events import LoggingEventHandler, FileSystemEventHandler
 
-from vantage6.node import util, node, constants
+from vantage6.node import run
+from vantage6.node.context import DockerNodeContext, NodeContext
 
 
 # class ReloadEventHandler(FileSystemEventHandler):
@@ -60,14 +61,14 @@ def start(name, environment):
     """
     
     # create context
-    ctx = util.DockerNodeContext(name, environment)
+    ctx = DockerNodeContext(name, environment)
 
     # run the node application
-    node.run(ctx)
+    run(ctx)
 
 def start_development(name, environment):
-    ctx = util.NodeContext(name, environment)
-    node.run(ctx)
+    ctx = NodeContext(name, environment)
+    run(ctx)
 
 if __name__ == "__main__":
 

@@ -13,7 +13,7 @@ from pathlib import Path
 from vantage6 import node
 from vantage6.node import util
 from vantage6.node.context import NodeContext
-from vantage6.node.configuration.configuration_wizard import (
+from vantage6.cli.configuration_wizard import (
     configuration_wizard, 
     select_configuration_questionaire
 )
@@ -108,7 +108,7 @@ def cli_node_files(name, environment, system_folders):
     """
     # select configuration name if none supplied
     name, environment = (name, environment) if name else \
-        select_configuration_questionaire('node', system_folders)
+        select_configuration_questionaire(system_folders)
     
     # raise error if config could not be found
     if not NodeContext.config_exists(name,environment,system_folders):
