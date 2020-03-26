@@ -391,3 +391,20 @@ class TestResources(unittest.TestCase):
             "password": "something-really-secure"
         })
         self.assertEqual(results.status_code, 400)
+
+    def test_root_role_forbidden(self):
+        headers = self.login("root")
+        new_user = {
+            "username": "some",
+            "firstname": "guy",
+            "lastname": "there",
+            "roles":  "root",
+            "password": "super-secret"
+        }
+        result = self.app.post("/api/user", headers=headers,
+            json=new_user)
+        self.assertEqual(result.status_code, 400)
+
+
+        
+    
