@@ -175,13 +175,13 @@ class Node:
         self.log.debug("fetching tasks that were posted while offline")
         self.__sync_task_que_with_server()
 
-
         self.log.debug("setup the docker manager")
         self.__docker = DockerManager(
             allowed_images=self.config.get("allowed_images"),
             docker_socket_path="unix://var/run/docker.sock",
             tasks_dir=self.ctx.data_dir,
-            isolated_network_name=f"{ctx.docker_network_name}-net"
+            isolated_network_name=f"{ctx.docker_network_name}-net",
+            node_name=self.ctx.name
         )
 
         # copy data to Volume /mnt/data-volume from /mnt/data to populate
@@ -244,7 +244,6 @@ class Node:
             self.log.critical("proxyserver crashed!...")
             self.log.debug(e)
 
-
     def authenticate(self):
         """ Authenticate to the central server
 
@@ -301,15 +300,9 @@ class Node:
         tasks = self.server_io.get_results(state="open", include_task=True)
         self.log.debug(tasks)
         for task in tasks:
-            # try:
-            #     task["input"] = self.server_io.cryptor.decrypt_base64(task["input"])
-            # except ValueError as e:
-            #     self.log.error(
-            #         "Unable to decrypt message, assuming it was unencrypted"
-            #     )
             self.queue.put(task)
 
-        self.log.info(f"received {self.queue._qsize()} tasks" )
+        self.log.info(f"received {self.queue._qsize()} tasks")
 
     def run_forever(self):
         """ Connect to the server to obtain and execute tasks forever

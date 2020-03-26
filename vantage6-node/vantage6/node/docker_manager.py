@@ -19,6 +19,7 @@ from typing import NamedTuple
 
 from . import globals as cs
 
+from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
 
 class Result(NamedTuple):
@@ -41,11 +42,11 @@ class DockerManager(object):
 
     log = logging.getLogger(logger_name(__name__))
 
-    # TODO validate that allowed repositoy is used
     # TODO authenticate to docker repository... from the config-file
 
     def __init__(self, allowed_images, tasks_dir,
-        docker_socket_path, isolated_network_name: str) -> None:
+                 docker_socket_path, isolated_network_name: str,
+                 node_name: str) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -69,6 +70,14 @@ class DockerManager(object):
         # can attach
         self.isolated_network = \
             self.create_isolated_network(isolated_network_name)
+
+        # node name is used to identify algorithm containers belonging
+        # to this node. This is required as multiple nodes may run at
+        # a single machine sharing the docker deamon while using a
+        # different server. Using a different server means that there
+        # could be duplicate result_id's running at the node at the same
+        # time.
+        self.node_name = node_name
 
     def create_isolated_network(self, name: str) \
         -> docker.models.networks.Network:
@@ -147,6 +156,17 @@ class DockerManager(object):
             :param run_id: identifieer of the run sequence
             :param token: Bearer token that the container can use
         """
+        # check that this result is not already running
+        container = self.client.containers.list(filters={
+            "label": [
+                f"{APPNAME}-type=algorithm",
+                f"node={self.node_name}"
+                f"result_id={result_id}"
+            ]
+        })
+        if container:
+            self.log.warn("Task is already being executed, discarding task")
+            self.log.debug(f"result_id={result_id} is discarded")
 
         # verify that an allowed image is used
         if not self.is_docker_image_allowed(image):
@@ -210,14 +230,19 @@ class DockerManager(object):
                 environment=environment_variables,
                 network=self.isolated_network.name,
                 volumes={
-                    tmp_vol_name:{
-                        "bind":tmp_folder,
+                    tmp_vol_name: {
+                        "bind": tmp_folder,
                         "mode": "rw"
                     },
-                    os.environ["DATA_VOLUME_NAME"]:{
+                    os.environ["DATA_VOLUME_NAME"]: {
                         "bind": "/mnt/data-volume",
                         "mode": "rw"
                     }
+                },
+                labels={
+                    f"{APPNAME}-type": "algorithm",
+                    "node": self.node_name,
+                    "result_id": str(result_id)
                 }
             )
         except Exception as e:
