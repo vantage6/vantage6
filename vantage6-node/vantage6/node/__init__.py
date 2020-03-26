@@ -54,12 +54,12 @@ class NodeTaskNamespace(SocketIONamespace):
         self.node_worker_ref = None
 
     def set_node_worker(self, node_worker):
-        """ Reference NodeWorker that created this Namespace.
+        """ Reference Node that created this Namespace.
 
             This way we can call methods from the nodeworking, allowing
             for actions to be taken.
 
-            :param node_worker: NodeWorker object
+            :param node_worker: Node object
         """
         self.node_worker_ref = node_worker
 
@@ -106,7 +106,7 @@ class NodeTaskNamespace(SocketIONamespace):
         self.node_worker_ref.socket_connected = True
 
 # ------------------------------------------------------------------------------
-class NodeWorker:
+class Node:
     """ Node to handle incomming computation requests.
 
         The main steps this application follows: 1) retrieve (new) tasks
@@ -118,7 +118,7 @@ class NodeWorker:
     """
 
     def __init__(self, ctx):
-        """ Initialize a new NodeWorker instance.
+        """ Initialize a new Node instance.
 
             Authenticates to the central server, setup encrpytion, a
             websocket connection, retrieving task that were posted while
@@ -530,7 +530,7 @@ def run(ctx):
     logging.getLogger("requests").setLevel(logging.WARNING)
 
     # initialize node, connect to the server using websockets
-    tmc = NodeWorker(ctx)
+    tmc = Node(ctx)
 
     # put the node to work, executing tasks that are in the que
     tmc.run_forever()
