@@ -40,9 +40,27 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire
 )
 
+import vantage6.common.colorer
 from colorama import init, Fore, Back, Style
 
 init()
+
+def echo(msg, level = "info"):
+    type_ = {
+        "error": f"[{Fore.RED}error{Style.RESET_ALL}]",
+        "warn": f"[{Fore.YELLOW}warn{Style.RESET_ALL}]",
+        "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]"
+    }.get(level)
+    click.echo(f"{type_} - {msg}")
+
+def info(msg):
+    echo(msg, "info")
+
+def warning(msg):
+    echo(msg, "warn")
+
+def error(msg):
+    echo(msg, "error")
 
 
 @click.group(name="node")
@@ -64,7 +82,6 @@ def cli_node_list():
         filters={"label":f"{APPNAME}-type=node"})
     running_node_names = []
     for node in running_nodes:
-        print("Your node is up and running.")
         running_node_names.append(node.name)
 
     header = \
@@ -105,8 +122,8 @@ def cli_node_list():
 
     click.echo("-"*85)
     if len(f1)+len(f2):
-        click.echo(
-            Fore.RED + f"Failed imports: {len(f1)+len(f2)}" + Style.RESET_ALL)
+        warning(
+             f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
 
 #
 #   new
@@ -114,7 +131,7 @@ def cli_node_list():
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None)
 @click.option('-e', '--environment',
-    default=DEFAULT_NODE_ENVIRONMENT,
+    default="",
     help='configuration environment to use'
 )
 @click.option('--system', 'system_folders',
@@ -134,14 +151,22 @@ def cli_node_new_configuration(name, environment, system_folders):
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
 
+    if not environment:
+        environment = q.select(
+            "Please select the environment you want to configure:",
+            ["application", "prod", "acc", "test", "dev"]
+        ).ask()
+
     # check that this config does not exist
     if NodeContext.config_exists(name,environment,system_folders):
-        raise FileExistsError(f"Configuration {name} and environment"
-            f"{environment} already exists!")
+        error(
+            f"Configuration {name} and environment"
+            f"{environment} already exists!"
+        )
 
     # create config in ctx location
     cfg_file = configuration_wizard(name, environment,system_folders)
-    click.echo(f"New configuration created: {cfg_file}")
+    info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
 #
 #   files
@@ -174,21 +199,25 @@ def cli_node_files(name, environment, system_folders):
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name,environment,system_folders):
-        print("The correct configuration could not be found.")
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
+        error(
+            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
+            f"not be found."
+        )
+        # raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
 
     # create node context
     ctx = NodeContext(name,environment=environment,
         system_folders=system_folders)
 
     # return path of the configuration
-    click.echo(f"Configuration file = {ctx.config_file}")
-    click.echo(f"Log file           = {ctx.log_file}")
-    click.echo(f"data folders       = {ctx.data_dir}")
-    click.echo(f"Database labels and files")
+    info(f"Configuration file = {ctx.config_file}")
+    info(f"Log file           = {ctx.log_file}")
+    info(f"data folders       = {ctx.data_dir}")
+    info(f"Database labels and files")
     for label, path in ctx.databases.items():
         print("The correct label and path is as follows:")
-        click.echo(f" - {label:15} = {path}")
+        info(f" - {label:15} = {path}")
 
 #
 #   start
@@ -230,7 +259,12 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         specify specific environments for the configuration (e.g. test,
         prod, acc).
     """
-    click.echo("Starting node...")
+    info("Starting node...")
+
+    info("Finding Docker deamon")
+    docker_client = docker.from_env()
+    check_if_docker_deamon_is_running(docker_client)
+
     # in case a configuration file is given, we by pass all the helper
     # stuff since you know what you are doing
     if config:
@@ -250,24 +284,30 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
                 configuration_wizard("node", name, environment=environment,
                     system_folders=system_folders)
             else:
-                click.echo("Config file couldn't be loaded")
+                error("Config file couldn't be loaded")
                 sys.exit(0)
 
         NodeContext.LOGGING_ENABLED = False
         ctx = NodeContext(name, environment, system_folders)
 
+    # check that this node is not already running
+    running_nodes = docker_client.containers.list(
+        filters={"label":f"{APPNAME}-type=node"})
+    for node in running_nodes:
+        post_ = "system" if system_folders else "user"
+        if node.name == f"{APPNAME}-{name}-{post_}":
+            error(f"Node {Fore.RED}{name}{Style.RESET_ALL} is already running")
+            exit()
+
+
     # make sure the (host)-task and -log dir exists
-    click.echo("--> Checking that data and log dirs exist")
+    info("Checking that data and log dirs exist")
 
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    click.echo("--> Finding Docker Deamon")
-    docker_client = docker.from_env()
-    check_if_docker_deamon_is_running(docker_client)
-
     # specify mount-points
-    click.echo("--> Mounting files & folders")
+    info("Mounting files & folders")
     mounts = [
         # TODO multiple database support
         docker.types.Mount("/mnt/database.csv", str(ctx.databases["default"]),
@@ -287,7 +327,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
                     type="bind")
             )
         else:
-            click.echo(f"private key file provided {rsa_file}, but does not exists")
+            warning(f"private key file provided {rsa_file}, but does not exists")
 
     # in case a development environment is run, we need to do a few extra things
     # and run a devcon container (see develop.Dockerfile)
@@ -300,25 +340,25 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         container_image = "harbor.distributedlearning.ai/infrastructure/dev"
         # attach proxy server for debugging to the host machine
         port = {"80/tcp": ("127.0.0.1", 8081)}
-        click.echo(f"proxy-server attached {port}")
+        info(f"proxy-server attached {port}")
     else:
         port = None
         # 1) --tag, 2) config 3) latest
         tag_ = tag if tag != "default" else ctx.config.get("tag", "latest")
         container_image = f"harbor.distributedlearning.ai/infrastructure/node:{tag_}"
-        click.echo(f"--> default container is used <{container_image}>")
+        info(f"Default container is used <{container_image}>")
 
     # pull the latest image
-    click.echo("--> Pulling latest node Docker image")
+    info("Pulling latest node Docker image")
     docker_client.images.pull(container_image)
 
     # create data volume which can be used by this node instance
-    click.echo("--> Create Docker data volume")
+    info("Create Docker data volume")
     data_volume = docker_client.volumes.create(
         f"{ctx.docker_container_name}-vol"
     )
 
-    click.echo("--> Run Docker container")
+    info("Run Docker container")
     container = docker_client.containers.run(
         container_image,
         command=[ctx.config_file_name, ctx.environment],
@@ -338,7 +378,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         auto_remove=True # not attach
     )
 
-    click.echo(f"--> Running, container id = {container}")
+    info(f"Succes! container id = {container}")
 
 
 #
@@ -366,12 +406,11 @@ def cli_node_stop(name, system_folders):
         filters={"label":f"{APPNAME}-type=node"})
 
     if not running_nodes:
-        click.echo("No nodes are currently running.")
+        warning("No nodes are currently running.")
         return
 
     running_node_names = [node.name for node in running_nodes]
     if not name:
-        click.echo("You will be asked for the name of the node you wish to stop.")
         name = q.select("Select the node you wish to stop:",
             choices=running_node_names).ask()
     else:
@@ -382,9 +421,9 @@ def cli_node_stop(name, system_folders):
     if name in running_node_names:
         container = client.containers.get(name)
         container.kill()
-        click.echo(f"Node {name} is stopped.")
+        info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
     else:
-        click.echo(Fore.RED + f"{name} was not running!?")
+        error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
 
 
 #
@@ -427,10 +466,10 @@ def cli_node_attach(name, system_folders):
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
-                print("Closing log file. Keyboard Interrupt.")
+                info("Closing log file. Keyboard Interrupt.")
                 exit(0)
     else:
-        click.echo(Fore.RED + f"{name} was not running!?")
+        error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
 
 def print_log_worker(logs_stream):
     for log in logs_stream:
@@ -440,6 +479,5 @@ def check_if_docker_deamon_is_running(docker_client):
     try:
         docker_client.ping()
     except Exception as e:
-        click.echo(
-            "Docker socket not found. Is Docker running? Exiting")
+        error("Docker socket can not be found. Make sure Docker is running.")
         exit()

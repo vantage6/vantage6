@@ -30,25 +30,25 @@ def node_configuration_questionaire(dirs, instance_name):
             "default": "http://localhost"
         },
         {
-            "type": "text", 
+            "type": "text",
             "name": "port",
             "message": "Enter port to which the server listens:",
             "default": "5000"
         },
         {
-            "type": "text", 
+            "type": "text",
             "name": "api_path",
             "message": "Path of the api:",
             "default": "/api"
         },
         {
-            "type": "text", 
+            "type": "text",
             "name": "task_dir",
             "message": "Task directory path:",
             "default": str(dirs["data"])
         }
     ])
-    
+
     config["databases"] = q.prompt([
         {
             "type": "text",
@@ -90,7 +90,7 @@ def node_configuration_questionaire(dirs, instance_name):
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
 
-    disable_encryption = q.select("Disable encryption?", 
+    disable_encryption = q.select("Disable encryption?",
         choices=["false", "true"]).ask()
 
     private_key = "" if disable_encryption == "true" else \
@@ -103,20 +103,20 @@ def node_configuration_questionaire(dirs, instance_name):
 
     return config
 
-def configuration_wizard(instance_name, 
+def configuration_wizard(instance_name,
     environment="application", system_folders=False):
 
     # for defaults and where to save the config
     dirs = NodeContext.instance_folders("node", instance_name, system_folders)
-    
+
     # invoke questionaire to create configuration file
     config = node_configuration_questionaire(dirs, instance_name)
-    
-    # in the case of an environment we need to add it to the current 
-    # configuration. In the case of application we can simply overwrite this 
+
+    # in the case of an environment we need to add it to the current
+    # configuration. In the case of application we can simply overwrite this
     # key (although there might be environments present)
     config_file = Path(dirs.get("config")) / (instance_name + ".yaml")
-    
+
     if Path(config_file).exists():
         config_manager = NodeConfigurationManager.from_file(config_file)
     else:
@@ -126,31 +126,32 @@ def configuration_wizard(instance_name,
     config_manager.save(config_file)
 
     return config_file
-    
+
 def select_configuration_questionaire(system_folders):
     """Asks which configuration the user want to use
-    
+
     It shows only configurations that are in the default folder.
     """
     Context = NodeContext
     configs, f = Context.available_configurations(system_folders)
 
-    # each collection (file) can contain multiple configs. (e.g. test, 
+    # each collection (file) can contain multiple configs. (e.g. test,
     # dev)
     choices = []
     for config_collection in configs:
+
         envs = config_collection.available_environments
         for env in envs:
             choices.append(q.Choice(
                 title=f"{config_collection.name:25} {env}",
                 value=(config_collection.name, env)))
-    
-    
+
+
     if not choices:
         raise Exception("No configurations could be found!")
-    
+
     # pop the question
     name, env = q.select("Select the configuration you want to use:",
         choices=choices).ask()
-    
+
     return name, env
