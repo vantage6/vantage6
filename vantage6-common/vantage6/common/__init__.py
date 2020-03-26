@@ -1,4 +1,7 @@
 import base64
+import click
+
+from colorama import init, Fore, Back, Style
 
 from vantage6.common.globals import STRING_ENCODING
 
@@ -9,7 +12,7 @@ def logger_name(special__name__):
     return log_name
 
 class Singleton(type):
-    _instances = {} 
+    _instances = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
@@ -22,3 +25,23 @@ def prepare_bytes_for_transport(bytes_):
 
 def unpack_bytes_from_transport(bytes_string):
     return base64.b64decode(bytes_string.encode(STRING_ENCODING))
+
+#
+# CLI prints
+#
+def echo(msg, level = "info"):
+    type_ = {
+        "error": f"[{Fore.RED}error{Style.RESET_ALL}]",
+        "warn": f"[{Fore.YELLOW}warn{Style.RESET_ALL}]",
+        "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]"
+    }.get(level)
+    click.echo(f"{type_} - {msg}")
+
+def info(msg):
+    echo(msg, "info")
+
+def warning(msg):
+    echo(msg, "warn")
+
+def error(msg):
+    echo(msg, "error")

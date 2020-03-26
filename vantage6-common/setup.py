@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# read the API version from disk 
+# read the API version from disk
 with open(path.join(here, 'vantage6', 'common', 'VERSION')) as fp:
     __version__ = fp.read()
 
@@ -27,9 +27,11 @@ setup(
         'appdirs==1.4.3',
         'PyYAML==5.3.1',
         'schema==0.7.1',
-        'termcolor==1.1.0'
+        'termcolor==1.1.0',
+        'click==7.1.1',
+        'colorama==0.4.3'
     ],
-    package_data={  
+    package_data={
         'vantage6': [
             'common/VERSION'
         ],
