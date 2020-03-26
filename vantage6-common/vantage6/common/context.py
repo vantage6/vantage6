@@ -1,15 +1,16 @@
 import os 
 import sys
 import appdirs
+
 import logging
+import vantage6.common.colorer
 
 from pathlib import Path
 
 from vantage6.common import Singleton
-from vantage6.common.globals import DEFAULT_ENVIRONMENT, APPNAME
+from vantage6.common.globals import DEFAULT_ENVIRONMENT, APPNAME, PACAKAGE_FOLDER
 from vantage6.common.configuration_manager import (
-    ConfigurationManager,
-    TestingConfigurationManager
+    ConfigurationManager
 )
 
 class AppContext(metaclass=Singleton):
@@ -210,27 +211,3 @@ class AppContext(metaclass=Singleton):
                 failed.append(file_)
 
         return configs, failed
-
-
-class TestContext(AppContext):
-
-    INST_CONFIG_MANAGER = TestingConfigurationManager
-    LOGGING_ENABLED = False
-    
-    @classmethod
-    def from_external_config_file(cls, path):
-        return super().from_external_config_file(
-            cls.test_config_location(), 
-            "unittest", "application", True
-        )
-
-    @staticmethod
-    def test_config_location():
-        return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
-            "_data" / "unittest_config.yaml")
-
-    @staticmethod
-    def test_data_location():
-        return ( constants.PACAKAGE_FOLDER / constants.APPNAME / \
-            "_data" )
-    

@@ -131,13 +131,3 @@ class ConfigurationManager(object):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)
-
-
-class TestingConfigurationManager(ConfigurationManager):
-
-    def __init__(self, name, *args, **kwargs):
-        super().__init__(conf_class=TestConfiguration, name=name)
-
-    @classmethod
-    def from_file(cls, path):
-        return super().from_file(path, conf_class=TestConfiguration)
