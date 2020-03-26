@@ -15,7 +15,7 @@ from vantage6.common.globals import (
     APPNAME
 )
 from vantage6.common.context import AppContext
-from vantage6.common.configuration_manager import TestingConfigurationManager
+from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.cli.context import NodeContext
 
 
@@ -35,6 +35,8 @@ class DockerNodeContext(NodeContext):
             "config": mnt / "config"
         }
 
+class TestingConfigurationManager(ConfigurationManager):
+    VALIDATORS = {}
 
 class TestContext(AppContext):
 
