@@ -12,9 +12,15 @@ import vantage6.server.model as db
 from functools import wraps
 from pathlib import Path
 from traitlets.config import get_config
+from colorama import (Fore, Style, init)
 
+from vantage6.common import (
+    echo,
+    info,
+    warning,
+    error
+)
 from vantage6.server.model.base import Database
-
 from vantage6 import server
 from vantage6.server import shell
 import vantage6.server.globals as constants
@@ -28,6 +34,8 @@ from vantage6.server.configuration.configuration_wizard import (
 
 from vantage6.server.context import ServerContext
 
+# init color-stuff
+init()
 
 def click_insert_context(func):
 
@@ -57,19 +65,34 @@ def click_insert_context(func):
 
         # select configuration if none supplied
         if config:
-            ctx = ServerContext.from_external_config_file(config,
-                environment, system_folders)
+            ctx = ServerContext.from_external_config_file(
+                config,
+                environment,
+                system_folders
+            )
         else:
             name, environment = (name, environment) if name else \
                 select_configuration_questionaire(system_folders)
 
             # raise error if config could not be found
-            if not ServerContext.config_exists(name,environment, system_folders):
-                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
+            if not ServerContext.config_exists(
+                name,
+                environment,
+                system_folders
+            ):
+                error(
+                    f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+                    f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist!"
+                )
 
             # create server context, and initialize db
-            ctx = ServerContext(name,environment=environment,
-                system_folders=system_folders)
+            ctx = ServerContext(
+                name,
+                environment=environment,
+                system_folders=system_folders
+            )
+
+        # initialize database (singleton)
         Database().connect(ctx.get_database_uri())
 
         return func(ctx, *args, **kwargs)
@@ -93,12 +116,14 @@ def cli_server():
 def cli_server_start(ctx, ip, port, debug):
     """Start the server."""
 
+    info("Starting server.")
     # Load the flask.Resources
     server.init_resources(ctx)
 
     # Run the server
     ip = ip or ctx.config['ip'] or '127.0.0.1'
     port = port or int(ctx.config['port']) or 5000
+    info(f"ip: {ip}, port: {port}")
     server.run(ctx, ip, port, debug=debug)
 
 #
@@ -108,11 +133,11 @@ def cli_server_start(ctx, ip, port, debug):
 def cli_server_configuration_list():
     """Print the available configurations."""
 
-
     click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
     click.echo("-"*70)
 
-    sys_configs, f1 = ServerContext.available_configurations(system_folders=True)
+    sys_configs, f1 = ServerContext.available_configurations(
+        system_folders=True)
     for config in sys_configs:
         click.echo(f"{config.name:25}{str(config.available_environments):32} System ")
 
@@ -120,7 +145,12 @@ def cli_server_configuration_list():
     for config in usr_configs:
         click.echo(f"{config.name:25}{str(config.available_environments):32} User   ")
     click.echo("-"*70)
-    click.echo(f"Number of failed imports: {len(f1)+len(f2)}")
+
+    if len(f1)+len(f2):
+        warning(
+            f"{Fore.YELLOW}Number of failed imports: "
+            f"{len(f1)+len(f2)}{Style.RESET_ALL}"
+        )
 
 #
 #   files
@@ -129,9 +159,9 @@ def cli_server_configuration_list():
 @click_insert_context
 def cli_server_files(ctx):
     """List files locations of a server instance."""
-    click.echo(f"Configuration file = {ctx.config_file}")
-    click.echo(f"Log file           = {ctx.log_file}")
-    click.echo(f"Database           = {ctx.get_database_uri()}")
+    info(f"Configuration file = {ctx.config_file}")
+    info(f"Log file           = {ctx.log_file}")
+    info(f"Database           = {ctx.get_database_uri()}")
 
 #
 #   new
@@ -160,36 +190,48 @@ def cli_server_new(name, environment, system_folders):
 
     # check that this config does not exist
     try:
-        if ServerContext.config_exists(name,environment,system_folders):
-            raise FileExistsError(f"Configuration {name} and environment"
-                f" {environment} already exists!")
+        if ServerContext.config_exists(name, environment, system_folders):
+            error(
+                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+                f"environment {Fore.RED}{environment}{Style.RESET_ALL} "
+                f"already exists!"
+            )
     except Exception as e:
         print(e)
         exit(0)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(name, environment=environment,
-        system_folders=system_folders)
-    click.echo(f"--> New configuration created: {cfg_file}")
+    cfg_file = configuration_wizard(
+        name,
+        environment=environment,
+        system_folders=system_folders
+    )
+    info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # create root user
-    ctx = ServerContext(name,environment=environment,
-                system_folders=system_folders)
+    ctx = ServerContext(
+        name,
+        environment=environment,
+        system_folders=system_folders
+    )
 
+    # initialize database
     Database().connect(ctx.get_database_uri())
     root = db.User(username="root", roles="root")
 
+    # keep prompting for password untill they match
     again = True
     while again:
-        password = q.password("Root password").ask()
-        repeat_password = q.password("Repeat root password").ask()
+        password = q.password("Root password:").ask()
+        repeat_password = q.password("Repeat root password:").ask()
         again = password != repeat_password
         if again:
-            click.echo("!-> Passwords do not match, try again.")
+            warning("Passwords do not match, try again.")
 
     root.set_password(password)
     root.save()
-    click.echo(f"--> root user created.")
+
+    info(f"root user created.")
 
 #
 #   import
@@ -203,10 +245,11 @@ def cli_server_import(ctx, file_, drop_all):
 
         Especially usefull for testing purposes.
     """
-
+    info("Reading yaml file.")
     with open(file_) as f:
         entities = yaml.safe_load(f.read())
 
+    info("Adding entities to database.")
     fixture.load(entities, drop_all=drop_all)
 
 #
