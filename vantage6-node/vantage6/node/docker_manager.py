@@ -160,7 +160,7 @@ class DockerManager(object):
         container = self.client.containers.list(filters={
             "label": [
                 f"{APPNAME}-type=algorithm",
-                f"node={self.node_name}"
+                f"node={self.node_name}",
                 f"result_id={result_id}"
             ]
         })
