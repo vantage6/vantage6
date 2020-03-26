@@ -396,7 +396,10 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
     flag_value=False,
     default=DEFAULT_NODE_SYSTEM_FOLDERS
 )
-def cli_node_stop(name, system_folders):
+@click.option('--all', 'all_nodes',
+    flag_value=True
+)
+def cli_node_stop(name, system_folders, all_nodes):
     """Stop a running container. """
 
     client = docker.from_env()
@@ -410,20 +413,27 @@ def cli_node_stop(name, system_folders):
         return
 
     running_node_names = [node.name for node in running_nodes]
-    if not name:
-        name = q.select("Select the node you wish to stop:",
-            choices=running_node_names).ask()
-    else:
 
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}"
-
-    if name in running_node_names:
-        container = client.containers.get(name)
-        container.kill()
-        info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
+    if all_nodes:
+        for name in running_node_names:
+            container = client.containers.get(name)
+            container.kill()
+            info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
     else:
-        error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
+        if not name:
+            name = q.select("Select the node you wish to stop:",
+                choices=running_node_names).ask()
+        else:
+
+            post_fix = "system" if system_folders else "user"
+            name = f"{APPNAME}-{name}-{post_fix}"
+
+        if name in running_node_names:
+            container = client.containers.get(name)
+            container.kill()
+            info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
+        else:
+            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
 
 
 #
