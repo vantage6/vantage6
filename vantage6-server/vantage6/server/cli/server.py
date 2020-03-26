@@ -61,7 +61,7 @@ def click_insert_context(func):
     )
     @wraps(func)
     def func_with_context(name, config, environment, system_folders,
-        *args, **kwargs):
+                          *args, **kwargs):
 
         # select configuration if none supplied
         if config:
@@ -71,8 +71,16 @@ def click_insert_context(func):
                 system_folders
             )
         else:
-            name, environment = (name, environment) if name else \
-                select_configuration_questionaire(system_folders)
+            if name:
+                name, environment = (name, environment)
+            else:
+                try:
+                    name, environment = select_configuration_questionaire(
+                        system_folders
+                    )
+                except Exception:
+                    error("No configurations could be found!")
+                    exit()
 
             # raise error if config could not be found
             if not ServerContext.config_exists(
