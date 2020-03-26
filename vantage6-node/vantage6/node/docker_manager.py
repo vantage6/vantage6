@@ -167,6 +167,7 @@ class DockerManager(object):
         if container:
             self.log.warn("Task is already being executed, discarding task")
             self.log.debug(f"result_id={result_id} is discarded")
+            return
 
         # verify that an allowed image is used
         if not self.is_docker_image_allowed(image):
