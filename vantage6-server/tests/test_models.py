@@ -6,6 +6,7 @@ import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database, Base
@@ -24,12 +25,14 @@ from vantage6.server.model import (
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.DEBUG
 
+
 class TestUserModel(unittest.TestCase):
 
     def setUp(self):
         Database().connect("sqlite://")
         # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+                    "unittest_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
@@ -67,10 +70,20 @@ class TestUserModel(unittest.TestCase):
         self.assertEqual(db_user, user)
 
     def test_methods(self):
+        """"Test model methods."""
         user = self.entities.get("organizations")[0].get("users")[0]
         assert User.getByUsername(user.get("username"))
         assert User.username_exists(user.get("username"))
         assert User.get_user_list()
+
+    def test_duplicate_user(self):
+        """Duplicate usernames are not permitted."""
+        user1 = User(username="unit")
+        user1.save()
+
+        user2 = User(username="unit")
+        self.assertRaises(IntegrityError, user2.save)
+
 
 
 class TestCollaborationModel(unittest.TestCase):

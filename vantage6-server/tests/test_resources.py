@@ -37,6 +37,7 @@ class TestNode(FlaskClient):
             kwargs['content_type'] = 'application/json'
         return super().open(*args, **kwargs)
 
+
 class TestResources(unittest.TestCase):
 
     @classmethod
@@ -57,7 +58,8 @@ class TestResources(unittest.TestCase):
     def setUp(self):
         """Called immediately before running a test method."""
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+                    "unittest_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
@@ -76,9 +78,9 @@ class TestResources(unittest.TestCase):
         self.app = server.app.test_client()
 
         self.credentials = {
-            'root':{
+            'root': {
                 'username': 'root',
-                'password': 'password'
+                'password': 'root'
             },
             'admin':{
                 'username': 'frank@iknl.nl',
@@ -404,7 +406,3 @@ class TestResources(unittest.TestCase):
         result = self.app.post("/api/user", headers=headers,
             json=new_user)
         self.assertEqual(result.status_code, 400)
-
-
-        
-    
