@@ -88,10 +88,13 @@ def click_insert_context(func):
                 environment,
                 system_folders
             ):
+                scope = "system" if system_folders else "user"
                 error(
                     f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                    f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist!"
+                    f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
+                    f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
                 )
+                exit(1)
 
             # create server context, and initialize db
             ctx = ServerContext(
@@ -99,6 +102,7 @@ def click_insert_context(func):
                 environment=environment,
                 system_folders=system_folders
             )
+
 
         # initialize database (singleton)
         Database().connect(ctx.get_database_uri())
@@ -204,9 +208,10 @@ def cli_server_new(name, environment, system_folders):
                 f"environment {Fore.RED}{environment}{Style.RESET_ALL} "
                 f"already exists!"
             )
+            exit(1)
     except Exception as e:
         print(e)
-        exit(0)
+        exit(1)
 
     # create config in ctx location
     cfg_file = configuration_wizard(
@@ -224,7 +229,20 @@ def cli_server_new(name, environment, system_folders):
     )
 
     # initialize database
-    Database().connect(ctx.get_database_uri())
+    try:
+        Database().connect(ctx.get_database_uri())
+    except Exception:
+        error(
+            f"Could not initialize database "
+            f"{Fore.RED}{ctx.get_database_uri()}{Style.RESET_ALL}."
+        )
+        warning(
+            f"No root user created. You might want to delete "
+            f"{Fore.YELLOW}{ctx.config_file}{Style.RESET_ALL} and start over."
+        )
+        exit(1)
+
+    # create root user
     root = db.User(username="root", roles="root")
 
     # keep prompting for password untill they match
@@ -235,11 +253,16 @@ def cli_server_new(name, environment, system_folders):
         again = password != repeat_password
         if again:
             warning("Passwords do not match, try again.")
-
     root.set_password(password)
+
+    # store root user
     root.save()
 
     info(f"root user created.")
+    info(
+        f"You can start the server by "
+        f"{Fore.GREEN}vserver start{Style.RESET_ALL}."
+    )
 
 #
 #   import
