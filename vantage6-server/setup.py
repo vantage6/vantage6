@@ -32,7 +32,7 @@ setup(
         'flask-marshmallow==0.11.0',
         'Flask-SocketIO==4.2.1',
         'Flask-SQLAlchemy==2.4.1',
-        'iknl-flasgger==0.9.2.post1',
+        'flasgger==0.9.4',
         'schema==0.7.1',
         'bcrypt==3.1.7',
         'questionary==1.5.1',
