@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from .base import Database
 from .authenticable import Authenticatable
 
+
 class User(Authenticatable):
     """User (person) that can access the system.
 
@@ -31,12 +32,19 @@ class User(Authenticatable):
     # relationships
     organization = relationship("Organization", back_populates="users")
 
-    # Copied from https://docs.pylonsproject.org/projects/pyramid/en/master/tutorials/wiki2/definingmodels.html
+    def __repr__(self):
+        organization = self.organization.name if self.organization else "None"
+        return (
+            f"<User "
+            f"<{self.id}, username:'{self.username}', roles='{self.roles}', "
+            f"organization='{organization}'"
+            f">"
+        )
+
     def set_password(self, pw):
         pwhash = bcrypt.hashpw(pw.encode('utf8'), bcrypt.gensalt())
         self.password = pwhash.decode('utf8')
 
-    # Copied from https://docs.pylonsproject.org/projects/pyramid/en/master/tutorials/wiki2/definingmodels.html
     def check_password(self, pw):
         if self.password is not None:
             expected_hash = self.password.encode('utf8')
@@ -57,10 +65,3 @@ class User(Authenticatable):
     def username_exists(cls, username):
         session = Database().Session
         return session.query(exists().where(cls.username == username)).scalar()
-
-    def __repr__(self):
-        return ( f"<User "
-            f"<{self.id}, username:'{self.username}', roles='{self.roles}', "
-            f"organization='{self.organization.name}'"
-            f">"
-        )
