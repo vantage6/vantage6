@@ -1,0 +1,18 @@
+version: '3'
+services:
+
+  vantage6-server:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - database
+    volumes:
+      - .\vantage6\server\_data\docker-server-config.yaml:/mnt/config.yaml
+    command: ["vserver", "start", "--config", "/mnt/config.yaml"]
+
+  database:
+    image: postgres:10
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: changeme

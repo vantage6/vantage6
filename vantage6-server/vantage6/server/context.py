@@ -23,11 +23,11 @@ class ServerContext(AppContext):
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
     def __init__(self, instance_name,
-        environment=constants.DEFAULT_SERVER_ENVIRONMENT,
-        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
+                 environment=constants.DEFAULT_SERVER_ENVIRONMENT,
+                 system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
 
         super().__init__("server", instance_name, environment=environment,
-            system_folders=system_folders)
+                         system_folders=system_folders)
 
     def get_database_uri(self):
         uri = self.config['uri']
@@ -41,37 +41,45 @@ class ServerContext(AppContext):
         return uri
 
     @classmethod
-    def from_external_config_file(cls, path,
+    def from_external_config_file(
+        cls, path,
         environment=constants.DEFAULT_SERVER_ENVIRONMENT,
-        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
+        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
+    ):
 
         return super().from_external_config_file(
             path, "server", environment, system_folders
         )
 
     @classmethod
-    def config_exists(cls, instance_name,
+    def config_exists(
+        cls, instance_name,
         environment=constants.DEFAULT_SERVER_ENVIRONMENT,
-        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
+        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
+    ):
 
-        return super().config_exists("server",
-            instance_name, environment= environment, system_folders=system_folders)
+        return super().config_exists("server", instance_name,
+                                     environment=environment,
+                                     system_folders=system_folders)
 
     @classmethod
-    def available_configurations(cls,
-        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
+    def available_configurations(
+        cls,
+        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
+    ):
 
         return super().available_configurations("server", system_folders)
+
 
 class TestContext(AppContext):
 
     INST_CONFIG_MANAGER = TestingConfigurationManager
     LOGGING_ENABLED = False
-    
+
     @classmethod
     def from_external_config_file(cls, path):
         return super().from_external_config_file(
-            cls.test_config_location(), 
+            cls.test_config_location(),
             "unittest", "application", True
         )
 

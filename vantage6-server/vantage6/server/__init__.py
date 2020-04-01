@@ -483,18 +483,20 @@ def run(ctx, *args, **kwargs):
         log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
-    # print('-' * 80)
-    # print(app.root_path)
-    # print('-' * 80)
+    # check if root-user exists
+    try:
+        db.User.getByUsername("root")
+    except Exception:
+        log.warn("No root user found! Is this the first run?")
+        log.warn("Creating root: username=root, password=root")
+        user = db.User(username="root", roles="root")
+        user.set_password("root")
+        user.save()
 
-    # Actually start the server
-    # app.run(*args, **kwargs)
+    # set all nodes to offline
     nodes, session = db.Node.get(with_session=True)
-
     for node in nodes:
         node.status = 'offline'
-
     session.commit()
 
     socketio.run(app, *args, **kwargs)
-    

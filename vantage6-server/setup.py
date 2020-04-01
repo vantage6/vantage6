@@ -44,7 +44,7 @@ setup(
         'gevent==1.4.0'
     ],
     extras_require={
-        'dev':[
+        'dev': [
             'termcolor==1.1.0',
             'coverage==4.5.4'
         ]

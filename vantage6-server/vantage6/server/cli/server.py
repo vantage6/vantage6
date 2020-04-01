@@ -222,43 +222,43 @@ def cli_server_new(name, environment, system_folders):
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # create root user
-    ctx = ServerContext(
-        name,
-        environment=environment,
-        system_folders=system_folders
-    )
+    # ctx = ServerContext(
+    #     name,
+    #     environment=environment,
+    #     system_folders=system_folders
+    # )
 
     # initialize database
-    try:
-        Database().connect(ctx.get_database_uri())
-    except Exception:
-        error(
-            f"Could not initialize database "
-            f"{Fore.RED}{ctx.get_database_uri()}{Style.RESET_ALL}."
-        )
-        warning(
-            f"No root user created. You might want to delete "
-            f"{Fore.YELLOW}{ctx.config_file}{Style.RESET_ALL} and start over."
-        )
-        exit(1)
+    # try:
+    #     Database().connect(ctx.get_database_uri())
+    # except Exception:
+    #     error(
+    #         f"Could not initialize database "
+    #         f"{Fore.RED}{ctx.get_database_uri()}{Style.RESET_ALL}."
+    #     )
+    #     warning(
+    #         f"No root user created. You might want to delete "
+    #         f"{Fore.YELLOW}{ctx.config_file}{Style.RESET_ALL} and start over."
+    #     )
+    #     exit(1)
 
-    # create root user
-    root = db.User(username="root", roles="root")
+    # # create root user
+    # root = db.User(username="root", roles="root")
 
-    # keep prompting for password untill they match
-    again = True
-    while again:
-        password = q.password("Root password:").ask()
-        repeat_password = q.password("Repeat root password:").ask()
-        again = password != repeat_password
-        if again:
-            warning("Passwords do not match, try again.")
-    root.set_password(password)
+    # # keep prompting for password untill they match
+    # again = True
+    # while again:
+    #     password = q.password("Root password:").ask()
+    #     repeat_password = q.password("Repeat root password:").ask()
+    #     again = password != repeat_password
+    #     if again:
+    #         warning("Passwords do not match, try again.")
+    # root.set_password(password)
 
-    # store root user
-    root.save()
+    # # store root user
+    # root.save()
 
-    info(f"root user created.")
+    # info(f"root user created.")
     info(
         f"You can start the server by "
         f"{Fore.GREEN}vserver start{Style.RESET_ALL}."
