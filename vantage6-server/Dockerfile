@@ -11,3 +11,5 @@ RUN pip install git+https://github.com/IKNL/vantage6-client
 
 COPY . /vantage6
 RUN pip install /vantage6
+
+ENTRYPOINT ["vserver", "start", "--config"]

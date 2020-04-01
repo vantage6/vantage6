@@ -8,8 +8,9 @@ services:
     depends_on:
       - database
     volumes:
-      - .\vantage6\server\_data\docker-server-config.yaml:/mnt/config.yaml
-    command: ["vserver", "start", "--config", "/mnt/config.yaml"]
+      # - ./configs/sqlite.yaml:/mnt/config.yaml
+      - ./configs/postgress.yaml:/mnt/config.yaml
+    command: ["/mnt/config.yaml"]
 
   database:
     image: postgres:10

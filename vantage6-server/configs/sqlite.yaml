@@ -1,0 +1,20 @@
+application: {}
+environments:
+  acc: {}
+  dev: {}
+  prod:
+    allow_drop_all: 'True'
+    api_path: ''
+    description: docker
+    ip: 0.0.0.0
+    logging:
+      backup_count: 5
+      datefmt: '%Y-%m-%d %H:%M:%S'
+      file: docker.log
+      format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+      level: DEBUG
+      max_size: 1024
+      use_console: true
+    port: '5000'
+    uri: sqlite:///example.sqlite
+  test: {}
