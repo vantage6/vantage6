@@ -457,8 +457,21 @@ def cli_node_start(name, config, environment, system_folders, image):
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
 
-    # fullpath = Path(ctx.get_data_file(filename))
-    fullpath = ctx.config.get("encryption", {}).get("private_key")
+    # FIXME: Code duplication: Node.__init__() (vantage6/node/__init__.py)
+    #   uses a lot of the same logic. Suggest moving this to
+    #   ctx.get_private_key()
+    filename = ctx.config.get("encryption", {}).get("private_key")
+
+    # filename may be set to an empty string
+    if not filename:
+        filename = 'private_key.pem'
+
+    # Location may be overridden by the environment
+    filename = os.environ.get('PRIVATE_KEY', filename)
+
+    # If ctx.get_data_file() receives an absolute path, it is returned as-is
+    fullpath = Path(ctx.get_data_file(filename))
+
     if fullpath:
         if Path(fullpath).exists():
             mounts.append(("/mnt/private_key.pem", fullpath))
@@ -483,8 +496,8 @@ def cli_node_start(name, config, environment, system_folders, image):
 
     info(f"Runing Docker container")
     debug(f"  with command: '{cmd}'")
-    debug(f"  with mounts: '{volumes}'")
-    debug(f"  with environment: '{env}'")
+    debug(f"  with mounts: {volumes}")
+    debug(f"  with environment: {env}")
     container = docker_client.containers.run(
         image,
         command=cmd,
