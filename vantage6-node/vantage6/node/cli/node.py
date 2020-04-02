@@ -12,7 +12,7 @@ from pathlib import Path
 
 from vantage6 import node
 from vantage6.node import util
-from vantage6.node.context import NodeContext
+from vantage6.node.context import NodeContext, DockerNodeContext
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
@@ -24,6 +24,7 @@ def cli_node():
     """Command `vantage6-node`."""
     pass
 
+
 #
 #   list
 #
@@ -32,8 +33,9 @@ import datetime
 def cli_node_list():
     """Lists all nodes in the default configuration directories."""
 
+    # FIXME: use package 'table' for this.
     click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
-    click.echo("-"*70)
+    click.echo("-" * 70)
 
     configs, f1 = NodeContext.available_configurations(system_folders=True)
     for config in configs:
@@ -50,17 +52,9 @@ def cli_node_list():
 #
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None)
-@click.option('-e', '--environment',
-    default=constants.DEFAULT_NODE_ENVIRONMENT,
-    help='configuration environment to use'
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
-)
+@click.option('-e', '--environment', default=constants.DEFAULT_NODE_ENVIRONMENT, help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=constants.DEFAULT_NODE_SYSTEM_FOLDERS)
 def cli_node_new_configuration(name, environment, system_folders):
     """Create a new configation file.
 
@@ -77,27 +71,17 @@ def cli_node_new_configuration(name, environment, system_folders):
             f"{environment} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard(name, environment=environment,
-        system_folders=system_folders)
+    cfg_file = configuration_wizard(name, environment, system_folders)
     click.echo(f"New configuration created: {cfg_file}")
 
 #
 #   files
 #
 @cli_node.command(name="files")
-@click.option("-n", "--name",
-    default=None,
-    help="configuration name"
-)
-@click.option('-e', '--environment',
-    default=constants.DEFAULT_NODE_ENVIRONMENT,
-    help='configuration environment to use'
-)
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('-e', '--environment', default=constants.DEFAULT_NODE_ENVIRONMENT, help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
-)
+@click.option('--user', 'system_folders', flag_value=False, default=constants.DEFAULT_NODE_SYSTEM_FOLDERS)
 def cli_node_files(name, environment, system_folders):
     """Print out the paths of important files.
 
@@ -128,26 +112,13 @@ def cli_node_files(name, environment, system_folders):
 #   start
 #
 @cli_node.command(name='start')
-@click.option("-n","--name",
-    default=None,
-    help="configuration name"
-)
-@click.option("-c", "--config",
-    default=None,
-    help='absolute path to configuration-file; overrides NAME'
-)
-@click.option('-e', '--environment',
-    default=constants.DEFAULT_NODE_ENVIRONMENT,
-    help='configuration environment to use'
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS
-)
-def cli_node_start(name, config, environment, system_folders):
+@click.option("-n","--name", default=None, help="configuration name")
+@click.option("-c", "--config", default=None, help='absolute path to configuration-file; overrides NAME')
+@click.option('-e', '--environment', default=constants.DEFAULT_NODE_ENVIRONMENT, help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=constants.DEFAULT_NODE_SYSTEM_FOLDERS)
+@click.option('--dockerized/-non-dockerized', default=False)
+def cli_node_start(name, config, environment, system_folders, dockerized):
     """Start the node instance.
 
     If no name or config is specified the default.yaml configuation is used.
@@ -156,32 +127,34 @@ def cli_node_start(name, config, environment, system_folders):
     specify specific environments for the configuration (e.g. test,
     prod, acc).
     """
+    ContextClass = DockerNodeContext if dockerized else NodeContext
 
-    # in case a configuration file is given, we by pass all the helper
+    # in case a configuration file is given, we bypass all the helper
     # stuff since you know what you are doing
     if config:
-        ctx = NodeContext.from_external_config_file(config, environment,
-                                                    system_folders)
-    else:
+        ctx = ContextClass(name, environment, system_folders, config)
 
+    else:
         # in case no name is supplied, ask user to select one
-        name, environment = (name, environment) if name \
-            else select_configuration_questionaire(system_folders)
+        if not name:
+            name, environment = select_configuration_questionaire(system_folders)
 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
-        if not NodeContext.config_exists(name,environment,system_folders):
-            if q.confirm(f"Configuration {name} using environment "
-                f"{environment} does not exists. Do you want to create "
-                f"this config now?").ask():
-                configuration_wizard(name, environment=environment,
-                    system_folders=system_folders)
-            else:
+        if not ContextClass.config_exists(name, environment, system_folders):
+            question =  f"Configuration '{name}' using environment"
+            question += f" '{environment}' does not exist.\n  Do you want to"
+            question += f" create this config now?"
 
+            if q.confirm(question).ask():
+                configuration_wizard(name, environment, system_folders)
+
+            else:
                 sys.exit(0)
 
         # create dummy node context
-        ctx = NodeContext(name, environment, system_folders)
+        ctx = ContextClass(name, environment, system_folders)
 
     # run the node application
     node.run(ctx)
+

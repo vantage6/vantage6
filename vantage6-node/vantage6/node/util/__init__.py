@@ -1,6 +1,6 @@
 from vantage6.common import (
-    logger_name, 
-    Singleton, 
-    prepare_bytes_for_transport, 
-    unpack_bytes_from_transport
+    logger_name,
+    Singleton,
+    bytes_to_base64,
+    base64_to_bytes
 )

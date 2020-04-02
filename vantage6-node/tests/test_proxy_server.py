@@ -16,14 +16,14 @@ from vantage6 import server
 from vantage6.node.server_io import ClientBaseProtocol
 from vantage6.client.encryption import Cryptor
 from vantage6.node.globals import (
-    PACAKAGE_FOLDER, 
-    APPNAME, 
-    DATA_FOLDER, 
+    PACAKAGE_FOLDER,
+    APPNAME,
+    DATA_FOLDER,
     VERSION
 )
 from vantage6.common import (
-    unpack_bytes_from_transport, 
-    prepare_bytes_for_transport
+    base64_to_bytes,
+    bytes_to_base64
 )
 
 
@@ -49,23 +49,23 @@ def test_central_server(): # pragma: no cover
     from vantage6.server.controller.fixture import load
 
     Database().connect("sqlite://")
-    
+
     file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
     with open(file_) as f:
         entities = yaml.safe_load(f.read())
     load(entities, drop_all=True)
-    
+
     server.app.secret_key = "test-secret"
 
     ctx = TestContext.from_external_config_file(
-        "unittest_config.yaml"           
+        "unittest_config.yaml"
     )
     server.init_resources(ctx)
     ip = '127.0.0.1'
     port = 5000
-    
+
     server.run(ctx=ctx, host=ip, port=port, debug=False)
-    
+
 class TestProxyServer(unittest.TestCase):
 
     @classmethod
@@ -80,7 +80,7 @@ class TestProxyServer(unittest.TestCase):
 
     def setUp(self):
         # start local server
-        
+
         # self.server = threading.Thread(
         #     target=self.__test_central_server,
         #     daemon=True
@@ -102,7 +102,7 @@ class TestProxyServer(unittest.TestCase):
         server_io.cryptor = Cryptor(
             DATA_FOLDER / "private_key.pem"
         )
-        
+
         # attach proxy to this local service
         app.testing = True
         app.response_class = Response
@@ -125,20 +125,20 @@ class TestProxyServer(unittest.TestCase):
                 "password": "password"
             }
         }
-        
+
         self.headers = None
-    
+
     @classmethod
     def tearDownClass(cls):
         cls.server.terminate()
 
     def login(self, type_='root'):
-        
+
         tokens = self.app.post(
             'token/user',
             json=self.credentials[type_]
         ).get_json()
-        
+
         headers = {
             'Authorization': 'Bearer {}'.format(tokens['access_token'])
         }
@@ -156,14 +156,14 @@ class TestProxyServer(unittest.TestCase):
             self.login()
         self.assertIn("Authorization", self.headers)
         self.assertIsInstance(self.headers["Authorization"], str)
-    
+
     def test_task(self):
         if not self.headers:
             self.login()
 
-        input_ = prepare_bytes_for_transport("bla".encode("ascii"))
+        input_ = bytes_to_base64("bla".encode("ascii"))
         proxy_test = self.app.post(
-            "task", 
+            "task",
             headers=self.headers,
             json={
                 "organizations":[{
@@ -185,7 +185,7 @@ class TestProxyServer(unittest.TestCase):
             self.login()
 
         proxy_test = self.app.get(
-            "result/1", 
+            "result/1",
             headers=self.headers,
         ).get_json()
 
@@ -194,8 +194,8 @@ class TestProxyServer(unittest.TestCase):
         self.assertIn("input", proxy_test)
 
 
-    
-    
-    
 
-        
+
+
+
+
