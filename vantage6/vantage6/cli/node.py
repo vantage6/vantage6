@@ -432,7 +432,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep, mount
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1) --tag, 2) config 3) latest
     if image is None:
         image = "harbor.distributedlearning.ai/infrastructure/node:latest"
 
@@ -440,7 +439,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep, mount
     try:
         docker_client.images.pull(image)
     except:
-        error(' ... alas, no dice!')
+        warning(' ... alas, no dice!')
     else:
         info(" ... succes!")
 
@@ -461,6 +460,8 @@ def cli_node_start(name, config, environment, system_folders, image, keep, mount
     ]
 
     if mount_src:
+        # If mount_src is a relative path, docker willl consider it a volume.
+        mount_src = os.path.abspath(mount_src)
         mounts.append(('/vantage6/vantage6-node', mount_src))
 
     # FIXME: Code duplication: Node.__init__() (vantage6/node/__init__.py)
@@ -480,7 +481,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep, mount
 
     if fullpath:
         if Path(fullpath).exists():
-            mounts.append(("/mnt/private_key.pem", fullpath))
+            mounts.append(("/mnt/private_key.pem", str(fullpath)))
         else:
             warning(f"private key file provided {fullpath}, but does not exists")
 

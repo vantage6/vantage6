@@ -50,7 +50,7 @@ class NodeConfiguration(Configuration):
             "datefmt": Use(str)
         },
         "encryption": {
-            "disabled": bool,
+            "enabled": bool,
             Optional("private_key"): Use(str)
         }
     }
