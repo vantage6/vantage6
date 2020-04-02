@@ -22,6 +22,8 @@ from vantage6.cli.context import NodeContext
 class DockerNodeContext(NodeContext):
     """Node context for the dockerized version of the node."""
 
+    running_in_docker = True
+
     @staticmethod
     def instance_folders(instance_type, instance_name, system_folders):
         """Log, data and config folders are allways mounted mounted. The

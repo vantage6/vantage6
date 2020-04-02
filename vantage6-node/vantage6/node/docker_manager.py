@@ -231,7 +231,6 @@ class DockerManager(object):
         except Exception as e:
             self.log.error(e)
 
-
         # FIXME: We should have a seperate mount/volume for this. At the
         #   moment this is a potential leak as containers might access input,
         #   output and token from other containers.
@@ -240,10 +239,12 @@ class DockerManager(object):
         #   is terrible when working from windows (as you have to convert
         #   from windows to unix several times...).
 
-        # If we're running in docker __tasks_dir should point to the mount
-        # point for the data volume. Alternatively, if we're not running in
-        # docker it should point to the folder on the host that can act like a
-        # data volume. In both cases, we can just copy the required files to it
+
+        # If we're running in docker __tasks_dir will point to a location on
+        # the data volume.
+        # Alternatively, if we're not running in docker it should point to the
+        # folder on the host that can act like a data volume. In both cases,
+        # we can just copy the required files to it
         task_folder_name = f"task-{result_id:09d}"
         task_folder_path = os.path.join(self.__tasks_dir, task_folder_name)
         os.makedirs(task_folder_path, exist_ok=True)
@@ -265,9 +266,8 @@ class DockerManager(object):
             with open(filepath, 'wb') as fp:
                 fp.write(data)
 
-        # define enviroment variables for the docker-container, the
-        # host, port and api_path are from the local proxy server to
-        # facilitate indirect communication with the central server
+        # FIXME: these values should be retrieved from DockerNodeContext
+        #   in some way.
         tmp_folder = "/mnt/tmp"
         data_folder = "/mnt/data"
 
@@ -278,16 +278,14 @@ class DockerManager(object):
         if self.running_in_docker():
             volumes[self.data_volume_name] = {"bind": data_folder,"mode": "rw"}
 
-            # The data volume contains the folder '/data' that actually holds
-            # the data. We'll need to adjust.
-            # FIXME: crappy implemenetation, Melle. How would DockerManager
-            #   know about what Node did?
-            data_folder = os.path.join(data_folder, 'data')
-
         else:
             volumes[self.__tasks_dir] = {"bind": data_folder,"mode": "rw"}
 
-        # FIXME: we should only prepend data_folder if database_uri is a filename
+        # define enviroment variables for the docker-container, the
+        # host, port and api_path are from the local proxy server to
+        # facilitate indirect communication with the central server
+        # FIXME: we should only prepend data_folder if database_uri is a
+        #   filename
         environment_variables = {
             "INPUT_FILE": os.path.join(data_folder, task_folder_name, "input"),
             "OUTPUT_FILE": os.path.join(data_folder, task_folder_name, "output"),

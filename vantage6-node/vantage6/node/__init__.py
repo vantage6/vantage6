@@ -98,8 +98,10 @@ class NodeTaskNamespace(SocketIONamespace):
         self.log.debug("Token refreshed")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
-        self.node_worker_ref.__sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
+
+        # FIXME: This won't work: you're trying to access a private method!?
+        # self.node_worker_ref.__sync_task_queue_with_server()
+        # self.log.debug("Tasks synced again with the server...")
 
     def on_pang(self, msg):
         # self.log.debug(f"Pong received, WS still connected <{msg}>")
@@ -147,7 +149,10 @@ class Node(object):
         self.authenticate()
 
         # Setup encryption
-        # FIXME: At the moment this *always* requires a key.
+        # FIXME: At the moment this *always* requires a key, even if the
+        #   collaboration doesn't use it.
+        # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
+        #   logic. Suggest moving this to ctx.get_private_key()
         encryption_cfg = self.config['encryption']
         filename = encryption_cfg["private_key"]
 
@@ -199,14 +204,19 @@ class Node(object):
         #  This also means that the volume will have to be created & mounted
         #  *before* this node is started, so we won't do anything with it here.
 
-        self.log.debug("Setting up the docker manager")
 
         # We'll create a subfolder in the data_dir. We need this subfolder so
         # we can easily mount it in the algorithm containers; the root folder
         # may contain the private key, which which we don't want to share.
-        task_dir = os.path.join(ctx.data_dir, 'data')
-        os.makedirs(task_dir, exist_ok=True)
+        # We'll only do this if we're running outside docker, otherwise we would
+        # create '/data' on the data volume.
+        if not ctx.running_in_docker:
+            task_dir = os.path.join(ctx.data_dir, 'data')
+            os.makedirs(task_dir, exist_ok=True)
+        else:
+            task_dir = ctx.data_dir
 
+        self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
             allowed_images=self.config.get("allowed_images"),
             tasks_dir=task_dir,
@@ -235,7 +245,7 @@ class Node(object):
 
         # Connect to the isolated algorithm network *only* if we're running in
         # a docker container.
-        if self.__docker.running_in_docker():
+        if ctx.running_in_docker:
             self.__docker.connect_to_isolated_network(
                 ctx.docker_container_name,
                 aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
