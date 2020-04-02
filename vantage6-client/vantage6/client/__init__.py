@@ -18,10 +18,10 @@ import typing
 
 from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
 
-from vantage6.client.encryption import Cryptor, NoCryptor
+from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
 from vantage6.client.util import (
-    bytes_to_base64,
-    base64_to_bytes
+    bytes_to_base64s,
+    base64s_to_bytes
 )
 
 module_name = __name__.split('.')[1]
@@ -87,6 +87,46 @@ class ClientBaseProtocol:
         self.cryptor = None
         self.whoami = None
 
+    @property
+    def name(self):
+        """Return the node's/client's name."""
+        return self.whoami.name
+
+    @property
+    def headers(self):
+        """Headers that are send with each request."""
+        if self._access_token:
+            return {'Authorization': 'Bearer ' + self._access_token}
+        else:
+            return {}
+
+    @property
+    def token(self):
+        """Authorization token."""
+        return self._access_token
+
+    @property
+    def host(self):
+        """Host including protocol (HTTP/HTTPS)."""
+        return self.__host
+
+    @property
+    def port(self):
+        """Port from the central server."""
+        return self.__port
+
+    @property
+    def path(self):
+        """Path/endpoint from the server where the api resides."""
+        return self.__api_path
+
+    @property
+    def base_path(self):
+        """Combination of host, port and api-path."""
+        if self.__port:
+            return f"{self.host}:{self.port}{self.__api_path}"
+
+        return f"{self.host}{self.__api_path}"
 
     def generate_path_to(self, endpoint: str):
         """ Generate URL from host, port and endpoint.
@@ -145,7 +185,7 @@ class ClientBaseProtocol:
         # self.log.debug(f"Response data={response.json()}")
         return response.json()
 
-    def setup_encryption(self, private_key_file, disabled=False) -> Cryptor:
+    def setup_encryption(self, private_key_file) -> CryptorBase:
         """ Enable the encryption module for the communcation.
 
             This will attach a Cryptor object to the server_io. It will
@@ -162,29 +202,27 @@ class ClientBaseProtocol:
             TODO update other parties when a new public_key is posted
             TODO clean up this method can be shorter
         """
-        assert self._access_token, \
-            "Encryption can only be setup after authentication"
-        assert self.whoami.organization_id, \
-            "Organization unknown... Did you authenticate?"
+        assert self._access_token, "Encryption can only be setup after authentication"
+        assert self.whoami.organization_id, "Organization unknown... Did you authenticate?"
 
-        # en/decryption class
-        CRYPTOR_CLASS = NoCryptor if disabled else Cryptor
-        cryptor = CRYPTOR_CLASS(private_key_file)
-        if disabled:
-            self.cryptor = cryptor
+        if private_key_file is None:
+            self.cryptor = DummyCryptor()
             return
+
+        cryptor = RSACryptor(private_key_file)
 
         # check if the public-key is the same on the server. If this is
         # not the case, this node will not be able to read any messages
         # that are send to him! If this is the case, the new public_key
         # will be uploaded to the central server
-        organization = self.request(
-            f"organization/{self.whoami.organization_id}")
+        organization = self.request(f"organization/{self.whoami.organization_id}")
         pub_key = organization.get("public_key")
         upload_pub_key = False
+
         if pub_key:
             if cryptor.verify_public_key(pub_key):
                 self.log.info("Public key matches the server key! Good to go!")
+
             else:
                 self.log.critical(
                     "Local public key does not match server public key. "
@@ -200,16 +238,14 @@ class ClientBaseProtocol:
             self.request(
                 f"organization/{self.whoami.organization_id}",
                 method="patch",
-                json={
-                    "public_key": cryptor.public_key_str
-                }
+                json={"public_key": cryptor.public_key_str}
             )
             self.log.info("The public key on the server is updated!")
 
         self.cryptor = cryptor
 
     def authenticate(self, credentials: dict, path="token/user"):
-        """ Authenticate to the central server.
+        """Authenticate to the central server.
 
             It allows signin for all identities (user, node, container).
             Therefore credentials can be either a username/password
@@ -269,8 +305,8 @@ class ClientBaseProtocol:
 
         self._access_token = response.json()["access_token"]
 
-    def post_task(self, name:str, image:str, collaboration_id:int,
-        input_:bytes=b'', description='', organization_ids:list=[]) -> dict:
+    def post_task(self, name: str, image: str, collaboration_id: int,
+        input_: bytes=b'', description='', organization_ids: list=None) -> dict:
         """ Post a new task at the server.
 
             It will also encrypt `input_` for each receiving
@@ -287,17 +323,18 @@ class ClientBaseProtocol:
         """
         assert self.cryptor, "Encryption has not yet been setup!"
 
+        if organization_ids is None:
+            organization_ids = []
+
         organization_json_list = []
         for org_id in organization_ids:
             pub_key = self.request(f"organization/{org_id}").get("public_key")
-            pub_key = base64_to_bytes(pub_key)
-            organization_json_list.append(
-                {
-                    "id": org_id,
-                    "input": self.cryptor.encrypt_bytes_to_base64(
-                        input_, pub_key)
-                }
-            )
+            pub_key = base64s_to_bytes(pub_key)
+
+            organization_json_list.append({
+                "id": org_id,
+                "input": self.cryptor.encrypt_bytes_to_str(input_, pub_key)
+            })
 
         return self.request('task', method='post', json={
             "name": name,
@@ -309,11 +346,11 @@ class ClientBaseProtocol:
 
     def get_results(self, id=None, state=None, include_task=False,
         task_id=None, node_id=None):
-        """ Get task result(s) from the central server.
+        """Get task result(s) from the central server.
 
             Depending if a `id` is specified or not, either a single or
             a list of results is returned. The input and result field
-            of the result are attemted te be decrypted. This fails if
+            of the result are attempted te be decrypted. This fails if
             the public key at the server is not derived from the
             currently private key.
 
@@ -325,19 +362,30 @@ class ClientBaseProtocol:
             :param node_id: the id of the node at which this result has
                 been produced, this will return all results from this
                 node
-
-            TODO unencrypted should only occur when the collaboration is
-                unencrypted (in the db at the server). Therefore if
-                unencryption fails, we can reject the message rather
-                than assuming that it is a not encrypted message. we
-                need check this setting first at the server. But this
-                might be better to do in the Cryptor class
-
-            TODO it is assumed that the output is json formatted.. We
-                might want to use other types of output
         """
-        # create formatted params
+
+        def decrypt_result(res):
+            """Helper to decrypt the keys 'input' and 'result' in dict.
+
+            Keys are replaced, but object reference remains intact: changes are
+            made *in-place*.
+            """
+            cryptor = self.cryptor
+            try:
+                res["input"] = cryptor.decrypt_str_to_bytes(res["input"])
+
+                if res["result"]:
+                    res["result"] = cryptor.decrypt_str_to_bytes(res["result"])
+
+            except ValueError as e:
+                self.log.error("Could not decrypt/decode input or result.")
+                self.log.error(e)
+                raise
+
+        # Determine endpoint and create dict with query parameters
+        endpoint = 'result' if not id else f'result/{id}'
         params = dict()
+
         if state:
             params['state'] = state
         if include_task:
@@ -347,101 +395,19 @@ class ClientBaseProtocol:
         if node_id:
             params['node_id'] = node_id
 
-        self.log.debug(f"obtaining results using params={params}")
-        results = self.request(
-            endpoint='result' if not id else f'result/{id}',
-            params=params
-        )
+        # self.log.debug(f"Retrieving results using query parameters: {params}")
+        results = self.request(endpoint=endpoint, params=params)
 
-        results_unencrypted = []
-        if not id:
+        if id:
+            # Single result
+            results = decrypt_result(results)
+
+        else:
+            # Multiple results
             for result in results:
-                try:
-                    result["input"] = self.cryptor.decrypt_bytes_from_base64(
-                        result["input"]
-                    )
-                    if result["result"]:
-                        result["result"] = self.cryptor.decrypt_bytes_from_base64(
-                            result["result"]
-                        )
+                decrypt_result(result)
 
-                except ValueError as e:
-                    # FIXME: I think this should be a hard stop instead of
-                    #   just a warning as it makes it possible to circumvent
-                    #   encryption even though it's required.
-                    self.log.warn(
-                        "Could not decrypt (or unpack in case no encryption "
-                        "is used) input."
-                    )
-                    self.log.debug(e)
-
-                results_unencrypted.append(result)
-            return results_unencrypted
-
-        else:
-            try:
-                results["input"] = self.cryptor.decrypt_bytes_from_base64(
-                    results["input"]
-                )
-
-                results["result"] = self.cryptor.decrypt_bytes_from_base64(
-                    results["result"]
-                )
-
-            except ValueError as e:
-                self.log.warn(
-                    "Could not decrypt input."
-                    "Assuming input was not encrypted"
-                )
-                self.log.debug(e)
-            return results
-
-
-    @property
-    def name(self):
-        return self.whoami.name
-
-    @property
-    def headers(self):
-        """ Headers that are send with each request.
-        """
-        if self._access_token:
-            return {'Authorization': 'Bearer ' + self._access_token}
-        else:
-            return {}
-
-    @property
-    def token(self):
-        """ Authorization token.
-        """
-        return self._access_token
-
-    @property
-    def host(self):
-        """ Host including protocol (HTTP/HTTPS).
-        """
-        return self.__host
-
-    @property
-    def port(self):
-        """ Port from the central server.
-        """
-        return self.__port
-
-    @property
-    def path(self):
-        """ Path/endpoint from the server where the api resides.
-        """
-        return self.__api_path
-
-    @property
-    def base_path(self):
-        """ Combination of host, port and api-path.
-        """
-        if self.__port:
-            return f"{self.host}:{self.port}{self.__api_path}"
-
-        return f"{self.host}{self.__api_path}"
+        return results
 
 
 class ClientUserProtocol(ClientBaseProtocol):

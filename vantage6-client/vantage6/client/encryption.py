@@ -17,7 +17,6 @@ TODO handle no public key from other organization (should that happen here)
 TODO rename def, not all methods should be public
 """
 import logging
-import pickle
 
 from pathlib import Path
 
@@ -33,13 +32,72 @@ from vantage6.client.constants import APPNAME
 from vantage6.client.util import (
     Singleton,
     logger_name,
-    bytes_to_base64,
-    base64_to_bytes
+    bytes_to_base64s,
+    base64s_to_bytes
 )
 
+# ------------------------------------------------------------------------------
+# CryptorBase
+# ------------------------------------------------------------------------------
+class CryptorBase(metaclass=Singleton):
+    """Base class/interface for encryption implementations."""
 
-class Cryptor(metaclass=Singleton):
-    """ Wrapper class for the cryptography package.
+    def encrypt(self, data: bytes, pubkey: bytes) -> bytes:
+        """Encrypt bytes in `data` using a public key.
+
+        Should be overridden by a subclass. This implementation does nothing.
+        """
+        return data
+
+    def decrypt(self, data: bytes) -> bytes:
+        """Decrypt bytes in `data`.
+
+        Should be overridden by a subclass. This implementation does nothing.
+        """
+        return data
+
+    def bytes_to_str(self, data: bytes) -> str:
+        """Encode bytes as string.
+
+        Default implementation just uses utf-8 encoding.
+        """
+        return data.decode('utf-8')
+
+    def str_to_bytes(self, data: str) -> bytes:
+        """Decode string to bytes.
+
+        Default implementation just uses utf-8 encoding.
+        """
+        return data.encode('utf-8')
+
+
+    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str) -> str:
+        """Encrypt bytes in `data` using a (base64 encoded) public key."""
+        public_key = base64s_to_bytes(public_key_base64)
+        encrypted_data = self.encrypt(data, public_key)
+
+        return self.str_to_bytes(encrypted_data)
+
+    def decrypt_str_to_bytes(self, data: str) -> bytes:
+        """Decrypt base64 encoded *string* `data."""
+        data_bytes = self.str_to_bytes(data)
+
+        return self.decrypt(data_bytes)
+
+
+# ------------------------------------------------------------------------------
+# DummyCryptor
+# ------------------------------------------------------------------------------
+class DummyCryptor(CryptorBase):
+    """Does absolutely nothing."""
+    pass
+
+
+# ------------------------------------------------------------------------------
+# RSACryptor
+# ------------------------------------------------------------------------------
+class RSACryptor(CryptorBase):
+    """Wrapper class for the cryptography package.
 
         It loads the private key, and has an interface to encrypt en decrypt
         messages. If no private key is found, it can generate one, and store
@@ -55,11 +113,12 @@ class Cryptor(metaclass=Singleton):
         sending and receiving the public_key.
     """
 
-    def __init__(self, private_key_file=None):
+    def __init__(self, private_key_file):
+        """Create a new RSACryptor instance."""
         self.log = logging.getLogger(logger_name(__name__))
         self.private_key = self.__load_private_key(private_key_file)
 
-    def __load_private_key(self, private_key_file=None):
+    def __load_private_key(self, private_key_file):
         """ Load a private key file into this instance.
 
             If `private_key_file` has not been supplied the default key
@@ -76,31 +135,18 @@ class Cryptor(metaclass=Singleton):
         #   unexpected side effect given the name of the method. Either rename
         #   the function or refactor to generate the key if this function
         #   cannot find/load it.
-
-        # we use the default data folder, which is a folder in the
-        # package directory
-        if not private_key_file:
-            rsa_file = Path("/mnt/data/private_key.pem")
-            self.log.debug(
-                f"No private key file specified, "
-                f"using default (located in the data folder)"
-            )
-        else:
-            rsa_file = private_key_file
-
-        # this gets messy when python does not have access to the
-        # `rsa_file`
-        if not rsa_file.exists():
+        if not private_key_file.exists():
             self.log.warning(
-                f"Private key file {rsa_file} not found. Now generating one. "
+                f"Private key file {private_key_file} not found. Now generating one. "
                 f"This is could be normal if you run {APPNAME} for the first "
                 f"time."
             )
-            self.__create_new_rsa_key(rsa_file)
+            self.__create_new_rsa_key(private_key_file)
 
         self.log.debug("Loading private key")
+
         return load_pem_private_key(
-            rsa_file.read_bytes(),
+            private_key_file.read_bytes(),
             password=None,
             backend=default_backend()
         )
@@ -130,127 +176,121 @@ class Cryptor(metaclass=Singleton):
 
     @property
     def public_key_str(self):
-        """ Returns a JSON safe public key, used for the API interface."""
-        return bytes_to_base64(self.public_key_bytes)
+        """ Returns a JSON safe public key, used for the API."""
+        return bytes_to_base64s(self.public_key_bytes)
 
-    def verify_public_key(self, public_key_base64) -> bool:
-        """ Verifies the public key.
+    def bytes_to_str(self, data: bytes) -> str:
+        """Encode bytes as base64 encoded string."""
+        return bytes_to_base64s(data)
 
-            Compare the public key with the generated public key from
+    def str_to_bytes(self, data: str) -> bytes:
+        """Decode base64 encoded string to bytes."""
+        return base64s_to_bytes(data)
+
+    def encrypt(self, data: bytes, pubkey: bytes) -> bytes:
+        """Encrypt bytes in `data` using a public key."""
+        backend = default_backend()
+
+        try:
+            pubkey = load_pem_public_key(pubkey, backend)
+
+        except Exception as e:
+            self.log.error("Unable to load public key")
+            raise
+
+        # Just for who's interested:
+        #   MGF1: Mask Generation Function based on hash function
+        #   OAEP: Optimal Asymmetric Encryption Padding
+        hash_algorithm = hashes.SHA256()
+        mgf1 = padding.MGF1(hash_algorithm)
+        padding.OAEP(mgf1, hash_algorithm, label=None)
+
+        try:
+            encrypted = pubkey.encrypt(data, padding)
+
+        except Exception as e:
+            self.log.error(f"Unable to encrypt message: {e}")
+            raise
+
+        return encrypted
+
+    def decrypt(self, data: bytes) -> bytes:
+        """Decrypt bytes in `data`."""
+        hash_algorithm = hashes.SHA256()
+        mgf1 = padding.MGF1(hash_algorithm)
+        padding.OAEP(mgf1, hash_algorithm, label=None)
+
+        return self.private_key.decrypt(data, padding)
+
+    def verify_public_key(self, pubkey_base64) -> bool:
+        """Verifies the public key.
+
+            Compare a public key with the generated public key from
             the private key that is stored in this instance. This is
             usefull for verifying that the public key stored on the
             server is derived from the currently used private key.
 
-            :param public_key_base64: public_key as returned from the
+            :param pubkey_base64: public_key as returned from the
                 server (still base64 encoded)
         """
-        public_key_server = base64_to_bytes(
-            public_key_base64
-        )
+        public_key_server = base64s_to_bytes(pubkey_base64)
         return self.public_key_bytes == public_key_server
 
-    def _encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
-        """ Encrypt `msg` using a `public_key_bytes`.
 
-            :param msg: string message to encrypt
-            :param public_key_bytes: public key used to encrypt `msg`
-        """
-        try:
-            pub_key = load_pem_public_key(
-                public_key_bytes,
-                backend=default_backend()
-            )
-
-        except Exception as e:
-            self.log.error("Unable to load public-key")
-            self.log.error(e)
-
-        try:
-            encrypted_msg = pub_key.encrypt(
-                msg,
-                padding.OAEP(
-                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                    algorithm=hashes.SHA256(),
-                    label=None
-                )
-            )
-        except Exception as e:
-            self.log.error(f"Unable to encrypt message: {e}")
-            return msg
-
-        return encrypted_msg
-
-    def _decrypt_bytes(self, msg: bytes) -> bytes:
-        """ Decrypt `msg` using our private key.
-
-            :param msg: bytes message
-        """
-        decrypted_msg = self.private_key.decrypt(
-            msg,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
-
-        return decrypted_msg
-
-    def encrypt_bytes_to_base64(self, msg: bytes, public_key_base64: str) -> str:
-        """Encrypt bytes in `msg` into a base64 encoded string.
-
-            :param msg: message to be encrypted
-            :param public_key_base64: public key base64 decoded
-                (directly from API transport)
-
-            TODO we should retreive all keys once... and store them in
-                the node
-        """
-        # unpack public key
-        public_key_bytes = base64_to_bytes(public_key_base64)
-
-        # encrypt message using public key
-        encrypted_msg = self._encrypt_bytes(msg, public_key_bytes)
-
-        # prepare message for transport
-        base64_str = bytes_to_base64(encrypted_msg)
-
-        return base64_str
-
-    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
+#    def encrypt_bytes_to_base64s(self, msg: bytes, public_key_base64: str) -> str:
+#        """Encrypt bytes in `msg` into a base64 encoded string.
+#
+#            :param msg: message to be encrypted
+#            :param public_key_base64: public key base64 decoded
+#                (directly from API transport)
+#
+#            TODO we should retrieve all keys once... and store them in
+#                the node
+#        """
+#        # unpack public key
+#        public_key_bytes = base64s_to_bytes(public_key_base64)
+#
+#        # encrypt message using public key
+#        encrypted_msg = self.encrypt(msg, public_key_bytes)
+#
+#        # prepare message for transport
+#        base64_str = bytes_to_base64s(encrypted_msg)
+#
+#        return base64_str
+#
+#    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
         """Decrypt base64 encoded *string* `msg` using our private key.
 
             :param msg: string utf-8 encoded base64 encrypted msg
         """
-        msg_bytes = base64_to_bytes(msg)
+        msg_bytes = base64s_to_bytes(msg)
         return self._decrypt_bytes(msg_bytes)
+#
 
 
-
-class NoCryptor(Cryptor):
-    """ When the collaboration of which the node part is is unencrypted.
-
-        This overwrites all encryption / descryption methods to not
-        use encryption, but does cenvert between str and bytes if needed
-    """
-    def __init__(self, private_key_file=None):
-        # super().__init__(private_key_file=private_key_file)
-        self.log = logging.getLogger(logger_name(__name__))
-        self.log.warning(
-                "Encrpytion disabled! Use this only for debugging")
-
-
-    def encrypt_bytes_to_base64(
-        self, msg: bytes, public_key_base64: str) -> str:
-        return bytes_to_base64(msg)
-
-    def encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
-        return msg
-
-    def decrypt_bytes(self, msg: bytes) -> bytes:
-        return msg
-
-    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
-        return base64_to_bytes(msg)
-
-
+#class NoCryptor(Cryptor):
+#    """ When the collaboration of which the node part is is unencrypted.
+#
+#        This overwrites all encryption / descryption methods to not
+#        use encryption, but does cenvert between str and bytes if needed
+#    """
+#    def __init__(self, private_key_file=None):
+#       # super().__init__(private_key_file=private_key_file)
+#       self.log = logging.getLogger(logger_name(__name__))
+#       self.log.warning(
+#               "Encrpytion disabled! Use this only for debugging")
+#
+#    def encrypt_bytes_to_base64s(
+#        self, msg: bytes, public_key_base64: str) -> str:
+#        return bytes_to_base64s(msg)
+#
+#    def encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
+#       return msg
+#
+#    def decrypt_bytes(self, msg: bytes) -> bytes:
+#       return msg
+#
+#    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
+#       return base64s_to_bytes(msg)
+#
+#
