@@ -75,7 +75,7 @@ class Task(Resource):
     @swag_from(str(Path(r"swagger/post_task_without_id.yaml")), endpoint='task_without_id')
     def post(self):
         """Create a new Task."""
-        log_full_request(request, log)
+        # log_full_request(request, log)
 
         if not request.is_json:
             return {"msg": "No JSON body found..."}, HTTPStatus.BAD_REQUEST

@@ -3,6 +3,7 @@ import logging
 from vantage6.server import db
 from vantage6 import server
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+import jwt
 from flask_socketio import join_room, send, leave_room, emit, Namespace
 from flask import g, session, request
 
@@ -28,11 +29,18 @@ class DefaultSocketNamespace(Namespace):
         # try to catch jwt authorization token.
         try:
             verify_jwt_in_request()
-        except Exception as e:
+
+        except jwt.exceptions.ExpiredSignatureError as e:
+            self.log.error("JWT has expired")
+            emit("expired_token", "", room=request.sid)
+
+        except Exception as e
             self.log.error("Could not connect client! No or Invalid JWT token?")
             self.log.exception(e)
-            self.__join_room_and_notify(request.sid)
             session.name = "no-sure-yet"
+            self.__join_room_and_notify(request.sid)
+
+            # FIXME: expired probably doesn't cover it ...
             emit("expired_token", "", room=request.sid)
             return
 
@@ -67,11 +75,14 @@ class DefaultSocketNamespace(Namespace):
 
 
     def on_disconnect(self):
-        for room in session.rooms:
-            self.__leave_room_and_notify(room)
-
-        session.auth.status = 'offline'
-        session.auth.save()
+        # FIXME: this raises errors:
+        #   AttributeError: '_ManagedSession' object has no attribute '...'
+        #
+        # for room in session.rooms:
+        #     self.__leave_room_and_notify(room)
+        #
+        # session.auth.status = 'offline'
+        # session.auth.save()
 
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
