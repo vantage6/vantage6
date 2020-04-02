@@ -25,6 +25,9 @@ import time
 from docker.errors import DockerException
 from pathlib import Path
 from threading import Thread
+from colorama import init, Fore, Back, Style
+
+import vantage6.common.colorer
 
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -39,28 +42,16 @@ from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
 )
+from vantage6.common import (
+    echo,
+    warning,
+    error,
+    info
+)
 
-import vantage6.common.colorer
-from colorama import init, Fore, Back, Style
 
+# init colorstuff
 init()
-
-def echo(msg, level = "info"):
-    type_ = {
-        "error": f"[{Fore.RED}error{Style.RESET_ALL}]",
-        "warn": f"[{Fore.YELLOW}warn{Style.RESET_ALL}]",
-        "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]"
-    }.get(level)
-    click.echo(f"{type_} - {msg}")
-
-def info(msg):
-    echo(msg, "info")
-
-def warning(msg):
-    echo(msg, "warn")
-
-def error(msg):
-    echo(msg, "error")
 
 
 @click.group(name="node")
@@ -269,7 +260,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
     # stuff since you know what you are doing
     if config:
         ctx = NodeContext.from_external_config_file(config, environment,
-            system_folders)
+                                                    system_folders)
     else:
         # in case no name is supplied, ask user to select one
         name, environment = (name, environment) if name else \
@@ -282,7 +273,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
                 f"{environment} does not exists. Do you want to create "
                 f"this config now?").ask():
                 configuration_wizard("node", name, environment=environment,
-                    system_folders=system_folders)
+                                     system_folders=system_folders)
             else:
                 error("Config file couldn't be loaded")
                 sys.exit(0)
@@ -293,8 +284,8 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
     # check that this node is not already running
     running_nodes = docker_client.containers.list(
         filters={"label":f"{APPNAME}-type=node"})
+    post_ = "system" if system_folders else "user"
     for node in running_nodes:
-        post_ = "system" if system_folders else "user"
         if node.name == f"{APPNAME}-{name}-{post_}":
             error(f"Node {Fore.RED}{name}{Style.RESET_ALL} is already running")
             exit()
@@ -334,8 +325,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
     # TODO these filepaths need to be set int the config file
     if develop:
         mounts.append(
-            docker.types.Mount("/src",
-            develop, type="bind")
+            docker.types.Mount("/src", develop, type="bind")
         )
         container_image = "harbor.distributedlearning.ai/infrastructure/dev"
         # attach proxy server for debugging to the host machine
@@ -346,7 +336,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         # 1) --tag, 2) config 3) latest
         tag_ = tag if tag != "default" else ctx.config.get("tag", "latest")
         container_image = f"harbor.distributedlearning.ai/infrastructure/node:{tag_}"
-        info(f"Default container is used <{container_image}>")
+    info(f"Node image {Fore.GREEN}{container_image}{Style.RESET_ALL}")
 
     # pull the latest image
     info("Pulling latest node Docker image")
@@ -364,7 +354,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         command=[ctx.config_file_name, ctx.environment],
         mounts=mounts,
         volumes={data_volume.name: {'bind': '/mnt/data-volume', 'mode': 'rw'}},
-        detach=True, # not attach,
+        detach=True,  # not attach,
         labels={
             f"{APPNAME}-type": "node",
             "system": str(system_folders),
@@ -375,7 +365,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         },
         ports=port,
         name=ctx.docker_container_name,
-        auto_remove=True # not attach
+        auto_remove=True  # not attach
     )
 
     info(f"Succes! container id = {container}")
@@ -481,9 +471,11 @@ def cli_node_attach(name, system_folders):
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
 
+
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING))
+
 
 def check_if_docker_deamon_is_running(docker_client):
     try:

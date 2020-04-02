@@ -4,6 +4,12 @@ from vantage6.common.globals import (
     STRING_ENCODING
 )
 
+#
+#   SERVER SETTINGS
+#
+DEFAULT_SERVER_SYSTEM_FOLDERS = True
+
+DEFAULT_SERVER_ENVIRONMENT = "prod"
 
 #
 #   NODE SETTINGS
