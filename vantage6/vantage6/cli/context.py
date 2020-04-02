@@ -37,6 +37,8 @@ class NodeContext(AppContext):
     #        be set in __init__
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
+    running_in_docker = False
+
     def __init__(self, instance_name, environment=ENVIRONMENT,
         system_folders=False, config_file=None):
         super().__init__("node", instance_name, environment, system_folders, config_file)

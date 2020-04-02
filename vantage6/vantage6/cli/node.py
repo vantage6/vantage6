@@ -376,7 +376,9 @@ def cli_node_start_old(name, config, environment, system_folders, develop, tag):
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=DEFAULT_NODE_SYSTEM_FOLDERS)
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
-def cli_node_start(name, config, environment, system_folders, image):
+@click.option('--keep/--auto-remove', default=False, help="Keep image after finishing")
+@click.option('--mount-src', default='', help="mount vantage6-node package source")
+def cli_node_start(name, config, environment, system_folders, image, keep, mount_src):
     """Start the node instance.
 
         If no name or config is specified the default.yaml configuation is used.
@@ -448,6 +450,7 @@ def cli_node_start(name, config, environment, system_folders, image):
 
     info("Creating file & folder mounts")
     # FIXME: should only mount /mnt/database.csv if it is a file!
+    # FIXME: should obtain mount points from DockerNodeContext
     mounts = [
         # (target, source)
         ("/mnt/database.csv", str(ctx.databases["default"])),
@@ -456,6 +459,9 @@ def cli_node_start(name, config, environment, system_folders, image):
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
+
+    if mount_src:
+        mounts.append(('/vantage6/vantage6-node', mount_src))
 
     # FIXME: Code duplication: Node.__init__() (vantage6/node/__init__.py)
     #   uses a lot of the same logic. Suggest moving this to
@@ -510,7 +516,7 @@ def cli_node_start(name, config, environment, system_folders, image):
         },
         environment=env,
         name=ctx.docker_container_name,
-        auto_remove=True
+        auto_remove=not keep
     )
 
     info(f"Succes! container id = {container}")
