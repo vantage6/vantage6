@@ -6,7 +6,7 @@ import questionary as q
 
 from pathlib import Path
 
-from vantage6.server.context import ServerContext
+from vantage6.cli.context import ServerContext
 from vantage6.server.configuration.configuration_manager import (
     ServerConfigurationManager
 )
@@ -28,24 +28,24 @@ def server_configuration_questionaire(dirs, instance_name):
             "default": "127.0.0.1"
         },
         {
-            "type": "text", 
+            "type": "text",
             "name": "port",
             "message": "Enter port to which the server listens:",
             "default": "5000"
         },
         {
-            "type": "text", 
+            "type": "text",
             "name": "api_path",
             "message": "Path of the api:",
             "default": "/api"
         },
         {
-            "type": "text", 
+            "type": "text",
             "name": "uri",
             "message": "Database URI:"
         },
         {
-            "type": "select", 
+            "type": "select",
             "name": "allow_drop_all",
             "message": "Allowed to drop all tables: ",
             "choices": ["True", "False"]
@@ -68,21 +68,21 @@ def server_configuration_questionaire(dirs, instance_name):
 
     return config
 
-def configuration_wizard(instance_name, environment="application", 
+def configuration_wizard(instance_name, environment="application",
     system_folders=False):
 
     # for defaults and where to save the config
-    dirs = ServerContext.instance_folders("server", instance_name, 
+    dirs = ServerContext.instance_folders("server", instance_name,
         system_folders)
-    
+
     # prompt questionaire
     config = server_configuration_questionaire(dirs, instance_name)
-    
-    # in the case of an environment we need to add it to the current 
-    # configuration. In the case of application we can simply overwrite this 
+
+    # in the case of an environment we need to add it to the current
+    # configuration. In the case of application we can simply overwrite this
     # key (although there might be environments present)
     config_file = Path(dirs.get("config")) / (instance_name + ".yaml")
-    
+
     # check if configuration already exists
     if Path(config_file).exists():
         config_manager = ServerConfigurationManager.from_file(config_file)
@@ -100,15 +100,15 @@ def configuration_wizard(instance_name, environment="application",
 def get_config_location(ctx, config, force_create):
     """Ensure configuration file exists and return its location."""
     return config if config else ctx.config_file
-    
+
 def select_configuration_questionaire(system_folders):
     """Asks which configuration the user want to use
-    
+
     It shows only configurations that are in the default folder.
     """
     configs, f = ServerContext.available_configurations(system_folders)
 
-    # each collection (file) can contain multiple configs. (e.g. test, 
+    # each collection (file) can contain multiple configs. (e.g. test,
     # dev)
     choices = []
     for config_collection in configs:
@@ -117,13 +117,13 @@ def select_configuration_questionaire(system_folders):
             choices.append(q.Choice(
                 title=f"{config_collection.name:25} {env}",
                 value=(config_collection.name, env)))
-    
-    
+
+
     if not choices:
         raise Exception("No configurations could be found!")
-    
+
     # pop the question
     name, env = q.select("Select the configuration you want to use:",
         choices=choices).ask()
-    
+
     return name, env

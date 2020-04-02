@@ -32,7 +32,7 @@ from vantage6.server.configuration.configuration_wizard import (
     configuration_wizard
 )
 
-from vantage6.server.context import ServerContext
+from vantage6.cli.context import ServerContext
 
 # init color-stuff
 init()
