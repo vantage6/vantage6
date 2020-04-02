@@ -19,12 +19,12 @@ from flask import Flask, request, jsonify
 
 from vantage6.node.util import (
     logger_name,
-    base64_to_bytes,
-    bytes_to_base64
+    base64s_to_bytes,
+    bytes_to_base64s
 )
 from vantage6.node.globals import STRING_ENCODING
 from vantage6.node.server_io import ClientNodeProtocol
-from vantage6.client.encryption import Cryptor
+from vantage6.client.encryption import CryptorBase, DummyCryptor, RSACryptor
 
 # Setup FLASK
 app = Flask(__name__)
@@ -104,12 +104,12 @@ def proxy_task():
 
         # Simple JSON (only for unencrypted collaborations)
         if isinstance(input_, dict):
-            input_ = bytes_to_base64(
+            input_ = bytes_to_base64s(
                 json.dumps(input_).encode(STRING_ENCODING)
             )
 
-        input_unpacked = base64_to_bytes(input_)
-        encrypted_input = server_io.cryptor.encrypt_bytes_to_base64(
+        input_unpacked = base64s_to_bytes(input_)
+        encrypted_input = server_io.cryptor.encrypt_bytes_to_base64s(
             input_unpacked, public_key)
 
         log.debug(f"should be unreadable={encrypted_input}")
@@ -152,7 +152,7 @@ def proxy_task_result(id):
             result["result"] = server_io.cryptor.decrypt_bytes_from_base64(
                 result["result"]
             )
-            result["result"] = bytes_to_base64(result["result"])
+            result["result"] = bytes_to_base64s(result["result"])
             unencrypted.append(
                 result
             )
@@ -185,7 +185,7 @@ def proxy_results(id):
             headers={'Authorization': auth}
         )
         encrypted_input = response["result"]
-        response["result"] = bytes_to_base64(
+        response["result"] = bytes_to_base64s(
             server_io.cryptor.decrypt_bytes_from_base64(
                 response["result"]
             )

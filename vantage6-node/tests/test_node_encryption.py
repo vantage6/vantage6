@@ -8,7 +8,7 @@ import json
 from cryptography.hazmat.primitives import hashes, serialization
 from vantage6.client.encryption import Cryptor
 from vantage6.node.globals import PACAKAGE_FOLDER, APPNAME, DATA_FOLDER
-from vantage6.common import base64_to_bytes
+from vantage6.common import base64s_to_bytes
 
 
 log = logging.getLogger(__name__.split(".")[-1])
@@ -49,7 +49,7 @@ class TestCryptor(unittest.TestCase):
         )
 
     def test_unpacking_transport_key(self):
-        b = base64_to_bytes(
+        b = base64s_to_bytes(
             self.cryptor.public_key_str
         )
         self.assertEqual(
@@ -59,7 +59,7 @@ class TestCryptor(unittest.TestCase):
 
     def test_encryption_decryption(self):
         msg = json.dumps({"msg":"some message!"}).encode("ascii")
-        encrypted = self.cryptor.encrypt_bytes_to_base64(
+        encrypted = self.cryptor.encrypt_bytes_to_base64s(
             msg,
             self.cryptor.public_key_str
         )

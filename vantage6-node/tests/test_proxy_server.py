@@ -22,8 +22,8 @@ from vantage6.node.globals import (
     VERSION
 )
 from vantage6.common import (
-    base64_to_bytes,
-    bytes_to_base64
+    base64s_to_bytes,
+    bytes_to_base64s
 )
 
 
@@ -161,7 +161,7 @@ class TestProxyServer(unittest.TestCase):
         if not self.headers:
             self.login()
 
-        input_ = bytes_to_base64("bla".encode("ascii"))
+        input_ = bytes_to_base64s("bla".encode("ascii"))
         proxy_test = self.app.post(
             "task",
             headers=self.headers,

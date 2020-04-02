@@ -133,6 +133,7 @@ class Node(object):
 
         self.ctx = ctx
         self.config = ctx.config
+        self._using_encryption = None
 
         # initialize Node connection to the server
         self.server_io = ClientNodeProtocol(
@@ -149,26 +150,7 @@ class Node(object):
         self.authenticate()
 
         # Setup encryption
-        # FIXME: At the moment this *always* requires a key, even if the
-        #   collaboration doesn't use it.
-        # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
-        #   logic. Suggest moving this to ctx.get_private_key()
-        encryption_cfg = self.config['encryption']
-        filename = encryption_cfg["private_key"]
-
-        # filename may be set to an empty string
-        if not filename:
-            filename = 'private_key.pem'
-
-        # If we're running dockerized, the location may have been overridden
-        filename = os.environ.get('PRIVATE_KEY', filename)
-
-        # If ctx.get_data_file() receives an absolute path, it is returned as-is
-        fullpath = Path(ctx.get_data_file(filename))
-
-        # FIXME: it makes no sense to first generate keys and only afterwards
-        #        checking if encryption is enabled/disabled.
-        self.server_io.setup_encryption(fullpath, encryption_cfg["disabled"])
+        self.setup_encryption()
 
         # Create a long-lasting websocket connection.
         self.log.debug("Creating websocket connection with the server")
@@ -213,6 +195,7 @@ class Node(object):
         if not ctx.running_in_docker:
             task_dir = os.path.join(ctx.data_dir, 'data')
             os.makedirs(task_dir, exist_ok=True)
+
         else:
             task_dir = ctx.data_dir
 
@@ -483,6 +466,41 @@ class Node(object):
 
         # At this point, we shoud be connnected.
         self.log.info(f"Node name: {self.server_io.name}")
+
+    def private_key_filename(self):
+        """Get the path to the private key."""
+
+        # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
+        #   logic. Suggest moving this to ctx.get_private_key()
+        filename = self.config['encryption']["private_key"]
+
+        # filename may be set to an empty string
+        if not filename:
+            filename = 'private_key.pem'
+
+        # If we're running dockerized, the location may have been overridden
+        filename = os.environ.get('PRIVATE_KEY', filename)
+
+        # If ctx.get_data_file() receives an absolute path, it is returned as-is
+        fullpath = Path(self.ctx.get_data_file(filename))
+
+        return fullpath
+
+    def setup_encryption(self):
+        """Setup encryption ... or don't."""
+        encrypted_collaboration = self.server_io.is_encrypted_collaboration()
+        encrypted_node = self.config['encryption']["enabled"]
+
+        if encrypted_collaboration != encrypted_node:
+            # You can't force it if it just ain't right, you know?
+            raise Exception("Expectations on encryption don't match!?")
+
+        if encrypted_collaboration:
+            private_key_file = self.private_key_filename()
+            self.server_io.setup_encryption(private_key_file)
+
+        else:
+            self.server_io.setup_encryption(None)
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.

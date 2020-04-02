@@ -19,8 +19,8 @@ import typing
 # from vantage6.node.encryption import Cryptor, NoCryptor
 from vantage6.client import ClientBaseProtocol
 from vantage6.node.util import (
-    bytes_to_base64,
-    base64_to_bytes
+    bytes_to_base64s,
+    base64s_to_bytes
 )
 from vantage6.client import WhoAmI
 
@@ -261,50 +261,50 @@ class ClientNodeProtocol(ClientBaseProtocol):
         response = self.request(f"collaboration/{self.collaboration_id}")
         return response.get("encrypted") == 1
 
-    def setup_encryption(self, private_key_file, disabled=False):
-        """ Initiates the encryption module.
-
-            The server and local configuration file must agree on
-            whether encryption is used or not. It goes according
-            to the following table:
-
-                   | server
-            node   | yes           | no
-            -------+---------------+-------------------
-               yes | V (encrypt)   | X (abort)
-                no | V (encrypt)   | V (no-encryption)
-
-            :param private_key_file: path to private key file
-        """
-        # FIXME: I suggest changing this to
-        #   - proceed if server and node agree on encryption
-        #   - abort if they don't
-
-        # check server setting
-        server_says = self.is_encrypted_collaboration()
-
-        # check local setting
-        config_says = not disabled
-
-        if server_says != config_says:
-            if server_says == True:
-                self.log.warn(
-                    f"Server request encrypted results, but our config "
-                    f"states that we do not want to use encryption! "
-                    f"We're going to encrypt it, ignoring the local config"
-                )
-                encrypted = True
-
-            else:
-                self.log.critical(
-                    f"Server request unencrypted results. Our config "
-                    f"states that we want to use encryption. Exiting!"
-                )
-                exit()
-        else:
-            encrypted = server_says # == config_says
-
-        super().setup_encryption(private_key_file, not encrypted)
+#    def setup_encryption(self, private_key_file, disabled=False):
+#        """ Initiates the encryption module.
+#
+#            The server and local configuration file must agree on
+#            whether encryption is used or not. It goes according
+#            to the following table:
+#
+#                   | server
+#            node   | yes           | no
+#            -------+---------------+-------------------
+#               yes | V (encrypt)   | X (abort)
+#                no | V (encrypt)   | V (no-encryption)
+#
+#            :param private_key_file: path to private key file
+#        """
+#        # FIXME: I suggest changing this to
+#        #   - proceed if server and node agree on encryption
+#        #   - abort if they don't
+#
+#        # check server setting
+#        server_says = self.is_encrypted_collaboration()
+#
+#        # check local setting
+#        config_says = not disabled
+#
+#        if server_says != config_says:
+#            if server_says == True:
+#                self.log.warn(
+#                    f"Server request encrypted results, but our config "
+#                    f"states that we do not want to use encryption! "
+#                    f"We're going to encrypt it, ignoring the local config"
+#                )
+#                encrypted = True
+#
+#            else:
+#                self.log.critical(
+#                    f"Server request unencrypted results. Our config "
+#                    f"states that we want to use encryption. Exiting!"
+#                )
+#                exit()
+#        else:
+#            encrypted = server_says # == config_says
+#
+#        super().setup_encryption(private_key_file, not encrypted)
 
     def set_task_start_time(self, id: int):
         """ Sets the start time of the task at the central server.
