@@ -16,7 +16,7 @@ class ServerConfiguration(Configuration):
     VALIDATORS = {
         "description": Use(str),
         "ip": Use(str) ,
-        "port": Use(int),  
+        "port": Use(int),
         "api_path": Use(str),
         "uri": Use(str),
         "allow_drop_all": Use(bool),
@@ -30,10 +30,9 @@ class ServerConfiguration(Configuration):
             "datefmt": Use(str)
         }
     }
-    
 
 class NodeConfiguration(Configuration):
-    
+
     VALIDATORS = {
         "api_key": And(Use(str), len),
         "server_url": Use(str),
@@ -70,9 +69,11 @@ class TestConfiguration(Configuration):
         #     "datefmt": Use(str)
         # }
     }
-    
+
+
+
 class NodeConfigurationManager(ConfigurationManager):
-    
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(conf_class=NodeConfiguration, name=name)
 
@@ -80,9 +81,8 @@ class NodeConfigurationManager(ConfigurationManager):
     def from_file(cls, path):
         return super().from_file(path, conf_class=NodeConfiguration)
 
-
 class ServerConfigurationManager(ConfigurationManager):
-    
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(conf_class=ServerConfiguration, name=name)
 

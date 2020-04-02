@@ -49,7 +49,8 @@ def echo(msg, level = "info"):
     type_ = {
         "error": f"[{Fore.RED}error{Style.RESET_ALL}]",
         "warn": f"[{Fore.YELLOW}warn{Style.RESET_ALL}]",
-        "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]"
+        "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]",
+        "debug": f"[{Fore.GREEN}info{Style.RESET_ALL}]",
     }.get(level)
     click.echo(f"{type_} - {msg}")
 
@@ -61,6 +62,9 @@ def warning(msg):
 
 def error(msg):
     echo(msg, "error")
+
+def debug(msg):
+    echo(msg, "debug")
 
 
 @click.group(name="node")
@@ -165,7 +169,7 @@ def cli_node_new_configuration(name, environment, system_folders):
         )
 
     # create config in ctx location
-    cfg_file = configuration_wizard(name, environment,system_folders)
+    cfg_file = configuration_wizard(name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
 #
@@ -222,35 +226,20 @@ def cli_node_files(name, environment, system_folders):
 #
 #   start
 #
-@cli_node.command(name='start')
-@click.option("-n","--name",
-    default=None,
-    help="configuration name"
-)
-@click.option("-c", "--config",
-    default=None,
-    help='absolute path to configuration-file; overrides NAME'
-)
-@click.option('-e', '--environment',
-    default=DEFAULT_NODE_ENVIRONMENT,
-    help='configuration environment to use'
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=DEFAULT_NODE_SYSTEM_FOLDERS
-)
-@click.option('-d', '--develop',
-    default=False,
-    help="Source code for developer container"
-)
-@click.option('-t', '--tag',
-    default="default",
-    help="Node Docker container tag to use"
-)
-def cli_node_start(name, config, environment, system_folders, develop, tag):
+help_ = {
+    'config': 'absolute path to configuration-file; overrides NAME',
+    'environment': 'configuration environment to use',
+}
+
+@cli_node.command(name='start.old')
+@click.option("-n","--name", default=None, help="configuration name")
+@click.option("-c", "--config", default=None, help=help_['config'])
+@click.option('-e', '--environment', default=DEFAULT_NODE_ENVIRONMENT, help=help_['environment'])
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=DEFAULT_NODE_SYSTEM_FOLDERS)
+@click.option('-d', '--develop', default=False, help="Source code for developer container")
+@click.option('-t', '--tag', default="default", help="Node Docker container tag to use")
+def cli_node_start_old(name, config, environment, system_folders, develop, tag):
     """ Start the node instance.
 
         If no name or config is specified the default.yaml configuation is used.
@@ -278,11 +267,13 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         # check that config exists in the APP, if not a questionaire will
         # be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
-            if q.confirm(f"Configuration {name} using environment "
-                f"{environment} does not exists. Do you want to create "
-                f"this config now?").ask():
-                configuration_wizard("node", name, environment=environment,
-                    system_folders=system_folders)
+            question =  f"Configuration '{name}' using environment"
+            question += f" '{environment}' does not exist.\n  Do you want to"
+            question += f" create this config now?"
+
+            if q.confirm(question).ask():
+                configuration_wizard(name, environment, system_folders)
+
             else:
                 error("Config file couldn't be loaded")
                 sys.exit(0)
@@ -292,9 +283,11 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
 
     # check that this node is not already running
     running_nodes = docker_client.containers.list(
-        filters={"label":f"{APPNAME}-type=node"})
+        filters={"label": f"{APPNAME}-type=node"}
+    )
+
+    post_ = "system" if system_folders else "user"
     for node in running_nodes:
-        post_ = "system" if system_folders else "user"
         if node.name == f"{APPNAME}-{name}-{post_}":
             error(f"Node {Fore.RED}{name}{Style.RESET_ALL} is already running")
             exit()
@@ -302,7 +295,6 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
 
     # make sure the (host)-task and -log dir exists
     info("Checking that data and log dirs exist")
-
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -310,13 +302,11 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
     info("Mounting files & folders")
     mounts = [
         # TODO multiple database support
-        docker.types.Mount("/mnt/database.csv", str(ctx.databases["default"]),
-            type="bind"),
+        docker.types.Mount("/mnt/database.csv", str(ctx.databases["default"]), type="bind"),
         docker.types.Mount("/mnt/log", str(ctx.log_dir), type="bind"),
         docker.types.Mount("/mnt/data", str(ctx.data_dir), type="bind"),
         docker.types.Mount("/mnt/config", str(ctx.config_dir), type="bind"),
-        docker.types.Mount("/var/run/docker.sock", "//var/run/docker.sock",
-            type="bind"),
+        docker.types.Mount("/var/run/docker.sock", "/var/run/docker.sock", type="bind"),
     ]
 
     rsa_file = ctx.config.get("encryption", {}).get("private_key")
@@ -353,10 +343,8 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
     docker_client.images.pull(container_image)
 
     # create data volume which can be used by this node instance
-    info("Create Docker data volume")
-    data_volume = docker_client.volumes.create(
-        f"{ctx.docker_container_name}-vol"
-    )
+    info("Creating Docker data volume")
+    data_volume = docker_client.volumes.create(f"{ctx.docker_container_name}-vol")
 
     info("Run Docker container")
     container = docker_client.containers.run(
@@ -364,7 +352,7 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         command=[ctx.config_file_name, ctx.environment],
         mounts=mounts,
         volumes={data_volume.name: {'bind': '/mnt/data-volume', 'mode': 'rw'}},
-        detach=True, # not attach,
+        detach=True,
         labels={
             f"{APPNAME}-type": "node",
             "system": str(system_folders),
@@ -375,7 +363,141 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         },
         ports=port,
         name=ctx.docker_container_name,
-        auto_remove=True # not attach
+        auto_remove=True
+    )
+
+    info(f"Succes! container id = {container}")
+
+
+@cli_node.command(name='start')
+@click.option("-n","--name", default=None, help="configuration name")
+@click.option("-c", "--config", default=None, help=help_['config'])
+@click.option('-e', '--environment', default=DEFAULT_NODE_ENVIRONMENT, help=help_['environment'])
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=DEFAULT_NODE_SYSTEM_FOLDERS)
+@click.option('-i', '--image', default=None, help="Node Docker image to use")
+def cli_node_start(name, config, environment, system_folders, image):
+    """Start the node instance.
+
+        If no name or config is specified the default.yaml configuation is used.
+        In case the configuration file not excists, a questionaire is
+        invoked to create one. Note that in this case it is not possible to
+        specify specific environments for the configuration (e.g. test,
+        prod, acc).
+    """
+    info("Starting node...")
+    info("Finding Docker deamon")
+    docker_client = docker.from_env()
+    check_if_docker_deamon_is_running(docker_client)
+
+    if config:
+        ctx = NodeContext(name, environment, system_folders, config)
+
+    else:
+        # in case no name is supplied, ask the user to select one
+        if not name:
+            name, environment = select_configuration_questionaire(system_folders)
+
+        # check that config exists, if not a questionaire will be invoked
+        if not NodeContext.config_exists(name, environment, system_folders):
+            question =  f"Configuration '{name}' using environment"
+            question += f" '{environment}' does not exist.\n  Do you want to"
+            question += f" create this config now?"
+
+            if q.confirm(question).ask():
+                configuration_wizard(name, environment, system_folders)
+
+            else:
+                error("Config file couldn't be loaded")
+                sys.exit(0)
+
+        NodeContext.LOGGING_ENABLED = False
+        ctx = NodeContext(name, environment, system_folders)
+
+    # check that this node is not already running
+    running_nodes = docker_client.containers.list(
+        filters={"label": f"{APPNAME}-type=node"}
+    )
+
+    suffix = "system" if system_folders else "user"
+    for node in running_nodes:
+        if node.name == f"{APPNAME}-{name}-{suffix}":
+            error(f"Node {Fore.RED}{name}{Style.RESET_ALL} is already running")
+            exit()
+
+    # make sure the (host)-task and -log dir exists
+    info("Checking that data and log dirs exist")
+    ctx.data_dir.mkdir(parents=True, exist_ok=True)
+    ctx.log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1) --tag, 2) config 3) latest
+    if image is None:
+        image = "harbor.distributedlearning.ai/infrastructure/node:latest"
+
+    info(f"Pulling latest node image '{image}'")
+    try:
+        docker_client.images.pull(image)
+    except:
+        error(' ... alas, no dice!')
+    else:
+        info(" ... succes!")
+
+
+    info("Creating Docker data volume")
+    data_volume = docker_client.volumes.create(f"{ctx.docker_container_name}-vol")
+
+    info("Creating file & folder mounts")
+    # FIXME: should only mount /mnt/database.csv if it is a file!
+    mounts = [
+        # (target, source)
+        ("/mnt/database.csv", str(ctx.databases["default"])),
+        ("/mnt/log", str(ctx.log_dir)),
+        ("/mnt/data", data_volume.name),
+        ("/mnt/config", str(ctx.config_dir)),
+        ("/var/run/docker.sock", "/var/run/docker.sock"),
+    ]
+
+    # fullpath = Path(ctx.get_data_file(filename))
+    fullpath = ctx.config.get("encryption", {}).get("private_key")
+    if fullpath:
+        if Path(fullpath).exists():
+            mounts.append(("/mnt/private_key.pem", fullpath))
+        else:
+            warning(f"private key file provided {fullpath}, but does not exists")
+
+
+    volumes = {}
+
+    for mount in mounts:
+        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
+
+    # Be careful not to use 'environment' as it would override the function
+    # argument ;-).
+    env = {
+        "DATA_VOLUME_NAME": data_volume.name,
+        "DATABASE_URI": "/mnt/database.csv",
+        "PRIVATE_KEY": "/mnt/private_key.pem"
+    }
+
+    cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e {environment} --dockerized'
+
+    info(f"Runing Docker container")
+    debug(f"  with command: '{cmd}'")
+    debug(f"  with mounts: '{volumes}'")
+    debug(f"  with environment: '{env}'")
+    container = docker_client.containers.run(
+        image,
+        command=cmd,
+        volumes=volumes,
+        detach=True,
+        labels={
+            f"{APPNAME}-type": "node",
+            "system": str(system_folders),
+            "name": ctx.config_file_name
+        },
+        environment=env,
+        name=ctx.docker_container_name,
+        auto_remove=True
     )
 
     info(f"Succes! container id = {container}")

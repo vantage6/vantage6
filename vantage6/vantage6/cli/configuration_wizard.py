@@ -103,8 +103,7 @@ def node_configuration_questionaire(dirs, instance_name):
 
     return config
 
-def configuration_wizard(instance_name,
-    environment="application", system_folders=False):
+def configuration_wizard(instance_name, environment, system_folders):
 
     # for defaults and where to save the config
     dirs = NodeContext.instance_folders("node", instance_name, system_folders)
@@ -128,12 +127,11 @@ def configuration_wizard(instance_name,
     return config_file
 
 def select_configuration_questionaire(system_folders):
-    """Asks which configuration the user want to use
+    """Ask which configuration the user wants to use
 
     It shows only configurations that are in the default folder.
     """
-    Context = NodeContext
-    configs, f = Context.available_configurations(system_folders)
+    configs, f = NodeContext.available_configurations(system_folders)
 
     # each collection (file) can contain multiple configs. (e.g. test,
     # dev)
