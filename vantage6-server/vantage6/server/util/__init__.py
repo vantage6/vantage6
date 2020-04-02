@@ -1,4 +1,4 @@
-from vantage6.common import Singleton, logger_name, bytes_to_base64, base64_to_bytes
+from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
 
 
 def log_full_request(request, log=None):

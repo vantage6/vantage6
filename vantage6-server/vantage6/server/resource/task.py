@@ -16,8 +16,8 @@ from pathlib import Path
 from vantage6.server import db
 from vantage6.server import socketio
 from vantage6.server.util import (
-    bytes_to_base64,
-    base64_to_bytes,
+    bytes_to_base64s,
+    base64s_to_bytes,
     log_full_request,
 )
 from vantage6.server.globals import STRING_ENCODING
@@ -158,7 +158,7 @@ class Task(Resource):
 
             if isinstance(input_, dict):
                 input_ = json.dumps(input_).encode(STRING_ENCODING)
-                #  = bytes_to_base64(
+                #  = bytes_to_base64s(
                 # )
 
             result = db.Result(
