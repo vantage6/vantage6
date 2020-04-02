@@ -468,6 +468,7 @@ def run(ctx, *args, **kwargs):
     """
     # Prevent logging from urllib3
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("socketIO-client").setLevel(logging.WARNING)
 
     wslh = WebSocketLoggingHandler()
     wslh.setLevel(logging.DEBUG)
@@ -496,5 +497,8 @@ def run(ctx, *args, **kwargs):
 
     session.commit()
 
+
+    kwargs.setdefault('log_output', False)
     socketio.run(app, *args, **kwargs)
-    
+
+

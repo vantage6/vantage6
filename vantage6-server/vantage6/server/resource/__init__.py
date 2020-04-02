@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Resources ... 
+Resources ...
 """
 import datetime
 import logging
@@ -18,7 +18,7 @@ from vantage6.server import db
 log = logging.getLogger(__name__.split('.')[-1])
 
 # ------------------------------------------------------------------------------
-# Helpfer functions/decoraters ... 
+# Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
 def only_for(types = ['user', 'node', 'container']):
     """JWT endpoint protection decorator"""
@@ -30,9 +30,10 @@ def only_for(types = ['user', 'node', 'container']):
             identity = get_jwt_identity()
             claims = get_jwt_claims()
 
-            # check that identity has access to endpoint            
+            # check that identity has access to endpoint
             g.type = claims["type"]
-            log.debug(f"Endpoint accessed as {g.type}")
+            # log.debug(f"Endpoint accessed as {g.type}")
+
             if g.type not in types:
                 log.warning(f"Illegal attempt from {g.type} to access endpoint")
                 raise Exception(f"{g.type}'s are not allowed!")

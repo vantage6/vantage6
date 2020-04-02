@@ -15,7 +15,11 @@ from http import HTTPStatus
 from pathlib import Path
 
 from vantage6.server import db
-from vantage6.server.resource._schema import CollaborationSchema, TaskSchema
+from vantage6.server.resource._schema import (
+    CollaborationSchema,
+    TaskSchema,
+    OrganizationSchema,
+)
 from vantage6.server.resource import with_user_or_node, with_user, only_for
 
 module_name = __name__.split('.')[-1]
@@ -61,7 +65,7 @@ def setup(api, api_base):
 # Schemas
 collaboration_schema = CollaborationSchema()
 tasks_schema = TaskSchema()
-
+org_schema = OrganizationSchema()
 
 # ------------------------------------------------------------------------------
 # Resources / API's
@@ -94,7 +98,7 @@ class Collaboration(Resource):
         data = parser.parse_args()
 
         encrypted = True if data["encrypted"] == 1 else False
-            
+
         collaboration = db.Collaboration(
             name=data['name'],
             organizations=[
