@@ -186,7 +186,6 @@ class Node(object):
         #  This also means that the volume will have to be created & mounted
         #  *before* this node is started, so we won't do anything with it here.
 
-
         # We'll create a subfolder in the data_dir. We need this subfolder so
         # we can easily mount it in the algorithm containers; the root folder
         # may contain the private key, which which we don't want to share.
@@ -312,7 +311,6 @@ class Node(object):
         # notify that we are processing this task
         self.server_io.set_task_start_time(taskresult["id"])
 
-        # TODO: possibly we want to limit the token handout
         token = self.server_io.request_token_for_container(
             task["id"],
             task["image"]

@@ -336,17 +336,18 @@ class ClientNodeProtocol(ClientBaseProtocol):
             FIXME: public keys should be cached
         """
         if "result" in result:
-            self.log.debug(
-                f"retrieving public key from organization={initiator_id}"
-            )
-            public_key = self.request(f"organization/{initiator_id}")\
-                .get("public_key")
+            msg = f"retrieving public key from organization={initiator_id}"
+            self.log.debug(msg)
 
-            # result["result"] = self.cryptor.encrypt_bytes_to_base64(
-            #     result["result"],
-            #     public_key
-            # )
-            result["result"] = result["result"].decode('utf8')
+            org = self.request(f"organization/{initiator_id}")
+            public_key = org["public_key"]
+
+
+            result["result"] = self.cryptor.encrypt_bytes_to_str(
+                result["result"],
+                public_key
+            )
+
             self.log.debug("Sending results to server")
 
         return self.request(f"result/{id}", json=result, method='patch')
