@@ -51,7 +51,7 @@ class WhoAmI(typing.NamedTuple):
         ">")
 
 
-class ClientBaseProtocol:
+class ClientBaseProtocol(object):
     """Common interface to the central server.
 
     It manages the connection settings and constructs request paths,
@@ -372,9 +372,11 @@ class ClientBaseProtocol:
             """
             cryptor = self.cryptor
             try:
+                self.log.info('Decrypting input')
                 res["input"] = cryptor.decrypt_str_to_bytes(res["input"])
 
                 if res["result"]:
+                    self.log.info('Decrypting result')
                     res["result"] = cryptor.decrypt_str_to_bytes(res["result"])
 
             except ValueError as e:

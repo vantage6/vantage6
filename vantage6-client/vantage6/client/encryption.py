@@ -12,16 +12,16 @@ In the case we are sending messages (input/results) we need to encrypt
 it using the public key of the receiving organization. (retreiving
 these public keys is outside the scope of this module).
 
-TODO handle disabled encryption
 TODO handle no public key from other organization (should that happen here)
-TODO rename def, not all methods should be public
 """
+import os
 import logging
 
 from pathlib import Path
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
@@ -36,25 +36,16 @@ from vantage6.client.util import (
     base64s_to_bytes
 )
 
+SEPARATOR = '$'
+
 # ------------------------------------------------------------------------------
 # CryptorBase
 # ------------------------------------------------------------------------------
 class CryptorBase(metaclass=Singleton):
     """Base class/interface for encryption implementations."""
-
-    def encrypt(self, data: bytes, pubkey: bytes) -> bytes:
-        """Encrypt bytes in `data` using a public key.
-
-        Should be overridden by a subclass. This implementation does nothing.
-        """
-        return data
-
-    def decrypt(self, data: bytes) -> bytes:
-        """Decrypt bytes in `data`.
-
-        Should be overridden by a subclass. This implementation does nothing.
-        """
-        return data
+    def __init__(self):
+        """Create a new CryptorBase instance."""
+        self.log = logging.getLogger(logger_name(__name__))
 
     def bytes_to_str(self, data: bytes) -> str:
         """Encode bytes as string.
@@ -73,16 +64,11 @@ class CryptorBase(metaclass=Singleton):
 
     def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str) -> str:
         """Encrypt bytes in `data` using a (base64 encoded) public key."""
-        public_key = base64s_to_bytes(public_key_base64)
-        encrypted_data = self.encrypt(data, public_key)
-
-        return self.str_to_bytes(encrypted_data)
+        return self.str_to_bytes(data)
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
         """Decrypt base64 encoded *string* `data."""
-        data_bytes = self.str_to_bytes(data)
-
-        return self.decrypt(data_bytes)
+        return self.str_to_bytes(data)
 
 
 # ------------------------------------------------------------------------------
@@ -115,7 +101,7 @@ class RSACryptor(CryptorBase):
 
     def __init__(self, private_key_file):
         """Create a new RSACryptor instance."""
-        self.log = logging.getLogger(logger_name(__name__))
+        super().__init__()
         self.private_key = self.__load_private_key(private_key_file)
 
     def __load_private_key(self, private_key_file):
@@ -187,40 +173,70 @@ class RSACryptor(CryptorBase):
         """Decode base64 encoded string to bytes."""
         return base64s_to_bytes(data)
 
-    def encrypt(self, data: bytes, pubkey: bytes) -> bytes:
-        """Encrypt bytes in `data` using a public key."""
-        backend = default_backend()
+    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64s: str) -> str:
+        """Encrypt bytes in `data` using a (base64 encoded) public key."""
 
-        try:
-            pubkey = load_pem_public_key(pubkey, backend)
+        # Use the shared key for symmetric encryption/decryption of the payload
+        shared_key = os.urandom(32)
+        iv_bytes = os.urandom(16)
 
-        except Exception as e:
-            self.log.error("Unable to load public key")
-            raise
+        cipher = Cipher(
+            algorithms.AES(shared_key),
+            modes.CTR(iv_bytes),
+            backend=default_backend()
+        )
 
-        # Just for who's interested:
-        #   MGF1: Mask Generation Function based on hash function
-        #   OAEP: Optimal Asymmetric Encryption Padding
-        hash_algorithm = hashes.SHA256()
-        mgf1 = padding.MGF1(hash_algorithm)
-        padding.OAEP(mgf1, hash_algorithm, label=None)
+        encryptor = cipher.encryptor()
+        encrypted_msg_bytes = encryptor.update(data) + encryptor.finalize()
 
-        try:
-            encrypted = pubkey.encrypt(data, padding)
+        # Create a public key instance.
+        pubkey = load_pem_public_key(
+            base64s_to_bytes(pubkey_base64s),
+            backend=default_backend()
+        )
 
-        except Exception as e:
-            self.log.error(f"Unable to encrypt message: {e}")
-            raise
+        encrypted_key_bytes = pubkey.encrypt(
+            shared_key,
+            padding.PKCS1v15()
+        )
 
-        return encrypted
+        encrypted_key = self.bytes_to_str(encrypted_key_bytes)
+        iv = self.bytes_to_str(iv_bytes)
+        encrypted_msg = self.bytes_to_str(encrypted_msg_bytes)
 
-    def decrypt(self, data: bytes) -> bytes:
-        """Decrypt bytes in `data`."""
-        hash_algorithm = hashes.SHA256()
-        mgf1 = padding.MGF1(hash_algorithm)
-        padding.OAEP(mgf1, hash_algorithm, label=None)
+        return SEPARATOR.join([encrypted_key, iv, encrypted_msg])
 
-        return self.private_key.decrypt(data, padding)
+
+    def decrypt_str_to_bytes(self, data: str) -> bytes:
+        """Decrypt base64 encoded *string* `data."""
+
+        (encrypted_key, iv, encrypted_msg) = data.split(SEPARATOR)
+
+        # Yes, this can be done more efficiently.
+        encrypted_key_bytes = self.str_to_bytes(encrypted_key)
+        iv_bytes = self.str_to_bytes(iv)
+        encrypted_msg_bytes = self.str_to_bytes(encrypted_msg)
+
+        # Decrypt the shared key using asymmetric encryption
+        shared_key = self.private_key.decrypt(
+            encrypted_key_bytes,
+            padding.PKCS1v15()
+        )
+
+        self.log.info(f'Decrypted shared key: {shared_key}')
+
+        # Use the shared key for symmetric encryption/decryption of the payload
+        cipher = Cipher(
+            algorithms.AES(shared_key),
+            modes.CTR(iv_bytes),
+            backend=default_backend()
+        )
+
+        decryptor = cipher.decryptor()
+        result = decryptor.update(encrypted_msg_bytes) + decryptor.finalize()
+
+        return result
+
 
     def verify_public_key(self, pubkey_base64) -> bool:
         """Verifies the public key.
