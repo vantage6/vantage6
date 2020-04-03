@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# read the API version from disk 
+# read the API version from disk
 with open(path.join(here, 'vantage6', 'VERSION')) as fp:
     __version__ = fp.read()
 
@@ -33,7 +33,7 @@ setup(
             'coverage==5.0.4'
         ]
     },
-    package_data={  
+    package_data={
         'vantage6': [
             'VERSION',
             '_data/*.*'
@@ -41,8 +41,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'vnode=vantage6.cli.node:cli_node'
-            # 'vserver=vantage6.node.cli.node:cli_node'
+            'vnode=vantage6.cli.node:cli_node',
+            'vserver=vantage6.cli.server:cli_server'
         ]
     }
 )

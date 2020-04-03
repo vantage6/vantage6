@@ -13,45 +13,24 @@ Configuration Commands
 * node attach
 """
 import click
-import yaml
-import os
 import sys
-import appdirs
 import questionary as q
-import errno
 import docker
 import time
 
-from docker.errors import DockerException
 from pathlib import Path
 from threading import Thread
-from colorama import init, Fore, Back, Style
+from colorama import Fore, Style
 
-import vantage6.common.colorer
-
-from vantage6.common.globals import (
-    STRING_ENCODING,
-    APPNAME
-)
-from vantage6.cli.globals import (
-    DEFAULT_NODE_ENVIRONMENT,
-    DEFAULT_NODE_SYSTEM_FOLDERS
-)
+from vantage6.common.globals import (STRING_ENCODING, APPNAME)
+from vantage6.cli.globals import (DEFAULT_NODE_ENVIRONMENT,
+                                  DEFAULT_NODE_SYSTEM_FOLDERS)
 from vantage6.cli.context import NodeContext
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
 )
-from vantage6.common import (
-    echo,
-    warning,
-    error,
-    info
-)
-
-
-# init colorstuff
-init()
+from vantage6.common import (warning, error, info)
 
 
 @click.group(name="node")
@@ -70,7 +49,7 @@ def cli_node_list():
     check_if_docker_deamon_is_running(client)
 
     running_nodes = client.containers.list(
-        filters={"label":f"{APPNAME}-type=node"})
+        filters={"label": f"{APPNAME}-type=node"})
     running_node_names = []
     for node in running_nodes:
         running_node_names.append(node.name)
@@ -121,17 +100,11 @@ def cli_node_list():
 #
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None)
-@click.option('-e', '--environment',
-    default="",
-    help='configuration environment to use'
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=DEFAULT_NODE_SYSTEM_FOLDERS
-)
+@click.option('-e', '--environment', default="",
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False,
+              default=DEFAULT_NODE_SYSTEM_FOLDERS)
 def cli_node_new_configuration(name, environment, system_folders):
     """Create a new configation file.
 
@@ -149,57 +122,47 @@ def cli_node_new_configuration(name, environment, system_folders):
         ).ask()
 
     # check that this config does not exist
-    if NodeContext.config_exists(name,environment,system_folders):
+    if NodeContext.config_exists(name, environment, system_folders):
         error(
             f"Configuration {name} and environment"
             f"{environment} already exists!"
         )
 
     # create config in ctx location
-    cfg_file = configuration_wizard(name, environment,system_folders)
+    cfg_file = configuration_wizard(name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
 #
 #   files
 #
 @cli_node.command(name="files")
-@click.option("-n", "--name",
-    default=None,
-    help="configuration name"
-)
-@click.option('-e', '--environment',
-    default=DEFAULT_NODE_ENVIRONMENT,
-    help='configuration environment to use'
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=DEFAULT_NODE_SYSTEM_FOLDERS
-)
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('-e', '--environment', default=DEFAULT_NODE_ENVIRONMENT,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False,
+              default=DEFAULT_NODE_SYSTEM_FOLDERS)
 def cli_node_files(name, environment, system_folders):
-    """Print out the paths of important files.
+    """ Prints location important files.
 
-    If the specified configuration cannot be found, it exits. Otherwise
-    it returns the absolute path to the output.
+        If the specified configuration cannot be found, it exits. Otherwise
+        it returns the absolute path to the output.
     """
     # select configuration name if none supplied
     name, environment = (name, environment) if name else \
         select_configuration_questionaire(system_folders)
 
     # raise error if config could not be found
-    if not NodeContext.config_exists(name,environment,system_folders):
+    if not NodeContext.config_exists(name, environment, system_folders):
         error(
             f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
             f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
             f"not be found."
         )
-        # raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
 
     # create node context
-    ctx = NodeContext(name,environment=environment,
-        system_folders=system_folders)
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
 
     # return path of the configuration
     info(f"Configuration file = {ctx.config_file}")
@@ -214,38 +177,23 @@ def cli_node_files(name, environment, system_folders):
 #   start
 #
 @cli_node.command(name='start')
-@click.option("-n","--name",
-    default=None,
-    help="configuration name"
-)
-@click.option("-c", "--config",
-    default=None,
-    help='absolute path to configuration-file; overrides NAME'
-)
-@click.option('-e', '--environment',
-    default=DEFAULT_NODE_ENVIRONMENT,
-    help='configuration environment to use'
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=DEFAULT_NODE_SYSTEM_FOLDERS
-)
-@click.option('-d', '--develop',
-    default=False,
-    help="Source code for developer container"
-)
-@click.option('-t', '--tag',
-    default="default",
-    help="Node Docker container tag to use"
-)
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-c", "--config", default=None,
+              help='absolute path to configuration-file; overrides NAME')
+@click.option('-e', '--environment', default=DEFAULT_NODE_ENVIRONMENT,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False,
+              default=DEFAULT_NODE_SYSTEM_FOLDERS)
+@click.option('-d', '--develop', default=False,
+              help="Source code for developer container")
+@click.option('-t', '--tag', default="default",
+              help="Node Docker container tag to use")
 def cli_node_start(name, config, environment, system_folders, develop, tag):
     """ Start the node instance.
 
-        If no name or config is specified the default.yaml configuation is used.
-        In case the configuration file not excists, a questionaire is
+        If no name or config is specified the default.yaml configuation is
+        used. In case the configuration file not excists, a questionaire is
         invoked to create one. Note that in this case it is not possible to
         specify specific environments for the configuration (e.g. test,
         prod, acc).
@@ -269,9 +217,11 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         # check that config exists in the APP, if not a questionaire will
         # be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
-            if q.confirm(f"Configuration {name} using environment "
+            if q.confirm(
+                f"Configuration {name} using environment "
                 f"{environment} does not exists. Do you want to create "
-                f"this config now?").ask():
+                f"this config now?"
+            ).ask():
                 configuration_wizard("node", name, environment=environment,
                                      system_folders=system_folders)
             else:
@@ -283,13 +233,12 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
 
     # check that this node is not already running
     running_nodes = docker_client.containers.list(
-        filters={"label":f"{APPNAME}-type=node"})
+        filters={"label": f"{APPNAME}-type=node"})
     post_ = "system" if system_folders else "user"
     for node in running_nodes:
         if node.name == f"{APPNAME}-{name}-{post_}":
             error(f"Node {Fore.RED}{name}{Style.RESET_ALL} is already running")
             exit()
-
 
     # make sure the (host)-task and -log dir exists
     info("Checking that data and log dirs exist")
@@ -302,12 +251,12 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
     mounts = [
         # TODO multiple database support
         docker.types.Mount("/mnt/database.csv", str(ctx.databases["default"]),
-            type="bind"),
+                           type="bind"),
         docker.types.Mount("/mnt/log", str(ctx.log_dir), type="bind"),
         docker.types.Mount("/mnt/data", str(ctx.data_dir), type="bind"),
         docker.types.Mount("/mnt/config", str(ctx.config_dir), type="bind"),
         docker.types.Mount("/var/run/docker.sock", "//var/run/docker.sock",
-            type="bind"),
+                           type="bind"),
     ]
 
     rsa_file = ctx.config.get("encryption", {}).get("private_key")
@@ -315,13 +264,13 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         if Path(rsa_file).exists():
             mounts.append(
                 docker.types.Mount("/mnt/private_key.pem", rsa_file,
-                    type="bind")
+                                   type="bind")
             )
         else:
-            warning(f"private key file provided {rsa_file}, but does not exists")
+            warning(f"private key file {rsa_file} does not exist!")
 
-    # in case a development environment is run, we need to do a few extra things
-    # and run a devcon container (see develop.Dockerfile)
+    # in case a development environment is run, we need to do a few extra
+    # things and run a devcon container (see develop.Dockerfile)
     # TODO these filepaths need to be set int the config file
     if develop:
         mounts.append(
@@ -335,7 +284,8 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
         port = None
         # 1) --tag, 2) config 3) latest
         tag_ = tag if tag != "default" else ctx.config.get("tag", "latest")
-        container_image = f"harbor.distributedlearning.ai/infrastructure/node:{tag_}"
+        container_image = \
+            f"harbor.distributedlearning.ai/infrastructure/node:{tag_}"
     info(f"Node image {Fore.GREEN}{container_image}{Style.RESET_ALL}")
 
     # pull the latest image
@@ -375,20 +325,11 @@ def cli_node_start(name, config, environment, system_folders, develop, tag):
 #   stop
 #
 @cli_node.command(name='stop')
-@click.option("-n","--name",
-    default=None,
-    help="configuration name"
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=DEFAULT_NODE_SYSTEM_FOLDERS
-)
-@click.option('--all', 'all_nodes',
-    flag_value=True
-)
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False,
+              default=DEFAULT_NODE_SYSTEM_FOLDERS)
+@click.option('--all', 'all_nodes', flag_value=True)
 def cli_node_stop(name, system_folders, all_nodes):
     """Stop a running container. """
 
@@ -396,7 +337,7 @@ def cli_node_stop(name, system_folders, all_nodes):
     check_if_docker_deamon_is_running(client)
 
     running_nodes = client.containers.list(
-        filters={"label":f"{APPNAME}-type=node"})
+        filters={"label": f"{APPNAME}-type=node"})
 
     if not running_nodes:
         warning("No nodes are currently running.")
@@ -412,7 +353,7 @@ def cli_node_stop(name, system_folders, all_nodes):
     else:
         if not name:
             name = q.select("Select the node you wish to stop:",
-                choices=running_node_names).ask()
+                            choices=running_node_names).ask()
         else:
 
             post_fix = "system" if system_folders else "user"
@@ -430,17 +371,10 @@ def cli_node_stop(name, system_folders, all_nodes):
 #   attach
 #
 @cli_node.command(name='attach')
-@click.option("-n","--name",
-    default=None,
-    help="configuration name"
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=DEFAULT_NODE_SYSTEM_FOLDERS
-)
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False,
+              default=DEFAULT_NODE_SYSTEM_FOLDERS)
 def cli_node_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
 
@@ -448,12 +382,12 @@ def cli_node_attach(name, system_folders):
     check_if_docker_deamon_is_running(client)
 
     running_nodes = client.containers.list(
-        filters={"label":f"{APPNAME}-type=node"})
+        filters={"label": f"{APPNAME}-type=node"})
     running_node_names = [node.name for node in running_nodes]
 
     if not name:
         name = q.select("Select the node you wish to inspect:",
-            choices=running_node_names).ask()
+                        choices=running_node_names).ask()
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}"
@@ -474,12 +408,12 @@ def cli_node_attach(name, system_folders):
 
 def print_log_worker(logs_stream):
     for log in logs_stream:
-        print(log.decode(STRING_ENCODING))
+        print(log.decode(STRING_ENCODING), end="")
 
 
 def check_if_docker_deamon_is_running(docker_client):
     try:
         docker_client.ping()
-    except Exception as e:
+    except Exception:
         error("Docker socket can not be found. Make sure Docker is running.")
-        exit()
+        exit(1)
