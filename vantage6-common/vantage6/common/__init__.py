@@ -20,10 +20,10 @@ class Singleton(type):
             cls._instances[cls] = instance
         return cls._instances[cls]
 
-def bytes_to_base64(bytes_):
+def bytes_to_base64s(bytes_):
     return base64.b64encode(bytes_).decode(STRING_ENCODING)
 
-def base64_to_bytes(bytes_string):
+def base64s_to_bytes(bytes_string):
     return base64.b64decode(bytes_string.encode(STRING_ENCODING))
 
 #
