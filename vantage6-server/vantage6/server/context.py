@@ -1,8 +1,6 @@
 import os
 import sys
 import appdirs
-import logging
-import logging.handlers
 
 from pathlib import Path
 from sqlalchemy.engine.url import make_url

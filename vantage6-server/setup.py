@@ -59,7 +59,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'vserver=vantage6.server.cli.server:cli_server'
+            'vserver-local=vantage6.server.cli.server:cli_server'
         ]
     }
 )
