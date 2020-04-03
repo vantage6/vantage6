@@ -2,13 +2,15 @@ import os
 import sys
 import appdirs
 
+
 import logging
 import logging.handlers
-import vantage6.common.colorer
+
 
 from pathlib import Path
 
 from vantage6.common import Singleton
+from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.globals import DEFAULT_ENVIRONMENT, APPNAME
 from vantage6.common.configuration_manager import (
     ConfigurationManager
@@ -74,7 +76,8 @@ class AppContext(metaclass=Singleton):
 
         # Check what to do with the console output ...
         if log_config["use_console"]:
-            ch = logging.StreamHandler(sys.stdout)
+            ch = ColorStreamHandler(sys.stdout)
+            # ch = logging.StreamHandler(sys.stdout)
             ch.setLevel(level)
             ch.setFormatter(logging.Formatter(format_, datefmt))
             logger.addHandler(ch)
