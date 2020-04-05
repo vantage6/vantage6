@@ -89,7 +89,6 @@ class Task(Resource):
             return {"msg": f"collaboration id={collaboration_id} not found"},\
             HTTPStatus.NOT_FOUND
 
-        # check that the organization ids are within the collaboration
         organizations_json_list = data.get('organizations')
         org_ids = [org.get("id") for org in organizations_json_list]
         db_ids = collaboration.get_organization_ids()
@@ -102,7 +101,9 @@ class Task(Resource):
         if data.get("master", False) and g.user:
             org_ids = [g.user.organization_id]
 
-        if not all([org_id in db_ids for org_id in org_ids]):
+        # Check that all organization ids are within the collaboration
+        # if not all([org_id in db_ids for org_id in org_ids]):
+        if not set(org_ids).issubset(db_ids):
             return {"msg": (
                 f"At least one of the supplied organizations in not within "
                 f"the collaboration"
@@ -113,9 +114,10 @@ class Task(Resource):
         elif g.container:
             initiator = db.Node.get(g.container["node_id"]).organization
         else:
+            # FIXME: Who then? Shouldn't this raise an exception?
             initiator = None
 
-        # create new task
+        # Create the new task in the database
         task = db.Task(
             collaboration=collaboration,
             name=data.get('name', ''),
@@ -129,7 +131,11 @@ class Task(Resource):
             if not self.__verify_user_permissions(g.user, task):
                 return {"msg": "You lack the permission to do that!"}, HTTPStatus.UNAUTHORIZED
 
-            # user can only create master-tasks (it is not required to have sub-tasks)
+            # Users can only create top-level -tasks (they will not
+            # have sub-tasks). Therefore, always create a new run_id.
+            # FIXME: I can see no reason why users wouldn't be allowed to create
+            #   subtasks? For iterative processes this would actually make a lot
+            #   of sense.
             task.run_id = task.next_run_id()
             log.debug(f"New run_id {task.run_id}")
 
@@ -138,7 +144,7 @@ class Task(Resource):
             if not self.__verify_container_permissions(g.container, task):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
-            # container tasks are always sub-tasks
+            # Tasks created by containers are always sub-tasks
             task.parent_task_id = g.container["task_id"]
             task.run_id = db.Task.get(g.container["task_id"]).run_id
             log.debug(f"Sub task from parent_task_id={task.parent_task_id}")
@@ -148,18 +154,17 @@ class Task(Resource):
 
         organizations = [db.Organization.get(id_) for id_ in org_ids]
         log.debug(f"Assigning task to {len(organizations)} nodes.")
+
         for organization in organizations:
             log.debug(f"Assigning task to '{organization.name}'.")
 
-            # get organization specific encrypted input
             # TODO make this cleaner...
+            # get organization specific (encrypted) input
             input_ = [org.get("input") for org in organizations_json_list \
                 if org.get("id")==organization.id].pop()
 
             if isinstance(input_, dict):
                 input_ = json.dumps(input_).encode(STRING_ENCODING)
-                #  = bytes_to_base64s(
-                # )
 
             result = db.Result(
                 task=task,
@@ -172,7 +177,7 @@ class Task(Resource):
         socketio.emit(
             'new_task',
             task.id,
-            room='collaboration_' + str(task.collaboration_id),
+            room=f'collaboration_{task.collaboration_id}',
             namespace='/tasks'
         )
 
@@ -190,6 +195,15 @@ class Task(Resource):
 
         return self.task_schema.dump(task, many=False)
 
+
+    def handle_master_task(self):
+        """Handle creation of a master task."""
+        pass
+
+    def handle_regular_task(self):
+        """Handle creation of a regular task."""
+        pass
+
     @staticmethod
     def __verify_user_permissions(user, task: db.Task):
         """Verify that user is permitted to create task"""
@@ -206,9 +220,12 @@ class Task(Resource):
         """Validates that the container is allowed to create the task."""
 
         # check that the image is allowed
-        if container["image"] != task.image:
+        # if container["image"] != task.image:
+        if not task.image.endswith(container["image"]):
             log.warning((f"Container from node={container['node_id']} "
-                f"attempts to post a task using illegal image={task.image}"))
+                f"attempts to post a task using illegal image!?"))
+            log.warning(f"  task image: {task.image}")
+            log.warning(f"  container image: {container['image']}")
             return False
 
         # check master task is not completed yet

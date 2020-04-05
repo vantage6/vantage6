@@ -110,7 +110,7 @@ class Collaboration(Resource):
         collaboration.save()
         return collaboration_schema.dump(collaboration).data, HTTPStatus.OK
 
-    @with_user_or_node
+    @only_for(['user', 'node', 'container'])
     @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")), endpoint='collaboration_with_id')
     @swag_from(str(Path(r"swagger/get_collaboration_without_id.yaml")), endpoint='collaboration_without_id')
     def get(self, id=None):
