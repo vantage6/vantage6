@@ -103,14 +103,17 @@ def proxy_task():
         public_key = response.json().get("public_key")
 
         # Simple JSON (only for unencrypted collaborations)
-        if isinstance(input_, dict):
-            input_ = bytes_to_base64s(
-                json.dumps(input_).encode(STRING_ENCODING)
-            )
+        # if isinstance(input_, dict):
+        #     input_ = bytes_to_base64s(
+        #         json.dumps(input_).encode(STRING_ENCODING)
+        #     )
 
         input_unpacked = base64s_to_bytes(input_)
-        encrypted_input = server_io.cryptor.encrypt_bytes_to_base64s(
-            input_unpacked, public_key)
+
+        encrypted_input = server_io.cryptor.encrypt_bytes_to_str(
+            input_unpacked,
+            public_key
+        )
 
         log.debug(f"should be unreadable={encrypted_input}")
         organization["input"] = encrypted_input
@@ -203,6 +206,7 @@ def proxy(central_server_path):
 
         :param central_server_path: the endpoint path to call
     """
+    log.info(f'Received proxy request for {central_server_path}')
     url = server_info()
 
     method_name = request.method.lower()

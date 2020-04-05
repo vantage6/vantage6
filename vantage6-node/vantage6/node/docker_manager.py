@@ -186,6 +186,28 @@ class DockerManager(object):
         # if not, it is considered an illegal image
         return False
 
+    def is_running(self, result_id):
+        """Return True iff a container is already running for <result_id>."""
+        container = self.client.containers.list(filters={
+            "label": [
+                f"{APPNAME}-type=algorithm",
+                f"node={self.node_name}",
+                f"result_id={result_id}"
+            ]
+        })
+
+        return container
+
+    def pull(self, image):
+        """Pull the latest image."""
+        try:
+            self.log.info(f"Retrieving latest image: '{image}'")
+            self.client.images.pull(image)
+
+        except Exception as e:
+            self.log.error(e)
+
+
     def set_database_uri(self, database_uri):
         """A setter for clarity."""
         self.database_uri = database_uri
@@ -211,25 +233,13 @@ class DockerManager(object):
             return False
 
         # Check that this task is not already running
-        container = self.client.containers.list(filters={
-            "label": [
-                f"{APPNAME}-type=algorithm",
-                f"node={self.node_name}",
-                f"result_id={result_id}"
-            ]
-        })
-
-        if container:
+        if self.is_running(result_id):
             self.log.warn("Task is already being executed, discarding task")
             self.log.debug(f"result_id={result_id} is discarded")
             return False
 
         # Try to pull the latest image
-        try:
-            self.log.info(f"Retrieving latest image={image}")
-            self.client.images.pull(image)
-        except Exception as e:
-            self.log.error(e)
+        self.pull(image)
 
         # FIXME: We should have a seperate mount/volume for this. At the
         #   moment this is a potential leak as containers might access input,
@@ -281,6 +291,15 @@ class DockerManager(object):
         else:
             volumes[self.__tasks_dir] = {"bind": data_folder,"mode": "rw"}
 
+        try:
+            proxy_host = os.environ['PROXY_SERVER_HOST']
+
+        except Exception as e:
+            print('-' * 80)
+            print(os.environ)
+            print('-' * 80)
+            proxy_host = 'host.docker.internal'
+
         # define enviroment variables for the docker-container, the
         # host, port and api_path are from the local proxy server to
         # facilitate indirect communication with the central server
@@ -292,7 +311,7 @@ class DockerManager(object):
             "TOKEN_FILE": os.path.join(data_folder, task_folder_name, "token"),
             "TEMPORARY_FOLDER": tmp_folder,
             "DATABASE_URI": os.path.join(data_folder, self.database_uri),
-            "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
+            "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
@@ -317,7 +336,8 @@ class DockerManager(object):
                 }
             )
         except Exception as e:
-            self.log.debug(e)
+            self.log.error('Could not run docker image!?')
+            self.log.error(e)
             return False
 
         # keep track of the container
@@ -356,21 +376,27 @@ class DockerManager(object):
             f"Result id={finished_task['result_id']} is finished"
         )
 
-        # report if the container has a different status than 0
-        status_code = finished_task["container"].attrs["State"]["ExitCode"]
-        if status_code:
-            self.log.error(f"Received non-zero exitcode: {status_code}")
-
         # get all info from the container and cleanup
         container = finished_task["container"]
-
         log = container.logs().decode('utf8')
 
-        try:
-            container.remove()
-        except Exception as e:
-            self.log.error(f"Failed to remove container {container.name}")
-            self.log.debug(e)
+        # report if the container has a different status than 0
+        status_code = container.attrs["State"]["ExitCode"]
+
+        if status_code:
+            self.log.error(f"Received non-zero exitcode: {status_code}")
+            self.log.error(f"  Container id: {container.id}")
+            self.log.warn("Will not remove container")
+            self.log.info(log)
+
+        else:
+            try:
+                container.remove()
+
+            except Exception as e:
+                self.log.error(f"Failed to remove container {container.name}")
+                self.log.debug(e)
+
 
         self.active_tasks.remove(finished_task)
 

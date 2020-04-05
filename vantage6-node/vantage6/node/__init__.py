@@ -16,6 +16,7 @@ The node application is seperated in 4 threads:
 """
 import sys
 import os
+import random
 import time
 import datetime
 import logging
@@ -133,6 +134,7 @@ class Node(object):
 
         self.ctx = ctx
         self.config = ctx.config
+        self.queue = queue.Queue()
         self._using_encryption = None
 
         # initialize Node connection to the server
@@ -152,16 +154,15 @@ class Node(object):
         # Setup encryption
         self.setup_encryption()
 
+        # Thread for proxy server for algorithm containers, so they can
+        # communicate with the central server.
+        self.log.info("Setting up proxy server")
+        t = Thread(target=self.__proxy_server_worker, daemon=True)
+        t.start()
+
         # Create a long-lasting websocket connection.
         self.log.debug("Creating websocket connection with the server")
         self.connect_to_socket()
-
-        # listen forever for incoming messages, tasks are stored in
-        # the queue.
-        self.queue = queue.Queue()
-        self.log.debug("Starting thread for incoming messages (tasks)")
-        t = Thread(target=self.__listening_worker, daemon=True)
-        t.start()
 
         # Check if new tasks were posted while offline.
         self.log.debug("Fetching tasks that were posted while offline")
@@ -241,16 +242,18 @@ class Node(object):
         t = Thread(target=self.__speaking_worker, daemon=True)
         t.start()
 
-        # Thread for proxy server for algorithm containers, so they can
-        # communicate with the central server.
-        self.log.info("Setting up proxy server")
-        t = Thread(target=self.__proxy_server_worker, daemon=True)
+        # listen forever for incoming messages, tasks are stored in
+        # the queue.
+        self.log.debug("Starting thread for incoming messages (tasks)")
+        t = Thread(target=self.__listening_worker, daemon=True)
         t.start()
 
         # Thread to monitor websocket connection
         self.log.info("Starting socket connection watchdog")
         t = Thread(target=self.__keep_socket_alive, daemon=True)
         t.start()
+
+        self.log.info('Init complete')
 
     def __proxy_server_worker(self):
         """ Proxy algorithm container communcation.
@@ -264,30 +267,53 @@ class Node(object):
         os.environ["SERVER_PORT"] = self.server_io.port
         os.environ["SERVER_PATH"] = self.server_io.path
 
-        port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
+        if self.ctx.running_in_docker:
+            # cs.NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
+            # when running in the isolated docker network.
+            default_proxy_host = cs.NODE_PROXY_SERVER_HOSTNAME
+        else:
+            # If we're running non-dockerized, assume that the proxy is
+            # accessible from within the docker algorithm container on
+            # host.docker.internal.
+            default_proxy_host = 'host.docker.internal'
 
+        # If PROXY_SERVER_HOST was set in the environment, it overrides our
+        # value.
+        proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
+        os.environ["PROXY_SERVER_HOST"] = proxy_host
+
+        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
+
+        # 'app' is defined in vantage6.node.proxy_server
         # app.debug = True
         app.config["SERVER_IO"] = self.server_io
-        http_server = WSGIServer(
-            ('0.0.0.0', port),
-            app
-        )
 
-        self.log.debug(
-            f"proxyserver host={cs.NODE_PROXY_SERVER_HOSTNAME} port={port}")
+        for try_number in range(5):
+            self.log.info(f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
+            http_server = WSGIServer(('0.0.0.0', proxy_port), app)
 
-        try:
-            http_server.serve_forever()
-        except Exception as e:
-            self.log.critical("proxyserver crashed!...")
-            self.log.debug(e)
+            try:
+                http_server.serve_forever()
+
+            except OSError as e:
+                self.log.debug(f'Error during attempt {try_number}')
+                self.log.debug(f'{type(e)}: {e}')
+
+                if e.errno == 48:
+                    proxy_port = random.randint(2048, 16384)
+                    self.log.critical(f"Retrying with a different port: {proxy_port}")
+                    os.environ['PROXY_SERVER_PORT'] = str(proxy_port)
+
+                else:
+                    raise
+
+            except Exception as e:
+                self.log.error('Proxyserver could not be started or crashed!')
+                self.log.error(e)
 
     def __sync_task_queue_with_server(self):
         """ Get all unprocessed tasks from the server for this node."""
         assert self.server_io.cryptor, "Encrpytion has not been setup"
-
-        # make sure we do not add the same job twice.
-        self.queue = queue.Queue()
 
         # request open tasks from the server
         tasks = self.server_io.get_results(state="open", include_task=True)
