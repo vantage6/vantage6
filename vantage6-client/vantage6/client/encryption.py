@@ -48,23 +48,17 @@ class CryptorBase(metaclass=Singleton):
         self.log = logging.getLogger(logger_name(__name__))
 
     def bytes_to_str(self, data: bytes) -> str:
-        """Encode bytes as string.
-
-        Default implementation just uses utf-8 encoding.
-        """
-        return data.decode('utf-8')
+        """Encode bytes as base64 encoded string."""
+        return bytes_to_base64s(data)
 
     def str_to_bytes(self, data: str) -> bytes:
-        """Decode string to bytes.
-
-        Default implementation just uses utf-8 encoding.
-        """
-        return data.encode('utf-8')
+        """Decode base64 encoded string to bytes."""
+        return base64s_to_bytes(data)
 
 
     def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str) -> str:
         """Encrypt bytes in `data` using a (base64 encoded) public key."""
-        return self.str_to_bytes(data)
+        return self.bytes_to_str(data)
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
         """Decrypt base64 encoded *string* `data."""
@@ -164,14 +158,6 @@ class RSACryptor(CryptorBase):
     def public_key_str(self):
         """ Returns a JSON safe public key, used for the API."""
         return bytes_to_base64s(self.public_key_bytes)
-
-    def bytes_to_str(self, data: bytes) -> str:
-        """Encode bytes as base64 encoded string."""
-        return bytes_to_base64s(data)
-
-    def str_to_bytes(self, data: str) -> bytes:
-        """Decode base64 encoded string to bytes."""
-        return base64s_to_bytes(data)
 
     def encrypt_bytes_to_str(self, data: bytes, pubkey_base64s: str) -> str:
         """Encrypt bytes in `data` using a (base64 encoded) public key."""
