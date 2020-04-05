@@ -138,7 +138,7 @@ class ClientBaseProtocol(object):
         else:
             path = self.base_path + '/' + endpoint
 
-        self.log.debug(f"Generated path to {path}")
+        # self.log.debug(f"Generated path to {path}")
         return path
 
     def request(self, endpoint: str, json: dict=None, method: str='get', params=None):
