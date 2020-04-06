@@ -1,9 +1,13 @@
 import base64
 import click
 
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore, Style
 
 from vantage6.common.globals import STRING_ENCODING
+
+
+# init colorstuff
+init()
 
 def logger_name(special__name__):
     log_name = special__name__.split('.')[-1]
