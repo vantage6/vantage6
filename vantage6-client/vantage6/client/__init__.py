@@ -141,7 +141,7 @@ class ClientBaseProtocol(object):
         # self.log.debug(f"Generated path to {path}")
         return path
 
-    def request(self, endpoint: str, json: dict=None, method: str='get', params=None):
+    def request(self, endpoint: str, json: dict=None, method: str='get', params=None, first_try=False):
         """ Create HTTP(S) request to the central server.
 
             It can contain a payload (JSON) in case of a POST method.
@@ -177,10 +177,11 @@ class ClientBaseProtocol(object):
             self.log.error(f'Server responded with error code: {response.status_code} ')
             self.log.debug(response.json().get("msg",""))
 
-            # FIXME: this should happen only *once* to prevent infinite recursion!
-            # refresh token and try again
-            self.refresh_token()
-            return self.request(endpoint, json=json, method=method, params=params)
+            if first_try:
+                self.refresh_token()
+                return self.request(endpoint, json, method, params, first_try=True)
+            else:
+                self.log.error("Nope, refreshing the token didn't fix it.")
 
         # self.log.debug(f"Response data={response.json()}")
         return response.json()
