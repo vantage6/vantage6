@@ -40,6 +40,7 @@ def server_info():
     path = os.environ["SERVER_PATH"]
     return f"{url}:{port}{path}"
 
+
 @app.route("/task", methods=["POST"])
 def proxy_task():
     """ Create new task at the server instance
@@ -108,6 +109,9 @@ def proxy_task():
         #         json.dumps(input_).encode(STRING_ENCODING)
         #     )
 
+        log.warn('Trying to unpack input:')
+        log.warn(input_)
+
         input_unpacked = base64s_to_bytes(input_)
 
         encrypted_input = server_io.cryptor.encrypt_bytes_to_str(
@@ -115,7 +119,7 @@ def proxy_task():
             public_key
         )
 
-        log.debug(f"should be unreadable={encrypted_input}")
+        # log.debug(f"should be unreadable={encrypted_input}")
         organization["input"] = encrypted_input
         encrypted_organizations.append(organization)
         log.debug(
@@ -150,11 +154,13 @@ def proxy_task_result(id):
             f"{url}/task/{id}/result",
             headers={'Authorization': auth}
         ).json()
+
         unencrypted = []
         for result in results:
-            result["result"] = server_io.cryptor.decrypt_bytes_from_base64(
+            result["result"] = server_io.cryptor.decrypt_str_to_bytes(
                 result["result"]
             )
+
             result["result"] = bytes_to_base64s(result["result"])
             unencrypted.append(
                 result
@@ -189,7 +195,7 @@ def proxy_results(id):
         )
         encrypted_input = response["result"]
         response["result"] = bytes_to_base64s(
-            server_io.cryptor.decrypt_bytes_from_base64(
+            server_io.cryptor.decrypt_str_to_bytes(
                 response["result"]
             )
         )
@@ -200,13 +206,13 @@ def proxy_results(id):
 
     return jsonify(response.json())
 
-@app.route('/<path:central_server_path>',methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+@app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
 def proxy(central_server_path):
     """ Generic endpoint that will forward everything to the central server.
 
         :param central_server_path: the endpoint path to call
     """
-    log.info(f'Received proxy request for {central_server_path}')
+    log.info(f'Generic proxy request for {central_server_path}')
     url = server_info()
 
     method_name = request.method.lower()
@@ -228,12 +234,12 @@ def proxy(central_server_path):
         auth = None
         auth_found = False
 
-    log.debug(f"method = {method_name}, auth = {auth_found}")
+    # log.debug(f"method = {method_name}, auth = {auth_found}")
 
     api_url = f"{url}/{central_server_path}"
     # print("*************")
     # print(api_url)
-    log.info(f"{method_name} | {api_url}")
+    # log.info(f"{method_name} | {api_url}")
     try:
         response = method(
             api_url,

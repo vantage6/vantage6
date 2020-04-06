@@ -520,10 +520,12 @@ class Node(object):
             raise Exception("Expectations on encryption don't match!?")
 
         if encrypted_collaboration:
+            self.log.warn('Enabling encryption!')
             private_key_file = self.private_key_filename()
             self.server_io.setup_encryption(private_key_file)
 
         else:
+            self.log.warn('Disabling encryption!')
             self.server_io.setup_encryption(None)
 
     def connect_to_socket(self):
