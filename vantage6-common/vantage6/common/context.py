@@ -50,6 +50,7 @@ class AppContext(metaclass=Singleton):
         self.config_file = self.find_config_file(
             instance_type,
             instance_name,
+            system_folders,
             config_file
         )
 
