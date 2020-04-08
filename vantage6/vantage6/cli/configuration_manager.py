@@ -15,12 +15,12 @@ class ServerConfiguration(Configuration):
 
     VALIDATORS = {
         "description": Use(str),
-        "ip": Use(str) ,
+        "ip": Use(str),
         "port": Use(int),
         "api_path": Use(str),
         "uri": Use(str),
         "allow_drop_all": Use(bool),
-        "logging":{
+        "logging": {
             "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
             "file": Use(str),
             "use_console": Use(bool),
@@ -38,7 +38,7 @@ class NodeConfiguration(Configuration):
         "server_url": Use(str),
         "port": Or(Use(int), None),
         "task_dir": Use(str),
-        "databases": {Use(str):Use(str)},
+        "databases": {Use(str): Use(str)},
         "api_path": Use(str),
         "logging": {
             "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),

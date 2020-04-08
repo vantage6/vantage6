@@ -90,14 +90,14 @@ def node_configuration_questionaire(dirs, instance_name):
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
 
-    disable_encryption = q.select("Disable encryption?",
-        choices=["false", "true"]).ask()
+    encryption = q.select("Enable encryption?",
+                          choices=["true", "false"]).ask()
 
-    private_key = "" if disable_encryption == "true" else \
+    private_key = "" if encryption == "false" else \
         q.text("Path to private key file:").ask()
 
     config["encryption"] = {
-        "disabled": disable_encryption == "true",
+        "enabled": encryption == "true",
         "private_key": private_key
     }
 
