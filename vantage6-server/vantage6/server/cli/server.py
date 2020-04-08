@@ -214,11 +214,7 @@ def cli_server_new(name, environment, system_folders):
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(
-        name,
-        environment=environment,
-        system_folders=system_folders
-    )
+    cfg_file = configuration_wizard(name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # create root user

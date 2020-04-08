@@ -3,13 +3,14 @@ import logging
 from vantage6.server import db
 from vantage6 import server
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+import jwt
 from flask_socketio import join_room, send, leave_room, emit, Namespace
 from flask import g, session, request
 
 class DefaultSocketNamespace(Namespace):
-    """Handlers for SocketIO events are different than handlers for routes and that 
-    introduces a lot of confusion around what can and cannot be done in a SocketIO handler. 
-    The main difference is that all the SocketIO events generated for a client occur in 
+    """Handlers for SocketIO events are different than handlers for routes and that
+    introduces a lot of confusion around what can and cannot be done in a SocketIO handler.
+    The main difference is that all the SocketIO events generated for a client occur in
     the context of a single long running request.
     """
 
@@ -18,21 +19,28 @@ class DefaultSocketNamespace(Namespace):
     def on_connect(self):
         """New incomming connections are authenticated using their
         JWT authorization token which is obtained from the REST api.
-        A session is created for each connected clients which lives 
+        A session is created for each connected clients which lives
         as long as the connection is active. There has not been made
         any difference between connecting and re-connecting.
         """
-                
+
         self.log.info(f'Client connected: "{request.sid}"')
 
         # try to catch jwt authorization token.
         try:
             verify_jwt_in_request()
+
+        except jwt.exceptions.ExpiredSignatureError as e:
+            self.log.error("JWT has expired")
+            emit("expired_token", "", room=request.sid)
+
         except Exception as e:
             self.log.error("Could not connect client! No or Invalid JWT token?")
             self.log.exception(e)
-            self.__join_room_and_notify(request.sid)
             session.name = "no-sure-yet"
+            self.__join_room_and_notify(request.sid)
+
+            # FIXME: expired probably doesn't cover it ...
             emit("expired_token", "", room=request.sid)
             return
 
@@ -51,11 +59,11 @@ class DefaultSocketNamespace(Namespace):
         session.type = auth.type
         session.name = auth.username if session.type == 'user' else auth.name
         self.log.info(f'Client identified as <{session.type}>: <{session.name}>')
-        
+
         # join appropiate rooms, nodes join a specific collaboration room.
-        # users do not belong to specific collaborations. 
+        # users do not belong to specific collaborations.
         session.rooms = ['all_connections', 'all_'+session.type+'s']
-        
+
         if session.type == 'node':
             session.rooms.append('collaboration_' + str(auth.collaboration_id))
             session.rooms.append('node_' + str(auth.id))
@@ -67,11 +75,14 @@ class DefaultSocketNamespace(Namespace):
 
 
     def on_disconnect(self):
-        for room in session.rooms:
-            self.__leave_room_and_notify(room)
-
-        session.auth.status = 'offline'
-        session.auth.save()
+        # FIXME: this raises errors:
+        #   AttributeError: '_ManagedSession' object has no attribute '...'
+        #
+        # for room in session.rooms:
+        #     self.__leave_room_and_notify(room)
+        #
+        # session.auth.status = 'offline'
+        # session.auth.save()
 
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
@@ -86,7 +97,7 @@ class DefaultSocketNamespace(Namespace):
 
     def on_error(self, e):
         self.log.error(e)
-    
+
     def on_join_room(self, room):
         self.__join_room_and_notify(room)
 
@@ -100,7 +111,7 @@ class DefaultSocketNamespace(Namespace):
         )
         # emit('message', "somewhere in the universe a container has crashed", room='all_connections')
         # print("collaboration_"+str(collaboration_id))
-        
+
         room = "collaboration_"+str(collaboration_id)
         emit("container_failed", run_id, room=room)
 
@@ -122,4 +133,3 @@ class DefaultSocketNamespace(Namespace):
         emit('message', msg, room=room)
 
 
-        

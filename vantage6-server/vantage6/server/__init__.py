@@ -468,6 +468,7 @@ def run(ctx, *args, **kwargs):
     """
     # Prevent logging from urllib3
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("socketIO-client").setLevel(logging.WARNING)
 
     wslh = WebSocketLoggingHandler()
     wslh.setLevel(logging.DEBUG)
@@ -478,7 +479,10 @@ def run(ctx, *args, **kwargs):
 
     app.config['JWT_SECRET_KEY'] = ctx.config.get('jwt_secret_key', str(uuid.uuid1()))
 
+    # Default expiration time
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=6)
     # Set an extra long expiration time on access tokens for testing
+
     if environment == 'test':
         log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
@@ -499,4 +503,5 @@ def run(ctx, *args, **kwargs):
         node.status = 'offline'
     session.commit()
 
+    kwargs.setdefault('log_output', False)
     socketio.run(app, *args, **kwargs)

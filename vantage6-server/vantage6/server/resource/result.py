@@ -28,7 +28,7 @@ def setup(api, api_base):
 
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
-    
+
     api.add_resource(
         Result,
         path,
@@ -61,7 +61,7 @@ class Result(Resource):
         if id:
             t = db_Result.get(id)
         else:
-            
+
             session = Database().Session
             q = session.query(db_Result)
 
@@ -76,7 +76,7 @@ class Result(Resource):
             if request.args.get('node_id'):
                 q = q.filter(db.Node.id==request.args.get('node_id'))\
                     .filter(db.Collaboration.id==db.Node.collaboration_id)
-            
+
             t = q.all()
 
         if request.args.get('include') == 'task':
@@ -94,7 +94,7 @@ class Result(Resource):
         result = db_Result.get(id)
 
         if result.organization_id != g.node.organization_id:
-            log.info(
+            log.warn(
                 f"{g.node.name} tries to update a result that does not belong "
                 f"to him. ({result.organization_id}/{g.node.organization_id})"
             )
@@ -103,17 +103,17 @@ class Result(Resource):
         if result.finished_at is not None:
             return {"msg": "Cannot update an already finished result!"}, HTTPStatus.BAD_REQUEST
 
-        
+
         # notify collaboration nodes/users that the task has an update
         socketio.emit(
-            "status_update", 
-            {'result_id': id}, 
+            "status_update",
+            {'result_id': id},
             room='collaboration_'+str(result.task.collaboration.id),
             namespace='/tasks',
         )
 
         url = url_for('result_with_id', id=id)
-        log.debug(f'result [{url}] was updated.')
+        # log.debug(f'result [{url}] was updated.')
 
         result.started_at = parse_datetime(data.get("started_at"), result.started_at)
         result.finished_at = parse_datetime(data.get("finished_at"))

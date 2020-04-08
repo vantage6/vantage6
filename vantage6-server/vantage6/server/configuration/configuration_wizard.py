@@ -68,8 +68,7 @@ def server_configuration_questionaire(dirs, instance_name):
 
     return config
 
-def configuration_wizard(instance_name, environment="application",
-    system_folders=False):
+def configuration_wizard(instance_name, environment, system_folders):
 
     # for defaults and where to save the config
     dirs = ServerContext.instance_folders("server", instance_name,
