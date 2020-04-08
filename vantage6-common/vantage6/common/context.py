@@ -90,6 +90,7 @@ class AppContext(metaclass=Singleton):
                 instance_type,
                 instance_name,
                 system_folders,
+                verbose=False
             )
 
         except Exception as e:
@@ -191,7 +192,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def find_config_file(cls, instance_type, instance_name, system_folders,
-        config_file=None):
+        config_file=None, verbose=True):
         """Find a configuration file."""
         if config_file is None:
             config_file = f"{instance_name}.yaml"
@@ -215,11 +216,12 @@ class AppContext(metaclass=Singleton):
             if os.path.exists(fullpath):
                 return fullpath
 
-        msg = f'Could not find configuration file "{config_file}"!?'
-        print(msg)
-        print('Tried the following directories:')
-        for d in dirs:
-            print(f' * {d}')
+        if verbose:
+            msg = f'Could not find configuration file "{config_file}"!?'
+            print(msg)
+            print('Tried the following directories:')
+            for d in dirs:
+                print(f' * {d}')
 
         raise Exception(msg)
 
@@ -276,5 +278,3 @@ class AppContext(metaclass=Singleton):
 
         # Finally, capture all warnings using the logging mechanism.
         logging.captureWarnings(True)
-
-
