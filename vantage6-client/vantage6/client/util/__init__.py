@@ -21,14 +21,14 @@ def logger_name(special__name__):
         log_name = log_name[:11] + ".."
     return log_name
 
-def prepare_bytes_for_transport(bytes_):
+def bytes_to_base64s(bytes_):
     return base64.b64encode(bytes_).decode(STRING_ENCODING)
 
-def unpack_bytes_from_transport(bytes_string):
+def base64s_to_bytes(bytes_string):
     return base64.b64decode(bytes_string.encode(STRING_ENCODING))
 
 class Singleton(type):
-    _instances = {} 
+    _instances = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
