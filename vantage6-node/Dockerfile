@@ -10,7 +10,7 @@ RUN pip install git+https://github.com/IKNL/vantage6-common
 RUN pip install git+https://github.com/IKNL/vantage6-client
 
 COPY . /vantage6
-RUN pip install /vantage6
+RUN pip install -e /vantage6
 
 # copy start file to app folder
 COPY /vantage6/node/start.py /app/start.py
@@ -21,4 +21,4 @@ EXPOSE ${port}
 ENV PROXY_SERVER_PORT ${port}
 
 # create entrypoint
-ENTRYPOINT [ "python", "/app/start.py"]
+CMD [ "python", "/app/start.py"]

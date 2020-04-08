@@ -16,6 +16,7 @@ The node application is seperated in 4 threads:
 """
 import sys
 import os
+import random
 import time
 import datetime
 import logging
@@ -24,6 +25,7 @@ import typing
 import shutil
 import requests
 import json
+import docker
 
 from pathlib import Path
 from threading import Thread
@@ -39,11 +41,11 @@ from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
 
 class NodeTaskNamespace(SocketIONamespace):
-    """ Class that handles incoming websocket events.
-    """
+    """Class that handles incoming websocket events."""
 
     # reference to the node objects, so a callback can edit the
     # node instance.
+    # FIXME: why is this a *class* attribute?
     node_worker_ref = None
 
     def __init__(self, *args, **kwargs):
@@ -64,26 +66,25 @@ class NodeTaskNamespace(SocketIONamespace):
         self.node_worker_ref = node_worker
 
     def on_disconnect(self):
-        """ Server disconnects event.
-        """
+        """ Server disconnects event."""
         self.log.info('Disconnected from the server')
 
     def on_new_task(self, task_id):
-        """ New task event.
-        """
+        """ New task event."""
         if self.node_worker_ref:
             self.node_worker_ref.get_task_and_add_to_queue(task_id)
             self.log.info(f'New task has been added task_id={task_id}')
+
         else:
             self.log.critical(
                 'Task Master Node reference not set is socket namespace'
             )
 
     def on_container_failed(self, run_id):
-        """ A container in the collaboration has failed event.
+        """A container in the collaboration has failed event.
 
-            TODO handle run sequence at this node. Maybe terminate all
-                containers with the same run_id?
+        TODO handle run sequence at this node. Maybe terminate all
+            containers with the same run_id?
         """
         self.log.critical(
             f"A container on a node within your collaboration part of "
@@ -91,30 +92,32 @@ class NodeTaskNamespace(SocketIONamespace):
         )
 
     def on_expired_token(self, msg):
-        self.log.warning("Your token is no longer valid... reconnect")
+        self.log.warning("Your token is no longer valid... reconnecting")
         self.node_worker_ref.socketIO.disconnect()
         self.log.debug("Old socket connection terminated")
         self.node_worker_ref.server_io.refresh_token()
         self.log.debug("Token refreshed")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
-        self.node_worker_ref.__sync_task_que_with_server()
-        self.log.debug("Tasks synced again with the server...")
+
+        # FIXME: This won't work: you're trying to access a private method!?
+        # self.node_worker_ref.__sync_task_queue_with_server()
+        # self.log.debug("Tasks synced again with the server...")
 
     def on_pang(self, msg):
-        self.log.debug(f"Pong received, WS still connected <{msg}>")
+        # self.log.debug(f"Pong received, WS still connected <{msg}>")
         self.node_worker_ref.socket_connected = True
 
 # ------------------------------------------------------------------------------
-class Node:
-    """ Node to handle incomming computation requests.
+class Node(object):
+    """Node to handle incomming computation requests.
 
-        The main steps this application follows: 1) retrieve (new) tasks
-        from the central server, 2) kick-off docker algorithm containers
-        based on this task and 3) retrieve the docker results and post
-        them to the central server.
+    The main steps this application follows: 1) retrieve (new) tasks
+    from the central server, 2) kick-off docker algorithm containers
+    based on this task and 3) retrieve the docker results and post
+    them to the central server.
 
-        TODO read allowed repositories from the config file
+    TODO: read allowed repositories from the config file
     """
 
     def __init__(self, ctx):
@@ -131,6 +134,8 @@ class Node:
 
         self.ctx = ctx
         self.config = ctx.config
+        self.queue = queue.Queue()
+        self._using_encryption = None
 
         # initialize Node connection to the server
         self.server_io = ClientNodeProtocol(
@@ -141,78 +146,114 @@ class Node:
 
         self.log.info(f"Connecting server: {self.server_io.base_path}")
 
-        # Authenticate to the DL server, obtaining a JSON Web Token.
+        # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
         self.log.debug("authenticating")
         self.authenticate()
 
-        # after we authenticated we setup encryption
-        file_ = self.config.get("encryption").get("private_key")
-        if file_:
-            rsa_file = Path(file_)
-            if not rsa_file.exists():
-                rsa_file = Path("/mnt/data/private_key.pem")
-        else:
-            rsa_file = Path("/mnt/data/private_key.pem")
+        # Setup encryption
+        self.setup_encryption()
 
-        self.server_io.setup_encryption(
-            rsa_file,
-            self.config.get("encryption").get("disabled")
-        )
-
-        # Create a long-lasting websocket connection.
-        self.log.debug("creating socket connection with the server")
-        self.connect_to_socket()
-
-        # listen forever for incoming messages, tasks are stored in
-        # the queue.
-        self.queue = queue.Queue()
-        self.log.debug("start thread for incoming messages (tasks)")
-        t = Thread(target=self.__listening_worker, daemon=True)
-        t.start()
-
-        # check if new tasks were posted while offline.
-        self.log.debug("fetching tasks that were posted while offline")
-        self.__sync_task_que_with_server()
-
-        self.log.debug("setup the docker manager")
-        self.__docker = DockerManager(
-            allowed_images=self.config.get("allowed_images"),
-            docker_socket_path="unix://var/run/docker.sock",
-            tasks_dir=self.ctx.data_dir,
-            isolated_network_name=f"{ctx.docker_network_name}-net",
-            node_name=self.ctx.name
-        )
-
-        # copy data to Volume /mnt/data-volume from /mnt/data to populate
-        # the volume for use in the algorithm containers (which can not access
-        # the host directly)
-        self.log.debug("copying data files to volume")
-        shutil.copy2("/mnt/database.csv", "/mnt/data-volume", follow_symlinks=True)
-
-        # connect itself to the isolated algorithm network
-        self.log.debug("connect to isolated algorithm network")
-        self.__docker.isolated_network.connect(
-            ctx.docker_container_name,
-            aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
-        )
-
-        # send results to the server when they come available.
-        self.log.debug("start thread for sending messages (results)")
-        t = Thread(target=self.__speaking_worker, daemon=True)
-        t.start()
-
-        # proxy server for algorithm containers, so they can communicate
-        # with the central server.
-        self.log.info("setting up proxy server")
+        # Thread for proxy server for algorithm containers, so they can
+        # communicate with the central server.
+        self.log.info("Setting up proxy server")
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
 
-        self.log.info("starting thread to check the socker connection")
+        # Create a long-lasting websocket connection.
+        self.log.debug("Creating websocket connection with the server")
+        self.connect_to_socket()
+
+        # Check if new tasks were posted while offline.
+        self.log.debug("Fetching tasks that were posted while offline")
+        self.__sync_task_queue_with_server()
+
+
+        # If we're in a 'regular' context, we'll copy the dataset to our data
+        # dir and mount it in any algorithm container that's run; bind mounts
+        # on a folder will work just fine.
+        #
+        # If we're running in dockerized mode we *cannot* bind mount a folder,
+        # because the folder is in the container and not in the host. We'll have
+        # to use a docker volume instead. This means:
+        #  1. we need to know the name of the volume so we can pass it along
+        #  2. need to have this volume mounted so we can copy files to it.
+        #
+        #  Ad 1: We'll use a default name that can be overridden by an
+        #        environment variable.
+        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
+        #        is OK, since ctx will be a DockerNodeContext.
+        #
+        #  This also means that the volume will have to be created & mounted
+        #  *before* this node is started, so we won't do anything with it here.
+
+        # We'll create a subfolder in the data_dir. We need this subfolder so
+        # we can easily mount it in the algorithm containers; the root folder
+        # may contain the private key, which which we don't want to share.
+        # We'll only do this if we're running outside docker, otherwise we would
+        # create '/data' on the data volume.
+        if not ctx.running_in_docker:
+            task_dir = os.path.join(ctx.data_dir, 'data')
+            os.makedirs(task_dir, exist_ok=True)
+
+        else:
+            task_dir = ctx.data_dir
+
+        self.log.debug("Setting up the docker manager")
+        self.__docker = DockerManager(
+            allowed_images=self.config.get("allowed_images"),
+            tasks_dir=task_dir,
+            isolated_network_name=f"{ctx.docker_network_name}-net",
+            node_name=ctx.name,
+            data_volume_name=ctx.docker_volume_name,
+        )
+
+        # If we're running in a docker container, database_uri would point
+        # to a path on the *host* (since it's been read from the config
+        # file). That's no good here. Therefore, we expect the CLI to set
+        # the environment variable for us. This has the added bonus that we
+        # can override the URI from the command line as well.
+        default_uri = self.config['databases']['default']
+        database_uri = os.environ.get('DATABASE_URI', default_uri)
+
+        if Path(database_uri).exists():
+            # We'll copy the file to the folder `data` in our task_dir.
+            self.log.info(f'Copying {database_uri} to {task_dir}')
+            shutil.copy(database_uri, task_dir)
+
+            # Since we've copied the database to the folder 'data' in the root
+            # of the volume: '/data/<database.csv>'. We'll just keep the
+            # basename (i.e. filename + ext).
+            database_uri = os.path.basename(database_uri)
+
+        # Connect to the isolated algorithm network *only* if we're running in
+        # a docker container.
+        if ctx.running_in_docker:
+            self.__docker.connect_to_isolated_network(
+                ctx.docker_container_name,
+                aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
+            )
+
+        # Let's keep it safe
+        self.__docker.set_database_uri(database_uri)
+
+        # Thread for sending results to the server when they come available.
+        self.log.debug("Start thread for sending messages (results)")
+        t = Thread(target=self.__speaking_worker, daemon=True)
+        t.start()
+
+        # listen forever for incoming messages, tasks are stored in
+        # the queue.
+        self.log.debug("Starting thread for incoming messages (tasks)")
+        t = Thread(target=self.__listening_worker, daemon=True)
+        t.start()
+
+        # Thread to monitor websocket connection
+        self.log.info("Starting socket connection watchdog")
         t = Thread(target=self.__keep_socket_alive, daemon=True)
         t.start()
-        # after here, you should/could call self.run_forever(). This
-        # could be done in a seperate Thread
+
+        self.log.info('Init complete')
 
     def __proxy_server_worker(self):
         """ Proxy algorithm container communcation.
@@ -226,23 +267,203 @@ class Node:
         os.environ["SERVER_PORT"] = self.server_io.port
         os.environ["SERVER_PATH"] = self.server_io.path
 
-        port = int(os.environ["PROXY_SERVER_PORT"])
+        if self.ctx.running_in_docker:
+            # cs.NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
+            # when running in the isolated docker network.
+            default_proxy_host = cs.NODE_PROXY_SERVER_HOSTNAME
+        else:
+            # If we're running non-dockerized, assume that the proxy is
+            # accessible from within the docker algorithm container on
+            # host.docker.internal.
+            default_proxy_host = 'host.docker.internal'
 
+        # If PROXY_SERVER_HOST was set in the environment, it overrides our
+        # value.
+        proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
+        os.environ["PROXY_SERVER_HOST"] = proxy_host
+
+        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
+
+        # 'app' is defined in vantage6.node.proxy_server
         # app.debug = True
         app.config["SERVER_IO"] = self.server_io
-        http_server = WSGIServer(
-            ('0.0.0.0', port),
-            app
+
+        for try_number in range(5):
+            self.log.info(f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
+            http_server = WSGIServer(('0.0.0.0', proxy_port), app)
+
+            try:
+                http_server.serve_forever()
+
+            except OSError as e:
+                self.log.debug(f'Error during attempt {try_number}')
+                self.log.debug(f'{type(e)}: {e}')
+
+                if e.errno == 48:
+                    proxy_port = random.randint(2048, 16384)
+                    self.log.critical(f"Retrying with a different port: {proxy_port}")
+                    os.environ['PROXY_SERVER_PORT'] = str(proxy_port)
+
+                else:
+                    raise
+
+            except Exception as e:
+                self.log.error('Proxyserver could not be started or crashed!')
+                self.log.error(e)
+
+    def __sync_task_queue_with_server(self):
+        """ Get all unprocessed tasks from the server for this node."""
+        assert self.server_io.cryptor, "Encrpytion has not been setup"
+
+        # request open tasks from the server
+        tasks = self.server_io.get_results(state="open", include_task=True)
+        self.log.debug(tasks)
+        for task in tasks:
+            self.queue.put(task)
+
+        self.log.info(f"received {self.queue._qsize()} tasks")
+
+    def __start_task(self, taskresult):
+        """Start a task.
+
+            Start the docker image and notify the server that the task
+            has been started.
+
+            :param taskresult: an empty taskresult
+        """
+        task = taskresult['task']
+        self.log.info("Starting task {id} - {name}".format(**task))
+
+        # notify that we are processing this task
+        self.server_io.set_task_start_time(taskresult["id"])
+
+        token = self.server_io.request_token_for_container(
+            task["id"],
+            task["image"]
+        )
+        token = token["container_token"]
+
+        # create a temporary volume for each run_id
+        # FIXME: why is docker_temporary_volume_name() in ctx???
+        vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
+        self.__docker.create_volume(vol_name)
+
+        # For some reason, if the key 'input' consists of JSON, it is
+        # automatically marshalled? This causes trouble, so we'll serialize it
+        # again.
+        # FIXME: should probably find & fix the root cause?
+        if type(taskresult['input']) == dict:
+            taskresult['input'] = json.dumps(taskresult['input'])
+
+        # Run the container. This adds the created container/task to the list
+        # __docker.active_tasks
+        self.__docker.run(
+            result_id=taskresult["id"],
+            image=task["image"],
+            docker_input=taskresult['input'],
+            tmp_vol_name=vol_name,
+            token=token
         )
 
-        self.log.debug(
-            f"proxyserver host={cs.NODE_PROXY_SERVER_HOSTNAME} port={port}")
+    def __listening_worker(self):
+        """ Listen for incoming (websocket) messages from the server.
 
-        try:
-            http_server.serve_forever()
-        except Exception as e:
-            self.log.critical("proxyserver crashed!...")
-            self.log.debug(e)
+            Runs in a separate thread. Received events are dispatched
+            through the appropriate action_handler for a channel.
+        """
+        self.log.debug("listening for incoming messages")
+
+        # FIXME: while True in combination with a wait() call that never exits
+        #   makes joining the tread (to terminate) difficult?
+        while True:
+            # incoming messages are handled by the action_handler instance which
+            # is attached when the socket connection was made. wait() is blocks
+            # forever (if no time is specified).
+            self.socketIO.wait()
+
+    def __speaking_worker(self):
+        """ Sending messages to central server.
+
+            Routine that is in a seperate thread sending results
+            to the server when they come available.
+
+            TODO change to a single request, might need to reconsider
+                the flow
+        """
+        self.log.debug("Waiting for results to send to the server")
+
+        while True:
+            results = self.__docker.get_result()
+
+            # notify all of a crashed container
+            if results.status_code:
+                self.socket_tasks.emit(
+                    'container_failed',
+                    self.server_io.id,
+                    results.status_code,
+                    results.result_id,
+                    self.server_io.collaboration_id
+                )
+
+            self.log.info(f"Sending result (id={results.result_id}) to the server!")
+
+            # FIXME: why are we retrieving the result *again*? Shouldn't we just
+            #   store the task_id when retrieving the task the first time?
+            response = self.server_io.request(f"result/{results.result_id}")
+            task_id = response.get("task").get("id")
+
+            if not task_id:
+                self.log.error(
+                    f"task_id of result (id={results.result_id}) "
+                    f"could not be retrieved"
+                )
+                return
+
+            response = self.server_io.request(f"task/{task_id}")
+            initiator_id = response.get("initiator")
+
+            if not initiator_id:
+                self.log.error(
+                    f"Initiator id from task (id={task_id})could not be "
+                    f"retrieved"
+                )
+
+            self.server_io.patch_results(
+                id=results.result_id,
+                initiator_id=initiator_id,
+                result={
+                    'result': results.data,
+                    'log': results.logs,
+                    'finished_at': datetime.datetime.now().isoformat(),
+                }
+            )
+
+    def __keep_socket_alive(self):
+
+        while True:
+            time.sleep(60)
+
+            # send ping
+            self.socket_connected = False
+            self.socket_tasks.emit("ping", self.server_io.whoami.id_)
+
+            # wait for pong
+            max_waiting_time = 5
+            count = 0
+            while (not self.socket_connected) and count < max_waiting_time:
+                # self.log.debug("Waiting for pong")
+                time.sleep(1)
+                count += 1
+
+            if not self.socket_connected:
+                self.log.warn("WS seems disconnected, resetting")
+                self.socketIO.disconnect()
+                self.log.debug("Disconnecting WS")
+                self.server_io.refresh_token()
+                self.log.debug("Token refreshed")
+                self.connect_to_socket()
+                self.log.debug("Connected to socket")
+                self.__sync_task_queue_with_server()
 
     def authenticate(self):
         """ Authenticate to the central server
@@ -270,119 +491,42 @@ class Node:
         # At this point, we shoud be connnected.
         self.log.info(f"Node name: {self.server_io.name}")
 
-    def get_task_and_add_to_queue(self, task_id):
-        """ Fetches (open) task with task_id from the server.
+    def private_key_filename(self):
+        """Get the path to the private key."""
 
-            The `task_id` is delivered by the websocket-connection.
-        """
+        # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
+        #   logic. Suggest moving this to ctx.get_private_key()
+        filename = self.config['encryption']["private_key"]
 
-        # fetch (open) result for the node with the task_id
-        tasks = self.server_io.get_results(
-            include_task=True,
-            state='open',
-            task_id=task_id
-        )
+        # filename may be set to an empty string
+        if not filename:
+            filename = 'private_key.pem'
 
-        # in the current setup, only a single result for a single node
-        # in a task exists.
-        for task in tasks:
-            self.queue.put(task)
+        # If we're running dockerized, the location may have been overridden
+        filename = os.environ.get('PRIVATE_KEY', filename)
 
-    def __sync_task_que_with_server(self):
-        """ Get all unprocessed tasks from the server for this node.
-        """
-        assert self.server_io.cryptor, "Encrpytion has not been setup"
+        # If ctx.get_data_file() receives an absolute path, it is returned as-is
+        fullpath = Path(self.ctx.get_data_file(filename))
 
-        # make sure we do not add the same job twice.
-        self.queue = queue.Queue()
+        return fullpath
 
-        # request open tasks from the server
-        tasks = self.server_io.get_results(state="open", include_task=True)
-        self.log.debug(tasks)
-        for task in tasks:
-            self.queue.put(task)
+    def setup_encryption(self):
+        """Setup encryption ... or don't."""
+        encrypted_collaboration = self.server_io.is_encrypted_collaboration()
+        encrypted_node = self.config['encryption']["enabled"]
 
-        self.log.info(f"received {self.queue._qsize()} tasks")
+        if encrypted_collaboration != encrypted_node:
+            # You can't force it if it just ain't right, you know?
+            raise Exception("Expectations on encryption don't match!?")
 
-    def run_forever(self):
-        """ Connect to the server to obtain and execute tasks forever
-        """
-        try:
-            while True:
-                # blocking untill a task comes available
-                # timeout specified, else Keyboard interupts are ignored
-                self.log.info("Waiting for new tasks....")
-                while True:
-                    try:
-                        task = self.queue.get(timeout=1)
-                        # if no item is returned, the Empty exception is
-                        # triggered, thus break statement is not reached
-                        break
+        if encrypted_collaboration:
+            self.log.warn('Enabling encryption!')
+            private_key_file = self.private_key_filename()
+            self.server_io.setup_encryption(private_key_file)
 
-                    except queue.Empty:
-                        pass
-
-                    except Exception as e:
-                        self.log.debug(e)
-
-                # if task comes available, attempt to execute it
-                try:
-                    self.__start_task(task)
-                except Exception as e:
-                    self.log.exception(e)
-
-        except KeyboardInterrupt:
-            self.log.debug("Caught a keyboard interupt, shutting down...")
-            self.socketIO.disconnect()
-            sys.exit()
-
-    def __start_task(self, taskresult):
-        """ Start a task.
-
-            Start the docker image and notify the server that the task
-            has been started.
-
-            :param taskresult: an empty taskresult
-        """
-
-        task = taskresult['task']
-        self.log.info("Starting task {id} - {name}".format(**task))
-
-        # notify that we are processing this task
-        self.server_io.set_task_start_time(taskresult["id"])
-
-        # TODO possibly we want to limit the token handout
-        token = self.server_io.request_token_for_container(
-            task["id"],
-            task["image"]
-        )
-        token = token["container_token"]
-
-        # If the task has the variable 'database' set and its value corresponds
-        # to a database defined in the configuration, we'll use that.
-        # TODO this is not working as this is going though a mount!
-        if (task['database']
-            and self.config.get('databases')
-            and task['database'] in self.config['databases']):
-            database_uri = self.config['databases'][task['database']]
         else:
-            database_uri = self.config['databases']["default"]
-
-        # create a temporary volume for each run_id
-        vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
-        self.__docker.create_volume(vol_name)
-
-        # start docker container in the background
-        if type(taskresult['input']) == dict:
-            taskresult['input'] = json.dumps(taskresult['input'])
-        self.__docker.run(
-            result_id=taskresult["id"],
-            image=task["image"],
-            database_uri=database_uri,
-            docker_input=taskresult['input'],
-            tmp_vol_name=vol_name,
-            token=token
-        )
+            self.log.warn('Disabling encryption!')
+            self.server_io.setup_encryption(None)
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
@@ -419,111 +563,66 @@ class Node:
             )
             self.log.critical(msg)
 
-    def __listening_worker(self):
-        """ Listen for incoming (websocket) messages from the server.
+    def get_task_and_add_to_queue(self, task_id):
+        """Fetches (open) task with task_id from the server.
 
-            Runs in a separate thread. Received events are dispatched
-            through the appropriate action_handler for a channel.
-        """
-        self.log.debug("listening for incoming messages")
-        while True:
-            # incoming messages are handled by the action_handler instance which
-            # is attached when the socket connection was made. wait is blocking
-            # forever (if no time is specified).
-            self.socketIO.wait()
-
-    def __speaking_worker(self):
-        """ Sending messages to central server.
-
-            Routine that is in a seperate thread sending results
-            to the server when they come available.
-
-            TODO change to a single request, might need to reconsider
-                the flow
+            The `task_id` is delivered by the websocket-connection.
         """
 
-        self.log.debug("Waiting for results to send to the server")
+        # fetch (open) result for the node with the task_id
+        tasks = self.server_io.get_results(
+            include_task=True,
+            state='open',
+            task_id=task_id
+        )
 
-        while True:
-            results = self.__docker.get_result()
+        # in the current setup, only a single result for a single node
+        # in a task exists.
+        for task in tasks:
+            self.queue.put(task)
 
-            # notify all of a crashed container
-            if results.status_code:
-                self.socket_tasks.emit(
-                    'container_failed',
-                    self.server_io.id,
-                    results.status_code,
-                    results.result_id,
-                    self.server_io.collaboration_id
-                )
+    def run_forever(self):
+        """Forever check self.queue for incoming tasks (and execute them)."""
+        try:
+            while True:
+                # blocking untill a task comes available
+                # timeout specified, else Keyboard interupts are ignored
+                self.log.info("Waiting for new tasks....")
 
-            self.log.info(
-                f"Results (id={results.result_id}) are sent to the server!")
+                while True:
+                    try:
+                        task = self.queue.get(timeout=1)
+                        # if no item is returned, the Empty exception is
+                        # triggered, thus break statement is not reached
+                        break
 
-            response = self.server_io.request(f"result/{results.result_id}")
-            task_id = response.get("task").get("id")
-            if not task_id:
-                self.log.error(
-                    f"task_id of result (id={results.result_id}) "
-                    f"could not be retrieved"
-                )
-                return
+                    except queue.Empty:
+                        pass
 
-            response = self.server_io.request(f"task/{task_id}")
-            initiator_id = response.get("initiator")
-            if not initiator_id:
-                self.log.error(
-                    f"Initiator id from task (id={task_id})could not be "
-                    f"retrieved"
-                )
+                    except Exception as e:
+                        self.log.debug(e)
 
-            self.server_io.patch_results(
-                id=results.result_id,
-                initiator_id=initiator_id,
-                result={
-                    'result': results.data,
-                    'log': results.logs,
-                    'finished_at': datetime.datetime.now().isoformat(),
-                }
-            )
+                # if task comes available, attempt to execute it
+                try:
+                    self.__start_task(task)
+                except Exception as e:
+                    self.log.exception(e)
 
-    def __keep_socket_alive(self):
-
-        while True:
-            time.sleep(60)
-
-            # send ping
-            self.socket_connected = False
-            self.socket_tasks.emit("ping", self.server_io.whoami.id_)
-
-            # wait for pong
-            max_waiting_time = 5
-            count = 0
-            while (not self.socket_connected) and count < max_waiting_time:
-                self.log.debug("Waiting for pong")
-                time.sleep(1)
-                count += 1
-
-            if not self.socket_connected:
-                self.log.warn("WS seems disconnected, resetting")
-                self.socketIO.disconnect()
-                self.log.debug("Disconnecting WS")
-                self.server_io.refresh_token()
-                self.log.debug("Token refreshed")
-                self.connect_to_socket()
-                self.log.debug("Connected to socket")
-                self.__sync_task_que_with_server()
+        except KeyboardInterrupt:
+            self.log.debug("Caught a keyboard interupt, shutting down...")
+            self.socketIO.disconnect()
+            sys.exit()
 
 
 # ------------------------------------------------------------------------------
 def run(ctx):
-    """ Start the node worker.
-    """
+    """ Start the node."""
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("socketIO-client").setLevel(logging.WARNING)
 
     # initialize node, connect to the server using websockets
-    tmc = Node(ctx)
+    node = Node(ctx)
 
     # put the node to work, executing tasks that are in the que
-    tmc.run_forever()
+    node.run_forever()

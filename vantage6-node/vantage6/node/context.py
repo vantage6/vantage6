@@ -11,7 +11,7 @@ from pathlib import Path
 from sqlalchemy.engine.url import make_url
 
 from vantage6.common.globals import (
-    PACAKAGE_FOLDER, 
+    PACAKAGE_FOLDER,
     APPNAME
 )
 from vantage6.common.context import AppContext
@@ -22,11 +22,13 @@ from vantage6.cli.context import NodeContext
 class DockerNodeContext(NodeContext):
     """Node context for the dockerized version of the node."""
 
+    running_in_docker = True
+
     @staticmethod
     def instance_folders(instance_type, instance_name, system_folders):
         """Log, data and config folders are allways mounted mounted. The
         node manager should take care of this. """
-        
+
         mnt = Path("/mnt")
 
         return {
@@ -35,18 +37,21 @@ class DockerNodeContext(NodeContext):
             "config": mnt / "config"
         }
 
+
 class TestingConfigurationManager(ConfigurationManager):
     VALIDATORS = {}
+
+
 
 class TestContext(AppContext):
 
     INST_CONFIG_MANAGER = TestingConfigurationManager
     LOGGING_ENABLED = False
-    
+
     @classmethod
     def from_external_config_file(cls, path):
         return super().from_external_config_file(
-            cls.test_config_location(), 
+            cls.test_config_location(),
             "unittest", "application", True
         )
 

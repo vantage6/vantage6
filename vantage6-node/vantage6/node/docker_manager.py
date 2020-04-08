@@ -1,21 +1,24 @@
 """ Docker manager
 
 The docker manager is responsible for communicating with the docker-
-deamon and is a wrapper arround the docker module. It has methods
+daemon and is a wrapper arround the docker module. It has methods
 for creating docker networks, docker volumes, start containers
 and retreive results from finisched containers
 
 TODO the task folder is also created by this class. This folder needs
 to be cleaned at some point.
 """
+import sys
+import os
 import time
 import logging
 import docker
-import os
 import pathlib
+import tarfile
 import re
 
 from typing import NamedTuple
+from pathlib import Path
 
 from . import globals as cs
 
@@ -23,8 +26,7 @@ from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
 
 class Result(NamedTuple):
-    """ Data class to store the result of the docker image.
-    """
+    """ Data class to store the result of the docker image."""
     result_id: int
     logs: str
     data: str
@@ -44,9 +46,8 @@ class DockerManager(object):
 
     # TODO authenticate to docker repository... from the config-file
 
-    def __init__(self, allowed_images, tasks_dir,
-                 docker_socket_path, isolated_network_name: str,
-                 node_name: str) -> None:
+    def __init__(self, allowed_images, tasks_dir, isolated_network_name: str,
+        node_name: str, data_volume_name: str) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -55,10 +56,13 @@ class DockerManager(object):
             :param tasks_dir: folder to store task related data.
         """
         self.log.debug("Initializing DockerManager")
+        self.data_volume_name = data_volume_name
+        self.database_uri = None
         self.__tasks_dir = tasks_dir
 
-        # Connect to docker deamon
-        self.client = docker.DockerClient(base_url=docker_socket_path)
+        # Connect to docker daemon
+        # self.client = docker.DockerClient(base_url=docker_socket_path)
+        self.client = docker.from_env()
 
         # keep track of the running containers
         self.active_tasks = []
@@ -68,28 +72,61 @@ class DockerManager(object):
 
         # create / get isolated network to which algorithm containers
         # can attach
-        self.isolated_network = \
-            self.create_isolated_network(isolated_network_name)
+        self.network_name = isolated_network_name
+        self._isolated_network = self._create_network()
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at
-        # a single machine sharing the docker deamon while using a
+        # a single machine sharing the docker daemon while using a
         # different server. Using a different server means that there
         # could be duplicate result_id's running at the node at the same
         # time.
         self.node_name = node_name
 
-    def create_isolated_network(self, name: str) \
-        -> docker.models.networks.Network:
+    def __refresh_container_statuses(self):
+        """ Refreshes the states of the containers.
+        """
+        for task in self.active_tasks:
+            task["container"].reload()
+
+    def __make_task_dir(self, result_id: int):
+        """ Creates a task directory for a specific result.
+
+            :param result_id: unique result id for which the folder is
+                intended
+        """
+        task_dir = os.path.join(
+            self.__tasks_dir,
+            "task-{0:09d}".format(result_id)
+        )
+
+        self.log.info(f"Using '{task_dir}' for task")
+
+        if os.path.exists(task_dir):
+            self.log.debug(f"Task directory already exists: '{task_dir}'")
+        else:
+            try:
+                os.makedirs(task_dir)
+            except Exception as e:
+                self.log.error(f"Could not create task directory: {task_dir}")
+                self.log.exception(e)
+                raise e
+
+        return task_dir
+
+    def _create_network(self) -> docker.models.networks.Network:
         """ Creates an internal (docker) network
 
             Used by algorithm containers to communicate with the node API.
 
             :param name: name of the internal network
         """
+        name = self.network_name
+
         try:
             network = self.client.networks.get(name)
             self.log.debug(f"Network {name} already exists.")
+
         except:
             self.log.debug(f"Creating isolated docker-network {name}")
             network = self.client.networks.create(
@@ -101,8 +138,16 @@ class DockerManager(object):
 
         return network
 
+    def connect_to_isolated_network(self, container_name, aliases):
+        """Connect to the isolated network."""
+        msg = f"Connecting to isolated network '{self.network_name}'"
+        self.log.debug(msg)
+
+        # If the network already exists, this is a no-op.
+        self._isolated_network.connect(container_name, aliases=aliases)
+
     def create_volume(self, volume_name: str):
-        """ Create a temporary volume for a single run.
+        """Create a temporary volume for a single run.
 
             A single run can consist of multiple algorithm containers.
             It is important to note that all algorithm containers having
@@ -113,6 +158,7 @@ class DockerManager(object):
         try:
             self.client.volumes.get(volume_name)
             self.log.debug(f"Volume {volume_name} already exists.")
+
         except docker.errors.NotFound:
             self.log.debug(f"Creating volume {volume_name}")
             self.client.volumes.create(volume_name)
@@ -141,22 +187,8 @@ class DockerManager(object):
         # if not, it is considered an illegal image
         return False
 
-    def run(self, result_id: int,  image: str, database_uri: str,
-        docker_input: bytes, tmp_vol_name: int, token: str) -> bool:
-        """ Runs the docker-image in detached mode.
-
-            It will will attach all mounts (input, output and datafile)
-            to the docker image. And will supply some environment
-            variables.
-
-            :param result_id: server result identifyer
-            :param image: docker image name
-            :param database_uri: URI of data file
-            :param docker_input: input that can be read by docker container
-            :param run_id: identifieer of the run sequence
-            :param token: Bearer token that the container can use
-        """
-        # check that this result is not already running
+    def is_running(self, result_id):
+        """Return True iff a container is already running for <result_id>."""
         container = self.client.containers.list(filters={
             "label": [
                 f"{APPNAME}-type=algorithm",
@@ -164,18 +196,73 @@ class DockerManager(object):
                 f"result_id={result_id}"
             ]
         })
-        if container:
-            self.log.warn("Task is already being executed, discarding task")
-            self.log.debug(f"result_id={result_id} is discarded")
-            return
 
-        # verify that an allowed image is used
+        return container
+
+    def pull(self, image):
+        """Pull the latest image."""
+        try:
+            self.log.info(f"Retrieving latest image: '{image}'")
+            self.client.images.pull(image)
+
+        except Exception as e:
+            self.log.error(e)
+
+    def set_database_uri(self, database_uri):
+        """A setter for clarity."""
+        self.database_uri = database_uri
+
+    def run(self, result_id: int,  image: str, docker_input: bytes,
+            tmp_vol_name: int, token: str) -> bool:
+        """Runs the docker-image in detached mode.
+
+            It will will attach all mounts (input, output and datafile)
+            to the docker image. And will supply some environment
+            variables.
+
+            :param result_id: server result identifier
+            :param image: docker image name
+            :param docker_input: input that can be read by docker container
+            :param run_id: identifieer of the run sequence
+            :param token: Bearer token that the container can use
+        """
+        # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image):
-            self.log.critical(
-                f"Docker image {image} is not allowed on this Node!")
+            msg = f"Docker image {image} is not allowed on this Node!"
+            self.log.critical(msg)
             return False
 
-        # create I/O files for docker
+        # Check that this task is not already running
+        if self.is_running(result_id):
+            self.log.warn("Task is already being executed, discarding task")
+            self.log.debug(f"result_id={result_id} is discarded")
+            return False
+
+        # Try to pull the latest image
+        self.pull(image)
+
+        # FIXME: We should have a seperate mount/volume for this. At the
+        #   moment this is a potential leak as containers might access input,
+        #   output and token from other containers.
+        #
+        #   This was not possible yet as mounting volumes from containers
+        #   is terrible when working from windows (as you have to convert
+        #   from windows to unix several times...).
+
+
+        # If we're running in docker __tasks_dir will point to a location on
+        # the data volume.
+        # Alternatively, if we're not running in docker it should point to the
+        # folder on the host that can act like a data volume. In both cases,
+        # we can just copy the required files to it
+        task_folder_name = f"task-{result_id:09d}"
+        task_folder_path = os.path.join(self.__tasks_dir, task_folder_name)
+        os.makedirs(task_folder_path, exist_ok=True)
+
+        if isinstance(docker_input, str):
+            docker_input = docker_input.encode('utf8')
+
+        # Create I/O files & token for the algorithm container
         self.log.debug("prepare IO files in docker volume")
         io_files = [
             ('input', docker_input),
@@ -183,44 +270,55 @@ class DockerManager(object):
             ('token', token.encode("ascii")),
         ]
 
-        # the data-volume is shared amongst all algorithm containers,
-        # therefore there should be no sensitive information in here.
-        # FIXME ideally we should have a seperate mount/volume for this
-        # this was not possible yet as mounting volumes from containers
-        # is terrible when working from windows (as you have to convert
-        # from windows to unix sevral times...). This is a potential leak
-        # as containers might access other container keys, which allows
-        # them to post tasks in different collaborations.
-        folder_name = "task-{0:09d}".format(result_id)
-        io_path = pathlib.Path("/mnt/data-volume") / folder_name
-        os.makedirs(io_path, exist_ok=True)
-        for (filename, contents) in io_files:
-            path = io_path / f"{filename}"
-            with open(path, 'wb') as fp:
-                fp.write(contents)
+        for (filename, data) in io_files:
+            filepath = os.path.join(task_folder_path, filename)
 
-        # attempt to pull the latest image
+            with open(filepath, 'wb') as fp:
+                fp.write(data)
+
+        # FIXME: these values should be retrieved from DockerNodeContext
+        #   in some way.
+        tmp_folder = "/mnt/tmp"
+        data_folder = "/mnt/data"
+
+        volumes = {
+            tmp_vol_name: {"bind": tmp_folder, "mode": "rw"},
+        }
+
+        if self.running_in_docker():
+            volumes[self.data_volume_name] = {"bind": data_folder, "mode": "rw"}
+
+        else:
+            volumes[self.__tasks_dir] = {"bind": data_folder, "mode": "rw"}
+
         try:
-            self.log.info(f"Retrieving latest image={image}")
-            self.client.images.pull(image)
+            proxy_host = os.environ['PROXY_SERVER_HOST']
+
         except Exception as e:
-            self.log.error(e)
+            print('-' * 80)
+            print(os.environ)
+            print('-' * 80)
+            proxy_host = 'host.docker.internal'
 
         # define enviroment variables for the docker-container, the
         # host, port and api_path are from the local proxy server to
         # facilitate indirect communication with the central server
-        tmp_folder = "/mnt/tmp" # docker env
+        # FIXME: we should only prepend data_folder if database_uri is a
+        #   filename
         environment_variables = {
-            "INPUT_FILE": str(io_path / "input"),
-            "OUTPUT_FILE": str(io_path / "output"),
-            "TOKEN_FILE": str(io_path / "token"),
+            "INPUT_FILE": data_folder + "/" + task_folder_name + "/" + "input",
+            "OUTPUT_FILE": data_folder + "/" + task_folder_name + "/" + "output",
+            "TOKEN_FILE": data_folder + "/" + task_folder_name + "/" + "token",
             "TEMPORARY_FOLDER": tmp_folder,
-            "DATABASE_URI": "/mnt/data-volume/database.csv",
-            "HOST": f"http://{cs.NODE_PROXY_SERVER_HOSTNAME}",
-            "PORT": os.environ["PROXY_SERVER_PORT"],
+            "DATABASE_URI": data_folder + "/" + self.database_uri,
+            "HOST": f"http://{proxy_host}",
+            "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
-        self.log.debug(f"Environment={environment_variables}")
+
+
+        self.log.debug(f"environment: {environment_variables}")
+        self.log.debug(f"volumes: {volumes}")
 
         # attempt to run the image
         try:
@@ -229,17 +327,8 @@ class DockerManager(object):
                 image,
                 detach=True,
                 environment=environment_variables,
-                network=self.isolated_network.name,
-                volumes={
-                    tmp_vol_name: {
-                        "bind": tmp_folder,
-                        "mode": "rw"
-                    },
-                    os.environ["DATA_VOLUME_NAME"]: {
-                        "bind": "/mnt/data-volume",
-                        "mode": "rw"
-                    }
-                },
+                network=self._isolated_network.name,
+                volumes=volumes,
                 labels={
                     f"{APPNAME}-type": "algorithm",
                     "node": self.node_name,
@@ -247,14 +336,15 @@ class DockerManager(object):
                 }
             )
         except Exception as e:
-            self.log.debug(e)
+            self.log.error('Could not run docker image!?')
+            self.log.error(e)
             return False
 
         # keep track of the container
         self.active_tasks.append({
             "result_id": result_id,
             "container": container,
-            "output_file": io_path / "output"
+            "output_file": os.path.join(task_folder_path, "output")
         })
 
         return True
@@ -263,13 +353,14 @@ class DockerManager(object):
         """ Returns the oldest (FIFO) finished docker container.
 
             This is a blocking method until a finished container shows up.
-            Once the container is obtained and the results are red, the
+            Once the container is obtained and the results are read, the
             container is removed from the docker environment.
         """
 
         # get finished results and get the first one, if no result is available
         # this is blocking
         finished_tasks = []
+
         while not finished_tasks:
             self.__refresh_container_statuses()
 
@@ -285,21 +376,27 @@ class DockerManager(object):
             f"Result id={finished_task['result_id']} is finished"
         )
 
-        # report if the container has a different status than 0
-        status_code = finished_task["container"].attrs["State"]["ExitCode"]
-        if status_code:
-            self.log.error(f"Received not 0 exitcode={status_code}")
-
         # get all info from the container and cleanup
         container = finished_task["container"]
-
         log = container.logs().decode('utf8')
 
-        try:
-            container.remove()
-        except Exception as e:
-            self.log.error(f"Failed to remove container {container.name}")
-            self.log.debug(e)
+        # report if the container has a different status than 0
+        status_code = container.attrs["State"]["ExitCode"]
+
+        if status_code:
+            self.log.error(f"Received non-zero exitcode: {status_code}")
+            self.log.error(f"  Container id: {container.id}")
+            self.log.warn("Will not remove container")
+            self.log.info(log)
+
+        else:
+            try:
+                container.remove()
+
+            except Exception as e:
+                self.log.error(f"Failed to remove container {container.name}")
+                self.log.debug(e)
+
 
         self.active_tasks.remove(finished_task)
 
@@ -314,32 +411,6 @@ class DockerManager(object):
             status_code=status_code
         )
 
-    def __refresh_container_statuses(self):
-        """ Refreshes the states of the containers.
-        """
-        for task in self.active_tasks:
-            task["container"].reload()
-
-    def __make_task_dir(self, result_id: int):
-        """ Creates a task directory for a specific result.
-
-            :param result_id: unique result id for which the folder is
-                intended
-        """
-
-        task_dir = os.path.join(
-            self.__tasks_dir, "task-{0:09d}".format(result_id)
-        )
-        self.log.info(f"Using '{task_dir}' for task")
-
-        if os.path.exists(task_dir):
-            self.log.debug(f"Task directory already exists: '{task_dir}'")
-        else:
-            try:
-                os.makedirs(task_dir)
-            except Exception as e:
-                self.log.error(f"Could not create task directory: {task_dir}")
-                self.log.exception(e)
-                raise e
-
-        return task_dir
+    def running_in_docker(self):
+        """Return True if this code is executed within a Docker container."""
+        return pathlib.Path('/.dockerenv').exists()
