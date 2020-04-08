@@ -383,7 +383,7 @@ class ClientBaseProtocol(object):
             except ValueError as e:
                 self.log.error("Could not decrypt/decode input or result.")
                 self.log.error(e)
-                raise
+                # raise
 
         # Determine endpoint and create dict with query parameters
         endpoint = 'result' if not id else f'result/{id}'
