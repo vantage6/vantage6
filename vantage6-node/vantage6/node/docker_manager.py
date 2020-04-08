@@ -18,6 +18,7 @@ import tarfile
 import re
 
 from typing import NamedTuple
+from pathlib import Path
 
 from . import globals as cs
 
@@ -207,13 +208,12 @@ class DockerManager(object):
         except Exception as e:
             self.log.error(e)
 
-
     def set_database_uri(self, database_uri):
         """A setter for clarity."""
         self.database_uri = database_uri
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
-        tmp_vol_name: int, token: str) -> bool:
+            tmp_vol_name: int, token: str) -> bool:
         """Runs the docker-image in detached mode.
 
             It will will attach all mounts (input, output and datafile)
@@ -282,14 +282,14 @@ class DockerManager(object):
         data_folder = "/mnt/data"
 
         volumes = {
-            tmp_vol_name: {"bind": tmp_folder,"mode": "rw"},
+            tmp_vol_name: {"bind": tmp_folder, "mode": "rw"},
         }
 
         if self.running_in_docker():
-            volumes[self.data_volume_name] = {"bind": data_folder,"mode": "rw"}
+            volumes[self.data_volume_name] = {"bind": data_folder, "mode": "rw"}
 
         else:
-            volumes[self.__tasks_dir] = {"bind": data_folder,"mode": "rw"}
+            volumes[self.__tasks_dir] = {"bind": data_folder, "mode": "rw"}
 
         try:
             proxy_host = os.environ['PROXY_SERVER_HOST']
@@ -306,11 +306,11 @@ class DockerManager(object):
         # FIXME: we should only prepend data_folder if database_uri is a
         #   filename
         environment_variables = {
-            "INPUT_FILE": os.path.join(data_folder, task_folder_name, "input"),
-            "OUTPUT_FILE": os.path.join(data_folder, task_folder_name, "output"),
-            "TOKEN_FILE": os.path.join(data_folder, task_folder_name, "token"),
+            "INPUT_FILE": data_folder + "/" + task_folder_name + "/" + "input",
+            "OUTPUT_FILE": data_folder + "/" + task_folder_name + "/" + "output",
+            "TOKEN_FILE": data_folder + "/" + task_folder_name + "/" + "token",
             "TEMPORARY_FOLDER": tmp_folder,
-            "DATABASE_URI": os.path.join(data_folder, self.database_uri),
+            "DATABASE_URI": data_folder + "/" + self.database_uri,
             "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
@@ -414,5 +414,3 @@ class DockerManager(object):
     def running_in_docker(self):
         """Return True if this code is executed within a Docker container."""
         return pathlib.Path('/.dockerenv').exists()
-
-
