@@ -2,11 +2,16 @@ import os.path
 
 from sqlalchemy.engine.url import make_url
 
-import vantage6.cli.globals as constants
 from vantage6.cli.configuration_manager import (NodeConfigurationManager,
                                                 ServerConfigurationManager)
 from vantage6.common.context import AppContext
 from vantage6.common.globals import APPNAME
+from vantage6.cli.globals import (
+    DEFAULT_NODE_ENVIRONMENT as N_ENV,
+    DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
+    DEFAULT_SERVER_ENVIRONMENT as S_ENV,
+    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
+)
 
 
 class ServerContext(AppContext):
@@ -18,10 +23,7 @@ class ServerContext(AppContext):
 
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
-    def __init__(self, instance_name,
-                 environment=constants.DEFAULT_SERVER_ENVIRONMENT,
-                 system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS):
-
+    def __init__(self, instance_name, environment=S_ENV, system_folders=S_FOL):
         super().__init__("server", instance_name, environment=environment,
                          system_folders=system_folders)
 
@@ -44,78 +46,81 @@ class ServerContext(AppContext):
         return f"{APPNAME}-{self.name}-{self.scope}-server"
 
     @classmethod
-    def from_external_config_file(
-        cls, path,
-        environment=constants.DEFAULT_SERVER_ENVIRONMENT,
-        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
-    ):
-
+    def from_external_config_file(cls, path, environment=S_ENV,
+                                  system_folders=S_FOL):
         return super().from_external_config_file(
             path, "server", environment, system_folders
         )
 
     @classmethod
-    def config_exists(
-        cls, instance_name,
-        environment=constants.DEFAULT_SERVER_ENVIRONMENT,
-        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
-    ):
-
+    def config_exists(cls, instance_name, environment=S_ENV,
+                      system_folders=S_FOL):
         return super().config_exists("server", instance_name,
                                      environment=environment,
                                      system_folders=system_folders)
 
     @classmethod
-    def available_configurations(
-        cls,
-        system_folders=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
-    ):
-
+    def available_configurations(cls, system_folders=S_FOL):
         return super().available_configurations("server", system_folders)
 
-class NodeContext(AppContext):
-    """ Context for the node.
 
-        Context for the node when it is run on the host machine. The
-        Context for the Dockerized version is NodeDockerContext.
+class NodeContext(AppContext):
+    """Node context on the host machine (used by the CLI).
+
+    See DockerNodeContext for the node instance mounts when running as a
+    dockerized service.
     """
 
+    # FIXME: drop the prefix "INST_": a *class* is assigned.
+    # FIXME: this does not need to be a class attribute, but ~~can~~_should_
+    #        be set in __init__
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
-    def __init__(self, instance_name,
-                 environment=constants.DEFAULT_NODE_ENVIRONMENT,
-                 system_folders=False):
+    running_in_docker = False
 
-        super().__init__("node", instance_name, environment=environment,
-                         system_folders=system_folders)
-
-    def get_database_uri(self, label="default"):
-        return self.config["databases"][label]
-
-    @property
-    def databases(self):
-        return self.config["databases"]
+    def __init__(self, instance_name, environment=N_ENV,
+                 system_folders=N_FOL, config_file=None):
+        super().__init__("node", instance_name, environment, system_folders,
+                         config_file)
 
     @classmethod
-    def from_external_config_file(
-        cls, path, environment=constants.DEFAULT_NODE_ENVIRONMENT,
-        system_folders=False
-    ):
-        return super().from_external_config_file(
-            path, "node", environment, system_folders
-        )
+    def from_external_config_file(cls, path, environment=N_ENV,
+                                  system_folders=N_FOL):
+        return super().from_external_config_file(path, "node", environment,
+                                                 system_folders)
 
     @classmethod
-    def config_exists(
-        cls, instance_name,
-        environment=constants.DEFAULT_NODE_ENVIRONMENT, system_folders=False
-    ):
+    def config_exists(cls, instance_name, environment=N_ENV,
+                      system_folders=N_FOL):
         return super().config_exists("node", instance_name,
                                      environment=environment,
                                      system_folders=system_folders)
 
     @classmethod
-    def available_configurations(
-        cls, system_folders=constants.DEFAULT_NODE_SYSTEM_FOLDERS
-    ):
+    def available_configurations(cls, system_folders=N_FOL):
         return super().available_configurations("node", system_folders)
+
+    @property
+    def databases(self):
+        return self.config["databases"]
+
+    @property
+    def docker_container_name(self):
+        return f"{APPNAME}-{self.name}-{self.scope}"
+
+    @property
+    def docker_network_name(self):
+        return f"{APPNAME}-{self.name}-{self.scope}"
+
+    @property
+    def docker_volume_name(self):
+        return os.environ.get(
+            'DATA_VOLUME_NAME',
+            f"{self.docker_container_name}-vol"
+        )
+
+    def docker_temporary_volume_name(self, run_id):
+        return f"{APPNAME}-{self.name}-{self.scope}-{run_id}-tmpvol"
+
+    def get_database_uri(self, label="default"):
+        return self.config["databases"][label]

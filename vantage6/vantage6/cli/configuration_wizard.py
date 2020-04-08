@@ -90,21 +90,20 @@ def node_configuration_questionaire(dirs, instance_name):
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
 
-    disable_encryption = q.select("Disable encryption?",
-        choices=["false", "true"]).ask()
+    encryption = q.select("Enable encryption?",
+                          choices=["true", "false"]).ask()
 
-    private_key = "" if disable_encryption == "true" else \
+    private_key = "" if encryption == "false" else \
         q.text("Path to private key file:").ask()
 
     config["encryption"] = {
-        "disabled": disable_encryption == "true",
+        "enabled": encryption == "true",
         "private_key": private_key
     }
 
     return config
 
-def configuration_wizard(instance_name,
-    environment="application", system_folders=False):
+def configuration_wizard(instance_name, environment, system_folders):
 
     # for defaults and where to save the config
     dirs = NodeContext.instance_folders("node", instance_name, system_folders)
@@ -128,12 +127,11 @@ def configuration_wizard(instance_name,
     return config_file
 
 def select_configuration_questionaire(system_folders):
-    """Asks which configuration the user want to use
+    """Ask which configuration the user wants to use
 
     It shows only configurations that are in the default folder.
     """
-    Context = NodeContext
-    configs, f = Context.available_configurations(system_folders)
+    configs, f = NodeContext.available_configurations(system_folders)
 
     # each collection (file) can contain multiple configs. (e.g. test,
     # dev)

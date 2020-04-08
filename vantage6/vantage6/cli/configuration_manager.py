@@ -15,12 +15,12 @@ class ServerConfiguration(Configuration):
 
     VALIDATORS = {
         "description": Use(str),
-        "ip": Use(str) ,
-        "port": Use(int),  
+        "ip": Use(str),
+        "port": Use(int),
         "api_path": Use(str),
         "uri": Use(str),
         "allow_drop_all": Use(bool),
-        "logging":{
+        "logging": {
             "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
             "file": Use(str),
             "use_console": Use(bool),
@@ -30,16 +30,15 @@ class ServerConfiguration(Configuration):
             "datefmt": Use(str)
         }
     }
-    
 
 class NodeConfiguration(Configuration):
-    
+
     VALIDATORS = {
         "api_key": And(Use(str), len),
         "server_url": Use(str),
         "port": Or(Use(int), None),
         "task_dir": Use(str),
-        "databases": {Use(str):Use(str)},
+        "databases": {Use(str): Use(str)},
         "api_path": Use(str),
         "logging": {
             "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
@@ -51,7 +50,7 @@ class NodeConfiguration(Configuration):
             "datefmt": Use(str)
         },
         "encryption": {
-            "disabled": bool,
+            "enabled": bool,
             Optional("private_key"): Use(str)
         }
     }
@@ -70,9 +69,11 @@ class TestConfiguration(Configuration):
         #     "datefmt": Use(str)
         # }
     }
-    
+
+
+
 class NodeConfigurationManager(ConfigurationManager):
-    
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(conf_class=NodeConfiguration, name=name)
 
@@ -80,9 +81,8 @@ class NodeConfigurationManager(ConfigurationManager):
     def from_file(cls, path):
         return super().from_file(path, conf_class=NodeConfiguration)
 
-
 class ServerConfigurationManager(ConfigurationManager):
-    
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(conf_class=ServerConfiguration, name=name)
 
