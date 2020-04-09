@@ -73,18 +73,17 @@ def node_configuration_questionaire(dirs, instance_name):
                 Path(config.get("databases").get("default")).parent)
         }])
         config["databases"][q2.get("label")] = q2.get("path")
-        i+=1
-
+        i += 1
 
     res = q.select("Which level of logging would you like?",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"]
-    ).ask()
+                   choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
+                            "NOTSET"]).ask()
 
     config["logging"] = {
         "level": res,
         "file": f"{instance_name}.log",
         "use_console": True,
-        "backup_count":5,
+        "backup_count": 5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S"
@@ -104,6 +103,9 @@ def node_configuration_questionaire(dirs, instance_name):
     return config
 
 def configuration_wizard(instance_name, environment, system_folders):
+
+def configuration_wizard(instance_name, environment="application",
+                         system_folders=False):
 
     # for defaults and where to save the config
     dirs = NodeContext.instance_folders("node", instance_name, system_folders)
@@ -126,6 +128,7 @@ def configuration_wizard(instance_name, environment, system_folders):
 
     return config_file
 
+
 def select_configuration_questionaire(system_folders):
     """Ask which configuration the user wants to use
 
@@ -144,12 +147,11 @@ def select_configuration_questionaire(system_folders):
                 title=f"{config_collection.name:25} {env}",
                 value=(config_collection.name, env)))
 
-
     if not choices:
         raise Exception("No configurations could be found!")
 
     # pop the question
     name, env = q.select("Select the configuration you want to use:",
-        choices=choices).ask()
+                         choices=choices).ask()
 
     return name, env
