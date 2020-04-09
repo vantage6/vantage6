@@ -6,12 +6,12 @@ from schema import Schema
 
 class Configuration(collections.UserDict):
     """Base to contains a single configuration."""
-    
+
     VALIDATORS = {}
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
     def __setitem__(self, key, value):
         """ Validation of a single item when put
         """
@@ -19,7 +19,7 @@ class Configuration(collections.UserDict):
         schema = Schema(self.VALIDATORS.get(key,lambda x: True), ignore_extra_keys=True)
         assert schema.is_valid(value), f"Invalid Value! {value} for {schema}"
         super().__setitem__(key, value)
-   
+
     def __getitem__(self, key):
         if key in self.data:
             return super().__getitem__(key)
@@ -29,13 +29,13 @@ class Configuration(collections.UserDict):
     @property
     def is_valid(self):
         return Schema(self.VALIDATORS, ignore_extra_keys=True).is_valid(self.data)
-            
+
 
 class ConfigurationManager(object):
     """Class to maintain valid configuration settings.
 
-    A configuration file contains at top level an `application` and/or 
-    `environments` key. The `environments` key can contain up to four 
+    A configuration file contains at top level an `application` and/or
+    `environments` key. The `environments` key can contain up to four
     keys: `dev`, `test`, `acc`, `prod`. e.g.:
     application:
         ...
@@ -48,7 +48,7 @@ class ConfigurationManager(object):
             ...
         prod:
             ...
-    
+
     Note that this structure is the same for the node and server.
     """
     ENVS = ("application", "prod", "acc", "test", "dev")
@@ -59,10 +59,10 @@ class ConfigurationManager(object):
         self.acc = ""
         self.test = ""
         self.dev = ""
-    
+
         self.name = name
         self.conf_class = conf_class
-        
+
     def put(self, env:str, config: dict):
         assert env in self.ENVS
         configuration = self.conf_class(config)
@@ -72,7 +72,7 @@ class ConfigurationManager(object):
         # else:
         #      print(f"config={config}")
         #      print(self.conf_class)
-        
+
     def get(self, env:str):
         assert env in self.ENVS
         return self.__getattribute__(env)
@@ -83,8 +83,8 @@ class ConfigurationManager(object):
             or self.test or self.dev)
 
     @property
-    def environments(self): 
-        return {"prod":self.prod, "acc":self.acc, "test":self.test, 
+    def environments(self):
+        return {"prod":self.prod, "acc":self.acc, "test":self.test,
             "dev":self.dev, "application": self.application}
 
     @property
@@ -94,25 +94,25 @@ class ConfigurationManager(object):
     @property
     def has_environments(self):
         return any([bool(env) for key, env in self.environments])
-    
+
     @property
     def available_environments(self):
         return [key for key, env in self.environments.items() if env]
-    
+
     def _get_environment_from_dict(self, d, e):
         assert e in self.ENVS
         if e == "application":
-            return d.get("application",{})  
+            return d.get("application",{})
         else:
             return d.get("environments",{}).get(e,{})
-           
+
     def load(self, path):
         with open(str(path), 'r') as f:
             config = yaml.safe_load(f)
-        
+
         for env in self.ENVS:
             self.put(env, self._get_environment_from_dict(config, env))
-    
+
     @classmethod
     def from_file(cls, path, conf_class=Configuration):
         name = Path(path).stem
@@ -125,9 +125,9 @@ class ConfigurationManager(object):
     def save(self, path):
 
         config = {"application": dict(self.application), "environments": {
-            "prod": dict(self.prod), "acc": dict(self.acc), "test": dict(self.test), 
+            "prod": dict(self.prod), "acc": dict(self.acc), "test": dict(self.test),
             "dev": dict(self.dev)}}
-    
+
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)
