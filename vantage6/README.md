@@ -1,5 +1,5 @@
 
-<img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" width=200 align="right">
+<img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" width=180 align="right">
 
 # Vantage6
 > A federated learning solution
@@ -17,12 +17,12 @@ This repository is part of the vantage6 solution. Vantage6 allowes to execute co
 * [vantage6-server](https://github.com/iknl/vantage6-server)
 * [vantage6-client](https://github.com/iknl/vantage6-client)
 
-## Motivation
+## :pray: Motivation
 The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is difficult due to patient privacy and data protection needs. Federated learning technology has the potential to overcome these limitations. In this approach, organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data safely on site and undisclosed. This repository contains software (and instructions) to setup a federated learning infrastructure.
 
 For an overview of the architecture and information on how to use the infrastructure, please see [https://vantage6.ai](https://vantage6.ai). For documentation, please see [https://docs.distributedlearning.ai/](https://docs.distributedlearning.ai/).
 
-## Installation
+## :cd: Installation
 
 ### option 1 - pypi
 ```bash
@@ -34,7 +34,7 @@ git clone https://github.com/iknl/vantage6
 pip install -e ./vantage6
 ```
 
-## Usage
+## :hatching_chick: Usage
 Configure a new node:
 <img src="http://g.recordit.co/Vm3yxPxjbq.gif" />
 
