@@ -337,7 +337,8 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         },
         environment=env,
         name=ctx.docker_container_name,
-        auto_remove=not keep
+        auto_remove=not keep,
+        tty=True
     )
 
     info(f"Succes! container id = {container}")

@@ -105,10 +105,13 @@ def cli_server():
               help='run server in debug mode (auto-restart)')
 @click.option('-t', '--tag', default="default",
               help="Node Docker container tag to use")
+@click.option('--keep/--auto-remove', default=False,
+              help="Keep image after finishing")
 @click_insert_context
-def cli_server_start(ctx, ip, port, debug, tag):
+def cli_server_start(ctx, ip, port, debug, tag, keep):
     """Start the server."""
 
+    info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
     # will print an error if not
@@ -140,7 +143,7 @@ def cli_server_start(ctx, ip, port, debug, tag):
     # try to attach database
     uri = ctx.config['uri']
     url = make_url(uri)
-    environment = None
+    environment_vars = None
     if (url.host is None):
         db_path = url.database
         if not os.path.isabs(db_path):
@@ -149,7 +152,7 @@ def cli_server_start(ctx, ip, port, debug, tag):
         mounts.append(docker.types.Mount(
             f"/mnt/{url.database}", str(db_path), type="bind"
         ))
-        environment = {
+        environment_vars = {
             "VANTAGE6_DB_URI": f"sqlite:////mnt/{url.database}"
         }
     else:
@@ -157,21 +160,25 @@ def cli_server_start(ctx, ip, port, debug, tag):
                 "is reachable from the Docker container")
         info("Consider using the docker-compose method to start a server")
 
+    cmd = f'vserver-local start -c /mnt/config.yaml -e {ctx.environment} ' \
+          f'--ip {ip} --port {port}'
+    info(cmd)
+
     info("Run Docker container")
     port_ = str(port or ctx.config["port"] or 5000)
     container = docker_client.containers.run(
         image,
-        command=["/mnt/config.yaml"],
+        command=cmd,
         mounts=mounts,
         detach=True,
         labels={
             f"{APPNAME}-type": "server",
             "name": ctx.config_file_name
         },
-        environment=environment,
-        ports={"5000/tcp": ("127.0.0.1", port_)},
+        environment=environment_vars,
+        ports={f"{port_}/tcp": ("127.0.0.1", port_)},
         name=ctx.docker_container_name,
-        auto_remove=False,
+        auto_remove=not keep,
         tty=True
     )
 
