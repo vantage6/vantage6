@@ -26,6 +26,9 @@ setup(
     install_requires=[
         'docker==4.2.0',
         'colorama==0.4.3',
+        'questionary==1.5.1',
+        'iPython==7.13.0',
+        'SQLAlchemy==1.3.15'
         # 'vantage6-common'
     ],
     extras_require={
