@@ -10,12 +10,19 @@
 -->
 [![PyPI version](https://badge.fury.io/py/vantage6.svg)](https://badge.fury.io/py/vantage6)
 
-This repository is part of the vantage6 solution. Vantage6 allowes to execute computations on federated datasets. Other repositories that are part of vantage6 are:
+This repository is part of the vantage6 solution. Vantage6 allowes to execute computations on federated datasets. This repository contains a command-line-interface to manage nodes and servers. It is not required to install any other repository than this one if you are setting up a server or node.
 
-* [vantage6-common](https://github.com/iknl/vantage6-common)
-* [vantage6-node](https://github.com/iknl/vantage6-node)
-* [vantage6-server](https://github.com/iknl/vantage6-server)
-* [vantage6-client](https://github.com/iknl/vantage6-client)
+Other repositories that are part of vantage6 are:
+
+## [vantage6-common](https://github.com/iknl/vantage6-common)
+Contains common files used through out most of our repositories.
+
+## [vantage6-node](https://github.com/iknl/vantage6-node)
+Contains the source code of the
+
+## [vantage6-server](https://github.com/iknl/vantage6-server)
+
+## [vantage6-client](https://github.com/iknl/vantage6-client)
 
 ## :pray: Motivation
 The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is difficult due to patient privacy and data protection needs. Federated learning technology has the potential to overcome these limitations. In this approach, organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data safely on site and undisclosed. This repository contains software (and instructions) to setup a federated learning infrastructure.
@@ -24,11 +31,11 @@ For an overview of the architecture and information on how to use the infrastruc
 
 ## :cd: Installation
 
-### option 1 - pypi
+### Option 1 - pypi
 ```bash
 pip install vantage6
 ```
-### option 2 - from repository
+### Option 2 - From this repository
 ```bash
 git clone https://github.com/iknl/vantage6
 pip install -e ./vantage6
