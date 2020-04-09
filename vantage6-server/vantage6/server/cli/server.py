@@ -1,64 +1,51 @@
 import click
-import logging
 import questionary as q
 import IPython
-import os
-import errno
 import yaml
 
 # for shell python
 import vantage6.server.model as db
 
 from functools import wraps
-from pathlib import Path
 from traitlets.config import get_config
 from colorama import (Fore, Style, init)
 
 from vantage6.common import (
-    echo,
     info,
     warning,
     error
 )
 from vantage6.server.model.base import Database
 from vantage6 import server
-from vantage6.server import shell
-import vantage6.server.globals as constants
+from vantage6.cli.globals import (
+    DEFAULT_SERVER_ENVIRONMENT as S_ENV,
+    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
+)
 
 from vantage6.server.controller import fixture
 from vantage6.server.configuration.configuration_wizard import (
-    get_config_location,
     select_configuration_questionaire,
     configuration_wizard
 )
 
 from vantage6.cli.context import ServerContext
 
-# init color-stuff
-init()
+
+help_ = {
+    "name": "name of the configutation you want to use.",
+    "config": "absolute path to configuration-file; overrides NAME",
+    "env": "configuration environment to use"
+}
+
 
 def click_insert_context(func):
 
     # add option decorators
-    @click.option('-n','--name',
-        default=None,
-        help="name of the configutation you want to use."
-    )
-    @click.option('-c', '--config',
-        default=None,
-        help='absolute path to configuration-file; overrides NAME'
-    )
-    @click.option('-e', '--environment',
-        default=constants.DEFAULT_SERVER_ENVIRONMENT,
-        help='configuration environment to use'
-    )
-    @click.option('--system', 'system_folders',
-        flag_value=True
-    )
-    @click.option('--user', 'system_folders',
-        flag_value=False,
-        default=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
-    )
+    @click.option('-n', '--name', default=None, help=help_["name"])
+    @click.option('-c', '--config', default=None, help=help_["config"])
+    @click.option('-e', '--environment', default=S_ENV, help=help_["env"])
+    @click.option('--system', 'system_folders', flag_value=True)
+    @click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
     @wraps(func)
     def func_with_context(name, config, environment, system_folders,
                           *args, **kwargs):
@@ -123,7 +110,8 @@ def cli_server():
 @cli_server.command(name='start')
 @click.option('--ip', default=None, help='ip address to listen on')
 @click.option('-p', '--port', type=int, help='port to listen on')
-@click.option('--debug', is_flag=True, help='run server in debug mode (auto-restart)')
+@click.option('--debug', is_flag=True,
+              help='run server in debug mode (auto-restart)')
 @click_insert_context
 def cli_server_start(ctx, ip, port, debug):
     """Start the server."""
@@ -179,21 +167,12 @@ def cli_server_files(ctx):
 #   new
 #
 @cli_server.command(name='new')
-@click.option('-n','--name',
-    default=None,
-    help="name of the configutation you want to use."
-)
-@click.option('-e', '--environment',
-    default=constants.DEFAULT_SERVER_ENVIRONMENT,
-    help='configuration environment to use'
-)
-@click.option('--system', 'system_folders',
-    flag_value=True
-)
-@click.option('--user', 'system_folders',
-    flag_value=False,
-    default=constants.DEFAULT_SERVER_SYSTEM_FOLDERS
-)
+@click.option('-n', '--name', default=None,
+              help="name of the configutation you want to use.")
+@click.option('-e', '--environment', default=S_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
 def cli_server_new(name, environment, system_folders):
     """Create new configuration."""
 
@@ -216,43 +195,6 @@ def cli_server_new(name, environment, system_folders):
     # create config in ctx location
     cfg_file = configuration_wizard(name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
-
-    # create root user
-    # ctx = ServerContext(
-    #     name,
-    #     environment=environment,
-    #     system_folders=system_folders
-    # )
-
-    # initialize database
-    # try:
-    #     Database().connect(ctx.get_database_uri())
-    # except Exception:
-    #     error(
-    #         f"Could not initialize database "
-    #         f"{Fore.RED}{ctx.get_database_uri()}{Style.RESET_ALL}."
-    #     )
-    #     warning(
-    #         f"No root user created. You might want to delete "
-    #         f"{Fore.YELLOW}{ctx.config_file}{Style.RESET_ALL} and start over."
-    #     )
-    #     exit(1)
-
-    # # create root user
-    # root = db.User(username="root", roles="root")
-
-    # # keep prompting for password untill they match
-    # again = True
-    # while again:
-    #     password = q.password("Root password:").ask()
-    #     repeat_password = q.password("Repeat root password:").ask()
-    #     again = password != repeat_password
-    #     if again:
-    #         warning("Passwords do not match, try again.")
-    # root.set_password(password)
-
-    # # store root user
-    # root.save()
 
     # info(f"root user created.")
     info(
