@@ -322,9 +322,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
           f'{environment} --dockerized'
 
     info(f"Runing Docker container")
-    debug(f"  with command: '{cmd}'")
-    debug(f"  with mounts: {volumes}")
-    debug(f"  with environment: {env}")
+    # debug(f"  with command: '{cmd}'")
+    # debug(f"  with mounts: {volumes}")
+    # debug(f"  with environment: {env}")
     container = docker_client.containers.run(
         image,
         command=cmd,
