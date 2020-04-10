@@ -24,16 +24,16 @@ from threading import Thread
 from colorama import Fore, Style
 
 from vantage6.common.globals import (STRING_ENCODING, APPNAME)
+from vantage6.common import (warning, error, info, debug)
+from vantage6.cli.context import NodeContext
 from vantage6.cli.globals import (
     DEFAULT_NODE_ENVIRONMENT as N_ENV,
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 )
-from vantage6.cli.context import NodeContext
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
 )
-from vantage6.common import (warning, error, info, debug)
 
 
 @click.group(name="node")
@@ -131,7 +131,7 @@ def cli_node_new_configuration(name, environment, system_folders):
         )
 
     # create config in ctx location
-    cfg_file = configuration_wizard(name, environment, system_folders)
+    cfg_file = configuration_wizard("node", name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
 #
@@ -151,7 +151,7 @@ def cli_node_files(name, environment, system_folders):
     """
     # select configuration name if none supplied
     name, environment = (name, environment) if name else \
-        select_configuration_questionaire(system_folders)
+        select_configuration_questionaire("node", system_folders)
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, environment, system_folders):
@@ -215,7 +215,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         # in case no name is supplied, ask the user to select one
         if not name:
             name, environment = select_configuration_questionaire(
-                system_folders)
+                "node", system_folders)
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
@@ -224,7 +224,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             question += f" create this config now?"
 
             if q.confirm(question).ask():
-                configuration_wizard(name, environment, system_folders)
+                configuration_wizard("node", name, environment, system_folders)
 
             else:
                 error("Config file couldn't be loaded")

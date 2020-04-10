@@ -1,7 +1,6 @@
 import click
 import questionary as q
 import IPython
-import yaml
 import docker
 import os
 import time
@@ -12,17 +11,16 @@ from traitlets.config import get_config
 from colorama import (Fore, Style)
 from sqlalchemy.engine.url import make_url
 
+from vantage6.common import info, warning, error
 from vantage6.common.globals import APPNAME, STRING_ENCODING
+# from vantage6.cli import fixture
 from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
                                   DEFAULT_SERVER_SYSTEM_FOLDERS)
-from vantage6.common import info, warning, error
-from vantage6.server.model.base import Database
-from vantage6.server.controller import fixture
-from vantage6.server.configuration.configuration_wizard import (
+from vantage6.cli.context import ServerContext
+from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
-from vantage6.cli.context import ServerContext
 
 
 def click_insert_context(func):
@@ -55,7 +53,7 @@ def click_insert_context(func):
             else:
                 try:
                     name, environment = select_configuration_questionaire(
-                        system_folders
+                        "server", system_folders
                     )
                 except Exception:
                     error("No configurations could be found!")
@@ -83,9 +81,6 @@ def click_insert_context(func):
                 system_folders=system_folders
             )
 
-        # initialize database (singleton)
-        Database().connect(ctx.get_database_uri())
-
         return func(ctx, *args, **kwargs)
     return func_with_context
 
@@ -103,12 +98,11 @@ def cli_server():
 @click.option('-p', '--port', type=int, help='port to listen on')
 @click.option('--debug', is_flag=True,
               help='run server in debug mode (auto-restart)')
-@click.option('-t', '--tag', default="default",
-              help="Node Docker container tag to use")
+@click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click_insert_context
-def cli_server_start(ctx, ip, port, debug, tag, keep):
+def cli_server_start(ctx, ip, port, debug, image, keep):
     """Start the server."""
 
     info("Starting server...")
@@ -127,11 +121,18 @@ def cli_server_start(ctx, ip, port, debug, tag, keep):
             exit(1)
 
     # pull the server docker image
-    info("Pulling latest version of the server.")
-    tag_ = tag if tag != "default" else "latest"
-    image = f"harbor.distributedlearning.ai/infrastructure/server:{tag_}"
-    docker_client.images.pull(image)
-    info(f"Server image {image}")
+    if image is None:
+        image = ctx.config.get(
+            "image",
+            "harbor.distributedlearning.ai/infrastructure/node:latest"
+        )
+    info(f"Pulling latest server image '{image}'.")
+    try:
+        docker_client.images.pull(image)
+    except Exception:
+        warning("... alas, no dice!")
+    else:
+        info(" ... succes!")
 
     info("Creating mounts")
     mounts = [
@@ -141,16 +142,18 @@ def cli_server_start(ctx, ip, port, debug, tag, keep):
     ]
 
     # try to attach database
+    # TODO clean this
     uri = ctx.config['uri']
     url = make_url(uri)
     environment_vars = None
     if (url.host is None):
-        db_path = url.database
-        if not os.path.isabs(db_path):
+        if not os.path.isabs(url.database):
             # We're dealing with a relative path here.
-            db_path = ctx.data_dir / url.database
+            db_path = str(ctx.data_dir / url.database)
+        else:
+            db_path = os.path.dirname(url.database)
         mounts.append(docker.types.Mount(
-            f"/mnt/{url.database}", str(db_path), type="bind"
+            f"/mnt/", db_path, type="bind"
         ))
         environment_vars = {
             "VANTAGE6_DB_URI": f"sqlite:////mnt/{url.database}"
@@ -160,8 +163,10 @@ def cli_server_start(ctx, ip, port, debug, tag, keep):
                 "is reachable from the Docker container")
         info("Consider using the docker-compose method to start a server")
 
+    ip_ = f"--ip {ip}" if ip else ""
+    port_ = f"--port {port}" if port else ""
     cmd = f'vserver-local start -c /mnt/config.yaml -e {ctx.environment} ' \
-          f'--ip {ip} --port {port}'
+          f'{ip_} {port_}'
     info(cmd)
 
     info("Run Docker container")
@@ -284,6 +289,7 @@ def cli_server_new(name, environment, system_folders):
 
     # create config in ctx location
     cfg_file = configuration_wizard(
+        "server",
         name,
         environment=environment,
         system_folders=system_folders
@@ -299,21 +305,101 @@ def cli_server_new(name, environment, system_folders):
 #
 #   import
 #
+# TODO this method has a lot of duplicated code from `start`
 @cli_server.command(name='import')
 @click.argument('file_', type=click.Path(exists=True))
 @click.option('--drop-all', is_flag=True, default=False)
+@click.option('-i', '--image', default=None, help="Node Docker image to use")
+@click.option('--keep/--auto-remove', default=False,
+              help="Keep image after finishing")
 @click_insert_context
-def cli_server_import(ctx, file_, drop_all):
+def cli_server_import(ctx, file_, drop_all, image, keep):
     """ Import organizations/collaborations/users and tasks.
 
         Especially usefull for testing purposes.
     """
-    info("Reading yaml file.")
-    with open(file_) as f:
-        entities = yaml.safe_load(f.read())
+    info("Starting server...")
+    info("Finding Docker daemon.")
+    docker_client = docker.from_env()
+    # will print an error if not
+    check_if_docker_deamon_is_running(docker_client)
 
-    info("Adding entities to database.")
-    fixture.load(entities, drop_all=drop_all)
+    # pull lastest Docker image
+    if image is None:
+        image = ctx.config.get(
+            "image",
+            "harbor.distributedlearning.ai/infrastructure/node:latest"
+        )
+    info(f"Pulling latest server image '{image}'.")
+    try:
+        docker_client.images.pull(image)
+    except Exception:
+        warning("... alas, no dice!")
+    else:
+        info(" ... succes!")
+
+    info("Creating mounts")
+    mounts = [
+        docker.types.Mount(
+            "/mnt/config.yaml", str(ctx.config_file), type="bind"
+        ),
+        docker.types.Mount(
+            "/mnt/import.yaml", str(file_), type="bind"
+        )
+    ]
+
+    # try to attach database
+    # TODO clean this
+    uri = ctx.config['uri']
+    url = make_url(uri)
+    environment_vars = None
+    if (url.host is None):
+        db_path = url.database
+        if not os.path.isabs(db_path):
+            # We're dealing with a relative path here.
+            db_path = ctx.data_dir / url.database
+        mounts.append(docker.types.Mount(
+            f"/mnt/{url.database}", str(db_path), type="bind"
+        ))
+        environment_vars = {
+            "VANTAGE6_DB_URI": f"sqlite:////mnt/{url.database}"
+        }
+    else:
+        warning(f"Database could not be transfered, make sure {url.host} "
+                "is reachable from the Docker container")
+        info("Consider using the docker-compose method to start a server")
+
+    drop_all_ = "--drop-all" if drop_all else ""
+    cmd = f'vserver-local import -c /mnt/config.yaml -e {ctx.environment} ' \
+          f'{drop_all_} /mnt/import.yaml'
+
+    info(cmd)
+
+    info("Run Docker container")
+    container = docker_client.containers.run(
+        image,
+        command=cmd,
+        mounts=mounts,
+        detach=True,
+        labels={
+            f"{APPNAME}-type": "server",
+            "name": ctx.config_file_name
+        },
+        environment=environment_vars,
+        auto_remove=not keep,
+        tty=True
+    )
+
+    info(f"Succes! container id = {container.id}")
+    info(f"Check logs files using {Fore.GREEN}docker logs {container.id}"
+         f"{Style.RESET_ALL}")
+
+    # info("Reading yaml file.")
+    # with open(file_) as f:
+    #     entities = yaml.safe_load(f.read())
+
+    # info("Adding entities to database.")
+    # fixture.load(entities, drop_all=drop_all)
 
 #
 #   shell

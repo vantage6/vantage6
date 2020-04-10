@@ -2,16 +2,14 @@ import os.path
 
 from sqlalchemy.engine.url import make_url
 
-from vantage6.cli.configuration_manager import (NodeConfigurationManager,
-                                                ServerConfigurationManager)
 from vantage6.common.context import AppContext
 from vantage6.common.globals import APPNAME
-from vantage6.cli.globals import (
-    DEFAULT_NODE_ENVIRONMENT as N_ENV,
-    DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
-    DEFAULT_SERVER_ENVIRONMENT as S_ENV,
-    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
-)
+from vantage6.cli.configuration_manager import (NodeConfigurationManager,
+                                                ServerConfigurationManager)
+from vantage6.cli.globals import (DEFAULT_NODE_ENVIRONMENT as N_ENV,
+                                  DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
+                                  DEFAULT_SERVER_ENVIRONMENT as S_ENV,
+                                  DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL)
 
 
 class ServerContext(AppContext):

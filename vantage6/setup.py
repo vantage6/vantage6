@@ -24,6 +24,9 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
+        'schema==0.7.1',
+        'click==7.1.1',
+        'SQLAlchemy==1.3.15',
         'docker==4.2.0',
         'colorama==0.4.3',
         'questionary==1.5.1',
