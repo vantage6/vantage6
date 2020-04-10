@@ -1,14 +1,6 @@
-import click
-import sys
-import os
-import shutil
-import yaml
 import questionary as q
 
 from pathlib import Path
-from schema import Schema, And, Or, Use, Optional
-
-from vantage6.node import util
 
 from vantage6.cli.context import NodeContext
 from vantage6.cli.configuration_manager import NodeConfigurationManager
@@ -59,19 +51,19 @@ def node_configuration_questionaire(dirs, instance_name):
     i = 1
     while q.confirm("Do you want to add another database?").ask():
         q2 = q.prompt([
-        {
-            "type": "text",
-            "name": "label",
-            "message": "Enter the label for the database:",
-            "default": f"database_{i}"
-        },
-        {
-            "type": "text",
-            "name": "path",
-            "message": "The path of the database file:",
-            "default": str(
-                Path(config.get("databases").get("default")).parent)
-        }])
+            {
+                "type": "text",
+                "name": "label",
+                "message": "Enter the label for the database:",
+                "default": f"database_{i}"
+            },
+            {
+                "type": "text",
+                "name": "path",
+                "message": "The path of the database file:",
+                "default": str(
+                    Path(config.get("databases").get("default")).parent)
+            }])
         config["databases"][q2.get("label")] = q2.get("path")
         i += 1
 

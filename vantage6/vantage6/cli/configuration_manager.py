@@ -1,15 +1,10 @@
-import os
-import collections
-import yaml
-import logging
-
-from pathlib import Path
-from schema import Schema, And, Or, Use, Optional
+from schema import And, Or, Use, Optional
 
 from vantage6.common.configuration_manager import (
     Configuration,
     ConfigurationManager
 )
+
 
 class ServerConfiguration(Configuration):
 
@@ -21,7 +16,8 @@ class ServerConfiguration(Configuration):
         "uri": Use(str),
         "allow_drop_all": Use(bool),
         "logging": {
-            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
+            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING",
+                                                   "ERROR", "CRITICAL")),
             "file": Use(str),
             "use_console": Use(bool),
             "backup_count": And(Use(int), lambda n: n > 0),
@@ -30,6 +26,7 @@ class ServerConfiguration(Configuration):
             "datefmt": Use(str)
         }
     }
+
 
 class NodeConfiguration(Configuration):
 
@@ -41,7 +38,8 @@ class NodeConfiguration(Configuration):
         "databases": {Use(str): Use(str)},
         "api_path": Use(str),
         "logging": {
-            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
+            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING",
+                                                   "ERROR", "CRITICAL")),
             "file": Use(str),
             "use_console": Use(bool),
             "backup_count": And(Use(int), lambda n: n > 0),
@@ -55,12 +53,15 @@ class NodeConfiguration(Configuration):
         }
     }
 
+
 class TestConfiguration(Configuration):
 
     VALIDATORS = {
         # "api_key": And(Use(str), len),
         # "logging": {
-        #     "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NONE")),
+        #     "level": And(Use(str), lambda l: l in ("DEBUG", "INFO",
+        #                                            "WARNING", "ERROR",
+        #                                            "CRITICAL", "NONE")),
         #     "file": Use(str),
         #     "use_console": Use(bool),
         #     "backup_count": And(Use(int), lambda n: n > 0),
@@ -71,7 +72,6 @@ class TestConfiguration(Configuration):
     }
 
 
-
 class NodeConfigurationManager(ConfigurationManager):
 
     def __init__(self, name, *args, **kwargs):
@@ -80,6 +80,7 @@ class NodeConfigurationManager(ConfigurationManager):
     @classmethod
     def from_file(cls, path):
         return super().from_file(path, conf_class=NodeConfiguration)
+
 
 class ServerConfigurationManager(ConfigurationManager):
 
