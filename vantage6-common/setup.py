@@ -20,19 +20,19 @@ setup(
     description='Vantage6 common',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/IKNL/vantage6-client',
+    url='https://github.com/IKNL/vantage6-common',
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
         'appdirs==1.4.3',
-        'PyYAML==5.3.1',
         'schema==0.7.1',
         'termcolor==1.1.0',
+        'colorama==0.4.3',
         'click==7.1.1',
-        'colorama==0.4.3'
+        'PyYAML==5.3.1'
     ],
     package_data={
-        'vantage6': [
+        'vantage6.common': [
             'common/VERSION'
         ],
     }

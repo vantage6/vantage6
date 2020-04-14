@@ -4,6 +4,7 @@ import collections
 from pathlib import Path
 from schema import Schema
 
+
 class Configuration(collections.UserDict):
     """Base to contains a single configuration."""
 
@@ -16,7 +17,10 @@ class Configuration(collections.UserDict):
         """ Validation of a single item when put
         """
         # assert key in self.VALIDATORS.keys(), "Invalid Key!"
-        schema = Schema(self.VALIDATORS.get(key,lambda x: True), ignore_extra_keys=True)
+        schema = Schema(
+            self.VALIDATORS.get(key, lambda x: True),
+            ignore_extra_keys=True
+        )
         assert schema.is_valid(value), f"Invalid Value! {value} for {schema}"
         super().__setitem__(key, value)
 
@@ -28,7 +32,8 @@ class Configuration(collections.UserDict):
 
     @property
     def is_valid(self):
-        return Schema(self.VALIDATORS, ignore_extra_keys=True).is_valid(self.data)
+        schema = Schema(self.VALIDATORS, ignore_extra_keys=True)
+        return schema.is_valid(self.data)
 
 
 class ConfigurationManager(object):
@@ -63,7 +68,7 @@ class ConfigurationManager(object):
         self.name = name
         self.conf_class = conf_class
 
-    def put(self, env:str, config: dict):
+    def put(self, env: str, config: dict):
         assert env in self.ENVS
         configuration = self.conf_class(config)
         # only set valid configs
@@ -73,19 +78,19 @@ class ConfigurationManager(object):
         #      print(f"config={config}")
         #      print(self.conf_class)
 
-    def get(self, env:str):
+    def get(self, env: str):
         assert env in self.ENVS
         return self.__getattribute__(env)
 
     @property
     def is_empty(self):
-        return not (self.application or self.prod or self.acc \
-            or self.test or self.dev)
+        return not (self.application or self.prod or self.acc
+                    or self.test or self.dev)
 
     @property
     def environments(self):
-        return {"prod":self.prod, "acc":self.acc, "test":self.test,
-            "dev":self.dev, "application": self.application}
+        return {"prod": self.prod, "acc": self.acc, "test": self.test,
+                "dev": self.dev, "application": self.application}
 
     @property
     def has_application(self):
@@ -102,9 +107,9 @@ class ConfigurationManager(object):
     def _get_environment_from_dict(self, d, e):
         assert e in self.ENVS
         if e == "application":
-            return d.get("application",{})
+            return d.get("application", {})
         else:
-            return d.get("environments",{}).get(e,{})
+            return d.get("environments", {}).get(e, {})
 
     def load(self, path):
         with open(str(path), 'r') as f:
@@ -121,12 +126,14 @@ class ConfigurationManager(object):
         conf.load(path)
         return conf
 
-
     def save(self, path):
 
         config = {"application": dict(self.application), "environments": {
-            "prod": dict(self.prod), "acc": dict(self.acc), "test": dict(self.test),
-            "dev": dict(self.dev)}}
+            "prod": dict(self.prod),
+            "acc": dict(self.acc),
+            "test": dict(self.test),
+            "dev": dict(self.dev)}
+        }
 
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:

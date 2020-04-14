@@ -89,8 +89,8 @@ class TestRunner(unittest.TextTestRunner):
 
     def __init__(self, log, stream=sys.stderr, descriptions=True, verbosity=1,
                  failfast=False, buffer=False, resultclass=None):
-        super(TestRunner, self).__init__(stream, descriptions, verbosity, failfast,
-                                         buffer, resultclass)
+        super(TestRunner, self).__init__(stream, descriptions, verbosity,
+                                         failfast, buffer, resultclass)
         self.log = log
 
     def _makeResult(self):
@@ -112,7 +112,7 @@ def find_tests(path=None):
     # Find test cases
     if path is None:
         path = os.path.abspath(os.path.dirname(__file__))
-    
+
     loader = unittest.TestLoader()
     suites = loader.discover(path)
 

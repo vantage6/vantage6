@@ -9,6 +9,7 @@ from vantage6.common.globals import STRING_ENCODING
 # init colorstuff
 init()
 
+
 def logger_name(special__name__):
     log_name = special__name__.split('.')[-1]
     if len(log_name) > 14:
@@ -57,6 +58,7 @@ def warning(msg):
 
 def error(msg):
     echo(msg, "error")
+
 
 def debug(msg):
     echo(msg, "debug")
