@@ -8,6 +8,7 @@ from vantage6.cli.configuration_manager import (
     ServerConfigurationManager
 )
 
+
 def node_configuration_questionaire(dirs, instance_name):
     """Questionary to generate a config file for the node instance."""
 
@@ -95,6 +96,7 @@ def node_configuration_questionaire(dirs, instance_name):
     }
 
     return config
+
 
 def server_configuration_questionaire(dirs, instance_name):
     """Questionary to generate a config file for the node instance."""
