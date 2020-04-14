@@ -1,7 +1,7 @@
 
 <img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" width=180 align="right">
 
-# Vantage6
+# vantage6
 > A federated learning solution
 <!--
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/ppDLI/badge.svg?branch=master)](https://coveralls.io/github/IKNL/ppDLI?branch=master)
@@ -9,6 +9,8 @@
 [![Build Status](https://travis-ci.org/IKNL/ppDLI.svg?branch=master)](https://travis-ci.org/IKNL/ppDLI)
 -->
 [![PyPI version](https://badge.fury.io/py/vantage6.svg)](https://badge.fury.io/py/vantage6)
+[![Build Status](https://travis-ci.org/IKNL/vantage6.svg?branch=master)](https://travis-ci.org/IKNL/vantage6)
+[![Coverage Status](https://coveralls.io/repos/github/IKNL/vantage6/badge.svg?branch=master)](https://coveralls.io/github/IKNL/vantage6?branch=master)
 
 This repository is part of the vantage6 solution. Vantage6 allowes to execute computations on federated datasets. This repository contains a command-line-interface to manage nodes and servers. It is not required to install any other repository than this one if you are setting up a server or node.
 

@@ -141,19 +141,18 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
         )
     ]
 
-    # try to attach database
+   # try to attach database
     # TODO clean this
     uri = ctx.config['uri']
     url = make_url(uri)
     environment_vars = None
     if (url.host is None):
-        if not os.path.isabs(url.database):
+        db_path = url.database
+        if not os.path.isabs(db_path):
             # We're dealing with a relative path here.
-            db_path = str(ctx.data_dir / url.database)
-        else:
-            db_path = os.path.dirname(url.database)
+            db_path = ctx.data_dir / url.database
         mounts.append(docker.types.Mount(
-            f"/mnt/", db_path, type="bind"
+            f"/mnt/{url.database}", str(db_path), type="bind"
         ))
         environment_vars = {
             "VANTAGE6_DB_URI": f"sqlite:////mnt/{url.database}"
@@ -389,10 +388,16 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
         auto_remove=not keep,
         tty=True
     )
+    logs = container.logs(stream=True, stdout=True)
+    Thread(target=print_log_worker, args=(logs,), daemon=False).start()
 
     info(f"Succes! container id = {container.id}")
-    info(f"Check logs files using {Fore.GREEN}docker logs {container.id}"
-         f"{Style.RESET_ALL}")
+
+    # print_log_worker(container.logs(stream=True))
+    # for log in container.logs(stream=True):
+    #     print(log.decode("utf-8"))
+    # info(f"Check logs files using {Fore.GREEN}docker logs {container.id}"
+    #      f"{Style.RESET_ALL}")
 
     # info("Reading yaml file.")
     # with open(file_) as f:
@@ -409,7 +414,14 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
 def cli_server_shell(ctx):
     """ Run a iPython shell. """
     # make db models available in shell
-    from vantage6.server import db
+    try:
+        from vantage6.server import db
+    except ImportError:
+        error("vantage6-server not installed")
+        error(f"install using {Fore.RED}pip install "
+              f"vantage6-server{Style.RESET_ALL}")
+        exit(1)
+
     c = get_config()
     c.InteractiveShellEmbed.colors = "Linux"
     IPython.embed(config=c)
