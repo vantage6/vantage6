@@ -1,7 +1,7 @@
 
 <img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" width=180 align="right">
 
-# Vantage6
+# vantage6-common
 > A federated learning solution
 <!--
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/ppDLI/badge.svg?branch=master)](https://coveralls.io/github/IKNL/ppDLI?branch=master)
@@ -10,6 +10,7 @@
 [![DOI](https://zenodo.org/badge/120275991.svg)](https://zenodo.org/badge/latestdoi/120275991)
 -->
 [![PyPI version](https://badge.fury.io/py/vantage6-common.svg)](https://badge.fury.io/py/vantage6-common)
+
 This repository is part of the vantage6 solution. Vantage6 allowes to execute computations on federated datasets. This repository contains a common classes, methods, constants that are shared between the packages.
 
 ## :pray: Motivation

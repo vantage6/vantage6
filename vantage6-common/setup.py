@@ -33,7 +33,7 @@ setup(
     ],
     package_data={
         'vantage6.common': [
-            'common/VERSION'
+            'VERSION'
         ],
     }
 )
