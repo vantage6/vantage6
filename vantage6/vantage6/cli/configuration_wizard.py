@@ -8,6 +8,7 @@ from vantage6.cli.configuration_manager import (
     ServerConfigurationManager
 )
 
+
 def node_configuration_questionaire(dirs, instance_name):
     """Questionary to generate a config file for the node instance."""
 
@@ -96,6 +97,7 @@ def node_configuration_questionaire(dirs, instance_name):
 
     return config
 
+
 def server_configuration_questionaire(dirs, instance_name):
     """Questionary to generate a config file for the node instance."""
 
@@ -137,14 +139,14 @@ def server_configuration_questionaire(dirs, instance_name):
     ])
 
     res = q.select("Which level of logging would you like?",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"]
-    ).ask()
+                   choices=["DEBUG", "INFO", "WARNING", "ERROR",
+                            "CRITICAL", "NOTSET"]).ask()
 
     config["logging"] = {
         "level": res,
         "file": f"{instance_name}.log",
         "use_console": True,
-        "backup_count":5,
+        "backup_count": 5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S"
