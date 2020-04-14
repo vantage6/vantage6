@@ -87,7 +87,7 @@ class Node(Resource):
                 return msg, HTTPStatus.FORBIDDEN  # 403
 
         else:
-            if 'admin' not in g.user.roles:
+            if not is_root:
                 # only the results of the user's organization are returned
                 org_id = g.user.organization_id
                 results = [n for n in results if n.organization_id == org_id]
