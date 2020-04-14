@@ -1,7 +1,7 @@
 
 <img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" width=180 align="right">
 
-# Vantage6
+# vantage6
 > A federated learning solution
 <!--
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/ppDLI/badge.svg?branch=master)](https://coveralls.io/github/IKNL/ppDLI?branch=master)

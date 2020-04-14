@@ -18,7 +18,7 @@ setup(
     name='vantage6',
     version=__version__,
     description='vantage6 command line interface',
-    long_description=long_description,
+    long_description="long_description",
     long_description_content_type='text/markdown',
     url='https://github.com/IKNL/vantage6',
     packages=find_namespace_packages(),
@@ -31,8 +31,8 @@ setup(
         'colorama==0.4.3',
         'questionary==1.5.1',
         'iPython==7.13.0',
-        'SQLAlchemy==1.3.15'
-        'vantage6-common'
+        'SQLAlchemy==1.3.15',
+        'vantage6-common==1.0.0a2'
     ],
     extras_require={
         'dev': [
