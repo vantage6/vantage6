@@ -1,0 +1,15 @@
+[submodule "vantage6"]
+	path = vantage6
+	url = https://github.com/IKNL/vantage6
+[submodule "vantage6-server"]
+	path = vantage6-server
+	url = https://github.com/IKNL/vantage6-server
+[submodule "vantage6-client"]
+	path = vantage6-client
+	url = https://github.com/IKNL/vantage6-client
+[submodule "vantage6-node"]
+	path = vantage6-node
+	url = https://github.com/IKNL/vantage6-node
+[submodule "vantage6-common"]
+	path = vantage6-common
+	url = https://github.com/IKNL/vantage6-common
