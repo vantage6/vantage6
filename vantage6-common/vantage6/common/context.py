@@ -83,6 +83,7 @@ class AppContext(metaclass=Singleton):
         instance_name = Path(path).stem
 
         self_ = cls.__new__(cls)
+        self_.name = instance_name
         self_.set_folders(instance_type, instance_name, system_folders)
         self_.config_dir = Path(path).parent
         self_.config_file = path
