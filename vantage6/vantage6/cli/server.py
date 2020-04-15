@@ -124,7 +124,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
     if image is None:
         image = ctx.config.get(
             "image",
-            "harbor.distributedlearning.ai/infrastructure/node:latest"
+            "harbor.distributedlearning.ai/infrastructure/server:latest"
         )
     info(f"Pulling latest server image '{image}'.")
     try:
