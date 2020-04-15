@@ -84,10 +84,13 @@ class AppContext(metaclass=Singleton):
 
         self_ = cls.__new__(cls)
         self_.name = instance_name
+        self_.scope = "system" if system_folders else "user"
         self_.set_folders(instance_type, instance_name, system_folders)
         self_.config_dir = Path(path).parent
         self_.config_file = path
         self_.environment = environment
+        module_name = __name__.split('.')[-1]
+        self_.log = logging.getLogger(module_name)
         return self_
 
     @classmethod
