@@ -6,8 +6,12 @@ from setuptools import setup, find_namespace_packages
 here = path.abspath(path.dirname(__file__))
 
 # get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+# with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+#     long_description = f.read()
+long_description = (
+    "GitHub: [https://github.com/iknl/vantage6]"
+    "(https://github.com/iknl/vantage6)"
+)
 
 # read the API version from disk
 with open(path.join(here, 'vantage6', 'cli', 'VERSION')) as fp:
@@ -18,8 +22,8 @@ setup(
     name='vantage6',
     version=__version__,
     description='vantage6 command line interface',
-    long_description="long_description",
-    long_description_content_type='text/markdown',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/IKNL/vantage6',
     packages=find_namespace_packages(),
     python_requires='>=3.6',
