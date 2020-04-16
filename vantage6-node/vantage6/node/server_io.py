@@ -297,9 +297,8 @@ class ClientNodeProtocol(ClientBaseProtocol):
             org = self.request(f"organization/{initiator_id}")
             public_key = org["public_key"]
 
-            self.log.info('Found result (base64 encoded):')
-            self.log.info(bytes_to_base64s(result["result"]))
-
+            # self.log.info('Found result (base64 encoded):')
+            # self.log.info(bytes_to_base64s(result["result"]))
 
             result["result"] = self.cryptor.encrypt_bytes_to_str(
                 result["result"],
