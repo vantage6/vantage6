@@ -10,7 +10,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 # read the API version from disk
-with open(path.join(here, 'vantage6', 'VERSION')) as fp:
+with open(path.join(here, 'vantage6', 'node', 'VERSION')) as fp:
     __version__ = fp.read()
 
 # setup the package
@@ -36,7 +36,7 @@ setup(
         # 'vantage6-client'
     ],
     extras_require={
-        'dev':[
+        'dev': [
             'coverage==4.5.4',
             'python-coveralls==2.9.3',
             'SQLAlchemy==1.3.15',
@@ -47,7 +47,7 @@ setup(
         ]
     },
     package_data={
-        'vantage6': [
+        'vantage6.node': [
             'VERSION',
             '_data/*.*'
         ],
