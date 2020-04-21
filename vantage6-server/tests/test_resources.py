@@ -10,7 +10,7 @@ from flask import Flask, Response as BaseResponse, json
 from flask.testing import FlaskClient
 from werkzeug.utils import cached_property
 
-from vantage6.common.globals import APPNAME, VERSION
+from vantage6.common.globals import APPNAME #, VERSION
 from vantage6.server.globals import PACAKAGE_FOLDER
 from vantage6 import server
 from vantage6.server import (
@@ -106,7 +106,7 @@ class TestResources(unittest.TestCase):
         rv = self.app.get('/api/version')
         r = json.loads(rv.data)
         self.assertIn('version', r)
-        self.assertEqual(r['version'], VERSION)
+        self.assertEqual(r['version'], vantage6.server.__version__)
 
     def test_token_different_users(self):
         for type_ in ["root", "admin", "user"]:
