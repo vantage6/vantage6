@@ -97,7 +97,7 @@ def cli_node_files(name, environment, system_folders):
     """
     # select configuration name if none supplied
     name, environment = (name, environment) if name else \
-        select_configuration_questionaire(system_folders)
+        select_configuration_questionaire("node", system_folders)
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, environment, system_folders):
@@ -149,6 +149,7 @@ def cli_node_start(name, config, environment, system_folders, dockerized):
         # in case no name is supplied, ask user to select one
         if not name:
             name, environment = select_configuration_questionaire(
+                "node",
                 system_folders
             )
 
