@@ -32,6 +32,7 @@ from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
+from ._version import version_info, __version__
 from . import globals as cs
 
 from vantage6.client import ServerInfo
