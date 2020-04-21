@@ -23,6 +23,7 @@ from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
 
+from ._version import version_info, __version__
 from vantage6.common.globals import (STRING_ENCODING, APPNAME)
 from vantage6.common import (warning, error, info, debug)
 from vantage6.cli.context import NodeContext

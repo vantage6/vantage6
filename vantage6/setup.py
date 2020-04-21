@@ -1,3 +1,4 @@
+import os
 from os import path
 from codecs import open
 from setuptools import setup, find_namespace_packages
@@ -13,14 +14,20 @@ long_description = (
     "(https://github.com/iknl/vantage6)"
 )
 
-# read the API version from disk
-with open(path.join(here, 'vantage6', 'cli', 'VERSION')) as fp:
-    __version__ = fp.read()
+# Read the API version from disk. This file should be located in the package
+# folder, since it's also used to set the pkg.__version__ variable.
+version_path = os.path.join(here, 'vantage6', 'cli', '_version.py')
+version_ns = {
+    '__file__': version_path
+}
+with open(version_path) as f:
+    exec(f.read(), {}, version_ns)
+
 
 # setup the package
 setup(
     name='vantage6',
-    version=__version__,
+    version=version_ns['__version__'],
     description='vantage6 command line interface',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -44,10 +51,7 @@ setup(
         ]
     },
     package_data={
-        'vantage6.cli': [
-            'VERSION',
-            '_data/*.*'
-        ],
+        'vantage6.cli': [],
     },
     entry_points={
         'console_scripts': [
