@@ -141,22 +141,32 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
         )
     ]
 
-   # try to attach database
-    # TODO clean this
+    # FIXME: code duplication with cli_server_import()
+    # try to mount database
     uri = ctx.config['uri']
     url = make_url(uri)
     environment_vars = None
+
+    # If host is None, we're dealing with a file-based DB, like SQLite
     if (url.host is None):
         db_path = url.database
+
         if not os.path.isabs(db_path):
-            # We're dealing with a relative path here.
+            # We're dealing with a relative path here -> make it absolute
             db_path = ctx.data_dir / url.database
+
+        basename = os.path.basename(db_path)
+        dirname = os.path.dirname(db_path)
+
+        # we're mounting the entire folder that contains the database
         mounts.append(docker.types.Mount(
-            f"/mnt/{url.database}", str(db_path), type="bind"
+            "/mnt/database/", dirname, type="bind"
         ))
+
         environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/{url.database}"
+            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}"
         }
+
     else:
         warning(f"Database could not be transfered, make sure {url.host} "
                 "is reachable from the Docker container")
@@ -347,22 +357,32 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
         )
     ]
 
-    # try to attach database
-    # TODO clean this
+    # FIXME: code duplication with cli_server_start()
+    # try to mount database
     uri = ctx.config['uri']
     url = make_url(uri)
     environment_vars = None
+
+    # If host is None, we're dealing with a file-based DB, like SQLite
     if (url.host is None):
         db_path = url.database
+
         if not os.path.isabs(db_path):
-            # We're dealing with a relative path here.
+            # We're dealing with a relative path here -> make it absolute
             db_path = ctx.data_dir / url.database
+
+        basename = os.path.basename(db_path)
+        dirname = os.path.dirname(db_path)
+
+        # we're mounting the entire folder that contains the database
         mounts.append(docker.types.Mount(
-            f"/mnt/{url.database}", str(db_path), type="bind"
+            "/mnt/database/", dirname, type="bind"
         ))
+
         environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/{url.database}"
+            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}"
         }
+
     else:
         warning(f"Database could not be transfered, make sure {url.host} "
                 "is reachable from the Docker container")
