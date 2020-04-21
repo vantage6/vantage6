@@ -75,7 +75,7 @@ def cli_node_new_configuration(name, environment, system_folders):
                               f"{environment} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard(name, environment, system_folders)
+    cfg_file = configuration_wizard("node", name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
 #
@@ -160,7 +160,7 @@ def cli_node_start(name, config, environment, system_folders, dockerized):
             question += f" create this config now?"
 
             if q.confirm(question).ask():
-                configuration_wizard(name, environment, system_folders)
+                configuration_wizard("node", name, environment, system_folders)
 
             else:
                 sys.exit(0)
