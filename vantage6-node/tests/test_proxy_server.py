@@ -19,7 +19,7 @@ from vantage6.node.globals import (
     PACAKAGE_FOLDER,
     APPNAME,
     DATA_FOLDER,
-    VERSION
+    # VERSION
 )
 from vantage6.common import (
     base64s_to_bytes,
@@ -148,7 +148,7 @@ class TestProxyServer(unittest.TestCase):
         proxy_version = self.app.get("version").get_json()
         self.assertEqual(
             proxy_version.get("version"),
-            VERSION
+            vantage6.node.__version__
         )
 
     def test_login(self):
