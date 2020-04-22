@@ -178,6 +178,10 @@ def cli_server_new(name, environment, system_folders):
 
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
+        name_new = name.replace(" ", "-")
+        if name != name_new:
+            info(f"Replaced spaces from configuration name: {name}")
+            name = name_new
 
     # check that this config does not exist
     try:
