@@ -39,7 +39,8 @@ def server_configuration_questionaire(dirs, instance_name):
         {
             "type": "text",
             "name": "uri",
-            "message": "Database URI:"
+            "message": "Database URI:",
+            "default": "sqlite:///default.sqlite"
         },
         {
             "type": "select",
