@@ -307,6 +307,7 @@ def cli_server_new(name, environment, system_folders):
     path_ = str(Path(dirs["config"]))
     if not os.access(path_, os.W_OK):
         error(f"No write permissions at '{path_}'")
+        info(f"Create a new server using '{Fore.GREEN}vserver new --user{Style.RESET_ALL}' instead!")
         exit(1)
 
     # create config in ctx location
