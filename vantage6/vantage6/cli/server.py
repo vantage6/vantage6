@@ -320,8 +320,9 @@ def cli_server_new(name, environment, system_folders):
 
     # info(f"root user created.")
     info(
-        f"You can start the server by "
-        f"{Fore.GREEN}vserver start{Style.RESET_ALL}."
+        f"You can start the server by running "
+        f"{Fore.GREEN}vserver start{Style.RESET_ALL} or "
+        f"{Fore.GREEN}vserver start --user{Style.RESET_ALL}."
     )
 
 #

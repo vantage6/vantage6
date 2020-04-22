@@ -112,7 +112,8 @@ def server_configuration_questionaire(dirs, instance_name):
             "type": "text",
             "name": "ip",
             "message": "ip:",
-            "default": "127.0.0.1"
+            # "default": "127.0.0.1"
+            "default": "0.0.0.0"
         },
         {
             "type": "text",
@@ -129,7 +130,8 @@ def server_configuration_questionaire(dirs, instance_name):
         {
             "type": "text",
             "name": "uri",
-            "message": "Database URI:"
+            "message": "Database URI:",
+            "default": "sqlite:///default.sqlite"
         },
         {
             "type": "select",
