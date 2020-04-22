@@ -1,4 +1,5 @@
 import questionary as q
+import uuid
 
 from pathlib import Path
 
@@ -83,6 +84,10 @@ def node_configuration_questionaire(dirs, instance_name):
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
+
+    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
+    if constant_jwt_secret:
+        config["jwt_secret_key"] = str(uuid.uuid1())
 
     encryption = q.select("Enable encryption?",
                           choices=["true", "false"]).ask()
