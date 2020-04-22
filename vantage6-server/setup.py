@@ -57,6 +57,7 @@ setup(
     },
     package_data={
         'vantage6.server': [
+            '__build__',
             '_data/**/*.yaml',
             'server_data/*.yaml',
             'resource/swagger/*.yaml'
