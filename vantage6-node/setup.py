@@ -54,7 +54,8 @@ setup(
     },
     package_data={
         'vantage6.node': [
-            '_data/*.*'
+            '__build__',
+            '_data/*.*',
         ],
     },
     entry_points={

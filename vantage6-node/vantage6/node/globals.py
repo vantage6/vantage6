@@ -22,5 +22,5 @@ NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
 
-with open(Path(PACAKAGE_FOLDER) / APPNAME / "node" / "VERSION") as f:
-    VERSION = f.read()
+# with open(Path(PACAKAGE_FOLDER) / APPNAME / "node" / "VERSION") as f:
+#     VERSION = f.read()
