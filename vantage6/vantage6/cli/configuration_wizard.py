@@ -85,10 +85,6 @@ def node_configuration_questionaire(dirs, instance_name):
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
 
-    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
-    if constant_jwt_secret:
-        config["jwt_secret_key"] = str(uuid.uuid1())
-
     encryption = q.select("Enable encryption?",
                           choices=["true", "false"]).ask()
 
@@ -142,6 +138,10 @@ def server_configuration_questionaire(dirs, instance_name):
             "choices": ["True", "False"]
         }
     ])
+
+    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
+    if constant_jwt_secret:
+        config["jwt_secret_key"] = str(uuid.uuid1())
 
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR",
