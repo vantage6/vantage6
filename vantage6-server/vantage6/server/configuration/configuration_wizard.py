@@ -1,8 +1,5 @@
-import click
-import sys
-import os
-import yaml
 import questionary as q
+import uuid
 
 from pathlib import Path
 
@@ -55,6 +52,10 @@ def server_configuration_questionaire(dirs, instance_name):
     res = q.select("Which level of logging would you like?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"]
     ).ask()
+
+    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
+    if constant_jwt_secret:
+        config["jwt_secret_key"] = str(uuid.uuid1())
 
     config["logging"] = {
         "level": res,
