@@ -7,10 +7,11 @@ import errno
 import vantage6.node.globals as constants
 
 from colorama import Fore, Style
+from pathlib import Path
 
 from vantage6 import node
 from vantage6.node.context import NodeContext, DockerNodeContext
-from vantage6.common import warning, info
+from vantage6.common import warning, info, error
 
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
@@ -54,7 +55,7 @@ def cli_node_list():
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None)
 @click.option('-e', '--environment',
-              default=constants.DEFAULT_NODE_ENVIRONMENT,
+              default=None,
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
@@ -73,10 +74,23 @@ def cli_node_new_configuration(name, environment, system_folders):
             info(f"Replaced spaces from configuration name: {name}")
             name = name_new
 
+    if not environment:
+        environment = q.select(
+            "Please select the environment you want to configure:",
+            ["application", "prod", "acc", "test", "dev"]
+        ).ask()
+
     # check that this config does not exist
     if NodeContext.config_exists(name, environment, system_folders):
         raise FileExistsError(f"Configuration {name} and environment"
                               f"{environment} already exists!")
+
+    # Check that we can write in this folder
+    dirs = NodeContext.instance_folders("node", name, system_folders)
+    path_ = str(Path(dirs["config"]))
+    if not os.access(path_, os.W_OK):
+        error(f"No write permissions at '{path_}'")
+        exit(1)
 
     # create config in ctx location
     cfg_file = configuration_wizard("node", name, environment, system_folders)
