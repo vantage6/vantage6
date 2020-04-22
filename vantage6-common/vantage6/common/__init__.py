@@ -3,6 +3,7 @@ import click
 
 from colorama import init, Fore, Style
 
+from ._version import version_info, __version__
 from vantage6.common.globals import STRING_ENCODING
 
 

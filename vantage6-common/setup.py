@@ -40,6 +40,8 @@ setup(
         'PyYAML==5.3.1'
     ],
     package_data={
-        'vantage6.common': [],
+        'vantage6.common': [
+            '__build__',
+        ],
     }
 )
