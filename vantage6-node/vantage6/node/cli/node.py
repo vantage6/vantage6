@@ -68,6 +68,10 @@ def cli_node_new_configuration(name, environment, system_folders):
     # select configuration name if none supplied
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
+        name_new = name.replace(" ", "-")
+        if name != name_new:
+            info(f"Replaced spaces from configuration name: {name}")
+            name = name_new
 
     # check that this config does not exist
     if NodeContext.config_exists(name, environment, system_folders):
