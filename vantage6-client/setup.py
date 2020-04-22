@@ -35,6 +35,8 @@ setup(
        'requests==2.23.0'
     ],
     package_data={
-        'vantage6.client': [],
+        'vantage6.client': [
+            '__build__',
+        ],
     }
 )

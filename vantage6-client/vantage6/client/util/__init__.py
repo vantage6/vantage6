@@ -12,7 +12,6 @@ from pathlib import Path
 from sqlalchemy.engine.url import make_url
 from weakref import WeakValueDictionary
 
-from ._version import version_info, __version__
 from vantage6.client.constants import STRING_ENCODING
 
 
