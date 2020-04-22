@@ -157,6 +157,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
 
         basename = os.path.basename(db_path)
         dirname = os.path.dirname(db_path)
+        os.makedirs(dirname, exist_ok=True)
 
         # we're mounting the entire folder that contains the database
         mounts.append(docker.types.Mount(
@@ -377,6 +378,7 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
 
         basename = os.path.basename(db_path)
         dirname = os.path.dirname(db_path)
+        os.makedirs(dirname, exist_ok=True)
 
         # we're mounting the entire folder that contains the database
         mounts.append(docker.types.Mount(
