@@ -43,7 +43,7 @@ setup(
         'questionary==1.5.1',
         'iPython==7.13.0',
         'SQLAlchemy==1.3.15',
-        'vantage6-common==1.0.0a2'
+        'vantage6-common'
     ],
     extras_require={
         'dev': [
@@ -51,7 +51,9 @@ setup(
         ]
     },
     package_data={
-        'vantage6.cli': [],
+        'vantage6.cli': [
+            '__build__',
+        ],
     },
     entry_points={
         'console_scripts': [
