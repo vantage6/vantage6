@@ -117,6 +117,11 @@ def cli_node_new_configuration(name, environment, system_folders):
     # select configuration name if none supplied
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
+        # remove spaces, from name
+        name_new = name.replace(" ", "-")
+        if name != name_new:
+            info(f"Replaced spaces from configuration name: {name}")
+            name = name_new
 
     if not environment:
         environment = q.select(
