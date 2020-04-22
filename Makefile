@@ -3,6 +3,19 @@
 
 TAG ?= trolltunga
 
+help:
+	@echo "Available commands to 'make':"
+	@echo "  uninstall    : uninstall all vantage6 packages"
+	@echo "  install      : do a regular install of all vantage6 packages"
+	@echo "  install-dev  : do an editable install of all vantage6 packages"
+	@echo "  docker-image : build the node/server docker image"
+	@echo "  docker-push  : push the node/server docker image"
+	@echo "  rebuild      : rebuild all python packages"
+	@echo "  publish-test : publish built python packages to test.pypi.org"
+	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
+	@echo "  clean        : clean all built packages"
+
+
 uninstall:
 	pip uninstall -y vantage6
 	pip uninstall -y vantage6-client
@@ -23,6 +36,14 @@ install-dev:
 	cd vantage6-client && pip install -e .
 	cd vantage6-node && pip install -e .
 	cd vantage6-server && pip install -e .
+
+docker-image:
+	docker build \
+	-t harbor.distributedlearning.ai/infrastructure/node-n-server:${TAG}
+	  ./
+
+docker-push:
+	docker push harbor.distributedlearning.ai/infrastructure/node-n-server:${TAG}
 
 rebuild:
 	cd vantage6-common && make rebuild
