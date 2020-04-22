@@ -5,6 +5,7 @@ import docker
 import os
 import time
 
+from pathlib import Path
 from threading import Thread
 from functools import wraps
 from traitlets.config import get_config
@@ -298,6 +299,13 @@ def cli_server_new(name, environment, system_folders):
             exit(1)
     except Exception as e:
         print(e)
+        exit(1)
+
+    # Check that we can write in this folder
+    dirs = ServerContext.instance_folders("server", name, system_folders)
+    path_ = str(Path(dirs["config"]))
+    if not os.access(path_, os.W_OK):
+        error(f"No write permissions at '{path_}'")
         exit(1)
 
     # create config in ctx location
