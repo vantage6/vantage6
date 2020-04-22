@@ -1,3 +1,4 @@
+import os
 import click
 import questionary as q
 import IPython
@@ -7,6 +8,7 @@ import yaml
 import vantage6.server.model as db
 
 from functools import wraps
+from pathlib import Path
 from traitlets.config import get_config
 from colorama import (Fore, Style, init)
 
@@ -89,7 +91,6 @@ def click_insert_context(func):
                 environment=environment,
                 system_folders=system_folders
             )
-
 
         # initialize database (singleton)
         Database().connect(ctx.get_database_uri())
@@ -194,6 +195,13 @@ def cli_server_new(name, environment, system_folders):
             exit(1)
     except Exception as e:
         print(e)
+        exit(1)
+
+    # Check that we can write in this folder
+    dirs = ServerContext.instance_folders("server", name, system_folders)
+    path_ = str(Path(dirs["config"]))
+    if not os.access(path_, os.W_OK):
+        error(f"No write permissions at '{path_}'")
         exit(1)
 
     # create config in ctx location
