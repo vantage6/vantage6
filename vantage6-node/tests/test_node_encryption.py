@@ -72,9 +72,8 @@ class TestCryptor(unittest.TestCase):
 
     def test_creating_a_new_key(self):
         tmp = DATA_FOLDER / "unit_test_key.pem"
-        self.cryptor._Cryptor__create_new_rsa_key(
+        self.cryptor.create_new_rsa_key(
             tmp
         )
         self.assertTrue(tmp.exists())
         tmp.unlink()
-
