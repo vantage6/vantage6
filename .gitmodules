@@ -13,3 +13,6 @@
 [submodule "vantage6-common"]
 	path = vantage6-common
 	url = https://github.com/IKNL/vantage6-common
+[submodule "vantage6-toolkit"]
+	path = vantage6-toolkit
+	url = https://github.com/IKNL/vantage6-toolkit
