@@ -111,17 +111,10 @@ class RSACryptor(CryptorBase):
 
             TODO consider making this a static function
         """
-        # FIXME: __load_private_key() should not generate a new key; this is an
-        #   unexpected side effect given the name of the method. Either rename
-        #   the function or refactor to generate the key if this function
-        #   cannot find/load it.
+
         if not private_key_file.exists():
-            self.log.warning(
-                f"Private key file {private_key_file} not found. Now generating one. "
-                f"This is could be normal if you run {APPNAME} for the first "
-                f"time."
-            )
-            self.__create_new_rsa_key(private_key_file)
+            raise FileNotFoundError(
+                f"Private key file {private_key_file} not found.")
 
         self.log.debug("Loading private key")
 
@@ -131,25 +124,33 @@ class RSACryptor(CryptorBase):
             backend=default_backend()
         )
 
-    def __create_new_rsa_key(self, path: Path):
+    @staticmethod
+    def create_new_rsa_key(path: Path):
         """ Creates a new RSA key for E2EE.
         """
-        self.log.info(f"Generating RSA-key at {path}")
         private_key = rsa.generate_private_key(
             backend=default_backend(),
             key_size=4096,
             public_exponent=65537
-        ).private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption()
         )
-        path.write_bytes(private_key)
+
+        path.write_bytes(
+            private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+        )
+        return private_key
 
     @property
     def public_key_bytes(self):
         """ Returns the public key bytes from the organization."""
-        return self.private_key.public_key().public_bytes(
+        return self.create_public_key_bytes(self.private_key)
+
+    @staticmethod
+    def create_public_key_bytes(private_key):
+        return private_key.public_key().public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
