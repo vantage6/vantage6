@@ -451,3 +451,88 @@ def check_if_docker_deamon_is_running(docker_client):
     except Exception:
         error("Docker socket can not be found. Make sure Docker is running.")
         exit(1)
+
+#
+#   create-private-key
+#
+from vantage6.client.encryption import RSACryptor
+from vantage6.node import ClientNodeProtocol
+from vantage6.client.util import bytes_to_base64s
+@cli_node.command(name='create-private-key')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('-e', '--environment', default="",
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option('--no-upload', 'upload', flag_value=False, default=True)
+def cli_node_create_private_key(name, environment, system_folders, upload):
+    """Create and upload a new private key (use with caughtion)"""
+
+    # retrieve context
+    name, environment = (name, environment) if name else \
+        select_configuration_questionaire("node", system_folders)
+
+    # raise error if config could not be found
+    NodeContext.LOGGING_ENABLED = False
+    if not NodeContext.config_exists(name, environment, system_folders):
+        error(
+            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
+            f"not be found."
+        )
+
+    # create node context
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+
+    url = ctx.config["server_url"]
+    info(f"Connecting to server '{url}'")
+    try:
+        client = ClientNodeProtocol(
+            host=url,
+            port=ctx.config["port"],
+            path=ctx.config["api_path"]
+        )
+        client.authenticate(ctx.config["api_key"])
+    except Exception as e:
+        error("Could not connect to server!")
+        debug(e)
+        exit(1)
+
+    # generate new key, and save it
+    info("Generating new private key")
+    try:
+        file_ = ctx.data_dir / "private_key.pem"
+        private_key = RSACryptor.create_new_rsa_key(file_)
+    except Exception as e:
+        error("Could not create private key file!")
+        debug(e)
+        exit(1)
+
+    # create public key
+    info("Deriving public key")
+    public_key = RSACryptor.create_public_key_bytes(private_key)
+
+    # update config file
+    info("Updating configuration")
+    ctx.config["encryption"]["private_key"] = str(file_)
+    ctx.config_manager.put(environment, ctx.config)
+    ctx.config_manager.save(ctx.config_file)
+
+    # upload key to the server
+    if upload:
+        info("Uploading public key to the server")
+        try:
+            client.request(
+                f"organization/{client.whoami.organization_id}",
+                method="patch",
+                json={"public_key": bytes_to_base64s(public_key)}
+            )
+        except Exception as e:
+            error("Could not upload the public key!")
+            debug(e)
+            exit(1)
+    else:
+        warning("Public key not uploaded!")
+
+    info("[Done]")
