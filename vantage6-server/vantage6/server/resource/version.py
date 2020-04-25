@@ -11,6 +11,8 @@ from flasgger import swag_from
 from pathlib import Path
 
 # from vantage6.server.globals import VERSION
+import vantage6.server
+
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -21,7 +23,7 @@ def setup(api, API_BASE):
 
     path = "/".join([API_BASE, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
-    
+
     api.add_resource(
         Version,
         path,
@@ -38,5 +40,5 @@ class Version(Resource):
     @swag_from(str(Path(r"swagger/version.yaml")), endpoint='version')
     def get(self):
         """Return the version of this server."""
-        
+
         return {"version": vantage6.server.__version__}

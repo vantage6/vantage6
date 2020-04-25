@@ -36,7 +36,7 @@ class User(Authenticatable):
         organization = self.organization.name if self.organization else "None"
         return (
             f"<User "
-            f"<{self.id}, username:'{self.username}', roles='{self.roles}', "
+            f"id={self.id}, username='{self.username}', roles='{self.roles}', "
             f"organization='{organization}'"
             f">"
         )

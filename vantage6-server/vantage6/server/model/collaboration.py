@@ -6,13 +6,13 @@ from .base import Base, Database
 
 class Collaboration(Base):
     """Combination of 2 or more Organizations."""
-    
+
     # fields
     name = Column(String)
     encrypted = Column(Boolean, default=1)
 
     # relationships
-    organizations = relationship("Organization", secondary="Member", 
+    organizations = relationship("Organization", secondary="Member",
         back_populates='collaborations')
     nodes = relationship("Node", back_populates="collaboration")
     tasks = relationship("Task", back_populates="collaboration")
@@ -26,7 +26,7 @@ class Collaboration(Base):
     def get_nodes_from_organizations(self, ids):
         """Returns a subset of nodes"""
         return [n for n in self.nodes if n.organization.id in ids]
-    
+
     def get_node_from_organization(self, organization):
         for node in self.nodes:
             if node.organization.id == organization.id:
@@ -35,20 +35,23 @@ class Collaboration(Base):
 
     @classmethod
     def find_by_name(cls, name):
-        """Find collaboration by its name. 
-        
-        If multiple collaborations share the same name, the first 
+        """Find collaboration by its name.
+
+        If multiple collaborations share the same name, the first
         collaboration found is returned."""
         session = Database().Session
         try:
             return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
             return None
-        
+
     def __repr__(self):
         number_of_organizations = len(self.organizations)
         number_of_tasks = len(self.tasks)
-        return ("<Collaboration "
-            f"number of tasks: {number_of_tasks}, "
-            f"number of organizations: {number_of_organizations}"
-        ">")
+        return (
+            "<Collaboration "
+                f"{self.id}: '{self.name}', "
+                f"{number_of_organizations} organization(s), "
+                f"{number_of_tasks} task(s)"
+            ">"
+        )

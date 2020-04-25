@@ -243,4 +243,13 @@ def cli_server_shell(ctx):
     # shell.init(ctx.environment)
     c = get_config()
     c.InteractiveShellEmbed.colors = "Linux"
+
+    # Suppress logging (e.g. on tab-completion)
+    import logging
+    logging.getLogger('parso.cache').setLevel(logging.WARNING)
+    logging.getLogger('parso.python.diff').setLevel(logging.WARNING)
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+    logging.getLogger('asyncio').setLevel(logging.WARNING)
+    del logging
+
     IPython.embed(config=c)
