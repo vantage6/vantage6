@@ -20,7 +20,7 @@ from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
 
 from ._version import version_info, __version__
 from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
-from vantage6.client.util import (
+from vantage6.common import (
     bytes_to_base64s,
     base64s_to_bytes
 )

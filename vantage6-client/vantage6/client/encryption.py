@@ -29,7 +29,7 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 from vantage6.client.constants import APPNAME
-from vantage6.client.util import (
+from vantage6.common import (
     Singleton,
     logger_name,
     bytes_to_base64s,

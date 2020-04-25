@@ -32,7 +32,8 @@ setup(
     python_requires='>=3.6',
     install_requires=[
        'cryptography==2.8',
-       'requests==2.23.0'
+       'requests==2.23.0',
+       'vantage6-common',
     ],
     package_data={
         'vantage6.client': [
