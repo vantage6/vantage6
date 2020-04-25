@@ -99,18 +99,7 @@ class RSACryptor(CryptorBase):
         self.private_key = self.__load_private_key(private_key_file)
 
     def __load_private_key(self, private_key_file):
-        """ Load a private key file into this instance.
-
-            If `private_key_file` has not been supplied the default key
-            is used (which is fine in most cases). In case the file
-            does not exist it is generated, make sure python has access
-            to the filepath in case you have specified one.
-
-            :param private_key_file: path to a private key file (or
-                where you want to store one)
-
-            TODO consider making this a static function
-        """
+        """ Load a private key file into this instance."""
 
         if not private_key_file.exists():
             raise FileNotFoundError(
