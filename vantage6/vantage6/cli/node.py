@@ -24,8 +24,16 @@ from threading import Thread
 from colorama import Fore, Style
 
 from ._version import version_info, __version__
+
+from vantage6.common import (
+    warning, error, info, debug,
+    bytes_to_base64s,
+)
 from vantage6.common.globals import (STRING_ENCODING, APPNAME)
-from vantage6.common import (warning, error, info, debug)
+from vantage6.client import Client
+from vantage6.client.encryption import RSACryptor
+
+
 from vantage6.cli.context import NodeContext
 from vantage6.cli.globals import (
     DEFAULT_NODE_ENVIRONMENT as N_ENV,
@@ -455,9 +463,6 @@ def check_if_docker_deamon_is_running(docker_client):
 #
 #   create-private-key
 #
-from vantage6.client.encryption import RSACryptor
-from vantage6.node import ClientNodeProtocol
-from vantage6.client.util import bytes_to_base64s
 @cli_node.command(name='create-private-key')
 @click.option("-n", "--name", default=None, help="configuration name")
 @click.option('-e', '--environment', default="",
@@ -465,7 +470,9 @@ from vantage6.client.util import bytes_to_base64s
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--no-upload', 'upload', flag_value=False, default=True)
-def cli_node_create_private_key(name, environment, system_folders, upload):
+@click.option('--overwrite', 'overwrite', flag_value=True, default=False)
+def cli_node_create_private_key(name, environment, system_folders, upload,
+                                overwrite):
     """Create and upload a new private key (use with caughtion)"""
 
     # retrieve context
@@ -485,29 +492,40 @@ def cli_node_create_private_key(name, environment, system_folders, upload):
     ctx = NodeContext(name, environment=environment,
                       system_folders=system_folders)
 
-    url = ctx.config["server_url"]
-    info(f"Connecting to server '{url}'")
-    try:
-        client = ClientNodeProtocol(
-            host=url,
-            port=ctx.config["port"],
-            path=ctx.config["api_path"]
-        )
-        client.authenticate(ctx.config["api_key"])
-    except Exception as e:
-        error("Could not connect to server!")
-        debug(e)
-        exit(1)
-
     # generate new key, and save it
-    info("Generating new private key")
-    try:
-        file_ = ctx.data_dir / "private_key.pem"
-        private_key = RSACryptor.create_new_rsa_key(file_)
-    except Exception as e:
-        error("Could not create private key file!")
-        debug(e)
-        exit(1)
+    file_ = ctx.data_dir / "private_key.pem"
+
+    if file_.exists():
+        warning(f"File '{Fore.CYAN}{file_}{Style.RESET_ALL}' exists!")
+
+        if overwrite:
+            warning("'--override' specified, so it will be overwritten ...")
+
+    if file_.exists() and not overwrite:
+        error("Could not create private key!")
+        warning(
+            f"If you're **sure** you want to create a new key, "
+            f"please run this command with the '--overwrite' flag"
+        )
+        warning("Continuing with existing key instead!")
+        private_key = RSACryptor(file_).private_key
+
+    else:
+        try:
+            info("Generating new private key")
+            private_key = RSACryptor.create_new_rsa_key(file_)
+
+        except Exception as e:
+            error(f"Could not create new private key '{file_}'!?")
+            debug(e)
+            info("Bailing out ...")
+            exit(1)
+
+        warning(f"Private key written to '{file_}'")
+        warning(
+            "If you're running multiple nodes, be sure to copy the private "
+            "key to the appropriate directories!"
+        )
 
     # create public key
     info("Deriving public key")
@@ -521,17 +539,42 @@ def cli_node_create_private_key(name, environment, system_folders, upload):
 
     # upload key to the server
     if upload:
-        info("Uploading public key to the server")
+        info(
+            "Uploading public key to the server. "
+            "This will overwrite any previously existing key!"
+        )
+
+        username = q.text("Username:").ask()
+        password = q.password("Password:").ask()
+
+        # Connect to the server
+        host = ctx.config['server_url']
+        port = ctx.config['port']
+        api_path = ctx.config['api_path']
+        api_key = ctx.config['api_key']
+
+        client = Client(host, port, api_path)
+
+        try:
+            client.authenticate(username, password)
+
+        except Exception as e:
+            error("Could not authenticate with server!")
+            debug(e)
+            exit(1)
+
         try:
             client.request(
-                f"organization/{client.whoami.organization_id}",
+                f"/organization/{client.whoami.organization_id}",
                 method="patch",
                 json={"public_key": bytes_to_base64s(public_key)}
             )
+
         except Exception as e:
             error("Could not upload the public key!")
             debug(e)
             exit(1)
+
     else:
         warning("Public key not uploaded!")
 

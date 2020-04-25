@@ -442,25 +442,36 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     # info("Adding entities to database.")
     # fixture.load(entities, drop_all=drop_all)
 
+
+# DISABLED for now - use vserver-local instead
 #
 #   shell
 #
-@cli_server.command(name='shell')
-@click_insert_context
-def cli_server_shell(ctx):
-    """ Run a iPython shell. """
-    # make db models available in shell
-    try:
-        from vantage6.server import db
-    except ImportError:
-        error("vantage6-server not installed")
-        error(f"install using {Fore.RED}pip install "
-              f"vantage6-server{Style.RESET_ALL}")
-        exit(1)
-
-    c = get_config()
-    c.InteractiveShellEmbed.colors = "Linux"
-    IPython.embed(config=c)
+# @cli_server.command(name='shell')
+# @click_insert_context
+# def cli_server_shell(ctx):
+#     """ Run a iPython shell. """
+#     # make db models available in shell
+#     try:
+#         from vantage6.server import db
+#     except ImportError:
+#         error("vantage6-server not installed")
+#         error(f"install using {Fore.RED}pip install "
+#               f"vantage6-server{Style.RESET_ALL}")
+#         exit(1)
+#
+#     c = get_config()
+#     c.InteractiveShellEmbed.colors = "Linux"
+#
+#     # Suppress logging (e.g. on tab-completion)
+#     import logging
+#     logging.getLogger('parso.cache').setLevel(logging.WARNING)
+#     logging.getLogger('parso.python.diff').setLevel(logging.WARNING)
+#     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+#     logging.getLogger('asyncio').setLevel(logging.WARNING)
+#     del logging
+#
+#     IPython.embed(config=c)
 
 #
 #   stop
@@ -557,3 +568,5 @@ def check_if_docker_deamon_is_running(docker_client):
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
+
+
