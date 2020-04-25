@@ -29,10 +29,12 @@ class Singleton(type):
 
 
 def bytes_to_base64s(bytes_):
+    """Return bytes as base64 encoded string."""
     return base64.b64encode(bytes_).decode(STRING_ENCODING)
 
 
 def base64s_to_bytes(bytes_string):
+    """Return base64 encoded string as bytes."""
     return base64.b64decode(bytes_string.encode(STRING_ENCODING))
 
 
@@ -46,7 +48,7 @@ def echo(msg, level="info"):
         "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]",
         "debug": f"[{Fore.CYAN}debug{Style.RESET_ALL}]",
     }.get(level)
-    click.echo(f"{type_} - {msg}")
+    click.echo(f"{type_:16} - {msg}")
 
 
 def info(msg):
