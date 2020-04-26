@@ -2,9 +2,11 @@
 # this Makefile
 
 TAG ?= trolltunga
+BUILDNR ?= 1
 
 help:
 	@echo "Available commands to 'make':"
+	@echo "  set-buildnr  : set buildnr in all vantage6 packages"
 	@echo "  uninstall    : uninstall all vantage6 packages"
 	@echo "  install      : do a regular install of all vantage6 packages"
 	@echo "  install-dev  : do an editable install of all vantage6 packages"
@@ -17,6 +19,8 @@ help:
 	@echo ""
 	@echo "Using tag: ${TAG}"
 
+set-buildnr:
+	find ./ -name __build__ -exec sh -c "echo ${BUILDNR} > {}" \;
 
 uninstall:
 	pip uninstall -y vantage6
