@@ -470,10 +470,34 @@ def check_if_docker_deamon_is_running(docker_client):
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--no-upload', 'upload', flag_value=False, default=True)
+@click.option("-o", "--organization-name", default=None, help="Organization name")
 @click.option('--overwrite', 'overwrite', flag_value=True, default=False)
 def cli_node_create_private_key(name, environment, system_folders, upload,
-                                overwrite):
+                                organization_name, overwrite):
     """Create and upload a new private key (use with caughtion)"""
+
+    def create_client_and_authenticate(ctx):
+        """Create a client and authenticate."""
+        host = ctx.config['server_url']
+        port = ctx.config['port']
+        api_path = ctx.config['api_path']
+        api_key = ctx.config['api_key']
+
+        info(f"Connecting to server at '{host}:{port}{api_path}'")
+        username = q.text("Username:").ask()
+        password = q.password("Password:").ask()
+
+        client = Client(host, port, api_path)
+
+        try:
+            client.authenticate(username, password)
+
+        except Exception as e:
+            error("Could not authenticate with server!")
+            debug(e)
+            exit(1)
+
+        return client
 
     # retrieve context
     name, environment = (name, environment) if name else \
@@ -488,12 +512,18 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
             f"not be found."
         )
 
-    # create node context
-    ctx = NodeContext(name, environment=environment,
-                      system_folders=system_folders)
+    # Create node context
+    ctx = NodeContext(name, environment, system_folders)
+
+    # Authenticate with the server to obtain organization name if it wasn't
+    # provided
+    if organization_name is None:
+        client = create_client_and_authenticate(ctx)
+        organization_name = client.whoami.organization_name
 
     # generate new key, and save it
-    file_ = ctx.data_dir / "private_key.pem"
+    filename = f"privkey_{organization_name}.pem"
+    file_ = ctx.type_data_folder(system_folders) / filename
 
     if file_.exists():
         warning(f"File '{Fore.CYAN}{file_}{Style.RESET_ALL}' exists!")
@@ -544,24 +574,8 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
             "This will overwrite any previously existing key!"
         )
 
-        username = q.text("Username:").ask()
-        password = q.password("Password:").ask()
-
-        # Connect to the server
-        host = ctx.config['server_url']
-        port = ctx.config['port']
-        api_path = ctx.config['api_path']
-        api_key = ctx.config['api_key']
-
-        client = Client(host, port, api_path)
-
-        try:
-            client.authenticate(username, password)
-
-        except Exception as e:
-            error("Could not authenticate with server!")
-            debug(e)
-            exit(1)
+        if 'client' not in locals():
+            client = create_client_and_authenticate(ctx)
 
         try:
             client.request(

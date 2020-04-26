@@ -98,6 +98,11 @@ class NodeContext(AppContext):
     def available_configurations(cls, system_folders=N_FOL):
         return super().available_configurations("node", system_folders)
 
+    @staticmethod
+    def type_data_folder(system_folders):
+        """Return OS specific data folder."""
+        return AppContext.type_data_folder("node", system_folders)
+
     @property
     def databases(self):
         return self.config["databases"]
