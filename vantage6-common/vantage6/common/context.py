@@ -112,9 +112,22 @@ class AppContext(metaclass=Singleton):
         config_manager = cls.INST_CONFIG_MANAGER.from_file(config_file)
         return bool(getattr(config_manager, environment))
 
+
+    @staticmethod
+    def type_data_folder(instance_type, system_folders):
+        """Return OS specific data folder."""
+        d = appdirs.AppDirs(APPNAME, "")
+
+        if system_folders:
+            return Path(d.site_data_dir) / instance_type
+
+        else:
+            return Path(d.user_data_dir) / instance_type
+
     @staticmethod
     def instance_folders(instance_type, instance_name, system_folders):
-        """Return OS specific folders for storing logs, data and config files
+        """Return OS and instance specific folders for storing logs, data and
+            config files.
         """
         d = appdirs.AppDirs(APPNAME, "")
 
