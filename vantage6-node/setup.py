@@ -37,9 +37,9 @@ setup(
         'cryptography==2.8',
         'click==7.1.1',
         'termcolor==1.1.0',
-        'bcrypt==3.1.7'
-        # 'vantage6',
-        # 'vantage6-client'
+        'bcrypt==3.1.7',
+        'vantage6 >= 1.0.0b5',
+        'vantage6-client >= 1.0.0b5',
     ],
     extras_require={
         'dev': [
