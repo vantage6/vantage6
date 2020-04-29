@@ -33,7 +33,7 @@ setup(
     install_requires=[
        'cryptography==2.8',
        'requests==2.23.0',
-       'vantage6-common',
+       'vantage6-common >= 1.0.0b5',
     ],
     package_data={
         'vantage6.client': [
