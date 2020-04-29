@@ -33,6 +33,7 @@ setup(
     install_requires=[
        'cryptography==2.8',
        'requests==2.23.0',
+       'PyJWT',
        'vantage6-common >= 1.0.0b5',
     ],
     package_data={
