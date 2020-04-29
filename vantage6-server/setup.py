@@ -47,7 +47,9 @@ setup(
         'ipython==7.13.0',
         'requests==2.23.0',
         'psutil==5.7.0',
-        'gevent==1.4.0'
+        'gevent==1.4.0',
+        'vantage6 >= 1.0.0b5',
+        'vantage6-common >= 1.0.0b5',
     ],
     extras_require={
         'dev': [
