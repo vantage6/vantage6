@@ -37,7 +37,7 @@ setup(
         'termcolor==1.1.0',
         'colorama==0.4.3',
         'click==7.1.1',
-        'PyYAML==5.3.1'
+        'PyYAML==5.3.1',
     ],
     package_data={
         'vantage6.common': [
