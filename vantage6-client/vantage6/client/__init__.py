@@ -455,6 +455,24 @@ class ClientUserProtocol(ClientBaseProtocol):
             organization_name=organization_name
         )
 
+    def get_results(self, id=None, state=None, include_task=False,
+                    task_id=None, node_id=None):
+
+        results = super().get_results(
+            id=id, state=state,
+            include_task=include_task, task_id=task_id, node_id=node_id
+        )
+
+        unpacked_results = []
+        for result in results:
+            if result.get("result"):
+                result["result"] = pickle.loads(result.get("result"))
+            unpacked_results.append(result)
+
+        return unpacked_results
+
+
+
 
 # creat a simple alias
 Client = ClientUserProtocol
