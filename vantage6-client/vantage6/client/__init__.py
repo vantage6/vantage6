@@ -15,6 +15,7 @@ import time
 import jwt
 import datetime
 import typing
+import pickle
 
 from cryptography.hazmat.backends.openssl.rsa import _RSAPrivateKey
 
@@ -328,6 +329,8 @@ class ClientBaseProtocol(object):
         if organization_ids is None:
             organization_ids = []
 
+        serialized_input = pickle.dumps(input_)
+
         organization_json_list = []
         for org_id in organization_ids:
             pub_key = self.request(f"organization/{org_id}").get("public_key")
@@ -335,7 +338,8 @@ class ClientBaseProtocol(object):
 
             organization_json_list.append({
                 "id": org_id,
-                "input": self.cryptor.encrypt_bytes_to_str(input_, pub_key)
+                "input": self.cryptor.encrypt_bytes_to_str(serialized_input,
+                                                           pub_key)
             })
 
         return self.request('task', method='post', json={
