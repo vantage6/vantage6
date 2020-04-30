@@ -334,7 +334,8 @@ class ClientBaseProtocol(object):
         organization_json_list = []
         for org_id in organization_ids:
             pub_key = self.request(f"organization/{org_id}").get("public_key")
-            pub_key = base64s_to_bytes(pub_key)
+            # pub_key = base64s_to_bytes(pub_key)
+            # self.log.debug(pub_key)
 
             organization_json_list.append({
                 "id": org_id,
@@ -378,8 +379,8 @@ class ClientBaseProtocol(object):
             """
             cryptor = self.cryptor
             try:
-                self.log.info('Decrypting input')
-                res["input"] = cryptor.decrypt_str_to_bytes(res["input"])
+                # self.log.info('Decrypting input')
+                # res["input"] = cryptor.decrypt_str_to_bytes(res["input"])
 
                 if res["result"]:
                     self.log.info('Decrypting result')
