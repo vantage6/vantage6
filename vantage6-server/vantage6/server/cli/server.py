@@ -15,7 +15,8 @@ from colorama import (Fore, Style, init)
 from vantage6.common import (
     info,
     warning,
-    error
+    error,
+    check_write_permissions
 )
 from vantage6.server.model.base import Database
 from vantage6 import server
@@ -183,6 +184,11 @@ def cli_server_new(name, environment, system_folders):
         if name != name_new:
             info(f"Replaced spaces from configuration name: {name}")
             name = name_new
+
+    # Check that we can write in this folder
+    if not check_write_permissions(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        exit(1)
 
     # check that this config does not exist
     try:
