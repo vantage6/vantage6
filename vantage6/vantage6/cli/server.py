@@ -12,7 +12,7 @@ from traitlets.config import get_config
 from colorama import (Fore, Style)
 from sqlalchemy.engine.url import make_url
 
-from vantage6.common import info, warning, error
+from vantage6.common import info, warning, error, check_write_permissions
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 # from vantage6.cli import fixture
 from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
@@ -125,7 +125,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
     if image is None:
         image = ctx.config.get(
             "image",
-            "harbor.distributedlearning.ai/infrastructure/server:latest"
+            "harbor.vantage6.ai/infrastructure/server:latest"
         )
     info(f"Pulling latest server image '{image}'.")
     try:
@@ -305,9 +305,11 @@ def cli_server_new(name, environment, system_folders):
     # Check that we can write in this folder
     dirs = ServerContext.instance_folders("server", name, system_folders)
     path_ = str(Path(dirs["config"]))
-    if not os.access(path_, os.W_OK):
-        error(f"No write permissions at '{path_}'")
-        info(f"Create a new server using '{Fore.GREEN}vserver new --user{Style.RESET_ALL}' instead!")
+     # Check that we can write in this folder
+    if not check_write_permissions(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        info(f"Create a new server using '{Fore.GREEN}vserver new "
+             "--user{Style.RESET_ALL}' instead!")
         exit(1)
 
     # create config in ctx location
@@ -352,7 +354,7 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     if image is None:
         image = ctx.config.get(
             "image",
-            "harbor.distributedlearning.ai/infrastructure/node:latest"
+            "harbor.vantage6.ai/infrastructure/server:latest"
         )
     info(f"Pulling latest server image '{image}'.")
     try:
@@ -568,5 +570,3 @@ def check_if_docker_deamon_is_running(docker_client):
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
-
-

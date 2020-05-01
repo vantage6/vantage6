@@ -27,7 +27,7 @@ from ._version import version_info, __version__
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s,
+    bytes_to_base64s, check_write_permissions
 )
 from vantage6.common.globals import (STRING_ENCODING, APPNAME)
 from vantage6.client import Client
@@ -145,10 +145,8 @@ def cli_node_new_configuration(name, environment, system_folders):
         )
 
     # Check that we can write in this folder
-    dirs = NodeContext.instance_folders("node", name, system_folders)
-    path_ = str(Path(dirs["config"]))
-    if not os.access(path_, os.W_OK):
-        error(f"No write permissions at '{path_}'")
+    if not check_write_permissions(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
         exit(1)
 
     # create config in ctx location
@@ -273,7 +271,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     if image is None:
         image = ctx.config.get(
             "image",
-            "harbor.distributedlearning.ai/infrastructure/node:latest"
+            "harbor.vantage6.ai/infrastructure/node:latest"
         )
 
     info(f"Pulling latest node image '{image}'")
