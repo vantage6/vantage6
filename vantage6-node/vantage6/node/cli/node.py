@@ -11,7 +11,7 @@ from pathlib import Path
 
 from vantage6 import node
 from vantage6.node.context import NodeContext, DockerNodeContext
-from vantage6.common import warning, info, error
+from vantage6.common import warning, info, error, check_write_permissions
 
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
@@ -79,6 +79,11 @@ def cli_node_new_configuration(name, environment, system_folders):
             "Please select the environment you want to configure:",
             ["application", "prod", "acc", "test", "dev"]
         ).ask()
+
+    # Check that we can write in this folder
+    if not check_write_permissions(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        exit(1)
 
     # check that this config does not exist
     if NodeContext.config_exists(name, environment, system_folders):
