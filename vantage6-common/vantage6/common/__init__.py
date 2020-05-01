@@ -1,5 +1,7 @@
+import os
 import base64
 import click
+import appdirs
 
 from colorama import init, Fore, Style
 
@@ -65,3 +67,22 @@ def error(msg):
 
 def debug(msg):
     echo(msg, "debug")
+
+
+def check_write_permissions(system_folders=False):
+    dirs = appdirs.AppDirs()
+    if system_folders:
+        dirs_to_check = [
+            dirs.site_config_dir
+        ]
+    else:
+        dirs_to_check = [
+            dirs.user_config_dir
+        ]
+    w_ok = True
+    for dir_ in dirs_to_check:
+        if not os.access(dir_, os.W_OK):
+            warning(f"No write permissions at '{dir_}'")
+            w_ok = False
+
+    return w_ok
