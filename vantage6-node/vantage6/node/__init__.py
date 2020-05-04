@@ -149,7 +149,7 @@ class Node(object):
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
-        self.log.debug("authenticating")
+        self.log.debug("Authenticating")
         self.authenticate()
 
         # Setup encryption
@@ -207,6 +207,11 @@ class Node(object):
             isolated_network_name=f"{ctx.docker_network_name}-net",
             node_name=ctx.name,
             data_volume_name=ctx.docker_volume_name,
+        )
+
+        # login to the registries
+        self.__docker.login_to_registries(
+            self.ctx.config.get("docker_registries",[])
         )
 
         # If we're running in a docker container, database_uri would point

@@ -67,7 +67,7 @@ class DockerManager(object):
         # keep track of the running containers
         self.active_tasks = []
 
-        # TODO this still needs to be checked
+        # before a task is executed it gets exposed to these regex
         self._allowed_images = allowed_images
 
         # create / get isolated network to which algorithm containers
@@ -414,3 +414,17 @@ class DockerManager(object):
     def running_in_docker(self):
         """Return True if this code is executed within a Docker container."""
         return pathlib.Path('/.dockerenv').exists()
+
+    def login_to_registries(self, registies: list = []) -> None:
+
+        for registry in registies:
+            try:
+                self.client.login(
+                    username=registry.get("username"),
+                    password=registry.get("password"),
+                    registry=registry.get("registry")
+                )
+                self.log.info(f"Logged in to {registry.get('registry')}")
+            except docker.errors.APIError as e:
+                self.log.warn(f"Could not login to {registry.get('registry')}")
+                self.log.debug(e)
