@@ -203,13 +203,6 @@ def cli_server_new(name, environment, system_folders):
         print(e)
         exit(1)
 
-    # Check that we can write in this folder
-    dirs = ServerContext.instance_folders("server", name, system_folders)
-    path_ = str(Path(dirs["config"]))
-    if not os.access(path_, os.W_OK):
-        error(f"No write permissions at '{path_}'")
-        exit(1)
-
     # create config in ctx location
     cfg_file = configuration_wizard(name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
