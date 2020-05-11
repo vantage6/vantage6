@@ -228,6 +228,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     check_if_docker_deamon_is_running(docker_client)
 
     if config:
+        name = Path(config).stem
         ctx = NodeContext(name, environment, system_folders, config)
 
     else:
