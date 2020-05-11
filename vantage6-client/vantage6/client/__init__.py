@@ -379,9 +379,16 @@ class ClientBaseProtocol(object):
             """
             cryptor = self.cryptor
             try:
-                # self.log.info('Decrypting input')
-                # res["input"] = cryptor.decrypt_str_to_bytes(res["input"])
+                self.log.info('Decrypting input')
+                #TODO this only works when the results belong to the
+                # same organization... We should make different implementation
+                # of get_results
+                res["input"] = cryptor.decrypt_str_to_bytes(res["input"])
 
+            except Exception as e:
+                self.log.debug(e)
+
+            try:
                 if res["result"]:
                     self.log.info('Decrypting result')
                     res["result"] = cryptor.decrypt_str_to_bytes(res["result"])
