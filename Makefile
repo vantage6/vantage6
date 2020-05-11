@@ -44,12 +44,21 @@ install-dev:
 	cd vantage6-server && pip install -e .
 
 docker-image:
-	docker build \
-	-t harbor.distributedlearning.ai/infrastructure/node-n-server:${TAG}
-	  ./
+	docker build -t vantage6-master .
 
 docker-push:
-	docker push harbor.distributedlearning.ai/infrastructure/node-n-server:${TAG}
+	@echo "Processing node:${TAG}"
+	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/node:${TAG}
+	docker push harbor.distributedlearning.ai/infrastructure/node:${TAG}
+	@echo "Processing node:latest"
+	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/node:latest
+	docker push harbor.distributedlearning.ai/infrastructure/node:latest
+	@echo "Processing server:${TAG}"
+	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/server:${TAG}
+	docker push harbor.distributedlearning.ai/infrastructure/server:${TAG}
+	@echo "Processing server:latest"
+	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/server:latest
+	docker push harbor.distributedlearning.ai/infrastructure/server:latest
 
 rebuild:
 	cd vantage6-common && make rebuild
