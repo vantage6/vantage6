@@ -39,11 +39,11 @@ class AppContext(metaclass=Singleton):
                 OS specific folder will be used to find the configuration file
                 specified by `instance_name`.
         """
+        self.scope = "system" if system_folders else "user"
+        self.name = instance_name
 
         # lookup system / user directories
-        self.name = instance_name
-        self.scope = "system" if system_folders else "user"
-        self.set_folders(instance_type, instance_name, system_folders)
+        self.set_folders(instance_type, self.name, system_folders)
 
         # configuration environment, load a single configuration from
         # entire confiration file (which can contain multiple environments)
@@ -53,7 +53,7 @@ class AppContext(metaclass=Singleton):
         #     config_file = f"{instance_name}.yaml"
         self.config_file = self.find_config_file(
             instance_type,
-            instance_name,
+            self.name,
             system_folders,
             config_file
         )
