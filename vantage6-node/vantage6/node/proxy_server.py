@@ -166,7 +166,7 @@ def proxy_task_result(id):
                 result
             )
 
-        log.error(unencrypted)
+        # log.error(unencrypted)
 
     except Exception as e:
         log.error("Proxyserver was unable to retrieve results (1)!")
@@ -199,7 +199,7 @@ def proxy_results(id):
                 response["result"]
             )
         )
-        log.error(response)
+        # log.error(response)
     except Exception as e:
         log.error("Proxyserver was unable to retrieve results! (2)")
         log.debug(e)
