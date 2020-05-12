@@ -159,6 +159,7 @@ def cli_node_start(name, config, environment, system_folders, dockerized):
     # in case a configuration file is given, we bypass all the helper
     # stuff since you know what you are doing
     if config:
+        name = Path(config).stem
         ctx = ContextClass(name, environment, system_folders, config)
 
     else:
