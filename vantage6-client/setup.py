@@ -34,7 +34,7 @@ setup(
        'cryptography==2.8',
        'requests==2.23.0',
        'PyJWT',
-       'vantage6-common >= 1.0.0b13',
+       'vantage6-common >= 1.0.0',
     ],
     package_data={
         'vantage6.client': [
