@@ -48,8 +48,8 @@ setup(
         'requests==2.23.0',
         'psutil==5.7.0',
         'gevent==1.4.0',
-        'vantage6 >= 1.0.0b13',
-        'vantage6-common >= 1.0.0b13',
+        'vantage6 >= 1.0.0',
+        'vantage6-common >= 1.0.0',
     ],
     extras_require={
         'dev': [
