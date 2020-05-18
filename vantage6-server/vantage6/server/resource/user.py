@@ -13,6 +13,8 @@ from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
 
+import sqlalchemy.exc
+
 from vantage6.server import db
 from vantage6.server.resource import with_user, only_for
 from vantage6.server.resource._schema import UserSchema
@@ -84,6 +86,7 @@ class User(Resource):
         parser.add_argument("lastname", type=str, required=True, help="This field is required")
         parser.add_argument("roles", type=str, required=True, help="This field is required")
         parser.add_argument("password", type=str, required=True, help="This field is required")
+        parser.add_argument("organization_id", type=int, required=False, help="This is only used if you're root")
         data = parser.parse_args()
 
         if db.User.username_exists(data["username"]):
@@ -98,13 +101,20 @@ class User(Resource):
             msg = {"msg": "You're funny! You can't assign the role 'root'!?"}
             return msg, HTTPStatus.BAD_REQUEST
 
+        if g.user.username == 'root':
+            organization_id = data['organization_id']
+            log.warn(f'Running as root and creating user for organization_id={organization_id}')
+        else:
+            organization_id = g.user.organization_id
+            log.warn(f'Creating user for organization_id={organization_id}') 
+
         # Ok, looks like we got most of the security hazards out of the way
         user = db.User(
             username=data["username"],
             firstname=data["firstname"],
             lastname=data["lastname"],
             roles=data["roles"],
-            organization_id=g.user.organization_id
+            organization_id=organization_id
         )
 
         user.set_password(data["password"])
@@ -128,10 +138,12 @@ class User(Resource):
         parser.add_argument("lastname", type=str, required=False, help="This field is required")
         parser.add_argument("roles", type=str, required=False, help="This field is required")
         parser.add_argument("password", type=str, required=False, help="This field is required")
+        parser.add_argument("organization_id", type=int, required=False, help="This is only used if you're root")
         data = parser.parse_args()
 
-        if data["username"]:
-            user.username = data["username"]
+        # Username cannot be changed once set?
+        # if data["username"]:
+        #     user.username = data["username"]
         if data["firstname"]:
             user.firstname = data["firstname"]
         if data["lastname"]:
@@ -140,8 +152,19 @@ class User(Resource):
             user.set_password(data["password"])
         if data["roles"]:
             user.roles = data["roles"]
+        if data["organization_id"]:
+            if g.user.username == 'root':
+                user.organization_id = data["organization_id"]
+                log.warn(f'Running as root and assigning (new) organization_id={data["organization_id"]}')
+            else:
+                log.error('Current user cannot assign new organizations!')
 
-        user.save()
+        try:
+            user.save()
+        except sqlalchemy.exc.IntegrityError as e:
+            log.error(e)
+            user.session.rollback()
+
         return user, HTTPStatus.OK
 
     @with_user
