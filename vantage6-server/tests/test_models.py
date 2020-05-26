@@ -29,7 +29,7 @@ log.level = logging.DEBUG
 class TestUserModel(unittest.TestCase):
 
     def setUp(self):
-        Database().connect("sqlite://", drop_all=True)
+        Database().connect("sqlite://", allow_drop_all=True)
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
@@ -88,7 +88,7 @@ class TestUserModel(unittest.TestCase):
 
 class TestCollaborationModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite://", drop_all=True)
+        Database().connect("sqlite://", allow_drop_all=True)
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
@@ -129,7 +129,7 @@ class TestCollaborationModel(unittest.TestCase):
 
 class TestNodeModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite://", drop_all=True)
+        Database().connect("sqlite://", allow_drop_all=True)
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
@@ -180,7 +180,7 @@ class TestNodeModel(unittest.TestCase):
 
 class TestOrganizationModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite://", drop_all=True)
+        Database().connect("sqlite://", allow_drop_all=True)
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
@@ -238,7 +238,7 @@ class TestOrganizationModel(unittest.TestCase):
 
 class TestResultModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite://", drop_all=True)
+        Database().connect("sqlite://", allow_drop_all=True)
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
@@ -281,7 +281,7 @@ class TestResultModel(unittest.TestCase):
 
 class TestTaskModel(unittest.TestCase):
     def setUp(self):
-        Database().connect("sqlite://", drop_all=True)
+        Database().connect("sqlite://", allow_drop_all=True)
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:

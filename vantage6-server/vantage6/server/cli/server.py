@@ -95,7 +95,7 @@ def click_insert_context(func):
 
         # initialize database (singleton)
         allow_drop_all = ctx.config["allow_drop_all"]
-        Database().connect(URI=ctx.get_database_uri(), drop_all=allow_drop_all)
+        Database().connect(URI=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
 
         return func(ctx, *args, **kwargs)
 

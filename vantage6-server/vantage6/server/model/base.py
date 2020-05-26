@@ -32,9 +32,9 @@ class Database(metaclass=Singleton):
         else:
             log.error("Cannot drop tables, configuration does not allow this!")
 
-    def connect(self, URI='sqlite:////tmp/test.db', drop_all=False):
+    def connect(self, URI='sqlite:////tmp/test.db', allow_drop_all=False):
 
-        self.allow_drop_all = drop_all
+        self.allow_drop_all = allow_drop_all
         self.URI = URI
 
         URL = make_url(URI)
