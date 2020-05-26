@@ -57,7 +57,7 @@ class TestResources(unittest.TestCase):
 
     def setUp(self):
         """Called immediately before running a test method."""
-        Database().connect("sqlite://")
+        Database().connect("sqlite://", drop_all=True)
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
@@ -106,7 +106,7 @@ class TestResources(unittest.TestCase):
         rv = self.app.get('/api/version')
         r = json.loads(rv.data)
         self.assertIn('version', r)
-        self.assertEqual(r['version'], vantage6.server.__version__)
+        self.assertEqual(r['version'], server.__version__)
 
     def test_token_different_users(self):
         for type_ in ["root", "admin", "user"]:
