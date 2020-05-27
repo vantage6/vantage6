@@ -1,5 +1,5 @@
 import logging
-import os 
+import os
 
 from sqlalchemy import Column, Integer, inspect
 from sqlalchemy.orm.session import Session, sessionmaker
@@ -23,16 +23,20 @@ class Database(metaclass=Singleton):
         self.engine = None
         self.Session = None
         self.object_session = None
+        self.allow_drop_all = False
 
     def drop_all(self):
-        Base.metadata.drop_all(self.engine)
-        Base.metadata.create_all(bind=self.engine)
+        if self.allow_drop_all:
+            Base.metadata.drop_all(self.engine)
+            Base.metadata.create_all(bind=self.engine)
+        else:
+            log.error("Cannot drop tables, configuration does not allow this!")
 
+    def connect(self, URI='sqlite:////tmp/test.db', allow_drop_all=False):
 
-    def connect(self, URI='sqlite:////tmp/test.db', drop_all=False):
-        
+        self.allow_drop_all = allow_drop_all
         self.URI = URI
-        
+
         URL = make_url(URI)
         log.info("Initializing the database")
         log.debug("  driver:   {}".format(URL.drivername))
@@ -41,8 +45,8 @@ class Database(metaclass=Singleton):
         log.debug("  database: {}".format(URL.database))
         log.debug("  username: {}".format(URL.username))
 
-        # Make sure that the director for the file database exists.    
-        if URL.host is None and URL.database:        
+        # Make sure that the director for the file database exists.
+        if URL.host is None and URL.database:
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
         self.engine = create_engine(URI, convert_unicode=True)
@@ -61,13 +65,13 @@ class ModelBase:
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
-    
+
     # Primary key, internal use only
     id = Column(Integer, primary_key=True)
 
     @classmethod
     def get(cls, id_=None, with_session=False):
-        
+
         session = Database().Session
 
         if id_ is None:
@@ -84,12 +88,17 @@ class ModelBase:
         return result
 
     def save(self):
-        if self.id is None:
-            session = Database().Session
-            session.add(self)
-        else:
-            session = Database().object_session(self)
-        session.commit()
+        try:
+            if self.id is None:
+                session = Database().Session
+                session.add(self)
+            else:
+                session = Database().object_session(self)
+            session.commit()
+        except Exception as e:
+            Database().Session.rollback()
+            log.error("Saving to the database failed!")
+            raise e
 
     def delete(self):
         if not self.id:
