@@ -48,7 +48,7 @@ def test_central_server(): # pragma: no cover
     from vantage6.server.model.base import Database
     from vantage6.server.controller.fixture import load
 
-    Database().connect("sqlite://")
+    Database().connect("sqlite://", allow_drop_all=True)
 
     file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
     with open(file_) as f:
@@ -192,10 +192,3 @@ class TestProxyServer(unittest.TestCase):
         # if we receive input, we assume that all has been returned
         # extensive testing of the API happens in test_resources
         self.assertIn("input", proxy_test)
-
-
-
-
-
-
-
