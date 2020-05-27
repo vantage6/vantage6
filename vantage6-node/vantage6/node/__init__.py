@@ -194,7 +194,7 @@ class Node(object):
         # We'll only do this if we're running outside docker, otherwise we would
         # create '/data' on the data volume.
         if not ctx.running_in_docker:
-            task_dir = os.path.join(ctx.data_dir, 'data')
+            task_dir = ctx.data_dir / 'data'
             os.makedirs(task_dir, exist_ok=True)
 
         else:
