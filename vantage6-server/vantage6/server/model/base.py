@@ -88,12 +88,17 @@ class ModelBase:
         return result
 
     def save(self):
-        if self.id is None:
-            session = Database().Session
-            session.add(self)
-        else:
-            session = Database().object_session(self)
-        session.commit()
+        try:
+            if self.id is None:
+                session = Database().Session
+                session.add(self)
+            else:
+                session = Database().object_session(self)
+            session.commit()
+        except Exception as e:
+            Database().Session.rollback()
+            log.error("Saving to the database failed!")
+            raise e
 
     def delete(self):
         if not self.id:

@@ -23,22 +23,28 @@ from vantage6.server.model import (
 )
 
 log = logging.getLogger(__name__.split(".")[-1])
-log.level = logging.DEBUG
+log.level = logging.CRITICAL
 
+logging.basicConfig(level=logging.CRITICAL)
 
-class TestUserModel(unittest.TestCase):
+class TestBaseModel(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         Database().connect("sqlite://", allow_drop_all=True)
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
+            cls.entities = yaml.safe_load(f.read())
+        load(cls.entities, drop_all=True)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         Database().drop_all()
+
+
+class TestUserModel(TestBaseModel):
 
     def test_relations(self):
         organization = self.entities.get("organizations")[0]
@@ -78,25 +84,16 @@ class TestUserModel(unittest.TestCase):
 
     def test_duplicate_user(self):
         """Duplicate usernames are not permitted."""
-        user1 = User(username="unit")
+        user1 = User(username="duplicate-user")
         user1.save()
 
-        user2 = User(username="unit")
+        user2 = User(username="duplicate-user")
         self.assertRaises(IntegrityError, user2.save)
+        # Database().Session.rollback()
 
 
 
-class TestCollaborationModel(unittest.TestCase):
-    def setUp(self):
-        Database().connect("sqlite://", allow_drop_all=True)
-        # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
-        with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
-
-    def trearDown(self):
-        Database().drop_all()
+class TestCollaborationModel(TestBaseModel):
 
     def test_read(self):
         for col in self.entities.get("collaborations"):
@@ -127,17 +124,7 @@ class TestCollaborationModel(unittest.TestCase):
             self.assertIsInstance(organization, Organization)
 
 
-class TestNodeModel(unittest.TestCase):
-    def setUp(self):
-        Database().connect("sqlite://", allow_drop_all=True)
-        # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
-        with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
-
-    def trearDown(self):
-        Database().drop_all()
+class TestNodeModel(TestBaseModel):
 
     def test_read(self):
         for node in Node.get():
@@ -178,17 +165,7 @@ class TestNodeModel(unittest.TestCase):
                 self.assertIsInstance(user, User)
 
 
-class TestOrganizationModel(unittest.TestCase):
-    def setUp(self):
-        Database().connect("sqlite://", allow_drop_all=True)
-        # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
-        with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
-
-    def trearDown(self):
-        Database().drop_all()
+class TestOrganizationModel(TestBaseModel):
 
     def test_read(self):
         for organization in self.entities.get("organizations"):
@@ -236,17 +213,7 @@ class TestOrganizationModel(unittest.TestCase):
                 self.assertIsInstance(result, Result)
 
 
-class TestResultModel(unittest.TestCase):
-    def setUp(self):
-        Database().connect("sqlite://", allow_drop_all=True)
-        # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
-        with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
-
-    def trearDown(self):
-        Database().drop_all()
+class TestResultModel(TestBaseModel):
 
     def test_read(self):
         for result in Result.get():
@@ -279,17 +246,7 @@ class TestResultModel(unittest.TestCase):
         self.assertIsInstance(result.task, Task)
 
 
-class TestTaskModel(unittest.TestCase):
-    def setUp(self):
-        Database().connect("sqlite://", allow_drop_all=True)
-        # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
-        with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
-
-    def trearDown(self):
-        Database().drop_all()
+class TestTaskModel(TestBaseModel):
 
     def test_read(self):
         db_tasks = Task.get()
@@ -305,7 +262,12 @@ class TestTaskModel(unittest.TestCase):
                 self.assertIsInstance(result, Result)
 
     def test_insert(self):
-        task = Task(name="unit_task")
+        task = Task(
+            name="unit_task",
+            image="some-image",
+            collaboration=Collaboration.get()[0],
+            run_id=1
+        )
         task.save()
         for task in Task.get():
             if task.name == "unit_task":

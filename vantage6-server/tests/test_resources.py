@@ -40,29 +40,16 @@ class TestNode(FlaskClient):
 
 class TestResources(unittest.TestCase):
 
+
     @classmethod
     def setUpClass(cls):
-        cls.loglevels = {}
-
-        for lib in ['fixtures', 'db']:
-            l = logging.getLogger(lib)
-            cls.loglevels[lib] = l.level
-            l.setLevel(logging.WARNING)
-
-    @classmethod
-    def tearDownClass(cls):
-        for lib in cls.loglevels:
-            l = logging.getLogger(lib)
-            l.setLevel(cls.loglevels[lib])
-
-    def setUp(self):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
-            self.entities = yaml.safe_load(f.read())
-        load(self.entities, drop_all=True)
+            cls.entities = yaml.safe_load(f.read())
+        load(cls.entities, drop_all=True)
 
         server.app.testing = True
         server.app.response_class = Response
@@ -75,9 +62,9 @@ class TestResources(unittest.TestCase):
 
         server.init_resources(ctx)
 
-        self.app = server.app.test_client()
+        cls.app = server.app.test_client()
 
-        self.credentials = {
+        cls.credentials = {
             'root': {
                 'username': 'root',
                 'password': 'root'
@@ -88,6 +75,10 @@ class TestResources(unittest.TestCase):
             },
             'user':{
                 'username': 'melle@iknl.nl',
+                'password': 'password'
+            },
+            'user-to-delete':{
+                'username': 'dont-use-me',
                 'password': 'password'
             }
         }
@@ -345,7 +336,7 @@ class TestResources(unittest.TestCase):
 
     def test_user_delete(self):
         headers = self.login("root")
-        result = self.app.delete("/api/user/1", headers=headers)
+        result = self.app.delete("/api/user/5", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_user_delete_unknown(self):
@@ -360,12 +351,10 @@ class TestResources(unittest.TestCase):
 
     def test_user_patch(self):
         headers = self.login("root")
-        result = self.app.patch("/api/user/1", headers=headers, json={
-            "username": "root2",
-            "firstname": "henk",
-            "lastname": "biertje",
-            "password": "wachtwoord",
-            "roles": ["root"]
+        # print(self.app.get("/api/user/2", headers=headers).json)
+        result = self.app.patch("/api/user/2", headers=headers, json={
+            "firstname": "Henk",
+            "lastname": "Martin"
         })
         self.assertEqual(result.status_code, 200)
 
