@@ -1,5 +1,5 @@
 # poc that we can dockerize the node-instance
-FROM ppdli-base
+FROM harbor.distributedlearning.ai/infrastructure/base
 
 LABEL version="0.0.1"
 LABEL infrastructure_version = "1.0.0"
