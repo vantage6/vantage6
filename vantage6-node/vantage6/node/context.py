@@ -17,12 +17,17 @@ from vantage6.common.globals import (
 from vantage6.common.context import AppContext
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.cli.context import NodeContext
+from vantage6.node import __version__
 
 
 class DockerNodeContext(NodeContext):
     """Node context for the dockerized version of the node."""
 
     running_in_docker = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.log.info(f"Node package version '{__version__}'")
 
     @staticmethod
     def instance_folders(instance_type, instance_name, system_folders):
