@@ -11,7 +11,7 @@ services:
     volumes:
       # - ./configs/sqlite.yaml:/mnt/config.yaml
       - ./configs/postgress.yaml:/mnt/config.yaml
-    command: ["/mnt/config.yaml"]
+    command: ["vserver-local start --config /mnt/config.yaml"]
 
   database:
     image: postgres:10
