@@ -10,6 +10,7 @@ from vantage6.cli.globals import (DEFAULT_NODE_ENVIRONMENT as N_ENV,
                                   DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
                                   DEFAULT_SERVER_ENVIRONMENT as S_ENV,
                                   DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL)
+from vantage6.cli._version import __version__
 
 
 class ServerContext(AppContext):
@@ -24,6 +25,10 @@ class ServerContext(AppContext):
     def __init__(self, instance_name, environment=S_ENV, system_folders=S_FOL):
         super().__init__("server", instance_name, environment=environment,
                          system_folders=system_folders)
+    
+    def __init__(self, *args, **kwargs): 
+        super().__init__(*args, **kwargs)
+        self.log.info(f"vantage6 version '{__version__}'")
 
     def get_database_uri(self):
         """ In the Docker environment we would like to overwrite the
@@ -81,6 +86,10 @@ class NodeContext(AppContext):
         super().__init__("node", instance_name, environment, system_folders,
                          config_file)
 
+    def __init__(self, *args, **kwargs): 
+        super().__init__(*args, **kwargs)
+        self.log.info(f"vantage6 version '{__version__}'")
+    
     @classmethod
     def from_external_config_file(cls, path, environment=N_ENV,
                                   system_folders=N_FOL):
