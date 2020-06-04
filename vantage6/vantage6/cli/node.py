@@ -447,18 +447,6 @@ def cli_node_attach(name, system_folders):
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
 
 
-def print_log_worker(logs_stream):
-    for log in logs_stream:
-        print(log.decode(STRING_ENCODING), end="")
-
-
-def check_if_docker_deamon_is_running(docker_client):
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
-        exit(1)
-
 #
 #   create-private-key
 #
@@ -592,3 +580,48 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
         warning("Public key not uploaded!")
 
     info("[Done]")
+
+
+#
+#   clean
+#
+@cli_node.command(name='clean')
+def cli_node_clean():
+    """
+    """
+    client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+
+    # retrieve all volumes
+    volumes = client.volumes.list()
+    canditates = []
+    msg = "This would remove the following volumes: "
+    for volume in volumes:
+        if volume.name[-6:] == "tmpvol":
+            canditates.append(volume)
+            msg += volume.name + ","
+    info(msg)
+
+    confirm = q.confirm(f"Are you sure?")
+    if confirm.ask():
+        for volume in canditates:
+            try:
+                volume.remove()
+                # info(volume.name)
+            except docker.errors.APIError as e:
+                error(f"Failed to remove volume {Fore.RED}'{volume.name}'"
+                      f"{Style.RESET_ALL}. Is it still in use?")
+                error(e)
+
+
+def print_log_worker(logs_stream):
+    for log in logs_stream:
+        print(log.decode(STRING_ENCODING), end="")
+
+
+def check_if_docker_deamon_is_running(docker_client):
+    try:
+        docker_client.ping()
+    except Exception:
+        error("Docker socket can not be found. Make sure Docker is running.")
+        exit(1)
