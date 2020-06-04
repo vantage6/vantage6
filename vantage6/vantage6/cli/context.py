@@ -25,9 +25,6 @@ class ServerContext(AppContext):
     def __init__(self, instance_name, environment=S_ENV, system_folders=S_FOL):
         super().__init__("server", instance_name, environment=environment,
                          system_folders=system_folders)
-    
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
         self.log.info(f"vantage6 version '{__version__}'")
 
     def get_database_uri(self):
@@ -85,9 +82,6 @@ class NodeContext(AppContext):
                  system_folders=N_FOL, config_file=None):
         super().__init__("node", instance_name, environment, system_folders,
                          config_file)
-
-    def __init__(self, *args, **kwargs): 
-        super().__init__(*args, **kwargs)
         self.log.info(f"vantage6 version '{__version__}'")
     
     @classmethod
