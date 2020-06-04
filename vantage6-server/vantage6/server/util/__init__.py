@@ -1,24 +1,22 @@
-import vantage6.server.util.colorer
+from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
 
 
-def logger_name(special__name__):
-    log_name = special__name__.split('.')[-1]
-    if len(log_name) > 14:
-        log_name = log_name[:11] + ".."
-    return log_name
+def log_full_request(request, log=None):
+    if log is None:
+        stack = inspect.stack()
+        calling = stack[1]
+        filename = os.path.split(calling.filename)[-1]
+        module_name = os.path.splitext(filename)[0]
 
-class Singleton(type):
-    _instances = {} 
+        log = logging.getLogger(module_name)
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super(Singleton, cls).__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
+    log.info(f'{request.method}: {request.url}')
+    log.info(f'  request.args: {request.args}')
+    log.info(f'  request.data: {request.get_data()}')
 
-def prepare_bytes_for_transport(bytes_):
-    return base64.b64encode(bytes_).decode(constants.STRING_ENCODING)
+    if request.is_json and len(request.data):
+        log.info(f'  request.json: {request.json}')
 
-def unpack_bytes_from_transport(bytes_string):
-    return base64.b64decode(bytes_string.encode(constants.STRING_ENCODING))
-
+    log.info(f'  headers:')
+    for header in str(request.headers).splitlines():
+        log.info(f'    ' + header)

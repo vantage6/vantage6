@@ -8,10 +8,20 @@ import json
 
 import sqlalchemy as sql
 
-from .model import ( Base, User, Organization, Authenticatable, Node, Task, 
-    Member, Result, Collaboration)
+from .model import (
+    Base,
+    User,
+    Organization,
+    Authenticatable,
+    Node,
+    Task,
+    Member,
+    Result,
+    Collaboration,
+)
+
 from vantage6.server.util import logger_name
-from vantage6.server.constants import STRING_ENCODING
+from vantage6.server.globals import STRING_ENCODING
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -28,7 +38,7 @@ def jsonable(value):
         columns = [c.key for c in mapper.columns if c.key not in value._hidden_attributes]
 
         for column in columns:
-            log.debug(f"processing column={column}")
+            # log.debug(f"processing column={column}")
             column_value = getattr(value, column)
 
             if isinstance(column_value, enum.Enum):

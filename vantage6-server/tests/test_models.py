@@ -6,10 +6,11 @@ import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database, Base
-from vantage6.constants import PACAKAGE_FOLDER, APPNAME
+from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
 
 from vantage6.server.model import (
     Base,
@@ -24,15 +25,18 @@ from vantage6.server.model import (
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.DEBUG
 
+
 class TestUserModel(unittest.TestCase):
 
     def setUp(self):
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        # FIXME: move path generation to a function in vantage6.server
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+                    "unittest_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
-        
+
     def tearDown(self):
         Database().drop_all()
 
@@ -50,7 +54,7 @@ class TestUserModel(unittest.TestCase):
                 self.assertEqual(db_user.firstname, user["firstname"])
                 self.assertEqual(db_user.lastname, user["lastname"])
                 self.assertTrue(db_user.check_password(user["password"]))
-    
+
     def test_insert(self):
         db_organization = Organization.get(1)
         user = User(
@@ -66,20 +70,31 @@ class TestUserModel(unittest.TestCase):
         self.assertEqual(db_user, user)
 
     def test_methods(self):
+        """"Test model methods."""
         user = self.entities.get("organizations")[0].get("users")[0]
         assert User.getByUsername(user.get("username"))
         assert User.username_exists(user.get("username"))
         assert User.get_user_list()
 
+    def test_duplicate_user(self):
+        """Duplicate usernames are not permitted."""
+        user1 = User(username="unit")
+        user1.save()
+
+        user2 = User(username="unit")
+        self.assertRaises(IntegrityError, user2.save)
+
+
 
 class TestCollaborationModel(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        # FIXME: move path generation to a function in vantage6.server
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
-        
+
     def trearDown(self):
         Database().drop_all()
 
@@ -103,7 +118,7 @@ class TestCollaborationModel(unittest.TestCase):
         self.assertIsInstance(db_col.get_task_ids(), list)
         for node in db_col.get_nodes_from_organizations(org_ids):
             self.assertIsInstance(node, Node)
-    
+
     def test_relations(self):
         db_col = Collaboration.get(1)
         for node in db_col.nodes:
@@ -115,11 +130,12 @@ class TestCollaborationModel(unittest.TestCase):
 class TestNodeModel(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        # FIXME: move path generation to a function in vantage6.server
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
-        
+
     def trearDown(self):
         Database().drop_all()
 
@@ -150,7 +166,7 @@ class TestNodeModel(unittest.TestCase):
     def test_methods(self):
         node = Node.get()[0]
         self.assertIsInstance(Node.get_by_api_key(node.api_key), Node)
-    
+
     def test_relations(self):
         node = Node.get()[0]
         self.assertIsNotNone(node)
@@ -165,11 +181,12 @@ class TestNodeModel(unittest.TestCase):
 class TestOrganizationModel(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        # FIXME: move path generation to a function in vantage6.server
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
-        
+
     def trearDown(self):
         Database().drop_all()
 
@@ -222,11 +239,12 @@ class TestOrganizationModel(unittest.TestCase):
 class TestResultModel(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        # FIXME: move path generation to a function in vantage6.server
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
-        
+
     def trearDown(self):
         Database().drop_all()
 
@@ -264,11 +282,12 @@ class TestResultModel(unittest.TestCase):
 class TestTaskModel(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        # FIXME: move path generation to a function in vantage6.server
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" / "example_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
-        
+
     def trearDown(self):
         Database().drop_all()
 
@@ -291,7 +310,7 @@ class TestTaskModel(unittest.TestCase):
         for task in Task.get():
             if task.name == "unit_task":
                 db_task = task
-                break                
+                break
         self.assertEqual(task, db_task)
 
     def test_methods(self):

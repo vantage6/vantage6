@@ -10,7 +10,7 @@ import unittest
 from datetime import datetime
 from termcolor import colored
 
-from vantage6 import util
+from vantage6.server import util
 
 
 class TestResult(unittest.TextTestResult):

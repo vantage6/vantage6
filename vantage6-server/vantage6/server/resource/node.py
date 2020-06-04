@@ -58,36 +58,41 @@ class Node(Resource):
     node_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_node_with_id.yaml")), 
+    @swag_from(str(Path(r"swagger/get_node_with_id.yaml")),
         endpoint='node_with_id')
-    @swag_from(str(Path(r"swagger/get_node_without_id.yaml")), 
+    @swag_from(str(Path(r"swagger/get_node_without_id.yaml")),
         endpoint='node_without_id')
     def get(self, id=None):
-        nodes = db.Node.get(id)
+        results = db.Node.get(id)
         user_or_node = g.user or g.node
 
         is_root = False
+
+        # Only users can be root, not containers.
         if g.user:
-            is_root = g.user.roles == 'root'
+            is_root = g.user.username == 'root'
 
         if id:
-            if not nodes:
-                return {"msg": "node with id={} not found".format(id)}, \
-                    HTTPStatus.NOT_FOUND  # 404
-            if (not is_root) \
-                and (nodes.organization_id != user_or_node.organization_id) \
-                and (g.user.roles != 'admin'):
-                return {"msg": "you are not allowed to see this node"}, \
-                    HTTPStatus.FORBIDDEN  # 403
-        else:
-            # only the nodes of the users organization are returned
-            if g.user.roles in ['root', 'admin']:
-                nodes = [node for node in nodes]
-            else:
-                nodes = [node for node in nodes \
-                    if node.organization_id == g.user.organization_id]
+            if not results:
+                msg = {"msg": f"Couldn't find node {id}"}
+                return msg, HTTPStatus.NOT_FOUND
 
-        return self.node_schema.dump(nodes, many=not id).data, HTTPStatus.OK  # 200
+            if is_root:
+                # Let's not make a fuss ...
+                return self.node_schema.dump(results, many=False)
+
+            if (results.organization_id != user_or_node.organization_id) \
+                    and 'admin' not in g.user.roles:
+                msg = {"msg": "you are not allowed to see this node"}
+                return msg, HTTPStatus.FORBIDDEN  # 403
+
+        else:
+            if not is_root:
+                # only the results of the user's organization are returned
+                org_id = g.user.organization_id
+                results = [n for n in results if n.organization_id == org_id]
+
+        return self.node_schema.dump(results, many=not id).data, HTTPStatus.OK  # 200
 
     @with_user
     @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")), endpoint='node_without_id')
@@ -151,7 +156,7 @@ class Node(Resource):
 
         # do not create new nodes here
         if not node:
-            return {"msg": "Use POST to create a new node"}, HTTPStatus.FORBIDDEN  # 403            
+            return {"msg": "Use POST to create a new node"}, HTTPStatus.FORBIDDEN  # 403
 
         data = request.get_json()
         if 'state' in data:
@@ -224,7 +229,7 @@ class NodeTasks(Resource):
         # of the node
         results = []
         for result in node.organization.results:
-            
+
             if node.collaboration == result.task.collaboration:
                 # result belongs to node
                 if request.args.get('state') == 'open':
@@ -232,6 +237,6 @@ class NodeTasks(Resource):
                         results.append(result)
                 else:
                     results.append(result)
-            
+
         return self.task_result_schema.dump(results, many=True), \
             HTTPStatus.OK  # 200

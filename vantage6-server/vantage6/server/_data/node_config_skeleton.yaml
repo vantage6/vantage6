@@ -5,11 +5,15 @@ application:
   api_path: '/api'
   task_dir: tasks
   encryption:
-    disabled: False # optional, default set to false, only for debugging
-    private_key: # optional, has default app location
+    enabled: true
+    private_key:
   databases:
-    default: 
-
+    default:
+  allowed_images:
+  docker_registries:
+    - registry: harbor.vantage6.ai
+      username: tester
+      password: 46KdE!ei
   logging:
       level:        CRITICAL               # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
       file:         node.log               # Filename of logfile

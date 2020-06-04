@@ -1,7 +1,7 @@
 import sys
 
 from vantage6.server import db, util
-from vantage6.server.constants import APPNAME
+from vantage6.server.globals import APPNAME
 from vantage6.server.configuration.configuration_wizard import (
     get_config_location )
 

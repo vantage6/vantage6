@@ -10,10 +10,14 @@ from flask import Flask, Response as BaseResponse, json
 from flask.testing import FlaskClient
 from werkzeug.utils import cached_property
 
+from vantage6.common.globals import APPNAME #, VERSION
+from vantage6.server.globals import PACAKAGE_FOLDER
 from vantage6 import server
-from vantage6 import util
-from vantage6.server import db
-from vantage6.constants import APPNAME, PACAKAGE_FOLDER, VERSION
+from vantage6.server import (
+    util,
+    db,
+    context
+)
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database
 
@@ -33,8 +37,9 @@ class TestNode(FlaskClient):
             kwargs['content_type'] = 'application/json'
         return super().open(*args, **kwargs)
 
+
 class TestResources(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         cls.loglevels = {}
@@ -53,18 +58,19 @@ class TestResources(unittest.TestCase):
     def setUp(self):
         """Called immediately before running a test method."""
         Database().connect("sqlite://")
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "_data" / "example_fixtures.yaml")
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+                    "unittest_fixtures.yaml")
         with open(file_) as f:
             self.entities = yaml.safe_load(f.read())
         load(self.entities, drop_all=True)
-        
+
         server.app.testing = True
         server.app.response_class = Response
         server.app.test_client_class = TestNode
         server.app.secret_key = "test-secret"
 
-        
-        ctx = util.TestContext.from_external_config_file(
+
+        ctx = context.TestContext.from_external_config_file(
             "unittest_config.yaml")
 
         server.init_resources(ctx)
@@ -72,9 +78,9 @@ class TestResources(unittest.TestCase):
         self.app = server.app.test_client()
 
         self.credentials = {
-            'root':{
+            'root': {
                 'username': 'root',
-                'password': 'password'
+                'password': 'root'
             },
             'admin':{
                 'username': 'frank@iknl.nl',
@@ -88,7 +94,7 @@ class TestResources(unittest.TestCase):
 
     def login(self, type_='root'):
         tokens = self.app.post(
-            '/api/token/user', 
+            '/api/token/user',
             json=self.credentials[type_]
         ).json
         headers = {
@@ -100,11 +106,11 @@ class TestResources(unittest.TestCase):
         rv = self.app.get('/api/version')
         r = json.loads(rv.data)
         self.assertIn('version', r)
-        self.assertEqual(r['version'], VERSION) 
+        self.assertEqual(r['version'], vantage6.server.__version__)
 
     def test_token_different_users(self):
         for type_ in ["root", "admin", "user"]:
-            tokens = self.app.post('/api/token/user', 
+            tokens = self.app.post('/api/token/user',
                 json=self.credentials[type_]).json
             self.assertIn('access_token', tokens)
             self.assertIn('refresh_token', tokens)
@@ -145,7 +151,7 @@ class TestResources(unittest.TestCase):
 
         org = self.app.post(
             '/api/organization',
-            json=org_details, 
+            json=org_details,
             headers=headers
         ).json
 
@@ -164,15 +170,15 @@ class TestResources(unittest.TestCase):
             '/api/collaboration', headers=headers
         ).json
         self.assertEqual(len(collaborations), 3)
-        
+
     def test_node_without_id(self):
-        
+
         # GET
         headers = self.login("root")
         nodes = self.app.get("/api/node", headers=headers).json
         expected_fields = [
-            'name', 
-            'api_key', 
+            'name',
+            'api_key',
             'collaboration',
             'organization',
             'status',
@@ -182,7 +188,7 @@ class TestResources(unittest.TestCase):
             'ip'
         ]
         for node in nodes:
-            for key in expected_fields: 
+            for key in expected_fields:
                 self.assertIn(key, node)
 
         headers = self.login("user")
@@ -197,22 +203,22 @@ class TestResources(unittest.TestCase):
         response_json = response.json
         self.assertIn("msg", response_json)
         self.assertEqual(response.status_code, 404) # NOT FOUND
-        
+
         # succesfully create a node
         response = self.app.post("/api/node", headers=headers, json={
             "collaboration_id": 1
         })
         response_json = response.json
         self.assertEqual(response.status_code, 201) # CREATED
-        
+
     def test_node_with_id(self):
-        
+
         # root user can access all nodes
         headers = self.login("root")
         node = self.app.get("/api/node/8", headers=headers).json
         expected_fields = [
-            'name', 
-            'api_key', 
+            'name',
+            'api_key',
             'collaboration',
             'organization',
             'status',
@@ -221,10 +227,10 @@ class TestResources(unittest.TestCase):
             'last_seen',
             'ip'
         ]
-        for key in expected_fields: 
+        for key in expected_fields:
             self.assertIn(key, node)
 
-        # user cannot access all 
+        # user cannot access all
         headers = self.login("user")
         node = self.app.get("/api/node/8", headers=headers)
         self.assertEqual(node.status_code, 403)
@@ -235,7 +241,7 @@ class TestResources(unittest.TestCase):
 
     def test_node_tasks(self):
         headers = self.login("root")
-        
+
         # Non existing node
         task = self.app.get("/api/node/9999/task", headers=headers)
         self.assertEqual(task.status_code, 404)
@@ -259,7 +265,7 @@ class TestResources(unittest.TestCase):
         result = self.app.get("/api/result", headers=headers)
         self.assertEqual(result.status_code, 200)
 
-        result = self.app.get("/api/result?state=open&&node_id=1", 
+        result = self.app.get("/api/result?state=open&&node_id=1",
             headers=headers)
         self.assertEqual(result.status_code, 200)
 
@@ -273,7 +279,7 @@ class TestResources(unittest.TestCase):
         headers = self.login("root")
         result = self.app.get("/api/result", headers=headers)
         self.assertEqual(result.status_code, 200)
-    
+
     def test_task_with_id(self):
         headers = self.login("root")
         result = self.app.get("/api/task/1", headers=headers)
@@ -308,7 +314,7 @@ class TestResources(unittest.TestCase):
         ]
         for field in expected_fields:
             self.assertIn(field, user)
-    
+
     def test_user_unknown(self):
         headers = self.login("admin")
         result = self.app.get("/api/user/9999", headers=headers)
@@ -341,8 +347,8 @@ class TestResources(unittest.TestCase):
         headers = self.login("root")
         result = self.app.delete("/api/user/1", headers=headers)
         self.assertEqual(result.status_code, 200)
-        
-    def test_user_delete_unknown(self):    
+
+    def test_user_delete_unknown(self):
         headers = self.login("root")
         result = self.app.delete("/api/user/99999", headers=headers)
         self.assertEqual(result.status_code, 404)
@@ -369,10 +375,34 @@ class TestResources(unittest.TestCase):
             "username": "root2"
         })
         self.assertEqual(result.status_code, 404)
-    
+
     def test_user_patch_forbidden(self):
         headers = self.login("user")
         result = self.app.patch("/api/user/4", headers=headers, json={
             "username": "root2"
         })
         self.assertEqual(result.status_code, 403)
+
+    def test_root_username_forbidden(self):
+        headers = self.login("root")
+        results = self.app.post("/api/user", headers=headers, json={
+            "username": "root",
+            "firstname": "madman",
+            "lastname": "idiot",
+            "roles": "admin",
+            "password": "something-really-secure"
+        })
+        self.assertEqual(results.status_code, 400)
+
+    def test_root_role_forbidden(self):
+        headers = self.login("root")
+        new_user = {
+            "username": "some",
+            "firstname": "guy",
+            "lastname": "there",
+            "roles":  "root",
+            "password": "super-secret"
+        }
+        result = self.app.post("/api/user", headers=headers,
+            json=new_user)
+        self.assertEqual(result.status_code, 400)

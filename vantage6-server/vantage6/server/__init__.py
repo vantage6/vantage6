@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os, sys
 import importlib
@@ -16,7 +15,7 @@ try:
     import struct
     import fcntl
     import termios
-except: 
+except:
     TERMINAL_AVAILABLE = False
 
 from flask import Flask, Response, request, render_template, make_response, g, session
@@ -29,18 +28,18 @@ from flask_socketio import SocketIO, emit, send,join_room, leave_room
 
 from flasgger import Swagger
 
-
-module_name = __name__.split('.')[-1]
-log = logging.getLogger(module_name)
-
 import json
 
+from ._version import version_info, __version__
 from vantage6.server import db
 
 from vantage6.server import util
-from vantage6.server.constants import APPNAME
+from vantage6.server.globals import APPNAME
 from vantage6.server.websockets import DefaultSocketNamespace
 from .resource.swagger import swagger_template
+
+module_name = __name__.split('.')[-1]
+log = logging.getLogger(module_name)
 
 
 # ------------------------------------------------------------------------------
@@ -81,11 +80,11 @@ def output_json(data, code, headers=None):
 
     if isinstance(data, db.Base):
         data = db.jsonable(data)
-        log.debug("json-proofed")
+        # log.debug("json-proofed")
     elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
         data = db.jsonable(data)
-        log.debug("json-list-proofed")
-    log.debug(f"finished preparing {data}, lets send")
+        # log.debug("json-list-proofed")
+    # log.debug(f"finished preparing {data}, lets send")
 
     resp = make_response(json.dumps(data), code)
     resp.headers.extend(headers or {})
@@ -114,7 +113,7 @@ def user_claims_loader(identity):
         type_ = 'container'
     else:
         log.error(f"could not create claims from {str(identity)}")
-    
+
     claims = {
         'type': type_,
         'roles': roles,
@@ -164,9 +163,9 @@ def start_interpreter():
 
         log.debug("starting process")
         child = subprocess.Popen(
-            cmd, 
-            stdin=slave_fd, 
-            stdout=slave_fd, 
+            cmd,
+            stdin=slave_fd,
+            stdout=slave_fd,
             stderr=slave_fd
         )
 
@@ -181,8 +180,8 @@ def start_interpreter():
 
         log.debug("starting background task")
         socketio.start_background_task(
-            read_and_forward_pty_output, 
-            fd=master_fd, 
+            read_and_forward_pty_output,
+            fd=master_fd,
             sid=request.sid,
             child=child,
         )
@@ -230,8 +229,8 @@ def read_and_forward_pty_output(fd, sid, child):
         for r in rs:
             output = os.read(r, max_read_bytes).decode()
             socketio.emit(
-                "pty-output", 
-                {"output": output}, 
+                "pty-output",
+                {"output": output},
                 namespace="/pty",
                 room=sid,
             )
@@ -254,7 +253,7 @@ def connect_pty():
         log.info(list(request.headers.keys()))
         log.exception(e)
     else:
-        # At this point we're sure that the user/client/whatever 
+        # At this point we're sure that the user/client/whatever
         # checks out
         user_or_node_id = get_jwt_identity()
         auth = db.Authenticatable.get(user_or_node_id)
@@ -329,7 +328,7 @@ def connect_admin():
         log.info(list(request.headers.keys()))
         log.exception(e)
     else:
-        # At this point we're sure that the user/client/whatever 
+        # At this point we're sure that the user/client/whatever
         # checks out
         user_or_node_id = get_jwt_identity()
         auth = db.Authenticatable.get(user_or_node_id)
@@ -351,7 +350,14 @@ def connect_admin():
         print(f'connecting {request.sid}')
         return True
 
-    return False    
+    return False
+
+
+@socketio.on("echo", namespace="/")
+def echo(data):
+    print("Hello!")
+    socketio.emit('echo', data, namespace='/')
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's
@@ -469,6 +475,7 @@ def run(ctx, *args, **kwargs):
     """
     # Prevent logging from urllib3
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("socketIO-client").setLevel(logging.WARNING)
 
     wslh = WebSocketLoggingHandler()
     wslh.setLevel(logging.DEBUG)
@@ -479,20 +486,30 @@ def run(ctx, *args, **kwargs):
 
     app.config['JWT_SECRET_KEY'] = ctx.config.get('jwt_secret_key', str(uuid.uuid1()))
 
+    # Default expiration time
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=6)
     # Set an extra long expiration time on access tokens for testing
+
     if environment == 'test':
         log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
-    # print('-' * 80)
-    # print(app.root_path)
-    # print('-' * 80)
+    # check if root-user exists
+    try:
+        db.User.getByUsername("root")
+    except Exception:
+        log.warn("No root user found! Is this the first run?")
+        log.warn("Creating root: username=root, password=root")
+        user = db.User(username="root", roles="root")
+        user.set_password("root")
+        user.save()
 
-    # Actually start the server
-    # app.run(*args, **kwargs)
+    # set all nodes to offline
     nodes, session = db.Node.get(with_session=True)
     for node in nodes:
         node.status = 'offline'
     session.commit()
 
+    kwargs.setdefault('log_output', True)
     socketio.run(app, *args, **kwargs)
+
