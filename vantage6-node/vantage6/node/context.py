@@ -17,6 +17,7 @@ class DockerNodeContext(NodeContext):
     running_in_docker = True
 
     def __init__(self, *args, **kwargs):
+        """Display node version number."""
         super().__init__(*args, **kwargs)
         self.log.info(f"Node package version '{__version__}'")
 
