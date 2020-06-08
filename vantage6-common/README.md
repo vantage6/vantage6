@@ -40,10 +40,8 @@ We hope to continue developing, improving, and supporting **vantage6** with the 
 
 If you are using **vantage6**, please cite the base repository as well as the accompanying paper as follows:
 
-> -   Frank Martin, Melle Sieswerda, Hasan Alradhi, Arturo Moncada-Torres, Johan van Soest. vantage6. Available at
->     <https://doi.org/10.5281/zenodo.3686944>. Accessed on [MONTH, 20XX].
-> -   Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. vantage6: an open source priVAcy preserviNg
->     federaTed leArninG infrastructurE for Secure Insight eXchange. Submitted for publication.
+> -   Frank Martin, Melle Sieswerda, Hasan Alradhi, Arturo Moncada-Torres, Johan van Soest. vantage6. Available at <https://doi.org/10.5281/zenodo.3686944>. Accessed on (MONTH, 20XX).
+> -   Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. vantage6: an open source priVAcy preserviNg federaTed leArninG infrastructurE for Secure Insight eXchange. Submitted for publication.
 
 * * *
 
