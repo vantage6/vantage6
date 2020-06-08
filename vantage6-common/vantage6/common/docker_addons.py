@@ -15,7 +15,7 @@ client = docker.from_env()
 
 
 def inspect_remote_image_timestamp(reg, rep, img, tag="latest"):
-    """ Retrieve timestamp of the remote image.
+    """Retrieve timestamp of the remote image.
 
         >>> inspect_remote_image_timestamp("harbor.vantage6.ai",
         ...                                 "infrastructure", "node")
@@ -40,7 +40,7 @@ def inspect_remote_image_timestamp(reg, rep, img, tag="latest"):
 
 
 def inspect_local_image_timestamp(reg, rep, img, tag="latest"):
-    """ Retrieve timestamp of the local image.
+    """Retrieve timestamp of the local image.
 
         >>> inspect_local_image_timestamp("harbor.vantage6.ai",
         ...                                 "infrastructure", "node")
@@ -62,7 +62,7 @@ def inspect_local_image_timestamp(reg, rep, img, tag="latest"):
 
 
 def pull_if_newer(image):
-    """ Only pull the image if the remote is newer.
+    """Only pull the image if the remote is newer.
 
         >>> pull_if_newer("registry/repository/image:tag")
         >>> pull_if_newer("registry/repository/image")
