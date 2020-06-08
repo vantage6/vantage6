@@ -16,7 +16,8 @@ client = docker.from_env()
 
 def inspect_remote_image_timestamp(reg: str, rep: str, img: str,
                                    tag: str = "latest"):
-    """Obtain creation timestamp object from remote image.
+    """
+    Obtain creation timestamp object from remote image.
 
     Parameters
     ----------
@@ -54,7 +55,8 @@ def inspect_remote_image_timestamp(reg: str, rep: str, img: str,
 
 def inspect_local_image_timestamp(reg: str, rep: str, img: str,
                                   tag: str = "latest"):
-    """Obtain creation timestamp object from local image.
+    """
+    Obtain creation timestamp object from local image.
 
     Parameters
     ----------
@@ -88,7 +90,8 @@ def inspect_local_image_timestamp(reg: str, rep: str, img: str,
 
 
 def pull_if_newer(image: str):
-    """Docker pull only if the remote image is newer
+    """
+    Docker pull only if the remote image is newer.
 
     Parameters
     ----------
