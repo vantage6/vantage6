@@ -14,12 +14,25 @@ logging.basicConfig(level=logging.DEBUG)
 client = docker.from_env()
 
 
-def inspect_remote_image_timestamp(reg, rep, img, tag="latest"):
-    """Retrieve timestamp of the remote image.
+def inspect_remote_image_timestamp(reg: str, rep: str, img: str,
+                                   tag: str = "latest"):
+    """Obtain creation timestamp object from remote image.
 
-        >>> inspect_remote_image_timestamp("harbor.vantage6.ai",
-        ...                                 "infrastructure", "node")
-        datetime.datetime(2020, 5, 18, 14, 33, 45, 420900, tzinfo=tzutc())
+    Parameters
+    ----------
+    reg : str
+        registry where the image is hosted
+    rep : str
+        repository in the registry
+    img : str
+        image name
+    tag : str, optional
+        image tag to be used, by default "latest"
+
+    Returns
+    -------
+    datetime
+        timestamp object containing the creation date and time of the image
     """
     image = f"https://{reg}/api/repositories/{rep}/{img}/tags/{tag}"
 
@@ -39,12 +52,25 @@ def inspect_remote_image_timestamp(reg, rep, img, tag="latest"):
     return timestamp
 
 
-def inspect_local_image_timestamp(reg, rep, img, tag="latest"):
-    """Retrieve timestamp of the local image.
+def inspect_local_image_timestamp(reg: str, rep: str, img: str,
+                                  tag: str = "latest"):
+    """Obtain creation timestamp object from local image.
 
-        >>> inspect_local_image_timestamp("harbor.vantage6.ai",
-        ...                                 "infrastructure", "node")
-        datetime.datetime(2020, 5, 18, 14, 33, 45, 420900, tzinfo=tzutc())
+    Parameters
+    ----------
+    reg : str
+        registry where the image is hosted
+    rep : str
+        repository in the registry
+    img : str
+        image name
+    tag : str, optional
+        image tag to be used, by default "latest"
+
+    Returns
+    -------
+    datetime
+        timestamp object containing the creation date and time of the image
     """
     image = f"{reg}/{rep}/{img}:{tag}"
     try:
@@ -61,17 +87,13 @@ def inspect_local_image_timestamp(reg, rep, img, tag="latest"):
     return timestamp
 
 
-def pull_if_newer(image):
-    """Only pull the image if the remote is newer.
+def pull_if_newer(image: str):
+    """Docker pull only if the remote image is newer
 
-        >>> pull_if_newer("registry/repository/image:tag")
-        >>> pull_if_newer("registry/repository/image")
-
-        >>> pull_if_newer("harbor.vantage6.ai/vantage/vtg.chisq:trolltunga")
-        >>> pull_if_newer("harbor.vantage6.ai/infrastructure/node:latest")
-        >>> pull_if_newer("harbor.vantage6.ai/infrastructure/server:latest")
-        >>> pull_if_newer("harbor.vantage6.ai/infrastructure/server1:latest")
-        >>> pull_if_newer("harbor.vantage6.ai/infrastructure/node")
+    Parameters
+    ----------
+    image : str
+        image to be pulled
     """
     image_parts = re.split(r"[/:]", image)
 
