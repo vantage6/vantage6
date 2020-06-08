@@ -20,7 +20,6 @@ def inspect_remote_image_timestamp(reg, rep, img, tag="latest"):
         >>> inspect_remote_image_timestamp("harbor.vantage6.ai",
         ...                                 "infrastructure", "node")
         datetime.datetime(2020, 5, 18, 14, 33, 45, 420900, tzinfo=tzutc())
-
     """
     image = f"https://{reg}/api/repositories/{rep}/{img}/tags/{tag}"
 
@@ -46,9 +45,7 @@ def inspect_local_image_timestamp(reg, rep, img, tag="latest"):
         >>> inspect_local_image_timestamp("harbor.vantage6.ai",
         ...                                 "infrastructure", "node")
         datetime.datetime(2020, 5, 18, 14, 33, 45, 420900, tzinfo=tzutc())
-
     """
-
     image = f"{reg}/{rep}/{img}:{tag}"
     try:
         img = client.images.get(image)
@@ -67,7 +64,6 @@ def inspect_local_image_timestamp(reg, rep, img, tag="latest"):
 def pull_if_newer(image):
     """ Only pull the image if the remote is newer.
 
-
         >>> pull_if_newer("registry/repository/image:tag")
         >>> pull_if_newer("registry/repository/image")
 
@@ -76,9 +72,7 @@ def pull_if_newer(image):
         >>> pull_if_newer("harbor.vantage6.ai/infrastructure/server:latest")
         >>> pull_if_newer("harbor.vantage6.ai/infrastructure/server1:latest")
         >>> pull_if_newer("harbor.vantage6.ai/infrastructure/node")
-
     """
-
     image_parts = re.split(r"[/:]", image)
 
     local_ = inspect_local_image_timestamp(*image_parts)
