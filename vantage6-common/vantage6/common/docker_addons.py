@@ -9,7 +9,6 @@ from vantage6.common import logger_name
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
-logging.basicConfig(level=logging.DEBUG)
 
 client = docker.from_env()
 
