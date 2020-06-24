@@ -37,6 +37,8 @@ setup(
         'colorama==0.4.3',
         'click==7.1.1',
         'PyYAML==5.3.1',
+        'python-dateutil==2.8.1',
+        'docker==4.2.0'
     ],
     package_data={
         'vantage6.common': [
