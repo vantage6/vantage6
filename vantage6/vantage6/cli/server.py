@@ -5,7 +5,6 @@ import docker
 import os
 import time
 
-from pathlib import Path
 from threading import Thread
 from functools import wraps
 from traitlets.config import get_config
@@ -13,6 +12,7 @@ from colorama import (Fore, Style)
 from sqlalchemy.engine.url import make_url
 
 from vantage6.common import info, warning, error, check_write_permissions
+from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 # from vantage6.cli import fixture
 from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
@@ -96,7 +96,7 @@ def cli_server():
 #
 @cli_server.command(name='start')
 @click.option('--ip', default=None, help='ip address to listen on')
-@click.option('-p', '--port', type=int, help='port to listen on')
+@click.option('-p', '--port', default=None, type=int, help='port to listen on')
 @click.option('--debug', is_flag=True,
               help='run server in debug mode (auto-restart)')
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
@@ -112,11 +112,11 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
     # will print an error if not
     check_if_docker_deamon_is_running(docker_client)
 
-    # check that this node is not already running
+    # check that this server is not already running
     running_servers = docker_client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
-    for node in running_servers:
-        if node.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-server":
+    for server in running_servers:
+        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-server":
             error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} "
                   "is already running")
             exit(1)
@@ -129,7 +129,8 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
         )
     info(f"Pulling latest server image '{image}'.")
     try:
-        docker_client.images.pull(image)
+        pull_if_newer(image)
+        # docker_client.images.pull(image)
     except Exception:
         warning("... alas, no dice!")
     else:
@@ -302,9 +303,6 @@ def cli_server_new(name, environment, system_folders):
         print(e)
         exit(1)
 
-    # Check that we can write in this folder
-    dirs = ServerContext.instance_folders("server", name, system_folders)
-    path_ = str(Path(dirs["config"]))
      # Check that we can write in this folder
     if not check_write_permissions(system_folders):
         error("Your user does not have write access to all folders. Exiting")
@@ -322,10 +320,10 @@ def cli_server_new(name, environment, system_folders):
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # info(f"root user created.")
+    flag = "" if system_folders else "--user"
     info(
         f"You can start the server by running "
-        f"{Fore.GREEN}vserver start{Style.RESET_ALL} or "
-        f"{Fore.GREEN}vserver start --user{Style.RESET_ALL}."
+        f"{Fore.GREEN}vserver start {flag}{Style.RESET_ALL}"
     )
 
 #
@@ -528,7 +526,7 @@ def cli_server_stop(name, system_folders, all_servers):
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_node_attach(name, system_folders):
+def cli_server_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
 
     client = docker.from_env()
