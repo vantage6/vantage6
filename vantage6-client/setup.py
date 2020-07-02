@@ -1,3 +1,4 @@
+import os
 from os import path
 from codecs import open
 from setuptools import setup, find_namespace_packages
@@ -9,14 +10,20 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# read the API version from disk 
-with open(path.join(here, 'vantage6', 'VERSION')) as fp:
-    __version__ = fp.read()
+# Read the API version from disk. This file should be located in the package
+# folder, since it's also used to set the pkg.__version__ variable.
+version_path = os.path.join(here, 'vantage6', 'client', '_version.py')
+version_ns = {
+    '__file__': version_path
+}
+with open(version_path) as f:
+    exec(f.read(), {}, version_ns)
+
 
 # setup the package
 setup(
     name='vantage6-client',
-    version=__version__,
+    version=version_ns['__version__'],
     description='Vantage6 client',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -25,11 +32,13 @@ setup(
     python_requires='>=3.6',
     install_requires=[
        'cryptography==2.8',
-       'requests==2.23.0'
+       'requests==2.23.0',
+       'PyJWT',
+       'vantage6-common >= 1.0.0',
     ],
-    package_data={  
-        'vantage6': [
-            'VERSION'
+    package_data={
+        'vantage6.client': [
+            '__build__',
         ],
     }
 )
