@@ -20,7 +20,7 @@ import logging
 from pathlib import Path
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.serialization import (
@@ -28,7 +28,6 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key
 )
 
-from vantage6.client.constants import APPNAME
 from vantage6.common import (
     Singleton,
     logger_name,
@@ -37,6 +36,7 @@ from vantage6.common import (
 )
 
 SEPARATOR = '$'
+
 
 # ------------------------------------------------------------------------------
 # CryptorBase
@@ -47,14 +47,15 @@ class CryptorBase(metaclass=Singleton):
         """Create a new CryptorBase instance."""
         self.log = logging.getLogger(logger_name(__name__))
 
-    def bytes_to_str(self, data: bytes) -> str:
+    @staticmethod
+    def bytes_to_str(data: bytes) -> str:
         """Encode bytes as base64 encoded string."""
         return bytes_to_base64s(data)
 
-    def str_to_bytes(self, data: str) -> bytes:
+    @staticmethod
+    def str_to_bytes(data: str) -> bytes:
         """Decode base64 encoded string to bytes."""
         return base64s_to_bytes(data)
-
 
     def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str) -> str:
         """Encrypt bytes in `data` using a (base64 encoded) public key."""
@@ -70,7 +71,6 @@ class CryptorBase(metaclass=Singleton):
 # ------------------------------------------------------------------------------
 class DummyCryptor(CryptorBase):
     """Does absolutely nothing."""
-    pass
 
 
 # ------------------------------------------------------------------------------
@@ -182,7 +182,6 @@ class RSACryptor(CryptorBase):
 
         return SEPARATOR.join([encrypted_key, iv, encrypted_msg])
 
-
     def decrypt_str_to_bytes(self, data: str) -> bytes:
         """Decrypt base64 encoded *string* `data."""
 
@@ -213,7 +212,6 @@ class RSACryptor(CryptorBase):
 
         return result
 
-
     def verify_public_key(self, pubkey_base64) -> bool:
         """Verifies the public key.
 
@@ -227,62 +225,3 @@ class RSACryptor(CryptorBase):
         """
         public_key_server = base64s_to_bytes(pubkey_base64)
         return self.public_key_bytes == public_key_server
-
-
-#    def encrypt_bytes_to_base64s(self, msg: bytes, public_key_base64: str) -> str:
-#        """Encrypt bytes in `msg` into a base64 encoded string.
-#
-#            :param msg: message to be encrypted
-#            :param public_key_base64: public key base64 decoded
-#                (directly from API transport)
-#
-#            TODO we should retrieve all keys once... and store them in
-#                the node
-#        """
-#        # unpack public key
-#        public_key_bytes = base64s_to_bytes(public_key_base64)
-#
-#        # encrypt message using public key
-#        encrypted_msg = self.encrypt(msg, public_key_bytes)
-#
-#        # prepare message for transport
-#        base64_str = bytes_to_base64s(encrypted_msg)
-#
-#        return base64_str
-#
-#    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
-        """Decrypt base64 encoded *string* `msg` using our private key.
-
-            :param msg: string utf-8 encoded base64 encrypted msg
-        """
-        msg_bytes = base64s_to_bytes(msg)
-        return self._decrypt_bytes(msg_bytes)
-#
-
-
-#class NoCryptor(Cryptor):
-#    """ When the collaboration of which the node part is is unencrypted.
-#
-#        This overwrites all encryption / descryption methods to not
-#        use encryption, but does cenvert between str and bytes if needed
-#    """
-#    def __init__(self, private_key_file=None):
-#       # super().__init__(private_key_file=private_key_file)
-#       self.log = logging.getLogger(logger_name(__name__))
-#       self.log.warning(
-#               "Encrpytion disabled! Use this only for debugging")
-#
-#    def encrypt_bytes_to_base64s(
-#        self, msg: bytes, public_key_base64: str) -> str:
-#        return bytes_to_base64s(msg)
-#
-#    def encrypt_bytes(self, msg: bytes, public_key_bytes: bytes) -> bytes:
-#       return msg
-#
-#    def decrypt_bytes(self, msg: bytes) -> bytes:
-#       return msg
-#
-#    def decrypt_bytes_from_base64(self, msg: str) -> bytes:
-#       return base64s_to_bytes(msg)
-#
-#

@@ -1,6 +1,6 @@
 import os
 from os import path
-from codecs import open
+from codecs import open as s_open
 from setuptools import setup, find_namespace_packages
 
 # get current directory
@@ -16,7 +16,7 @@ version_path = os.path.join(here, 'vantage6', 'client', '_version.py')
 version_ns = {
     '__file__': version_path
 }
-with open(version_path) as f:
+with s_open(version_path) as f:
     exec(f.read(), {}, version_ns)
 
 

@@ -409,7 +409,7 @@ class ClientBase(object):
 
         if id:
             # Single result
-            results = decrypt_result(results)
+            decrypt_result(results)
 
         else:
             # Multiple results
