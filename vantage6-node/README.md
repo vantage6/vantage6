@@ -1,4 +1,3 @@
-
 <h1 align="center">
   <br>
   <a href="https://vantage6.ai"><img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" alt="vantage6" width="350"></a>
@@ -9,13 +8,13 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/vantage6-node/badge.svg?branch=master)](https://coveralls.io/github/IKNL/vantage6-node?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/0f03092824814c5797224884fb65f048)](https://www.codacy.com/gh/IKNL/vantage6-node?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=IKNL/vantage6-node&amp;utm_campaign=Badge_Grade)
+[![PyPI version](https://badge.fury.io/py/vantage6-client.svg)](https://badge.fury.io/py/vantage6-client)
 [![Build Status](https://api.travis-ci.org/IKNL/vantage6-node.svg?branch=master)](https://travis-ci.org/IKNL/vantage6-node)
-<!--[![PyPI version](https://badge.fury.io/py/ppDLI.svg)](https://badge.fury.io/py/ppDLI)--> 
+<!--[![PyPI version](https://badge.fury.io/py/ppDLI.svg)](https://badge.fury.io/py/ppDLI)-->
 
 </h3>
 
 <p align="center">
-  
   <a href="#books-documentation">Documentation</a> •
   <a href="#cd-installation">Installation</a> •
   <a href="#hatching_chick-how-to-use">How To Use</a> •
@@ -26,20 +25,20 @@
 -----------------------------------------------------------------------------------------------------
 This repository is part of **vantage6**, our **priVAcy preserviNg federaTed leArninG infrastructurE for Secure Insight eXchange**. Other repositories include:
 
-* [vantage6](https://github.com/iknl/vantage6)
-* [vantage6-common](https://github.com/iknl/vantage6-common)
-* [vantage6-server](https://github.com/iknl/vantage6-server)
-* vantage6-node (you are here)
-* [vantage6-client](https://github.com/iknl/vantage6-client)
-* [vantage6-UI](https://github.com/IKNL/Vantage6-UI)
-* [vantage6-master](https://github.com/iknl/vantage6-master)  
+*   [vantage6](https://github.com/iknl/vantage6)
+*   [vantage6-common](https://github.com/iknl/vantage6-common)
+*   [vantage6-server](https://github.com/iknl/vantage6-server)
+*   vantage6-node (you are here)
+*   [vantage6-client](https://github.com/iknl/vantage6-client)
+*   [vantage6-UI](https://github.com/IKNL/Vantage6-UI)
+*   [vantage6-master](https://github.com/iknl/vantage6-master)
 
 ## :books: Documentation
 The following is a short cheat sheet of how to setup a **vantage6** node. For a more detailed, comprehensive guide, please refer to our [website `https://vantage6.ai`](https://vantage6.ai) and the official [documentation: `https://docs.vantage6.ai/`](https://docs.vantage6.ai/).
 
 ## :cd: Installation
 This repository contains the code for a **vantage6** node. Installation can be done in two different ways:
- 
+
 ### Option 1 - Directly from `pypi`
 ```bash
 pip install vantage6-node
@@ -83,10 +82,8 @@ We hope to continue developing, improving, and supporting **vantage6** with the 
 ## :black_nib: References
 If you are using **vantage6**, please cite this repository as well as the accompanying paper as follows:
 
-> - Frank Martin, Melle Sieswerda, Hasan Alradhi, Arturo Moncada-Torres, Johan van Soest. vantage6. Available at
-https://doi.org/10.5281/zenodo.3686944. Accessed on [MONTH, 20XX].
-> - Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. vantage6: an open source priVAcy preserviNg
-federaTed leArninG infrastructurE for Secure Insight eXchange. Submitted for publication.
+> &ndash; Frank Martin, Melle Sieswerda, Hasan Alradhi, Arturo Moncada-Torres, Johan van Soest. vantage6. Available at https://doi.org/10.5281/zenodo.3686944. Accessed on (MONTH, 20XX).
+> &ndash; Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. vantage6: an open source priVAcy preserviNg federaTed leArninG infrastructurE for Secure Insight eXchange. Submitted for publication.
 
 -----------------------------------------------------------------------------------------------------
 <p align="center">
