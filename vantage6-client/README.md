@@ -6,10 +6,10 @@
 <h3 align=center> A privacy preserving federated learning solution</h3>
 <h3 align="center">
 
-[![Coverage Status](https://coveralls.io/repos/github/IKNL/ppDLI/badge.svg?branch=master)](https://coveralls.io/github/IKNL/ppDLI?branch=master)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bcde6ed5c77440c6969462bfead0774c)](https://app.codacy.com/app/frankcorneliusmartin/ppDLI?utm_source=github.com&utm_medium=referral&utm_content=IKNL/ppDLI&utm_campaign=Badge_Grade_Dashboard)
-[![PyPI version](https://badge.fury.io/py/ppDLI.svg)](https://badge.fury.io/py/ppDLI)
-[![Build Status](https://travis-ci.org/IKNL/ppDLI.svg?branch=master)](https://travis-ci.org/IKNL/ppDLI)
+[![Coverage Status](https://coveralls.io/repos/github/IKNL/vantage6-client/badge.svg?branch=master)](https://coveralls.io/github/IKNL/vantage6-client?branch=master)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/272012fbf5484aee97a2c382aa5f6fc7)](https://www.codacy.com/gh/IKNL/vantage6-client?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=IKNL/vantage6-client&amp;utm_campaign=Badge_Grade)
+[![PyPI version](https://badge.fury.io/py/vantage6-client.svg)](https://badge.fury.io/py/vantage6-client)
+[![Build Status](https://travis-ci.org/IKNL/vantage6-client.svg?branch=master)](https://travis-ci.org/IKNL/vantage6-client)
 
 </h3>
 
@@ -28,7 +28,7 @@ This repository is part of **vantage6**, our **priVAcy preserviNg federaTed leAr
 * [vantage6-node](https://github.com/iknl/vantage6-node)
 * vantage6-client (you are here)
 * [vantage6-UI](https://github.com/IKNL/Vantage6-UI)
-* [vantage6-master](https://github.com/iknl/vantage6-master)  
+* [vantage6-master](https://github.com/iknl/vantage6-master)
 
 ## :books: Documentation
 This repository contains the code for a **vantage6** client. For a more detailed, comprehensive guide, please refer to our [website (`https://vantage6.ai`)](https://vantage6.ai) and the official [documentation (`https://docs.vantage6.ai/`)](https://docs.vantage6.ai/).
