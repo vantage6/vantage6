@@ -9,8 +9,8 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/vantage6-server/badge.svg?branch=master)](https://coveralls.io/github/IKNL/vantage6-server?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/707833fa47a94393b3f8ab9f2c598034)](https://www.codacy.com/gh/IKNL/vantage6-server?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=IKNL/vantage6-server&amp;utm_campaign=Badge_Grade)
+[![PyPI version](https://badge.fury.io/py/vantage6-server.svg)](https://badge.fury.io/py/vantage6-server)
 [![Build Status](https://travis-ci.org/IKNL/ppDLI.svg?branch=master)](https://travis-ci.org/IKNL/vantage6-server)
-<!--[![PyPI version](https://badge.fury.io/py/ppDLI.svg)](https://badge.fury.io/py/ppDLI) -->
 
 </h3>
 
@@ -31,14 +31,14 @@ This repository is part of **vantage6**, our **priVAcy preserviNg federaTed leAr
 * [vantage6-node](https://github.com/iknl/vantage6-node)
 * [vantage6-client](https://github.com/iknl/vantage6-client)
 * [vantage6-UI](https://github.com/IKNL/Vantage6-UI)
-* [vantage6-master](https://github.com/iknl/vantage6-master)  
+* [vantage6-master](https://github.com/iknl/vantage6-master)
 
 ## :books: Documentation
 The following is a short cheat sheet of how to setup a **vantage6** server. For a more detailed, comprehensive guide, please refer to our [website `https://vantage6.ai`](https://vantage6.ai) and the official [documentation: `https://docs.vantage6.ai/`](https://docs.vantage6.ai/).
 
 ## :cd: Installation
 This repository contains the code for a **vantage6** server. Installation can be done in two different ways:
- 
+
 ### Option 1 - Directly from `pypi`
 ```bash
 pip install vantage6-server
