@@ -21,25 +21,21 @@ import time
 import datetime
 import logging
 import queue
-import typing
 import shutil
-import requests
 import json
-import docker
 
 from pathlib import Path
 from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
-from ._version import version_info, __version__
 from . import globals as cs
 
-from vantage6.client import ServerInfo
 from vantage6.node.docker_manager import DockerManager
 from vantage6.node.server_io import ClientNodeProtocol
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
+
 
 class NodeTaskNamespace(SocketIONamespace):
     """Class that handles incoming websocket events."""
@@ -109,6 +105,7 @@ class NodeTaskNamespace(SocketIONamespace):
         # self.log.debug(f"Pong received, WS still connected <{msg}>")
         self.node_worker_ref.socket_connected = True
 
+
 # ------------------------------------------------------------------------------
 class Node(object):
     """Node to handle incomming computation requests.
@@ -169,14 +166,13 @@ class Node(object):
         self.log.debug("Fetching tasks that were posted while offline")
         self.__sync_task_queue_with_server()
 
-
         # If we're in a 'regular' context, we'll copy the dataset to our data
         # dir and mount it in any algorithm container that's run; bind mounts
         # on a folder will work just fine.
         #
         # If we're running in dockerized mode we *cannot* bind mount a folder,
-        # because the folder is in the container and not in the host. We'll have
-        # to use a docker volume instead. This means:
+        # because the folder is in the container and not in the host. We'll
+        # have to use a docker volume instead. This means:
         #  1. we need to know the name of the volume so we can pass it along
         #  2. need to have this volume mounted so we can copy files to it.
         #
@@ -191,8 +187,8 @@ class Node(object):
         # We'll create a subfolder in the data_dir. We need this subfolder so
         # we can easily mount it in the algorithm containers; the root folder
         # may contain the private key, which which we don't want to share.
-        # We'll only do this if we're running outside docker, otherwise we would
-        # create '/data' on the data volume.
+        # We'll only do this if we're running outside docker, otherwise we
+        # would create '/data' on the data volume.
         if not ctx.running_in_docker:
             task_dir = ctx.data_dir / 'data'
             os.makedirs(task_dir, exist_ok=True)
@@ -211,7 +207,7 @@ class Node(object):
 
         # login to the registries
         self.__docker.login_to_registries(
-            self.ctx.config.get("docker_registries",[])
+            self.ctx.config.get("docker_registries", [])
         )
 
         # If we're running in a docker container, database_uri would point
@@ -295,7 +291,8 @@ class Node(object):
         app.config["SERVER_IO"] = self.server_io
 
         for try_number in range(5):
-            self.log.info(f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
+            self.log.info(
+                f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
             http_server = WSGIServer(('0.0.0.0', proxy_port), app)
 
             try:
@@ -307,7 +304,8 @@ class Node(object):
 
                 if e.errno == 48:
                     proxy_port = random.randint(2048, 16384)
-                    self.log.critical(f"Retrying with a different port: {proxy_port}")
+                    self.log.critical(
+                        f"Retrying with a different port: {proxy_port}")
                     os.environ['PROXY_SERVER_PORT'] = str(proxy_port)
 
                 else:
@@ -382,9 +380,9 @@ class Node(object):
         # FIXME: while True in combination with a wait() call that never exits
         #   makes joining the tread (to terminate) difficult?
         while True:
-            # incoming messages are handled by the action_handler instance which
-            # is attached when the socket connection was made. wait() is blocks
-            # forever (if no time is specified).
+            # incoming messages are handled by the action_handler instance
+            # which is attached when the socket connection was made. wait()
+            # is blocks forever (if no time is specified).
             self.socketIO.wait()
 
     def __speaking_worker(self):
@@ -411,10 +409,11 @@ class Node(object):
                     self.server_io.collaboration_id
                 )
 
-            self.log.info(f"Sending result (id={results.result_id}) to the server!")
+            self.log.info(
+                f"Sending result (id={results.result_id}) to the server!")
 
-            # FIXME: why are we retrieving the result *again*? Shouldn't we just
-            #   store the task_id when retrieving the task the first time?
+            # FIXME: why are we retrieving the result *again*? Shouldn't we
+            # just store the task_id when retrieving the task the first time?
             response = self.server_io.request(f"result/{results.result_id}")
             task_id = response.get("task").get("id")
 
@@ -511,7 +510,7 @@ class Node(object):
         # If we're running dockerized, the location may have been overridden
         filename = os.environ.get('PRIVATE_KEY', filename)
 
-        # If ctx.get_data_file() receives an absolute path, it is returned as-is
+        # If ctx.get_data_file() receives an absolute path, its returned as-is
         fullpath = Path(self.ctx.get_data_file(filename))
 
         return fullpath
