@@ -32,7 +32,7 @@ from gevent.pywsgi import WSGIServer
 from . import globals as cs
 
 from vantage6.node.docker_manager import DockerManager
-from vantage6.node.server_io import ClientNodeProtocol
+from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
 
@@ -136,7 +136,7 @@ class Node(object):
         self._using_encryption = None
 
         # initialize Node connection to the server
-        self.server_io = ClientNodeProtocol(
+        self.server_io = NodeClient(
             host=self.config.get('server_url'),
             port=self.config.get('port'),
             path=self.config.get('api_path')
