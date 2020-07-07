@@ -6,13 +6,13 @@ import logging.handlers
 
 from pathlib import Path
 
-from vantage6.common import Singleton
+from vantage6.common import Singleton, error, Fore, Style
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.globals import DEFAULT_ENVIRONMENT, APPNAME
 from vantage6.common.configuration_manager import (
     ConfigurationManager
 )
-
+from vantage6.common import __version__
 
 class AppContext(metaclass=Singleton):
 
@@ -42,9 +42,6 @@ class AppContext(metaclass=Singleton):
         self.scope = "system" if system_folders else "user"
         self.name = instance_name
 
-        # lookup system / user directories
-        self.set_folders(instance_type, self.name, system_folders)
-
         # configuration environment, load a single configuration from
         # entire confiration file (which can contain multiple environments)
         # self.config_file = self.config_dir / f"{instance_name}.yaml"
@@ -62,6 +59,16 @@ class AppContext(metaclass=Singleton):
         # triggers to set the logging as this is env dependant
         self.environment = environment
 
+        # lookup system / user directories, this needs to be done after
+        # the environment is been set. This way we can check if the
+        # config file container custom directories
+        self.set_folders(instance_type, self.name, system_folders)
+
+        # after both the folders and the environment have been set, we
+        # can start logging!
+        if self.LOGGING_ENABLED:
+            self.setup_logging()
+
         # Log some history
         # FIXME: this should probably be moved to the actual app
         module_name = __name__.split('.')[-1]
@@ -75,6 +82,7 @@ class AppContext(metaclass=Singleton):
         self.log.info(f"Succesfully loaded configuration from "
                       f"'{self.config_file}'")
         self.log.info("Logging to '%s'" % self.log_file)
+        self.log.info(f"Common package version '{__version__}'")
 
     @classmethod
     def from_external_config_file(cls, path, instance_type,
@@ -172,6 +180,7 @@ class AppContext(metaclass=Singleton):
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
 
+        # check if the configuration file contains a logging file setting
         if self.config.get("logging"):
             if self.config.get("logging").get("file"):
                 return self.log_dir / self.config.get("logging").get("file")
@@ -206,8 +215,6 @@ class AppContext(metaclass=Singleton):
             f"Requested environment {env} is not found in the configuration"
         self.__environment = env
         self.config = self.config_manager.get(env)
-        if self.LOGGING_ENABLED:
-            self.setup_logging()
 
     @classmethod
     def find_config_file(cls, instance_type, instance_name, system_folders,
@@ -259,8 +266,18 @@ class AppContext(metaclass=Singleton):
             system_folders
         )
 
-        self.log_dir = dirs.get("log")
-        self.data_dir = dirs.get("data")
+        # Check if the user has set custom directories
+        custom_dirs = self.config.get("directories", None)
+        if custom_dirs:
+            log_dir = custom_dirs.get("log")
+            data_dir = custom_dirs.get("data")
+
+            self.log_dir = Path(log_dir) if log_dir else dirs.get("log")
+            self.data_dir = Path(data_dir) if data_dir else dirs.get("data")
+        else:
+            self.log_dir = dirs.get("log")
+            self.data_dir = dirs.get("data")
+
         self.config_dir = dirs.get("config")
 
     def setup_logging(self):
@@ -279,11 +296,17 @@ class AppContext(metaclass=Singleton):
         logger.setLevel(level)
 
         # Create RotatingFileHandler
-        rfh = logging.handlers.RotatingFileHandler(
-            self.log_file,
-            maxBytes=1024*log_config["max_size"],
-            backupCount=log_config["backup_count"]
-        )
+        try:
+            rfh = logging.handlers.RotatingFileHandler(
+                self.log_file,
+                maxBytes=1024*log_config["max_size"],
+                backupCount=log_config["backup_count"]
+            )
+        except PermissionError:
+            error(f"Can't write to log dir: "
+                  f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!")
+            exit(1)
+
         rfh.setLevel(level)
         rfh.setFormatter(logging.Formatter(format_, datefmt))
         logger.addHandler(rfh)
