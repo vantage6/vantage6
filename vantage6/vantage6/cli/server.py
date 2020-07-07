@@ -11,7 +11,8 @@ from traitlets.config import get_config
 from colorama import (Fore, Style)
 from sqlalchemy.engine.url import make_url
 
-from vantage6.common import info, warning, error, check_write_permissions
+from vantage6.common import (info, warning, error,
+                             check_config_write_permissions)
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 # from vantage6.cli import fixture
@@ -304,7 +305,7 @@ def cli_server_new(name, environment, system_folders):
         exit(1)
 
      # Check that we can write in this folder
-    if not check_write_permissions(system_folders):
+    if not check_config_write_permissions(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(f"Create a new server using '{Fore.GREEN}vserver new "
              "--user{Style.RESET_ALL}' instead!")

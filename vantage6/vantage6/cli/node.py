@@ -25,7 +25,7 @@ from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_write_permissions
+    bytes_to_base64s, check_config_write_permissions
 )
 from vantage6.common.globals import (STRING_ENCODING, APPNAME)
 from vantage6.common.docker_addons import pull_if_newer
@@ -147,7 +147,7 @@ def cli_node_new_configuration(name, environment, system_folders):
         exit(1)
 
     # Check that we can write in this folder
-    if not check_write_permissions(system_folders):
+    if not check_config_write_permissions(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         exit(1)
 
@@ -285,6 +285,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     try:
         # docker_client.images.pull(image)
         pull_if_newer(image)
+
     except Exception:
         warning(' ... alas, no dice!')
     else:

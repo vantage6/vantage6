@@ -92,7 +92,7 @@ class NodeCLITest(unittest.TestCase):
         )
 
     @patch("vantage6.cli.node.configuration_wizard")
-    @patch("vantage6.cli.node.check_write_permissions")
+    @patch("vantage6.cli.node.check_config_write_permissions")
     @patch("vantage6.cli.node.NodeContext")
     def test_new_config(self, context, permissions, wizard):
         """No error produced when creating new configuration."""
@@ -144,7 +144,7 @@ class NodeCLITest(unittest.TestCase):
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.check_write_permissions")
+    @patch("vantage6.cli.node.check_config_write_permissions")
     @patch("vantage6.cli.node.NodeContext")
     def test_new_write_permissions(self, context, permissions):
         """User needs write permissions."""
