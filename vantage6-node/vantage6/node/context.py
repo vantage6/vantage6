@@ -8,7 +8,7 @@ from vantage6.common.globals import (
 from vantage6.common.context import AppContext
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.cli.context import NodeContext
-from vantage6.node import __version__
+from vantage6.node._version import __version__
 
 
 class DockerNodeContext(NodeContext):
