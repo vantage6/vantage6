@@ -69,7 +69,27 @@ def debug(msg):
     echo(msg, "debug")
 
 
-def check_write_permissions(system_folders=False):
+class ClickLogger:
+    """"Logs output to the click interface."""
+
+    @staticmethod
+    def info(msg):
+        info(msg)
+
+    @staticmethod
+    def warn(msg):
+        warning(msg)
+
+    @staticmethod
+    def error(msg):
+        error(msg)
+
+    @staticmethod
+    def debug(msg):
+        debug(msg)
+
+
+def check_config_write_permissions(system_folders=False):
     dirs = appdirs.AppDirs()
     if system_folders:
         dirs_to_check = [
@@ -84,5 +104,14 @@ def check_write_permissions(system_folders=False):
         if not os.access(dir_, os.W_OK):
             warning(f"No write permissions at '{dir_}'")
             w_ok = False
+
+    return w_ok
+
+
+def check_write_permissions(folder):
+    w_ok = True
+    if not os.access(folder, os.W_OK):
+        warning(f"No write permissions at '{folder}'")
+        w_ok = False
 
     return w_ok
