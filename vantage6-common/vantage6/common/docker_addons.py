@@ -12,14 +12,13 @@ from vantage6.common import ClickLogger
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
 
-docker = docker.from_env()
+docker_client = docker.from_env()
 
 # logger needs to be setable as logging is used both inside and outside
 # our man application
 
 
-def inspect_remote_image_timestamp(reg: str, rep: str, img: str,
-                                   tag: str = "latest", log=ClickLogger):
+def inspect_remote_image_timestamp(image: str, log=ClickLogger):
     """
     Obtain creation timestamp object from remote image.
 
@@ -39,7 +38,20 @@ def inspect_remote_image_timestamp(reg: str, rep: str, img: str,
     datetime
         timestamp object containing the creation date and time of the image
     """
-    image = f"https://{reg}/api/repositories/{rep}/{img}/tags/{tag}"
+    # check if a tag has been profided
+
+    image_tag = re.split(":", image)
+    img = image_tag[0]
+    tag = image_tag[1] if len(image_tag) == 2 else "latest"
+
+    try:
+        reg, rep, img_ = re.split("/", img)
+    except ValueError:
+        log.warn("Could not construct remote URL, "
+                 "are you using a local image?")
+        return
+
+    image = f"https://{reg}/api/repositories/{rep}/{img_}/tags/{tag}"
 
     result = requests.get(image)
 
@@ -49,16 +61,15 @@ def inspect_remote_image_timestamp(reg: str, rep: str, img: str,
 
     if result.status_code != 200:
         log.warn(f"Remote info could not be fetched! ({result.status_code})"
-                f"{image}")
-        return None
+                 f"{image}")
+        return
 
     timestamp = result.json().get("created")
     timestamp = parse(timestamp)
     return timestamp
 
 
-def inspect_local_image_timestamp(reg: str, rep: str, img: str,
-                                  tag: str = "latest", log=ClickLogger):
+def inspect_local_image_timestamp(image: str, log=ClickLogger):
     """
     Obtain creation timestamp object from local image.
 
@@ -78,9 +89,12 @@ def inspect_local_image_timestamp(reg: str, rep: str, img: str,
     datetime
         timestamp object containing the creation date and time of the image
     """
-    image = f"{reg}/{rep}/{img}:{tag}"
+    # p = re.split(r"[/:]", image)
+    # if len(p) == 4:
+    #     image = f"{p[0]}/{p[1]}/{p[2]}:{p[3]}"
+
     try:
-        img = docker.images.get(image)
+        img = docker_client.images.get(image)
     except docker.errors.ImageNotFound:
         log.debug(f"Local image does not exist! {image}")
         return None
@@ -102,10 +116,9 @@ def pull_if_newer(image: str, log=ClickLogger):
     image : str
         image to be pulled
     """
-    image_parts = re.split(r"[/:]", image)
 
-    local_ = inspect_local_image_timestamp(*image_parts, log)
-    remote_ = inspect_remote_image_timestamp(*image_parts, log)
+    local_ = inspect_local_image_timestamp(image, log=log)
+    remote_ = inspect_remote_image_timestamp(image, log=log)
     pull = False
     if local_ and remote_:
         if remote_ > local_:
@@ -125,7 +138,7 @@ def pull_if_newer(image: str, log=ClickLogger):
 
     if pull:
         try:
-            docker.images.pull(image)
+            docker_client.images.pull(image)
         except docker.errors.APIError as e:
             log.error(f"Failed to pull image! {image}")
             log.debug(e)
