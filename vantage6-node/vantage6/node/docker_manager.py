@@ -17,8 +17,10 @@ import re
 
 from typing import NamedTuple
 
+from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
+
 
 
 class Result(NamedTuple):
@@ -38,10 +40,7 @@ class DockerManager(object):
         the same time. Results (async) can be retrieved through
         `get_result()` which returns the first available result.
     """
-
     log = logging.getLogger(logger_name(__name__))
-
-    # TODO authenticate to docker repository... from the config-file
 
     def __init__(self, allowed_images, tasks_dir, isolated_network_name: str,
                  node_name: str, data_volume_name: str) -> None:
@@ -200,7 +199,8 @@ class DockerManager(object):
         """Pull the latest image."""
         try:
             self.log.info(f"Retrieving latest image: '{image}'")
-            self.docker.images.pull(image)
+            # self.docker.images.pull(image)
+            pull_if_newer(image, self.log)
 
         except Exception as e:
             self.log.error(e)
