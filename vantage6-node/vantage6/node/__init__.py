@@ -62,8 +62,12 @@ class NodeTaskNamespace(SocketIONamespace):
         """
         self.node_worker_ref = node_worker
 
+    def on_message(self, data):
+        self.log.info(data)
+
     def on_disconnect(self):
         """ Server disconnects event."""
+        # self.node_worker_ref.socketIO.disconnect()
         self.log.info('Disconnected from the server')
 
     def on_new_task(self, task_id):
@@ -100,10 +104,6 @@ class NodeTaskNamespace(SocketIONamespace):
         # FIXME: This won't work: you're trying to access a private method!?
         # self.node_worker_ref.__sync_task_queue_with_server()
         # self.log.debug("Tasks synced again with the server...")
-
-    def on_pang(self, msg):
-        # self.log.debug(f"Pong received, WS still connected <{msg}>")
-        self.node_worker_ref.socket_connected = True
 
 
 # ------------------------------------------------------------------------------
@@ -248,11 +248,6 @@ class Node(object):
         # the queue.
         self.log.debug("Starting thread for incoming messages (tasks)")
         t = Thread(target=self.__listening_worker, daemon=True)
-        t.start()
-
-        # Thread to monitor websocket connection
-        self.log.info("Starting socket connection watchdog")
-        t = Thread(target=self.__keep_socket_alive, daemon=True)
         t.start()
 
         self.log.info('Init complete')
@@ -442,33 +437,6 @@ class Node(object):
                     'finished_at': datetime.datetime.now().isoformat(),
                 }
             )
-
-    def __keep_socket_alive(self):
-
-        while True:
-            time.sleep(60)
-
-            # send ping
-            self.socket_connected = False
-            self.socket_tasks.emit("ping", self.server_io.whoami.id_)
-
-            # wait for pong
-            max_waiting_time = 5
-            count = 0
-            while (not self.socket_connected) and count < max_waiting_time:
-                # self.log.debug("Waiting for pong")
-                time.sleep(1)
-                count += 1
-
-            if not self.socket_connected:
-                self.log.warn("WS seems disconnected, resetting")
-                self.socketIO.disconnect()
-                self.log.debug("Disconnecting WS")
-                self.server_io.refresh_token()
-                self.log.debug("Token refreshed")
-                self.connect_to_socket()
-                self.log.debug("Connected to socket")
-                self.__sync_task_queue_with_server()
 
     def authenticate(self):
         """ Authenticate to the central server
