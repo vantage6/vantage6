@@ -36,13 +36,16 @@ This repository contains the code for a **vantage6** client. For a more detailed
 ## :gift_heart: Contributing
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)
 
+## :lock_with_ink_pen: Data Protection Impact Assessment
+Deploying Federated Learning solutions in real life often requires careful analysis and approval of a variety of legal entities. As part of these processes, we at IKNL have written a [Data Protection Impact Assessment (DPIA), which you can find here](https://vantage6.ai/index.php/2020/07/08/dpia/). Please note that this DPIA was executed by IKNL and is specific for our situation. It can be used as an example by other organizations, but it cannot be used verbatim.
+
 ## :black_nib: References
-If you are using **vantage6**, please cite the base repository as well as the accompanying paper as follows:
+If you are using **vantage6**, please cite this repository as well as the accompanying paper as follows:
 
 > - Frank Martin, Melle Sieswerda, Hasan Alradhi, Arturo Moncada-Torres, Johan van Soest. vantage6. Available at
 https://doi.org/10.5281/zenodo.3686944. Accessed on [MONTH, 20XX].
-> - Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. vantage6: an open source priVAcy preserviNg
-federaTed leArninG infrastructurE for Secure Insight eXchange. Submitted for publication.
+> - Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. VANTAGE6: an open source priVAcy preserviNg
+federaTed leArninG infrastructurE for Secure Insight eXchange. AMIA Annual Symposium Proceedings, 2020 (in press). [[BibTeX](https://arturomoncadatorres.com/bibtex/moncada-torres2020vantage6.txt)]
 
 -----------------------------------------------------------------------------------------------------
 <p align="center">
