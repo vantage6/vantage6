@@ -130,7 +130,7 @@ class ClientBase(object):
         return path
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params=None, first_try=False):
+                params=None, first_try=True):
         """ Create HTTP(S) request to the central server.
 
             It can contain a payload (JSON) in case of a POST method.
@@ -171,7 +171,7 @@ class ClientBase(object):
             if first_try:
                 self.refresh_token()
                 return self.request(endpoint, json, method, params,
-                                    first_try=True)
+                                    first_try=False)
             else:
                 self.log.error("Nope, refreshing the token didn't fix it.")
 
