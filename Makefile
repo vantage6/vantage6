@@ -10,7 +10,7 @@ help:
 	@echo "  uninstall    : uninstall all vantage6 packages"
 	@echo "  install      : do a regular install of all vantage6 packages"
 	@echo "  install-dev  : do an editable install of all vantage6 packages"
-	@echo "  docker-image : build the node/server docker image"
+	@echo "  image 		  : build the node/server docker image"
 	@echo "  docker-push  : push the node/server docker image"
 	@echo "  rebuild      : rebuild all python packages"
 	@echo "  publish-test : publish built python packages to test.pypi.org"
@@ -43,22 +43,13 @@ install-dev:
 	cd vantage6-node && pip install -e .
 	cd vantage6-server && pip install -e .
 
-docker-image:
-	docker build -t vantage6-master .
+image:
+	docker build -t harbor.vantage6.ai/infrastructure/node:${TAG} .
+	docker tag harbor.vantage6.ai/infrastructure/node:${TAG} harbor.vantage6.ai/infrastructure/server:${TAG}
 
 docker-push:
-	@echo "Processing node:${TAG}"
-	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/node:${TAG}
-	docker push harbor.distributedlearning.ai/infrastructure/node:${TAG}
-	@echo "Processing node:latest"
-	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/node:latest
-	docker push harbor.distributedlearning.ai/infrastructure/node:latest
-	@echo "Processing server:${TAG}"
-	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/server:${TAG}
-	docker push harbor.distributedlearning.ai/infrastructure/server:${TAG}
-	@echo "Processing server:latest"
-	docker tag vantage6-master harbor.distributedlearning.ai/infrastructure/server:latest
-	docker push harbor.distributedlearning.ai/infrastructure/server:latest
+	docker push harbor.vantage6.ai/infrastructure/node:${TAG}
+	docker push harbor.vantage6.ai/infrastructure/server:${TAG}
 
 rebuild:
 	cd vantage6-common && make rebuild
