@@ -23,13 +23,12 @@ from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
 
-from ._version import version_info, __version__
-
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_write_permissions
+    bytes_to_base64s, check_config_write_permissions
 )
 from vantage6.common.globals import (STRING_ENCODING, APPNAME)
+from vantage6.common.docker_addons import pull_if_newer
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
 
@@ -62,6 +61,7 @@ def cli_node_list():
 
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
+
     running_node_names = []
     for node in running_nodes:
         running_node_names.append(node.name)
@@ -125,11 +125,12 @@ def cli_node_new_configuration(name, environment, system_folders):
     # select configuration name if none supplied
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
-        # remove spaces, from name
-        name_new = name.replace(" ", "-")
-        if name != name_new:
-            info(f"Replaced spaces from configuration name: {name}")
-            name = name_new
+
+    # remove spaces, from name
+    name_new = name.replace(" ", "-")
+    if name != name_new:
+        info(f"Replaced spaces from configuration name: {name_new}")
+        name = name_new
 
     if not environment:
         environment = q.select(
@@ -143,15 +144,19 @@ def cli_node_new_configuration(name, environment, system_folders):
             f"Configuration {name} and environment"
             f"{environment} already exists!"
         )
+        exit(1)
 
     # Check that we can write in this folder
-    if not check_write_permissions(system_folders):
+    if not check_config_write_permissions(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         exit(1)
 
     # create config in ctx location
+    flag = "--system" if system_folders else ""
     cfg_file = configuration_wizard("node", name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
+    info(f"You can start the node by running "
+         f"{Fore.GREEN}vnode start {flag}{Style.RESET_ALL}")
 
 #
 #   files
@@ -179,6 +184,7 @@ def cli_node_files(name, environment, system_folders):
             f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
             f"not be found."
         )
+        exit(1)
 
     # create node context
     ctx = NodeContext(name, environment=environment,
@@ -189,8 +195,8 @@ def cli_node_files(name, environment, system_folders):
     info(f"Log file           = {ctx.log_file}")
     info(f"data folders       = {ctx.data_dir}")
     info(f"Database labels and files")
+
     for label, path in ctx.databases.items():
-        print("The correct label and path is as follows:")
         info(f" - {label:15} = {path}")
 
 
@@ -262,7 +268,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     for node in running_nodes:
         if node.name == f"{APPNAME}-{name}-{suffix}":
             error(f"Node {Fore.RED}{name}{Style.RESET_ALL} is already running")
-            exit()
+            exit(1)
 
     # make sure the (host)-task and -log dir exists
     info("Checking that data and log dirs exist")
@@ -277,11 +283,13 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
     info(f"Pulling latest node image '{image}'")
     try:
-        docker_client.images.pull(image)
+        # docker_client.images.pull(image)
+        pull_if_newer(image)
+
     except Exception:
         warning(' ... alas, no dice!')
     else:
-        info(" ... succes!")
+        info(" ... success!")
 
     info("Creating Docker data volume")
     data_volume = docker_client.volumes.create(
@@ -345,6 +353,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
     # debug(f"  with environment: {env}")
+
     container = docker_client.containers.run(
         image,
         command=cmd,
@@ -361,7 +370,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         tty=True
     )
 
-    info(f"Succes! container id = {container}")
+    info(f"Success! container id = {container}")
 
 
 #
@@ -447,18 +456,6 @@ def cli_node_attach(name, system_folders):
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
 
 
-def print_log_worker(logs_stream):
-    for log in logs_stream:
-        print(log.decode(STRING_ENCODING), end="")
-
-
-def check_if_docker_deamon_is_running(docker_client):
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
-        exit(1)
-
 #
 #   create-private-key
 #
@@ -469,34 +466,12 @@ def check_if_docker_deamon_is_running(docker_client):
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--no-upload', 'upload', flag_value=False, default=True)
-@click.option("-o", "--organization-name", default=None, help="Organization name")
+@click.option("-o", "--organization-name", default=None,
+              help="Organization name")
 @click.option('--overwrite', 'overwrite', flag_value=True, default=False)
 def cli_node_create_private_key(name, environment, system_folders, upload,
                                 organization_name, overwrite):
     """Create and upload a new private key (use with caughtion)"""
-
-    def create_client_and_authenticate(ctx):
-        """Create a client and authenticate."""
-        host = ctx.config['server_url']
-        port = ctx.config['port']
-        api_path = ctx.config['api_path']
-        api_key = ctx.config['api_key']
-
-        info(f"Connecting to server at '{host}:{port}{api_path}'")
-        username = q.text("Username:").ask()
-        password = q.password("Password:").ask()
-
-        client = Client(host, port, api_path)
-
-        try:
-            client.authenticate(username, password)
-
-        except Exception as e:
-            error("Could not authenticate with server!")
-            debug(e)
-            exit(1)
-
-        return client
 
     # retrieve context
     name, environment = (name, environment) if name else \
@@ -510,6 +485,7 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
             f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
             f"not be found."
         )
+        exit(1)
 
     # Create node context
     ctx = NodeContext(name, environment, system_folders)
@@ -592,3 +568,72 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
         warning("Public key not uploaded!")
 
     info("[Done]")
+
+
+#
+#   clean
+#
+@cli_node.command(name='clean')
+def cli_node_clean():
+    """ This command erases docker volumes"""
+    client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+
+    # retrieve all volumes
+    volumes = client.volumes.list()
+    canditates = []
+    msg = "This would remove the following volumes: "
+    for volume in volumes:
+        if volume.name[-6:] == "tmpvol":
+            canditates.append(volume)
+            msg += volume.name + ","
+    info(msg)
+
+    confirm = q.confirm(f"Are you sure?")
+    if confirm.ask():
+        for volume in canditates:
+            try:
+                volume.remove()
+                # info(volume.name)
+            except docker.errors.APIError as e:
+                error(f"Failed to remove volume {Fore.RED}'{volume.name}'"
+                      f"{Style.RESET_ALL}. Is it still in use?")
+                debug(e)
+                exit(1)
+    info("Done!")
+
+
+def print_log_worker(logs_stream):
+    for log in logs_stream:
+        print(log.decode(STRING_ENCODING), end="")
+
+
+def check_if_docker_deamon_is_running(docker_client):
+    try:
+        docker_client.ping()
+    except Exception:
+        error("Docker socket can not be found. Make sure Docker is running.")
+        exit(1)
+
+
+def create_client_and_authenticate(ctx):
+    """Create a client and authenticate."""
+    host = ctx.config['server_url']
+    port = ctx.config['port']
+    api_path = ctx.config['api_path']
+
+    info(f"Connecting to server at '{host}:{port}{api_path}'")
+    username = q.text("Username:").ask()
+    password = q.password("Password:").ask()
+
+    client = Client(host, port, api_path)
+
+    try:
+        client.authenticate(username, password)
+
+    except Exception as e:
+        error("Could not authenticate with server!")
+        debug(e)
+        exit(1)
+
+    return client
