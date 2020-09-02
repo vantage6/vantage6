@@ -41,15 +41,15 @@ setup(
         'flasgger==0.9.4',
         'schema==0.7.1',
         'bcrypt==3.1.7',
-        'questionary==1.5.1',
+        'questionary==1.5.2',
         'marshmallow==2.16.3',
         'marshmallow-sqlalchemy==0.15.0',
         'ipython==7.13.0',
         'requests==2.23.0',
         'psutil==5.7.0',
         'gevent==1.4.0',
-        'vantage6 >= 1.0.0',
-        'vantage6-common >= 1.0.0',
+        'vantage6 >= 1.1.0',
+        'vantage6-common >= 1.1.0',
     ],
     extras_require={
         'dev': [

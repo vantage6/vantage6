@@ -510,6 +510,5 @@ def run(ctx, *args, **kwargs):
         node.status = 'offline'
     session.commit()
 
-    kwargs.setdefault('log_output', True)
+    kwargs.setdefault('log_output', False)
     socketio.run(app, *args, **kwargs)
-

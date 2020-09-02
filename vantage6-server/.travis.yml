@@ -8,7 +8,6 @@ python:
 install:
   - pip install coverage
   - pip install python-coveralls
-  - pip install git+https://github.com/iknl/vantage6-common
   - pip install -e .[dev]
 
 script:
