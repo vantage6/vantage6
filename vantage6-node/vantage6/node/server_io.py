@@ -3,30 +3,23 @@
 This module is basically a high level interface to the central server.
 
 The module contains three communication classes: 1) The
-ClientNodeProtocol provides an interface from the Node to the central
-server, 2) The ClientUserProtocol provides an interface for users/
-researchers and finally 3) The ClientContainerProtocol which provides
+NodeClient provides an interface from the Node to the central
+server, 2) The UserClient provides an interface for users/
+researchers and finally 3) The ContainerClient which provides
 an interface for algorithms to the central server (this is mainly used
 by master containers).
 """
-import logging
-import requests
-import time
 import jwt
 import datetime
-import typing
 
 # from vantage6.node.encryption import Cryptor, NoCryptor
-from vantage6.client import ClientBaseProtocol
-from vantage6.node.util import (
-    bytes_to_base64s,
-    base64s_to_bytes
-)
+from vantage6.client import ClientBase
 from vantage6.client import WhoAmI
 
 module_name = __name__.split('.')[1]
 
-class ClientContainerProtocol(ClientBaseProtocol):
+
+class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
 
         A algorithm container (should) never communicate directly to the
@@ -40,7 +33,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
         we are happy that we can ignore this detail.
     """
 
-    def __init__(self, token:str, *args, **kwargs):
+    def __init__(self, token: str, *args, **kwargs):
         """ All permissions of the container are derived from the
             token.
 
@@ -51,7 +44,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
 
         # obtain the identity from the token
         container_identity = jwt.decode(token, verify=False)['identity']
-        self.image =  container_identity.get("image")
+        self.image = container_identity.get("image")
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.log.info(
@@ -122,8 +115,9 @@ class ClientContainerProtocol(ClientBaseProtocol):
             f"collaboration/{self.collaboration_id}/organization")
         return organizations
 
-    def post_task(self, name:str, image:str, collaboration_id:int,
-        input_:str='', description='', organization_ids:list=[]) -> dict:
+    def post_task(self, name: str, image: str, collaboration_id: int,
+                  input_: str = '', description='',
+                  organization_ids: list = None) -> dict:
         """ Post a new task at the central server.
 
             ! To create a new task from the algorithm container you
@@ -146,6 +140,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
                 task should run
         """
         self.log.debug("post task without encryption (is handled by proxy)")
+        organization_ids = organization_ids if organization_ids else []
         organization_json_list = []
         for org_id in organization_ids:
             organization_json_list.append(
@@ -165,7 +160,7 @@ class ClientContainerProtocol(ClientBaseProtocol):
         })
 
 
-class ClientNodeProtocol(ClientBaseProtocol):
+class NodeClient(ClientBase):
     """ Node interface to the central server."""
 
     def __init__(self, *args, **kwargs):
@@ -236,7 +231,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
         })
 
     def get_results(self, id=None, state=None, include_task=False,
-        task_id=None):
+                    task_id=None):
         """ Obtain the results for a specific task.
 
             Overload the definition of the parent by entering the
@@ -311,3 +306,7 @@ class ClientNodeProtocol(ClientBaseProtocol):
 
         return self.request(f"result/{id}", json=result, method='patch')
 
+
+# aliases for backward compatibility
+ClientContainerProtocol = ContainerClient
+ClientNodeProtocol = NodeClient
