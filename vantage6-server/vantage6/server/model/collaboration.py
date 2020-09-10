@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, exists
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -8,7 +8,7 @@ class Collaboration(Base):
     """Combination of 2 or more Organizations."""
 
     # fields
-    name = Column(String)
+    name = Column(String, unique=True)
     encrypted = Column(Boolean, default=1)
 
     # relationships
@@ -44,6 +44,12 @@ class Collaboration(Base):
             return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
             return None
+
+    @classmethod
+    def name_exists(cls, name):
+        session = Database().Session
+        return session.query(exists().where(cls.name == name)).scalar()
+
 
     def __repr__(self):
         number_of_organizations = len(self.organizations)

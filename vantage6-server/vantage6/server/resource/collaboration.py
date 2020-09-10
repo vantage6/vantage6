@@ -97,10 +97,15 @@ class Collaboration(Resource):
         )
         data = parser.parse_args()
 
+        name = data["name"]
+        if db.Collaboration.name_exists(name):
+            return {"msg": f"Collaboration name '{name}' already exists!"}, \
+                HTTPStatus.BAD_REQUEST
+
         encrypted = True if data["encrypted"] == 1 else False
 
         collaboration = db.Collaboration(
-            name=data['name'],
+            name=name,
             organizations=[
                 db.Organization.get(org_id) for org_id in data['organization_ids'] if db.Organization.get(org_id)
             ],
