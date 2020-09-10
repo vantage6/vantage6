@@ -17,8 +17,13 @@ from pathlib import Path
 
 
 from vantage6.server.model.base import Database
+from vantage6.server import db
+from vantage6.server.resource._schema import (
+    TaskIncludedSchema,
+    TaskSchema,
+    NodeSchema
+)
 
-from ._schema import *
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -66,9 +71,8 @@ class Node(Resource):
         results = db.Node.get(id)
         user_or_node = g.user or g.node
 
-        is_root = False
-
         # Only users can be root, not containers.
+        is_root = False
         if g.user:
             is_root = g.user.username == 'root'
 
@@ -121,7 +125,12 @@ class Node(Resource):
         # store the new node
         # TODO an admin does not have to belong to an organization?
         # TODO we need to check that the organization belongs to the collaboration
-        organization = g.user.organization
+        is_root = g.user.username == 'root'
+        if is_root:
+            organization = db.Organization.get(data["organization_id"])
+        else:
+            organization = g.user.organization
+
         node = db.Node(
             name="{} - {} Node".format(organization.name, collaboration.name),
             collaboration=collaboration,
@@ -141,7 +150,7 @@ class Node(Resource):
         if not node:
             return {"msg": "node with id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
 
-        if node.organization_id != g.user.organization_id and g.user.roles != 'admin':
+        if node.organization_id != g.user.organization_id and g.user.username != "root":
             return {"msg": "you are not allowed to delete this node"}, HTTPStatus.FORBIDDEN  # 403
 
         node.delete()
@@ -209,8 +218,6 @@ class NodeTasks(Resource):
     TODO also the user can only see nodes which belong to their organization
     """
 
-    task_result_schema = TaskResultSchema()
-
     @with_user_or_node
     @swag_from(str(Path(r"swagger/get_node_tasks.yaml")), endpoint='node_tasks')
     def get(self, id):
@@ -228,15 +235,16 @@ class NodeTasks(Resource):
         # select tasks from organization that are within the collaboration
         # of the node
         results = []
-        for result in node.organization.results:
+        # for task in :
 
-            if node.collaboration == result.task.collaboration:
-                # result belongs to node
-                if request.args.get('state') == 'open':
-                    if result.complete:
-                        results.append(result)
-                else:
-                    results.append(result)
+        #     if task.collaboration == task.collaboration:
+        #         # result belongs to node
+        #         if request.args.get('state') == 'open':
+        #             if not task.complete:
+        #                 results.append(task)
+        #         else:
+        #             results.append(task)
+        s = TaskIncludedSchema() if \
+            request.args.get('include') == 'results' else TaskSchema()
 
-        return self.task_result_schema.dump(results, many=True), \
-            HTTPStatus.OK  # 200
+        return s.dump(node.collaboration.tasks, many=True).data, HTTPStatus.OK  # 200
