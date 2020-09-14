@@ -85,8 +85,7 @@ class Node(Resource):
                 # Let's not make a fuss ...
                 return self.node_schema.dump(results, many=False)
 
-            if (results.organization_id != user_or_node.organization_id) \
-                    and 'admin' not in g.user.roles:
+            if (results.organization_id != user_or_node.organization_id):
                 msg = {"msg": "you are not allowed to see this node"}
                 return msg, HTTPStatus.FORBIDDEN  # 403
 
