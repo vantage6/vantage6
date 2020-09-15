@@ -4,14 +4,18 @@ Server IO
 This module is an interface to the central server.
 """
 import logging
-import requests
-import jwt
-import typing
 import pickle
+import typing
 
+import jwt
+import requests
+
+from vantage6.client import serialization
 from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
 
 module_name = __name__.split('.')[1]
+
+LEGACY = 'legacy'
 
 
 class ServerInfo(typing.NamedTuple):
@@ -301,8 +305,9 @@ class ClientBase(object):
         self._access_token = response.json()["access_token"]
 
     def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_: bytes = b'', description='',
-                  organization_ids: list = None) -> dict:
+                  input_='', description='',
+                  organization_ids: list = None,
+                  data_format=LEGACY) -> dict:
         """ Post a new task at the server.
 
             It will also encrypt `input_` for each receiving
@@ -316,13 +321,21 @@ class ClientBase(object):
             :param description: human readable description of the task
             :param organization_ids: id's of the organizations that need
                 to execute the task
+            :param data_format: Type of data format to use to send and receive data.
+                    possible values: 'json', 'pickle', 'legacy'. 'legacy' will use pickle serialization. Default is
+                    'legacy'.
         """
         assert self.cryptor, "Encryption has not yet been setup!"
 
         if organization_ids is None:
             organization_ids = []
 
-        serialized_input = pickle.dumps(input_)
+        if data_format == LEGACY:
+            serialized_input = pickle.dumps(input_)
+        else:
+            # Data will be serialized to bytes in the specified data format.
+            # It will be prepended with 'DATA_FORMAT.' in unicode.
+            serialized_input = data_format.encode() + b'.' + serialization.serialize(input_, data_format)
 
         organization_json_list = []
         for org_id in organization_ids:
@@ -332,8 +345,7 @@ class ClientBase(object):
 
             organization_json_list.append({
                 "id": org_id,
-                "input": self.cryptor.encrypt_bytes_to_str(serialized_input,
-                                                           pub_key)
+                "input": self.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
             })
 
         return self.request('task', method='post', json={
