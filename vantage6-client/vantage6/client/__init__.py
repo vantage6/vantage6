@@ -10,7 +10,7 @@ import typing
 import jwt
 import requests
 
-from vantage6.client import serialization
+from vantage6.client import serialization, deserialization
 from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
 
 module_name = __name__.split('.')[1]
@@ -478,7 +478,7 @@ class UserClient(ClientBase):
         unpacked_results = []
         for result in results:
             if result.get("result"):
-                result["result"] = pickle.loads(result.get("result"))
+                result["result"] = deserialization.load_data(result.get('result'))
             unpacked_results.append(result)
 
         return unpacked_results
