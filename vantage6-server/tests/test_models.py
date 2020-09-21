@@ -49,13 +49,13 @@ class TestUserModel(TestBaseModel):
     def test_relations(self):
         organization = self.entities.get("organizations")[0]
         user = organization.get("users")[0]
-        db_user = User.getByUsername(user.get("username"))
+        db_user = User.get_by_username(user.get("username"))
         self.assertEqual(db_user.organization.name, organization["name"])
 
     def test_read(self):
         for org in self.entities.get("organizations"):
             for user in org.get("users"):
-                db_user = User.getByUsername(user["username"])
+                db_user = User.get_by_username(user["username"])
                 self.assertEqual(db_user.username, user["username"])
                 self.assertEqual(db_user.firstname, user["firstname"])
                 self.assertEqual(db_user.lastname, user["lastname"])
@@ -72,13 +72,13 @@ class TestUserModel(TestBaseModel):
         )
         user.set_password("unit_pass")
         user.save()
-        db_user = User.getByUsername("unit")
+        db_user = User.get_by_username("unit")
         self.assertEqual(db_user, user)
 
     def test_methods(self):
         """"Test model methods."""
         user = self.entities.get("organizations")[0].get("users")[0]
-        assert User.getByUsername(user.get("username"))
+        assert User.get_by_username(user.get("username"))
         assert User.username_exists(user.get("username"))
         assert User.get_user_list()
 
@@ -178,7 +178,7 @@ class TestOrganizationModel(TestBaseModel):
             self.assertEqual(org.country, organization.get("country"))
 
             for user in organization.get("users"):
-                db_user = User.getByUsername(user.get("username"))
+                db_user = User.get_by_username(user.get("username"))
                 self.assertIsNotNone(db_user)
                 self.assertEqual(db_user.organization.name, organization.get("name"))
 

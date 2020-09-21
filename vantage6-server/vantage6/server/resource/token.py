@@ -101,7 +101,7 @@ class UserToken(Resource):
         log.info("trying to login '{}'".format(username))
 
         if db.User.username_exists(username):
-            user = db.User.getByUsername(username)
+            user = db.User.get_by_username(username)
             if not user.check_password(password):
                 msg = f"password for '{username}' is invalid"
                 log.error(msg)
@@ -115,7 +115,7 @@ class UserToken(Resource):
         return user, HTTPStatus.OK
 
 class NodeToken(Resource):
-    
+
     @swag_from(str(Path(r"swagger/post_token_node.yaml")), endpoint='node_token')
     def post(self):
         """Authenticate as Node."""
@@ -133,7 +133,7 @@ class NodeToken(Resource):
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
         node = db.Node.get_by_api_key(api_key)
-        
+
         if not node:  # login failed
             log.error(f"Api key is not recognised")
             return {"msg": "Api key is not recognised!"}
@@ -151,15 +151,15 @@ class NodeToken(Resource):
 
 
 class ContainerToken(Resource):
-    
+
     @only_for(['node'])
     @swag_from(str(Path(r"swagger/post_token_container.yaml")), endpoint='container_token')
     def post(self):
         """Create a token for a container running on a node."""
         log.debug("POST /token/container")
-        
+
         data = request.get_json()
-        
+
         task_id = data.get("task_id")
         claim_image = data.get("image")
         db_task = db.Task.get(task_id)
@@ -167,27 +167,27 @@ class ContainerToken(Resource):
             log.warning(f"Node {g.node.id} attempts to generate key for task {task_id} "\
                         "that does not exist")
             return {"msg": "Master task does not exist!"}, HTTPStatus.BAD_REQUEST
-        
+
         # verify that task the token is requested for exists
         if claim_image != db_task.image:
             log.warning(f"Node {g.node.id} attemts to generate key for image {claim_image} "\
                         f"that does not belong to task {task_id}.")
             return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
-        
+
         # check if the node is in the collaboration to which the task is enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
             log.warning(f"Node {g.node.id} attemts to generate key for task {task_id} "\
                         f"which is outside its collaboration ({g.node.collaboration_id}/{db_task.collaboration_id}).")
             return {"msg": "You are not within the collaboration of this task"}, \
                 HTTPStatus.UNAUTHORIZED
-        
+
         # validate that the task not has been finished yet
         if db_task.complete:
             log.warning(f"Node {g.node.id} attempts to generate a key for completed "\
                         "task {task_id}")
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
-        
-        # container identity consists of its node_id, 
+
+        # container identity consists of its node_id,
         # task_id, collaboration_id and image_id
         container = {
             "type": "container",
@@ -212,4 +212,3 @@ class RefreshToken(Resource):
         ret = {'access_token': create_access_token(user_or_node)}
 
         return ret, HTTPStatus.OK
-        
