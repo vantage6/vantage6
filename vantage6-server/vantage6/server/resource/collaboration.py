@@ -21,7 +21,7 @@ from vantage6.server.resource._schema import (
     OrganizationSchema,
 )
 from vantage6.server.resource import with_user_or_node, with_user, only_for
-from vantage6.server.resource._schema import OrganizationSchema, NodeSchema
+from vantage6.server.resource._schema import OrganizationSchema, NodeSchemaSimple
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -249,7 +249,7 @@ class CollaborationOrganization(Resource):
 class CollaborationNode(Resource):
     """Resource for /api/collaboration/<int:id>/node."""
 
-    node_schema = NodeSchema()
+    node_schema = NodeSchemaSimple()
 
     @with_user
     @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")), endpoint='collaboration_with_id_node')

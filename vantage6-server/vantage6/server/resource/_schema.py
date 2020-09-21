@@ -220,30 +220,31 @@ class NodeSchemaSimple(HATEOASModelSchema):
     #     exclude=['organizations', 'nodes', 'tasks']
     # )
 
-    organization = fields.Nested(
-        'OrganizationSchema',
-        many=False,
-        exclude=[
-            '_id',
-            'id',
-            'domain',
-            'address1',
-            'address2',
-            'zipcode',
-            'country',
-            'nodes',
-            'collaborations',
-            'users',
-            ]
-    )
-
+    # organization = fields.Nested(
+    #     'OrganizationSchema',
+    #     many=False,
+    #     exclude=[
+    #         '_id',
+    #         'id',
+    #         'domain',
+    #         'address1',
+    #         'address2',
+    #         'zipcode',
+    #         'country',
+    #         'nodes',
+    #         'collaborations',
+    #         'users',
+    #         'results'
+    #         ]
+    # )
+    organization = fields.Method("organization")
 
     class Meta:
         model = db.Node
         exclude = [
             # 'id',
             # 'organization',
-            # 'collaboration',
+            'collaboration',
             'taskresults',
             'api_key',
             'type',
