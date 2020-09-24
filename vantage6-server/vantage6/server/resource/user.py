@@ -87,6 +87,7 @@ class User(Resource):
         parser.add_argument("roles", type=str, required=True, help="This field is required")
         parser.add_argument("password", type=str, required=True, help="This field is required")
         parser.add_argument("organization_id", type=int, required=False, help="This is only used if you're root")
+        parser.add_argument("email", type=str, required=True, help="This field is required")
         data = parser.parse_args()
 
         if db.User.username_exists(data["username"]):
@@ -114,7 +115,8 @@ class User(Resource):
             firstname=data["firstname"],
             lastname=data["lastname"],
             roles=data["roles"],
-            organization_id=organization_id
+            organization_id=organization_id,
+            email=data["email"]
         )
 
         user.set_password(data["password"])

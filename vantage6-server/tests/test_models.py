@@ -68,7 +68,8 @@ class TestUserModel(TestBaseModel):
             firstname="un",
             lastname="it",
             roles="admin",
-            organization=db_organization
+            organization=db_organization,
+            email="unit@org.org"
         )
         user.set_password("unit_pass")
         user.save()
@@ -84,10 +85,10 @@ class TestUserModel(TestBaseModel):
 
     def test_duplicate_user(self):
         """Duplicate usernames are not permitted."""
-        user1 = User(username="duplicate-user")
+        user1 = User(username="duplicate-user", email="unique@org.org")
         user1.save()
 
-        user2 = User(username="duplicate-user")
+        user2 = User(username="duplicate-user", email="something-else@org.org")
         self.assertRaises(IntegrityError, user2.save)
         # Database().Session.rollback()
 

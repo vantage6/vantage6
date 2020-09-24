@@ -62,7 +62,7 @@ class ResetPassword(Resource):
         password = body.get("password")
 
         if not reset_token or not password:
-            return {"msg", "reset token and/or password is missing!"}, \
+            return {"msg": "reset token and/or password is missing!"}, \
                 HTTPStatus.BAD_REQUEST
 
         # obtain user
