@@ -13,6 +13,7 @@ from flask_jwt_extended import (
     create_access_token,
     decode_token
 )
+from jwt.exceptions import DecodeError
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
@@ -33,16 +34,16 @@ def setup(api, api_base):
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        RecoverPassword,
-        path+'/lost',
-        endpoint='recover_password',
+        ResetPassword,
+        path+'/reset',
+        endpoint="reset_password",
         methods=('POST',)
     )
 
     api.add_resource(
-        ResetPassword,
-        path+'/reset',
-        endpoint="reset_password",
+        RecoverPassword,
+        path+'/lost',
+        endpoint='recover_password',
         methods=('POST',)
     )
 
@@ -53,6 +54,8 @@ def setup(api, api_base):
 class ResetPassword(Resource):
     """user can use recover token to reset their password."""
 
+    @swag_from(str(Path(r"swagger/post_reset_password.yaml")),
+               endpoint='reset_password')
     def post(self):
         """"submit email-adress receive token."""
 
@@ -66,7 +69,11 @@ class ResetPassword(Resource):
                 HTTPStatus.BAD_REQUEST
 
         # obtain user
-        user_id = decode_token(reset_token)['identity'].get('id')
+        try:
+            user_id = decode_token(reset_token)['identity'].get('id')
+        except DecodeError:
+            return {"msg": "Invalid recovery token!"}, HTTPStatus.BAD_REQUEST
+
         log.debug(user_id)
         user = db.User.get(user_id)
         log.debug(user.username)
@@ -83,8 +90,8 @@ class ResetPassword(Resource):
 class RecoverPassword(Resource):
     """send a mail containing a recover token"""
 
-    # @swag_from(str(Path(r"swagger/post_token_user.yaml")),
-            #    endpoint='recover_password')
+    @swag_from(str(Path(r"swagger/post_recover_password.yaml")),
+               endpoint='recover_password')
     def post(self):
         """username or email generates a token which is mailed."""
 
@@ -118,13 +125,14 @@ class RecoverPassword(Resource):
             {"id": str(user.id)}, expires_delta=expires
         )
 
-        send_email("password reset",
-                   sender="support@vantage6.ai",
-                   recipients=[user.email],
-                   text_body=render_template("mail/reset_password.txt",
-                                             token=reset_token),
-                   html_body=render_template("mail/reset_password.html",
-                                             token=reset_token)
+        send_email(
+            "password reset",
+            sender="support@vantage6.ai",
+            recipients=[user.email],
+            text_body=render_template("mail/reset_password.txt",
+                                      token=reset_token),
+            html_body=render_template("mail/reset_password.html",
+                                      token=reset_token)
         )
 
         return ret
