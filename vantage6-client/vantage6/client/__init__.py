@@ -4,8 +4,7 @@ Server IO
 This module is an interface to the central server.
 """
 import logging
-import requests
-import jwt
+import pickle
 import typing
 import jwt
 import requests
@@ -16,6 +15,8 @@ from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
 
 
 module_name = __name__.split('.')[1]
+
+LEGACY = 'legacy'
 
 
 class ServerInfo(typing.NamedTuple):
@@ -305,8 +306,9 @@ class ClientBase(object):
         self._access_token = response.json()["access_token"]
 
     def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_: bytes = b'', description='',
-                  organization_ids: list = None) -> dict:
+                  input_='', description='',
+                  organization_ids: list = None,
+                  data_format=LEGACY) -> dict:
         """ Post a new task at the server.
 
             It will also encrypt `input_` for each receiving
@@ -345,8 +347,7 @@ class ClientBase(object):
 
             organization_json_list.append({
                 "id": org_id,
-                "input": self.cryptor.encrypt_bytes_to_str(serialized_input,
-                                                           pub_key)
+                "input": self.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
             })
 
         return self.request('task', method='post', json={
