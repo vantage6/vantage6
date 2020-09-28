@@ -40,7 +40,8 @@ def serializer(data_format: DataFormat):
         # Register serialization function
         _serializers[data_format] = func
 
-        # Return function without modifications so it can also be run without retrieving it from `_serializers`.
+        # Return function without modifications so it can also be run without
+        # retrieving it from `_serializers`.
         return func
 
     return decorator_serializer
