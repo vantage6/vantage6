@@ -34,11 +34,16 @@ setup(
        'cryptography==2.8',
        'requests==2.23.0',
        'PyJWT',
+       'pandas',
        'vantage6-common >= 1.1.0',
     ],
+    tests_require=["pytest"],
     package_data={
         'vantage6.client': [
             '__build__',
+        ],
+        'vantage6.tools': [
+            '__build__'
         ],
     }
 )
