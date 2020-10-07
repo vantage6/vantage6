@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import patch
 
 import pandas as pd
-from pytest import raises, mark
+from pytest import raises
 
 from vantage6.tools import docker_wrapper
 from vantage6.tools.exceptions import DeserializationException
