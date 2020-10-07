@@ -8,10 +8,12 @@ python:
 install:
   - pip install coverage==4.5.4
   - pip install python-coveralls
+  - pip install pytest-cov
   - pip install -e .
 
 script:
-  - coverage run --source=vantage6 --omit="utest.py" utest.py
+  - pytest --cov tests/
+  #- coverage run --source=vantage6 --omit="utest.py" utest.py
 
 after_success:
   - coveralls
