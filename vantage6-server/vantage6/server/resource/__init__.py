@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
-"""
-Resources ...
-"""
 import datetime
 import logging
 import os
-import os.path
-import sys
 
 from functools import wraps
 
 from flask import g, request
 from flask_jwt_extended import get_jwt_claims, get_jwt_identity, jwt_required
 
+from vantage6.common import logger_name
 from vantage6.server import db
 
-log = logging.getLogger(__name__.split('.')[-1])
+log = logging.getLogger(logger_name(__name__))
+
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types = ['user', 'node', 'container']):
+def only_for(types=['user', 'node', 'container']):
     """JWT endpoint protection decorator"""
     def protection_decorator(fn):
         @wraps(fn)
@@ -62,6 +59,7 @@ def only_for(types = ['user', 'node', 'container']):
         return jwt_required(decorator)
     return protection_decorator
 
+
 def get_and_update_authenticatable_info(auth_id):
     """Get DB entity from ID and update info."""
     auth = db.Authenticatable.get(auth_id)
@@ -69,6 +67,7 @@ def get_and_update_authenticatable_info(auth_id):
     auth.ip = request.remote_addr
     auth.save()
     return auth
+
 
 # create alias decorators
 with_user_or_node = only_for(["user", "node"])

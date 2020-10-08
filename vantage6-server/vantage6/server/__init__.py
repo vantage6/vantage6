@@ -1,46 +1,40 @@
 # -*- coding: utf-8 -*-
-import os, sys
-import importlib
-import flask_socketio
 import datetime
+import importlib
 import logging
+import os
 import uuid
+import json
+
+from flasgger import Swagger
+from flask import Flask, make_response, request, session, current_app
+from flask_cors import CORS
+from flask_jwt_extended import (JWTManager, get_jwt_identity,
+                                verify_jwt_in_request)
+from flask_marshmallow import Marshmallow
+from flask_restful import Api
+from flask_socketio import SocketIO
+
+from vantage6.server import db
+from vantage6.common import logger_name
+from vantage6.server.globals import APPNAME
+from vantage6.server.websockets import DefaultSocketNamespace
+from vantage6.server.resource.swagger import swagger_template
 
 TERMINAL_AVAILABLE = True
 try:
     # Stuff needed for running shell in a browser
+    import fcntl
     import pty
     import select
-    import subprocess
     import struct
-    import fcntl
+    import subprocess
     import termios
-except:
+except Exception:
     TERMINAL_AVAILABLE = False
 
-from flask import Flask, Response, request, render_template, make_response, g, session
-from flask_restful import Resource, Api, fields
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager, get_jwt_identity, get_jwt_claims, get_raw_jwt, jwt_required, jwt_optional, verify_jwt_in_request
-
-from flask_marshmallow import Marshmallow
-from flask_socketio import SocketIO, emit, send,join_room, leave_room
-
-from flasgger import Swagger
-
-import json
-
-from ._version import version_info, __version__
-from vantage6.server import db
-
-from vantage6.server import util
-from vantage6.server.globals import APPNAME
-from vantage6.server.websockets import DefaultSocketNamespace
-from .resource.swagger import swagger_template
-
-module_name = __name__.split('.')[-1]
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
-
 
 # ------------------------------------------------------------------------------
 # Initialize Flask
@@ -99,14 +93,27 @@ ma = Marshmallow(app)
 # ------------------------------------------------------------------------------
 # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
 # ------------------------------------------------------------------------------
+from flask_principal import Principal, Identity, RoleNeed, identity_changed
+
 jwt = JWTManager(app)
+
+Principal(app, use_sessions=False)
+
 
 @jwt.user_claims_loader
 def user_claims_loader(identity):
+    log.debug("Hi")
     roles = []
     if isinstance(identity, db.User):
         type_ = 'user'
         roles = identity.roles.split(',')
+        auth_identity = Identity(identity.id)
+        log.debug(f"roles={identity.roles}")
+        for role in roles:
+            auth_identity.provides.add(RoleNeed(role))
+        identity_changed.send(current_app._get_current_object(),
+                              identity=auth_identity)
+
     elif isinstance(identity, db.Node):
         type_ = 'node'
     elif isinstance(identity, dict):
@@ -123,7 +130,7 @@ def user_claims_loader(identity):
 
 @jwt.user_identity_loader
 def user_identity_loader(identity):
-
+    log.debug("How do you do?")
     if isinstance(identity, db.Authenticatable):
         return identity.id
     if isinstance(identity, dict):
@@ -131,6 +138,7 @@ def user_identity_loader(identity):
 
     log.error(f"Could not create a JSON serializable identity \
                 from '{str(identity)}'")
+
 
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):

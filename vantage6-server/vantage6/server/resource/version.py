@@ -31,14 +31,22 @@ def setup(api, API_BASE):
         methods=('GET',)
     )
 
+from flask_principal import Permission, RoleNeed
+from vantage6.server.resource import with_user
+
+test_permission = Permission(RoleNeed("root"))
+test_permission.description = "Testing the principal package!"
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Version(Resource):
 
+    @with_user
+    @test_permission.require(http_exception=403)
     @swag_from(str(Path(r"swagger/version.yaml")), endpoint='version')
     def get(self):
         """Return the version of this server."""
 
-        return {"version": vantage6.server.__version__}
+        return {"----->version": vantage6.server.__version__}
