@@ -18,7 +18,7 @@ class User(Authenticatable):
     # overwrite id with linked id to the authenticatable
     id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
     __mapper_args__ = {
-        'polymorphic_identity':'user',
+        'polymorphic_identity': 'user',
     }
 
     # fields
@@ -31,6 +31,8 @@ class User(Authenticatable):
 
     # relationships
     organization = relationship("Organization", back_populates="users")
+    roles = relationship("Role", back_populates="users",
+                         secondary="Permission")
 
     def __repr__(self):
         organization = self.organization.name if self.organization else "None"

@@ -21,6 +21,9 @@ from vantage6.server.globals import APPNAME
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.resource.swagger import swagger_template
 
+# load version symbol in pkg context, do not remove!
+from vantage6.server._version import __version__
+
 TERMINAL_AVAILABLE = True
 try:
     # Stuff needed for running shell in a browser
@@ -102,17 +105,13 @@ Principal(app, use_sessions=False)
 
 @jwt.user_claims_loader
 def user_claims_loader(identity):
-    log.debug("Hi")
+    log.debug("user_claims_loader")
     roles = []
     if isinstance(identity, db.User):
         type_ = 'user'
         roles = identity.roles.split(',')
-        auth_identity = Identity(identity.id)
+
         log.debug(f"roles={identity.roles}")
-        for role in roles:
-            auth_identity.provides.add(RoleNeed(role))
-        identity_changed.send(current_app._get_current_object(),
-                              identity=auth_identity)
 
     elif isinstance(identity, db.Node):
         type_ = 'node'
@@ -130,6 +129,7 @@ def user_claims_loader(identity):
 
 @jwt.user_identity_loader
 def user_identity_loader(identity):
+    log.debug("user_identity_loader")
     log.debug("How do you do?")
     if isinstance(identity, db.Authenticatable):
         return identity.id
@@ -142,9 +142,25 @@ def user_identity_loader(identity):
 
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
+    log.debug("user_load_callback")
     if isinstance(identity, int):
-        return db.Authenticatable.get(identity)
+        log.debug(identity)
+
+        auth_identity = Identity(identity)
+
+        auth = db.Authenticatable.get(identity)
+
+        if isinstance(auth, db.User):
+            roles = auth.roles.split(",")
+            for role in roles:
+                log.debug(role)
+                auth_identity.provides.add(RoleNeed(role))
+            identity_changed.send(current_app._get_current_object(),
+                                  identity=auth_identity)
+
+        return auth
     else:
+        log.debug(identity)
         return identity
 
 

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
-import os
 
 from functools import wraps
 
 from flask import g, request
-from flask_jwt_extended import get_jwt_claims, get_jwt_identity, jwt_required
+from flask_jwt_extended import (
+    get_jwt_claims, get_jwt_identity, jwt_required
+)
 
 from vantage6.common import logger_name
 from vantage6.server import db

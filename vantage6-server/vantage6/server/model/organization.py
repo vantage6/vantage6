@@ -1,8 +1,8 @@
-import base64 
+import base64
 
 from sqlalchemy import Column, String, LargeBinary
 from sqlalchemy.orm import Session, relationship
-from sqlalchemy.ext.hybrid import hybrid_property 
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.server.globals import STRING_ENCODING
@@ -15,9 +15,9 @@ from .user import User
 
 class Organization(Base):
     """A legal entity.
-    
+
     An organization plays a central role in managing distributed tasks. Each
-    Organization contains a public key which other organizations can use to 
+    Organization contains a public key which other organizations can use to
     send encrypted messages that only this organization can read.
     """
 
@@ -37,6 +37,7 @@ class Organization(Base):
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
     created_tasks = relationship("Task", back_populates="initiator")
+    roles = relationship("Role", back_populates="organization")
 
     @classmethod
     def get_by_name(cls, name):
