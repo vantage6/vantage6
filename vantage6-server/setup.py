@@ -7,8 +7,12 @@ from setuptools import setup, find_namespace_packages
 here = path.abspath(path.dirname(__file__))
 
 # get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+# with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+#     long_description = f.read()
+long_description = (
+    "GitHub: [https://github.com/iknl/vantage6]"
+    "(https://github.com/iknl/vantage6)"
+)
 
 # Read the API version from disk. This file should be located in the package
 # folder, since it's also used to set the pkg.__version__ variable.
