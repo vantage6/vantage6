@@ -21,6 +21,7 @@ from vantage6.server.resource._schema import (
     OrganizationSchema,
 )
 from vantage6.server.resource import with_user_or_node, with_user, only_for
+from vantage6.server.resource._schema import OrganizationSchema, NodeSchemaSimple
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -97,10 +98,15 @@ class Collaboration(Resource):
         )
         data = parser.parse_args()
 
+        name = data["name"]
+        if db.Collaboration.name_exists(name):
+            return {"msg": f"Collaboration name '{name}' already exists!"}, \
+                HTTPStatus.BAD_REQUEST
+
         encrypted = True if data["encrypted"] == 1 else False
 
         collaboration = db.Collaboration(
-            name=data['name'],
+            name=name,
             organizations=[
                 db.Organization.get(org_id) for org_id in data['organization_ids'] if db.Organization.get(org_id)
             ],
@@ -189,8 +195,9 @@ class CollaborationOrganization(Resource):
         # organization_ids = collaboration.get_organization_ids()
         # if g.user.organization_id not in organization_ids and "admin" not in g.user.roles:
         #     return {"msg": "only users that belong to this collaboration can view its organizations"}, 403
-
-        return collaboration.organizations, HTTPStatus.OK
+        org_schema = OrganizationSchema()
+        return org_schema.dump(collaboration.organizations, many=True).data, \
+            HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
@@ -242,6 +249,8 @@ class CollaborationOrganization(Resource):
 class CollaborationNode(Resource):
     """Resource for /api/collaboration/<int:id>/node."""
 
+    node_schema = NodeSchemaSimple()
+
     @with_user
     @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
     def get(self, id):
@@ -252,7 +261,8 @@ class CollaborationNode(Resource):
                 id
             )}, HTTPStatus.NOT_FOUND
 
-        return collaboration.nodes, HTTPStatus.OK
+        return self.node_schema.dump(collaboration.nodes, many=True).data, \
+            HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
@@ -275,7 +285,8 @@ class CollaborationNode(Resource):
 
         collaboration.nodes.append(node)
         collaboration.save()
-        return collaboration.nodes
+        return self.node_schema.dump(collaboration.nodes, many=True), \
+             HTTPStatus.CREATED
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_collaboration_node.yaml")), endpoint='collaboration_with_id_node')

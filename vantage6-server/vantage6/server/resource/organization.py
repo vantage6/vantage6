@@ -60,9 +60,9 @@ class Organization(Resource):
     org_schema = OrganizationSchema()
 
     @only_for(["user", "node", "container"])
-    @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")), 
+    @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")),
         endpoint='organization_with_id')
-    @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")), 
+    @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")),
         endpoint='organization_without_id')
     def get(self, id=None):
         organization = db.Organization.get(id)
@@ -74,7 +74,7 @@ class Organization(Resource):
             HTTPStatus.OK
 
     @only_for(["user"])
-    @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")), 
+    @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
         endpoint='organization_without_id')
     def post(self):
         """Create a new organization."""
@@ -86,7 +86,8 @@ class Organization(Resource):
             address2=data.get('address2' ''),
             zipcode=data.get('zipcode', ''),
             country=data.get('country', ''),
-            public_key=data.get('public_key', '')
+            public_key=data.get('public_key', ''),
+            domain=data.get('domain', '')
         )
         organization.save()
 
@@ -97,19 +98,19 @@ class Organization(Resource):
     @only_for(["user", "node"])
     def patch(self, id):
         """Update organization."""
-        
+
         organization = db.Organization.get(id)
         if not organization:
             return {"msg": f"Organization with id {id} not found"}, \
                 HTTPStatus.NOT_FOUND
-        
+
         data = request.get_json()
         fields = ["name", "address1", "address2", "zipcode", "country", \
-            "public_key"]
+            "public_key", "domain"]
         for field in fields:
             if data.get(field):
                 setattr(organization, field, data.get(field))
-        
+
         organization.save()
         return organization, HTTPStatus.OK
 
@@ -176,5 +177,3 @@ class OrganizationNode(Resource):
     #     node.save()
     #
     #     return node
-
-
