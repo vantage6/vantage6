@@ -46,8 +46,8 @@ WEB_BASE = '/app'
 # Create Flask app
 ROOT_PATH = os.path.dirname(__file__)
 app = Flask(APPNAME, root_path=ROOT_PATH)
-
-app.config['JWT_AUTH_URL_RULE'] ='/api/token'
+app.config['PROPAGATE_EXCEPTIONS'] = True
+app.config['JWT_AUTH_URL_RULE'] = '/api/token'
 
 # False means refresh tokens never expire
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = False
