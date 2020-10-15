@@ -26,7 +26,6 @@ class User(Authenticatable):
     password = Column(String)
     firstname = Column(String)
     lastname = Column(String)
-    roles = Column(String)
     organization_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships

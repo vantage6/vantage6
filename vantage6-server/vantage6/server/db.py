@@ -18,6 +18,8 @@ from .model import (
     Member,
     Result,
     Collaboration,
+    Role,
+    Rule
 )
 
 from vantage6.server.util import logger_name
@@ -61,5 +63,3 @@ def jsonable(value):
 def jsonify(value):
     """Convert a (list of) SQLAlchemy instance(s) to a JSON (string)."""
     return json.dumps(jsonable(value))
-
-

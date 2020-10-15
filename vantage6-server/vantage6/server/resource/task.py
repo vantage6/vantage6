@@ -87,7 +87,7 @@ class Task(Resource):
 
         if not collaboration:
             return {"msg": f"collaboration id={collaboration_id} not found"},\
-            HTTPStatus.NOT_FOUND
+                   HTTPStatus.NOT_FOUND
 
         organizations_json_list = data.get('organizations')
         org_ids = [org.get("id") for org in organizations_json_list]
@@ -271,4 +271,3 @@ class TaskResult(Resource):
             return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
 
         return self.task_result_schema.dump(task.results, many=True).data, HTTPStatus.OK
-

@@ -97,7 +97,7 @@ ma = Marshmallow(app)
 # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
 # ------------------------------------------------------------------------------
 from flask_principal import Principal, Identity, RoleNeed, identity_changed
-
+from vantage6.server.permission import RuleNeed
 jwt = JWTManager(app)
 
 Principal(app, use_sessions=False)
@@ -109,9 +109,7 @@ def user_claims_loader(identity):
     roles = []
     if isinstance(identity, db.User):
         type_ = 'user'
-        roles = identity.roles.split(',')
-
-        log.debug(f"roles={identity.roles}")
+        roles = [role.name for role in identity.roles]
 
     elif isinstance(identity, db.Node):
         type_ = 'node'
@@ -129,8 +127,8 @@ def user_claims_loader(identity):
 
 @jwt.user_identity_loader
 def user_identity_loader(identity):
+    """"JSON serializing identity to be used by create_access_token."""
     log.debug("user_identity_loader")
-    log.debug("How do you do?")
     if isinstance(identity, db.Authenticatable):
         return identity.id
     if isinstance(identity, dict):
@@ -151,10 +149,16 @@ def user_loader_callback(identity):
         auth = db.Authenticatable.get(identity)
 
         if isinstance(auth, db.User):
-            roles = auth.roles.split(",")
-            for role in roles:
-                log.debug(role)
-                auth_identity.provides.add(RoleNeed(role))
+            for role in auth.roles:
+                for rule in role.rules:
+                    auth_identity.provides.add(
+                        RuleNeed(
+                            name=rule.name,
+                            scope=rule.scope,
+                            operation=rule.operation
+                        )
+                    )
+
             identity_changed.send(current_app._get_current_object(),
                                   identity=auth_identity)
 
@@ -523,9 +527,16 @@ def run(ctx, *args, **kwargs):
         db.User.getByUsername("root")
     except Exception:
         log.warn("No root user found! Is this the first run?")
+        log.warn("Creating root role...")
+        root = db.Role(
+            name="Root",
+            description="Super role"
+        )
+        root.rules = db.Rule.get()
         log.warn("Creating root: username=root, password=root")
-        user = db.User(username="root", roles="root")
+        user = db.User(username="root", roles=[root])
         user.set_password("root")
+
         user.save()
 
     # set all nodes to offline

@@ -6,26 +6,25 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from vantage6.server.model import Base
 
 
-class Role(Base):
+class Rule(Base):
     """Rules to determine permissions in an API endpoint.
     """
 
     # fields
     name = Column(Text)
-    description = Column(Text)
-    organization_id = Column(Integer, ForeignKey("organization.id"))
+    operation = Column(Integer)
+    scope = Column(Integer)
+    description = Column(String)
 
     # relationships
-    rules = relationship("Rule", back_populates="roles",
+    roles = relationship("Role", back_populates="rules",
                          secondary="role_rule_association")
-    organization = relationship("Organization", back_populates="roles")
-    users = relationship("User", back_populates="roles", secondary="Permission")
 
     def __repr__(self):
         return (
-            f"<Role {self.id}, "
+            f"<Rule {self.id}, "
             f"name: {self.name}, "
-            f"description: {self.description}, "
-            f"users: {len(self.users)}"
+            f"operation: {self.operation}, "
+            f"scope: {len(self.scope)}"
             ">"
         )
