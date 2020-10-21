@@ -42,6 +42,8 @@ class HATEOASModelSchema(ModelSchema):
             lambda obj: self.hateos("result", obj))
         setattr(self, "task",
             lambda obj: self.hateos("task", obj))
+        setattr(self, "parent_",
+            lambda obj: self.hateos("parent", obj, endpoint="task"))
 
         # to many relationship
         setattr(self, "nodes",
@@ -56,6 +58,14 @@ class HATEOASModelSchema(ModelSchema):
             lambda obj: self.hateos_list("result", obj))
         setattr(self, "tasks",
             lambda obj: self.hateos_list("task", obj))
+        setattr(self, "children",
+            lambda obj: self.hateos_list(
+                "children",
+                obj,
+                plural="children",
+                endpoint="task"
+            )
+        )
 
         # special cases
 
@@ -72,17 +82,28 @@ class HATEOASModelSchema(ModelSchema):
         second_elem = getattr(first_elem, second)
         return self._hateos_from_related(second_elem, second)
 
-    def hateos(self, name, obj):
+    def hateos(self, name, obj, endpoint=None):
         elem = getattr(obj, name)
-        return self._hateos_from_related(elem, name)
+        endpoint = endpoint if endpoint else name
+        if elem:
+            return self._hateos_from_related(elem, endpoint)
+        else:
+            return None
 
-    def hateos_list(self, name, obj):
+
+    def hateos_list(self, name, obj, plural=None, endpoint=None):
         hateos_list = list()
         type_ = type(obj)
-        for elem in getattr(obj, name+"s"):
-            hateos = self._hateos_from_related(elem, name)
+        plural_ = plural if plural else name+"s"
+        endpoint = endpoint if endpoint else name
+        for elem in getattr(obj, plural_):
+            hateos = self._hateos_from_related(elem, endpoint)
             hateos_list.append(hateos)
-        return hateos_list
+
+        if hateos_list:
+            return hateos_list
+        else:
+            return None
 
     def _hateos_from_related(self, elem, name):
         _id = elem.id
@@ -105,6 +126,8 @@ class TaskSchema(HATEOASModelSchema):
     complete = fields.Boolean()
     collaboration = fields.Method("collaboration")
     results = fields.Method("results")
+    parent = fields.Method("parent_")
+    children = fields.Method("children")
 
 
 # /task/{id}?include=result
@@ -197,30 +220,31 @@ class NodeSchemaSimple(HATEOASModelSchema):
     #     exclude=['organizations', 'nodes', 'tasks']
     # )
 
-    organization = fields.Nested(
-        'OrganizationSchema',
-        many=False,
-        exclude=[
-            '_id',
-            'id',
-            'domain',
-            'address1',
-            'address2',
-            'zipcode',
-            'country',
-            'nodes',
-            'collaborations',
-            'users',
-            ]
-    )
-
+    # organization = fields.Nested(
+    #     'OrganizationSchema',
+    #     many=False,
+    #     exclude=[
+    #         '_id',
+    #         'id',
+    #         'domain',
+    #         'address1',
+    #         'address2',
+    #         'zipcode',
+    #         'country',
+    #         'nodes',
+    #         'collaborations',
+    #         'users',
+    #         'results'
+    #         ]
+    # )
+    organization = fields.Method("organization")
 
     class Meta:
         model = db.Node
         exclude = [
             # 'id',
             # 'organization',
-            # 'collaboration',
+            'collaboration',
             'taskresults',
             'api_key',
             'type',

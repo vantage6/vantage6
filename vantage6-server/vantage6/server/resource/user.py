@@ -87,6 +87,7 @@ class User(Resource):
         parser.add_argument("roles", type=str, required=True, help="This field is required")
         parser.add_argument("password", type=str, required=True, help="This field is required")
         parser.add_argument("organization_id", type=int, required=False, help="This is only used if you're root")
+        parser.add_argument("email", type=str, required=True, help="This field is required")
         data = parser.parse_args()
 
         if db.User.username_exists(data["username"]):
@@ -106,7 +107,7 @@ class User(Resource):
             log.warn(f'Running as root and creating user for organization_id={organization_id}')
         else:
             organization_id = g.user.organization_id
-            log.warn(f'Creating user for organization_id={organization_id}') 
+            log.warn(f'Creating user for organization_id={organization_id}')
 
         # Ok, looks like we got most of the security hazards out of the way
         user = db.User(
@@ -114,13 +115,15 @@ class User(Resource):
             firstname=data["firstname"],
             lastname=data["lastname"],
             roles=data["roles"],
-            organization_id=organization_id
+            organization_id=organization_id,
+            email=data["email"]
         )
 
         user.set_password(data["password"])
         user.save()
 
         return self.user_schema.dump(user), HTTPStatus.CREATED
+
     @with_user
     @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")), endpoint='user_with_id')
     def patch(self, id):
@@ -129,8 +132,11 @@ class User(Resource):
 
         if not user:
             return {"msg": "user id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-        if user.organization_id != g.user.organization_id and g.user.roles != "admin":
-            return {"msg": "you do not have permission to modify user id={}".format(id)}, HTTPStatus.FORBIDDEN
+
+        is_root = g.user.username == 'root'
+        if (user.organization_id != g.user.organization_id) and not is_root:
+            return {"msg": f"No permission to modify user_id={id}"}, \
+                HTTPStatus.FORBIDDEN
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=False, help="This field is required")
@@ -153,7 +159,7 @@ class User(Resource):
         if data["roles"]:
             user.roles = data["roles"]
         if data["organization_id"]:
-            if g.user.username == 'root':
+            if is_root:
                 user.organization_id = data["organization_id"]
                 log.warn(f'Running as root and assigning (new) organization_id={data["organization_id"]}')
             else:
@@ -174,7 +180,8 @@ class User(Resource):
         user = db.User.get(id)
         if not user:
             return {"msg": "user id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-        if user.organization_id != g.user.organization_id and g.user.roles != "admin":
+        is_root = g.user.username == 'root'
+        if user.organization_id != g.user.organization_id and not is_root:
             log.warning(
                 "user {} has tried to delete user {} but does not have the required permissions".format(
                     g.user.id,

@@ -102,7 +102,7 @@ class UserToken(Resource):
         log.info("trying to login '{}'".format(username))
 
         if db.User.username_exists(username):
-            user = db.User.getByUsername(username)
+            user = db.User.get_by_username(username)
             if not user.check_password(password):
                 msg = f"password for '{username}' is invalid"
                 log.error(msg)

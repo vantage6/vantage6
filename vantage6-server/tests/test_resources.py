@@ -1,25 +1,21 @@
 # -*- coding: utf-8 -*-
-import types
 import yaml
 import unittest
-import doctest
 import logging
 import json
 
-from flask import Flask, Response as BaseResponse, json
+from unittest.mock import MagicMock, patch
+from flask import Response as BaseResponse
 from flask.testing import FlaskClient
 from werkzeug.utils import cached_property
 
-from vantage6.common.globals import APPNAME #, VERSION
+from vantage6.common.globals import APPNAME
 from vantage6.server.globals import PACAKAGE_FOLDER
 from vantage6 import server
-from vantage6.server import (
-    util,
-    db,
-    context
-)
-from vantage6.server.controller.fixture import load
+from vantage6.server import context
 from vantage6.server.model.base import Database
+from vantage6.server.controller.fixture import load
+
 
 log = logging.getLogger(__name__.split('.')[-1])
 
@@ -40,7 +36,6 @@ class TestNode(FlaskClient):
 
 class TestResources(unittest.TestCase):
 
-
     @classmethod
     def setUpClass(cls):
         """Called immediately before running a test method."""
@@ -56,7 +51,6 @@ class TestResources(unittest.TestCase):
         server.app.test_client_class = TestNode
         server.app.secret_key = "test-secret"
 
-
         ctx = context.TestContext.from_external_config_file(
             "unittest_config.yaml")
 
@@ -69,15 +63,15 @@ class TestResources(unittest.TestCase):
                 'username': 'root',
                 'password': 'root'
             },
-            'admin':{
+            'admin': {
                 'username': 'frank@iknl.nl',
                 'password': 'password'
             },
-            'user':{
+            'user': {
                 'username': 'melle@iknl.nl',
                 'password': 'password'
             },
-            'user-to-delete':{
+            'user-to-delete': {
                 'username': 'dont-use-me',
                 'password': 'password'
             }
@@ -101,8 +95,10 @@ class TestResources(unittest.TestCase):
 
     def test_token_different_users(self):
         for type_ in ["root", "admin", "user"]:
-            tokens = self.app.post('/api/token/user',
-                json=self.credentials[type_]).json
+            tokens = self.app.post(
+                '/api/token/user',
+                json=self.credentials[type_]
+            ).json
             self.assertIn('access_token', tokens)
             self.assertIn('refresh_token', tokens)
 
@@ -193,14 +189,14 @@ class TestResources(unittest.TestCase):
         })
         response_json = response.json
         self.assertIn("msg", response_json)
-        self.assertEqual(response.status_code, 404) # NOT FOUND
+        self.assertEqual(response.status_code, 404)  # NOT FOUND
 
         # succesfully create a node
         response = self.app.post("/api/node", headers=headers, json={
             "collaboration_id": 1
         })
         response_json = response.json
-        self.assertEqual(response.status_code, 201) # CREATED
+        self.assertEqual(response.status_code, 201)  # CREATED
 
     def test_node_with_id(self):
 
@@ -257,13 +253,14 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, 200)
 
         result = self.app.get("/api/result?state=open&&node_id=1",
-            headers=headers)
+                              headers=headers)
         self.assertEqual(result.status_code, 200)
 
         result = self.app.get("/api/result?task_id=1", headers=headers)
         self.assertEqual(result.status_code, 200)
 
-        result = self.app.get("/api/result?task_id=1&&node_id=1", headers=headers)
+        result = self.app.get("/api/result?task_id=1&&node_id=1",
+                              headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_stats(self):
@@ -323,15 +320,16 @@ class TestResources(unittest.TestCase):
             "username": "unittest",
             "firstname": "unit",
             "lastname": "test",
-            "roles": ["admin", "root"],
-            "password": "super-secret"
+            "roles": "admin",
+            "password": "super-secret",
+            "email": "unit@test.org"
         }
         result = self.app.post("/api/user", headers=headers,
-            json=new_user)
+                               json=new_user)
         self.assertEqual(result.status_code, 201)
 
         result = self.app.post("/api/user", headers=headers,
-            json=new_user)
+                               json=new_user)
         self.assertEqual(result.status_code, 400)
 
     def test_user_delete(self):
@@ -393,5 +391,40 @@ class TestResources(unittest.TestCase):
             "password": "super-secret"
         }
         result = self.app.post("/api/user", headers=headers,
-            json=new_user)
+                               json=new_user)
+        self.assertEqual(result.status_code, 400)
+
+    @patch("vantage6.server.resource.recover.send_email")
+    def test_reset_password(self, send_email):
+        user_ = {
+            "username": "root"
+        }
+        result = self.app.post("/api/recover/lost", json=user_)
+        self.assertEqual(result.status_code, 200)
+
+    @patch("vantage6.server.resource.recover.send_email")
+    def test_reset_password_missing_error(self, send_email):
+        result = self.app.post("/api/recover/lost", json={})
+        self.assertEqual(result.status_code, 400)
+
+    @patch("vantage6.server.resource.recover.decode_token")
+    def test_recover_password(self, decode_token):
+        decode_token.return_value = {'identity': {'id': 1}}
+        new_password = {
+            "password": "$ecret88!",
+            "reset_token": "token"
+        }
+        result = self.app.post("/api/recover/reset", json=new_password)
+        self.assertEqual(result.status_code, 200)
+
+        # verify that the new password works
+        result = self.app.post("/api/token/user", json={
+            "username": "root",
+            "password": "$ecret88!"
+        })
+        self.assertIn("access_token", result.json)
+        self.credentials["root"]["password"] = "$ecret88!"
+
+    def test_fail_recover_password(self):
+        result = self.app.post("/api/recover/reset", json={})
         self.assertEqual(result.status_code, 400)

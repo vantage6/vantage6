@@ -398,6 +398,12 @@ def load_resources(api, API_BASE, resources):
 
 
 # ------------------------------------------------------------------------------
+# Setup the Flask-Mail which is configured using the `current_app` context
+# ------------------------------------------------------------------------------
+mail = Mail()
+
+
+# ------------------------------------------------------------------------------
 # Http routes
 # ------------------------------------------------------------------------------
 @app.route(WEB_BASE+'/', defaults={'path': ''})
@@ -484,6 +490,7 @@ def init_resources(ctx):
             'token',
             'user',
             'version',
+            'recover',
             # 'websocket_test',
             'stats',
     ]
@@ -516,15 +523,15 @@ def run(ctx, *args, **kwargs):
 
     # Default expiration time
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=6)
-    # Set an extra long expiration time on access tokens for testing
 
+    # Set an extra long expiration time on access tokens for testing
     if environment == 'test':
         log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
         app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
     # check if root-user exists
     try:
-        db.User.getByUsername("root")
+        db.User.get_by_username("root")
     except Exception:
         log.warn("No root user found! Is this the first run?")
         log.warn("Creating root role...")
@@ -544,6 +551,16 @@ def run(ctx, *args, **kwargs):
     for node in nodes:
         node.status = 'offline'
     session.commit()
+
+    # setup mail
+    mail_config = ctx.config.get("smtp", {})
+    app.config["MAIL_PORT"] = mail_config.get("port", 1025)
+    app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
+    app.config["MAIL_USERNAME"] = mail_config.get("username",
+                                                  "support@vantage6.ai")
+    app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
+    # log.debug(app.config)
+    mail.init_app(app)
 
     kwargs.setdefault('log_output', False)
     socketio.run(app, *args, **kwargs)

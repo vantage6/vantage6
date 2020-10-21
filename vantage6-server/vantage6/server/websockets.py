@@ -191,3 +191,9 @@ class DefaultSocketNamespace(Namespace):
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
         emit('message', msg, room=room)
+
+    # TODO: to be removed in version 2.x.x. nodes 1.1.0 dont use this anymore.
+    def on_ping(self, node_id):
+        # self.log.debug(f"ping from id={node_id}")
+        room = f"node_{node_id}"
+        emit("pang","success!", room=room)

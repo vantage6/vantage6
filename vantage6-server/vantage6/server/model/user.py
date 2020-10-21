@@ -26,6 +26,8 @@ class User(Authenticatable):
     password = Column(String)
     firstname = Column(String)
     lastname = Column(String)
+    email = Column(String, unique=True, nullable=False)
+    roles = Column(String)
     organization_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships
@@ -53,9 +55,14 @@ class User(Authenticatable):
         return False
 
     @classmethod
-    def getByUsername(cls, username):
+    def get_by_username(cls, username):
         session = Database().Session
         return session.query(cls).filter_by(username=username).one()
+
+    @classmethod
+    def get_by_email(cls, email):
+        session = Database().Session
+        return session.query(cls).filter_by(email=email).one()
 
     @classmethod
     def get_user_list(cls, filters=None):

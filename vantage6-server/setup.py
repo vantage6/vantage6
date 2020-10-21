@@ -7,8 +7,12 @@ from setuptools import setup, find_namespace_packages
 here = path.abspath(path.dirname(__file__))
 
 # get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+# with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+#     long_description = f.read()
+long_description = (
+    "GitHub: [https://github.com/iknl/vantage6]"
+    "(https://github.com/iknl/vantage6)"
+)
 
 # Read the API version from disk. This file should be located in the package
 # folder, since it's also used to set the pkg.__version__ variable.
@@ -48,8 +52,9 @@ setup(
         'requests==2.23.0',
         'psutil==5.7.0',
         'gevent==1.4.0',
-        'vantage6 >= 1.0.0',
-        'vantage6-common >= 1.0.0',
+        'Flask-Mail==0.9.1',
+        'vantage6 >= 1.2.0',
+        'vantage6-common >= 1.2.0',
     ],
     extras_require={
         'dev': [
