@@ -8,7 +8,7 @@ import json
 
 import sqlalchemy as sql
 
-from .model import (
+from vantage6.server.model import (
     Base,
     User,
     Organization,

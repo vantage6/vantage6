@@ -66,6 +66,8 @@ class HATEOASModelSchema(ModelSchema):
                 endpoint="task"
             )
         )
+        setattr(self, "rules",
+                lambda obj: self.hateos_list("rule", obj))
 
         # special cases
 
@@ -260,3 +262,19 @@ class UserSchema(HATEOASModelSchema):
 
     roles = fields.Function(lambda obj: (print(obj.name)))
     organization = fields.Method("organization")
+
+
+# ------------------------------------------------------------------------------
+class RoleSchema(HATEOASModelSchema):
+
+    rules = fields.Method("rules")
+
+    class Meta:
+        model = db.Role
+
+
+# ------------------------------------------------------------------------------
+class RuleSchema(HATEOASModelSchema):
+
+    class Meta:
+        model = db.Rule

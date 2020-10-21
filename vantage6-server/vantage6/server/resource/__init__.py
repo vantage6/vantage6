@@ -33,7 +33,8 @@ def only_for(types=['user', 'node', 'container']):
             # log.debug(f"Endpoint accessed as {g.type}")
 
             if g.type not in types:
-                msg = f"{g.type}'s are not allowed to access {request.url} ({request.method})"
+                msg = f"{g.type}'s are not allowed to access {request.url} " \
+                      f"({request.method})"
                 log.warning(msg)
                 raise Exception(msg)
 
@@ -75,6 +76,7 @@ with_user_or_node = only_for(["user", "node"])
 with_user = only_for(["user"])
 with_node = only_for(["node"])
 with_container = only_for(["container"])
+
 
 def parse_datetime(dt=None, default=None):
     if dt:

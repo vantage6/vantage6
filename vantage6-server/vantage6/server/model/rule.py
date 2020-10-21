@@ -1,9 +1,24 @@
 
-from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, String
+from enum import Enum as Enumerate
+
+from sqlalchemy import Column, Text, String, Enum
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.server.model import Base
+
+
+class Operation(Enumerate):
+    VIEW = 0
+    EDIT = 1
+    CREATE = 2
+    DELETE = 3
+
+
+class Scope(Enumerate):
+    OWN = 0
+    ORGANIZATION = 1
+    COLLABORATION = 2
+    GLOBAL = 3
 
 
 class Rule(Base):
@@ -12,8 +27,8 @@ class Rule(Base):
 
     # fields
     name = Column(Text)
-    operation = Column(Integer)
-    scope = Column(Integer)
+    operation = Column(Enum(Operation))
+    scope = Column(Enum(Scope))
     description = Column(String)
 
     # relationships

@@ -17,6 +17,7 @@ from vantage6.server.util import Singleton
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
+
 class Database(metaclass=Singleton):
 
     def __init__(self):

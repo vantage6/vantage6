@@ -493,6 +493,8 @@ def init_resources(ctx):
             'recover',
             # 'websocket_test',
             'stats',
+            'role',
+            # 'rule'
     ]
 
     # Load resources
@@ -534,16 +536,21 @@ def run(ctx, *args, **kwargs):
         db.User.get_by_username("root")
     except Exception:
         log.warn("No root user found! Is this the first run?")
+
+        log.debug("Creating organization for root user")
+        org = db.Organization(name="default")
+
         log.warn("Creating root role...")
         root = db.Role(
             name="Root",
             description="Super role"
         )
         root.rules = db.Rule.get()
-        log.warn("Creating root: username=root, password=root")
-        user = db.User(username="root", roles=[root])
-        user.set_password("root")
 
+        log.warn("Creating root user: username=root, password=root")
+
+        user = db.User(username="root", roles=[root], organization=org)
+        user.set_password("root")
         user.save()
 
     # set all nodes to offline
