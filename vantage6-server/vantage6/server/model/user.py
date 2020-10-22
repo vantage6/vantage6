@@ -44,9 +44,18 @@ class User(Authenticatable):
             f">"
         )
 
+    @validates("password")
+    def _validate_password(self, key, password):
+        return self.hash_password(password)
+
+    @staticmethod
+    def hash_password(password: str):
+        return bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())\
+            .decode('utf8')
+
     def set_password(self, pw):
-        pwhash = bcrypt.hashpw(pw.encode('utf8'), bcrypt.gensalt())
-        self.password = pwhash.decode('utf8')
+        pwhash = self.hash_password(pw)
+        self.password = pwhash
 
     def check_password(self, pw):
         if self.password is not None:
