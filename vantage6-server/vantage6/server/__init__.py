@@ -14,6 +14,7 @@ from flask_jwt_extended import (JWTManager, get_jwt_identity,
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
 from flask_socketio import SocketIO
+from flask_mail import Mail
 
 from vantage6.server import db
 from vantage6.common import logger_name
@@ -494,7 +495,7 @@ def init_resources(ctx):
             # 'websocket_test',
             'stats',
             'role',
-            # 'rule'
+            'rule'
     ]
 
     # Load resources
@@ -549,7 +550,8 @@ def run(ctx, *args, **kwargs):
 
         log.warn("Creating root user: username=root, password=root")
 
-        user = db.User(username="root", roles=[root], organization=org)
+        user = db.User(username="root", roles=[root], organization=org,
+                       email="root@domain.ext")
         user.set_password("root")
         user.save()
 
