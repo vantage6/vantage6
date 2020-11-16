@@ -1,6 +1,8 @@
 import logging
 
 from collections import namedtuple
+from flask_principal import Permission
+
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import Database
 from vantage6.common import logger_name
@@ -77,7 +79,7 @@ def register_rule(rule: str, scopes: list, operations: list, description=None):
                 log.debug(f"New auth rule '{rule}' with scope={scope}"
                           f" and operation={operation} is added")
 
-    return lambda scope, operation: valid_rule_need(rule, scope, operation)
+    return lambda scope, operation: Permission(valid_rule_need(rule, scope, operation))
 
 
 def rule_exists(name, scope, operation):
