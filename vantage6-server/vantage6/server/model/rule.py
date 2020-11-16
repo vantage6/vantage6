@@ -3,6 +3,8 @@ from enum import Enum as Enumerate
 
 from sqlalchemy import Column, Text, String, Enum
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound
+from vantage6.server.model.base import Base, Database
 
 from vantage6.server.model import Base
 
@@ -34,12 +36,22 @@ class Rule(Base):
     # relationships
     roles = relationship("Role", back_populates="rules",
                          secondary="role_rule_association")
+    users = relationship("User", back_populates="rules",
+                         secondary="UserPermission")
+
+    @classmethod
+    def get_by_name(cls, name):
+        session = Database().Session
+        try:
+            return session.query(cls).filter_by(name=name).first()
+        except NoResultFound:
+            return None
 
     def __repr__(self):
         return (
             f"<Rule {self.id}, "
             f"name: {self.name}, "
             f"operation: {self.operation}, "
-            f"scope: {len(self.scope)}"
+            f"scope: {self.scope}"
             ">"
         )

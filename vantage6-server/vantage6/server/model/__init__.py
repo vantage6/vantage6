@@ -7,7 +7,7 @@ from .member import Member
 from .node import Node
 from .task import Task
 from .result import Result
-from .permission import Permission
+from .permission import Permission, UserPermission
 from .role import Role
 from .rule import Rule
 from .role_rule_association import role_rule_association

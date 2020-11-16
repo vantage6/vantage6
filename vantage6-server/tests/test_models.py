@@ -1,4 +1,5 @@
 import logging
+import operator
 import unittest
 import yaml
 import bcrypt
@@ -8,6 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
+from vantage6 import server
+from vantage6.server import context
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database, Base
 from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
@@ -19,8 +22,13 @@ from vantage6.server.model import (
     Collaboration,
     Task,
     Result,
-    Node
+    Node,
+    Rule,
+    Role
 )
+from vantage6.server.model.rule import Scope, Operation
+
+from sqlalchemy.orm.exc import NoResultFound
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.CRITICAL
@@ -32,12 +40,18 @@ class TestBaseModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Database().connect("sqlite://", allow_drop_all=True)
+
+        ctx = context.TestContext.from_external_config_file(
+            "unittest_config.yaml")
+
+        server.init_resources(ctx)
+
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
             cls.entities = yaml.safe_load(f.read())
-        load(cls.entities, drop_all=True)
+        load(cls.entities)
 
     @classmethod
     def tearDownClass(cls):
@@ -67,11 +81,10 @@ class TestUserModel(TestBaseModel):
             username="unit",
             firstname="un",
             lastname="it",
-            roles="admin",
             organization=db_organization,
-            email="unit@org.org"
+            email="unit@org.org",
+            password="unit_pass"
         )
-        user.set_password("unit_pass")
         user.save()
         db_user = User.get_by_username("unit")
         self.assertEqual(db_user, user)
@@ -227,13 +240,12 @@ class TestResultModel(TestBaseModel):
     def test_insert(self):
         task = Task(name="unit_task")
         result = Result(
-            task = task,
+            task=task,
             organization=Organization.get()[0],
             input="something"
         )
         result.save()
         self.assertEqual(result, result)
-
 
     def test_methods(self):
         for result in Result.get():
@@ -292,4 +304,58 @@ class TestTaskModel(TestBaseModel):
             for result in task.results:
                 self.assertIsInstance(result, Result)
             for user in task.collaboration.organizations[0].users:
+                self.assertIsInstance(user, User)
+
+
+class TestRuleModel(TestBaseModel):
+
+    def test_read(self):
+        rules = Rule.get()
+        # check that there are rules
+        self.assertTrue(rules)
+        # check their type
+        for rule in rules:
+            self.assertIsInstance(rule, Rule)
+
+    def test_insert(self):
+
+        # users should not insert these, but the system
+        rule = Rule(
+            name="unittest",
+            description="A unittest rule",
+            scope=Scope.Own,
+            operation=Operation.CREATE
+        )
+        rule.save()
+
+        # check that the db rule is the same
+        db_rule = Rule.get_by_name("unittest")
+        self.assertEqual(rule, db_rule)
+
+    def test_methods(self):
+
+        self.assertRaises(
+            NoResultFound,
+            Rule.get_by_name("non-existant")
+        )
+
+        rule = Rule(
+            name="unittest",
+            description="A unittest rule",
+            scope=Scope.Own,
+            operation=Operation.CREATE
+        )
+        rule.save()
+
+    def test_relations(self):
+        rules = Rule.get()
+        for rule in rules:
+            self.assertIsInstance(rule.name, str)
+            self.assertIsInstance(rule.operation, Operation)
+            self.assertIsInstance(rule.scope, Scope)
+
+            for role in rule.roles:
+                self.assertIsInstance(role, Role)
+
+            for user in rule.users:
                 self.assertIsInstance(user, User)

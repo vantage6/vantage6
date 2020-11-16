@@ -1,10 +1,10 @@
 import bcrypt
 
 from sqlalchemy import Column, String, Integer, ForeignKey, exists
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 
-from .base import Database
-from .authenticable import Authenticatable
+from vantage6.server.model.base import Database
+from vantage6.server.model.authenticable import Authenticatable
 
 
 class User(Authenticatable):
@@ -27,13 +27,14 @@ class User(Authenticatable):
     firstname = Column(String)
     lastname = Column(String)
     email = Column(String, unique=True, nullable=False)
-    roles = Column(String)
     organization_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships
     organization = relationship("Organization", back_populates="users")
     roles = relationship("Role", back_populates="users",
                          secondary="Permission")
+    rules = relationship("Rule", back_populates="users",
+                         secondary="UserPermission")
 
     def __repr__(self):
         organization = self.organization.name if self.organization else "None"
@@ -54,8 +55,7 @@ class User(Authenticatable):
             .decode('utf8')
 
     def set_password(self, pw):
-        pwhash = self.hash_password(pw)
-        self.password = pwhash
+        self.password = pw
 
     def check_password(self, pw):
         if self.password is not None:
@@ -82,3 +82,8 @@ class User(Authenticatable):
     def username_exists(cls, username):
         session = Database().Session
         return session.query(exists().where(cls.username == username)).scalar()
+
+    @classmethod
+    def exists(cls, field, value):
+        session = Database().Session
+        return session.query(exists().where(getattr(cls, field) == value)).scalar()
