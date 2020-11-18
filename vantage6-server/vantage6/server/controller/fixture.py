@@ -14,21 +14,20 @@ def load(fixtures, drop_all=False):
         Database().drop_all()
 
     log.info("Creating super user role")
-    log.warn("All added users are power users!")
-    superuserrole = db.Role(name="super", description="Super user",
-                            rules=db.Rule.get())
 
     log.info("Create Organizations and Users")
     for org in fixtures.get("organizations", {}):
 
         # create organization
-        organization = db.Organization(**{k:org[k] for k in ["name", "domain",\
-            "address1", "address2", "zipcode", "country", "public_key"]})
+        organization = db.Organization(**{k: org[k] for k in [
+            "name", "domain", "address1", "address2", "zipcode",
+            "country", "public_key"
+        ]})
         organization.save()
         log.debug(f"processed organization={organization.name}")
-
+        superuserrole = db.Role(name="super", description="Super user",
+                                rules=db.Rule.get(), organization=organization)
         # create users
-
         for usr in org.get("users", {}):
             user = db.User(**usr)
             user.roles = [superuserrole]

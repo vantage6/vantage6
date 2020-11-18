@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+from http import HTTPStatus
+from sqlalchemy.sql.schema import PassiveDefault
 import yaml
 import unittest
 import logging
 import json
+import uuid
 
 from unittest.mock import MagicMock, patch
 from flask import Response as BaseResponse
@@ -12,6 +15,8 @@ from werkzeug.utils import cached_property
 from vantage6.common.globals import APPNAME
 from vantage6.server.globals import PACAKAGE_FOLDER
 from vantage6 import server
+from vantage6.server.model import Rule, Role, Organization, User
+from vantage6.server.model.rule import Scope, Operation
 from vantage6.server import context
 from vantage6.server.model.base import Database
 from vantage6.server.controller.fixture import load
@@ -40,11 +45,6 @@ class TestResources(unittest.TestCase):
     def setUpClass(cls):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
-                    "unittest_fixtures.yaml")
-        with open(file_) as f:
-            cls.entities = yaml.safe_load(f.read())
-        load(cls.entities, drop_all=True)
 
         server.app.testing = True
         server.app.response_class = Response
@@ -55,6 +55,12 @@ class TestResources(unittest.TestCase):
             "unittest_config.yaml")
 
         server.init_resources(ctx)
+
+        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+                    "unittest_fixtures.yaml")
+        with open(file_) as f:
+            cls.entities = yaml.safe_load(f.read())
+        load(cls.entities)
 
         cls.app = server.app.test_client()
 
@@ -86,6 +92,33 @@ class TestResources(unittest.TestCase):
             'Authorization': 'Bearer {}'.format(tokens['access_token'])
         }
         return headers
+
+    def create_user(self, organization=None, rules=[]):
+
+        if not organization:
+            organization = Organization(name="some-organization")
+
+        # user details
+        username = str(uuid.uuid1())
+        password = "password"
+
+        # create a temporary organization
+
+        user = User(username=username, password=password,
+                    organization=organization, email=f"{username}@test.org",
+                    rules=rules)
+        user.save()
+
+        self.credentials[username] = {
+            "username": username,
+            "password": password
+        }
+
+        return user.username
+
+    def create_user_and_login(self, organization=None, rules=[]):
+        username = self.create_user(organization, rules)
+        return self.login(username)
 
     def test_version(self):
         rv = self.app.get('/api/version')
@@ -320,7 +353,6 @@ class TestResources(unittest.TestCase):
             "username": "unittest",
             "firstname": "unit",
             "lastname": "test",
-            "roles": "admin",
             "password": "super-secret",
             "email": "unit@test.org"
         }
@@ -376,7 +408,6 @@ class TestResources(unittest.TestCase):
             "username": "root",
             "firstname": "madman",
             "lastname": "idiot",
-            "roles": "admin",
             "password": "something-really-secure"
         })
         self.assertEqual(results.status_code, 400)
@@ -415,6 +446,7 @@ class TestResources(unittest.TestCase):
             "reset_token": "token"
         }
         result = self.app.post("/api/recover/reset", json=new_password)
+
         self.assertEqual(result.status_code, 200)
 
         # verify that the new password works
@@ -428,3 +460,196 @@ class TestResources(unittest.TestCase):
     def test_fail_recover_password(self):
         result = self.app.post("/api/recover/reset", json={})
         self.assertEqual(result.status_code, 400)
+
+    def test_view_rules(self):
+        headers = self.login("root")
+        result = self.app.get("/api/rule", headers=headers)
+        self.assertEqual(result.status_code, 200)
+
+    def test_view_roles(self):
+        headers = self.login("root")
+        result = self.app.get("/api/role", headers=headers)
+        self.assertEqual(result.status_code, 200)
+
+        body = result.json
+        expected_fields = ['organization', 'name', 'description', 'users']
+        for field in expected_fields:
+            self.assertIn(field, body[0])
+
+    def test_create_role_as_root(self):
+        headers = self.login("root")
+
+        # obtain available rules
+        rules = self.app.get("/api/rule", headers=headers).json
+        rule_ids = [rule.get("id") for rule in rules]
+
+        # assign first two rules to role
+        body = {
+            "name": "some-role-name",
+            "description": "Testing if we can create a role",
+            "rules": rule_ids[:2]
+        }
+
+        # create role
+        result = self.app.post("/api/role", headers=headers, json=body)
+
+        # check that server responded ok
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+
+        # verify the values
+        self.assertEqual(result.json.get("name"), body["name"])
+        self.assertEqual(result.json.get("description"), body["description"])
+        self.assertEqual(len(result.json.get("rules")), 2)
+
+    def test_create_role_as_root_for_different_organization(self):
+        headers = self.login("root")
+
+        # obtain available rules
+        rules = self.app.get("/api/rule", headers=headers).json
+
+        # create new organization, so we're sure that the current user
+        # is not assigned to the same organization
+        org = Organization(name="Some-random-organization")
+        org.save()
+
+        body = {
+            "name": "some-role-name",
+            "description": "Testing if we can create a rol for another org",
+            "rules": [rule.get("id") for rule in rules],
+            "organization_id": org.id
+        }
+
+        # create role
+        result = self.app.post("/api/role", headers=headers, json=body)
+
+        # check that server responded ok
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+
+        # verify the organization
+        self.assertEqual(org.id, result.json["organization"]["id"])
+
+    def test_create_role_permissions(self):
+        all_rules = Rule.get()
+
+        # check user without any permissions
+        headers = self.create_user_and_login()
+
+        body = {
+            "name": "some-role-name",
+            "description": "Testing if we can create a rol for another org",
+            "rules": [rule.id for rule in all_rules],
+        }
+        result = self.app.post("/api/role", headers=headers, json=body)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # check that user with a missing rule cannot create a role with that
+        # missing rule
+        headers = self.create_user_and_login(rules=(all_rules[:-2]))
+        result = self.app.post("/api/role", headers=headers, json=body)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # check that user can create role within his organization
+        rule = Rule.get_by_("manage_roles", scope=Scope.ORGANIZATION,
+                            operation=Operation.CREATE)
+
+        headers = self.create_user_and_login(rules=[rule])
+        body["rules"] = [rule.id]
+        result = self.app.post("/api/role", headers=headers, json=body)
+
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+
+        # check a non-existing organization
+        headers = self.login("root")
+        body["organization_id"] = -1
+        result = self.app.post('/api/role', headers=headers, json=body)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # check that assigning an unexisting rule is not possible
+        headers = self.create_user_and_login()
+        body["rules"] = [-1]
+        result = self.app.post("/api/role", headers=headers, json=body)
+        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+
+    def test_edit_role(self):
+        headers = self.login('root')
+
+        # create testing entities
+        org = Organization(name="some-organization-name")
+        org.save()
+        role = Role(name="some-role-name", organization=org)
+        role.save()
+
+        # test name, description
+        result = self.app.patch(f'/api/role/{role.id}', headers=headers, json={
+            "name": "a-different-role-name",
+            "description": "some description of this role..."
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(role.name, "a-different-role-name")
+        self.assertEqual(role.description, "some description of this role...")
+
+        # test modifying rules
+        all_rule_ids = [rule.id for rule in Rule.get()]
+        result = self.app.patch(f'/api/role/{role.id}', headers=headers, json={
+            "rules": all_rule_ids
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertListEqual(all_rule_ids, [rule.id for rule in role.rules])
+
+        # test non owning rules
+        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION,
+                            Operation.EDIT)
+        headers = self.create_user_and_login(org, [rule])
+        result = self.app.patch(f"/api/role/{role.id}", headers=headers, json={
+            "rules": all_rule_ids
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test modifying role of another organization, without global
+        # permission
+        org2 = Organization(name="another-organization")
+        headers = self.create_user_and_login(org2, [rule])
+        result = self.app.patch(f'/api/role/{role.id}', headers=headers, json={
+            "name": "this-will-not-be-updated"
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test modifying role with global permissions
+        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(org2, [rule])
+        result = self.app.patch(f'/api/role/{role.id}', headers=headers, json={
+            "name": "this-will-not-be-updated"
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+    def test_remove_role(self):
+
+        org = Organization()
+        org.save()
+        role = Role(organization=org)
+        role.save()
+
+        # test removal without permissions
+        headers = self.create_user_and_login()
+        result = self.app.delete(f'/api/role/{role.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test removal with organization permissions
+        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION,
+                            Operation.DELETE)
+        headers = self.create_user_and_login(org, [rule])
+        result = self.app.delete(f'/api/role/{role.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # test failed removal with organization permissions
+        role = Role(organization=org)  # because we removed it...
+        role.save()
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.delete(f'/api/role/{role.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test removal with global permissions
+        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.DELETE)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.delete(f'/api/role/{role.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)

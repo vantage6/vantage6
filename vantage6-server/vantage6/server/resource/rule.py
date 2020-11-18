@@ -74,7 +74,8 @@ class Rule(Resource):
     @swag_from(str(Path(r"swagger/rule_without_id.yaml")),
                endpoint='rule_without_id')
     def get(self, id=None):
-        """List roles."""
+        """List rules."""
 
         roles = db_Rule.get(id)
-        return self.rule_schema.dump(roles, many=not id).data, HTTPStatus.OK
+        return self.rule_schema.dump(roles, many=not id).data,\
+            HTTPStatus.OK

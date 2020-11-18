@@ -38,24 +38,12 @@ def setup(api, api_base):
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
-rule = register_rule(
-    "see version",
-    [Scope.GLOBAL],
-    [Operation.VIEW],
-    "Can you see the version or not?"
-)
-
-permission = rule(Scope.GLOBAL, Operation.VIEW)
-test_permission = Permission(permission)
-test_permission.description = "Can you see the version or not?"
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Version(Resource):
 
-    @with_user
-    @test_permission.require(http_exception=403)
     @swag_from(str(Path(r"swagger/version.yaml")), endpoint='version')
     def get(self):
         """Return the version of this server."""

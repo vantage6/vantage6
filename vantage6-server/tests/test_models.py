@@ -334,18 +334,11 @@ class TestRuleModel(TestBaseModel):
 
     def test_methods(self):
 
+        # check that error is raised
         self.assertRaises(
             NoResultFound,
             Rule.get_by_name("non-existant")
         )
-
-        rule = Rule(
-            name="unittest",
-            description="A unittest rule",
-            scope=Scope.Own,
-            operation=Operation.CREATE
-        )
-        rule.save()
 
     def test_relations(self):
         rules = Rule.get()

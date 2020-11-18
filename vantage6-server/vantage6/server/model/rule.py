@@ -6,8 +6,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 from vantage6.server.model.base import Base, Database
 
-from vantage6.server.model import Base
-
 
 class Operation(Enumerate):
     VIEW = 0
@@ -40,10 +38,14 @@ class Rule(Base):
                          secondary="UserPermission")
 
     @classmethod
-    def get_by_name(cls, name):
+    def get_by_(cls, name, scope, operation):
         session = Database().Session
         try:
-            return session.query(cls).filter_by(name=name).first()
+            return session.query(cls).filter_by(
+                name=name,
+                operation=operation,
+                scope=scope
+            ).first()
         except NoResultFound:
             return None
 

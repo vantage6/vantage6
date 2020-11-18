@@ -150,6 +150,8 @@ def user_loader_callback(identity):
         auth = db.Authenticatable.get(identity)
 
         if isinstance(auth, db.User):
+
+            # add role permissions
             for role in auth.roles:
                 for rule in role.rules:
                     auth_identity.provides.add(
@@ -159,6 +161,16 @@ def user_loader_callback(identity):
                             operation=rule.operation
                         )
                     )
+
+            # add 'extra' permissions
+            for rule in auth.rules:
+                auth_identity.provides.add(
+                    RuleNeed(
+                        name=rule.name,
+                        scope=rule.scope,
+                        operation=rule.operation
+                    )
+                )
 
             identity_changed.send(current_app._get_current_object(),
                                   identity=auth_identity)
@@ -551,8 +563,7 @@ def run(ctx, *args, **kwargs):
         log.warn("Creating root user: username=root, password=root")
 
         user = db.User(username="root", roles=[root], organization=org,
-                       email="root@domain.ext")
-        user.set_password("root")
+                       email="root@domain.ext", password="root")
         user.save()
 
     # set all nodes to offline

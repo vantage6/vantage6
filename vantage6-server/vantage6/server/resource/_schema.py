@@ -12,6 +12,7 @@ from flask import url_for, Flask
 from flask_marshmallow.sqla import HyperlinkRelated
 from flask_marshmallow import Schema
 from marshmallow.fields import List, Integer
+from sqlalchemy.util import langhelpers
 from werkzeug.routing import BuildError
 
 from vantage6.server import api
@@ -30,44 +31,35 @@ class HATEOASModelSchema(ModelSchema):
         super().__init__(*args, **kwargs)
 
         # to one relationship
-        setattr(self, "node",
-            lambda obj: self.hateos("node", obj))
+        setattr(self, "node", lambda obj: self.hateos("node", obj))
         setattr(self, "organization",
-            lambda obj: self.hateos("organization", obj))
+                lambda obj: self.hateos("organization", obj))
         setattr(self, "collaboration",
-            lambda obj: self.hateos("collaboration", obj))
-        setattr(self, "user",
-            lambda obj: self.hateos("user", obj))
-        setattr(self, "result",
-            lambda obj: self.hateos("result", obj))
-        setattr(self, "task",
-            lambda obj: self.hateos("task", obj))
+                lambda obj: self.hateos("collaboration", obj))
+        setattr(self, "user", lambda obj: self.hateos("user", obj))
+        setattr(self, "result", lambda obj: self.hateos("result", obj))
+        setattr(self, "task", lambda obj: self.hateos("task", obj))
         setattr(self, "parent_",
-            lambda obj: self.hateos("parent", obj, endpoint="task"))
+                lambda obj: self.hateos("parent", obj, endpoint="task"))
 
         # to many relationship
-        setattr(self, "nodes",
-            lambda obj: self.hateos_list("node", obj))
+        setattr(self, "nodes", lambda obj: self.hateos_list("node", obj))
         setattr(self, "organizations",
-            lambda obj: self.hateos_list("organization", obj))
+                lambda obj: self.hateos_list("organization", obj))
         setattr(self, "collaborations",
-            lambda obj: self.hateos_list("collaboration", obj))
-        setattr(self, "users",
-            lambda obj: self.hateos_list("user", obj))
-        setattr(self, "results",
-            lambda obj: self.hateos_list("result", obj))
-        setattr(self, "tasks",
-            lambda obj: self.hateos_list("task", obj))
+                lambda obj: self.hateos_list("collaboration", obj))
+        setattr(self, "users", lambda obj: self.hateos_list("user", obj))
+        setattr(self, "results", lambda obj: self.hateos_list("result", obj))
+        setattr(self, "tasks", lambda obj: self.hateos_list("task", obj))
         setattr(self, "children",
-            lambda obj: self.hateos_list(
-                "children",
-                obj,
-                plural="children",
-                endpoint="task"
-            )
-        )
-        setattr(self, "rules",
-                lambda obj: self.hateos_list("rule", obj))
+                lambda obj: self.hateos_list(
+                    "children",
+                    obj,
+                    plural="children",
+                    endpoint="task"
+                ))
+        setattr(self, "rules", lambda obj: self.hateos_list("rule", obj))
+        setattr(self, "roles", lambda obj: self.hateos_list("role", obj))
 
         # special cases
 
@@ -260,7 +252,8 @@ class UserSchema(HATEOASModelSchema):
         model = db.User
         exclude = ('password',)
 
-    roles = fields.Function(lambda obj: (print(obj.name)))
+    roles = fields.Method("roles")
+    rules = fields.Method("rules")
     organization = fields.Method("organization")
 
 
@@ -268,6 +261,8 @@ class UserSchema(HATEOASModelSchema):
 class RoleSchema(HATEOASModelSchema):
 
     rules = fields.Method("rules")
+    users = fields.Method("users")
+    organization = fields.Method("organization")
 
     class Meta:
         model = db.Role
@@ -275,6 +270,11 @@ class RoleSchema(HATEOASModelSchema):
 
 # ------------------------------------------------------------------------------
 class RuleSchema(HATEOASModelSchema):
+
+    scope = fields.Function(func=lambda obj: obj.scope.name)
+    operation = fields.Function(func=lambda obj: obj.operation.name)
+    roles = fields.Method("roles")
+    users = fields.Method("users")
 
     class Meta:
         model = db.Rule

@@ -13,7 +13,8 @@ class Role(Base):
     # fields
     name = Column(Text)
     description = Column(Text)
-    organization_id = Column(Integer, ForeignKey("organization.id"))
+    organization_id = Column(Integer, ForeignKey("organization.id"),
+                             nullable=False)
 
     # relationships
     rules = relationship("Rule", back_populates="roles",

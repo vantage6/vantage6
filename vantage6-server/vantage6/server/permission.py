@@ -1,7 +1,7 @@
 import logging
 
 from collections import namedtuple
-from flask_principal import Permission
+from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import Database
@@ -104,3 +104,14 @@ def rule_exists(name, scope, operation):
         operation=operation,
         scope=scope
     ).scalar()
+
+
+def verify_user_rules(rules) -> dict:
+    for rule in rules:
+        requires = RuleNeed(rule.name, rule.scope, rule.operation)
+        try:
+            Permission(requires).test()
+        except PermissionDenied:
+            return {"msg": f"You dont have the rule ({rule.name},"
+                    f"{rule.scope}, {rule.operation})"}
+    return False
