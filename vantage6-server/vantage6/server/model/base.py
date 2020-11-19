@@ -28,10 +28,19 @@ class Database(metaclass=Singleton):
 
     def drop_all(self):
         if self.allow_drop_all:
-            Base.metadata.drop_all(self.engine)
-            Base.metadata.create_all(bind=self.engine)
+            Base.metadata.drop_all(bind=self.engine)
+            # Base.metadata.create_all(bind=self.engine)
+            # self.Session.close()
         else:
             log.error("Cannot drop tables, configuration does not allow this!")
+
+    def close(self):
+        self.drop_all()
+        self.engine = None
+        self.Session = None
+        self.object_session = None
+        self.allow_drop_all = False
+        self.URI = None
 
     def connect(self, URI='sqlite:////tmp/test.db', allow_drop_all=False):
 
@@ -58,6 +67,7 @@ class Database(metaclass=Singleton):
 
         Base.metadata.create_all(bind=self.engine)
         log.info("Database initialized!")
+
 
 class ModelBase:
     """Declarative base that defines default attributes."""
@@ -139,5 +149,6 @@ class ModelBase:
         attrs = cols.intersection(keys)
         for attr in attrs:
             setattr(self, attr, kwargs[attr])
+
 
 Base = declarative_base(cls=ModelBase)

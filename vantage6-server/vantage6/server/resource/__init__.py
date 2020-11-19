@@ -5,6 +5,7 @@ import logging
 from functools import wraps
 
 from flask import g, request
+from flask_restful import Resource
 from flask_jwt_extended import (
     get_jwt_claims, get_jwt_identity, jwt_required
 )
@@ -14,6 +15,13 @@ from vantage6.server import db
 
 log = logging.getLogger(logger_name(__name__))
 
+
+class ServicesResources(Resource):
+
+    def __init__(self, socketio, mail, api):
+        self.socketio = socketio
+        self.mail = mail
+        self.api = api
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...

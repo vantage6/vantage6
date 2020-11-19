@@ -9,7 +9,10 @@ from flasgger import swag_from
 from pathlib import Path
 from flask_principal import Permission
 
-from vantage6.server.resource import with_user
+from vantage6.server.resource import (
+    with_user,
+    ServicesResources
+)
 from vantage6.common import logger_name
 from vantage6.server.permission import (
     register_rule, valid_rule_need
@@ -22,7 +25,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
@@ -31,7 +34,8 @@ def setup(api, api_base):
         Version,
         path,
         endpoint='version',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
 
 
@@ -42,7 +46,7 @@ def setup(api, api_base):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Version(Resource):
+class Version(ServicesResources):
 
     @swag_from(str(Path(r"swagger/version.yaml")), endpoint='version')
     def get(self):

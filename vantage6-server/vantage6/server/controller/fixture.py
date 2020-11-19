@@ -7,13 +7,12 @@ from vantage6.server.model.base import Database
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
+
 def load(fixtures, drop_all=False):
     # TODO we are not sure the DB is connected here....
 
     if drop_all:
         Database().drop_all()
-
-    log.info("Creating super user role")
 
     log.info("Create Organizations and Users")
     for org in fixtures.get("organizations", {}):

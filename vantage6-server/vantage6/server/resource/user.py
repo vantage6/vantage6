@@ -3,49 +3,80 @@
 Resources below '/<api_base>/user'
 """
 from __future__ import print_function, unicode_literals
+import http
 
 import logging
+from os import abort
 
+from http import HTTPStatus
 from flask_restful import Resource
 from flask import g
 from flask_restful import reqparse
 from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
-
+from flask_principal import Permission
 import sqlalchemy.exc
 
 from vantage6.server import db
-from vantage6.server.resource import with_user, only_for
+from vantage6.server.permission import (
+    register_rule,
+    Scope,
+    Operation,
+    verify_user_rules
+)
+from vantage6.server.resource import (
+    with_user,
+    only_for,
+    ServicesResources
+)
 from vantage6.server.resource._schema import UserSchema
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
-    module_name = __name__.split('.')[-1]
-    path = "/".join([API_BASE, module_name])
+def setup(api, api_base, services):
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
         User,
         path,
         endpoint='user_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         User,
         path + '/<int:id>',
         endpoint='user_with_id',
-        methods=('GET', 'PATCH', 'DELETE')
+        methods=('GET', 'PATCH', 'DELETE'),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
+# Permissions
+# ------------------------------------------------------------------------------
+manage_users = register_rule(
+    "manage users",
+    [Scope.ORGANIZATION, Scope.GLOBAL],
+    [Operation.EDIT, Operation.VIEW, Operation.DELETE, Operation.CREATE]
+)
+
+
+manage_roles = register_rule(
+    "manage roles",
+    [Scope.ORGANIZATION, Scope.GLOBAL],
+    [Operation.EDIT, Operation.VIEW, Operation.DELETE, Operation.CREATE],
+    "Assign roles to other users."
+)
+
+# ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class User(Resource):
+class User(ServicesResources):
 
     user_schema = UserSchema()
 
@@ -76,53 +107,80 @@ class User(Resource):
         return {"msg": f"user id {id} is not found"}, HTTPStatus.NOT_FOUND
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_user_without_id.yaml")), endpoint='user_without_id')
+    @swag_from(str(Path(r"swagger/post_user_without_id.yaml")),
+               endpoint='user_without_id')
     def post(self):
         """Create a new User."""
-
         parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=True, help="This field is required")
-        parser.add_argument("firstname", type=str, required=True, help="This field is required")
-        parser.add_argument("lastname", type=str, required=True, help="This field is required")
-        parser.add_argument("roles", type=str, required=True, help="This field is required")
-        parser.add_argument("password", type=str, required=True, help="This field is required")
-        parser.add_argument("organization_id", type=int, required=False, help="This is only used if you're root")
-        parser.add_argument("email", type=str, required=True, help="This field is required")
+        parser.add_argument("username", type=str, required=True)
+        parser.add_argument("firstname", type=str, required=True)
+        parser.add_argument("lastname", type=str, required=True)
+        parser.add_argument("password", type=str, required=True)
+        parser.add_argument("organization_id", type=int, required=False,
+                            help="This is only used if you're root")
+        parser.add_argument("roles", type=int, action="append", required=False)
+        parser.add_argument("rules", type=int, action="append", required=False)
+        parser.add_argument("email", type=str, required=True)
         data = parser.parse_args()
 
+        # check unique constraints
         if db.User.username_exists(data["username"]):
-            return {"msg": "username already exists"}, HTTPStatus.BAD_REQUEST
+            return {"msg": "username already exists."}, HTTPStatus.BAD_REQUEST
 
-        if data["username"] == 'root':
-            msg = {"msg": "You're funny! You can't create root!?"}
-            return msg, HTTPStatus.BAD_REQUEST
+        if db.User.exists("email", data["email"]):
+            return {"msg": "email already exists."}, HTTPStatus.BAD_REQUEST
 
-        roles = data['roles'].split(',')
-        if 'root' in roles:
-            msg = {"msg": "You're funny! You can't assign the role 'root'!?"}
-            return msg, HTTPStatus.BAD_REQUEST
-
-        if g.user.username == 'root':
+        # check if it is global or organization scope. Depending on that a
+        # different permission is required.
+        if 'organization_id' in data:
+            manage_users(Scope.GLOBAL, Operation.CREATE).test(
+                http_exception=HTTPStatus.FORBIDDEN
+            )
             organization_id = data['organization_id']
-            log.warn(f'Running as root and creating user for organization_id={organization_id}')
+
         else:
+            manage_users(Scope.ORGANIZATION, Operation.CREATE).test(
+                http_exception=HTTPStatus.FORBIDDEN
+            )
             organization_id = g.user.organization_id
-            log.warn(f'Creating user for organization_id={organization_id}')
+
+        # process the required roles. It is only possible to assign roles with
+        # rules that you already have permission to. This way we ensure you can
+        # never extend your power on your own.
+        potential_roles = data.get("roles")
+        roles = []
+        if potential_roles:
+            for role in potential_roles:
+                role_ = db.Role.get(role)
+                if role_:
+                    denied = self.verify_user_rules(role_.rules)
+                    if denied:
+                        return denied, HTTPStatus.UNAUTHORIZED
+                    roles.append(role_)
+
+        # You can only assign rules that you already have to others.
+        potential_rules = data["rules"]
+        rules = []
+        if potential_rules:
+            rules = [db.Rule.get(rule) for rule in potential_rules if db.Rule.get(rule)]
+            denied = self.verify_user_rules(rules)
+            if denied:
+                return denied, HTTPStatus.UNAUTHORIZED
 
         # Ok, looks like we got most of the security hazards out of the way
         user = db.User(
             username=data["username"],
             firstname=data["firstname"],
             lastname=data["lastname"],
-            roles=data["roles"],
+            roles=roles,
+            rules=rules,
             organization_id=organization_id,
-            email=data["email"]
+            email=data["email"],
+            password=data["password"]
         )
-
-        user.set_password(data["password"])
         user.save()
 
-        return self.user_schema.dump(user), HTTPStatus.CREATED
+        return self.user_schema.dump(user).data, HTTPStatus.CREATED
 
     @with_user
     @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")), endpoint='user_with_id')
@@ -155,7 +213,7 @@ class User(Resource):
         if data["lastname"]:
             user.lastname = data["lastname"]
         if data["password"]:
-            user.set_password(data["password"])
+            user.password = data["password"]
         if data["roles"]:
             user.roles = data["roles"]
         if data["organization_id"]:

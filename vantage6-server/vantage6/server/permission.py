@@ -79,7 +79,9 @@ def register_rule(rule: str, scopes: list, operations: list, description=None):
                 log.debug(f"New auth rule '{rule}' with scope={scope}"
                           f" and operation={operation} is added")
 
-    return lambda scope, operation: Permission(valid_rule_need(rule, scope, operation))
+    return lambda scope, operation: Permission(
+        valid_rule_need(rule, scope, operation)
+    )
 
 
 def rule_exists(name, scope, operation):

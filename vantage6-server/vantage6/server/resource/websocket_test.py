@@ -11,6 +11,8 @@ from flask_socketio import send
 from flasgger import swag_from
 from pathlib import Path
 
+from vantage6.server.resource import ServicesResources
+
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
@@ -18,23 +20,24 @@ from .. import db
 from .. import socketio
 
 
-def setup(api, API_BASE):
+def setup(api, api_base, services):
 
-    path = "/".join([API_BASE, module_name])
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
-    
+
     api.add_resource(
         Test,
         path,
         endpoint='test',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Test(Resource):
+class Test(ServicesResources):
 
     @swag_from(str(Path(r"swagger/websocket-test.yaml")), endpoint='websocket_test')
     def get(self):

@@ -46,15 +46,18 @@ class TestResources(unittest.TestCase):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
 
-        server.app.testing = True
-        server.app.response_class = Response
-        server.app.test_client_class = TestNode
-        server.app.secret_key = "test-secret"
+        # server.app.testing = True
+        # server.app.response_class = Response
+        # server.app.test_client_class = TestNode
+        # server.app.secret_key = "test-secret"
 
         ctx = context.TestContext.from_external_config_file(
             "unittest_config.yaml")
 
-        server.init_resources(ctx)
+        app, _ = server.create_app(ctx)
+
+        # server.app, server.socketio = server.create_app()
+        # server.init_resources(ctx)
 
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
@@ -62,7 +65,7 @@ class TestResources(unittest.TestCase):
             cls.entities = yaml.safe_load(f.read())
         load(cls.entities)
 
-        cls.app = server.app.test_client()
+        cls.app = app.test_client()
 
         cls.credentials = {
             'root': {
@@ -82,6 +85,14 @@ class TestResources(unittest.TestCase):
                 'password': 'password'
             }
         }
+
+        log.debug(User.get())
+        log.debug(Role.get(1).rules)
+        log.debug(Rule.get())
+
+    @classmethod
+    def tearDownClass(cls):
+        Database().close()
 
     def login(self, type_='root'):
         tokens = self.app.post(
@@ -140,7 +151,8 @@ class TestResources(unittest.TestCase):
 
         # First retrieve a list of all organizations
         orgs = self.app.get('/api/organization', headers=headers).json
-        self.assertEqual(len(orgs), 3)
+
+        self.assertEqual(len(orgs), len(Organization.get()))
 
         attrs = [
             'id',
@@ -354,7 +366,7 @@ class TestResources(unittest.TestCase):
             "firstname": "unit",
             "lastname": "test",
             "password": "super-secret",
-            "email": "unit@test.org"
+            "email": "unit@test.org",
         }
         result = self.app.post("/api/user", headers=headers,
                                json=new_user)
@@ -425,7 +437,7 @@ class TestResources(unittest.TestCase):
                                json=new_user)
         self.assertEqual(result.status_code, 400)
 
-    @patch("vantage6.server.resource.recover.send_email")
+    @patch("vantage6.server.mail_service.MailService.send_email")
     def test_reset_password(self, send_email):
         user_ = {
             "username": "root"
@@ -433,7 +445,7 @@ class TestResources(unittest.TestCase):
         result = self.app.post("/api/recover/lost", json=user_)
         self.assertEqual(result.status_code, 200)
 
-    @patch("vantage6.server.resource.recover.send_email")
+    @patch("vantage6.server.mail_service.MailService.send_email")
     def test_reset_password_missing_error(self, send_email):
         result = self.app.post("/api/recover/lost", json={})
         self.assertEqual(result.status_code, 400)

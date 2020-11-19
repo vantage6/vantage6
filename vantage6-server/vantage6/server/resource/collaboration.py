@@ -20,14 +20,19 @@ from vantage6.server.resource._schema import (
     TaskSchema,
     OrganizationSchema,
 )
-from vantage6.server.resource import with_user_or_node, with_user, only_for
+from vantage6.server.resource import (
+    with_user_or_node,
+    with_user,
+    only_for,
+    ServicesResources
+)
 from vantage6.server.resource._schema import OrganizationSchema, NodeSchemaSimple
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
@@ -35,31 +40,36 @@ def setup(api, api_base):
         Collaboration,
         path,
         endpoint='collaboration_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         Collaboration,
         path + '/<int:id>',
         endpoint='collaboration_with_id',
-        methods=('GET', 'PATCH', 'DELETE')
+        methods=('GET', 'PATCH', 'DELETE'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         CollaborationOrganization,
         path+'/<int:id>/organization',
         endpoint='collaboration_with_id_organization',
-        methods=('GET', 'POST', 'DELETE')
+        methods=('GET', 'POST', 'DELETE'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         CollaborationNode,
         path+'/<int:id>/node',
         endpoint='collaboration_with_id_node',
-        methods=('GET', 'POST', 'DELETE')
+        methods=('GET', 'POST', 'DELETE'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         CollaborationTask,
         path+'/<int:id>/task',
         endpoint='collaboration_with_id_task',
-        methods=('GET', 'POST', 'DELETE')
+        methods=('GET', 'POST', 'DELETE'),
+        resource_class_kwargs=services
     )
 
 
@@ -68,10 +78,11 @@ collaboration_schema = CollaborationSchema()
 tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Collaboration(Resource):
+class Collaboration(ServicesResources):
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")), endpoint='collaboration_without_id')
@@ -178,7 +189,7 @@ class Collaboration(Resource):
         return {"msg": "node id={} successfully deleted".format(id)}, 200
 
 
-class CollaborationOrganization(Resource):
+class CollaborationOrganization(ServicesResources):
     """Resource for /api/collaboration/<int:id>/organization."""
 
     @only_for(["node","user","container"])
@@ -246,7 +257,7 @@ class CollaborationOrganization(Resource):
         )}, HTTPStatus.OK
 
 
-class CollaborationNode(Resource):
+class CollaborationNode(ServicesResources):
     """Resource for /api/collaboration/<int:id>/node."""
 
     node_schema = NodeSchemaSimple()
@@ -309,7 +320,7 @@ class CollaborationNode(Resource):
         return {"msg": "node id={} removed from collaboration id={}".format(data['id'], id)}, 200
 
 
-class CollaborationTask(Resource):
+class CollaborationTask(ServicesResources):
     """Resource for /api/collaboration/<int:id>/task."""
 
     @with_user_or_node

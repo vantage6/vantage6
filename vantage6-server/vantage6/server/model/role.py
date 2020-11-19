@@ -7,7 +7,7 @@ from vantage6.server.model import Base
 
 
 class Role(Base):
-    """Rules to determine permissions in an API endpoint.
+    """Collection of Rules
     """
 
     # fields

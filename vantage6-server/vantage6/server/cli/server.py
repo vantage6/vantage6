@@ -120,8 +120,6 @@ def cli_server_start(ctx, ip, port, debug):
     """Start the server."""
 
     info("Starting server.")
-    # Load the flask.Resources
-    server.init_resources(ctx)
 
     # Run the server
     ip = ip or ctx.config['ip'] or '127.0.0.1'

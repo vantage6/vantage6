@@ -7,53 +7,54 @@ import json
 
 from flask import g, request, url_for
 from flask_restful import Resource
-from . import with_user_or_node, with_user, only_for
+from vantage6.server.resource import (
+    only_for,
+    ServicesResources
+)
 from ._schema import TaskSchema, TaskIncludedSchema, TaskResultSchema
 from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
 
 from vantage6.server import db
-from vantage6.server import socketio
-from vantage6.server.util import (
-    bytes_to_base64s,
-    base64s_to_bytes,
-    log_full_request,
-)
+
 from vantage6.server.globals import STRING_ENCODING
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
-    path = "/".join([API_BASE, module_name])
+def setup(api, api_base, services):
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
         Task,
         path,
         endpoint='task_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         Task,
         path + '/<int:id>',
         endpoint='task_with_id',
-        methods=('GET', 'DELETE')
+        methods=('GET', 'DELETE'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         TaskResult,
         path + '/<int:id>/result',
         endpoint='task_result',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Task(Resource):
+class Task(ServicesResources):
     """Resource for /api/task"""
 
     task_schema = TaskSchema()
@@ -257,7 +258,7 @@ class Task(Resource):
         return {"msg": "task id={} successfully deleted".format(id)}, HTTPStatus.OK
 
 
-class TaskResult(Resource):
+class TaskResult(ServicesResources):
     """Resource for /api/task/<int:id>/result"""
 
     task_result_schema = TaskResultSchema()

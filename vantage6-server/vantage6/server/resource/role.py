@@ -10,10 +10,12 @@ from flask import g
 from flask_restful import Resource
 from flasgger import swag_from
 from pathlib import Path
-from flask_principal import Permission
 from flask_restful import reqparse
 
-from vantage6.server.resource import with_user
+from vantage6.server.resource import (
+    with_user,
+    ServicesResources
+)
 from vantage6.common import logger_name
 from vantage6.server.permission import (
     register_rule,
@@ -21,14 +23,14 @@ from vantage6.server.permission import (
 )
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model import Role as db_Role, Rule, Organization
-from vantage6.server.resource._schema import RoleSchema
+from vantage6.server.resource._schema import RoleSchema, RuleSchema
 
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
@@ -37,17 +39,29 @@ def setup(api, api_base):
         Role,
         path,
         endpoint='role_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         Role,
         path + '/<int:id>',
         endpoint="role_with_id",
-        methods=('GET', 'PATCH', 'DELETE')
+        methods=('GET', 'PATCH', 'DELETE'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         RoleRules,
-        path + '/<int:id>/rule'
+        path + '/<int:id>/rule',
+        endpoint='role_rule_without_id',
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
+    api.add_resource(
+        RoleRules,
+        path + '/<int:id>/rule/<int:rule_id>',
+        endpoint='role_rule_with_id',
+        methods=('POST', 'DELETE'),
+        resource_class_kwargs=services
     )
 
 
@@ -79,10 +93,14 @@ edit_any.description = "Edit any role"
 edit_organization = role_permission(Scope.ORGANIZATION, Operation.EDIT)
 edit_organization.description = "Edit a role within your organization"
 
+delete_any = role_permission(Scope.GLOBAL, Operation.DELETE)
+delete_organization = role_permission(Scope.ORGANIZATION, Operation.DELETE)
+
+
 # -----------------------------------------------------------------------------
 # Resources / API's
 # -----------------------------------------------------------------------------
-class Role(Resource):
+class Role(ServicesResources):
 
     role_schema = RoleSchema()
 
@@ -153,7 +171,8 @@ class Role(Resource):
             if not Organization.get(organization_id):
                 return {'msg': f'organization "{organization_id}" does not '
                         'exist!'}, HTTPStatus.NOT_FOUND
-        elif create_organization.can():
+        elif (not data['organization_id'] and create_any.can()) or \
+                create_organization.can():
             organization_id = g.user.organization_id
         else:
             return {'msg': 'You lack the permission to create roles!'}, \
@@ -169,8 +188,6 @@ class Role(Resource):
     @with_user
     @swag_from(str(Path(r"swagger/patch_role_with_id.yaml")),
                endpoint='role_with_id')
-    @swag_from(str(Path(r"swagger/patch_role_without_id.yaml")),
-               endpoint='role_without_id')
     def patch(self, id):
         """Update role."""
         data = request.get_json()
@@ -211,6 +228,8 @@ class Role(Resource):
         return self.role_schema.dump(role, many=False).data, HTTPStatus.OK
 
     @with_user
+    @swag_from(str(Path(r"swagger/delete_role_with_id.yaml")),
+               endpoint='role_with_id')
     def delete(self, id):
 
         role = db_Role.get(id)
@@ -218,8 +237,8 @@ class Role(Resource):
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        if not role_permission(Scope.GLOBAL, Operation.DELETE).can():
-            if not role_permission(Scope.ORGANIZATION, Operation.DELETE).can():
+        if not delete_any.can():
+            if not delete_organization.can():
                 return {'msg': 'You do not have permission to delete roles!'},\
                     HTTPStatus.UNAUTHORIZED
             elif role.organization.id != g.user.organization.id:
@@ -231,13 +250,23 @@ class Role(Resource):
         return {"msg": "Role removed from the database."}, HTTPStatus.OK
 
 
-class RoleRules(Resource):
+class RoleRules(ServicesResources):
 
-    def get(self):
-        pass
+    rule_schema = RuleSchema()
 
-    def post(self):
-        pass
+    def get(self, id):
+        role = Role.get(id)
+        if not role:
+            return {'msg', f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
 
-    def delete(self):
+        rules = role.rules
+        return self.rule_schema.dump(rules, many=False).data, HTTPStatus.OK
+
+    def post(self, id, rule_id):
+        rule = Rule.get(rule_id)
+        if not rule:
+            return {'msg': f'Rule id={rule_id} not found'}, \
+                HTTPStatus.NOT_FOUND
+
+    def delete(self, id, rule_id):
         pass

@@ -12,7 +12,10 @@ from pathlib import Path
 from flask_principal import Permission
 from flask_restful import reqparse
 
-from vantage6.server.resource import with_user
+from vantage6.server.resource import (
+    with_user,
+    ServicesResources
+)
 from vantage6.common import logger_name
 from vantage6.server.permission import (
     register_rule, valid_rule_need
@@ -28,7 +31,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
@@ -37,13 +40,15 @@ def setup(api, api_base):
         Rule,
         path,
         endpoint='rule_without_id',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
     api.add_resource(
         Rule,
         path + '/<int:id>',
         endpoint='rule_with_id',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
 
 # ------------------------------------------------------------------------------
@@ -64,7 +69,7 @@ def setup(api, api_base):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Rule(Resource):
+class Rule(ServicesResources):
 
     rule_schema = RuleSchema()
 

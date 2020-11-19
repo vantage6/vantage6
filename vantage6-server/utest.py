@@ -12,6 +12,7 @@ from termcolor import colored
 
 from vantage6.server import util
 
+logging.basicConfig(level=logging.FATAL)
 
 class TestResult(unittest.TextTestResult):
 

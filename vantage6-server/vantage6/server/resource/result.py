@@ -9,22 +9,34 @@ from flask_restful import Resource, abort
 from requests import codes as rqc # todo remove and use HTTPStatus
 from http import HTTPStatus
 from . import parse_datetime
-from . import with_user_or_node, with_node, only_for
+from vantage6.server.resource import (
+    with_user_or_node,
+    with_node,
+    only_for,
+    ServicesResources
+)
 from ._schema import *
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
-from vantage6.server import socketio, api
-from vantage6.server.model import ( Result as db_Result, Node,
-    Task, Collaboration, Organization )
+from vantage6.server.model import ( Result as db_Result,
+    Node,
+    Task,
+    Collaboration,
+    Organization
+)
 from vantage6.server.model.base import Database
+from vantage6.server.resource._schema import (
+    ResultSchema,
+    ResultTaskIncludedSchema
+)
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
@@ -33,13 +45,15 @@ def setup(api, api_base):
         Result,
         path,
         endpoint='result_without_id',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
     api.add_resource(
         Result,
         path + '/<int:id>',
         endpoint='result_with_id',
-        methods=('GET', 'PATCH')
+        methods=('GET', 'PATCH'),
+        resource_class_kwargs=services
     )
 
 
@@ -51,7 +65,7 @@ result_inc_schema = ResultTaskIncludedSchema()
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Result(Resource):
+class Result(ServicesResources):
     """Resource for /api/result"""
 
     @only_for(['node', 'user', 'container'])

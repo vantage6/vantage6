@@ -4,28 +4,22 @@ import base64
 
 from marshmallow import fields
 from marshmallow_sqlalchemy import (
-    ModelSchema,
-    field_for,
-    ModelConverter
+    ModelSchema
 )
-from flask import url_for, Flask
-from flask_marshmallow.sqla import HyperlinkRelated
-from flask_marshmallow import Schema
-from marshmallow.fields import List, Integer
-from sqlalchemy.util import langhelpers
-from werkzeug.routing import BuildError
+from flask import url_for
 
-from vantage6.server import api
 from vantage6.server.util import logger_name
 from vantage6.server.globals import STRING_ENCODING
-from .. import ma
 from .. import db
+
 
 log = logging.getLogger(logger_name(__name__))
 
 
 class HATEOASModelSchema(ModelSchema):
     """Convert foreign-key fields to HATEOAS specification."""
+
+    api = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -84,7 +78,6 @@ class HATEOASModelSchema(ModelSchema):
         else:
             return None
 
-
     def hateos_list(self, name, obj, plural=None, endpoint=None):
         hateos_list = list()
         type_ = type(obj)
@@ -102,14 +95,17 @@ class HATEOASModelSchema(ModelSchema):
     def _hateos_from_related(self, elem, name):
         _id = elem.id
         endpoint = name+"_with_id"
-        if not api.owns_endpoint(endpoint):
-            Exception(f"Make sure {endpoint} exists!")
+        if self.api:
+            if not self.api.owns_endpoint(endpoint):
+                Exception(f"Make sure {endpoint} exists!")
 
-        verbs = list(api.app.url_map._rules_by_endpoint[endpoint][0].methods)
-        verbs.remove("HEAD")
-        verbs.remove("OPTIONS")
-        url = url_for(endpoint, id=_id)
-        return {"id":_id, "link":url, "methods": verbs}
+            verbs = list(self.api.app.url_map._rules_by_endpoint[endpoint][0].methods)
+            verbs.remove("HEAD")
+            verbs.remove("OPTIONS")
+            url = url_for(endpoint, id=_id)
+        else:
+            log.error("No API found?")
+        return {"id": _id, "link": url, "methods": verbs}
 
 
 # /task/{id}

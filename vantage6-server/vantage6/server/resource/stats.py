@@ -17,28 +17,29 @@ from pathlib import Path
 import psutil
 
 from vantage6.server import db
-from vantage6.server import socketio
+from vantage6.server.resource import ServicesResources
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
-    path = "/".join([API_BASE, module_name])
+def setup(api, api_base, services):
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
         Stats,
         path,
         endpoint='stats',
-        methods=('GET', )
+        methods=('GET', ),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Stats(Resource):
+class Stats(ServicesResources):
     """Resource for /api/stats"""
 
     # stats_schema = StatsSchema()
@@ -49,7 +50,3 @@ class Stats(Resource):
         return {
             'collaborations': schema.dump(db.Collaboration.get()).data
         }
-
-
-    
-

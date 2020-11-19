@@ -17,6 +17,7 @@ from pathlib import Path
 
 
 from vantage6.server.model.base import Database
+from vantage6.server.resource import ServicesResources
 from vantage6.server import db
 from vantage6.server.resource._schema import (
     TaskIncludedSchema,
@@ -29,7 +30,7 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
@@ -37,19 +38,22 @@ def setup(api, api_base):
         Node,
         path,
         endpoint='node_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         Node,
         path + '/<int:id>',
         endpoint='node_with_id',
-        methods=('GET', 'DELETE', 'PATCH')
+        methods=('GET', 'DELETE', 'PATCH'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         NodeTasks,
         path + '/<int:id>/task',
         endpoint='node_tasks',
-        methods=('GET', )
+        methods=('GET', ),
+        resource_class_kwargs=services
     )
 
 
@@ -57,7 +61,7 @@ def setup(api, api_base):
 # Resources / API's
 # ------------------------------------------------------------------------------
 
-class Node(Resource):
+class Node(ServicesResources):
 
     # Schemas
     node_schema = NodeSchema()
@@ -204,7 +208,7 @@ class Node(Resource):
         return self.node_schema.dump(node)  # 200
 
 
-class NodeTasks(Resource):
+class NodeTasks(ServicesResources):
     """Resource for /api/node/<int:id>/task.
     returns task(s) belonging to a specific node
 

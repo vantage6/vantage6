@@ -15,13 +15,17 @@ from pathlib import Path
 
 from vantage6 import server
 from vantage6.server import db
-from vantage6.server.resource import with_node, only_for
+from vantage6.server.resource import (
+    with_node,
+    only_for,
+    ServicesResources
+)
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
@@ -30,35 +34,39 @@ def setup(api, api_base):
         UserToken,
         path+'/user',
         endpoint='user_token',
-        methods=('POST',)
+        methods=('POST',),
+        resource_class_kwargs=services
     )
 
     api.add_resource(
         NodeToken,
         path+'/node',
         endpoint='node_token',
-        methods=('POST',)
+        methods=('POST',),
+        resource_class_kwargs=services
     )
 
     api.add_resource(
         ContainerToken,
         path+'/container',
         endpoint='container_token',
-        methods=('POST',)
+        methods=('POST',),
+        resource_class_kwargs=services
     )
 
     api.add_resource(
         RefreshToken,
         path+'/refresh',
         endpoint='refresh_token',
-        methods=('POST',)
+        methods=('POST',),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class UserToken(Resource):
+class UserToken(ServicesResources):
     """resource for api/token"""
 
     @swag_from(str(Path(r"swagger/post_token_user.yaml")), endpoint='user_token')
@@ -89,8 +97,8 @@ class UserToken(Resource):
         ret = {
             'access_token': token,
             'refresh_token': create_refresh_token(user),
-            'user_url': server.api.url_for(server.resource.user.User, id=user.id),
-            'refresh_url': server.api.url_for(RefreshToken),
+            'user_url': self.api.url_for(server.resource.user.User, id=user.id),
+            'refresh_url': self.api.url_for(RefreshToken),
         }
 
         log.info(f"Succesfull login from {username}")
@@ -114,7 +122,7 @@ class UserToken(Resource):
 
         return user, HTTPStatus.OK
 
-class NodeToken(Resource):
+class NodeToken(ServicesResources):
 
     @swag_from(str(Path(r"swagger/post_token_node.yaml")), endpoint='node_token')
     def post(self):
@@ -150,7 +158,7 @@ class NodeToken(Resource):
         return ret, HTTPStatus.OK, {'jwt-token': token}
 
 
-class ContainerToken(Resource):
+class ContainerToken(ServicesResources):
 
     @only_for(['node'])
     @swag_from(str(Path(r"swagger/post_token_container.yaml")), endpoint='container_token')
@@ -200,7 +208,7 @@ class ContainerToken(Resource):
         return {'container_token': create_access_token(container, expires_delta=False)}, HTTPStatus.OK
 
 
-class RefreshToken(Resource):
+class RefreshToken(ServicesResources):
 
     @jwt_refresh_token_required
     @swag_from(str(Path(r"swagger/post_token_refresh.yaml")), endpoint='refresh_token')

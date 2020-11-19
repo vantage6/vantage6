@@ -13,7 +13,10 @@ from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
-from vantage6.server.resource import with_user_or_node, with_user, only_for
+from vantage6.server.resource import (
+    with_user_or_node, with_user, only_for,
+    ServicesResources
+)
 from ._schema import *
 
 
@@ -21,41 +24,45 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
+def setup(api, api_base, services):
 
-    path = "/".join([API_BASE, module_name])
+    path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
         Organization,
         path,
         endpoint='organization_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
      )
     api.add_resource(
         Organization,
         path + '/<int:id>',
         endpoint='organization_with_id',
-        methods=('GET', 'PATCH')
+        methods=('GET', 'PATCH'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         OrganizationCollaboration,
         path + '/<int:id>/collaboration',
         endpoint='organization_collaboration',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
     api.add_resource(
         OrganizationNode,
         path + '/<int:id>/node',
         endpoint='organization_node',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Organization(Resource):
+class Organization(ServicesResources):
 
     org_schema = OrganizationSchema()
 
@@ -114,7 +121,7 @@ class Organization(Resource):
         organization.save()
         return organization, HTTPStatus.OK
 
-class OrganizationCollaboration(Resource):
+class OrganizationCollaboration(ServicesResources):
     """Collaborations for a specific organization."""
 
     col_schema = CollaborationSchema()
@@ -144,7 +151,7 @@ class OrganizationCollaboration(Resource):
     #     return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
 
 
-class OrganizationNode(Resource):
+class OrganizationNode(ServicesResources):
     """Resource for /api/organization/<int:id>/node."""
 
     nod_schema = NodeSchema()
