@@ -1,16 +1,11 @@
-import os
 import click
 import questionary as q
 import IPython
 import yaml
 
-# for shell python
-import vantage6.server.model as db
-
 from functools import wraps
-from pathlib import Path
 from traitlets.config import get_config
-from colorama import (Fore, Style, init)
+from colorama import Fore, Style
 
 from vantage6.common import (
     info,
@@ -24,13 +19,11 @@ from vantage6.cli.globals import (
     DEFAULT_SERVER_ENVIRONMENT as S_ENV,
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 )
-
 from vantage6.server.controller import fixture
 from vantage6.server.configuration.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
-
 from vantage6.cli.context import ServerContext
 
 
@@ -95,7 +88,8 @@ def click_insert_context(func):
 
         # initialize database (singleton)
         allow_drop_all = ctx.config["allow_drop_all"]
-        Database().connect(URI=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
+        Database().connect(URI=ctx.get_database_uri(),
+                           allow_drop_all=allow_drop_all)
 
         return func(ctx, *args, **kwargs)
 
@@ -140,11 +134,17 @@ def cli_server_configuration_list():
     sys_configs, f1 = ServerContext.available_configurations(
         system_folders=True)
     for config in sys_configs:
-        click.echo(f"{config.name:25}{str(config.available_environments):32} System ")
+        click.echo(
+            f"{config.name:25}{str(config.available_environments):32} System "
+        )
 
-    usr_configs, f2 = ServerContext.available_configurations(system_folders=False)
+    usr_configs, f2 = ServerContext.available_configurations(
+        system_folders=False
+    )
     for config in usr_configs:
-        click.echo(f"{config.name:25}{str(config.available_environments):32} User   ")
+        click.echo(
+            f"{config.name:25}{str(config.available_environments):32} User   "
+        )
     click.echo("-"*70)
 
     if len(f1)+len(f2):

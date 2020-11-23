@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/role'
-"""
 import logging
 
 from http import HTTPStatus
 from flask.globals import request
 from flask import g
-from flask_restful import Resource
 from flasgger import swag_from
 from pathlib import Path
 from flask_restful import reqparse
@@ -33,7 +29,7 @@ log = logging.getLogger(module_name)
 def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         Role,

@@ -1,7 +1,6 @@
 
-from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, String
+from sqlalchemy import Column, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.server.model import Base
 
@@ -20,7 +19,8 @@ class Role(Base):
     rules = relationship("Rule", back_populates="roles",
                          secondary="role_rule_association")
     organization = relationship("Organization", back_populates="roles")
-    users = relationship("User", back_populates="roles", secondary="Permission")
+    users = relationship("User", back_populates="roles",
+                         secondary="Permission")
 
     def __repr__(self):
         return (

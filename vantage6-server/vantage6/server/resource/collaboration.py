@@ -1,15 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/collaboration'
-"""
-
-from __future__ import print_function, unicode_literals
-
 import json
 import logging
 
-from flask import request, g
-from flask_restful import Resource, reqparse
+from flask import request
+from flask_restful import reqparse
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
@@ -19,6 +13,7 @@ from vantage6.server.resource._schema import (
     CollaborationSchema,
     TaskSchema,
     OrganizationSchema,
+    NodeSchemaSimple
 )
 from vantage6.server.resource import (
     with_user_or_node,
@@ -26,7 +21,7 @@ from vantage6.server.resource import (
     only_for,
     ServicesResources
 )
-from vantage6.server.resource._schema import OrganizationSchema, NodeSchemaSimple
+
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -34,7 +29,7 @@ log = logging.getLogger(module_name)
 
 def setup(api, api_base, services):
     path = "/".join([api_base, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         Collaboration,
@@ -85,7 +80,8 @@ org_schema = OrganizationSchema()
 class Collaboration(ServicesResources):
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")), endpoint='collaboration_without_id')
+    @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")),
+               endpoint='collaboration_without_id')
     def post(self):
         """create a new collaboration"""
 
@@ -119,7 +115,9 @@ class Collaboration(ServicesResources):
         collaboration = db.Collaboration(
             name=name,
             organizations=[
-                db.Organization.get(org_id) for org_id in data['organization_ids'] if db.Organization.get(org_id)
+                db.Organization.get(org_id)
+                for org_id in data['organization_ids']
+                if db.Organization.get(org_id)
             ],
             encrypted=encrypted
         )
@@ -128,41 +126,34 @@ class Collaboration(ServicesResources):
         return collaboration_schema.dump(collaboration).data, HTTPStatus.OK
 
     @only_for(['user', 'node', 'container'])
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")), endpoint='collaboration_with_id')
-    @swag_from(str(Path(r"swagger/get_collaboration_without_id.yaml")), endpoint='collaboration_without_id')
+    @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")),
+               endpoint='collaboration_with_id')
+    @swag_from(str(Path(r"swagger/get_collaboration_without_id.yaml")),
+               endpoint='collaboration_without_id')
     def get(self, id=None):
         """collaboration or list of collaborations in case no id is provided"""
         collaboration = db.Collaboration.get(id)
 
         # check that collaboration exists
         if not collaboration:
-            return {"msg": "collaboration having id={} not found".format(id)}, HTTPStatus.NOT_FOUND  # 404
+            return {"msg": "collaboration having id={} not found".format(id)},\
+                HTTPStatus.NOT_FOUND  # 404
 
-        # check if node or user have permission to view the collaboration
-        # organization_ids = collaboration.get_organization_ids()
-        # auth = g.user if g.user is not None else g.node
-        # if auth.organization_id not in organization_ids and "admin" not in g.user.roles:
-        #     log.warning("user or node from organization_id={} tries to access collaboration_id={}".format(
-        #         auth.organization_id, id)
-        #     )
-        #     return {"msg": "you do not have permission to view this collaboration"}
-
-        return collaboration_schema.dump(collaboration, many=not id).data, HTTPStatus.OK  # 200
+        return collaboration_schema.dump(collaboration, many=not id).data, \
+            HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(str(Path(r"swagger/patch_collaboration_with_id.yaml")), endpoint='collaboration_with_id')
+    @swag_from(str(Path(r"swagger/patch_collaboration_with_id.yaml")),
+               endpoint='collaboration_with_id')
     def patch(self, id):
         """update a collaboration"""
-        # if "admin" not in g.user.roles:
-        #     return {"msg": "only administrators can edit collaborations"}, 403  # forbidden
 
         collaboration = db.Collaboration.get(id)
 
         # check if collaboration exists
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND  # 404
+            return {"msg": f"collaboration having collaboration_id={id} "
+                    "can not be found"}, HTTPStatus.NOT_FOUND  # 404
 
         # only update fields that are provided
         data = request.get_json()
@@ -170,62 +161,67 @@ class Collaboration(ServicesResources):
             collaboration.name = data["name"]
         if "organization_ids" in data:
             collaboration.organizations = [
-                db.Organization.get(org_id) for org_id in data['organization_ids'] if db.Organization.get(org_id)
+                db.Organization.get(org_id)
+                for org_id in data['organization_ids']
+                if db.Organization.get(org_id)
             ]
         collaboration.save()
 
-        return collaboration_schema.dump(collaboration, many=False), HTTPStatus.OK  # 200
+        return collaboration_schema.dump(collaboration, many=False), \
+            HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_with_id.yaml")), endpoint='collaboration_with_id')
+    @swag_from(str(Path(r"swagger/delete_collaboration_with_id.yaml")),
+               endpoint='collaboration_with_id')
     def delete(self, id):
         """delete collaboration"""
 
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration id={} is not found".format(id)}, 404
+            return {"msg": "collaboration id={} is not found".format(id)}, \
+                HTTPStatus.NOT_FOUND
 
         collaboration.delete()
-        return {"msg": "node id={} successfully deleted".format(id)}, 200
+        return {"msg": "node id={} successfully deleted".format(id)}, \
+            HTTPStatus.OK
 
 
 class CollaborationOrganization(ServicesResources):
     """Resource for /api/collaboration/<int:id>/organization."""
 
-    @only_for(["node","user","container"])
-    @swag_from(str(Path(r"swagger/get_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
+    @only_for(["node", "user", "container"])
+    @swag_from(str(Path(r"swagger/get_collaboration_organization.yaml")),
+               endpoint='collaboration_with_id_organization')
     def get(self, id):
         """Return organizations for a specific collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         # only users that belong to the collaboration can view collaborators
         # organization_ids = collaboration.get_organization_ids()
-        # if g.user.organization_id not in organization_ids and "admin" not in g.user.roles:
-        #     return {"msg": "only users that belong to this collaboration can view its organizations"}, 403
         org_schema = OrganizationSchema()
         return org_schema.dump(collaboration.organizations, many=True).data, \
             HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
+    @swag_from(str(Path(r"swagger/post_collaboration_organization.yaml")),
+               endpoint='collaboration_with_id_organization')
     def post(self, id):
         """Add an organizations to a specific collaboration."""
         # get collaboration to which te organization should be added
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         # get the organization
         data = request.get_json()
         organization = db.Organization.get(data['id'])
         if not organization:
-            return {"msg": "organization with id={} is not found"}, HTTPStatus.NOT_FOUND
+            return {"msg": "organization with id={} is not found"}, \
+                HTTPStatus.NOT_FOUND
 
         # append organization to the collaboration
         collaboration.organizations.append(organization)
@@ -233,28 +229,28 @@ class CollaborationOrganization(ServicesResources):
         return collaboration.organizations
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
+    @swag_from(str(Path(r"swagger/delete_collaboration_organization.yaml")),
+               endpoint='collaboration_with_id_organization')
     def delete(self, id):
         """Removes an organization from a collaboration."""
         # get collaboration from which organization should be removed
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         # get organization which should be deleted
         data = request.get_json()
         organization = db.Organization.get(data['id'])
         if not organization:
-            return {"msg": "organization with id={} is not found"}, HTTPStatus.NOT_FOUND
+            return {"msg": "organization with id={} is not found"}, \
+                HTTPStatus.NOT_FOUND
 
         # delete organization and update
         collaboration.organizations.remove(organization)
         collaboration.save()
-        return {"msg": "organization id={} successfully deleted from collaboration id={}".format(
-            data['id'], id
-        )}, HTTPStatus.OK
+        return {"msg": f"organization id={data['id']} successfully deleted "
+                f"from collaboration id={id}"}, HTTPStatus.OK
 
 
 class CollaborationNode(ServicesResources):
@@ -263,90 +259,97 @@ class CollaborationNode(ServicesResources):
     node_schema = NodeSchemaSimple()
 
     @with_user
-    @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
+    @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")),
+               endpoint='collaboration_with_id_node')
     def get(self, id):
         """"Return a list of nodes that belong to the collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         return self.node_schema.dump(collaboration.nodes, many=True).data, \
             HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
+    @swag_from(str(Path(r"swagger/post_collaboration_node.yaml")),
+               endpoint='collaboration_with_id_node')
     def post(self, id):
         """Add an node to a specific collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
+            return {"msg": "collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
         node = db.Node.get(data['id'])
         if not node:
             return {"msg": "node id={} not found"}, HTTPStatus.NOT_FOUND
         if node in collaboration.nodes:
-            return {"msg": "node id={} is already in collaboration id={}".format(
-                data['id'], id
-            )}, HTTPStatus.BAD_REQUEST
+            return {"msg": "node id={data['id']} is already in collaboration "
+                    f"id={id}"}, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.append(node)
         collaboration.save()
-        return self.node_schema.dump(collaboration.nodes, many=True), \
-             HTTPStatus.CREATED
+        return self.node_schema.dump(collaboration.nodes, many=True),\
+            HTTPStatus.CREATED
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
+    @swag_from(str(Path(r"swagger/delete_collaboration_node.yaml")),
+               endpoint='collaboration_with_id_node')
     def delete(self, id):
         """Remove node from collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, 404
+            return {"msg": f"collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
         node = db.Node.get(data['id'])
         if not node:
-            return {"msg": "node id={} not found"}, 404
+            return {"msg": "node id={} not found"}, HTTPStatus.NOT_FOUND
         if node not in collaboration.nodes:
-            return {"msg": "node id={} is not part of collaboration id={}".format(data['id'], id)}, 400
+            return {"msg": f"node id={data['id']} is not part of "
+                    "collaboration id={id}"}, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.remove(node)
-        return {"msg": "node id={} removed from collaboration id={}".format(data['id'], id)}, 200
+        return {"msg": "node id={data['id']} removed from collaboration "
+                "id={id}"}, HTTPStatus.OK
 
 
 class CollaborationTask(ServicesResources):
     """Resource for /api/collaboration/<int:id>/task."""
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_collaboration_task.yaml")), endpoint='collaboration_with_id_task')
+    @swag_from(str(Path(r"swagger/get_collaboration_task.yaml")),
+               endpoint='collaboration_with_id_task')
     def get(self, id):
         """List of tasks that belong to a collaboration"""
         collaboration = db.Collaboration.get(id)
         return tasks_schema.dump(collaboration.tasks, many=True)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_task.yaml")), endpoint='collaboration_with_id_task')
+    @swag_from(str(Path(r"swagger/post_collaboration_task.yaml")),
+               endpoint='collaboration_with_id_task')
     def post(self, id):
         """Attach new task to collaboration"""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
+
+        input_ = data.get('input', '') if \
+            isinstance(data.get('input', ''), str) else \
+            json.dumps(data.get('input'))
+
         task = db.Task(
             collaboration=collaboration,
             name=data.get('name', ''),
             description=data.get('description', ''),
             image=data.get('image', ''),
-            input=data.get('input', '') if isinstance(data.get('input', ''), str) else json.dumps(data.get('input')),
+            input=input_,
         )
         task.save()
 
@@ -360,21 +363,24 @@ class CollaborationTask(ServicesResources):
         return tasks_schema.dump(collaboration.tasks, many=True)
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_task.yaml")), endpoint='collaboration_with_id_task')
+    @swag_from(str(Path(r"swagger/delete_collaboration_task.yaml")),
+               endpoint='collaboration_with_id_task')
     def delete(self, id):
         """Remove task from collaboration"""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration having collaboration_id={id} can "
+                    "not be found"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
         task_id = data['task_id']
         task = db.Task.get(task_id)
         if not task:
-            return {"msg": "Task id={} not found".format(task_id)}, HTTPStatus.NOT_FOUND
+            return {"msg": f"Task id={task_id} not found"}, \
+                HTTPStatus.NOT_FOUND
         if task_id not in collaboration.get_task_ids():
-            return {"msg": "Task id={} is not part of collaboration id={}".format(task_id, id)}, HTTPStatus.BAD_REQUEST
+            return {"msg": f"Task id={task_id} is not part of collaboration "
+                    "id={id}"}, HTTPStatus.BAD_REQUEST
         task.delete()
-        return {"msg": "Task id={} is removed from collaboration id={}".format(task_id, id)}, HTTPStatus.OK
+        return {"msg": "Task id={task_id} is removed from collaboration "
+                f"id={id}"}, HTTPStatus.OK

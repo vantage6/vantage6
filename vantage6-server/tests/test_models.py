@@ -1,23 +1,16 @@
 import logging
-import operator
 import unittest
-from flask_restful import Api
 import yaml
-import bcrypt
 import datetime
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6 import server
-from vantage6.server import context
 from vantage6.server.controller.fixture import load
-from vantage6.server.model.base import Database, Base
+from vantage6.server.model.base import Database
 from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
 
 from vantage6.server.model import (
-    Base,
     User,
     Organization,
     Collaboration,
@@ -29,11 +22,9 @@ from vantage6.server.model import (
 )
 from vantage6.server.model.rule import Scope, Operation
 
-from sqlalchemy.orm.exc import NoResultFound
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.CRITICAL
-
 logging.basicConfig(level=logging.CRITICAL)
 
 
@@ -42,14 +33,6 @@ class TestBaseModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Database().connect("sqlite://", allow_drop_all=True)
-
-        # ctx = context.TestContext.from_external_config_file(
-            # "unittest_config.yaml")
-
-        # server.app.testing = True
-        # server.api = Api(server.app)
-        # server.RESOURCES_INITIALIZED = False
-        # server.init_resources(ctx)
 
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
@@ -108,8 +91,6 @@ class TestUserModel(TestBaseModel):
 
         user2 = User(username="duplicate-user", email="something-else@org.org")
         self.assertRaises(IntegrityError, user2.save)
-        # Database().Session.rollback()
-
 
 
 class TestCollaborationModel(TestBaseModel):
@@ -117,7 +98,7 @@ class TestCollaborationModel(TestBaseModel):
     def test_read(self):
         for col in self.entities.get("collaborations"):
             db_collaboration = Collaboration.find_by_name(col.get("name"))
-            assert db_collaboration.name == col.get("name"), "incorrect name"
+            self.assertEqual(db_collaboration.name, col.get("name"))
 
     def test_insert(self):
         col = Collaboration(
@@ -125,7 +106,7 @@ class TestCollaborationModel(TestBaseModel):
         )
         col.save()
         db_col = Collaboration.find_by_name("unit_collaboration")
-        assert db_col == col, "Collaboration not correct stored in the database"
+        self.assertEqual(db_col, col)
 
     def test_methods(self):
         db_col = Collaboration.get(1)
@@ -138,7 +119,7 @@ class TestCollaborationModel(TestBaseModel):
     def test_relations(self):
         db_col = Collaboration.get(1)
         for node in db_col.nodes:
-            self.assertIsInstance(node,Node)
+            self.assertIsInstance(node, Node)
         for organization in db_col.organizations:
             self.assertIsInstance(organization, Organization)
 
@@ -163,11 +144,11 @@ class TestNodeModel(TestBaseModel):
 
         node = Node.get_by_api_key("that-we-never-use")
         self.assertIsNotNone(node)
-        self.assertIsInstance(node,Node)
-        self.assertEqual(node.name, "unit_node", "names do not match")
-        self.assertEqual(node.api_key, "that-we-never-use", "api-keys are messed up")
-        self.assertEqual(node.collaboration, collaboration, "collaboration do not match")
-        self.assertEqual(node.organization, organization, "names do not match")
+        self.assertIsInstance(node, Node)
+        self.assertEqual(node.name, "unit_node")
+        self.assertEqual(node.api_key, "that-we-never-use")
+        self.assertEqual(node.collaboration, collaboration)
+        self.assertEqual(node.organization, organization)
 
     def test_methods(self):
         node = Node.get()[0]
@@ -199,7 +180,10 @@ class TestOrganizationModel(TestBaseModel):
             for user in organization.get("users"):
                 db_user = User.get_by_username(user.get("username"))
                 self.assertIsNotNone(db_user)
-                self.assertEqual(db_user.organization.name, organization.get("name"))
+                self.assertEqual(
+                    db_user.organization.name,
+                    organization.get("name")
+                )
 
     def test_insert(self):
         col = Collaboration.get()

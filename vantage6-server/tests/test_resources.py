@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-from http import HTTPStatus
-from sqlalchemy.sql.schema import PassiveDefault
 import yaml
 import unittest
 import logging
 import json
 import uuid
 
-from unittest.mock import MagicMock, patch
+from http import HTTPStatus
+from unittest.mock import patch
 from flask import Response as BaseResponse
 from flask.testing import FlaskClient
 from werkzeug.utils import cached_property
 
+from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.server.globals import PACAKAGE_FOLDER
 from vantage6.server import ServerApp
@@ -23,7 +23,8 @@ from vantage6.server.model.base import Database
 from vantage6.server.controller.fixture import load
 
 
-log = logging.getLogger(__name__.split('.')[-1])
+logger = logger_name(__name__)
+log = logging.getLogger(logger)
 
 
 class Response(BaseResponse):

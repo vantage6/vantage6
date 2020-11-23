@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/recover'
-"""
-from __future__ import print_function, unicode_literals
-
 import logging
 import datetime
 
-from flask import request, jsonify, g, render_template
-from flask_restful import Resource
+from flask import request, render_template
 from flask_jwt_extended import (
     create_access_token,
     decode_token
@@ -19,12 +13,13 @@ from http import HTTPStatus
 from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
+from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.resource import (
     ServicesResources
 )
 
-module_name = __name__.split('.')[-1]
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 

@@ -2,19 +2,19 @@ import logging
 import os
 
 from sqlalchemy import Column, Integer, inspect
-from sqlalchemy.orm.session import Session, sessionmaker
+from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm.session import Session
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
-
+from vantage6.common import logger_name
 from vantage6.server.util import Singleton
 
-module_name = __name__.split('.')[-1]
+
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
@@ -42,12 +42,12 @@ class Database(metaclass=Singleton):
         self.allow_drop_all = False
         self.URI = None
 
-    def connect(self, URI='sqlite:////tmp/test.db', allow_drop_all=False):
+    def connect(self, uri='sqlite:////tmp/test.db', allow_drop_all=False):
 
         self.allow_drop_all = allow_drop_all
-        self.URI = URI
+        self.URI = uri
 
-        URL = make_url(URI)
+        URL = make_url(uri)
         log.info("Initializing the database")
         log.debug("  driver:   {}".format(URL.drivername))
         log.debug("  host:     {}".format(URL.host))
@@ -59,8 +59,9 @@ class Database(metaclass=Singleton):
         if URL.host is None and URL.database:
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
-        self.engine = create_engine(URI, convert_unicode=True)
-        self.Session = scoped_session(sessionmaker(autocommit=False, autoflush=False))
+        self.engine = create_engine(uri, convert_unicode=True)
+        self.Session = scoped_session(sessionmaker(autocommit=False,
+                                                   autoflush=False))
         self.object_session = Session.object_session
 
         self.Session.configure(bind=self.engine)
@@ -133,14 +134,14 @@ class ModelBase:
 
         # Only *keep* keys listed in `include`
         if include:
-            if type(include) != type([]):
+            if type(include) is not None:
                 include = [include, ]
             include = set(include)
             keys = keys & include
 
         # Remove any keys that are in `exclude`
         if exclude:
-            if type(exclude) != type([]):
+            if type(exclude) is not None:
                 exclude = [exclude, ]
             exclude = set(exclude)
             keys = keys - exclude

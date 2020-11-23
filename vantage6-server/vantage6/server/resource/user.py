@@ -1,29 +1,19 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/user'
-"""
-from __future__ import print_function, unicode_literals
-import http
-
 import logging
-from os import abort
-
-from http import HTTPStatus
-from flask_restful import Resource
-from flask import g
-from flask_restful import reqparse
-from http import HTTPStatus
-from flasgger import swag_from
-from pathlib import Path
-from flask_principal import Permission
 import sqlalchemy.exc
 
+from http import HTTPStatus
+from flask import g
+from flask_restful import reqparse
+from flasgger import swag_from
+from pathlib import Path
+
+from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.permission import (
     register_rule,
     Scope,
-    Operation,
-    verify_user_rules
+    Operation
 )
 from vantage6.server.resource import (
     with_user,
@@ -32,13 +22,14 @@ from vantage6.server.resource import (
 )
 from vantage6.server.resource._schema import UserSchema
 
-module_name = __name__.split('.')[-1]
+
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
 def setup(api, api_base, services):
     path = "/".join([api_base, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         User,
@@ -73,6 +64,7 @@ manage_roles = register_rule(
     "Assign roles to other users."
 )
 
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
@@ -81,8 +73,10 @@ class User(ServicesResources):
     user_schema = UserSchema()
 
     @only_for(['user'])
-    @swag_from(str(Path(r"swagger/get_user_with_id.yaml")), endpoint='user_with_id')
-    @swag_from(str(Path(r"swagger/get_user_without_id.yaml")), endpoint='user_without_id')
+    @swag_from(str(Path(r"swagger/get_user_with_id.yaml")),
+               endpoint='user_with_id')
+    @swag_from(str(Path(r"swagger/get_user_without_id.yaml")),
+               endpoint='user_without_id')
     def get(self, id=None):
         """Return user details."""
         retval = db.User.get(id)
@@ -162,7 +156,8 @@ class User(ServicesResources):
         potential_rules = data["rules"]
         rules = []
         if potential_rules:
-            rules = [db.Rule.get(rule) for rule in potential_rules if db.Rule.get(rule)]
+            rules = [db.Rule.get(rule) for rule in potential_rules
+                     if db.Rule.get(rule)]
             denied = self.verify_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
@@ -183,13 +178,15 @@ class User(ServicesResources):
         return self.user_schema.dump(user).data, HTTPStatus.CREATED
 
     @with_user
-    @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")), endpoint='user_with_id')
+    @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")),
+               endpoint='user_with_id')
     def patch(self, id):
 
         user = db.User.get(id)
 
         if not user:
-            return {"msg": "user id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "user id={} not found".format(id)}, \
+                HTTPStatus.NOT_FOUND
 
         is_root = g.user.username == 'root'
         if (user.organization_id != g.user.organization_id) and not is_root:
@@ -197,17 +194,14 @@ class User(ServicesResources):
                 HTTPStatus.FORBIDDEN
 
         parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=False, help="This field is required")
-        parser.add_argument("firstname", type=str, required=False, help="This field is required")
-        parser.add_argument("lastname", type=str, required=False, help="This field is required")
-        parser.add_argument("roles", type=str, required=False, help="This field is required")
-        parser.add_argument("password", type=str, required=False, help="This field is required")
-        parser.add_argument("organization_id", type=int, required=False, help="This is only used if you're root")
+        parser.add_argument("username", type=str, required=False)
+        parser.add_argument("firstname", type=str, required=False)
+        parser.add_argument("lastname", type=str, required=False)
+        parser.add_argument("roles", type=str, required=False)
+        parser.add_argument("password", type=str, required=False)
+        parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
 
-        # Username cannot be changed once set?
-        # if data["username"]:
-        #     user.username = data["username"]
         if data["firstname"]:
             user.firstname = data["firstname"]
         if data["lastname"]:
@@ -219,7 +213,10 @@ class User(ServicesResources):
         if data["organization_id"]:
             if is_root:
                 user.organization_id = data["organization_id"]
-                log.warn(f'Running as root and assigning (new) organization_id={data["organization_id"]}')
+                log.warn(
+                    f'Running as root and assigning (new) '
+                    f'organization_id={data["organization_id"]}'
+                )
             else:
                 log.error('Current user cannot assign new organizations!')
 
@@ -232,22 +229,23 @@ class User(ServicesResources):
         return user, HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")), endpoint='user_with_id')
+    @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")),
+               endpoint='user_with_id')
     def delete(self, id):
 
         user = db.User.get(id)
         if not user:
-            return {"msg": "user id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "user id={} not found".format(id)}, \
+                HTTPStatus.NOT_FOUND
         is_root = g.user.username == 'root'
         if user.organization_id != g.user.organization_id and not is_root:
-            log.warning(
-                "user {} has tried to delete user {} but does not have the required permissions".format(
-                    g.user.id,
-                    user.id
-                )
-            )
-            return {"msg": "you do not have permission to modify user id={}".format(id)}, HTTPStatus.FORBIDDEN
+            log.warning(f"user {g.user.id} has tried to delete user {user.id} "
+                        f"but does not have the required permissions")
+            return {"msg": f"you do not have permission to modify user"
+                    " id={id}"}, \
+                HTTPStatus.FORBIDDEN
 
         user.delete()
-        log.info("user id={} is removed from the database".format(id))
-        return {"msg": "user id={} is removed from the database".format(id)}, HTTPStatus.OK
+        log.info(f"user id={id} is removed from the database")
+        return {"msg": f"user id={id} is removed from the database"}, \
+            HTTPStatus.OK

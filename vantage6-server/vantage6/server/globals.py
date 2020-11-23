@@ -2,7 +2,7 @@ import datetime
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME, STRING_ENCODING
+from vantage6.common.globals import APPNAME
 
 #
 #   INSTALLATION SETTINGS

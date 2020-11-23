@@ -2,6 +2,7 @@
 import sys
 import json
 
+
 def run(filename):
     with open(filename) as fp:
         BUILD = json.load(fp)

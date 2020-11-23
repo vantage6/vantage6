@@ -86,4 +86,5 @@ class User(Authenticatable):
     @classmethod
     def exists(cls, field, value):
         session = Database().Session
-        return session.query(exists().where(getattr(cls, field) == value)).scalar()
+        return session.query(exists().where(getattr(cls, field) == value))\
+            .scalar()

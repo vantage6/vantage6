@@ -35,7 +35,7 @@ def load(fixtures, drop_all=False):
             log.debug(f"processed user={user.username}")
 
     log.info("Create collaborations")
-    for col in fixtures.get("collaborations",{}):
+    for col in fixtures.get("collaborations", {}):
 
         # create collaboration
         collaboration = db.Collaboration(name=col.get("name"))
@@ -43,12 +43,12 @@ def load(fixtures, drop_all=False):
 
         # append organizations to the collaboration
 
-        for participant in col.get("participants",{}):
+        for participant in col.get("participants", {}):
 
             if isinstance(participant, str):
                 org_name = participant
                 node_api_key = str(uuid.uuid1())
-            elif isinstance(participant, dict):
+            else:  # == isinstance(participant, dict):
                 org_name = participant.get("name")
                 node_api_key = participant.get("api-key", str(uuid.uuid1()))
 
@@ -69,7 +69,7 @@ def load(fixtures, drop_all=False):
 
         # append dummy tasks to the collaboration
         log.debug("Processing Task Assignments")
-        for image in col.get("tasks",{}):
+        for image in col.get("tasks", {}):
             initiator = collaboration.organizations[0]
             task = db.Task(
                 name=f"Example task",

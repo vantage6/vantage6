@@ -1,27 +1,23 @@
-import os
-import collections
-import yaml
-import logging
-
-from pathlib import Path
-from schema import Schema, And, Or, Use, Optional
+from schema import And, Use
 
 from vantage6.common.configuration_manager import (
-    Configuration, 
+    Configuration,
     ConfigurationManager
 )
+
 
 class ServerConfiguration(Configuration):
 
     VALIDATORS = {
         "description": Use(str),
-        "ip": Use(str) ,
-        "port": Use(int),  
+        "ip": Use(str),
+        "port": Use(int),
         "api_path": Use(str),
         "uri": Use(str),
         "allow_drop_all": Use(bool),
-        "logging":{
-            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
+        "logging": {
+            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING",
+                                                   "ERROR", "CRITICAL")),
             "file": Use(str),
             "use_console": Use(bool),
             "backup_count": And(Use(int), lambda n: n > 0),
@@ -31,19 +27,19 @@ class ServerConfiguration(Configuration):
         }
     }
 
+
 class TestConfiguration(Configuration):
     VALIDATORS = {}
-    
+
 
 class ServerConfigurationManager(ConfigurationManager):
-    
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(conf_class=ServerConfiguration, name=name)
 
     @classmethod
     def from_file(cls, path):
         return super().from_file(path, conf_class=ServerConfiguration)
-
 
 
 class TestingConfigurationManager(ConfigurationManager):
@@ -54,4 +50,3 @@ class TestingConfigurationManager(ConfigurationManager):
     @classmethod
     def from_file(cls, path):
         return super().from_file(path, conf_class=TestConfiguration)
-

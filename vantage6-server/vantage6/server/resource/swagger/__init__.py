@@ -1,16 +1,16 @@
 # swagger template
 swagger_template = {
-    "components":{
-        "securitySchemes":{
-            "bearerAuth":{
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": " JWT"
             }
         },
-        "schemas":{
-            "Task":{
-                "properties":{
+        "schemas": {
+            "Task": {
+                "properties": {
                     "image": {"type": "string"},
                     "description": {"type": "string"},
                     "input": {"type": "string"},
@@ -21,7 +21,7 @@ swagger_template = {
                         "items": {"type": "integer"}
                     }
                 },
-                "example":{
+                "example": {
                     "name": "human-readable-name",
                     "image": "hello-world",
                     "collaboration_id": 1
@@ -32,7 +32,7 @@ swagger_template = {
                 "properties": {
                     "collaboration_id": {"type": "integer"}
                 },
-                "example":{
+                "example": {
                     "collaboration_id": 1
                 }
             },
@@ -48,11 +48,11 @@ swagger_template = {
             },
             "User": {
                 "example": {
-                    "password": "secret!", 
+                    "password": "secret!",
                     "username": "yourname"
-                }, 
+                },
                 "properties": {
-                    "password": {"type": "string"}, 
+                    "password": {"type": "string"},
                     "username": {"type": "string"}
                 }
             },

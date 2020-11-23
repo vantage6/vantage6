@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/task'
-"""
 import logging
 import json
 
 from flask import g, request, url_for
-from flask_restful import Resource
-from vantage6.server.resource import (
-    only_for,
-    ServicesResources
-)
-from ._schema import TaskSchema, TaskIncludedSchema, TaskResultSchema
 from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
 
+from vantage6.server.resource import (
+    only_for,
+    ServicesResources
+)
+from vantage6.server.resource._schema import (
+    TaskSchema,
+    TaskIncludedSchema,
+    TaskResultSchema
+)
 from vantage6.server import db
+from vantage6.common.globals import STRING_ENCODING
 
-from vantage6.server.globals import STRING_ENCODING
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -61,19 +61,22 @@ class Task(ServicesResources):
     task_result_schema = TaskIncludedSchema()
 
     @only_for(["user", "node", "container"])
-    @swag_from(str(Path(r"swagger/get_task_with_id.yaml")), endpoint='task_with_id')
-    @swag_from(str(Path(r"swagger/get_task_without_id.yaml")), endpoint='task_without_id')
+    @swag_from(str(Path(r"swagger/get_task_with_id.yaml")),
+               endpoint='task_with_id')
+    @swag_from(str(Path(r"swagger/get_task_without_id.yaml")),
+               endpoint='task_without_id')
     def get(self, id=None):
         task = db.Task.get(id)
         if not task:
             return {"msg": "task id={} is not found"}, HTTPStatus.NOT_FOUND
 
-        s = self.task_result_schema if request.args.get('include') == 'results' else self.task_schema
+        s = self.task_result_schema \
+            if request.args.get('include') == 'results' else self.task_schema
         return s.dump(task, many=not id).data, HTTPStatus.OK
 
-
     @only_for(["user", "container"])
-    @swag_from(str(Path(r"swagger/post_task_without_id.yaml")), endpoint='task_without_id')
+    @swag_from(str(Path(r"swagger/post_task_without_id.yaml")),
+               endpoint='task_without_id')
     def post(self):
         """Create a new Task."""
         # log_full_request(request, log)
@@ -98,7 +101,8 @@ class Task(ServicesResources):
         # is part of a the collaboration
         # if the 'master'-flag is set to true the (master) task is executed on
         # a node in the collaboration from the organization to which the user
-        # belongs. If also organization_ids are supplied, then these are ignored.
+        # belongs. If also organization_ids are supplied, then these are
+        # ignored.
         if data.get("master", False) and g.user:
             org_ids = [g.user.organization_id]
 
@@ -130,20 +134,22 @@ class Task(ServicesResources):
 
         if g.user:
             if not self.__verify_user_permissions(g.user, task):
-                return {"msg": "You lack the permission to do that!"}, HTTPStatus.UNAUTHORIZED
+                return {"msg": "You lack the permission to do that!"}, \
+                    HTTPStatus.UNAUTHORIZED
 
             # Users can only create top-level -tasks (they will not
             # have sub-tasks). Therefore, always create a new run_id.
-            # FIXME: I can see no reason why users wouldn't be allowed to create
-            #   subtasks? For iterative processes this would actually make a lot
-            #   of sense.
+            # FIXME: I can see no reason why users wouldn't be allowed to
+            # create subtasks? For iterative processes this would actually
+            # make a lot of sense.
             task.run_id = task.next_run_id()
             log.debug(f"New run_id {task.run_id}")
 
         elif g.container:
             # verify that the container has permissions to create the task
             if not self.__verify_container_permissions(g.container, task):
-                return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
+                return {"msg": "Container-token is not valid"}, \
+                    HTTPStatus.UNAUTHORIZED
 
             # Tasks created by containers are always sub-tasks
             task.parent_task_id = g.container["task_id"]
@@ -161,8 +167,8 @@ class Task(ServicesResources):
 
             # TODO make this cleaner...
             # get organization specific (encrypted) input
-            input_ = [org.get("input") for org in organizations_json_list \
-                if org.get("id")==organization.id].pop()
+            input_ = [org.get("input") for org in organizations_json_list
+                      if org.get("id") == organization.id].pop()
 
             if isinstance(input_, dict):
                 input_ = json.dumps(input_).encode(STRING_ENCODING)
@@ -175,19 +181,21 @@ class Task(ServicesResources):
             result.save()
 
         # notify nodes a new task available (only to online nodes)
-        socketio.emit(
+        self.socketio.emit(
             'new_task',
             task.id,
             room=f'collaboration_{task.collaboration_id}',
             namespace='/tasks'
         )
 
-        log.info(f"New task created for collaboration '{task.collaboration.name}'")
+        log.info(f"New task created for collaboration "
+                 "'{task.collaboration.name}'")
 
         if g.type == 'user':
             log.debug(f" created by: '{g.user.username}'")
         else:
-            log.debug((f" created by container on node_id={g.container['node_id']}"
+            log.debug((f" created by container on node_id="
+                       f"{g.container['node_id']}"
                        f" for (master) task_id={g.container['task_id']}"))
 
         log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
@@ -195,7 +203,6 @@ class Task(ServicesResources):
         log.debug(f" image: '{task.image}'")
 
         return self.task_schema.dump(task, many=False)
-
 
     def handle_master_task(self):
         """Handle creation of a master task."""
@@ -214,7 +221,8 @@ class Task(ServicesResources):
             return True
 
         # user is within organization that is part of the collaboration
-        return g.user.organization_id in task.collaboration.get_organization_ids()
+        return g.user.organization_id in \
+            task.collaboration.get_organization_ids()
 
     @staticmethod
     def __verify_container_permissions(container, task):
@@ -224,38 +232,46 @@ class Task(ServicesResources):
         # if container["image"] != task.image:
         if not task.image.endswith(container["image"]):
             log.warning((f"Container from node={container['node_id']} "
-                f"attempts to post a task using illegal image!?"))
+                         f"attempts to post a task using illegal image!?"))
             log.warning(f"  task image: {task.image}")
             log.warning(f"  container image: {container['image']}")
             return False
 
         # check master task is not completed yet
         if db.Task.get(container["task_id"]).complete:
-            log.warning((f"Container from node={container['node_id']} attempts "
-                f"to start sub-task for a completed task={container['task_id']}"))
+            log.warning(
+                f"Container from node={container['node_id']} "
+                f"attempts to start sub-task for a completed "
+                f"task={container['task_id']}"
+            )
             return False
 
         # check that node id is indeed part of the collaboration
         if not container["collaboration_id"] == task.collaboration.id:
-            log.warning((f"Container attempts to create a task outside "
+            log.warning(
+                f"Container attempts to create a task outside "
                 f"collaboration_id={container['collaboration_id']} in "
-                f"collaboration_id={task.collaboration_id}!"))
+                f"collaboration_id={task.collaboration_id}!"
+            )
             return False
 
         return True
 
     @only_for(['user'])
-    @swag_from(str(Path(r"swagger/delete_task_with_id.yaml")), endpoint='task_with_id')
+    @swag_from(str(Path(r"swagger/delete_task_with_id.yaml")),
+               endpoint='task_with_id')
     def delete(self, id):
         """Deletes a task"""
         # TODO we might want to delete the corresponding results also?
 
         task = db.Task.get(id)
         if not task:
-            return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "task id={} not found".format(id)}, \
+                HTTPStatus.NOT_FOUND
 
         task.delete()
-        return {"msg": "task id={} successfully deleted".format(id)}, HTTPStatus.OK
+        return {"msg": "task id={} successfully deleted".format(id)}, \
+            HTTPStatus.OK
 
 
 class TaskResult(ServicesResources):
@@ -264,11 +280,14 @@ class TaskResult(ServicesResources):
     task_result_schema = TaskResultSchema()
 
     @only_for(['user', 'container'])
-    @swag_from(str(Path(r"swagger/get_task_result.yaml")), endpoint='task_result')
+    @swag_from(str(Path(r"swagger/get_task_result.yaml")),
+               endpoint='task_result')
     def get(self, id):
         """Return results for task."""
         task = db.Task.get(id)
         if not task:
-            return {"msg": "task id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "task id={} not found".format(id)}, \
+                HTTPStatus.NOT_FOUND
 
-        return self.task_result_schema.dump(task.results, many=True).data, HTTPStatus.OK
+        return self.task_result_schema.dump(task.results, many=True).data, \
+            HTTPStatus.OK

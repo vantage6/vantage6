@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/organization'
-"""
-from __future__ import print_function, unicode_literals
-
 import logging
-import base64
 
 from flask import request
-from flask_restful import Resource
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
+from vantage6.server import db
 from vantage6.server.resource import (
-    with_user_or_node, with_user, only_for,
+    with_user_or_node, only_for,
     ServicesResources
 )
-from ._schema import *
+from vantage6.server.resource._schema import (
+    OrganizationSchema,
+    CollaborationSchema,
+    NodeSchema
+)
 
 
 module_name = __name__.split('.')[-1]
@@ -27,7 +25,7 @@ log = logging.getLogger(module_name)
 def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         Organization,
@@ -68,9 +66,9 @@ class Organization(ServicesResources):
 
     @only_for(["user", "node", "container"])
     @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")),
-        endpoint='organization_with_id')
+               endpoint='organization_with_id')
     @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")),
-        endpoint='organization_without_id')
+               endpoint='organization_without_id')
     def get(self, id=None):
         organization = db.Organization.get(id)
         if not organization:
@@ -82,7 +80,7 @@ class Organization(ServicesResources):
 
     @only_for(["user"])
     @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
-        endpoint='organization_without_id')
+               endpoint='organization_without_id')
     def post(self):
         """Create a new organization."""
 
@@ -112,8 +110,8 @@ class Organization(ServicesResources):
                 HTTPStatus.NOT_FOUND
 
         data = request.get_json()
-        fields = ["name", "address1", "address2", "zipcode", "country", \
-            "public_key", "domain"]
+        fields = ["name", "address1", "address2", "zipcode", "country",
+                  "public_key", "domain"]
         for field in fields:
             if data.get(field):
                 setattr(organization, field, data.get(field))
@@ -121,34 +119,25 @@ class Organization(ServicesResources):
         organization.save()
         return organization, HTTPStatus.OK
 
+
 class OrganizationCollaboration(ServicesResources):
     """Collaborations for a specific organization."""
 
     col_schema = CollaborationSchema()
 
     @only_for(["user", "node"])
-    @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")), endpoint='organization_collaboration')
+    @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")),
+               endpoint='organization_collaboration')
     def get(self, id):
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "organization id={} not found".format(id)}, \
+                HTTPStatus.NOT_FOUND
 
-        return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
-
-    # @with_user
-    # def post(self, id):
-    #     organization = db.Organization.get(id)
-    #     if not organization:
-    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-    #
-    #     data = request.get_json()
-    #     collaboration = db.Collaboration.get(data['id'])
-    #     if not collaboration:
-    #         return {"msg": "collaboration id={} is not found".format(data['id'])}, HTTPStatus.NOT_FOUND
-    #
-    #     organization.collaborations.append(collaboration)
-    #     organization.save()
-    #     return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
+        return self.col_schema.dump(
+            organization.collaborations,
+            many=True
+        ).data, HTTPStatus.OK
 
 
 class OrganizationNode(ServicesResources):
@@ -157,30 +146,14 @@ class OrganizationNode(ServicesResources):
     nod_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_organization_node.yaml")), endpoint='organization_node')
+    @swag_from(str(Path(r"swagger/get_organization_node.yaml")),
+               endpoint='organization_node')
     def get(self, id):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": "organization id={} not found".format(id)}, \
+                HTTPStatus.NOT_FOUND
 
-        return self.nod_schema.dump(organization.nodes, many=True).data, HTTPStatus.OK
-
-    # @with_user
-    # def post(self, id):
-    #     """Create new node"""
-    #     organization = db.Organization.get(id)
-    #     if not organization:
-    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-    #
-    #     data = request.get_json()
-    #
-    #     db.Node(
-    #         name="{} - {} Node".format(organization.name, collaboration.name),
-    #         collaboration=collaboration,
-    #         organization=organization,
-    #         api_key=api_key
-    #     )
-    #     node.save()
-    #
-    #     return node
+        return self.nod_schema.dump(organization.nodes, many=True).data, \
+            HTTPStatus.OK

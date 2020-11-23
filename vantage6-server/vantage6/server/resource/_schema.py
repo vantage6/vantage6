@@ -3,14 +3,12 @@ import logging
 import base64
 
 from marshmallow import fields
-from marshmallow_sqlalchemy import (
-    ModelSchema
-)
+from marshmallow_sqlalchemy import ModelSchema
 from flask import url_for
 
+from vantage6.server import db
 from vantage6.server.util import logger_name
-from vantage6.server.globals import STRING_ENCODING
-from .. import db
+from vantage6.common.globals import STRING_ENCODING
 
 
 log = logging.getLogger(logger_name(__name__))
@@ -80,7 +78,6 @@ class HATEOASModelSchema(ModelSchema):
 
     def hateos_list(self, name, obj, plural=None, endpoint=None):
         hateos_list = list()
-        type_ = type(obj)
         plural_ = plural if plural else name+"s"
         endpoint = endpoint if endpoint else name
         for elem in getattr(obj, plural_):
@@ -99,13 +96,15 @@ class HATEOASModelSchema(ModelSchema):
             if not self.api.owns_endpoint(endpoint):
                 Exception(f"Make sure {endpoint} exists!")
 
-            verbs = list(self.api.app.url_map._rules_by_endpoint[endpoint][0].methods)
+            verbs = list(
+                self.api.app.url_map._rules_by_endpoint[endpoint][0].methods
+            )
             verbs.remove("HEAD")
             verbs.remove("OPTIONS")
             url = url_for(endpoint, id=_id)
+            return {"id": _id, "link": url, "methods": verbs}
         else:
             log.error("No API found?")
-        return {"id": _id, "link": url, "methods": verbs}
 
 
 # /task/{id}
@@ -157,8 +156,10 @@ class OrganizationSchema(HATEOASModelSchema):
 
     # make sure
     public_key = fields.Function(
-        lambda self: base64.b64encode(self._public_key).decode(STRING_ENCODING) if \
-            self._public_key else ""
+        lambda obj: (
+            base64.b64encode(obj._public_key).decode(STRING_ENCODING)
+            if obj._public_key else ""
+        )
     )
 
 
@@ -170,6 +171,7 @@ class CollaborationSchema(HATEOASModelSchema):
     organizations = fields.Method("organizations")
     nodes = fields.Method("nodes")
     tasks = fields.Method("tasks")
+
 
 # ------------------------------------------------------------------------------
 class CollaborationSchemaSimple(HATEOASModelSchema):

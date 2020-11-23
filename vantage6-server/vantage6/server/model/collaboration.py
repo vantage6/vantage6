@@ -1,8 +1,9 @@
 from sqlalchemy import Column, String, Boolean, exists
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
 from .base import Base, Database
+
 
 class Collaboration(Base):
     """Combination of 2 or more Organizations."""
@@ -13,7 +14,7 @@ class Collaboration(Base):
 
     # relationships
     organizations = relationship("Organization", secondary="Member",
-        back_populates='collaborations')
+                                 back_populates='collaborations')
     nodes = relationship("Node", back_populates="collaboration")
     tasks = relationship("Task", back_populates="collaboration")
 
@@ -50,14 +51,13 @@ class Collaboration(Base):
         session = Database().Session
         return session.query(exists().where(cls.name == name)).scalar()
 
-
     def __repr__(self):
         number_of_organizations = len(self.organizations)
         number_of_tasks = len(self.tasks)
         return (
             "<Collaboration "
-                f"{self.id}: '{self.name}', "
-                f"{number_of_organizations} organization(s), "
-                f"{number_of_tasks} task(s)"
+            f"{self.id}: '{self.name}', "
+            f"{number_of_organizations} organization(s), "
+            f"{number_of_tasks} task(s)"
             ">"
         )
