@@ -14,10 +14,11 @@ from werkzeug.utils import cached_property
 
 from vantage6.common.globals import APPNAME
 from vantage6.server.globals import PACAKAGE_FOLDER
-from vantage6 import server
+from vantage6.server import ServerApp
 from vantage6.server.model import Rule, Role, Organization, User
 from vantage6.server.model.rule import Scope, Operation
 from vantage6.server import context
+from vantage6.server._version import __version__
 from vantage6.server.model.base import Database
 from vantage6.server.controller.fixture import load
 
@@ -46,18 +47,10 @@ class TestResources(unittest.TestCase):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
 
-        # server.app.testing = True
-        # server.app.response_class = Response
-        # server.app.test_client_class = TestNode
-        # server.app.secret_key = "test-secret"
-
         ctx = context.TestContext.from_external_config_file(
             "unittest_config.yaml")
 
-        app, _ = server.create_app(ctx)
-
-        # server.app, server.socketio = server.create_app()
-        # server.init_resources(ctx)
+        server = ServerApp(ctx)
 
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
@@ -65,7 +58,7 @@ class TestResources(unittest.TestCase):
             cls.entities = yaml.safe_load(f.read())
         load(cls.entities)
 
-        cls.app = app.test_client()
+        cls.app = server.app.test_client()
 
         cls.credentials = {
             'root': {
@@ -135,7 +128,7 @@ class TestResources(unittest.TestCase):
         rv = self.app.get('/api/version')
         r = json.loads(rv.data)
         self.assertIn('version', r)
-        self.assertEqual(r['version'], server.__version__)
+        self.assertEqual(r['version'], __version__)
 
     def test_token_different_users(self):
         for type_ in ["root", "admin", "user"]:

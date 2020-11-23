@@ -4,22 +4,15 @@ Resources below '/<api_base>/version'
 """
 import logging
 
-from flask_restful import Resource, abort
 from flasgger import swag_from
 from pathlib import Path
-from flask_principal import Permission
 
 from vantage6.server.resource import (
-    with_user,
     ServicesResources
 )
 from vantage6.common import logger_name
-from vantage6.server.permission import (
-    register_rule, valid_rule_need
-)
-from vantage6.server.model.rule import Operation, Scope
-
 from vantage6.server._version import __version__
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
