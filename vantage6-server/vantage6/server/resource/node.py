@@ -227,8 +227,7 @@ class NodeTasks(ServicesResources):
     @swag_from(str(Path(r"swagger/get_node_tasks.yaml")),
                endpoint='node_tasks')
     def get(self, id):
-        """Return a list of tasks for a node or a single task <task_result_id>
-        belonging t.
+        """Return a list of tasks for a node or a single task.
 
         If the query parameter 'state' equals 'open' the list is
         filtered to return only tasks without result.

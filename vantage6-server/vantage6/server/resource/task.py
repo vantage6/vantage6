@@ -188,8 +188,8 @@ class Task(ServicesResources):
             namespace='/tasks'
         )
 
-        log.info(f"New task created for collaboration "
-                 "'{task.collaboration.name}'")
+        log.info("New task created for collaboration "
+                 f"'{task.collaboration.name}'")
 
         if g.type == 'user':
             log.debug(f" created by: '{g.user.username}'")

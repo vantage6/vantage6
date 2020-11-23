@@ -7,7 +7,7 @@ from marshmallow_sqlalchemy import ModelSchema
 from flask import url_for
 
 from vantage6.server import db
-from vantage6.server.util import logger_name
+from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
 
 

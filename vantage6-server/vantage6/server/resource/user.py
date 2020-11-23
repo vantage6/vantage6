@@ -241,8 +241,8 @@ class User(ServicesResources):
         if user.organization_id != g.user.organization_id and not is_root:
             log.warning(f"user {g.user.id} has tried to delete user {user.id} "
                         f"but does not have the required permissions")
-            return {"msg": f"you do not have permission to modify user"
-                    " id={id}"}, \
+            return {"msg": "you do not have permission to modify user"
+                    f" id={id}"}, \
                 HTTPStatus.FORBIDDEN
 
         user.delete()

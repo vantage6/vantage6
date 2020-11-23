@@ -6,10 +6,22 @@ import enum
 import json
 import sqlalchemy as sql
 
+# TODO this file is akward...
 from vantage6.server.model import (
-    Base
+    Base,
+    Task,
+    Result,
+    Organization,
+    User,
+    Node,
+    Authenticatable,
+    Collaboration,
+    Member,
+    Permission,
+    Role,
+    Rule
 )
-from vantage6.server.util import logger_name
+from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
 
 

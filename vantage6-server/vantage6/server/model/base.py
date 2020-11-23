@@ -9,9 +9,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.util.langhelpers import NoneType
 
-from vantage6.common import logger_name
-from vantage6.server.util import Singleton
+from vantage6.common import logger_name, Singleton
 
 
 module_name = logger_name(__name__)
@@ -134,14 +134,14 @@ class ModelBase:
 
         # Only *keep* keys listed in `include`
         if include:
-            if type(include) is not None:
+            if not isinstance(include, NoneType):
                 include = [include, ]
             include = set(include)
             keys = keys & include
 
         # Remove any keys that are in `exclude`
         if exclude:
-            if type(exclude) is not None:
+            if not isinstance(exclude, NoneType):
                 exclude = [exclude, ]
             exclude = set(exclude)
             keys = keys - exclude
