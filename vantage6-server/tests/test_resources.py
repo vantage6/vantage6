@@ -659,3 +659,182 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.delete(f'/api/role/{role.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+
+    def test_rules_from_role(self):
+        headers = self.login('root')
+        role = Role.get()[0]
+
+        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(role.rules), len(result.json))
+
+        result = self.app.get('/api/role/-1/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+    def test_add_single_rule_to_role(self):
+        headers = self.login('root')
+
+        role = Role(name="empty", organization=Organization())
+        role.save()
+
+        # role without rules
+        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json), 0)
+
+        rule = Rule.get()[0]
+
+        # try to add rule to non existing role
+        result = self.app.post(f'/api/role/-1/rule/{rule.id}',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # try to add non existant rule
+        result = self.app.post(f'/api/role/{role.id}/rule/-1',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # add a rule to a role
+        result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+
+        # check that the role now has one rule
+        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json), 1)
+
+    def test_remove_single_rule_from_role(self):
+        headers = self.login('root')
+
+        rule = Rule.get()[0]
+        role = Role(name="unit", organization=Organization(), rules=[rule])
+        role.save()
+
+        # try to add rule to non existing role
+        result = self.app.delete(f'/api/role/-1/rule/{rule.id}',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # try to add non existant rule
+        result = self.app.delete(f'/api/role/{role.id}/rule/-1',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json), 1)
+
+        result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json), 0)
+
+    def test_view_permission_rules(self):
+        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION, Operation.VIEW)
+
+        role = Role(name="some-role", organization=Organization())
+        role.save()
+
+        # user does not belong to organization
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # user does belong to the organization
+        headers = self.create_user_and_login(organization=role.organization,
+                                             rules=[rule])
+        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # user has global permissions
+        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        role.delete()
+
+    def test_add_rule_to_role_permission(self):
+
+        role = Role(name="new-role", organization=Organization())
+        role.save()
+
+        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION, Operation.EDIT)
+
+        # try adding a rule without any permission
+        headers = self.create_user_and_login()
+        result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # you cant edit other organizations roles
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # you can edit other organizations with the global permission
+        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+
+        # however you can only assign rules that you own
+        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION, Operation.EDIT)
+        result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        role.delete()
+
+    def test_remove_rule_from_role_permissions(self):
+
+        role = Role(name="new-role", organization=Organization())
+        role.save()
+        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION,
+                            Operation.DELETE)
+
+        # try removing without any permissions
+        headers = self.create_user_and_login()
+        result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # try removing rule from other organization
+        headers = self.create_user_and_login(organization=Organization(),
+                                             rules=[rule])
+        result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # try removing rule which is not in the role
+        headers = self.create_user_and_login(organization=role.organization,
+                                             rules=[rule])
+        result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        role.rules.append(rule)
+        role.save()
+
+        # lets try that again
+        headers = self.create_user_and_login(organization=role.organization,
+                                             rules=[rule])
+        result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        role.rules.append(rule)
+        role.save()
+
+        # power users can edit other organization rules
+        power_rule = Rule.get_by_("manage_roles", Scope.GLOBAL,
+                                  Operation.DELETE)
+        headers = self.create_user_and_login(rules=[power_rule, rule])
+        result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
+                                 headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        role.delete()

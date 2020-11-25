@@ -56,7 +56,7 @@ def setup(api, api_base, services):
         RoleRules,
         path + '/<int:id>/rule/<int:rule_id>',
         endpoint='role_rule_with_id',
-        methods=('POST', 'DELETE'),
+        methods=('DELETE', 'POST'),
         resource_class_kwargs=services
     )
 
@@ -249,20 +249,82 @@ class Role(ServicesResources):
 class RoleRules(ServicesResources):
 
     rule_schema = RuleSchema()
+    role_schema = RoleSchema()
 
+    @with_user
     def get(self, id):
-        role = Role.get(id)
+        """View all rules for a role."""
+        role = db_Role.get(id)
+
         if not role:
-            return {'msg', f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
+            return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
+
+        if not view_any.can():
+            if not (view_organization.can() and
+                    g.user.organization == role.organization):
+                return {'msg': 'You lack permissions to do that'}, \
+                    HTTPStatus.UNAUTHORIZED
 
         rules = role.rules
-        return self.rule_schema.dump(rules, many=False).data, HTTPStatus.OK
+        return self.rule_schema.dump(rules, many=True).data, HTTPStatus.OK
 
+    @with_user
     def post(self, id, rule_id):
+        """Add rule to a role."""
+        role = db_Role.get(id)
+        if not role:
+            return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
         rule = Rule.get(rule_id)
         if not rule:
-            return {'msg': f'Rule id={rule_id} not found'}, \
+            return {'msg': f'Rule id={rule_id} not found!'}, HTTPStatus.NOT_FOUND
+
+        # check that this user can edit rules
+        if not edit_any.can():
+            if not (edit_organization.can() and
+                    g.user.organization == role.organization):
+                return {'msg': 'You lack permissions to do that'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        # user needs to role to assign it
+        denied = verify_user_rules([rule])
+        if denied:
+            return denied, HTTPStatus.UNAUTHORIZED
+
+        # We're good, lets add the rule
+        role.rules.append(rule)
+        role.save()
+
+        return self.rule_schema.dump(role.rules, many=False).data, \
+            HTTPStatus.CREATED
+
+    @with_user
+    def delete(self, id, rule_id):
+        """Remove rule from role."""
+        role = db_Role.get(id)
+        if not role:
+            return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
+        rule = Rule.get(rule_id)
+        if not rule:
+            return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-    def delete(self, id, rule_id):
-        pass
+        if not delete_any.can():
+            if not (delete_organization.can() and
+                    g.user.organization == role.organization):
+                return {'msg': 'You lack permissions to do that'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        # user needs to role to remove it
+        denied = verify_user_rules([rule])
+        if denied:
+            return denied, HTTPStatus.UNAUTHORIZED
+
+        if not (rule in role.rules):
+            return {'msg': f'Rule id={rule_id} not found in Role={id}!'}, \
+                HTTPStatus.NOT_FOUND
+
+        # Ok jumped all hoopes, remove it..
+        role.rules.remove(rule)
+
+        return self.rule_schema.dump(role.rules, many=False).data, \
+            HTTPStatus.OK
