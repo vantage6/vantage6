@@ -276,7 +276,8 @@ class RoleRules(ServicesResources):
             return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
         rule = Rule.get(rule_id)
         if not rule:
-            return {'msg': f'Rule id={rule_id} not found!'}, HTTPStatus.NOT_FOUND
+            return {'msg': f'Rule id={rule_id} not found!'}, \
+                HTTPStatus.NOT_FOUND
 
         # check that this user can edit rules
         if not edit_any.can():
