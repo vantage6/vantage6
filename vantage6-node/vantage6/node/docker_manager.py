@@ -121,16 +121,26 @@ class DockerManager(object):
 
         try:
             network = self.docker.networks.get(name)
-            self.log.debug(f"Network {name} already exists.")
-
+            self.log.debug(f"Network {name} already exists. Deleting it.")
+            network.remove()
         except Exception:
-            self.log.debug(f"Creating isolated docker-network {name}")
-            network = self.docker.networks.create(
-                name,
-                driver="bridge",
-                internal=False,
-                scope="local"
+            self.log.debug("No network found...")
+
+        self.log.debug(f"Creating isolated docker-network {name}!")
+
+        internal_ = self.running_in_docker()
+        if not internal_:
+            self.log.warn(
+                "Algorithms have internet connection! "
+                "This happens because you use 'vnode-local'!"
             )
+
+        network = self.docker.networks.create(
+            name,
+            driver="bridge",
+            internal=internal_,
+            scope="local"
+        )
 
         return network
 
