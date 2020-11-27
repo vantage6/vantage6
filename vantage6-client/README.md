@@ -42,10 +42,8 @@ Deploying Federated Learning solutions in real life often requires careful analy
 ## :black_nib: References
 If you are using **vantage6**, please cite this repository as well as the accompanying paper as follows:
 
-> - Frank Martin, Melle Sieswerda, Hasan Alradhi, Arturo Moncada-Torres, Johan van Soest. vantage6. Available at
-https://doi.org/10.5281/zenodo.3686944. Accessed on [MONTH, 20XX].
-> - Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. VANTAGE6: an open source priVAcy preserviNg
-federaTed leArninG infrastructurE for Secure Insight eXchange. AMIA Annual Symposium Proceedings, 2020 (in press). [[BibTeX](https://arturomoncadatorres.com/bibtex/moncada-torres2020vantage6.txt)]
+> - Frank Martin, Melle Sieswerda, Hasan Alradhi, et al. vantage6. Available at https://doi.org/10.5281/zenodo.3686944. Accessed on [MONTH, 20XX].
+> - Arturo Moncada-Torres, Frank Martin, Melle Sieswerda, Johan van Soest, Gijs Gelijnse. VANTAGE6: an open source priVAcy preserviNg federaTed leArninG infrastructurE for Secure Insight eXchange. AMIA Annual Symposium Proceedings, 2020, p. 870-877. [[BibTeX](https://arturomoncadatorres.com/bibtex/moncada-torres2020vantage6.txt), [PDF](https://vantage6.ai/vantage6/)]
 
 -----------------------------------------------------------------------------------------------------
 <p align="center">
