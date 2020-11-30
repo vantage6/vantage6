@@ -12,8 +12,9 @@ from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.permission import (
     register_rule,
-    Scope,
-    Operation
+    verify_user_rules,
+    Scope as S,
+    Operation as P
 )
 from vantage6.server.resource import (
     with_user,
@@ -51,18 +52,25 @@ def setup(api, api_base, services):
 # Permissions
 # ------------------------------------------------------------------------------
 manage_users = register_rule(
-    "manage users",
-    [Scope.ORGANIZATION, Scope.GLOBAL],
-    [Operation.EDIT, Operation.VIEW, Operation.DELETE, Operation.CREATE]
+    "manage_users",
+    [S.OWN, S.ORGANIZATION, S.GLOBAL],
+    [P.EDIT, P.VIEW, P.DELETE, P.CREATE]
 )
 
+view_any = manage_users(S.GLOBAL, P.VIEW)
+view_org = manage_users(S.ORGANIZATION, P.VIEW)
+view_own = manage_users(S.OWN, P.VIEW)
 
-manage_roles = register_rule(
-    "manage roles",
-    [Scope.ORGANIZATION, Scope.GLOBAL],
-    [Operation.EDIT, Operation.VIEW, Operation.DELETE, Operation.CREATE],
-    "Assign roles to other users."
-)
+create_any = manage_users(S.GLOBAL, P.CREATE)
+create_org = manage_users(S.ORGANIZATION, P.CREATE)
+
+edit_any = manage_users(S.GLOBAL, P.EDIT)
+edit_org = manage_users(S.ORGANIZATION, P.EDIT)
+edit_own = manage_users(S.OWN, P.EDIT)
+
+del_any = manage_users(S.GLOBAL, P.DELETE)
+del_org = manage_users(S.ORGANIZATION, P.DELETE)
+del_own = manage_users(S.OWN, P.DELETE)
 
 
 # ------------------------------------------------------------------------------
@@ -79,26 +87,43 @@ class User(ServicesResources):
                endpoint='user_without_id')
     def get(self, id=None):
         """Return user details."""
-        retval = db.User.get(id)
-        is_root = g.user.username == "root"
+        many = not id
+        user = db.User.get(id)
+        if not user:
+            return {"msg": f"user={id} is not found"}, HTTPStatus.NOT_FOUND
 
-        if id is None:
-            # Only root can retrieve all users at once
-            if is_root:
-                return self.user_schema.dump(retval, many=True)
+        # global scope can see all
+        if view_any.can():
+            return self.user_schema.dump(user, many=many).data, \
+                HTTPStatus.OK
 
-            # Everyone else can only list the users from their own organization
+        # organization scope can see their own organization users
+        if view_org.can():
+            if many:
+                filtered_users = [user for user in user if user.organization
+                                  == g.user.organization]
+                return self.user_schema.dump(filtered_users, many=True).data, \
+                    HTTPStatus.OK
             else:
-                org_id = g.user.organization_id
-                filtered = [u for u in retval if u.organization_id == org_id]
-                return self.user_schema.dump(filtered, many=True)
+                if user.organization != g.user.organization:
+                    return {'msg': 'You lack the permission to do that!'}, \
+                        HTTPStatus.UNAUTHORIZED
+                return self.user_schema.dump(user, many=False).data, \
+                    HTTPStatus.OK
 
-        if retval:
-            # You either have to be root or someone from the same organization
-            if is_root or (retval.organization_id == g.user.organization_id):
-                return self.user_schema.dump(retval, many=False)
+        # own scope can see their own user info
+        if view_own.can():
+            if not id:
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            if user.id != g.user.id:
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            return self.user_schema.dump(user, many=False).data, HTTPStatus.OK
 
-        return {"msg": f"user id {id} is not found"}, HTTPStatus.NOT_FOUND
+        # if you get here... you do not have any permissions
+        return {'msg': 'You lack the permission to do that!'}, \
+            HTTPStatus.UNAUTHORIZED
 
     @with_user
     @swag_from(str(Path(r"swagger/post_user_without_id.yaml")),
@@ -124,19 +149,20 @@ class User(ServicesResources):
         if db.User.exists("email", data["email"]):
             return {"msg": "email already exists."}, HTTPStatus.BAD_REQUEST
 
-        # check if it is global or organization scope. Depending on that a
-        # different permission is required.
-        if 'organization_id' in data:
-            manage_users(Scope.GLOBAL, Operation.CREATE).test(
-                http_exception=HTTPStatus.FORBIDDEN
-            )
+        # check if the organization has been profided, if this is the case the
+        # user needs global permissions in case it is not their own
+        organization_id = g.user.organization_id
+        if data['organization_id']:
+            if data['organization_id'] != organization_id and \
+                    not create_any.can():
+                return {'msg': 'You lack the permission to do that!1'}, \
+                    HTTPStatus.UNAUTHORIZED
             organization_id = data['organization_id']
 
-        else:
-            manage_users(Scope.ORGANIZATION, Operation.CREATE).test(
-                http_exception=HTTPStatus.FORBIDDEN
-            )
-            organization_id = g.user.organization_id
+        # check that user is allowed to create users
+        if not (create_any.can() or create_org.can()):
+            return {'msg': 'You lack the permission to do that!2'}, \
+                HTTPStatus.UNAUTHORIZED
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -147,7 +173,7 @@ class User(ServicesResources):
             for role in potential_roles:
                 role_ = db.Role.get(role)
                 if role_:
-                    denied = self.verify_user_rules(role_.rules)
+                    denied = verify_user_rules(role_.rules)
                     if denied:
                         return denied, HTTPStatus.UNAUTHORIZED
                     roles.append(role_)
@@ -158,7 +184,7 @@ class User(ServicesResources):
         if potential_rules:
             rules = [db.Rule.get(rule) for rule in potential_rules
                      if db.Rule.get(rule)]
-            denied = self.verify_user_rules(rules)
+            denied = verify_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
 
@@ -188,16 +214,19 @@ class User(ServicesResources):
             return {"msg": "user id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
 
-        is_root = g.user.username == 'root'
-        if (user.organization_id != g.user.organization_id) and not is_root:
-            return {"msg": f"No permission to modify user_id={id}"}, \
-                HTTPStatus.FORBIDDEN
+        if not edit_any.can():
+            if not (edit_org.can() and user.organization ==
+                    g.user.organization):
+                if not (edit_own.can() and user == g.user):
+                    return {'msg': 'You lack the permission to do that!'}, \
+                        HTTPStatus.UNAUTHORIZED
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=False)
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
-        parser.add_argument("roles", type=str, required=False)
+        parser.add_argument("roles", type=int, action='append', required=False)
+        parser.add_argument("rules", type=int, action='append', required=False)
         parser.add_argument("password", type=str, required=False)
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
@@ -209,16 +238,51 @@ class User(ServicesResources):
         if data["password"]:
             user.password = data["password"]
         if data["roles"]:
-            user.roles = data["roles"]
+            # validate that these roles exist
+            roles = []
+            for role_id in data['roles']:
+                role = db.Role.get(role_id)
+                if not role:
+                    return {'msg': f'Role={role_id} can not be found!'}, \
+                        HTTPStatus.NOT_FOUND
+                roles.append(role)
+
+            # validate that user can assign these
+            for role in roles:
+                denied = verify_user_rules(role.rules)
+                if denied:
+                    return denied, HTTPStatus.UNAUTHORIZED
+
+            user.roles = roles
+
+        if data['rules']:
+            # validate that these rules exist
+            rules = []
+            for rule_id in data['rules']:
+                rule = db.Rule.get(rule_id)
+                if not rule:
+                    return {'msg': f'Rule={rule_id} can not be found!'}, \
+                        HTTPStatus.NOT_FOUND
+                rules.append(rule)
+
+            # validate that user can assign these
+            denied = verify_user_rules(rules)
+            if denied:
+                return denied, HTTPStatus.UNAUTHORIZED
+
+            user.rules = rules
+
         if data["organization_id"]:
-            if is_root:
-                user.organization_id = data["organization_id"]
+            if not (edit_any.can() and data["organization_id"] !=
+                    g.user.organization_id):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            else:
                 log.warn(
                     f'Running as root and assigning (new) '
                     f'organization_id={data["organization_id"]}'
                 )
-            else:
-                log.error('Current user cannot assign new organizations!')
+                user.organization_id = data["organization_id"]
 
         try:
             user.save()
@@ -226,7 +290,7 @@ class User(ServicesResources):
             log.error(e)
             user.session.rollback()
 
-        return user, HTTPStatus.OK
+        return self.user_schema.dump(user).data, HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")),
@@ -237,13 +301,13 @@ class User(ServicesResources):
         if not user:
             return {"msg": "user id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
-        is_root = g.user.username == 'root'
-        if user.organization_id != g.user.organization_id and not is_root:
-            log.warning(f"user {g.user.id} has tried to delete user {user.id} "
-                        f"but does not have the required permissions")
-            return {"msg": "you do not have permission to modify user"
-                    f" id={id}"}, \
-                HTTPStatus.FORBIDDEN
+
+        if not del_any.can():
+            if not (del_org.can() and user.organization ==
+                    g.user.organization):
+                if not (del_own.can() and user == g.user):
+                    return {'msg': 'You lack the permission to do that!'}, \
+                        HTTPStatus.UNAUTHORIZED
 
         user.delete()
         log.info(f"user id={id} is removed from the database")

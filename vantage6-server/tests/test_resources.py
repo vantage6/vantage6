@@ -119,11 +119,11 @@ class TestResources(unittest.TestCase):
             "password": password
         }
 
-        return user.username
+        return user
 
     def create_user_and_login(self, organization=None, rules=[]):
-        username = self.create_user(organization, rules)
-        return self.login(username)
+        user = self.create_user(organization, rules)
+        return self.login(user.username)
 
     def test_version(self):
         rv = self.app.get('/api/version')
@@ -400,13 +400,6 @@ class TestResources(unittest.TestCase):
             "username": "root2"
         })
         self.assertEqual(result.status_code, 404)
-
-    def test_user_patch_forbidden(self):
-        headers = self.login("user")
-        result = self.app.patch("/api/user/4", headers=headers, json={
-            "username": "root2"
-        })
-        self.assertEqual(result.status_code, 403)
 
     def test_root_username_forbidden(self):
         headers = self.login("root")
@@ -838,3 +831,291 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         role.delete()
+
+    def test_view_permission_user(self):
+
+        # user not found
+        headers = self.create_user_and_login()
+        result = self.app.get('/api/user/-1', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # try to view users without any permissions
+        headers = self.create_user_and_login()
+        result = self.app.get('/api/user', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # root user can view all users
+        headers = self.login('root')
+        result = self.app.get('/api/user', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json), len(User.get()))
+
+        # view users of your organization
+        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION, Operation.VIEW)
+        org = Organization.get(1)
+        headers = self.create_user_and_login(org, rules=[rule])
+        result = self.app.get('/api/user', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json), len(org.users))
+
+        # view a single user of your organization
+        user_id = org.users[0].id
+        result = self.app.get(f'/api/user/{user_id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # user can view their own data
+        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.VIEW)
+        user = self.create_user(rules=[rule])
+        headers = self.login(user.username)
+        result = self.app.get(f'/api/user/{user.id}', headers=headers)
+
+    def test_bounce_existing_username_and_email(self):
+        headers = self.create_user_and_login()
+        User(username="something", email="mail@me.org").save()
+        userdata = {
+            "username": "not-important",
+            "firstname": "name",
+            "lastname": "lastname",
+            "password": "welkom01",
+            "email": "mail@me.org"
+        }
+        result = self.app.post('/api/user', headers=headers, json=userdata)
+        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+
+        userdata['username'] = 'not-important'
+        result = self.app.post('/api/user', headers=headers, json=userdata)
+        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+
+    def test_new_permission_user(self):
+        userdata = {
+            "username": "smarty",
+            "firstname": "Smart",
+            "lastname": "Pants",
+            "password": "welkom01",
+            "email": "mail-us@me.org"
+        }
+
+        # Creating users for other organizations can only be by global scope
+        org = Organization()
+        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION,
+                            Operation.CREATE)
+        userdata['organization_id'] = 1
+        headers = self.create_user_and_login(org, rules=[rule])
+        result = self.app.post('/api/user', headers=headers, json=userdata)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # you can do that when you have the global scope
+        gl_rule = Rule.get_by_("manage_users", Scope.GLOBAL, Operation.CREATE)
+        userdata['rules'] = [gl_rule.id]
+        headers = self.create_user_and_login(org, rules=[gl_rule])
+        result = self.app.post('/api/user', headers=headers, json=userdata)
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+
+        # you need to own all rules in order to assign them
+        headers = self.create_user_and_login(org, rules=[rule])
+        userdata['username'] = 'smarty2'
+        userdata['email'] = 'mail2@me.org'
+        result = self.app.post('/api/user', headers=headers, json=userdata)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # you can only assign roles in which you have all rules
+        headers = self.create_user_and_login(org, rules=[rule])
+        role = Role(rules=[rule], organization=org)
+        role.save()
+        userdata['username'] = 'smarty3'
+        userdata['email'] = 'mail3@me.org'
+        userdata['roles'] = [role.id]
+        del userdata['organization_id']
+        del userdata['rules']
+        result = self.app.post('/api/user', headers=headers, json=userdata)
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+        self.assertEqual(len(result.json['roles']), 1)
+
+    def test_patch_user_permissions(self):
+
+        user = User(firstname="Firstname", lastname="Lastname",
+                    username="Username", password="Password", email="a@b.c",
+                    organization=Organization())
+        user.save()
+        self.credentials[user.username] = {'username': user.username,
+                                           'password': "Password"}
+
+        # check non-exsitsing user
+        headers = self.create_user_and_login()
+        result = self.app.patch(f'/api/user/-1', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # patching without permissions
+        headers = self.create_user_and_login()
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'firstname': 'this-aint-gonna-fly'
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual("Username", user.username)
+
+        # patch as a user of other organization
+        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION, Operation.EDIT)
+        self.create_user_and_login(rules=[rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'firstname': 'this-aint-gonna-fly'
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual("Username", user.username)
+
+        # patch as another user from the same organization
+        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.EDIT)
+        self.create_user_and_login(user.organization, [rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'firstname': 'this-aint-gonna-fly'
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual("Username", user.username)
+
+        # edit 'simple' fields
+        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.EDIT)
+        user.rules.append(rule)
+        user.save()
+        headers = self.login(user.username)
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'firstname': 'yeah'
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual("yeah", user.firstname)
+
+        # edit other user within your organization
+        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION, Operation.EDIT)
+        headers = self.create_user_and_login(organization=user.organization,
+                                             rules=[rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'firstname': 'whatever'
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual("whatever", user.firstname)
+
+        # edit user from different organization, and test other edit fields
+        rule = Rule.get_by_("manage_users", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'firstname': 'again',
+            'lastname': 'and again',
+            'password': 'keep-it-safe'
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual("again", user.firstname)
+        self.assertEqual("and again", user.lastname)
+        self.assertTrue(user.check_password("keep-it-safe"))
+
+        # test that you cannot assign rules that you not own
+        not_owning_rule = Rule.get_by_("manage_users", Scope.OWN,
+                                       Operation.DELETE)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'rules': [not_owning_rule.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test that you cannot assign role that has rules that you do not own
+        role = Role(name="somename", rules=[not_owning_rule],
+                    organization=Organization())
+        role.save()
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'rules': [role.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test that you CAN change the rules
+        headers = self.create_user_and_login(rules=[rule, not_owning_rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'rules': [not_owning_rule.id, rule.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        user_rule_ids = [rule['id'] for rule in result.json['rules']]
+        self.assertIn(not_owning_rule.id, user_rule_ids)
+
+        # test that you CAN assign roles
+        headers = self.create_user_and_login(rules=[rule, not_owning_rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'roles': [role.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        user_role_ids = [role['id'] for role in result.json['roles']]
+        self.assertIn(role.id, user_role_ids)
+
+        # test missing role
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'roles': [-1]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # test missing rule
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'rules': [-1]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        user.delete()
+        role.delete()
+
+    def test_delete_user_permissions(self):
+
+        user = User(firstname="Firstname", lastname="Lastname",
+                    username="Username", password="Password", email="a@b.c",
+                    organization=Organization())
+        user.save()
+        self.credentials[user.username] = {'username': user.username,
+                                           'password': "Password"}
+
+        # check non-exsitsing user
+        headers = self.create_user_and_login()
+        result = self.app.delete(f'/api/user/-1', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # try to delete without any permissions
+        headers = self.create_user_and_login()
+        result = self.app.delete(f'/api/user/{user.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # same organization but missing permissions
+        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.DELETE)
+        headers = self.create_user_and_login(organization=user.organization,
+                                             rules=[rule])
+        result = self.app.delete(f'/api/user/{user.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # other organization with organization scope
+        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION,
+                            Operation.DELETE)
+        headers = self.create_user_and_login(organization=Organization(),
+                                             rules=[rule])
+        result = self.app.delete(f'/api/user/{user.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # delete yourself
+        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.DELETE)
+        user.rules.append(rule)
+        user.save()
+        headers = self.login(user.username)
+        result = self.app.delete(f'/api/user/{user.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # delete colleague
+        user = User(firstname="Firstname", lastname="Lastname",
+                    username="Username", password="Password", email="a@b.c",
+                    organization=Organization())
+        user.save()
+        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION,
+                            Operation.DELETE)
+        headers = self.create_user_and_login(rules=[rule],
+                                             organization=user.organization)
+        result = self.app.delete(f'/api/user/{user.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # delete as root
+        user = User(firstname="Firstname", lastname="Lastname",
+                    username="Username", password="Password", email="a@b.c",
+                    organization=Organization())
+        user.save()
+        rule = Rule.get_by_("manage_users", Scope.GLOBAL, Operation.DELETE)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.delete(f'/api/user/{user.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
