@@ -64,33 +64,30 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-role_permission = register_rule(
-    "manage_roles",
-    [Scope.ORGANIZATION, Scope.GLOBAL],
-    [Operation.VIEW, Operation.EDIT, Operation.CREATE, Operation.DELETE],
-    "Manage roles"
-)
-
-# VIEW  / GET
-view_any = role_permission(Scope.GLOBAL, Operation.VIEW)
-view_any.description = "View any role at the server"
-view_organization = role_permission(Scope.ORGANIZATION, Operation.VIEW)
-view_organization.description = "View the roles of your organization"
-
-# CREATE / POST
-create_any = role_permission(Scope.GLOBAL, Operation.CREATE)
-create_any.description = "Create a role of any organization"
-create_organization = role_permission(Scope.ORGANIZATION, Operation.CREATE)
-create_organization.description = "Create a new role for your organization"
-
-# EDIT / PATCH
-edit_any = role_permission(Scope.GLOBAL, Operation.EDIT)
-edit_any.description = "Edit any role"
-edit_organization = role_permission(Scope.ORGANIZATION, Operation.EDIT)
-edit_organization.description = "Edit a role within your organization"
-
-delete_any = role_permission(Scope.GLOBAL, Operation.DELETE)
-delete_organization = role_permission(Scope.ORGANIZATION, Operation.DELETE)
+view_any = register_rule("manage_roles", Scope.GLOBAL,
+                         Operation.VIEW,
+                         description="View any role")
+view_org = register_rule("manage_roles", Scope.ORGANIZATION,
+                         Operation.VIEW,
+                         description="View the roles of your organization")
+crte_any = register_rule("manage_roles", Scope.GLOBAL,
+                         Operation.CREATE,
+                         description="Create role for any organization")
+crte_org = register_rule("manage_roles", Scope.ORGANIZATION,
+                         Operation.CREATE,
+                         description="Create role for your organization")
+edit_any = register_rule("manage_roles", Scope.GLOBAL,
+                         Operation.EDIT,
+                         description="Edit any role")
+edit_org = register_rule("manage_roles", Scope.ORGANIZATION,
+                         Operation.EDIT,
+                         description="Edit a role from your organization")
+delt_any = register_rule("manage_roles", Scope.GLOBAL,
+                         Operation.DELETE,
+                         description="Delete any organization")
+delt_org = register_rule("manage_roles", Scope.ORGANIZATION,
+                         Operation.DELETE,
+                         description="Delete your organization")
 
 
 # -----------------------------------------------------------------------------
@@ -114,7 +111,7 @@ class Role(ServicesResources):
         if view_any.can():
             # view all roles at the server
             roles = db_Role.get(id)
-        elif view_organization.can():
+        elif view_org.can():
             # view all roles from your organization
             roles = [role for role in db_Role.get(id)
                      if role.organization == g.user.organization]
@@ -157,18 +154,18 @@ class Role(ServicesResources):
             return denied, HTTPStatus.UNAUTHORIZED
 
         # if trying to create a role for another organization
-        if data["organization_id"] and not create_any.can():
+        if data["organization_id"] and not crte_any.can():
             return {'msg': 'You cannot create roles for other organizations'},\
                 HTTPStatus.UNAUTHORIZED
-        elif data["organization_id"] and create_any.can():
+        elif data["organization_id"] and crte_any.can():
             organization_id = data["organization_id"]
 
             # verify that the organization exists
             if not Organization.get(organization_id):
                 return {'msg': f'organization "{organization_id}" does not '
                         'exist!'}, HTTPStatus.NOT_FOUND
-        elif (not data['organization_id'] and create_any.can()) or \
-                create_organization.can():
+        elif (not data['organization_id'] and crte_any.can()) or \
+                crte_org.can():
             organization_id = g.user.organization_id
         else:
             return {'msg': 'You lack the permission to create roles!'}, \
@@ -195,7 +192,7 @@ class Role(ServicesResources):
 
         # check permission of the user
         if not edit_any.can():
-            if not edit_organization.can():
+            if not edit_org.can():
                 return {'msg': 'You do not have permission to edit roles!'}, \
                     HTTPStatus.UNAUTHORIZED
             elif g.user.organization_id != role.organization.id:
@@ -233,8 +230,8 @@ class Role(ServicesResources):
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        if not delete_any.can():
-            if not delete_organization.can():
+        if not delt_any.can():
+            if not delt_org.can():
                 return {'msg': 'You do not have permission to delete roles!'},\
                     HTTPStatus.UNAUTHORIZED
             elif role.organization.id != g.user.organization.id:
@@ -260,7 +257,7 @@ class RoleRules(ServicesResources):
             return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
 
         if not view_any.can():
-            if not (view_organization.can() and
+            if not (view_org.can() and
                     g.user.organization == role.organization):
                 return {'msg': 'You lack permissions to do that'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -281,7 +278,7 @@ class RoleRules(ServicesResources):
 
         # check that this user can edit rules
         if not edit_any.can():
-            if not (edit_organization.can() and
+            if not (edit_org.can() and
                     g.user.organization == role.organization):
                 return {'msg': 'You lack permissions to do that'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -309,8 +306,8 @@ class RoleRules(ServicesResources):
             return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        if not delete_any.can():
-            if not (delete_organization.can() and
+        if not delt_any.can():
+            if not (delt_org.can() and
                     g.user.organization == role.organization):
                 return {'msg': 'You lack permissions to do that'}, \
                     HTTPStatus.UNAUTHORIZED

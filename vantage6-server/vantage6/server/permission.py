@@ -3,6 +3,7 @@ import logging
 from collections import namedtuple
 from flask_principal import Permission, PermissionDenied
 
+from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import Database
 from vantage6.common import logger_name
@@ -13,6 +14,35 @@ log = logging.getLogger(module_name)
 
 # create a Need which is used by prinicipal
 RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
+
+
+_node_rules = []
+_container_rules = []
+
+
+def assign_rule_to_node(name: str, scope: Scope, operation: Operation):
+    assign_rule_to_fixed_role("node", name, scope, operation)
+
+
+def assign_rule_to_container(name: str, scope: Scope, operation: Operation):
+    assign_rule_to_fixed_role("container", name, scope, operation)
+
+
+def assign_rule_to_fixed_role(fixedrole: str, name: str, scope: Scope,
+                              operation: Operation):
+    """Make sure that all the rules are attached to the node role."""
+    role = Role.get_by_name(fixedrole)
+    if not role:
+        log.warning("Node role not found, creating it now!")
+        role = Role(name=fixedrole, description="Node role used by all nodes")
+
+    rule = Rule.get_by_(name, scope, operation)
+    if not rule:
+        log.error(f"Rule ({name},{scope},{operation}) not found!")
+
+    if rule not in role.rules:
+        role.rules.append(rule)
+        log.info(f"Rule ({name},{scope},{operation}) added to node role!")
 
 
 def valid_rule_need(name: str, scope: Scope, operation: Operation):
@@ -43,7 +73,9 @@ def valid_rule_need(name: str, scope: Scope, operation: Operation):
     return RuleNeed(name, scope, operation)
 
 
-def register_rule(rule: str, scopes: list, operations: list, description=None):
+def register_rule(rule: str, scope: Scope, operation: Operation,
+                  description=None, assign_to_node=False,
+                  assign_to_container=False):
     """Register a rule in the database.
 
     If a rule already exists, nothing is done. This rule can be used in API
@@ -54,34 +86,37 @@ def register_rule(rule: str, scopes: list, operations: list, description=None):
     ----------
     rule : str
         (Unique) name of the rule
-    scopes : list[Scope...]
+    scope : Scope
         List of available scopes of this rule
-    operations : list[Operation...]
+    operation : Operation
         List of available operations on this rule
     description : String, optional
         Human readable description where the rule is used for, by default None
 
     Returns
     -------
-    Lambda function
-        Wrapper method for valid_rule_need to create quick rule assignments.
+    Permission (tuple)
+        permision object that can be used in API endpoints
     """
-    for operation in operations:
-        for scope in scopes:
-            if not rule_exists(rule, scope, operation):
-                new_rule = Rule(
-                    name=rule,
-                    operation=operation,
-                    scope=scope,
-                    description=description
-                )
-                new_rule.save()
-                log.debug(f"New auth rule '{rule}' with scope={scope}"
-                          f" and operation={operation} is added")
+    if not rule_exists(rule, scope, operation):
+        new_rule = Rule(
+            name=rule,
+            operation=operation,
+            scope=scope,
+            description=description
+        )
+        new_rule.save()
+        log.debug(f"New auth rule '{rule}' with scope={scope}"
+                  f" and operation={operation} is added")
 
-    return lambda scope, operation: Permission(
-        valid_rule_need(rule, scope, operation)
-    )
+    if assign_to_container:
+        assign_rule_to_container(rule, scope, operation)
+
+    if assign_to_node:
+        assign_rule_to_node(rule, scope, operation)
+
+    permission = Permission(valid_rule_need(rule, scope, operation))
+    return permission
 
 
 def rule_exists(name, scope, operation):
@@ -101,7 +136,7 @@ def rule_exists(name, scope, operation):
     Boolean
         Whenever this rule exists in the database or not
     """
-    return Database().Session.query(Rule.id).filter_by(
+    return Database().Session.query(Rule).filter_by(
         name=name,
         operation=operation,
         scope=scope

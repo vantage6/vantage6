@@ -160,9 +160,9 @@ class NodeToken(ServicesResources):
         ret = {
             'access_token': create_access_token(node),
             'refresh_token': create_refresh_token(node),
-            'node_url': server.api.url_for(server.resource.node.Node,
-                                           id=node.id),
-            'refresh_url': server.api.url_for(RefreshToken),
+            'node_url': self.api.url_for(server.resource.node.Node,
+                                         id=node.id),
+            'refresh_url': self.api.url_for(RefreshToken),
         }
 
         log.info(f"Succesfull login as node '{node.id}' ({node.name})")
@@ -220,6 +220,7 @@ class ContainerToken(ServicesResources):
         container = {
             "type": "container",
             "node_id": g.node.id,
+            "organization_id": g.node.organization_id,
             "collaboration_id": g.node.collaboration_id,
             "task_id": task_id,
             "image": claim_image

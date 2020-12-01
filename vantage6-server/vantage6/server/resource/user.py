@@ -51,26 +51,39 @@ def setup(api, api_base, services):
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
-manage_users = register_rule(
-    "manage_users",
-    [S.OWN, S.ORGANIZATION, S.GLOBAL],
-    [P.EDIT, P.VIEW, P.DELETE, P.CREATE]
-)
-
-view_any = manage_users(S.GLOBAL, P.VIEW)
-view_org = manage_users(S.ORGANIZATION, P.VIEW)
-view_own = manage_users(S.OWN, P.VIEW)
-
-create_any = manage_users(S.GLOBAL, P.CREATE)
-create_org = manage_users(S.ORGANIZATION, P.CREATE)
-
-edit_any = manage_users(S.GLOBAL, P.EDIT)
-edit_org = manage_users(S.ORGANIZATION, P.EDIT)
-edit_own = manage_users(S.OWN, P.EDIT)
-
-del_any = manage_users(S.GLOBAL, P.DELETE)
-del_org = manage_users(S.ORGANIZATION, P.DELETE)
-del_own = manage_users(S.OWN, P.DELETE)
+view_any = register_rule('manage_users', S.GLOBAL,
+                         P.VIEW,
+                         description='View any user')
+view_org = register_rule('manage_users', S.ORGANIZATION,
+                         P.VIEW,
+                         description='View users from your organization')
+view_own = register_rule('manage_users', S.OWN,
+                         P.VIEW,
+                         description='View your own data')
+crte_any = register_rule('manage_users', S.GLOBAL,
+                         P.CREATE,
+                         description='Create a new user for any organization')
+crte_org = register_rule('manage_users', S.ORGANIZATION,
+                         P.CREATE,
+                         description='Create a new user for your organization')
+edit_any = register_rule('manage_users', S.GLOBAL,
+                         P.EDIT,
+                         description='Edit any user')
+edit_org = register_rule('manage_users', S.ORGANIZATION,
+                         P.EDIT,
+                         description='Edit users from your organization')
+edit_own = register_rule('manage_users', S.OWN,
+                         P.EDIT,
+                         description='Edit your own info')
+delt_any = register_rule('manage_users', S.GLOBAL,
+                         P.DELETE,
+                         description='Delete any user')
+delt_org = register_rule('manage_users', S.ORGANIZATION,
+                         P.DELETE,
+                         description='Delete users from your organization')
+delt_own = register_rule('manage_users', S.OWN,
+                         P.DELETE,
+                         description='Delete your own account')
 
 
 # ------------------------------------------------------------------------------
@@ -154,13 +167,13 @@ class User(ServicesResources):
         organization_id = g.user.organization_id
         if data['organization_id']:
             if data['organization_id'] != organization_id and \
-                    not create_any.can():
+                    not crte_any.can():
                 return {'msg': 'You lack the permission to do that!1'}, \
                     HTTPStatus.UNAUTHORIZED
             organization_id = data['organization_id']
 
         # check that user is allowed to create users
-        if not (create_any.can() or create_org.can()):
+        if not (crte_any.can() or crte_org.can()):
             return {'msg': 'You lack the permission to do that!2'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -302,10 +315,10 @@ class User(ServicesResources):
             return {"msg": "user id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
 
-        if not del_any.can():
-            if not (del_org.can() and user.organization ==
+        if not delt_any.can():
+            if not (delt_org.can() and user.organization ==
                     g.user.organization):
-                if not (del_own.can() and user == g.user):
+                if not (delt_own.can() and user == g.user):
                     return {'msg': 'You lack the permission to do that!'}, \
                         HTTPStatus.UNAUTHORIZED
 

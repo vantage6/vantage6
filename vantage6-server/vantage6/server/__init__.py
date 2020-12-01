@@ -200,13 +200,24 @@ class ServerApp:
 
         @self.jwt.user_loader_callback_loader
         def user_loader_callback(identity):
-            log.debug("user_load_callback")
+            auth_identity = Identity(identity)
+            # in case of a user or node an auth id is shared as identity,
             if isinstance(identity, int):
-                log.debug(identity)
 
-                auth_identity = Identity(identity)
+                # auth_identity = Identity(identity)
 
                 auth = db.Authenticatable.get(identity)
+
+                if isinstance(auth, db.Node):
+
+                    for rule in db.Role.get_by_name("node").rules:
+                        auth_identity.provides.add(
+                                RuleNeed(
+                                    name=rule.name,
+                                    scope=rule.scope,
+                                    operation=rule.operation
+                                )
+                            )
 
                 if isinstance(auth, db.User):
 
@@ -231,11 +242,22 @@ class ServerApp:
                             )
                         )
 
-                    identity_changed.send(current_app._get_current_object(),
-                                          identity=auth_identity)
+                identity_changed.send(current_app._get_current_object(),
+                                      identity=auth_identity)
 
                 return auth
             else:
+
+                for rule in db.Role.get_by_name("container").rules:
+                    auth_identity.provides.add(
+                        RuleNeed(
+                            name=rule.name,
+                            scope=rule.scope,
+                            operation=rule.operation
+                        )
+                    )
+                identity_changed.send(current_app._get_current_object(),
+                                      identity=auth_identity)
                 log.debug(identity)
                 return identity
 
