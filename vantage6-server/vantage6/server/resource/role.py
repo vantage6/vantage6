@@ -14,8 +14,7 @@ from vantage6.server.resource import (
 )
 from vantage6.common import logger_name
 from vantage6.server.permission import (
-    register_rule,
-    verify_user_rules
+    PermissionManager
 )
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model import Role as db_Role, Rule, Organization
@@ -64,30 +63,24 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-view_any = register_rule("manage_roles", Scope.GLOBAL,
-                         Operation.VIEW,
-                         description="View any role")
-view_org = register_rule("manage_roles", Scope.ORGANIZATION,
-                         Operation.VIEW,
-                         description="View the roles of your organization")
-crte_any = register_rule("manage_roles", Scope.GLOBAL,
-                         Operation.CREATE,
-                         description="Create role for any organization")
-crte_org = register_rule("manage_roles", Scope.ORGANIZATION,
-                         Operation.CREATE,
-                         description="Create role for your organization")
-edit_any = register_rule("manage_roles", Scope.GLOBAL,
-                         Operation.EDIT,
-                         description="Edit any role")
-edit_org = register_rule("manage_roles", Scope.ORGANIZATION,
-                         Operation.EDIT,
-                         description="Edit a role from your organization")
-delt_any = register_rule("manage_roles", Scope.GLOBAL,
-                         Operation.DELETE,
-                         description="Delete any organization")
-delt_org = register_rule("manage_roles", Scope.ORGANIZATION,
-                         Operation.DELETE,
-                         description="Delete your organization")
+def permissions(permission: PermissionManager):
+    add = permission.appender(module_name)
+    add(scope=Scope.GLOBAL, operation=Operation.VIEW,
+        description="View any role")
+    add(scope=Scope.ORGANIZATION, operation=Operation.VIEW,
+        description="View the roles of your organization")
+    add(scope=Scope.GLOBAL, operation=Operation.CREATE,
+        description="Create role for any organization")
+    add(scope=Scope.ORGANIZATION, operation=Operation.CREATE,
+        description="Create role for your organization")
+    add(scope=Scope.GLOBAL, operation=Operation.EDIT,
+        description="Edit any role")
+    add(scope=Scope.ORGANIZATION, operation=Operation.EDIT,
+        description="Edit a role from your organization")
+    add(scope=Scope.GLOBAL, operation=Operation.DELETE,
+        description="Delete any organization")
+    add(scope=Scope.ORGANIZATION, operation=Operation.DELETE,
+        description="Delete your organization")
 
 
 # -----------------------------------------------------------------------------
@@ -96,6 +89,10 @@ delt_org = register_rule("manage_roles", Scope.ORGANIZATION,
 class Role(ServicesResources):
 
     role_schema = RoleSchema()
+
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
 
     @with_user
     @swag_from(str(Path(r"swagger/get_role_with_id.yaml")),
@@ -108,10 +105,10 @@ class Role(ServicesResources):
         Depending on your permissions you see no, your organization or all
         available roles at the server.
         """
-        if view_any.can():
+        if self.r.v_glo.can():
             # view all roles at the server
             roles = db_Role.get(id)
-        elif view_org.can():
+        elif self.r.v_org.can():
             # view all roles from your organization
             roles = [role for role in db_Role.get(id)
                      if role.organization == g.user.organization]
@@ -149,23 +146,23 @@ class Role(ServicesResources):
             rules.append(rule)
 
         # And check that this used has the rules he is trying to assign
-        denied = verify_user_rules(rules)
+        denied = self.permissions.verify_user_rules(rules)
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
         # if trying to create a role for another organization
-        if data["organization_id"] and not crte_any.can():
+        if data["organization_id"] and not self.r.c_glo.can():
             return {'msg': 'You cannot create roles for other organizations'},\
                 HTTPStatus.UNAUTHORIZED
-        elif data["organization_id"] and crte_any.can():
+        elif data["organization_id"] and self.r.c_glo.can():
             organization_id = data["organization_id"]
 
             # verify that the organization exists
             if not Organization.get(organization_id):
                 return {'msg': f'organization "{organization_id}" does not '
                         'exist!'}, HTTPStatus.NOT_FOUND
-        elif (not data['organization_id'] and crte_any.can()) or \
-                crte_org.can():
+        elif (not data['organization_id'] and self.r.c_glo.can()) or \
+                self.r.c_org.can():
             organization_id = g.user.organization_id
         else:
             return {'msg': 'You lack the permission to create roles!'}, \
@@ -191,8 +188,8 @@ class Role(ServicesResources):
                 HTTPStatus.NOT_FOUND
 
         # check permission of the user
-        if not edit_any.can():
-            if not edit_org.can():
+        if not self.r.e_glo.can():
+            if not self.r.e_org.can():
                 return {'msg': 'You do not have permission to edit roles!'}, \
                     HTTPStatus.UNAUTHORIZED
             elif g.user.organization_id != role.organization.id:
@@ -212,7 +209,7 @@ class Role(ServicesResources):
                     return {'msg': f'rule with id={rule_id} not found!'}, \
                         HTTPStatus.NOT_FOUND
                 rules.append(rule)
-            denied = verify_user_rules(rules)
+            denied = self.permissions.verify_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
             role.rules = rules
@@ -230,8 +227,8 @@ class Role(ServicesResources):
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        if not delt_any.can():
-            if not delt_org.can():
+        if not self.r.d_glo.can():
+            if not self.r.d_org.can():
                 return {'msg': 'You do not have permission to delete roles!'},\
                     HTTPStatus.UNAUTHORIZED
             elif role.organization.id != g.user.organization.id:
@@ -248,6 +245,10 @@ class RoleRules(ServicesResources):
     rule_schema = RuleSchema()
     role_schema = RoleSchema()
 
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
+
     @with_user
     def get(self, id):
         """View all rules for a role."""
@@ -256,8 +257,8 @@ class RoleRules(ServicesResources):
         if not role:
             return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
 
-        if not view_any.can():
-            if not (view_org.can() and
+        if not self.r.v_glo.can():
+            if not (self.r.v_org.can() and
                     g.user.organization == role.organization):
                 return {'msg': 'You lack permissions to do that'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -277,14 +278,14 @@ class RoleRules(ServicesResources):
                 HTTPStatus.NOT_FOUND
 
         # check that this user can edit rules
-        if not edit_any.can():
-            if not (edit_org.can() and
+        if not self.r.e_glo.can():
+            if not (self.r.e_org.can() and
                     g.user.organization == role.organization):
                 return {'msg': 'You lack permissions to do that'}, \
                     HTTPStatus.UNAUTHORIZED
 
         # user needs to role to assign it
-        denied = verify_user_rules([rule])
+        denied = self.permissions.verify_user_rules([rule])
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
@@ -306,14 +307,14 @@ class RoleRules(ServicesResources):
             return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        if not delt_any.can():
-            if not (delt_org.can() and
+        if not self.r.d_glo.can():
+            if not (self.r.d_org.can() and
                     g.user.organization == role.organization):
                 return {'msg': 'You lack permissions to do that'}, \
                     HTTPStatus.UNAUTHORIZED
 
         # user needs to role to remove it
-        denied = verify_user_rules([rule])
+        denied = self.permissions.verify_user_rules([rule])
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 

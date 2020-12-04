@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from uuid import uuid1
-from flask_jwt_extended.utils import create_access_token
 import yaml
 import unittest
 import logging
@@ -201,7 +200,7 @@ class TestResources(unittest.TestCase):
 
     def test_organization(self):
 
-        rule = Rule.get_by_("manage_organization", Scope.GLOBAL,
+        rule = Rule.get_by_("organization", Scope.GLOBAL,
                             Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
 
@@ -594,7 +593,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # check that user can create role within his organization
-        rule = Rule.get_by_("manage_roles", scope=Scope.ORGANIZATION,
+        rule = Rule.get_by_("role", scope=Scope.ORGANIZATION,
                             operation=Operation.CREATE)
 
         headers = self.create_user_and_login(rules=[rule])
@@ -642,7 +641,7 @@ class TestResources(unittest.TestCase):
         self.assertListEqual(all_rule_ids, [rule.id for rule in role.rules])
 
         # test non owning rules
-        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION,
+        rule = Rule.get_by_("role", Scope.ORGANIZATION,
                             Operation.EDIT)
         headers = self.create_user_and_login(org, [rule])
         result = self.app.patch(f"/api/role/{role.id}", headers=headers, json={
@@ -660,7 +659,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test modifying role with global permissions
-        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.EDIT)
+        rule = Rule.get_by_("role", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(org2, [rule])
         result = self.app.patch(f'/api/role/{role.id}', headers=headers, json={
             "name": "this-will-not-be-updated"
@@ -680,7 +679,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test removal with organization permissions
-        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION,
+        rule = Rule.get_by_("role", Scope.ORGANIZATION,
                             Operation.DELETE)
         headers = self.create_user_and_login(org, [rule])
         result = self.app.delete(f'/api/role/{role.id}', headers=headers)
@@ -694,7 +693,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test removal with global permissions
-        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.DELETE)
+        rule = Rule.get_by_("role", Scope.GLOBAL, Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.delete(f'/api/role/{role.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
@@ -770,7 +769,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(len(result.json), 0)
 
     def test_view_permission_rules(self):
-        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION, Operation.VIEW)
+        rule = Rule.get_by_("role", Scope.ORGANIZATION, Operation.VIEW)
 
         role = Role(name="some-role", organization=Organization())
         role.save()
@@ -787,7 +786,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # user has global permissions
-        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.VIEW)
+        rule = Rule.get_by_("role", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
@@ -799,7 +798,7 @@ class TestResources(unittest.TestCase):
         role = Role(name="new-role", organization=Organization())
         role.save()
 
-        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION, Operation.EDIT)
+        rule = Rule.get_by_("role", Scope.ORGANIZATION, Operation.EDIT)
 
         # try adding a rule without any permission
         headers = self.create_user_and_login()
@@ -814,14 +813,14 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # you can edit other organizations with the global permission
-        rule = Rule.get_by_("manage_roles", Scope.GLOBAL, Operation.EDIT)
+        rule = Rule.get_by_("role", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
                                headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
 
         # however you can only assign rules that you own
-        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION, Operation.EDIT)
+        rule = Rule.get_by_("role", Scope.ORGANIZATION, Operation.EDIT)
         result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
                                headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
@@ -832,7 +831,7 @@ class TestResources(unittest.TestCase):
 
         role = Role(name="new-role", organization=Organization())
         role.save()
-        rule = Rule.get_by_("manage_roles", Scope.ORGANIZATION,
+        rule = Rule.get_by_("role", Scope.ORGANIZATION,
                             Operation.DELETE)
 
         # try removing without any permissions
@@ -869,7 +868,7 @@ class TestResources(unittest.TestCase):
         role.save()
 
         # power users can edit other organization rules
-        power_rule = Rule.get_by_("manage_roles", Scope.GLOBAL,
+        power_rule = Rule.get_by_("role", Scope.GLOBAL,
                                   Operation.DELETE)
         headers = self.create_user_and_login(rules=[power_rule, rule])
         result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
@@ -897,7 +896,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(len(result.json), len(User.get()))
 
         # view users of your organization
-        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION, Operation.VIEW)
+        rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.VIEW)
         org = Organization.get(1)
         headers = self.create_user_and_login(org, rules=[rule])
         result = self.app.get('/api/user', headers=headers)
@@ -910,7 +909,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # user can view their own data
-        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.VIEW)
+        rule = Rule.get_by_("user", Scope.OWN, Operation.VIEW)
         user = self.create_user(rules=[rule])
         headers = self.login(user.username)
         result = self.app.get(f'/api/user/{user.id}', headers=headers)
@@ -943,7 +942,7 @@ class TestResources(unittest.TestCase):
 
         # Creating users for other organizations can only be by global scope
         org = Organization()
-        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION,
+        rule = Rule.get_by_("user", Scope.ORGANIZATION,
                             Operation.CREATE)
         userdata['organization_id'] = 1
         headers = self.create_user_and_login(org, rules=[rule])
@@ -951,7 +950,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # you can do that when you have the global scope
-        gl_rule = Rule.get_by_("manage_users", Scope.GLOBAL, Operation.CREATE)
+        gl_rule = Rule.get_by_("user", Scope.GLOBAL, Operation.CREATE)
         userdata['rules'] = [gl_rule.id]
         headers = self.create_user_and_login(org, rules=[gl_rule])
         result = self.app.post('/api/user', headers=headers, json=userdata)
@@ -1000,7 +999,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual("Username", user.username)
 
         # patch as a user of other organization
-        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION, Operation.EDIT)
+        rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.EDIT)
         self.create_user_and_login(rules=[rule])
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'this-aint-gonna-fly'
@@ -1009,7 +1008,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual("Username", user.username)
 
         # patch as another user from the same organization
-        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.EDIT)
+        rule = Rule.get_by_("user", Scope.OWN, Operation.EDIT)
         self.create_user_and_login(user.organization, [rule])
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'this-aint-gonna-fly'
@@ -1018,7 +1017,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual("Username", user.username)
 
         # edit 'simple' fields
-        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.EDIT)
+        rule = Rule.get_by_("user", Scope.OWN, Operation.EDIT)
         user.rules.append(rule)
         user.save()
         headers = self.login(user.username)
@@ -1029,7 +1028,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual("yeah", user.firstname)
 
         # edit other user within your organization
-        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION, Operation.EDIT)
+        rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.EDIT)
         headers = self.create_user_and_login(organization=user.organization,
                                              rules=[rule])
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
@@ -1039,7 +1038,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual("whatever", user.firstname)
 
         # edit user from different organization, and test other edit fields
-        rule = Rule.get_by_("manage_users", Scope.GLOBAL, Operation.EDIT)
+        rule = Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'again',
@@ -1052,7 +1051,7 @@ class TestResources(unittest.TestCase):
         self.assertTrue(user.check_password("keep-it-safe"))
 
         # test that you cannot assign rules that you not own
-        not_owning_rule = Rule.get_by_("manage_users", Scope.OWN,
+        not_owning_rule = Rule.get_by_("user", Scope.OWN,
                                        Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
@@ -1122,14 +1121,14 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # same organization but missing permissions
-        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.DELETE)
+        rule = Rule.get_by_("user", Scope.OWN, Operation.DELETE)
         headers = self.create_user_and_login(organization=user.organization,
                                              rules=[rule])
         result = self.app.delete(f'/api/user/{user.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # other organization with organization scope
-        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION,
+        rule = Rule.get_by_("user", Scope.ORGANIZATION,
                             Operation.DELETE)
         headers = self.create_user_and_login(organization=Organization(),
                                              rules=[rule])
@@ -1137,34 +1136,37 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # delete yourself
-        rule = Rule.get_by_("manage_users", Scope.OWN, Operation.DELETE)
+        rule = Rule.get_by_("user", Scope.OWN, Operation.DELETE)
         user.rules.append(rule)
         user.save()
         headers = self.login(user.username)
         result = self.app.delete(f'/api/user/{user.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+        # User is deleted by the endpoint! user.delete()
 
         # delete colleague
         user = User(firstname="Firstname", lastname="Lastname",
                     username="Username", password="Password", email="a@b.c",
                     organization=Organization())
         user.save()
-        rule = Rule.get_by_("manage_users", Scope.ORGANIZATION,
+        rule = Rule.get_by_("user", Scope.ORGANIZATION,
                             Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule],
                                              organization=user.organization)
         result = self.app.delete(f'/api/user/{user.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+        # User is deleted by the endpoint user.delete()
 
         # delete as root
         user = User(firstname="Firstname", lastname="Lastname",
                     username="Username", password="Password", email="a@b.c",
                     organization=Organization())
         user.save()
-        rule = Rule.get_by_("manage_users", Scope.GLOBAL, Operation.DELETE)
+        rule = Rule.get_by_("user", Scope.GLOBAL, Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.delete(f'/api/user/{user.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+        # user is deleted by endpoint! user.delete()
 
     def test_view_organization_as_user_permissions(self):
 
@@ -1174,7 +1176,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # view your own organization
-        rule = Rule.get_by_("manage_organization", Scope.ORGANIZATION,
+        rule = Rule.get_by_("organization", Scope.ORGANIZATION,
                             Operation.VIEW)
         user = self.create_user(rules=[rule])
         headers = self.login(user.username)
@@ -1190,7 +1192,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # Missing organization with global view
-        rule = Rule.get_by_("manage_organization", Scope.GLOBAL,
+        rule = Rule.get_by_("organization", Scope.GLOBAL,
                             Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f'/api/organization/-1',
@@ -1239,7 +1241,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertIsInstance(result.json, list)
 
-    def test_create_organaiztion_permissions(self):
+    def test_create_organization_permissions(self):
 
         # try creating an organization without permissions
         headers = self.create_user_and_login()
@@ -1249,7 +1251,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # create an organization
-        rule = Rule.get_by_("manage_organization", Scope.GLOBAL,
+        rule = Rule.get_by_("organization", Scope.GLOBAL,
                             Operation.CREATE)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.post('/api/organization', headers=headers, json={
@@ -1259,5 +1261,51 @@ class TestResources(unittest.TestCase):
         self.assertIsNotNone(Organization.get_by_name("this-is-gonna-happen"))
 
     def test_patch_organization_permissions(self):
-        self.assertTrue(False)
-        # dont forget that we have other authenticables than users....
+
+        # unknown organization
+        headers = self.create_user_and_login()
+        results = self.app.patch('/api/organization/-1', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        # try to change anything without permissions
+        org = Organization(name="first-name")
+        org.save()
+        results = self.app.patch(f'/api/organization/{org.id}',
+                                 headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # change as super user
+        rule = Rule.get_by_("organization", Scope.GLOBAL,
+                            Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.patch(f'/api/organization/{org.id}',
+                                 headers=headers, json={
+                                     "name": "second-name"
+                                 })
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['name'], "second-name")
+
+        # change as organization editor
+        rule = Rule.get_by_("organization", Scope.ORGANIZATION,
+                            Operation.EDIT)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        results = self.app.patch(f'/api/organization/{org.id}',
+                                 headers=headers, json={
+                                     "name": "third-name"
+                                 })
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['name'], "third-name")
+
+        # change other organization as organization editor
+        rule = Rule.get_by_("organization", Scope.ORGANIZATION,
+                            Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.patch(f'/api/organization/{org.id}',
+                                 headers=headers, json={
+                                     "name": "third-name"
+                                 })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+
+def test_organization_view_nodes(self):
+    pass

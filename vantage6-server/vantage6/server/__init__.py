@@ -18,7 +18,7 @@ from flask_socketio import SocketIO
 from vantage6.server import db
 from vantage6.server.resource._schema import HATEOASModelSchema
 from vantage6.common import logger_name
-from vantage6.server.permission import RuleNeed
+from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
     JWT_ACCESS_TOKEN_EXPIRES,
@@ -74,6 +74,9 @@ class ServerApp:
         except Exception:
             self.socketio = SocketIO(self.app)
         self.socketio.on_namespace(DefaultSocketNamespace("/tasks"))
+
+        # setup the permission manager for the API endpoints
+        self.permissions = PermissionManager()
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
@@ -269,7 +272,8 @@ class ServerApp:
         services = {
             "socketio": self.socketio,
             "mail": self.mail,
-            "api": self.api
+            "api": self.api,
+            "permissions": self.permissions
         }
 
         for res in RESOURCES:

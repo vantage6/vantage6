@@ -11,10 +11,9 @@ from pathlib import Path
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.permission import (
-    register_rule,
-    verify_user_rules,
     Scope as S,
-    Operation as P
+    Operation as P,
+    PermissionManager
 )
 from vantage6.server.resource import (
     with_user,
@@ -51,39 +50,30 @@ def setup(api, api_base, services):
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
-view_any = register_rule('manage_users', S.GLOBAL,
-                         P.VIEW,
-                         description='View any user')
-view_org = register_rule('manage_users', S.ORGANIZATION,
-                         P.VIEW,
-                         description='View users from your organization')
-view_own = register_rule('manage_users', S.OWN,
-                         P.VIEW,
-                         description='View your own data')
-crte_any = register_rule('manage_users', S.GLOBAL,
-                         P.CREATE,
-                         description='Create a new user for any organization')
-crte_org = register_rule('manage_users', S.ORGANIZATION,
-                         P.CREATE,
-                         description='Create a new user for your organization')
-edit_any = register_rule('manage_users', S.GLOBAL,
-                         P.EDIT,
-                         description='Edit any user')
-edit_org = register_rule('manage_users', S.ORGANIZATION,
-                         P.EDIT,
-                         description='Edit users from your organization')
-edit_own = register_rule('manage_users', S.OWN,
-                         P.EDIT,
-                         description='Edit your own info')
-delt_any = register_rule('manage_users', S.GLOBAL,
-                         P.DELETE,
-                         description='Delete any user')
-delt_org = register_rule('manage_users', S.ORGANIZATION,
-                         P.DELETE,
-                         description='Delete users from your organization')
-delt_own = register_rule('manage_users', S.OWN,
-                         P.DELETE,
-                         description='Delete your own account')
+def permissions(permissions: PermissionManager):
+    add = permissions.appender(module_name)
+    add(S.GLOBAL, P.VIEW,
+        description='View any user')
+    add(S.ORGANIZATION, P.VIEW,
+        description='View users from your organization')
+    add(S.OWN, P.VIEW,
+        description='View your own data')
+    add(S.GLOBAL, P.CREATE,
+        description='Create a new user for any organization')
+    add(S.ORGANIZATION, P.CREATE,
+        description='Create a new user for your organization')
+    add(S.GLOBAL, P.EDIT,
+        description='Edit any user')
+    add(S.ORGANIZATION, P.EDIT,
+        description='Edit users from your organization')
+    add(S.OWN, P.EDIT,
+        description='Edit your own info')
+    add(S.GLOBAL, P.DELETE,
+        description='Delete any user')
+    add(S.ORGANIZATION, P.DELETE,
+        description='Delete users from your organization')
+    add(S.OWN, P.DELETE,
+        description='Delete your own account')
 
 
 # ------------------------------------------------------------------------------
@@ -92,6 +82,10 @@ delt_own = register_rule('manage_users', S.OWN,
 class User(ServicesResources):
 
     user_schema = UserSchema()
+
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
 
     @only_for(['user'])
     @swag_from(str(Path(r"swagger/get_user_with_id.yaml")),
@@ -106,12 +100,12 @@ class User(ServicesResources):
             return {"msg": f"user={id} is not found"}, HTTPStatus.NOT_FOUND
 
         # global scope can see all
-        if view_any.can():
+        if self.r.v_glo.can():
             return self.user_schema.dump(user, many=many).data, \
                 HTTPStatus.OK
 
         # organization scope can see their own organization users
-        if view_org.can():
+        if self.r.v_org.can():
             if many:
                 filtered_users = [user for user in user if user.organization
                                   == g.user.organization]
@@ -125,7 +119,7 @@ class User(ServicesResources):
                     HTTPStatus.OK
 
         # own scope can see their own user info
-        if view_own.can():
+        if self.r.v_own.can():
             if not id:
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -167,13 +161,13 @@ class User(ServicesResources):
         organization_id = g.user.organization_id
         if data['organization_id']:
             if data['organization_id'] != organization_id and \
-                    not crte_any.can():
+                    not self.r.c_glo.can():
                 return {'msg': 'You lack the permission to do that!1'}, \
                     HTTPStatus.UNAUTHORIZED
             organization_id = data['organization_id']
 
         # check that user is allowed to create users
-        if not (crte_any.can() or crte_org.can()):
+        if not (self.r.c_glo.can() or self.r.c_org.can()):
             return {'msg': 'You lack the permission to do that!2'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -186,7 +180,7 @@ class User(ServicesResources):
             for role in potential_roles:
                 role_ = db.Role.get(role)
                 if role_:
-                    denied = verify_user_rules(role_.rules)
+                    denied = self.permissions.verify_user_rules(role_.rules)
                     if denied:
                         return denied, HTTPStatus.UNAUTHORIZED
                     roles.append(role_)
@@ -197,7 +191,7 @@ class User(ServicesResources):
         if potential_rules:
             rules = [db.Rule.get(rule) for rule in potential_rules
                      if db.Rule.get(rule)]
-            denied = verify_user_rules(rules)
+            denied = self.permissions.verify_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
 
@@ -227,10 +221,10 @@ class User(ServicesResources):
             return {"msg": "user id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
 
-        if not edit_any.can():
-            if not (edit_org.can() and user.organization ==
+        if not self.r.e_glo.can():
+            if not (self.r.e_org.can() and user.organization ==
                     g.user.organization):
-                if not (edit_own.can() and user == g.user):
+                if not (self.r.e_own.can() and user == g.user):
                     return {'msg': 'You lack the permission to do that!'}, \
                         HTTPStatus.UNAUTHORIZED
 
@@ -262,7 +256,7 @@ class User(ServicesResources):
 
             # validate that user can assign these
             for role in roles:
-                denied = verify_user_rules(role.rules)
+                denied = self.permissions.verify_user_rules(role.rules)
                 if denied:
                     return denied, HTTPStatus.UNAUTHORIZED
 
@@ -279,14 +273,14 @@ class User(ServicesResources):
                 rules.append(rule)
 
             # validate that user can assign these
-            denied = verify_user_rules(rules)
+            denied = self.permissions.verify_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
 
             user.rules = rules
 
         if data["organization_id"]:
-            if not (edit_any.can() and data["organization_id"] !=
+            if not (self.r.e_glo.can() and data["organization_id"] !=
                     g.user.organization_id):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -315,10 +309,10 @@ class User(ServicesResources):
             return {"msg": "user id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
 
-        if not delt_any.can():
-            if not (delt_org.can() and user.organization ==
+        if not self.r.d_glo.can():
+            if not (self.r.d_org.can() and user.organization ==
                     g.user.organization):
-                if not (delt_own.can() and user == g.user):
+                if not (self.r.d_own.can() and user == g.user):
                     return {'msg': 'You lack the permission to do that!'}, \
                         HTTPStatus.UNAUTHORIZED
 

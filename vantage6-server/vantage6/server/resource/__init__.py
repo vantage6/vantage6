@@ -18,10 +18,11 @@ log = logging.getLogger(logger_name(__name__))
 
 class ServicesResources(Resource):
 
-    def __init__(self, socketio, mail, api):
+    def __init__(self, socketio, mail, api, permissions):
         self.socketio = socketio
         self.mail = mail
         self.api = api
+        self.permissions = permissions
 
 
 # ------------------------------------------------------------------------------

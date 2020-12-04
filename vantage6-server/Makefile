@@ -24,3 +24,6 @@ clean:
 	# Cleaning ...
 	-rm -r build
 	-rm dist/*
+
+test:
+	coverage run --source=vantage6 --omit="utest.py" ./utest.py

@@ -11,6 +11,8 @@ from flask_restful import reqparse
 
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
+from vantage6.server.permission import (Scope as S,
+                                        Operation as P, PermissionManager)
 from vantage6.server import db
 from vantage6.server.resource._schema import (
     TaskIncludedSchema,
@@ -48,6 +50,16 @@ def setup(api, api_base, services):
         methods=('GET', ),
         resource_class_kwargs=services
     )
+
+
+# -----------------------------------------------------------------------------
+# Permissions
+# -----------------------------------------------------------------------------
+def permissions(permission: PermissionManager):
+    add = permission.appender("node")
+    add(scope=S.GLOBAL, operation=P.VIEW, description="view any node")
+    add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
+        description="view your own node info", assign_to_node=True)
 
 
 # ------------------------------------------------------------------------------

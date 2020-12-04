@@ -9,9 +9,9 @@ from pathlib import Path
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.permission import (
-    register_rule,
     Scope as S,
-    Operation as P
+    Operation as P,
+    PermissionManager
 )
 from vantage6.server.resource import (
     with_user_or_node, only_for,
@@ -66,32 +66,30 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-view_any = register_rule("manage_organization", scope=S.GLOBAL,
-                         operation=P.VIEW,
-                         description="view any organization")
-view_org = register_rule("manage_organization", scope=S.ORGANIZATION,
-                         operation=P.VIEW,
-                         description="view your own organization info",
-                         assign_to_container=True, assign_to_node=True)
-view_col = register_rule('manage_organization', S.COLLABORATION,
-                         P.VIEW,
-                         description='view collaborating organizations',
-                         assign_to_container=True, assign_to_node=True)
-edit_any = register_rule("manage_organization", scope=S.GLOBAL,
-                         operation=P.EDIT,
-                         description="edit any organization")
-edit_org = register_rule("manage_organization", scope=S.ORGANIZATION,
-                         operation=P.EDIT,
-                         description="edit your own organization info")
-crte_any = register_rule("manage_organization", scope=S.GLOBAL,
-                         operation=P.CREATE,
-                         description="create a new organization")
-delt_any = register_rule("manage_organization", scope=S.GLOBAL,
-                         operation=P.DELETE,
-                         description="delete any organization")
-delt_org = register_rule("manage_organization", scope=S.ORGANIZATION,
-                         operation=P.DELETE,
-                         description="delete your organization")
+def permissions(permissions: PermissionManager):
+    add = permissions.appender(module_name)
+
+    add(scope=S.GLOBAL, operation=P.VIEW,
+        description="view any organization")
+    add(scope=S.ORGANIZATION, operation=P.VIEW,
+        description="view your own organization info",
+        assign_to_container=True, assign_to_node=True)
+    add(scope=S.COLLABORATION, operation=P.VIEW,
+        description='view collaborating organizations',
+        assign_to_container=True, assign_to_node=True)
+    add(scope=S.GLOBAL, operation=P.EDIT,
+        description="edit any organization")
+    add(scope=S.ORGANIZATION, operation=P.EDIT,
+        description="edit your own organization info")
+    add(scope=S.GLOBAL, operation=P.CREATE,
+        description="create a new organization")
+
+# add_rule(scope=S.GLOBAL,
+#                          operation=P.DELETE,
+#                          description="delete any organization")
+# add_rule(scope=S.ORGANIZATION,
+#                          operation=P.DELETE,
+#                          description="delete your organization")
 
 
 # ------------------------------------------------------------------------------
@@ -100,6 +98,10 @@ delt_org = register_rule("manage_organization", scope=S.ORGANIZATION,
 class Organization(ServicesResources):
 
     org_schema = OrganizationSchema()
+
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
 
     @only_for(["user", "node", "container"])
     @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")),
@@ -124,16 +126,16 @@ class Organization(ServicesResources):
         # check if he want a single or all organizations
         if id:
             # Check if auth has enough permissions
-            if view_any.can():
+            if self.r.v_glo.can():
                 accepted = True
-            elif view_col.can():
+            elif self.r.v_col.can():
                 # check if the organization is whithin a collaboration
                 for col in auth_org.collaborations:
                     if req_org in col.organizations:
                         accepted = True
                 if req_org == auth_org:
                     accepted = True
-            elif view_org.can():
+            elif self.r.v_org.can():
                 accepted = auth_org == req_org
 
             if accepted:
@@ -143,17 +145,17 @@ class Organization(ServicesResources):
         # filter de list of organizations based on the scope
         else:
             organizations = []
-            if view_any.can():
+            if self.r.v_glo.can():
                 organizations = req_org
                 accepted = True
-            elif view_col.can():
+            elif self.r.v_col.can():
                 for col in auth_org.collaborations:
                     for org in col.organizations:
                         if org not in organizations:
                             organizations.append(org)
                 organizations.append(auth_org)
                 accepted = True
-            elif view_org.can():
+            elif self.r.v_org.can():
                 organizations = [auth_org]
                 accepted = True
 
@@ -165,16 +167,13 @@ class Organization(ServicesResources):
         return {'msg': 'You do not have permission to do that!'}, \
             HTTPStatus.UNAUTHORIZED
 
-
-
-
     @only_for(["user"])
     @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
                endpoint='organization_without_id')
     def post(self):
         """Create a new organization."""
 
-        if not crte_any.can():
+        if not self.r.c_glo.can():
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
@@ -202,8 +201,8 @@ class Organization(ServicesResources):
             return {"msg": f"Organization with id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not edit_any.can():
-            if not (edit_org.can() and id == g.user.organization.id):
+        if not self.r.e_glo.can():
+            if not (self.r.e_org.can() and id == g.user.organization.id):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
@@ -215,7 +214,8 @@ class Organization(ServicesResources):
                 setattr(organization, field, data.get(field))
 
         organization.save()
-        return organization, HTTPStatus.OK
+        return self.org_schema.dump(organization, many=False).data, \
+            HTTPStatus.OK
 
 
 class OrganizationCollaboration(ServicesResources):
@@ -242,6 +242,10 @@ class OrganizationNode(ServicesResources):
     """Resource for /api/organization/<int:id>/node."""
 
     nod_schema = NodeSchema()
+
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, "node")
 
     @with_user_or_node
     @swag_from(str(Path(r"swagger/get_organization_node.yaml")),

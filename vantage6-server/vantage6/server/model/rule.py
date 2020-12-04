@@ -8,17 +8,17 @@ from vantage6.server.model.base import Base, Database
 
 
 class Operation(Enumerate):
-    VIEW = 0
-    EDIT = 1
-    CREATE = 2
-    DELETE = 3
+    VIEW = "v"
+    EDIT = "e"
+    CREATE = "c"
+    DELETE = "d"
 
 
 class Scope(Enumerate):
-    OWN = 0
-    ORGANIZATION = 1
-    COLLABORATION = 2
-    GLOBAL = 3
+    OWN = "own"
+    ORGANIZATION = "org"
+    COLLABORATION = "col"
+    GLOBAL = "glo"
 
 
 class Rule(Base):
