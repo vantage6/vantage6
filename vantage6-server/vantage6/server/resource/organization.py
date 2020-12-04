@@ -227,6 +227,7 @@ class OrganizationCollaboration(ServicesResources):
     @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")),
                endpoint='organization_collaboration')
     def get(self, id):
+
         organization = db.Organization.get(id)
         if not organization:
             return {"msg": "organization id={} not found".format(id)}, \
@@ -243,10 +244,6 @@ class OrganizationNode(ServicesResources):
 
     nod_schema = NodeSchema()
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
-        self.r = getattr(self.permissions, "node")
-
     @with_user_or_node
     @swag_from(str(Path(r"swagger/get_organization_node.yaml")),
                endpoint='organization_node')
@@ -256,6 +253,16 @@ class OrganizationNode(ServicesResources):
         if not organization:
             return {"msg": "organization id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
+
+        if g.user:
+            auth_org_id = g.user.organization.id
+        else:  # g.node
+            auth_org_id = g.node.organization.id
+
+        if not self.permissions.node.v_glo.can():
+            if not (self.permissions.node.v_org.can() and id == auth_org_id):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
 
         return self.nod_schema.dump(organization.nodes, many=True).data, \
             HTTPStatus.OK

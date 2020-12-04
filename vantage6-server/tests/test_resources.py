@@ -1306,6 +1306,53 @@ class TestResources(unittest.TestCase):
                                  })
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
+    def test_organization_view_collaborations(self):
+        pass
 
-def test_organization_view_nodes(self):
-    pass
+    def test_organization_view_nodes(self):
+
+        # create organization, collaboration and node
+        org = Organization()
+        org.save()
+        col = Collaboration(organizations=[org])
+        col.save()
+        node = Node(organization=org, collaboration=col)
+        node.save()
+
+        # try to view without permissions
+        headers = self.create_user_and_login(org)
+        results = self.app.get(f"/api/organization/{org.id}/node",
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # try to view with organization permissions
+        rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(org, rules=[rule])
+        results = self.app.get(f"/api/organization/{org.id}/node",
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # try to view other organization
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.get(f"/api/organization/{org.id}/node",
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # try to view with global permissions
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.get(f"/api/organization/{org.id}/node",
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # try to view as node
+        headers = self.create_node_and_login(organization=org)
+        results = self.app.get(f"/api/organization/{org.id}/node",
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # try to view as node from another organization
+        headers = self.create_node_and_login()
+        results = self.app.get(f"/api/organization/{org.id}/node",
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)

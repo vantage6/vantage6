@@ -1,3 +1,4 @@
+import collections
 import logging
 import importlib
 
@@ -136,7 +137,13 @@ class PermissionManager:
 
     def __getattr__(self, name: str):
         # __getattr__ is called when it is not found in the usual places
-        return self.collections[name]
+        try:
+            collection = self.collections[name]
+            return collection
+        except Exception as e:
+            log.critical(f"Missing permission collection! {name}")
+            raise e
+
 
     @staticmethod
     def rule_exists_in_db(name, scope, operation):
