@@ -2,13 +2,18 @@
 import json
 import logging
 
-from flask import request
+from flask import request, g
 from flask_restful import reqparse
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
 from vantage6.server import db
+from vantage6.server.permission import (
+    Scope as S,
+    Operation as P,
+    PermissionManager
+)
 from vantage6.server.resource._schema import (
     CollaborationSchema,
     TaskSchema,
@@ -74,10 +79,39 @@ tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 
 
+# -----------------------------------------------------------------------------
+# Permissions
+# -----------------------------------------------------------------------------
+def permissions(permissions: PermissionManager):
+    add = permissions.appender(module_name)
+
+    add(scope=S.GLOBAL, operation=P.VIEW,
+        description="view any collaboration")
+    add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
+        assign_to_node=True,
+        description="view collaborations of your organization")
+
+    add(scope=S.GLOBAL, operation=P.EDIT,
+        description="edit any collaboration")
+    # add(scope=S.ORGANIZATION, operation=P.EDIT,
+    #     description="edit collaboration in which your organization "
+    #     "participates")
+
+    add(scope=S.GLOBAL, operation=P.CREATE,
+        description="create a new collaboration")
+
+    add(scope=S.GLOBAL, operation=P.DELETE,
+        description="delete a collaboration")
+
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Collaboration(ServicesResources):
+
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")),
@@ -86,29 +120,21 @@ class Collaboration(ServicesResources):
         """create a new collaboration"""
 
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            'name',
-            type=str,
-            required=True,
-            help="This field cannot be left blank!"
-        )
-        parser.add_argument(
-            'organization_ids',
-            type=int,
-            required=True,
-            action='append'
-        )
-        parser.add_argument(
-            'encrypted',
-            type=int,
-            required=False
-        )
+        parser.add_argument('name', type=str, required=True,
+                            help="This field cannot be left blank!")
+        parser.add_argument('organization_ids', type=int, required=True,
+                            action='append')
+        parser.add_argument('encrypted', type=int, required=False)
         data = parser.parse_args()
 
         name = data["name"]
         if db.Collaboration.name_exists(name):
             return {"msg": f"Collaboration name '{name}' already exists!"}, \
                 HTTPStatus.BAD_REQUEST
+
+        if not self.r.c_glo.can():
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         encrypted = True if data["encrypted"] == 1 else False
 
@@ -137,7 +163,21 @@ class Collaboration(ServicesResources):
         # check that collaboration exists
         if not collaboration:
             return {"msg": "collaboration having id={} not found".format(id)},\
-                HTTPStatus.NOT_FOUND  # 404
+                HTTPStatus.NOT_FOUND
+
+        if g.user:
+            auth_org_id = g.user.organization.id
+        elif g.node:
+            auth_org_id = g.node.organization.id
+        else:  # g.container
+            auth_org_id = g.container["organization_id"]
+
+        # verify permissions
+        ids = [org.id for org in collaboration.organizations]
+        if not self.r.v_glo.can():
+            if not (self.r.v_org.can() and auth_org_id in ids):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
 
         return collaboration_schema.dump(collaboration, many=not id).data, \
             HTTPStatus.OK  # 200
@@ -155,6 +195,11 @@ class Collaboration(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} "
                     "can not be found"}, HTTPStatus.NOT_FOUND  # 404
 
+        # verify permissions
+        if not self.r.e_glo.can():
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
+
         # only update fields that are provided
         data = request.get_json()
         if "name" in data:
@@ -167,7 +212,7 @@ class Collaboration(ServicesResources):
             ]
         collaboration.save()
 
-        return collaboration_schema.dump(collaboration, many=False), \
+        return collaboration_schema.dump(collaboration, many=False).data, \
             HTTPStatus.OK  # 200
 
     @with_user
@@ -180,6 +225,11 @@ class Collaboration(ServicesResources):
         if not collaboration:
             return {"msg": "collaboration id={} is not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
+
+        # verify permissions
+        if not self.r.d_glo.can():
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         collaboration.delete()
         return {"msg": "node id={} successfully deleted".format(id)}, \

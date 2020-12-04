@@ -84,13 +84,6 @@ def permissions(permissions: PermissionManager):
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create a new organization")
 
-# add_rule(scope=S.GLOBAL,
-#                          operation=P.DELETE,
-#                          description="delete any organization")
-# add_rule(scope=S.ORGANIZATION,
-#                          operation=P.DELETE,
-#                          description="delete your organization")
-
 
 # ------------------------------------------------------------------------------
 # Resources / API's
@@ -232,6 +225,17 @@ class OrganizationCollaboration(ServicesResources):
         if not organization:
             return {"msg": "organization id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
+
+        if g.node:
+            auth_org_id = g.node.organization.id
+        else:  # g.user:
+            auth_org_id = g.user.organization.id
+
+        if not self.permissions.collaboration.v_glo.can():
+            if not (self.permissions.collaboration.v_org.can() and
+                    auth_org_id == id):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
 
         return self.col_schema.dump(
             organization.collaborations,
