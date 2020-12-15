@@ -77,6 +77,7 @@ def setup(api, api_base, services):
 collaboration_schema = CollaborationSchema()
 tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
+node_schema = NodeSchemaSimple()
 
 
 # -----------------------------------------------------------------------------
@@ -93,9 +94,6 @@ def permissions(permissions: PermissionManager):
 
     add(scope=S.GLOBAL, operation=P.EDIT,
         description="edit any collaboration")
-    # add(scope=S.ORGANIZATION, operation=P.EDIT,
-    #     description="edit collaboration in which your organization "
-    #     "participates")
 
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create a new collaboration")
@@ -112,6 +110,53 @@ class Collaboration(ServicesResources):
     def __init__(self, socketio, mail, api, permissions):
         super().__init__(socketio, mail, api, permissions)
         self.r = getattr(self.permissions, module_name)
+
+    @only_for(['user', 'node', 'container'])
+    @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")),
+               endpoint='collaboration_with_id')
+    @swag_from(str(Path(r"swagger/get_collaboration_without_id.yaml")),
+               endpoint='collaboration_without_id')
+    def get(self, id=None):
+        """collaboration or list of collaborations in case no id is provided"""
+        collaboration = db.Collaboration.get(id)
+
+        # check that collaboration exists, unlikely to happen without ID
+        if not collaboration:
+            return {"msg": f"collaboration having id={id} not found"},\
+                HTTPStatus.NOT_FOUND
+
+        if g.user:
+            auth_org_id = g.user.organization.id
+        elif g.node:
+            auth_org_id = g.node.organization.id
+        else:  # g.container
+            auth_org_id = g.container["organization_id"]
+
+        if id:
+
+            # verify that the user/node organization is within the
+            # collaboration
+            ids = [org.id for org in collaboration.organizations]
+            if not self.r.v_glo.can():
+                if not (self.r.v_org.can() and auth_org_id in ids):
+                    return {'msg': 'You lack the permission to do that!'}, \
+                        HTTPStatus.UNAUTHORIZED
+
+            return collaboration_schema.dump(collaboration, many=False).data, \
+                HTTPStatus.OK  # 200
+
+        else:
+            if self.r.v_glo.can():
+                allowed_collaborations = collaboration
+
+            elif self.r.v_org.can():
+                allowed_collaborations = []
+                for col in collaboration:
+                    if auth_org_id in [org.id for org in col.organizations]:
+                        allowed_collaborations.append(col)
+
+            return collaboration_schema.dump(collaboration, many=True)\
+                .data, HTTPStatus.OK  # 200
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")),
@@ -150,37 +195,6 @@ class Collaboration(ServicesResources):
 
         collaboration.save()
         return collaboration_schema.dump(collaboration).data, HTTPStatus.OK
-
-    @only_for(['user', 'node', 'container'])
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")),
-               endpoint='collaboration_with_id')
-    @swag_from(str(Path(r"swagger/get_collaboration_without_id.yaml")),
-               endpoint='collaboration_without_id')
-    def get(self, id=None):
-        """collaboration or list of collaborations in case no id is provided"""
-        collaboration = db.Collaboration.get(id)
-
-        # check that collaboration exists
-        if not collaboration:
-            return {"msg": "collaboration having id={} not found".format(id)},\
-                HTTPStatus.NOT_FOUND
-
-        if g.user:
-            auth_org_id = g.user.organization.id
-        elif g.node:
-            auth_org_id = g.node.organization.id
-        else:  # g.container
-            auth_org_id = g.container["organization_id"]
-
-        # verify permissions
-        ids = [org.id for org in collaboration.organizations]
-        if not self.r.v_glo.can():
-            if not (self.r.v_org.can() and auth_org_id in ids):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        return collaboration_schema.dump(collaboration, many=not id).data, \
-            HTTPStatus.OK  # 200
 
     @with_user
     @swag_from(str(Path(r"swagger/patch_collaboration_with_id.yaml")),
@@ -239,6 +253,10 @@ class Collaboration(ServicesResources):
 class CollaborationOrganization(ServicesResources):
     """Resource for /api/collaboration/<int:id>/organization."""
 
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
+
     @only_for(["node", "user", "container"])
     @swag_from(str(Path(r"swagger/get_collaboration_organization.yaml")),
                endpoint='collaboration_with_id_organization')
@@ -249,9 +267,19 @@ class CollaborationOrganization(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-        # only users that belong to the collaboration can view collaborators
-        # organization_ids = collaboration.get_organization_ids()
-        org_schema = OrganizationSchema()
+        if g.user:
+            auth_org_id = g.user.organization.id
+        elif g.node:
+            auth_org_id = g.node.organization.id
+        else:  # g.container
+            auth_org_id = g.container["organization_id"]
+
+        if not self.r.v_glo.can():
+            org_ids = [org.id for org in collaboration.organizations]
+            if not (self.r.v_org.can() and auth_org_id in org_ids):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
         return org_schema.dump(collaboration.organizations, many=True).data, \
             HTTPStatus.OK
 
@@ -266,17 +294,23 @@ class CollaborationOrganization(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
+         # verify permissions
+        if not self.r.e_glo.can():
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
+
         # get the organization
         data = request.get_json()
         organization = db.Organization.get(data['id'])
         if not organization:
-            return {"msg": "organization with id={} is not found"}, \
+            return {"msg": f"organization with id={id} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
         # append organization to the collaboration
         collaboration.organizations.append(organization)
         collaboration.save()
-        return collaboration.organizations
+        return org_schema.dump(collaboration.organizations, many=True).data, \
+            HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_collaboration_organization.yaml")),
@@ -296,17 +330,23 @@ class CollaborationOrganization(ServicesResources):
             return {"msg": "organization with id={} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
+        if not self.r.d_glo.can():
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
+
         # delete organization and update
         collaboration.organizations.remove(organization)
         collaboration.save()
-        return {"msg": f"organization id={data['id']} successfully deleted "
-                f"from collaboration id={id}"}, HTTPStatus.OK
+        return org_schema.dump(collaboration.organizations, many=True).data, \
+            HTTPStatus.OK
 
 
 class CollaborationNode(ServicesResources):
     """Resource for /api/collaboration/<int:id>/node."""
 
-    node_schema = NodeSchemaSimple()
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
 
     @with_user
     @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")),
@@ -315,10 +355,16 @@ class CollaborationNode(ServicesResources):
         """"Return a list of nodes that belong to the collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": f"collaboration having collaboration_id={id} can "
-                    "not be found"}, HTTPStatus.NOT_FOUND
+            return {"msg": f"collaboration id={id} can not be found"},\
+                HTTPStatus.NOT_FOUND
 
-        return self.node_schema.dump(collaboration.nodes, many=True).data, \
+        if not self.r.v_glo.can():
+            org_ids = [org.id for org in collaboration.organizations]
+            if not (self.r.v_org.can() and g.user.organization.id in org_ids):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        return node_schema.dump(collaboration.nodes, many=True).data, \
             HTTPStatus.OK
 
     @with_user
