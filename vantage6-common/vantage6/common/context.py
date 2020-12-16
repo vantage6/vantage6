@@ -223,6 +223,7 @@ class AppContext(metaclass=Singleton):
     def find_config_file(cls, instance_type, instance_name, system_folders,
                          config_file=None, verbose=True):
         """Find a configuration file."""
+
         if config_file is None:
             config_file = f"{instance_name}.yaml"
 
@@ -281,7 +282,8 @@ class AppContext(metaclass=Singleton):
             self.log_dir = dirs.get("log")
             self.data_dir = dirs.get("data")
 
-        self.config_dir = dirs.get("config")
+        # config dir could be different if the --config option is used
+        self.config_dir = self.config_file.parent
 
     def setup_logging(self):
         """Setup a basic logging mechanism."""
