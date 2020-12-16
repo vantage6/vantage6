@@ -217,7 +217,7 @@ help_ = {
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click.option('--mount-src', default='',
-              help="mount vantage6-node package source")
+              help="mount vantage6-master package source")
 def cli_node_start(name, config, environment, system_folders, image, keep,
                    mount_src):
     """Start the node instance.
@@ -310,7 +310,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     if mount_src:
         # If mount_src is a relative path, docker willl consider it a volume.
         mount_src = os.path.abspath(mount_src)
-        mounts.append(('/vantage6/vantage6-node', mount_src))
+        mounts.append(('/vantage6', mount_src))
 
     # FIXME: Code duplication: Node.__init__() (vantage6/node/__init__.py)
     #   uses a lot of the same logic. Suggest moving this to
@@ -346,8 +346,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         "PRIVATE_KEY": "/mnt/private_key.pem"
     }
 
+    system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
-          f'{environment} --dockerized'
+          f'{environment} --dockerized {system_folders_option}'
 
     info(f"Runing Docker container")
     # debug(f"  with command: '{cmd}'")
