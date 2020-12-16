@@ -43,8 +43,8 @@ setup(
         'questionary==1.5.2',
         'iPython==7.13.0',
         'SQLAlchemy==1.3.15',
-        'vantage6-common >= 1.2.1',
-        'vantage6-client >= 1.2.1',
+        'vantage6-common >= 1.2.2',
+        'vantage6-client >= 1.2.2',
     ],
     extras_require={
         'dev': [
