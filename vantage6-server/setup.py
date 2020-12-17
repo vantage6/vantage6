@@ -53,8 +53,8 @@ setup(
         'psutil==5.7.0',
         'gevent==1.4.0',
         'Flask-Mail==0.9.1',
-        'vantage6 >= 1.2.2',
-        'vantage6-common >= 1.2.2',
+        'vantage6 >= 1.2.3',
+        'vantage6-common >= 1.2.3',
     ],
     extras_require={
         'dev': [
