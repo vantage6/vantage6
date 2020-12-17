@@ -41,8 +41,8 @@ setup(
         'click==7.1.1',
         'termcolor==1.1.0',
         'bcrypt==3.1.7',
-        'vantage6 >= 1.2.2',
-        'vantage6-client >= 1.2.2',
+        'vantage6 >= 1.2.3',
+        'vantage6-client >= 1.2.3',
     ],
     extras_require={
         'dev': [
