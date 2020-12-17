@@ -35,7 +35,7 @@ setup(
        'requests==2.23.0',
        'PyJWT',
        'pandas',
-       'vantage6-common >= 1.2.2',
+       'vantage6-common >= 1.2.3',
     ],
     tests_require=["pytest"],
     package_data={
