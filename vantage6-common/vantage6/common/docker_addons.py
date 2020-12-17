@@ -5,6 +5,7 @@ import docker
 import requests
 
 from dateutil.parser import parse
+from requests.api import request
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
@@ -49,23 +50,48 @@ def inspect_remote_image_timestamp(image: str, log=ClickLogger):
     except ValueError:
         log.warn("Could not construct remote URL, "
                  "are you using a local image?")
+        log.warn("Or an image from docker hub?")
+        log.warn("We'll make an final attemt when running the image to pull"
+                 " it without any checks...")
         return
 
-    image = f"https://{reg}/api/repositories/{rep}/{img_}/tags/{tag}"
+    # figure out API of the docker repo
+    v1_check = requests.get(f"https://{reg}/api/health")
+    v1 = v1_check.status_code == 200
+    v2 = False
+    if not v1:
+        v2_check = requests.get(f"https://{reg}/api/v2.0/health")
+        v2 = v2_check.status_code == 200
 
+    if not v1 and not v2:
+        log.error(f"Could not determine version of the registry! {reg}")
+        log.error(f"Is this a Harbor registry?")
+        log.error(f"Or is the harbor server offline?")
+        return
+
+    if v1:
+        image = f"https://{reg}/api/repositories/{rep}/{img_}/tags/{tag}"
+    else:
+        image = f"https://{reg}/api/v2.0/projects/{rep}/repositories/" \
+                f"{img_}/artifacts/{tag}"
+
+    # retrieve info from the Harbor server
     result = requests.get(image)
 
+    # verify that we got an result
     if result.status_code == 404:
         log.warn(f"Remote image not found! {image}")
-        return None
+        return
 
     if result.status_code != 200:
         log.warn(f"Remote info could not be fetched! ({result.status_code})"
                  f"{image}")
         return
 
-    timestamp = result.json().get("created")
-    timestamp = parse(timestamp)
+    if v1:
+        timestamp = parse(result.json().get("created"))
+    else:
+        timestamp = parse(result.json().get("extra_attrs").get("created"))
     return timestamp
 
 
