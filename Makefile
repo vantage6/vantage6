@@ -3,6 +3,7 @@
 
 TAG ?= trolltunga
 BUILDNR ?= 1
+BRANCH ?= master
 
 help:
 	@echo "Available commands to 'make':"
@@ -16,8 +17,44 @@ help:
 	@echo "  publish-test : publish built python packages to test.pypi.org"
 	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  clean        : clean all built packages"
+	@echo "  checkout     : git checkout a BRANCH"
 	@echo ""
 	@echo "Using tag: ${TAG}"
+
+checkout:
+	cd vantage6-common && git checkout ${BRANCH}
+	cd vantage6-client && git checkout ${BRANCH}
+	cd vantage6 && git checkout ${BRANCH}
+	cd vantage6-node && git checkout ${BRANCH}
+	cd vantage6-server && git checkout ${BRANCH}
+
+commit:
+	cd vantage6-common && git commit -a -m "bumped version"
+	cd vantage6-client && git commit -a -m "bumped version"
+	cd vantage6 && git commit -a -m "bumped version"
+	cd vantage6-node && git commit -a -m "bumped version"
+	cd vantage6-server && git commit -a -m "bumped version"
+
+git-push:
+	cd vantage6-common && git push
+	cd vantage6-client && git push
+	cd vantage6 && git push
+	cd vantage6-node && git push
+	cd vantage6-server && git push
+
+git-merge:
+	cd vantage6-common && git merge ${BRANCH}
+	cd vantage6-client && git merge ${BRANCH}
+	cd vantage6 && git merge ${BRANCH}
+	cd vantage6-node && git merge ${BRANCH}
+	cd vantage6-server && git merge ${BRANCH}
+
+git-tag:
+	cd vantage6-common && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
+	cd vantage6-client && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
+	cd vantage6 && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
+	cd vantage6-node && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
+	cd vantage6-server && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
 
 set-buildnr:
 	find ./ -name __build__ -exec sh -c "echo ${BUILDNR} > {}" \;
