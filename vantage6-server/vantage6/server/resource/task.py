@@ -7,6 +7,11 @@ from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
 
+from vantage6.server.permission import (
+    Scope as S,
+    PermissionManager,
+    Operation as P
+)
 from vantage6.server.resource import (
     only_for,
     ServicesResources
@@ -48,6 +53,39 @@ def setup(api, api_base, services):
         endpoint='task_result',
         methods=('GET',),
         resource_class_kwargs=services
+    )
+
+
+# -----------------------------------------------------------------------------
+# Permissions
+# -----------------------------------------------------------------------------
+def permissions(permissions: PermissionManager):
+    add = permissions.appender(module_name)
+
+    add(scope=S.GLOBAL, operation=P.VIEW,
+        description="view any task")
+    add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
+        assign_to_node=True, description="view tasks of your organization")
+
+    add(scope=S.GLOBAL, operation=P.EDIT, description="edit any task")
+    add(scope=S.ORGANIZATION, operation=P.EDIT,
+        description="edit tasks of your organization")
+
+    add(scope=S.GLOBAL, operation=P.CREATE, description="create a new task")
+    add(scope=S.ORGANIZATION, operation=P.CREATE,
+        description=(
+            "create a new task for collaborations in which your organization "
+            "participates"
+        )
+    )
+
+    add(scope=S.GLOBAL, operation=P.DELETE,
+        description="delete a task")
+    add(scope=S.ORGANIZATION, operation=P.DELETE,
+        description=(
+            "delete a task from a collaboration in which your organization "
+            "participates"
+        )
     )
 
 
@@ -107,7 +145,6 @@ class Task(ServicesResources):
             org_ids = [g.user.organization_id]
 
         # Check that all organization ids are within the collaboration
-        # if not all([org_id in db_ids for org_id in org_ids]):
         if not set(org_ids).issubset(db_ids):
             return {"msg": (
                 f"At least one of the supplied organizations in not within "
@@ -116,11 +153,8 @@ class Task(ServicesResources):
 
         if g.user:
             initiator = g.user.organization
-        elif g.container:
+        else: #g.container:
             initiator = db.Node.get(g.container["node_id"]).organization
-        else:
-            # FIXME: Who then? Shouldn't this raise an exception?
-            initiator = None
 
         # Create the new task in the database
         task = db.Task(

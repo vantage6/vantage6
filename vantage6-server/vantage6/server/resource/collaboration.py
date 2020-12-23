@@ -68,7 +68,7 @@ def setup(api, api_base, services):
         CollaborationTask,
         path+'/<int:id>/task',
         endpoint='collaboration_with_id_task',
-        methods=('GET', 'POST', 'DELETE'),
+        methods=('GET',),
         resource_class_kwargs=services
     )
 
@@ -377,17 +377,22 @@ class CollaborationNode(ServicesResources):
             return {"msg": "collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
+        if not self.r.e_glo.can():
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
+
         data = request.get_json()
         node = db.Node.get(data['id'])
         if not node:
-            return {"msg": "node id={} not found"}, HTTPStatus.NOT_FOUND
+            return {"msg": f"node id={data['id']} not found"}, \
+                HTTPStatus.NOT_FOUND
         if node in collaboration.nodes:
-            return {"msg": "node id={data['id']} is already in collaboration "
+            return {"msg": f"node id={data['id']} is already in collaboration "
                     f"id={id}"}, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.append(node)
         collaboration.save()
-        return self.node_schema.dump(collaboration.nodes, many=True),\
+        return node_schema.dump(collaboration.nodes, many=True).data,\
             HTTPStatus.CREATED
 
     @with_user
@@ -399,6 +404,10 @@ class CollaborationNode(ServicesResources):
         if not collaboration:
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
+
+        if not self.r.e_glo.can():
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
         node = db.Node.get(data['id'])
@@ -416,67 +425,30 @@ class CollaborationNode(ServicesResources):
 class CollaborationTask(ServicesResources):
     """Resource for /api/collaboration/<int:id>/task."""
 
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, 'task')
+
     @with_user_or_node
     @swag_from(str(Path(r"swagger/get_collaboration_task.yaml")),
                endpoint='collaboration_with_id_task')
     def get(self, id):
         """List of tasks that belong to a collaboration"""
         collaboration = db.Collaboration.get(id)
-        return tasks_schema.dump(collaboration.tasks, many=True)
-
-    @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_task.yaml")),
-               endpoint='collaboration_with_id_task')
-    def post(self, id):
-        """Attach new task to collaboration"""
-        collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": f"collaboration having collaboration_id={id} can "
-                    "not be found"}, HTTPStatus.NOT_FOUND
-
-        data = request.get_json()
-
-        input_ = data.get('input', '') if \
-            isinstance(data.get('input', ''), str) else \
-            json.dumps(data.get('input'))
-
-        task = db.Task(
-            collaboration=collaboration,
-            name=data.get('name', ''),
-            description=data.get('description', ''),
-            image=data.get('image', ''),
-            input=input_,
-        )
-        task.save()
-
-        for organization in collaboration.organizations:
-            result = db.Result(
-                task=task,
-                organization=organization
-            )
-            result.save()
-
-        return tasks_schema.dump(collaboration.tasks, many=True)
-
-    @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_task.yaml")),
-               endpoint='collaboration_with_id_task')
-    def delete(self, id):
-        """Remove task from collaboration"""
-        collaboration = db.Collaboration.get(id)
-        if not collaboration:
-            return {"msg": f"collaboration having collaboration_id={id} can "
-                    "not be found"}, HTTPStatus.NOT_FOUND
-
-        data = request.get_json()
-        task_id = data['task_id']
-        task = db.Task.get(task_id)
-        if not task:
-            return {"msg": f"Task id={task_id} not found"}, \
+            return {"msg": f"collaboration id={id} can not be found"},\
                 HTTPStatus.NOT_FOUND
-        if task_id not in collaboration.get_task_ids():
-            return {"msg": f"Task id={task_id} is not part of collaboration "
-                    "id={id}"}, HTTPStatus.BAD_REQUEST
-        task.delete()
-        return {"msg": "Task id={task_id} is removed from collaboration "
-                f"id={id}"}, HTTPStatus.OK
+
+        if g.user:
+            auth_org_id = g.user.organization.id
+        else: #g.node:
+            auth_org_id = g.node.organization.id
+
+        if not self.r.v_glo.can():
+            org_ids = [org.id for org in collaboration.organizations]
+            if not (self.r.v_org.can() and auth_org_id in org_ids):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        return tasks_schema.dump(collaboration.tasks, many=True).data, \
+            HTTPStatus.OK

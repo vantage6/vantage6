@@ -40,6 +40,15 @@ class Node(Authenticatable):
         except NoResultFound:
             return None
 
+    @classmethod
+    def exists(cls, organization_id, collaboration_id):
+        session = Database().Session
+        return session.query(cls).filter_by(
+            organization_id=organization_id,
+            collaboration_id=collaboration_id
+        ).scalar()
+
+
     def __repr__(self):
         return (
             "<Node "

@@ -250,4 +250,6 @@ def cli_server_shell(ctx):
     logging.getLogger('asyncio').setLevel(logging.WARNING)
     del logging
 
+    import vantage6.server.db as db
+
     IPython.embed(config=c)
