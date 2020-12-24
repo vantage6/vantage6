@@ -24,7 +24,7 @@ JWT_TEST_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=1)
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
 RESOURCES = ['node', 'collaboration', 'organization', 'task', 'result',
-             'token', 'user', 'version', 'recover', 'stats', 'role',
+             'token', 'user', 'version', 'recover', 'role',
              'rule']
 
 # Super user information. This user is only created if it is not in the
