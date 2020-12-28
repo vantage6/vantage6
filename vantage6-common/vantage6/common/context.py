@@ -73,9 +73,16 @@ class AppContext(metaclass=Singleton):
         # FIXME: this should probably be moved to the actual app
         module_name = __name__.split('.')[-1]
         self.log = logging.getLogger(module_name)
-        self.log.info("#" * 80)
-        self.log.info(f'#{APPNAME:^78}#')
-        self.log.info("#" * 80)
+        self.log.info("-" * 45)
+        # self.log.info(f'#{APPNAME:^78}#')
+        import pyfiglet
+        self.log.info(" Welcome to")
+        for line in pyfiglet.figlet_format(APPNAME, font='big').split('\n'):
+            self.log.info(line)
+        self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
+        self.log.info(" --> Docs: https://docs.vantage6.ai")
+        self.log.info(" --> Blog: https://vantage6.ai")
+        self.log.info("-" * 45)
         self.log.info(f"Started application {APPNAME} with environment "
                       f"{self.environment}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
