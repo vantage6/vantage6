@@ -46,13 +46,6 @@ def setup(api, api_base, services):
         methods=('GET', 'DELETE', 'PATCH'),
         resource_class_kwargs=services
     )
-    api.add_resource(
-        NodeTasks,
-        path + '/<int:id>/task',
-        endpoint='node_tasks',
-        methods=('GET', ),
-        resource_class_kwargs=services
-    )
 
 
 # -----------------------------------------------------------------------------

@@ -44,7 +44,9 @@ class PermissionManager:
             try:
                 module.permissions(self)
             except Exception:
-                log.info(f"{module} contains no (or invalid) permissions")
+                module_name = module.__name__.split(".")[-1]
+                log.debug(f"Resource '{module_name}' contains no or invalid "
+                          "permissions")
 
     def assign_rule_to_node(self, name: str, scope: Scope,
                             operation: Operation):

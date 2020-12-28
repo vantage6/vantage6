@@ -14,7 +14,7 @@ from vantage6.common import (
     check_config_write_permissions
 )
 from vantage6.server.model.base import Database
-from vantage6 import server
+from vantage6.server import ServerApp
 from vantage6.cli.globals import (
     DEFAULT_SERVER_ENVIRONMENT as S_ENV,
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
@@ -119,7 +119,8 @@ def cli_server_start(ctx, ip, port, debug):
     ip = ip or ctx.config['ip'] or '127.0.0.1'
     port = port or int(ctx.config['port']) or 5000
     info(f"ip: {ip}, port: {port}")
-    server.run(ctx, ip, port, debug=debug)
+    app = ServerApp(ctx)
+    app.run(ip, port, debug=debug)
 
 #
 #   list
