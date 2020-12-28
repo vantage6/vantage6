@@ -152,7 +152,8 @@ class OrganizationSchema(HATEOASModelSchema):
     collaborations = fields.Method("collaborations")
     nodes = fields.Method("nodes")
     users = fields.Method("users")
-    tasks = fields.Method("tasks")
+    created_tasks = fields.Method("tasks")
+    results = fields.Method("results")
 
     # make sure
     public_key = fields.Function(
