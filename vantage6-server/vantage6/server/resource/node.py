@@ -143,7 +143,7 @@ class Node(ServicesResources):
                     HTTPStatus.UNAUTHORIZED
             else:
                 org_id = g.user.organization.id
-        organization = db.Organization.get(org_id)
+        organization = db.Organization.get(org_id or user_org_id)
 
         # we need to check that the organization belongs to the
         # collaboration
@@ -187,7 +187,7 @@ class Node(ServicesResources):
         node.delete()
         return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK  # 200
 
-    @with_user_or_node
+    @with_user
     @swag_from(str(Path(r"swagger/patch_node_with_id.yaml")),
                endpoint='node_with_id')
     def patch(self, id):
@@ -211,6 +211,17 @@ class Node(ServicesResources):
         if 'name' in data:
             node.name = data['name']
 
+        # organization goes before collaboration (!)
+        if 'organization_id' in data:
+            if not self.r.e_glo.can():
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            organization = db.Organization.get(data['organization_id'])
+            if not organization:
+                return {'msg': f'Organization id={data["organization_id"]} '
+                        'not found!'}, HTTPStatus.NOT_FOUND
+            node.organization = organization
+
         if 'collaboration_id' in data:
             collaboration = db.Collaboration.get(data['collaboration_id'])
             if not auth.organization in collaboration.organizations:
@@ -218,15 +229,5 @@ class Node(ServicesResources):
                         'this node is not part of this collaboration id='
                         f'{collaboration.id}'}
             node.collaboration = collaboration
-
-        if 'organization_id' in data:
-            if not self.r.e_glo.can():
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            organization = db.Organization.get(data['organization_id'])
-            if not organization:
-                return {'msg': f'Organization id={organization.id} '
-                        'not found!'}, HTTPStatus.NOT_FOUND
-            node.organization = organization
 
         return self.node_schema.dump(node).data, HTTPStatus.OK

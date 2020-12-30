@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import datetime
 from os import O_RANDOM
 from uuid import uuid1
+from sqlalchemy.orm.relationships import remote
 import yaml
 import unittest
 import logging
@@ -173,6 +175,9 @@ class TestResources(unittest.TestCase):
         }
         ).json
 
+        if 'msg' in tokens:
+            print(tokens['msg'])
+
         headers = {
             'Authorization': 'Bearer {}'.format(tokens['container_token'])
         }
@@ -267,7 +272,8 @@ class TestResources(unittest.TestCase):
     def test_node_without_id(self):
 
         # GET
-        headers = self.login("root")
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
         nodes = self.app.get("/api/node", headers=headers).json
         expected_fields = [
             'name',
@@ -284,30 +290,36 @@ class TestResources(unittest.TestCase):
             for key in expected_fields:
                 self.assertIn(key, node)
 
-        headers = self.login("user")
         nodes = self.app.get("/api/node", headers=headers).json
         self.assertIsNotNone(nodes)
 
         # POST
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.CREATE)
+        headers = self.create_user_and_login(rules=[rule])
         # unknown collaboration id should fail
         response = self.app.post("/api/node", headers=headers, json={
             "collaboration_id": 99999
         })
         response_json = response.json
         self.assertIn("msg", response_json)
-        self.assertEqual(response.status_code, 404)  # NOT FOUND
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # succesfully create a node
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        col.save()
+
+        headers = self.create_user_and_login(org, rules=[rule])
         response = self.app.post("/api/node", headers=headers, json={
-            "collaboration_id": 1
+            "collaboration_id": col.id
         })
-        response_json = response.json
-        self.assertEqual(response.status_code, 201)  # CREATED
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
 
     def test_node_with_id(self):
 
         # root user can access all nodes
-        headers = self.login("root")
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
         node = self.app.get("/api/node/8", headers=headers).json
         expected_fields = [
             'name',
@@ -324,26 +336,13 @@ class TestResources(unittest.TestCase):
             self.assertIn(key, node)
 
         # user cannot access all
-        headers = self.login("user")
+        headers = self.create_user_and_login()
         node = self.app.get("/api/node/8", headers=headers)
-        self.assertEqual(node.status_code, 403)
+        self.assertEqual(node.status_code, HTTPStatus.UNAUTHORIZED)
 
         # some nodes just don't exist
         node = self.app.get("/api/node/9999", headers=headers)
         self.assertEqual(node.status_code, 404)
-
-    def test_node_tasks(self):
-        headers = self.login("root")
-
-        # Non existing node
-        task = self.app.get("/api/node/9999/task", headers=headers)
-        self.assertEqual(task.status_code, 404)
-
-        task = self.app.get("/api/node/7/task", headers=headers)
-        self.assertEqual(task.status_code, 200)
-
-        task = self.app.get("/api/node/7/task?state=open", headers=headers)
-        self.assertEqual(task.status_code, 200)
 
     def test_result_with_id(self):
         headers = self.login("root")
@@ -1962,5 +1961,332 @@ class TestResources(unittest.TestCase):
         results = self.app.delete(f'/api/node/{node.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
-    def test_patch_node_permissions(self):
-        self.assertTrue(False)
+    def test_patch_node_permissions_as_user(self):
+        # test patching non-existant node
+        headers = self.create_user_and_login()
+        results = self.app.patch(f"/api/node/-1", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        # test user without any permissions
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        node = Node(organization=org, collaboration=col)
+        node.save()
+
+        results = self.app.patch(f"/api/node/{node.id}", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test user with global permissions
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.patch(f"/api/node/{node.id}", headers=headers,
+                                 json={"name": "A"})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['name'], "A")
+
+        # test user with org permissions and own organization
+        rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.EDIT)
+        headers = self.create_user_and_login(org, [rule])
+        results = self.app.patch(f"/api/node/{node.id}", headers=headers,
+                                 json={'name': 'B'})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['name'], "B")
+
+        # test user with org permissions and other organization
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.patch(f"/api/node/{node.id}", headers=headers,
+                                 json={'name': 'C'})
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test updatin the `organization_id` with organization permissions
+        org2 = Organization()
+        org2.save()
+        results = self.app.patch(f"/api/node/{node.id}", headers=headers,
+                                 json={'organization_id': org2.id})
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test assigning it to a node thats not part of the collaborat
+        col2 = Collaboration(organizations=[org2])
+        col2.save()
+        results = self.app.patch(f"/api/node/{node.id}", headers=headers,
+                                 json={'collaboration_id': col2.id})
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # collaboration_id and organization_id. Note that the organization
+        # is assigned before the collaboration is defined.
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(org2, rules=[rule])
+        results = self.app.patch(f'/api/node/{node.id}', headers=headers,
+                                 json={'collaboration_id': col2.id,
+                                 'organization_id': org2.id})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['organization']['id'], org2.id)
+        self.assertEqual(results.json['collaboration']['id'], col2.id)
+
+        # assign unknow organization
+        results = self.app.patch(f'/api/node/{node.id}', headers=headers,
+                                 json={'organization_id': -1})
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+    def test_view_task_permissions_as_user(self):
+        # non existing task
+        headers = self.create_user_and_login()
+        results = self.app.get(f'/api/task/-1', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        # test user without any permissions and id
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        task = Task(name="unit", collaboration=col)
+        task.save()
+
+        results = self.app.get(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test user with org permissions with id
+        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(org, rules=[rule])
+        results = self.app.get(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['name'], 'unit')
+
+        # test user with org permissions with id from another org
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.get(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test user with org permissions without id
+        headers = self.create_user_and_login(org, rules=[rule])
+        results = self.app.get(f'/api/task', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test user with global permissions and id
+        rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.get(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test user with global permissions without id
+        results = self.app.get(f'/api/task', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+
+    def test_view_task_permissions_as_node_and_container(self):
+        # test node with id
+        org = Organization()
+        org.save()
+        col = Collaboration(organizations=[org])
+        col.save()
+        task = Task(collaboration=col, image="some-image")
+        task.save()
+        res = Result(task=task)
+        res.save()
+
+        headers = self.create_node_and_login(organization=org)
+        results = self.app.get(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test node without id
+        results = self.app.get(f'/api/task', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test container with id
+        headers = self.login_container(collaboration=col, organization=org,
+                                       task=task)
+        results = self.app.get(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test container without id
+        results = self.app.get(f'/api/task', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+    def test_create_task_permission_as_user(self):
+        # non existant collaboration
+        headers = self.create_user_and_login()
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "collaboration_id": -1
+        })
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        # organizations outside of collaboration
+        org = Organization()
+        org.save()
+        col = Collaboration(organizations=[org])
+        col.save()
+        org2 = Organization()
+        org2.save()
+
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org2.id}], 'collaboration_id': col.id
+        })
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # user without any permissions
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            "collaboration_id": col.id
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # user with organization permissions for other organization
+        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.CREATE)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}], 'collaboration_id': col.id
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # user with organization permissions
+        headers = self.create_user_and_login(org, rules=[rule])
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}], 'collaboration_id': col.id
+        })
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # user with global permissions
+        rule = Rule.get_by_("task", Scope.GLOBAL, Operation.CREATE)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}], 'collaboration_id': col.id
+        })
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # test master task
+        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.CREATE)
+        headers = self.create_user_and_login(org, rules=[rule])
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col.id,
+            'master': True
+        })
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+
+    def test_create_task_permissions_as_container(self):
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        parent_task = Task(collaboration=col, image="some-image")
+        parent_task.save()
+        parent_res = Result(organization=org, task=parent_task)
+        parent_res.save()
+
+        # test wrong image name
+        headers = self.login_container(collaboration=col, organization=org,
+                                       task=parent_task)
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col.id,
+            'image': 'other-image'
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test other collaboration_id
+        col2 = Collaboration(organizations=[org])
+        col2.save()
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col2.id,
+            'image': 'some-image'
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test with correct parameters
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col.id,
+            'image': 'some-image'
+        })
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # test already completed task
+        parent_res.finished_at = datetime.date(2020,1,1)
+        parent_res.save()
+        results = self.app.post(f'/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col.id,
+            'image': 'some-image'
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+
+    def test_delete_task_permissions(self):
+
+        # test non-existing task
+        headers = self.create_user_and_login()
+        self.app.delete(f'/api/task/-1', headers=headers)
+
+        # test with organization permissions from other organization
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        task = Task(collaboration=col)
+        task.save()
+
+        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.DELETE)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.delete(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test with organization permissions
+        headers = self.create_user_and_login(org, [rule])
+        results = self.app.delete(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test with global permissions
+        task = Task(collaboration=col)
+        task.save()
+        rule = Rule.get_by_("task", Scope.GLOBAL, Operation.DELETE)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.delete(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test that all results are also deleted
+        task = Task(collaboration=col)
+        res = Result(task=task)
+        res.save()
+        results = self.app.delete(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertIsNone(Task.get(res.id))
+
+    def test_view_task_result_permissions_as_user(self):
+
+        # non-existing task
+        headers = self.create_user_and_login()
+        result = self.app.get(f'/api/task/-1/result', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # test with organization permissions from other organization
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        task = Task(collaboration=col)
+        res = Result(task=task, organization=org)
+        res.save()
+
+        rule = Rule.get_by_("result", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test with organization permission
+        headers = self.create_user_and_login(org, [rule])
+        result = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # test with global permission
+        rule = Rule.get_by_("result", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+    def test_view_task_result_permissions_as_container(self):
+        # test if container can
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        task = Task(collaboration=col, image="some-image")
+        task.save()
+        res = Result(task=task, organization=org)
+        res.save()
+
+        headers = self.login_container(collaboration=col, organization=org,
+                                       task=task)
+        results = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)

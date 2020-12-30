@@ -136,9 +136,10 @@ class Task(ServicesResources):
         else:
             if self.r.v_glo.can():
                 return schema.dump(task, many=True).data, HTTPStatus.OK
-            elif self.v_org.can():
+            elif self.r.v_org.can():
                 filtered = filter(
-                    lambda t: auth_org in t.collanoration.organizations, task
+                    lambda t: auth_org in t.collaboration.organizations,
+                    filter(lambda t: bool(t.collaboration), task)
                 )
                 return schema.dump(filtered, many=True).data, HTTPStatus.OK
             else:
@@ -154,6 +155,7 @@ class Task(ServicesResources):
         data = request.get_json()
         collaboration_id = data.get('collaboration_id')
         collaboration = db.Collaboration.get(collaboration_id)
+
         if not collaboration:
             return {"msg": f"Collaboration id={collaboration_id} not found!"},\
                    HTTPStatus.NOT_FOUND
@@ -220,6 +222,9 @@ class Task(ServicesResources):
         # ignored.
         # TODO in this case the user *must* have a node attached to this
         # collaboration
+        # TODO this does not make a lot of sense as the `organizations` input
+        # should only contain the organization where the master container
+        # shoudl run
         assign_orgs = []
         if data.get("master", False) and g.user:
             for org in organizations_json_list:
@@ -278,10 +283,11 @@ class Task(ServicesResources):
 
         # check that the image is allowed
         # if container["image"] != task.image:
+        # FIXME why?
         if not image.endswith(container["image"]):
             log.warning((f"Container from node={container['node_id']} "
                          f"attempts to post a task using illegal image!?"))
-            log.warning(f"  task image: {task.image}")
+            log.warning(f"  task image: {image}")
             log.warning(f"  container image: {container['image']}")
             return False
 
@@ -342,7 +348,7 @@ class TaskResult(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions):
         super().__init__(socketio, mail, api, permissions)
-        self.r = getattr(self.permissions, module_name)
+        self.r = getattr(self.permissions, "result")
 
     @only_for(['user', 'container'])
     @swag_from(str(Path(r"swagger/get_task_result.yaml")),
@@ -351,13 +357,13 @@ class TaskResult(ServicesResources):
         """Return results for task."""
         task = db.Task.get(id)
         if not task:
-            return {"msg": "task id={} not found".format(id)}, \
+            return {"msg": f"task id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if g.user:
             org = g.user.organization
         else:
-            org = db.Organization(g.container['organization_id'])
+            org = db.Organization.get(g.container['organization_id'])
 
         if not self.r.v_glo.can():
             c_orgs = task.collaboration.organizations

@@ -25,7 +25,7 @@ JWT_TEST_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=1)
 # file-names in the resource directory
 RESOURCES = ['node', 'collaboration', 'organization', 'task', 'result',
              'token', 'user', 'version', 'recover', 'role',
-             'rule']
+             'rule', 'health']
 
 # Super user information. This user is only created if it is not in the
 # database yet at startup time.
