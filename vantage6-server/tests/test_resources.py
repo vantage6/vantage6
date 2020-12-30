@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
-from os import O_RANDOM
 from uuid import uuid1
-from sqlalchemy.orm.relationships import remote
 import yaml
 import unittest
 import logging
