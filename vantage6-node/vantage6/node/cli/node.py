@@ -19,9 +19,9 @@ from vantage6.cli.configuration_wizard import (
 )
 
 
-@click.group(name="vantage6-node")
+@click.group(name="vnode-local")
 def cli_node():
-    """Command `vantage6-node`."""
+    """Command `vnode-local`."""
     pass
 
 
