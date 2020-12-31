@@ -52,7 +52,7 @@ setup(
         'ipython==7.13.0',
         'requests==2.23.0',
         'psutil==5.7.0',
-        'gevent==1.4.0',
+        'gevent==1.3.4',
         'Flask-Mail==0.9.1',
         'vantage6 >= 1.2.3',
         'vantage6-common >= 1.2.3',

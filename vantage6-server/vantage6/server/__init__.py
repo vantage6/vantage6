@@ -73,6 +73,8 @@ class ServerApp:
             self.socketio = SocketIO(self.app, async_mode='gevent_uwsgi')
         except Exception:
             self.socketio = SocketIO(self.app)
+        # FIXME: temporary fix to get socket object into the namespace class
+        DefaultSocketNamespace.socket = self.socketio
         self.socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         # setup the permission manager for the API endpoints
@@ -96,6 +98,9 @@ class ServerApp:
         # Prevent logging from urllib3
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("socketIO-client").setLevel(logging.WARNING)
+        logging.getLogger("engineio.server").setLevel(logging.WARNING)
+        logging.getLogger("socketio.server").setLevel(logging.WARNING)
+
 
     def configure_flask(self):
         """All flask config settings should go here."""
