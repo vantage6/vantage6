@@ -65,7 +65,7 @@ def docker_wrapper(module: str):
     input_file = os.environ["INPUT_FILE"]
     info(f"Reading input file {input_file}")
 
-    input_data = _load_data(input_file)
+    input_data = load_input(input_file)
 
     # all containers receive a token, however this is usually only
     # used by the master method. But can be used by regular containers also
@@ -88,10 +88,24 @@ def docker_wrapper(module: str):
     # transfered back to the server by the node-instance.
     output_file = os.environ["OUTPUT_FILE"]
     info(f"Writing output to {output_file}")
-    with open(output_file, 'wb') as fp:
-        if 'output_format' in input_data:
-            output_format = input_data['output_format']
 
+    output_format = input_data.get('output_format', None)
+    write_output(output_format, output, output_file)
+
+
+def write_output(output_format, output, output_file):
+    """
+    Write output to output_file using the format from output_format.
+
+    If output_format == None, write output as pickle without indicating format (legacy method)
+
+    :param output_format:
+    :param output:
+    :param output_file:
+    :return:
+    """
+    with open(output_file, 'wb') as fp:
+        if output_format:
             # Indicate output format
             fp.write(output_format.encode() + b'.')
 
@@ -104,7 +118,7 @@ def docker_wrapper(module: str):
             fp.write(pickle.dumps(output))
 
 
-def _load_data(input_file):
+def load_input(input_file):
     """
     Try to read the specified data format and deserialize the rest of the
     stream accordingly. If this fails, assume the data format is pickle.
