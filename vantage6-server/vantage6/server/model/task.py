@@ -1,18 +1,17 @@
-from sqlalchemy import Column, String, Text, ForeignKey, Integer, sql
+from sqlalchemy import Column, String, ForeignKey, Integer, sql
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from .node import Node
-from .base import Base, Database
-from .collaboration import Collaboration
+from vantage6.server.model.node import Node
+from vantage6.server.model.base import Base, Database
 
 
 class Task(Base):
     """Central definition of a single task.
-    
+
     A task can assigned in the Result for multiple organizations. The input
-    of the task is different for each organization (due to the encryption). 
-    Therefore the input for the task is encrypted for each organization 
+    of the task is different for each organization (due to the encryption).
+    Therefore the input for the task is encrypted for each organization
     seperately. The task originates from an organization to which the results
     need to be encrypted, therefore the originating organization is also logged
     """
@@ -22,7 +21,7 @@ class Task(Base):
     description = Column(String)
     image = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
-    run_id = Column(Integer) 
+    run_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
     database = Column(String)
     initiator_id = Column(Integer, ForeignKey("organization.id"))
@@ -36,13 +35,13 @@ class Task(Base):
     @hybrid_property
     def complete(self):
         return all([r.complete for r in self.results])
-    
+
     def results_for_node(self, node):
         assert isinstance(node, Node), "Should be a node..."
-        return [result for result in self.results if \
-            self.collaboration==node.collaboration and \
-            self.organization==node.organization ]
-    
+        return [result for result in self.results if
+                self.collaboration == node.collaboration and
+                self.organization == node.organization]
+
     @classmethod
     def next_run_id(cls):
         session = Database().Session
@@ -53,7 +52,9 @@ class Task(Base):
             return 1
 
     def __repr__(self):
-        return (f"<Task "
+        return (
+            f"<Task "
             f"name:{self.name}, "
             f"collaboration:{self.collaboration.name}"
-        ">")
+            ">"
+        )

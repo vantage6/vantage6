@@ -1,532 +1,320 @@
 # -*- coding: utf-8 -*-
-import os, sys
 import importlib
-import flask_socketio
-import datetime
 import logging
+import os
 import uuid
-
-TERMINAL_AVAILABLE = True
-try:
-    # Stuff needed for running shell in a browser
-    import pty
-    import select
-    import subprocess
-    import struct
-    import fcntl
-    import termios
-except:
-    TERMINAL_AVAILABLE = False
-
-from flask import Flask, Response, request, render_template, make_response, g, session
-from flask_restful import Resource, Api, fields
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager, get_jwt_identity, get_jwt_claims, get_raw_jwt, jwt_required, jwt_optional, verify_jwt_in_request
-from flask_mail import Mail
-
-from flask_marshmallow import Marshmallow
-from flask_socketio import SocketIO, emit, send,join_room, leave_room
-
-from flasgger import Swagger
-
 import json
 
-from ._version import version_info, __version__
+from flasgger import Swagger
+from flask import Flask, make_response, current_app
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_marshmallow import Marshmallow
+from flask_restful import Api
+from flask_mail import Mail
+from flask_principal import Principal, Identity, identity_changed
+from flask_socketio import SocketIO
+
 from vantage6.server import db
-
-from vantage6.server import util
-from vantage6.server.globals import APPNAME
+from vantage6.server.resource._schema import HATEOASModelSchema
+from vantage6.common import logger_name
+from vantage6.server.permission import RuleNeed, PermissionManager
+from vantage6.server.globals import (
+    APPNAME,
+    JWT_ACCESS_TOKEN_EXPIRES,
+    JWT_TEST_ACCESS_TOKEN_EXPIRES,
+    RESOURCES,
+    SUPER_USER_INFO,
+    REFRESH_TOKENS_EXPIRE
+)
+from vantage6.server.resource.swagger import swagger_template
+from vantage6.server._version import __version__
+from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
-from .resource.swagger import swagger_template
 
-module_name = __name__.split('.')[-1]
+
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-# ------------------------------------------------------------------------------
-# Initialize Flask
-# ------------------------------------------------------------------------------
-RESOURCES_INITIALIZED = False
-API_BASE = '/api'
-WEB_BASE = '/app'
+class ServerApp:
+    """Vantage6 server instance."""
 
-# Create Flask app
-ROOT_PATH = os.path.dirname(__file__)
-app = Flask(APPNAME, root_path=ROOT_PATH)
+    def __init__(self, ctx):
+        """Create a vantage6-server application."""
 
-app.config['JWT_AUTH_URL_RULE'] ='/api/token'
+        self.ctx = ctx
 
-# False means refresh tokens never expire
-app.config['JWT_REFRESH_TOKEN_EXPIRES'] = False
+        # initialize, configure Flask
+        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
+        self.configure_flask()
 
-# Open Api Specification (f.k.a. swagger)
-app.config['SWAGGER'] = {
-    'title': APPNAME + ' API',
-    'uiversion': 3,
-    'openapi': '3.0.0',
-}
-swagger = Swagger(app, template=swagger_template)
+        # Setup SQLAlchemy and Marshmallow for marshalling/serializing
+        self.ma = Marshmallow(self.app)
 
-# Enable cross-origin resource sharing
-CORS(app)
+        # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
+        self.jwt = JWTManager(self.app)
+        self.configure_jwt()
 
+        # Setup Principal, granular API access manegement
+        self.principal = Principal(self.app, use_sessions=False)
 
-# ------------------------------------------------------------------------------
-# Api - REST JSON-rpc
-# ------------------------------------------------------------------------------
-api = Api(app)
+        # Enable cross-origin resource sharing
+        self.cors = CORS(self.app)
 
-@api.representation('application/json')
-def output_json(data, code, headers=None):
+        # SWAGGER documentation
+        self.swagger = Swagger(self.app, template=swagger_template)
 
-    if isinstance(data, db.Base):
-        data = db.jsonable(data)
-        # log.debug("json-proofed")
-    elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
-        data = db.jsonable(data)
-        # log.debug("json-list-proofed")
-    # log.debug(f"finished preparing {data}, lets send")
+        # Setup the Flask-Mail client
+        self.mail = MailService(self.app, Mail(self.app))
 
-    resp = make_response(json.dumps(data), code)
-    resp.headers.extend(headers or {})
-    return resp
+        # Setup websocket channel
+        try:
+            self.socketio = SocketIO(self.app, async_mode='gevent_uwsgi')
+        except Exception:
+            self.socketio = SocketIO(self.app)
+        self.socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
+        # setup the permission manager for the API endpoints
+        self.permissions = PermissionManager()
 
-# ------------------------------------------------------------------------------
-# Setup SQLAlchemy and Marshmallow for marshalling/serializing
-# ------------------------------------------------------------------------------
-ma = Marshmallow(app)
+        # Api - REST JSON-rpc
+        self.api = Api(self.app)
+        self.configure_api()
+        self.load_resources()
 
-# ------------------------------------------------------------------------------
-# Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
-# ------------------------------------------------------------------------------
-jwt = JWTManager(app)
+        # make specific log settings (muting etc)
+        self.configure_logging()
 
-@jwt.user_claims_loader
-def user_claims_loader(identity):
-    roles = []
-    if isinstance(identity, db.User):
-        type_ = 'user'
-        roles = identity.roles.split(',')
-    elif isinstance(identity, db.Node):
-        type_ = 'node'
-    elif isinstance(identity, dict):
-        type_ = 'container'
-    else:
-        log.error(f"could not create claims from {str(identity)}")
+        # set the serv
+        self.__version__ = __version__
 
-    claims = {
-        'type': type_,
-        'roles': roles,
-    }
+    @staticmethod
+    def configure_logging():
+        """Turn 3rd party loggers off."""
 
-    return claims
+        # Prevent logging from urllib3
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
+        logging.getLogger("socketIO-client").setLevel(logging.WARNING)
 
-@jwt.user_identity_loader
-def user_identity_loader(identity):
+    def configure_flask(self):
+        """All flask config settings should go here."""
 
-    if isinstance(identity, db.Authenticatable):
-        return identity.id
-    if isinstance(identity, dict):
-        return identity
+        # let us handle exceptions
+        self.app.config['PROPAGATE_EXCEPTIONS'] = True
 
-    log.error(f"Could not create a JSON serializable identity \
-                from '{str(identity)}'")
+        # patch where to obtain token
+        self.app.config['JWT_AUTH_URL_RULE'] = '/api/token'
 
-@jwt.user_loader_callback_loader
-def user_loader_callback(identity):
-    if isinstance(identity, int):
-        return db.Authenticatable.get(identity)
-    else:
-        return identity
+        # False means refresh tokens never expire
+        self.app.config['JWT_REFRESH_TOKEN_EXPIRES'] = REFRESH_TOKENS_EXPIRE
 
-
-# ------------------------------------------------------------------------------
-# Setup flask-socketio
-# ------------------------------------------------------------------------------
-try:
-    socketio = SocketIO(app, async_mode='gevent_uwsgi')
-except:
-    socketio = SocketIO(app)
-
-# socketio.on_namespace(DefaultSocketNamespace("/"))
-socketio.on_namespace(DefaultSocketNamespace("/tasks"))
-
-
-def start_interpreter():
-    # create child process attached to a pty we can read from and write to
-    if TERMINAL_AVAILABLE:
-        env = app.config['environment']
-        cmd = ['ipython', '-m', 'vantage6.server.shell', '-i', '--', env]
-
-        log.debug("opening pty")
-        master_fd, slave_fd = pty.openpty()
-
-        log.debug("starting process")
-        child = subprocess.Popen(
-            cmd,
-            stdin=slave_fd,
-            stdout=slave_fd,
-            stderr=slave_fd
+        # If no secret is set in the config file, one is generated. This
+        # implies that all (even refresh) tokens will be invalidated on restart
+        self.app.config['JWT_SECRET_KEY'] = self.ctx.config.get(
+            'jwt_secret_key',
+            str(uuid.uuid1())
         )
 
-        log.debug("adding process details to session")
-        session.child = child
-        session.fd = master_fd
-        session.master_fd = master_fd
-        session.slave_fd = slave_fd
+        # Default expiration time
+        self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
 
-        log.debug("setting window size")
-        set_winsize(master_fd, 50, 50)
+        # Set an extra long expiration time on access tokens for testing
+        # TODO: this does not seem needed...
+        environment = self.ctx.config.get('type')
+        self.app.config['environment'] = environment
+        if environment == 'test':
+            log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
+            self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = \
+                JWT_TEST_ACCESS_TOKEN_EXPIRES
 
-        log.debug("starting background task")
-        socketio.start_background_task(
-            read_and_forward_pty_output,
-            fd=master_fd,
-            sid=request.sid,
-            child=child,
+        # Open Api Specification (f.k.a. swagger)
+        self.app.config['SWAGGER'] = {
+            'title': APPNAME + ' API',
+            'uiversion': 3,
+            'openapi': '3.0.0',
+        }
+
+        # Mail settings
+        mail_config = self.ctx.config.get("smtp", {})
+        self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
+        self.app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
+        self.app.config["MAIL_USERNAME"] = mail_config.get(
+            "username",
+            "support@vantage6.ai"
         )
-        log.debug("ipython terminal backend started")
-    else:
-        log.debug("ipython terminal not available")
+        self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
 
+    def configure_api(self):
+        """"Define global API output."""
 
-def assert_running_interpreter(start_if_required=False, child=None):
-    # log.debug(f"assert_running_interpreter(start_if_required={start_if_required})")
+        # helper to create HATEOAS schemas
+        HATEOASModelSchema.api = self.api
 
-    try:
-        child = child or session.child
+        # whatever you get try to json it
+        @self.api.representation('application/json')
+        def output_json(data, code, headers=None):
 
-        if child.poll() is None:
-            # log.debug("interpreter already running!")
-            return True
-    except (AttributeError, TypeError):
-        pass
+            if isinstance(data, db.Base):
+                data = db.jsonable(data)
+            elif isinstance(data, list) and len(data) and \
+                    isinstance(data[0], db.Base):
+                data = db.jsonable(data)
 
+            resp = make_response(json.dumps(data), code)
+            resp.headers.extend(headers or {})
+            return resp
 
-    if start_if_required:
-        # log.debug("starting interpreter")
-        start_interpreter()
-        return True
+    def configure_jwt(self):
+        """Load user and its claims."""
 
-    return False
+        @self.jwt.user_claims_loader
+        def user_claims_loader(identity):
+            roles = []
+            if isinstance(identity, db.User):
+                type_ = 'user'
+                roles = [role.name for role in identity.roles]
 
-def set_winsize(fd, row, col, xpix=0, ypix=0):
-    winsize = struct.pack("HHHH", row, col, xpix, ypix)
-    fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+            elif isinstance(identity, db.Node):
+                type_ = 'node'
+            elif isinstance(identity, dict):
+                type_ = 'container'
+            else:
+                log.error(f"could not create claims from {str(identity)}")
+                return
 
+            claims = {
+                'type': type_,
+                'roles': roles,
+            }
 
-def read_and_forward_pty_output(fd, sid, child):
-    max_read_bytes = 1024 * 20
+            return claims
 
-    # fd = session.fd
-    timeout_sec = 0.01
+        @self.jwt.user_identity_loader
+        def user_identity_loader(identity):
+            """"JSON serializing identity to be used by create_access_token."""
+            if isinstance(identity, db.Authenticatable):
+                return identity.id
+            if isinstance(identity, dict):
+                return identity
 
-    while assert_running_interpreter(child=child):
-        socketio.sleep(timeout_sec)
+            log.error(f"Could not create a JSON serializable identity \
+                        from '{str(identity)}'")
 
-        (rs, ws, es) = select.select([fd], [], [], timeout_sec)
+        @self.jwt.user_loader_callback_loader
+        def user_loader_callback(identity):
+            auth_identity = Identity(identity)
+            # in case of a user or node an auth id is shared as identity,
+            if isinstance(identity, int):
 
-        for r in rs:
-            output = os.read(r, max_read_bytes).decode()
-            socketio.emit(
-                "pty-output",
-                {"output": output},
-                namespace="/pty",
-                room=sid,
+                # auth_identity = Identity(identity)
+
+                auth = db.Authenticatable.get(identity)
+
+                if isinstance(auth, db.Node):
+
+                    for rule in db.Role.get_by_name("node").rules:
+                        auth_identity.provides.add(
+                                RuleNeed(
+                                    name=rule.name,
+                                    scope=rule.scope,
+                                    operation=rule.operation
+                                )
+                            )
+
+                if isinstance(auth, db.User):
+
+                    # add role permissions
+                    for role in auth.roles:
+                        for rule in role.rules:
+                            auth_identity.provides.add(
+                                RuleNeed(
+                                    name=rule.name,
+                                    scope=rule.scope,
+                                    operation=rule.operation
+                                )
+                            )
+
+                    # add 'extra' permissions
+                    for rule in auth.rules:
+                        auth_identity.provides.add(
+                            RuleNeed(
+                                name=rule.name,
+                                scope=rule.scope,
+                                operation=rule.operation
+                            )
+                        )
+
+                identity_changed.send(current_app._get_current_object(),
+                                      identity=auth_identity)
+
+                return auth
+            else:
+
+                for rule in db.Role.get_by_name("container").rules:
+                    auth_identity.provides.add(
+                        RuleNeed(
+                            name=rule.name,
+                            scope=rule.scope,
+                            operation=rule.operation
+                        )
+                    )
+                identity_changed.send(current_app._get_current_object(),
+                                      identity=auth_identity)
+                log.debug(identity)
+                return identity
+
+    def load_resources(self):
+        """Import the modules containing Resources."""
+
+        # make services available to the endpoints, this way each endpoint can
+        # make use of 'em.
+        services = {
+            "socketio": self.socketio,
+            "mail": self.mail,
+            "api": self.api,
+            "permissions": self.permissions
+        }
+
+        for res in RESOURCES:
+            module = importlib.import_module('vantage6.server.resource.' + res)
+            module.setup(self.api, self.ctx.config['api_path'], services)
+
+    def run(self, *args, **kwargs):
+        """Run the server.
+        """
+
+        # create root user if it is not in the DB yet
+        try:
+            db.User.get_by_username(SUPER_USER_INFO['username'])
+        except Exception:
+            log.warn("No root user found! Is this the first run?")
+
+            log.debug("Creating organization for root user")
+            org = db.Organization(name="root")
+
+            log.warn("Creating root role...")
+            root = db.Role(
+                name="Root",
+                description="Super role"
             )
+            root.rules = db.Rule.get()
 
+            log.warn(f"Creating root user: "
+                     f"username={SUPER_USER_INFO['username']}, "
+                     f"password={SUPER_USER_INFO['password']}")
 
-@socketio.on("connect", namespace="/pty")
-def connect_pty():
-    """new client connected"""
-    environment = app.config['environment']
+            user = db.User(username=SUPER_USER_INFO['username'], roles=[root],
+                           organization=org, email="root@domain.ext",
+                           password=SUPER_USER_INFO['password'])
+            user.save()
 
-    log.debug('-' * 80)
-    log.debug('connect /pty')
-    log.debug(f'environment: {environment}')
-    log.debug('-' * 80)
+        # set all nodes to offline
+        # TODO: this is *not* the way
+        nodes, session = db.Node.get(with_session=True)
+        for node in nodes:
+            node.status = 'offline'
+        session.commit()
 
-    try:
-        verify_jwt_in_request()
-    except Exception as e:
-        log.error("Could not connect client! No or Invalid JWT token?")
-        log.info(list(request.headers.keys()))
-        log.exception(e)
-    else:
-        # At this point we're sure that the user/client/whatever
-        # checks out
-        user_or_node_id = get_jwt_identity()
-        auth = db.Authenticatable.get(user_or_node_id)
-
-        if not isinstance(auth, db.User):
-            log.error("Sorry, but only users can use this websocket")
-            return False
-
-        if auth.username != 'root':
-            log.error("Only root can connect to the admin channel")
-            log.error(f"You're trying to connect as '{auth.username}'")
-            return False
-
-        # define socket-session variables.
-        session.type = auth.type
-        session.name = auth.username if session.type == 'user' else auth.name
-        log.info(f'Client identified as <{session.type}>: <{session.name}>')
-
-        assert_running_interpreter(start_if_required=True)
-        return True
-
-    return False
-
-@socketio.on("disconnect", namespace="/pty")
-def disconnect_pty():
-    print(f'Client {request.sid} disconnected')
-    # app.config['socket_connections'].remove(request.sid)
-    # session["child"].kill()
-    try:
-        session.child.kill()
-    except Exception as e:
-        log.error("Could not kill interpreter backend!?")
-        log.exception(e)
-
-
-
-@socketio.on("pty-input", namespace="/pty")
-def pty_input(data):
-    """write to the child pty. The pty sees this as if you are typing in a real
-    terminal.
-    """
-    if assert_running_interpreter():
-        raw_data = data["input"].encode()
-        # if raw_data == '':
-        #     log.error('empty string!?')
-        # else:
-        #     log.info(f"input: '{raw_data}'")
-
-        # os.write(app.config["fd"], raw_data)
-        os.write(session.fd, raw_data)
-
-
-@socketio.on("resize", namespace="/pty")
-def resize(data):
-    if assert_running_interpreter():
-        set_winsize(session.fd, data["rows"], data["cols"])
-
-
-@socketio.on("connect", namespace="/admin")
-def connect_admin():
-    environment = app.config['environment']
-
-    print('-' * 80)
-    print('connect /admin')
-    print(f'environment: {environment}')
-    print('-' * 80)
-
-    try:
-        verify_jwt_in_request()
-    except Exception as e:
-        log.error("Could not connect client! No or Invalid JWT token?")
-        log.info(list(request.headers.keys()))
-        log.exception(e)
-    else:
-        # At this point we're sure that the user/client/whatever
-        # checks out
-        user_or_node_id = get_jwt_identity()
-        auth = db.Authenticatable.get(user_or_node_id)
-
-        if not isinstance(auth, db.User):
-            log.error("Sorry, but only users can use this websocket")
-            return False
-
-        if auth.username != 'root':
-            log.error("Only root can connect to the admin channel")
-            log.error(f"You're trying to connect as '{auth.username}'")
-            return False
-
-        # define socket-session variables.
-        session.type = auth.type
-        session.name = auth.username if session.type == 'user' else auth.name
-        log.info(f'Client identified as <{session.type}>: <{session.name}>')
-
-        print(f'connecting {request.sid}')
-        return True
-
-    return False
-
-
-@socketio.on("echo", namespace="/")
-def echo(data):
-    print("Hello!")
-    socketio.emit('echo', data, namespace='/')
-
-
-# ------------------------------------------------------------------------------
-# Resources / API's
-# ------------------------------------------------------------------------------
-def load_resources(api, API_BASE, resources):
-    """Import the modules containing Resources."""
-    for name in resources:
-        module = importlib.import_module('vantage6.server.resource.' + name)
-        module.setup(api, API_BASE)
-
-
-# ------------------------------------------------------------------------------
-# Setup the Flask-Mail which is configured using the `current_app` context
-# ------------------------------------------------------------------------------
-mail = Mail()
-
-
-# ------------------------------------------------------------------------------
-# Http routes
-# ------------------------------------------------------------------------------
-@app.route(WEB_BASE+'/', defaults={'path': ''})
-# @app.route(WEB_BASE+'/<path:path>')
-def index(path):
-    return """
-    <html>
-        <head>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.dev.js"></script>
-        <script type="text/javascript" charset="utf-8">
-            setTimeout(function() {
-                console.log('running javascript');
-                socket = io.connect('http://' + document.domain + ':' + location.port, { transports: ['websocket']});
-
-                socket.on('message', function(msg){
-                    console.log(msg);
-                });
-
-                socket.on('connect', function() {
-                    console.log('emitting!');
-                    socket.emit("my event", {data: "I'm connected!"});
-                });},
-                2000
-            );
-        </script>
-        </head>
-        <body>
-            <h1>Hi there!!</h2>
-        </body>
-    </html>
-"""
-
-
-# ------------------------------------------------------------------------------
-# init & run
-# ------------------------------------------------------------------------------
-# def init(environment=None, init_resources_=False):
-#     """Initialize the server using a site-wide ServerContext."""
-#     logging.getLogger("urllib3").setLevel(logging.WARNING)
-
-#     if environment is None:
-#         if 'environment' in os.environ:
-#             environment = os.environ['environment']
-#         else:
-#             environment = 'prod'
-
-#     # Load configuration and initialize logging system
-#     ctx = util.ServerContext(APPNAME, 'default')
-#     ctx.init(ctx.config_file, environment)
-
-#     if init_resources_:
-#         init_resources(ctx)
-
-#     uri = ctx.get_database_location()
-#     print('-' * 80)
-#     print(uri)
-#     print('-' * 80)
-#     db.init(uri)
-
-class WebSocketLoggingHandler(logging.Handler):
-
-    def emit(self, record):
-        entry = self.format(record)
-        # print(f'emitting to websocket: {entry}')
-
-        socketio.emit('append-log', entry, namespace='/admin')
-
-
-def init_resources(ctx):
-    # Load resources
-    global RESOURCES_INITIALIZED
-
-    if RESOURCES_INITIALIZED:
-        return
-
-    api_base = ctx.config['api_path']
-
-    resources = [
-            'node',
-            'collaboration',
-            'organization',
-            'task',
-            'result',
-            'token',
-            'user',
-            'version',
-            'recover',
-            # 'websocket_test',
-            'stats',
-    ]
-
-    # Load resources
-    load_resources(api, api_base, resources)
-
-    # Make sure we do this only once
-    RESOURCES_INITIALIZED = True
-
-
-def run(ctx, *args, **kwargs):
-    """Run the server.
-
-        Note that this method is never called when the server is instantiated
-        through the Web Server Gateway Interface (WSGI)!
-    """
-    # Prevent logging from urllib3
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("socketIO-client").setLevel(logging.WARNING)
-
-    wslh = WebSocketLoggingHandler()
-    wslh.setLevel(logging.DEBUG)
-    logging.getLogger().addHandler(wslh)
-
-    environment = ctx.config.get('type')
-    app.config['environment'] = environment
-
-    app.config['JWT_SECRET_KEY'] = ctx.config.get('jwt_secret_key', str(uuid.uuid1()))
-
-    # Default expiration time
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=6)
-
-    # Set an extra long expiration time on access tokens for testing
-    if environment == 'test':
-        log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
-        app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
-
-    # check if root-user exists
-    try:
-        db.User.get_by_username("root")
-    except Exception:
-        log.warn("No root user found! Is this the first run?")
-        log.warn("Creating root: username=root, password=root")
-        user = db.User(username="root", roles="root")
-        user.set_password("root")
-        user.save()
-
-    # set all nodes to offline
-    nodes, session = db.Node.get(with_session=True)
-    for node in nodes:
-        node.status = 'offline'
-    session.commit()
-
-    # setup mail
-    mail_config = ctx.config.get("smtp", {})
-    app.config["MAIL_PORT"] = mail_config.get("port", 1025)
-    app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
-    app.config["MAIL_USERNAME"] = mail_config.get("username",
-                                                  "support@vantage6.ai")
-    app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
-    # log.debug(app.config)
-    mail.init_app(app)
-
-    kwargs.setdefault('log_output', False)
-    socketio.run(app, *args, **kwargs)
+        kwargs.setdefault('log_output', False)
+        self.socketio.run(self.app, *args, **kwargs)

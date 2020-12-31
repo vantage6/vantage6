@@ -3,22 +3,13 @@ import logging
 import base64
 
 from marshmallow import fields
-from marshmallow_sqlalchemy import (
-    ModelSchema,
-    field_for,
-    ModelConverter
-)
-from flask import url_for, Flask
-from flask_marshmallow.sqla import HyperlinkRelated
-from flask_marshmallow import Schema
-from marshmallow.fields import List, Integer
-from werkzeug.routing import BuildError
+from marshmallow_sqlalchemy import ModelSchema
+from flask import url_for
 
-from vantage6.server import api
-from vantage6.server.util import logger_name
-from vantage6.server.globals import STRING_ENCODING
-from .. import ma
-from .. import db
+from vantage6.server import db
+from vantage6.common import logger_name
+from vantage6.common.globals import STRING_ENCODING
+
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -26,46 +17,41 @@ log = logging.getLogger(logger_name(__name__))
 class HATEOASModelSchema(ModelSchema):
     """Convert foreign-key fields to HATEOAS specification."""
 
+    api = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # to one relationship
-        setattr(self, "node",
-            lambda obj: self.hateos("node", obj))
+        setattr(self, "node", lambda obj: self.hateos("node", obj))
         setattr(self, "organization",
-            lambda obj: self.hateos("organization", obj))
+                lambda obj: self.hateos("organization", obj))
         setattr(self, "collaboration",
-            lambda obj: self.hateos("collaboration", obj))
-        setattr(self, "user",
-            lambda obj: self.hateos("user", obj))
-        setattr(self, "result",
-            lambda obj: self.hateos("result", obj))
-        setattr(self, "task",
-            lambda obj: self.hateos("task", obj))
+                lambda obj: self.hateos("collaboration", obj))
+        setattr(self, "user", lambda obj: self.hateos("user", obj))
+        setattr(self, "result", lambda obj: self.hateos("result", obj))
+        setattr(self, "task", lambda obj: self.hateos("task", obj))
         setattr(self, "parent_",
-            lambda obj: self.hateos("parent", obj, endpoint="task"))
+                lambda obj: self.hateos("parent", obj, endpoint="task"))
 
         # to many relationship
-        setattr(self, "nodes",
-            lambda obj: self.hateos_list("node", obj))
+        setattr(self, "nodes", lambda obj: self.hateos_list("node", obj))
         setattr(self, "organizations",
-            lambda obj: self.hateos_list("organization", obj))
+                lambda obj: self.hateos_list("organization", obj))
         setattr(self, "collaborations",
-            lambda obj: self.hateos_list("collaboration", obj))
-        setattr(self, "users",
-            lambda obj: self.hateos_list("user", obj))
-        setattr(self, "results",
-            lambda obj: self.hateos_list("result", obj))
-        setattr(self, "tasks",
-            lambda obj: self.hateos_list("task", obj))
+                lambda obj: self.hateos_list("collaboration", obj))
+        setattr(self, "users", lambda obj: self.hateos_list("user", obj))
+        setattr(self, "results", lambda obj: self.hateos_list("result", obj))
+        setattr(self, "tasks", lambda obj: self.hateos_list("task", obj))
         setattr(self, "children",
-            lambda obj: self.hateos_list(
-                "children",
-                obj,
-                plural="children",
-                endpoint="task"
-            )
-        )
+                lambda obj: self.hateos_list(
+                    "children",
+                    obj,
+                    plural="children",
+                    endpoint="task"
+                ))
+        setattr(self, "rules", lambda obj: self.hateos_list("rule", obj))
+        setattr(self, "roles", lambda obj: self.hateos_list("role", obj))
 
         # special cases
 
@@ -90,10 +76,8 @@ class HATEOASModelSchema(ModelSchema):
         else:
             return None
 
-
     def hateos_list(self, name, obj, plural=None, endpoint=None):
         hateos_list = list()
-        type_ = type(obj)
         plural_ = plural if plural else name+"s"
         endpoint = endpoint if endpoint else name
         for elem in getattr(obj, plural_):
@@ -108,14 +92,19 @@ class HATEOASModelSchema(ModelSchema):
     def _hateos_from_related(self, elem, name):
         _id = elem.id
         endpoint = name+"_with_id"
-        if not api.owns_endpoint(endpoint):
-            Exception(f"Make sure {endpoint} exists!")
+        if self.api:
+            if not self.api.owns_endpoint(endpoint):
+                Exception(f"Make sure {endpoint} exists!")
 
-        verbs = list(api.app.url_map._rules_by_endpoint[endpoint][0].methods)
-        verbs.remove("HEAD")
-        verbs.remove("OPTIONS")
-        url = url_for(endpoint, id=_id)
-        return {"id":_id, "link":url, "methods": verbs}
+            verbs = list(
+                self.api.app.url_map._rules_by_endpoint[endpoint][0].methods
+            )
+            verbs.remove("HEAD")
+            verbs.remove("OPTIONS")
+            url = url_for(endpoint, id=_id)
+            return {"id": _id, "link": url, "methods": verbs}
+        else:
+            log.error("No API found?")
 
 
 # /task/{id}
@@ -163,12 +152,15 @@ class OrganizationSchema(HATEOASModelSchema):
     collaborations = fields.Method("collaborations")
     nodes = fields.Method("nodes")
     users = fields.Method("users")
-    tasks = fields.Method("tasks")
+    created_tasks = fields.Method("tasks")
+    results = fields.Method("results")
 
     # make sure
     public_key = fields.Function(
-        lambda self: base64.b64encode(self._public_key).decode(STRING_ENCODING) if \
-            self._public_key else ""
+        lambda obj: (
+            base64.b64encode(obj._public_key).decode(STRING_ENCODING)
+            if obj._public_key else ""
+        )
     )
 
 
@@ -180,6 +172,7 @@ class CollaborationSchema(HATEOASModelSchema):
     organizations = fields.Method("organizations")
     nodes = fields.Method("nodes")
     tasks = fields.Method("tasks")
+
 
 # ------------------------------------------------------------------------------
 class CollaborationSchemaSimple(HATEOASModelSchema):
@@ -250,6 +243,7 @@ class NodeSchemaSimple(HATEOASModelSchema):
             'type',
         ]
 
+
 # ------------------------------------------------------------------------------
 class UserSchema(HATEOASModelSchema):
 
@@ -257,4 +251,29 @@ class UserSchema(HATEOASModelSchema):
         model = db.User
         exclude = ('password',)
 
+    roles = fields.Method("roles")
+    rules = fields.Method("rules")
     organization = fields.Method("organization")
+
+
+# ------------------------------------------------------------------------------
+class RoleSchema(HATEOASModelSchema):
+
+    rules = fields.Method("rules")
+    users = fields.Method("users")
+    organization = fields.Method("organization")
+
+    class Meta:
+        model = db.Role
+
+
+# ------------------------------------------------------------------------------
+class RuleSchema(HATEOASModelSchema):
+
+    scope = fields.Function(func=lambda obj: obj.scope.name)
+    operation = fields.Function(func=lambda obj: obj.operation.name)
+    roles = fields.Method("roles")
+    users = fields.Method("users")
+
+    class Meta:
+        model = db.Rule

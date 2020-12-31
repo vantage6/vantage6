@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
 
-from vantage6.common import logger_name
 from vantage6.server.resource import ServicesResources
+from vantage6.common import logger_name
+from vantage6.server.model.base import Database
 
 
 module_name = logger_name(__name__)
@@ -18,22 +20,30 @@ def setup(api, api_base, services):
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        Test,
+        Health,
         path,
-        endpoint='test',
+        endpoint='health',
         methods=('GET',),
         resource_class_kwargs=services
     )
 
-
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Test(ServicesResources):
+class Health(ServicesResources):
 
-    @swag_from(str(Path(r"swagger/websocket-test.yaml")),
-               endpoint='websocket_test')
+    @swag_from(str(Path(r"swagger/health.yaml")), endpoint='health')
     def get(self):
-        """Return something."""
-        self.socketio.send("you're welcome!", room='all_nodes')
-        return self.socketio.server.manager.rooms
+        """displays the health of services."""
+
+        # test DB
+        session = Database().Session
+        db_ok = False
+        try:
+            session.execute('SELECT 1')
+            db_ok = True
+        except Exception as e:
+            log.error("DB not responding")
+            log.debug(e)
+
+        return {'database': db_ok }, HTTPStatus.OK

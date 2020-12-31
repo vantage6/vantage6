@@ -1,23 +1,20 @@
-import base64 
+import base64
 
 from sqlalchemy import Column, String, LargeBinary
-from sqlalchemy.orm import Session, relationship
-from sqlalchemy.ext.hybrid import hybrid_property 
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.server.globals import STRING_ENCODING
+from vantage6.common.globals import STRING_ENCODING
 
 from .base import Base, Database
-from .member import Member
-from .collaboration import Collaboration
-from .user import User
 
 
 class Organization(Base):
     """A legal entity.
-    
+
     An organization plays a central role in managing distributed tasks. Each
-    Organization contains a public key which other organizations can use to 
+    Organization contains a public key which other organizations can use to
     send encrypted messages that only this organization can read.
     """
 
@@ -32,11 +29,12 @@ class Organization(Base):
 
     # relations
     collaborations = relationship("Collaboration", secondary="Member",
-        back_populates="organizations")
+                                  back_populates="organizations")
     results = relationship("Result", back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
     created_tasks = relationship("Task", back_populates="initiator")
+    roles = relationship("Role", back_populates="organization")
 
     @classmethod
     def get_by_name(cls, name):
@@ -51,8 +49,9 @@ class Organization(Base):
         if self._public_key:
             # TODO this should be fixed properly
             try:
-                return base64.b64decode(self._public_key).decode(STRING_ENCODING)
-            except:
+                return base64.b64decode(self._public_key)\
+                    .decode(STRING_ENCODING)
+            except Exception:
                 return ""
         else:
             return ""
@@ -66,8 +65,10 @@ class Organization(Base):
 
     def __repr__(self):
         number_of_users = len(self.users)
-        return ("<Organization "
+        return (
+            "<Organization "
             f"name:{self.name}, "
             f"domain:{self.domain}, "
             f"users:{number_of_users}"
-        ">")
+            ">"
+        )

@@ -1,10 +1,10 @@
 import bcrypt
 
 from sqlalchemy import Column, String, Integer, ForeignKey, exists
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 
-from .base import Database
-from .authenticable import Authenticatable
+from vantage6.server.model.base import Database
+from vantage6.server.model.authenticable import Authenticatable
 
 
 class User(Authenticatable):
@@ -18,7 +18,7 @@ class User(Authenticatable):
     # overwrite id with linked id to the authenticatable
     id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
     __mapper_args__ = {
-        'polymorphic_identity':'user',
+        'polymorphic_identity': 'user',
     }
 
     # fields
@@ -32,6 +32,10 @@ class User(Authenticatable):
 
     # relationships
     organization = relationship("Organization", back_populates="users")
+    roles = relationship("Role", back_populates="users",
+                         secondary="Permission")
+    rules = relationship("Rule", back_populates="users",
+                         secondary="UserPermission")
 
     def __repr__(self):
         organization = self.organization.name if self.organization else "None"
@@ -42,9 +46,17 @@ class User(Authenticatable):
             f">"
         )
 
+    @validates("password")
+    def _validate_password(self, key, password):
+        return self.hash_password(password)
+
+    @staticmethod
+    def hash_password(password: str):
+        return bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())\
+            .decode('utf8')
+
     def set_password(self, pw):
-        pwhash = bcrypt.hashpw(pw.encode('utf8'), bcrypt.gensalt())
-        self.password = pwhash.decode('utf8')
+        self.password = pw
 
     def check_password(self, pw):
         if self.password is not None:
@@ -71,3 +83,9 @@ class User(Authenticatable):
     def username_exists(cls, username):
         session = Database().Session
         return session.query(exists().where(cls.username == username)).scalar()
+
+    @classmethod
+    def exists(cls, field, value):
+        session = Database().Session
+        return session.query(exists().where(getattr(cls, field) == value))\
+            .scalar()

@@ -2,43 +2,41 @@
 """
 Resources below '/<api_base>/version'
 """
-from __future__ import print_function, unicode_literals
-
 import logging
 
-from flask_restful import Resource, abort
 from flasgger import swag_from
 from pathlib import Path
 
-# from vantage6.server.globals import VERSION
-import vantage6.server
+from vantage6.common import logger_name
+from vantage6.server.resource import ServicesResources
+from vantage6.server._version import __version__
 
 
-module_name = __name__.split('.')[-1]
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
-from .. import db
 
-def setup(api, API_BASE):
+def setup(api, api_base, services):
 
-    path = "/".join([API_BASE, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    path = "/".join([api_base, module_name])
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         Version,
         path,
         endpoint='version',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Version(Resource):
+class Version(ServicesResources):
 
     @swag_from(str(Path(r"swagger/version.yaml")), endpoint='version')
     def get(self):
         """Return the version of this server."""
 
-        return {"version": vantage6.server.__version__}
+        return {"version": __version__}

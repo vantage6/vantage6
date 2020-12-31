@@ -1,26 +1,34 @@
 # -*- coding: utf-8 -*-
-"""
-Resources ...
-"""
 import datetime
 import logging
-import os
-import os.path
-import sys
 
 from functools import wraps
 
 from flask import g, request
-from flask_jwt_extended import get_jwt_claims, get_jwt_identity, jwt_required
+from flask_restful import Resource
+from flask_jwt_extended import (
+    get_jwt_claims, get_jwt_identity, jwt_required
+)
 
+from vantage6.common import logger_name
 from vantage6.server import db
 
-log = logging.getLogger(__name__.split('.')[-1])
+log = logging.getLogger(logger_name(__name__))
+
+
+class ServicesResources(Resource):
+
+    def __init__(self, socketio, mail, api, permissions):
+        self.socketio = socketio
+        self.mail = mail
+        self.api = api
+        self.permissions = permissions
+
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types = ['user', 'node', 'container']):
+def only_for(types=['user', 'node', 'container']):
     """JWT endpoint protection decorator"""
     def protection_decorator(fn):
         @wraps(fn)
@@ -35,7 +43,8 @@ def only_for(types = ['user', 'node', 'container']):
             # log.debug(f"Endpoint accessed as {g.type}")
 
             if g.type not in types:
-                msg = f"{g.type}'s are not allowed to access {request.url} ({request.method})"
+                msg = f"{g.type}'s are not allowed to access {request.url} " \
+                      f"({request.method})"
                 log.warning(msg)
                 raise Exception(msg)
 
@@ -62,6 +71,7 @@ def only_for(types = ['user', 'node', 'container']):
         return jwt_required(decorator)
     return protection_decorator
 
+
 def get_and_update_authenticatable_info(auth_id):
     """Get DB entity from ID and update info."""
     auth = db.Authenticatable.get(auth_id)
@@ -70,11 +80,13 @@ def get_and_update_authenticatable_info(auth_id):
     auth.save()
     return auth
 
+
 # create alias decorators
 with_user_or_node = only_for(["user", "node"])
 with_user = only_for(["user"])
 with_node = only_for(["node"])
 with_container = only_for(["container"])
+
 
 def parse_datetime(dt=None, default=None):
     if dt:
