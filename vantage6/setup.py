@@ -40,11 +40,11 @@ setup(
         'SQLAlchemy==1.3.15',
         'docker==4.2.0',
         'colorama==0.4.3',
-        'questionary==1.5.1',
+        'questionary==1.5.2',
         'iPython==7.13.0',
         'SQLAlchemy==1.3.15',
-        'vantage6-common >= 1.0.0',
-        'vantage6-client >= 1.0.0',
+        'vantage6-common >= 1.2.3',
+        'vantage6-client >= 1.2.3',
     ],
     extras_require={
         'dev': [

@@ -217,7 +217,7 @@ help_ = {
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click.option('--mount-src', default='',
-              help="mount vantage6-node package source")
+              help="mount vantage6-master package source")
 def cli_node_start(name, config, environment, system_folders, image, keep,
                    mount_src):
     """Start the node instance.
@@ -233,6 +233,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     docker_client = docker.from_env()
     check_if_docker_deamon_is_running(docker_client)
 
+    NodeContext.LOGGING_ENABLED = False
     if config:
         name = Path(config).stem
         ctx = NodeContext(name, environment, system_folders, config)
@@ -256,7 +257,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
                 error("Config file couldn't be loaded")
                 sys.exit(0)
 
-        NodeContext.LOGGING_ENABLED = False
+
         ctx = NodeContext(name, environment, system_folders)
 
     # check that this node is not already running
@@ -289,7 +290,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     except Exception:
         warning(' ... alas, no dice!')
     else:
-        info(" ... succes!")
+        info(" ... success!")
 
     info("Creating Docker data volume")
     data_volume = docker_client.volumes.create(
@@ -310,7 +311,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     if mount_src:
         # If mount_src is a relative path, docker willl consider it a volume.
         mount_src = os.path.abspath(mount_src)
-        mounts.append(('/vantage6/vantage6-node', mount_src))
+        mounts.append(('/vantage6', mount_src))
 
     # FIXME: Code duplication: Node.__init__() (vantage6/node/__init__.py)
     #   uses a lot of the same logic. Suggest moving this to
@@ -346,8 +347,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         "PRIVATE_KEY": "/mnt/private_key.pem"
     }
 
+    system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
-          f'{environment} --dockerized'
+          f'{environment} --dockerized {system_folders_option}'
 
     info(f"Runing Docker container")
     # debug(f"  with command: '{cmd}'")
@@ -370,7 +372,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         tty=True
     )
 
-    info(f"Succes! container id = {container}")
+    info(f"Success! container id = {container}")
 
 
 #
@@ -575,8 +577,7 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
 #
 @cli_node.command(name='clean')
 def cli_node_clean():
-    """
-    """
+    """ This command erases docker volumes"""
     client = docker.from_env()
     check_if_docker_deamon_is_running(client)
 
