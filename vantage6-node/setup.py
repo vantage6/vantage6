@@ -34,7 +34,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'requests==2.23.0',
-        'gevent==1.4.0',
+        'gevent==1.3.4',
         'socketIO-client==0.7.2',
         'docker==4.2.0',
         'cryptography==2.8',
