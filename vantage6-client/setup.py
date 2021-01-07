@@ -33,7 +33,7 @@ setup(
     install_requires=[
        'cryptography==2.8',
        'requests==2.23.0',
-       'PyJWT',
+       'PyJWT==1.7.1',
        'pandas',
        'vantage6-common >= 1.2.3',
     ],
