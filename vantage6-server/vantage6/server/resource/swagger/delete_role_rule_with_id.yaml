@@ -21,21 +21,15 @@ responses:
     description: Ok
   404:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
     description: Rule id not found in role id, Not Found
   401:
     description: Unauthorized
 
 tags: ["Role"]
 =======
-=======
->>>>>>> Stashed changes
     description: collaboration or node not found
   401:
     description: Unauthorized
 
 tags: ["Collaboration"]
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
 >>>>>>> Stashed changes

@@ -161,22 +161,16 @@ class Collaboration(ServicesResources):
                     HTTPStatus.UNAUTHORIZED  # 401
 
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
             return collaboration_schema.dump(collaboration, many=True)\
                 .data, HTTPStatus.OK  # 200
 =======
 class Collaboration(Resource):
 >>>>>>> parent of 93b83e9... Updated swagger documentation
 =======
-=======
->>>>>>> Stashed changes
             return collaboration_schema.dump(
                 allowed_collaborations,
                 many=True
             ).data, HTTPStatus.OK  # 200
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
 >>>>>>> Stashed changes
 
     @with_user
@@ -228,12 +222,8 @@ class Collaboration(Resource):
         # check if collaboration exists
         if not collaboration:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": f"collaboration having collaboration_id={id} "
-=======
-            return {"msg": f"collaboration having collaboration_id={id}"
->>>>>>> Stashed changes
 =======
             return {"msg": f"collaboration having collaboration_id={id}"
 >>>>>>> Stashed changes
@@ -273,12 +263,8 @@ class Collaboration(Resource):
         collaboration = db.Collaboration.get(id)
         if not collaboration:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "collaboration id={} is not found".format(id)}, \
-=======
-            return {"msg": f"collaboration id={id} is not found".format(id)}, \
->>>>>>> Stashed changes
 =======
             return {"msg": f"collaboration id={id} is not found".format(id)}, \
 >>>>>>> Stashed changes
@@ -340,12 +326,8 @@ class CollaborationOrganization(ServicesResources):
 
     @with_user
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
     @swag_from(str(Path(r"swagger/post_collaboration_organization.yaml")),
-=======
-    @swag_from(str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
->>>>>>> Stashed changes
 =======
     @swag_from(str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
 >>>>>>> Stashed changes
@@ -381,12 +363,8 @@ class CollaborationOrganization(ServicesResources):
 
     @with_user
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
     @swag_from(str(Path(r"swagger/delete_collaboration_organization.yaml")),
-=======
-    @swag_from(str(Path(r"swagger/delete_collaboration_with_id_organization.yaml")),
->>>>>>> Stashed changes
 =======
     @swag_from(str(Path(r"swagger/delete_collaboration_with_id_organization.yaml")),
 >>>>>>> Stashed changes
@@ -407,12 +385,8 @@ class CollaborationOrganization(ServicesResources):
         organization = db.Organization.get(data['id'])
         if not organization:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "organization with id={} is not found"}, \
-=======
-            return {"msg": f"organization with id={id} is not found"}, \
->>>>>>> Stashed changes
 =======
             return {"msg": f"organization with id={id} is not found"}, \
 >>>>>>> Stashed changes
@@ -441,12 +415,8 @@ class CollaborationNode(ServicesResources):
 
     @with_user
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
     @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")),
-=======
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id_node.yaml")),
->>>>>>> Stashed changes
 =======
     @swag_from(str(Path(r"swagger/get_collaboration_with_id_node.yaml")),
 >>>>>>> Stashed changes
@@ -472,12 +442,8 @@ class CollaborationNode(ServicesResources):
 
     @with_user
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
     @swag_from(str(Path(r"swagger/post_collaboration_node.yaml")),
-=======
-    @swag_from(str(Path(r"swagger/post_collaboration_with_id_node.yaml")),
->>>>>>> Stashed changes
 =======
     @swag_from(str(Path(r"swagger/post_collaboration_with_id_node.yaml")),
 >>>>>>> Stashed changes
@@ -490,12 +456,8 @@ class CollaborationNode(ServicesResources):
         collaboration = db.Collaboration.get(id)
         if not collaboration:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "collaboration having collaboration_id={id} can "
-=======
-            return {"msg": f"collaboration having collaboration_id={id} can "
->>>>>>> Stashed changes
 =======
             return {"msg": f"collaboration having collaboration_id={id} can "
 >>>>>>> Stashed changes
@@ -526,12 +488,8 @@ class CollaborationNode(ServicesResources):
 
     @with_user
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
     @swag_from(str(Path(r"swagger/delete_collaboration_node.yaml")),
-=======
-    @swag_from(str(Path(r"swagger/delete_collaboration_with_id_node.yaml")),
->>>>>>> Stashed changes
 =======
     @swag_from(str(Path(r"swagger/delete_collaboration_with_id_node.yaml")),
 >>>>>>> Stashed changes
@@ -554,15 +512,11 @@ class CollaborationNode(ServicesResources):
         node = db.Node.get(data['id'])
         if not node:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "node id={} not found"}, HTTPStatus.NOT_FOUND
 =======
             return {"msg": "node id={} not found"}, 404
 >>>>>>> parent of 93b83e9... Updated swagger documentation
-=======
-            return {"msg": f"node id={id} not found"}, HTTPStatus.NOT_FOUND
->>>>>>> Stashed changes
 =======
             return {"msg": f"node id={id} not found"}, HTTPStatus.NOT_FOUND
 >>>>>>> Stashed changes
@@ -572,12 +526,8 @@ class CollaborationNode(ServicesResources):
 
         collaboration.nodes.remove(node)
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
         return {"msg": "node id={data['id']} removed from collaboration "
-=======
-        return {"msg": f"node id={data['id']} removed from collaboration "
->>>>>>> Stashed changes
 =======
         return {"msg": f"node id={data['id']} removed from collaboration "
 >>>>>>> Stashed changes
@@ -596,12 +546,8 @@ class CollaborationTask(ServicesResources):
 
     @with_user_or_node
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
     @swag_from(str(Path(r"swagger/get_collaboration_task.yaml")),
-=======
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id_task.yaml")),
->>>>>>> Stashed changes
 =======
     @swag_from(str(Path(r"swagger/get_collaboration_with_id_task.yaml")),
 >>>>>>> Stashed changes

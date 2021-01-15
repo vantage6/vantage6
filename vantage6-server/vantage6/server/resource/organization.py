@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
-=======
-from vantage6.server.model import organization
->>>>>>> Stashed changes
 =======
 from vantage6.server.model import organization
 >>>>>>> Stashed changes
@@ -211,14 +207,9 @@ class Organization(ServicesResources):
 <<<<<<< HEAD
     @only_for(["user"])
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 =======
     @only_for(["user", "node"])
 >>>>>>> parent of 93b83e9... Updated swagger documentation
-=======
-    @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
-               endpoint='organization_with_id')
->>>>>>> Stashed changes
 =======
     @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
                endpoint='organization_with_id')
@@ -261,12 +252,8 @@ class OrganizationCollaboration(ServicesResources):
         organization = db.Organization.get(id)
         if not organization:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "organization id={} not found".format(id)}, \
-=======
-            return {"msg": f"organization id={id} not found"}, \
->>>>>>> Stashed changes
 =======
             return {"msg": f"organization id={id} not found"}, \
 >>>>>>> Stashed changes
@@ -325,12 +312,8 @@ class OrganizationNode(Resource):
         organization = db.Organization.get(id)
         if not organization:
 <<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "organization id={} not found".format(id)}, \
-=======
-            return {"msg": f"organization id={id} not found"}, \
->>>>>>> Stashed changes
 =======
             return {"msg": f"organization id={id} not found"}, \
 >>>>>>> Stashed changes
