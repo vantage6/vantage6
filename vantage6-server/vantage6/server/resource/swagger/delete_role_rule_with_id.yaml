@@ -1,0 +1,27 @@
+summary: Removes rule from role
+
+description:
+  Removes a rule from a role given the user has permission and the rule id exists.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: role id within the organization
+  - in: path
+    name: rule_id
+    schema:
+      type: integer
+    description: rule id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: Rule id not found in role id, Not Found
+  401:
+    description: Unauthorized
+
+tags: ["Role"]
