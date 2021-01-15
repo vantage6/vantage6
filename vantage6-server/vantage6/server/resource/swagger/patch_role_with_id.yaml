@@ -1,7 +1,7 @@
-summary: Update results
+summary: Update role
 
 description:
-  Update results if the organization_id is
+Updates roles within an organization if the user has permission to do so.
 
 parameters:
   - in: path
@@ -9,24 +9,22 @@ parameters:
     schema:
       type: integer
       minimum: 1
-    description: "unique task identifier"
+    description: Role id
     required: true
 
 requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/Collaboration'
+        $ref: '#/components/schemas/Task'
 
 responses:
   200:
     description: Ok
-  400:
-    description: not owner of this task or results already posted
   401:
     description: Unauthorized
 
 security:
   - bearerAuth: []
 
-tags: ["Result"]
+tags: ["Role"]

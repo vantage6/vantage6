@@ -1,7 +1,7 @@
-summary: Add organization to collaboration
+summary: Add node to collaboration
 
 description:
-  Adds a single organization to a existing collaboration.
+  Adds a single node to an existing collaboration
 
 parameters:
   - in: path
@@ -18,13 +18,15 @@ requestBody:
         properties:
           id:
             type: integer
-            description: organization id which needs to be added
+            description: node id which should be added
 
 responses:
-  200:
-    description: Ok
+  201:
+    description: added node to collaboration
   404:
-    description: specified collaboration or organization does not exists
+    description: collaboration or node not found
+  400:
+    description: node is alrady in collaboration
   401:
     description: Unauthorized
 

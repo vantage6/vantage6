@@ -102,8 +102,8 @@ class Role(ServicesResources):
     def get(self, id=None):
         """View roles
 
-        Depending on your permissions you see no, your organization or all
-        available roles at the server.
+        Depending on your permissions this will return a list of the roles
+        within the organization
         """
         if self.r.v_glo.can():
             # view all roles at the server
@@ -124,7 +124,7 @@ class Role(ServicesResources):
     def post(self):
         """Create a new role
 
-        You can only assign rules that you own. You need permission to create
+        You can only assign roles that you own. You need permission to create
         roles, and you can only assign roles to other organizations if you
         have gobal permission.
 
@@ -184,7 +184,7 @@ class Role(ServicesResources):
 
         role = db_Role.get(id)
         if not role:
-            return {"msg": "Role with id={id} not found."}, \
+            return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
         # check permission of the user
@@ -193,8 +193,8 @@ class Role(ServicesResources):
                 return {'msg': 'You do not have permission to edit roles!'}, \
                     HTTPStatus.UNAUTHORIZED
             elif g.user.organization_id != role.organization.id:
-                return {'msg': 'You can\'t edit roles from another '
-                        'organization'}, HTTPStatus.UNAUTHORIZED
+                return {'msg': "You can't edit roles from another "
+                        "organization"}, HTTPStatus.UNAUTHORIZED
 
         # process patch
         if 'name' in data:
@@ -232,8 +232,8 @@ class Role(ServicesResources):
                 return {'msg': 'You do not have permission to delete roles!'},\
                     HTTPStatus.UNAUTHORIZED
             elif role.organization.id != g.user.organization.id:
-                return {'msg': 'You can\'t delete a role from another '
-                        'organization'}, HTTPStatus.UNAUTHORIZED
+                return {'msg': "You can't delete a role from another "
+                        "organization"}, HTTPStatus.UNAUTHORIZED
 
         role.delete()
 
@@ -250,7 +250,9 @@ class RoleRules(ServicesResources):
         self.r = getattr(self.permissions, module_name)
 
     @with_user
-    def get(self, id):
+    @swag_from(str(Path(r"swagger/get_role_rule_without_id.yaml")),
+               endpoint='role_rule_without_id')
+    def get(self,id):
         """View all rules for a role."""
         role = db_Role.get(id)
 
@@ -267,6 +269,8 @@ class RoleRules(ServicesResources):
         return self.rule_schema.dump(rules, many=True).data, HTTPStatus.OK
 
     @with_user
+    @swag_from(str(Path(r"swagger/post_role_rule_with_id.yaml")),
+               endpoint='role_rule_with_id')
     def post(self, id, rule_id):
         """Add rule to a role."""
         role = db_Role.get(id)
@@ -297,6 +301,8 @@ class RoleRules(ServicesResources):
             HTTPStatus.CREATED
 
     @with_user
+    @swag_from(str(Path(r"swagger/delete_role_rule_with_id.yaml")),
+               endpoint='role_rule_with_id')
     def delete(self, id, rule_id):
         """Remove rule from role."""
         role = db_Role.get(id)

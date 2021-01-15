@@ -54,7 +54,7 @@ class ResetPassword(ServicesResources):
     @swag_from(str(Path(r"swagger/post_reset_password.yaml")),
                endpoint='reset_password')
     def post(self):
-        """"submit email-adress receive token."""
+        """"submit email address to receive token."""
 
         # retrieve user based on email or username
         body = request.get_json()
