@@ -105,7 +105,6 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-<<<<<<< HEAD
 class Collaboration(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions):
@@ -158,9 +157,6 @@ class Collaboration(ServicesResources):
 
             return collaboration_schema.dump(collaboration, many=True)\
                 .data, HTTPStatus.OK  # 200
-=======
-class Collaboration(Resource):
->>>>>>> parent of 93b83e9... Updated swagger documentation
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")),
@@ -210,7 +206,6 @@ class Collaboration(Resource):
 
         # check if collaboration exists
         if not collaboration:
-<<<<<<< HEAD
             return {"msg": f"collaboration having collaboration_id={id} "
                     "can not be found"}, HTTPStatus.NOT_FOUND  # 404
 
@@ -218,11 +213,6 @@ class Collaboration(Resource):
         if not self.r.e_glo.can():
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
-=======
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND  # 404
->>>>>>> parent of 93b83e9... Updated swagger documentation
 
         # only update fields that are provided
         data = request.get_json()
@@ -247,7 +237,6 @@ class Collaboration(Resource):
 
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-<<<<<<< HEAD
             return {"msg": "collaboration id={} is not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
 
@@ -259,18 +248,11 @@ class Collaboration(Resource):
         collaboration.delete()
         return {"msg": "node id={} successfully deleted".format(id)}, \
             HTTPStatus.OK
-=======
-            return {"msg": "collaboration id={} is not found".format(id)}, 404
-
-        collaboration.delete()
-        return {"msg": "node id={} successfully deleted".format(id)}, 200
->>>>>>> parent of 93b83e9... Updated swagger documentation
 
 
 class CollaborationOrganization(ServicesResources):
     """Resource for /api/collaboration/<int:id>/organization."""
 
-<<<<<<< HEAD
     def __init__(self, socketio, mail, api, permissions):
         super().__init__(socketio, mail, api, permissions)
         self.r = getattr(self.permissions, module_name)
@@ -278,10 +260,6 @@ class CollaborationOrganization(ServicesResources):
     @only_for(["node", "user", "container"])
     @swag_from(str(Path(r"swagger/get_collaboration_organization.yaml")),
                endpoint='collaboration_with_id_organization')
-=======
-    @only_for(["node","user","container"])
-    @swag_from(str(Path(r"swagger/get_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def get(self, id):
         """Return organizations for a specific collaboration."""
         collaboration = db.Collaboration.get(id)
@@ -306,12 +284,8 @@ class CollaborationOrganization(ServicesResources):
             HTTPStatus.OK
 
     @with_user
-<<<<<<< HEAD
     @swag_from(str(Path(r"swagger/post_collaboration_organization.yaml")),
                endpoint='collaboration_with_id_organization')
-=======
-    @swag_from(str(Path(r"swagger/post_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def post(self, id):
         """Add an organizations to a specific collaboration."""
         # get collaboration to which te organization should be added
@@ -339,12 +313,8 @@ class CollaborationOrganization(ServicesResources):
             HTTPStatus.OK
 
     @with_user
-<<<<<<< HEAD
     @swag_from(str(Path(r"swagger/delete_collaboration_organization.yaml")),
                endpoint='collaboration_with_id_organization')
-=======
-    @swag_from(str(Path(r"swagger/delete_collaboration_organization.yaml")), endpoint='collaboration_with_id_organization')
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def delete(self, id):
         """Removes an organization from a collaboration."""
         # get collaboration from which organization should be removed
@@ -357,16 +327,12 @@ class CollaborationOrganization(ServicesResources):
         data = request.get_json()
         organization = db.Organization.get(data['id'])
         if not organization:
-<<<<<<< HEAD
             return {"msg": "organization with id={} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if not self.r.d_glo.can():
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
-=======
-            return {"msg": "organization with id={} is not found"}, HTTPStatus.NOT_FOUND
->>>>>>> parent of 93b83e9... Updated swagger documentation
 
         # delete organization and update
         collaboration.organizations.remove(organization)
@@ -383,12 +349,8 @@ class CollaborationNode(ServicesResources):
         self.r = getattr(self.permissions, module_name)
 
     @with_user
-<<<<<<< HEAD
     @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")),
                endpoint='collaboration_with_id_node')
-=======
-    @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def get(self, id):
         """"Return a list of nodes that belong to the collaboration."""
         collaboration = db.Collaboration.get(id)
@@ -406,28 +368,18 @@ class CollaborationNode(ServicesResources):
             HTTPStatus.OK
 
     @with_user
-<<<<<<< HEAD
     @swag_from(str(Path(r"swagger/post_collaboration_node.yaml")),
                endpoint='collaboration_with_id_node')
-=======
-    @swag_from(str(Path(r"swagger/post_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def post(self, id):
         """Add an node to a specific collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-<<<<<<< HEAD
             return {"msg": "collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
         if not self.r.e_glo.can():
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
-=======
-            return {"msg": "collaboration having collaboration_id={} can not be found".format(
-                id
-            )}, HTTPStatus.NOT_FOUND
->>>>>>> parent of 93b83e9... Updated swagger documentation
 
         data = request.get_json()
         node = db.Node.get(data['id'])
@@ -444,12 +396,8 @@ class CollaborationNode(ServicesResources):
             HTTPStatus.CREATED
 
     @with_user
-<<<<<<< HEAD
     @swag_from(str(Path(r"swagger/delete_collaboration_node.yaml")),
                endpoint='collaboration_with_id_node')
-=======
-    @swag_from(str(Path(r"swagger/delete_collaboration_node.yaml")), endpoint='collaboration_with_id_node')
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def delete(self, id):
         """Remove node from collaboration."""
         collaboration = db.Collaboration.get(id)
@@ -464,22 +412,14 @@ class CollaborationNode(ServicesResources):
         data = request.get_json()
         node = db.Node.get(data['id'])
         if not node:
-<<<<<<< HEAD
             return {"msg": "node id={} not found"}, HTTPStatus.NOT_FOUND
-=======
-            return {"msg": "node id={} not found"}, 404
->>>>>>> parent of 93b83e9... Updated swagger documentation
         if node not in collaboration.nodes:
             return {"msg": f"node id={data['id']} is not part of "
                     "collaboration id={id}"}, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.remove(node)
-<<<<<<< HEAD
         return {"msg": "node id={data['id']} removed from collaboration "
                 "id={id}"}, HTTPStatus.OK
-=======
-        return {"msg": "node id={} removed from collaboration id={}".format(data['id'], id)}, 200
->>>>>>> parent of 93b83e9... Updated swagger documentation
 
 
 class CollaborationTask(ServicesResources):
@@ -490,12 +430,8 @@ class CollaborationTask(ServicesResources):
         self.r = getattr(self.permissions, 'task')
 
     @with_user_or_node
-<<<<<<< HEAD
     @swag_from(str(Path(r"swagger/get_collaboration_task.yaml")),
                endpoint='collaboration_with_id_task')
-=======
-    @swag_from(str(Path(r"swagger/get_collaboration_task.yaml")), endpoint='collaboration_with_id_task')
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def get(self, id):
         """List of tasks that belong to a collaboration"""
         collaboration = db.Collaboration.get(id)

@@ -1,14 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-<<<<<<< HEAD
 
 from flask import request, g
-=======
-import base64
-
-from flask import request
-from flask_restful import Resource
->>>>>>> parent of 93b83e9... Updated swagger documentation
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
@@ -110,7 +103,6 @@ class Organization(ServicesResources):
                endpoint='organization_without_id')
     def get(self, id=None):
 
-<<<<<<< HEAD
         # determine the organization to which the auth belongs
         if g.container:
             auth_org_id = g.container["organization_id"]
@@ -167,10 +159,6 @@ class Organization(ServicesResources):
         # If you get here you do not have permission to see anything
         return {'msg': 'You do not have permission to do that!'}, \
             HTTPStatus.UNAUTHORIZED
-=======
-        return self.org_schema.dump(organization, many=not id).data, \
-            HTTPStatus.OK
->>>>>>> parent of 93b83e9... Updated swagger documentation
 
     @only_for(["user"])
     @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
@@ -197,11 +185,7 @@ class Organization(ServicesResources):
         return self.org_schema.dump(organization, many=False).data, \
             HTTPStatus.CREATED
 
-<<<<<<< HEAD
     @only_for(["user"])
-=======
-    @only_for(["user", "node"])
->>>>>>> parent of 93b83e9... Updated swagger documentation
     def patch(self, id):
         """Update organization."""
 
@@ -239,7 +223,6 @@ class OrganizationCollaboration(ServicesResources):
 
         organization = db.Organization.get(id)
         if not organization:
-<<<<<<< HEAD
             return {"msg": "organization id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
 
@@ -261,29 +244,6 @@ class OrganizationCollaboration(ServicesResources):
 
 
 class OrganizationNode(ServicesResources):
-=======
-            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-
-        return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
-
-    # @with_user
-    # def post(self, id):
-    #     organization = db.Organization.get(id)
-    #     if not organization:
-    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-    #
-    #     data = request.get_json()
-    #     collaboration = db.Collaboration.get(data['id'])
-    #     if not collaboration:
-    #         return {"msg": "collaboration id={} is not found".format(data['id'])}, HTTPStatus.NOT_FOUND
-    #
-    #     organization.collaborations.append(collaboration)
-    #     organization.save()
-    #     return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
-
-
-class OrganizationNode(Resource):
->>>>>>> parent of 93b83e9... Updated swagger documentation
     """Resource for /api/organization/<int:id>/node."""
 
     nod_schema = NodeSchema()
@@ -295,7 +255,6 @@ class OrganizationNode(Resource):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
         if not organization:
-<<<<<<< HEAD
             return {"msg": "organization id={} not found".format(id)}, \
                 HTTPStatus.NOT_FOUND
 
@@ -311,27 +270,3 @@ class OrganizationNode(Resource):
 
         return self.nod_schema.dump(organization.nodes, many=True).data, \
             HTTPStatus.OK
-=======
-            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-
-        return self.nod_schema.dump(organization.nodes, many=True).data, HTTPStatus.OK
-
-    # @with_user
-    # def post(self, id):
-    #     """Create new node"""
-    #     organization = db.Organization.get(id)
-    #     if not organization:
-    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-    #
-    #     data = request.get_json()
-    #
-    #     db.Node(
-    #         name="{} - {} Node".format(organization.name, collaboration.name),
-    #         collaboration=collaboration,
-    #         organization=organization,
-    #         api_key=api_key
-    #     )
-    #     node.save()
-    #
-    #     return node
->>>>>>> parent of 93b83e9... Updated swagger documentation
