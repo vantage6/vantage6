@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-<<<<<<< Updated upstream
 <<<<<<< HEAD
-=======
-from vantage6.server.model import organization
->>>>>>> Stashed changes
 
 from flask import request, g
 =======
@@ -126,9 +122,6 @@ class Organization(ServicesResources):
 
         # retrieve requested organization
         req_org = db.Organization.get(id)
-        if not req_org:
-            return {'msg': f"This organization = {id} is not found"}, \
-                HTTPStatus.NOT_FOUND
         accepted = False
 
         # check if he want a single or all organizations
@@ -150,7 +143,7 @@ class Organization(ServicesResources):
                 return self.org_schema.dump(req_org, many=False).data, \
                     HTTPStatus.OK
 
-        # filter the list of organizations based on the scope
+        # filter de list of organizations based on the scope
         else:
             organizations = []
             if self.r.v_glo.can():
@@ -206,14 +199,9 @@ class Organization(ServicesResources):
 
 <<<<<<< HEAD
     @only_for(["user"])
-<<<<<<< Updated upstream
 =======
     @only_for(["user", "node"])
 >>>>>>> parent of 93b83e9... Updated swagger documentation
-=======
-    @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
-               endpoint='organization_with_id')
->>>>>>> Stashed changes
     def patch(self, id):
         """Update organization."""
 
@@ -251,12 +239,8 @@ class OrganizationCollaboration(ServicesResources):
 
         organization = db.Organization.get(id)
         if not organization:
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "organization id={} not found".format(id)}, \
-=======
-            return {"msg": f"organization id={id} not found"}, \
->>>>>>> Stashed changes
                 HTTPStatus.NOT_FOUND
 
         if g.node:
@@ -311,12 +295,8 @@ class OrganizationNode(Resource):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
         if not organization:
-<<<<<<< Updated upstream
 <<<<<<< HEAD
             return {"msg": "organization id={} not found".format(id)}, \
-=======
-            return {"msg": f"organization id={id} not found"}, \
->>>>>>> Stashed changes
                 HTTPStatus.NOT_FOUND
 
         if g.user:

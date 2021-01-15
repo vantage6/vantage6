@@ -1,7 +1,7 @@
 summary: Update collaboration
 
 description:
-  Updates the collaboration with the specified id.
+  Updates the collaboration with the specified data.
 
 parameters:
   - in: path

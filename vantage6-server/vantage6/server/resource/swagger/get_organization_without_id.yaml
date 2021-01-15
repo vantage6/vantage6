@@ -1,7 +1,7 @@
 summary: List organizations
 
 description:
-  Filters through a list of organizations based on scope and returns a list of organizations
+  Returns a list of organizations
 
 responses:
   200:

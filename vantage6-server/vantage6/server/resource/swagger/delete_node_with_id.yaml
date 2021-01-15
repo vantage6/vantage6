@@ -17,6 +17,8 @@ responses:
     description: Ok, node is deleted
   404:
     description: node with specified id is not found
+  403:
+    description: you do not have permission to delete this node
   401:
     description: Unauthorized
 

@@ -1,7 +1,7 @@
 summary: Update results
 
 description:
-  Update results if the organization_id is
+  Update results
 
 parameters:
   - in: path
@@ -11,12 +11,6 @@ parameters:
       minimum: 1
     description: "unique task identifier"
     required: true
-
-requestBody:
-  content:
-    application/json:
-      schema:
-        $ref: '#/components/schemas/Collaboration'
 
 responses:
   200:

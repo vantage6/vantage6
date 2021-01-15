@@ -1,32 +1,26 @@
 summary: List results
 
 description:
-  Returns a list of all results only if the node, user or container have the proper authorization
-  to do so.
+  Returns a list of all results
 
 parameters:
-  # - in: path
-  #   name: id
-  #   schema:
-  #     type: integer
-  #     minimum: 1
-  #   description: "unique task identifier"
-  #   required: true
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "unique task identifier"
+    required: true
   - in: query
     name: state
     schema:
       type: string
     description: the state of the task ('open')
   - in: query
-    name: task_id
+    name: organization_id
     schema:
       type: integer
-    description: "unique task identifier"
-  - in: query
-    name: node_id
-    schema:
-      type: integer
-    description: node id
+    description: organization id
   - in: query
     name: include
     schema:

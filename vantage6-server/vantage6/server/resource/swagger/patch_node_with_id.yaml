@@ -1,7 +1,8 @@
+# get a node having specified id
 summary: Update node
 
 description:
-  Update the node specified by the id. Only user or node that belongs to the organization of the node are allowed to update it.
+  Update the node specified by the id. Only user that belong to the organization of the node are allowed to update it.
   If the node does not exists it is created as a new node.
 
 parameters:
@@ -25,8 +26,6 @@ responses:
     description: you do not have permission to alter this node
   401:
     description: Unauthorized
-  404:
-    description: Not found
 
 security:
   - bearerAuth: []

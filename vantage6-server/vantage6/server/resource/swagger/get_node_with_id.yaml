@@ -23,3 +23,40 @@ responses:
 security:
   - bearerAuth: []
 tags: ["Node"]
+
+
+#components:
+#  schemas:
+#    Node:
+#      properties:
+#       id:
+#         type: integer
+#         description: unique node identifier
+#       api_key:
+#         type: string
+#         description: api-key used by the node to authenticate
+#       collaboration:
+#         type: string
+#         description: path to collaboration endpoint
+#       last_seen:
+#         type: integer
+#         description: timestamp when the last action was performed from the node instance
+#       name:
+#         type: string
+#         description: human readable label
+#       organiztion:
+#         type: string
+#         description: path to organization endpoint
+#       type:
+#         type: string
+#         description: in this case it should always return node
+#       taskresults:
+#         type: array
+#         items:
+#           type: string
+#         default: []
+#         description: list of endpoints containing task results from this node
+#       ip:
+#         type: string
+#         description: string containing the ip-address from which the node authenticated the last time
+#         default: null

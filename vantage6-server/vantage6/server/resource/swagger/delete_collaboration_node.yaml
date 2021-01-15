@@ -8,8 +8,17 @@ parameters:
     name: id
     schema:
       type: integer
-    description: collaboration id from which node is to be deleted from
+    description: collaboration id
     required: true
+
+# requestBody:
+#   content:
+#     application/json:
+#       schema:
+#         properties:
+#           id:
+#             type: integer
+#             description: node id which should be deleted
 
 responses:
   200:
