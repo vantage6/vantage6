@@ -1,7 +1,7 @@
-summary: Delete collaboration
+summary: List nodes in collaboration
 
 description:
-  Removes the collaboration from the database entirely.
+  Returns a list of node(s) which belong to the specified collaboration
 
 parameters:
   - in: path
@@ -15,11 +15,8 @@ responses:
   200:
     description: Ok
   404:
-    description: collaboration with specified id is not found
+    description: collaboration not found
   401:
     description: Unauthorized
-
-security:
-  - bearerAuth: []
 
 tags: ["Collaboration"]

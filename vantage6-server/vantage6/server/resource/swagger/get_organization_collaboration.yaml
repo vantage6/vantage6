@@ -1,7 +1,7 @@
 summary: Get collaborations from organization
 
 description:
-  Returns a list of collaboration in which the organization participates
+  Returns a list of collaborations in which the organization is a participant of.
 
 parameters:
   - in: path

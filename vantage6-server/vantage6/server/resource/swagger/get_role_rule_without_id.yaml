@@ -1,25 +1,20 @@
-summary: Delete node
+summary: Get role rules
 
 description:
-  Delete node from organization. Only users that belong to the organization of the node can delete it.
-
+  Returns the role for rules without an id given that
 parameters:
   - in: path
     name: id
     schema:
       type: integer
       minimum: 1
-    description: "unique node identifier"
+    description: Role id
     required: true
-
 responses:
-  200:
-    description: Ok, node is deleted
   404:
     description: node with specified id is not found
   401:
     description: Unauthorized
-
 security:
   - bearerAuth: []
-tags: ["Node"]
+tags: ["Role"]
