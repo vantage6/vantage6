@@ -153,7 +153,7 @@ class NodeToken(ServicesResources):
         node = db.Node.get_by_api_key(api_key)
 
         if not node:  # login failed
-            log.error(f"Api key is not recognised")
+            log.error("Api key is not recognised")
             return {"msg": "Api key is not recognised!"}
 
         token = create_access_token(node)
@@ -176,7 +176,7 @@ class ContainerToken(ServicesResources):
                endpoint='container_token')
     def post(self):
         """Create a token for a container running on a node."""
-        log.debug("POST /token/container")
+        log.debug("Creating a token for a container running on a node")
 
         data = request.get_json()
 

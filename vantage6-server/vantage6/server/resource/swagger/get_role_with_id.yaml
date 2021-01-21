@@ -1,25 +1,25 @@
-summary: Get user
+summary: Get roles
 
 description:
-  Returns the user specified by the id as well as be able to view the info on the users within the same scope.
+  Depending on permission, you can view nothing, your organization or all the
+  available roles at the server.
 
 parameters:
   - in: path
     name: id
     schema:
       type: integer
-    description: user id
+      minimum: 1
+    description: role_id
     required: true
 
 responses:
   200:
     description: Ok
-  404:
-    description: User not found
   401:
     description: Unauthorized
 
 security:
   - bearerAuth: []
 
-tags: ["User"]
+tags: ["Roles"]

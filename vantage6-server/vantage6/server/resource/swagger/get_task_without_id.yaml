@@ -1,7 +1,7 @@
 summary: List tasks
 
 description:
-  Returns the task specified by the id
+  Returns a list of tasks.
 
 responses:
   200:

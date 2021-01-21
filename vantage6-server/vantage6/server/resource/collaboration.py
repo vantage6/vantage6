@@ -237,7 +237,7 @@ class Collaboration(ServicesResources):
 
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration id={} is not found".format(id)}, \
+            return {"msg": f"collaboration id={id} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
         # verify permissions
@@ -246,7 +246,7 @@ class Collaboration(ServicesResources):
                 HTTPStatus.UNAUTHORIZED
 
         collaboration.delete()
-        return {"msg": "node id={} successfully deleted".format(id)}, \
+        return {"msg": f"node id={id} successfully deleted"}, \
             HTTPStatus.OK
 
 

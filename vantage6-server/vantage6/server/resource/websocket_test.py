@@ -3,7 +3,7 @@ import logging
 
 from flasgger import swag_from
 from pathlib import Path
-
+from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.server.resource import ServicesResources
 
@@ -36,4 +36,4 @@ class Test(ServicesResources):
     def get(self):
         """Return something."""
         self.socketio.send("you're welcome!", room='all_nodes')
-        return self.socketio.server.manager.rooms
+        return self.socketio.server.manager.rooms, HTTPStatus.OK

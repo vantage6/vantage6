@@ -1,7 +1,7 @@
 summary: Get role rules
 
 description:
-  Returns the role for rules without an id given that
+  Returns the role for rules without giving a user id
 parameters:
   - in: path
     name: id

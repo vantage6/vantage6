@@ -102,7 +102,7 @@ class Role(ServicesResources):
     def get(self, id=None):
         """View roles
 
-        Depending on your permissions you see no, your organization or all
+        Depending on permission, you can view nothing, your organization or all the
         available roles at the server.
         """
         if self.r.v_glo.can():

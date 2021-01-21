@@ -1,0 +1,10 @@
+summary: Web socket test
+
+description:
+  Returns a response to check that the websocket works as intended.
+
+responses:
+  200:
+    description: Ok
+
+tags: ["Other"]

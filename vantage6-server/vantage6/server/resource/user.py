@@ -162,7 +162,7 @@ class User(ServicesResources):
         if data['organization_id']:
             if data['organization_id'] != organization_id and \
                     not self.r.c_glo.can():
-                return {'msg': 'You lack the permission to do that!1'}, \
+                return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
             organization_id = data['organization_id']
 
@@ -218,7 +218,7 @@ class User(ServicesResources):
         user = db.User.get(id)
 
         if not user:
-            return {"msg": "user id={} not found".format(id)}, \
+            return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if not self.r.e_glo.can():
@@ -303,10 +303,10 @@ class User(ServicesResources):
     @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")),
                endpoint='user_with_id')
     def delete(self, id):
-
+        """Remove user from the database."""
         user = db.User.get(id)
         if not user:
-            return {"msg": "user id={} not found".format(id)}, \
+            return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if not self.r.d_glo.can():

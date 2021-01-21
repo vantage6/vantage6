@@ -107,7 +107,7 @@ class Task(ServicesResources):
     @swag_from(str(Path(r"swagger/get_task_without_id.yaml")),
                endpoint='task_without_id')
     def get(self, id=None):
-
+        """List tasks"""
         task = db.Task.get(id)
         if not task:
             return {"msg": f"task id={id} is not found"}, HTTPStatus.NOT_FOUND

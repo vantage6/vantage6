@@ -54,6 +54,6 @@ class Rule(ServicesResources):
     def get(self, id=None):
         """List rules."""
 
-        roles = db_Rule.get(id)
-        return self.rule_schema.dump(roles, many=not id).data,\
+        rules = db_Rule.get(id)
+        return self.rule_schema.dump(rules, many=not id).data,\
             HTTPStatus.OK

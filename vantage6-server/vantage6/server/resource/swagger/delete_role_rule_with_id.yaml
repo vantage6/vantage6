@@ -24,4 +24,4 @@ responses:
   401:
     description: Unauthorized
 
-tags: ["Collaboration"]
+tags: ["Role"]

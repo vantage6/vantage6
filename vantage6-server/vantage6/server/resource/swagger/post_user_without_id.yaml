@@ -15,13 +15,21 @@ requestBody:
             type: string
           lastname:
             type: string
+          password:
+            type: string
+          organization_id:
+            type: integer
           roles:
             type: array
             items:
-              type: string
+              type: integer
             description: user roles
-          password:
+          rules:
+            type: integer
+            description: rules assigned to the roles
+          email:
             type: string
+
 
 responses:
   400:
