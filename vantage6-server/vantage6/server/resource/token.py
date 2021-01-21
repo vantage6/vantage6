@@ -114,7 +114,7 @@ class UserToken(ServicesResources):
     @staticmethod
     def user_login(username, password):
         """Returns user or message in case of failed login attempt"""
-        log.info("trying to login '{}'".format(username))
+        log.info(f"trying to login '{username}'")
 
         if db.User.username_exists(username):
             user = db.User.get_by_username(username)
@@ -123,7 +123,7 @@ class UserToken(ServicesResources):
                 log.error(msg)
                 return {"msg": msg}, HTTPStatus.UNAUTHORIZED
         else:
-            msg = "username '{}' does not exist".format(username)
+            msg = f"username '{username}' does not exist"
             log.error(msg)
             return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
@@ -238,7 +238,7 @@ class RefreshToken(ServicesResources):
     def post(self):
         """Create a token from a refresh token."""
         user_or_node_id = get_jwt_identity()
-        log.info('Refreshing token for user or node "{user_or_node_id}"')
+        log.info(f'Refreshing token for user or node "{user_or_node_id}"')
         user_or_node = db.Authenticatable.get(user_or_node_id)
         ret = {'access_token': create_access_token(user_or_node)}
 

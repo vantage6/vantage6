@@ -223,7 +223,7 @@ class OrganizationCollaboration(ServicesResources):
 
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, \
+            return {"msg": f"organization id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if g.node:
@@ -255,7 +255,7 @@ class OrganizationNode(ServicesResources):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, \
+            return {"msg": f"organization id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if g.user:

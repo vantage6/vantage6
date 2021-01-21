@@ -327,7 +327,7 @@ class CollaborationOrganization(ServicesResources):
         data = request.get_json()
         organization = db.Organization.get(data['id'])
         if not organization:
-            return {"msg": "organization with id={} is not found"}, \
+            return {"msg": f"organization with id={id} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if not self.r.d_glo.can():
@@ -374,7 +374,7 @@ class CollaborationNode(ServicesResources):
         """Add an node to a specific collaboration."""
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": "collaboration having collaboration_id={id} can "
+            return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
         if not self.r.e_glo.can():
@@ -412,7 +412,7 @@ class CollaborationNode(ServicesResources):
         data = request.get_json()
         node = db.Node.get(data['id'])
         if not node:
-            return {"msg": "node id={} not found"}, HTTPStatus.NOT_FOUND
+            return {"msg": f"node id={id} not found"}, HTTPStatus.NOT_FOUND
         if node not in collaboration.nodes:
             return {"msg": f"node id={data['id']} is not part of "
                     "collaboration id={id}"}, HTTPStatus.BAD_REQUEST

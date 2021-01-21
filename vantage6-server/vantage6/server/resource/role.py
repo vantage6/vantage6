@@ -184,7 +184,7 @@ class Role(ServicesResources):
 
         role = db_Role.get(id)
         if not role:
-            return {"msg": "Role with id={id} not found."}, \
+            return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
         # check permission of the user
