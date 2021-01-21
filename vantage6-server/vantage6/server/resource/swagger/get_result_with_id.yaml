@@ -20,8 +20,8 @@ parameters:
 responses:
   200:
     description: Ok
- 404:
-   description: result id not found
+  404:
+    description: result id not found
 #  403:
 #    description: you do not have permission to view this collaboration
   401:

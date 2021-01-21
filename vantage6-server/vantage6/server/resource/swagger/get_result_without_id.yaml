@@ -5,13 +5,13 @@ description:
   to do so.
 
 parameters:
-  # - in: path
-  #   name: id
-  #   schema:
-  #     type: integer
-  #     minimum: 1
-  #   description: "unique task identifier"
-  #   required: true
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "unique task identifier"
+    required: true
   - in: query
     name: state
     schema:
@@ -36,10 +36,6 @@ parameters:
 responses:
   200:
     description: Ok
-#  404:
-#    description: collaboration with specified id is not found
-#  403:
-#    description: you do not have permission to view this collaboration
   401:
     description: Unauthorized
 

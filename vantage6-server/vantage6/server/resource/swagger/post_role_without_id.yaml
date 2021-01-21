@@ -17,8 +17,8 @@ requestBody:
           rules:
             type: integer
             description:
-          organization_ids:
-            type: array
+          organization_id:
+            type: integer
             items:
               type: integer
             description: list of organization ids which form the collaboration
@@ -27,11 +27,9 @@ responses:
   201:
     description: Created
   404:
-    description: Organization with `organization_id` was not found
+    description: Organization or rule was not found
   401:
     description: Unauthorized
-  # 400:
-  #   description: Bad request
 
 security:
   - bearerAuth: []

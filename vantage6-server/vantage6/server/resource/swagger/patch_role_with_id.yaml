@@ -1,7 +1,7 @@
 summary: Update role
 
 description:
-Updates roles within an organization if the user has permission to do so.
+  Updates roles within an organization if the user has permission to do so.
 
 parameters:
   - in: path

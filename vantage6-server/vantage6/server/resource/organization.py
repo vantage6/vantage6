@@ -186,6 +186,8 @@ class Organization(ServicesResources):
             HTTPStatus.CREATED
 
     @only_for(["user"])
+    @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
+        endpoint='organization_with_id')
     def patch(self, id):
         """Update organization."""
 

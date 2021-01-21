@@ -47,9 +47,9 @@ class Rule(ServicesResources):
     rule_schema = RuleSchema()
 
     @with_user
-    @swag_from(str(Path(r"swagger/rule_with_id.yaml")),
+    @swag_from(str(Path(r"swagger/get_rule_with_id.yaml")),
                endpoint='rule_with_id')
-    @swag_from(str(Path(r"swagger/rule_without_id.yaml")),
+    @swag_from(str(Path(r"swagger/get_rule_without_id.yaml")),
                endpoint='rule_without_id')
     def get(self, id=None):
         """List rules."""

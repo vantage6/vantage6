@@ -284,7 +284,7 @@ class CollaborationOrganization(ServicesResources):
             HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_organization.yaml")),
+    @swag_from(str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
                endpoint='collaboration_with_id_organization')
     def post(self, id):
         """Add an organizations to a specific collaboration."""
@@ -349,7 +349,7 @@ class CollaborationNode(ServicesResources):
         self.r = getattr(self.permissions, module_name)
 
     @with_user
-    @swag_from(str(Path(r"swagger/get_collaboration_node.yaml")),
+    @swag_from(str(Path(r"swagger/get_collaboration_with_id_node.yaml")),
                endpoint='collaboration_with_id_node')
     def get(self, id):
         """"Return a list of nodes that belong to the collaboration."""
@@ -368,7 +368,7 @@ class CollaborationNode(ServicesResources):
             HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_node.yaml")),
+    @swag_from(str(Path(r"swagger/post_collaboration_with_id_node.yaml")),
                endpoint='collaboration_with_id_node')
     def post(self, id):
         """Add an node to a specific collaboration."""
@@ -396,7 +396,7 @@ class CollaborationNode(ServicesResources):
             HTTPStatus.CREATED
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_node.yaml")),
+    @swag_from(str(Path(r"swagger/delete_collaboration_with_id_node.yaml")),
                endpoint='collaboration_with_id_node')
     def delete(self, id):
         """Remove node from collaboration."""
@@ -430,7 +430,7 @@ class CollaborationTask(ServicesResources):
         self.r = getattr(self.permissions, 'task')
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_collaboration_task.yaml")),
+    @swag_from(str(Path(r"swagger/get_collaboration_with_id_task.yaml")),
                endpoint='collaboration_with_id_task')
     def get(self, id):
         """List of tasks that belong to a collaboration"""
