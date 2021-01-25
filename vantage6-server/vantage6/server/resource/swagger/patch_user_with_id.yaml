@@ -21,6 +21,12 @@ requestBody:
             items:
               type: string
             description: user roles
+          rules:
+            type: integer
+            description: rules assigned to the user role
+          organization_id:
+            type: integer
+
 
 parameters:
   - in: path

@@ -1,7 +1,7 @@
-summary: List nodes in collaboration
+summary: List organizations in collaboration
 
 description:
-  Returns a list of node which belong to the specified collaboration
+  Returns a list of all organizations that belong to the specified collaboration.
 
 parameters:
   - in: path
@@ -15,8 +15,9 @@ responses:
   200:
     description: Ok
   404:
-    description: collaboration not found
+    description: Collaboration specified by id does not exists
   401:
     description: Unauthorized
-
+security:
+  - bearerAuth: []
 tags: ["Collaboration"]

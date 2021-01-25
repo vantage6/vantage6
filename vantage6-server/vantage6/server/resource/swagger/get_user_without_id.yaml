@@ -2,7 +2,8 @@ summary: List users
 
 description:
   returns a list of users that are within the organization of the user. In case of an **administrator** all users from
-  all organizations are returned
+  all organizations are returned. This also returns the info for the users given that they have authorization and
+  only request information on the users from within the same scope
 
 responses:
   200:

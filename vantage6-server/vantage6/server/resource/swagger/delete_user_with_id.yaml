@@ -14,8 +14,6 @@ parameters:
 responses:
   200:
     description: Ok
-  403:
-    description: No permission to update this user
   404:
     description: User not found
   401:

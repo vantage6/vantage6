@@ -1,4 +1,4 @@
-summary: Delete node
+summary: Delete role
 
 description:
   Delete node from organization. Only users that belong to the organization of the node can delete it.
@@ -9,17 +9,15 @@ parameters:
     schema:
       type: integer
       minimum: 1
-    description: "unique node identifier"
+    description: Role_id
     required: true
 
 responses:
   200:
-    description: Ok, node is deleted
-  404:
-    description: node with specified id is not found
+    description: Ok, role was deleted
   401:
     description: Unauthorized
 
 security:
   - bearerAuth: []
-tags: ["Node"]
+tags: ["Role"]

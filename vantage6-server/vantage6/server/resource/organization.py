@@ -186,6 +186,8 @@ class Organization(ServicesResources):
             HTTPStatus.CREATED
 
     @only_for(["user"])
+    @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
+        endpoint='organization_with_id')
     def patch(self, id):
         """Update organization."""
 
@@ -223,7 +225,7 @@ class OrganizationCollaboration(ServicesResources):
 
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, \
+            return {"msg": f"organization id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if g.node:
@@ -255,7 +257,7 @@ class OrganizationNode(ServicesResources):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, \
+            return {"msg": f"organization id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if g.user:

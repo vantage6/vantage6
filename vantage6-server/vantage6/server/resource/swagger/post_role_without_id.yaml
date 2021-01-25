@@ -1,0 +1,37 @@
+summary: Creates a new role within an organization
+
+description:
+  Creates a new role within an organization only if permissions are satsified.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          name:
+            type: string
+            description: human readable name for collaboration
+          description:
+            type: string
+            description:
+          rules:
+            type: integer
+            description:
+          organization_id:
+            type: integer
+            items:
+              type: integer
+            description: list of organization ids which form the collaboration
+
+responses:
+  201:
+    description: Created
+  404:
+    description: Organization or rule was not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Role"]

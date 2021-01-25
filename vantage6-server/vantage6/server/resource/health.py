@@ -32,7 +32,7 @@ def setup(api, api_base, services):
 # ------------------------------------------------------------------------------
 class Health(ServicesResources):
 
-    @swag_from(str(Path(r"swagger/health.yaml")), endpoint='health')
+    @swag_from(str(Path(r"swagger/get_health.yaml")), endpoint='health')
     def get(self):
         """displays the health of services."""
 

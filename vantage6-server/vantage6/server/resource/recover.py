@@ -73,7 +73,6 @@ class ResetPassword(ServicesResources):
 
         log.debug(user_id)
         user = db.User.get(user_id)
-        log.debug(user.username)
 
         # set password
         user.set_password(password)
