@@ -43,7 +43,7 @@ setup(
         'Flask-SocketIO==4.2.1',
         'Flask-SQLAlchemy==2.4.1',
         'Flask-Principal==0.4.0',
-        'flasgger==0.9.4',
+        'flasgger==0.9.5',
         'schema==0.7.1',
         'bcrypt==3.1.7',
         'questionary==1.5.2',
