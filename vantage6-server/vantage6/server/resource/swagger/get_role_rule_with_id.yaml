@@ -1,7 +1,7 @@
 summary: Get role rules
 
 description: |
-  View all rules for the roles in the organization.
+  View all rules for a given role. If the user requesting this is not part of the organization then they cannot view the role rules.
 
   ### Permission Table
   | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |

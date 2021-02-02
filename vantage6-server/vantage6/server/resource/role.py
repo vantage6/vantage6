@@ -55,7 +55,7 @@ def setup(api, api_base, services):
         RoleRules,
         path + '/<int:id>/rule/<int:rule_id>',
         endpoint='role_rule_with_id',
-        methods=('DELETE', 'POST'),
+        methods=('GET', 'DELETE', 'POST'),
         resource_class_kwargs=services
     )
 
@@ -253,7 +253,7 @@ class RoleRules(ServicesResources):
     @swag_from(str(Path(r"swagger/get_role_rule_without_id.yaml")),
                endpoint='role_rule_without_id')
     @swag_from(str(Path(r"swagger/get_role_rule_with_id.yaml")),
-               endpoint='role_with_id')
+               endpoint='role_rule_with_id')
     def get(self, id):
         """View all rules for a role."""
         role = db_Role.get(id)
@@ -304,7 +304,7 @@ class RoleRules(ServicesResources):
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_role_rule_with_id.yaml")),
-               endpoint='role_with_id')
+               endpoint='role_rule_with_id')
     def delete(self, id, rule_id):
         """Remove rule from role."""
         role = db_Role.get(id)

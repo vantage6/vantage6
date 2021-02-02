@@ -1,7 +1,13 @@
 summary: Add user
 
-description:
+description: |
   Creates new user from the request data to the users organization.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | User  | Global | Create | ❌ | ❌ | Create a new user |
+  | User  | Organization | Create | ❌ | ❌ | Create a new user as part of your organization |
 
 requestBody:
   content:
@@ -37,7 +43,7 @@ responses:
   201:
     description: Ok
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

@@ -1,8 +1,14 @@
-summary: Remove user
+summary: Remove user.
 
-description:
-  Remove user entirely from the database
+description: |
+  Remove user entirely from the database.
 
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | User  | Global | Delete | ❌ | ❌ | Delete any user |
+  | User  | Organization | Delete | ❌ | ❌ | Delete users from your organization |
+  | User  | Own | Delete | ❌ | ❌ | Delete your own account |
 parameters:
   - in: path
     name: id
@@ -17,7 +23,7 @@ responses:
   404:
     description: User not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

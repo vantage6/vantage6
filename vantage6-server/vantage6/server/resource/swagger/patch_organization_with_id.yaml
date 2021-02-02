@@ -1,7 +1,13 @@
 summary: Update organization
 
-description:
+description: |
   Updates the organization with the specified id.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Organization   | Global        | Edit      | ❌                | ❌ | Update an organization with specified id  |
+  | Organization   | Organization        | Edit      | ❌                | ❌ | Update an organization that the user is part of |
 
 parameters:
   - in: path
@@ -37,7 +43,7 @@ responses:
   404:
     description: organization with specified id is not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

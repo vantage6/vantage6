@@ -1,8 +1,16 @@
 # get a node having specified id
 summary: Get node
-description:
+
+description: |
   Returns the node by the specified id.
   Only returns the node if the user or node has the required permission.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Node   | Global        | View      | ❌                | ❌ | View any node information |
+  | Node   | Organization        | View      | ✅                | ✅ | View node information for nodes that belong to your organization |
+
 parameters:
   - in: path
     name: id
@@ -11,6 +19,7 @@ parameters:
       minimum: 1
     description: "unique node identifier"
     required: true
+
 responses:
   200:
     description: Ok
@@ -18,8 +27,8 @@ responses:
     description: node with specified id is not found
   403:
     description: you do not have permission to view this node
-  401:
-    description: Unauthorized
+
 security:
   - bearerAuth: []
+
 tags: ["Node"]

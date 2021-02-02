@@ -1,8 +1,14 @@
-summary: Add rule to a role
+summary: Add a rule to a role.
 
-description:
+description: |
   Adds a rule to a role given that the role exists already and that the user has
   the permission to do so.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Role  | Global | Edit | ❌ | ❌ | Edit any role |
+  | Role  | Organization | Edit | ❌ | ❌ | Edit any role in your organization |
 
 parameters:
   - in: path
@@ -23,11 +29,11 @@ requestBody:
 
 responses:
   201:
-    description: added rule to node
+    description: Added rule to node
   404:
-    description: collaboration or node not found
+    description: Collaboration or node not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

@@ -1,8 +1,14 @@
 summary: Get roles
 
-description:
+description: |
   Depending on permission, you can view nothing, your organization or all the
   available roles at the server.
+
+   ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Role  | Global | View | ❌ | ❌ | View all roles |
+  | Role  | Organization | View | ❌ | ❌ | View roles that are part of your organization |
 
 parameters:
   - in: path
@@ -17,9 +23,9 @@ responses:
   200:
     description: Ok
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []
 
-tags: ["Roles"]
+tags: ["Role"]

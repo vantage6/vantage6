@@ -1,7 +1,12 @@
-summary: List nodes in collaboration
+summary: List nodes in collaboration.
 
-description:
-  Returns a list of node(s) which belong to the specified collaboration
+description: |
+  Returns a list of node(s) which belong to the specified collaboration.
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | View      | ❌                | ❌ | List nodes in a specified collaboration |
+  | Collaboration   | Organization        | View      | ✅                | ✅ | List nodes in a specified collaboration |
 
 parameters:
   - in: path
