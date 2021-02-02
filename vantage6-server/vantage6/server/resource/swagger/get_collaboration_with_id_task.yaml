@@ -1,7 +1,7 @@
 summary: List tasks from collaboration
 
 description: |
-  Returns a list of all tasks that belong to the collaboration. The
+  Returns a list of all tasks that belong to the collaboration.
 
   ### Permission Table
   | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |

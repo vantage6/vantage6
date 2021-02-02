@@ -79,15 +79,16 @@ tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
 
-
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
 def permissions(permissions: PermissionManager):
+
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW,
         description="view any collaboration")
+
     add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
         assign_to_node=True,
         description="view collaborations of your organization")
@@ -415,11 +416,11 @@ class CollaborationNode(ServicesResources):
             return {"msg": f"node id={id} not found"}, HTTPStatus.NOT_FOUND
         if node not in collaboration.nodes:
             return {"msg": f"node id={data['id']} is not part of "
-                    "collaboration id={id}"}, HTTPStatus.BAD_REQUEST
+                    f"collaboration id={id}"}, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.remove(node)
-        return {"msg": "node id={data['id']} removed from collaboration "
-                "id={id}"}, HTTPStatus.OK
+        return {"msg": f"node id={data['id']} removed from collaboration "
+                f"id={id}"}, HTTPStatus.OK
 
 
 class CollaborationTask(ServicesResources):

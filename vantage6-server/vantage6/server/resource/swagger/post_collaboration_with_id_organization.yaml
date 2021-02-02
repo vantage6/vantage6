@@ -1,7 +1,11 @@
 summary: Add organization to collaboration
 
-description:
+description: |
   Adds a single organization to an existing collaboration.
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | Edit      | ❌                | ❌ | Add organization to a collaboration |
 
 parameters:
   - in: path

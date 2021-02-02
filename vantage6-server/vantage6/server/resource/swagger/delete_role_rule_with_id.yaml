@@ -1,8 +1,13 @@
-summary: Removes rule from role
+summary: Removes rule from role.
 
-description:
+description: |
   Removes a rule from a role given the user has permission and the rule id exists.
 
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Role  | Global | Delete | ❌ | ❌ | Delete any role rule |
+  | Role  | Organization | Delete | ❌ | ❌ | Delete any role rule in your organization |
 parameters:
   - in: path
     name: id
@@ -20,8 +25,8 @@ responses:
   200:
     description: Ok
   404:
-    description: collaboration or node not found
+    description: Collaboration or node not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 tags: ["Role"]

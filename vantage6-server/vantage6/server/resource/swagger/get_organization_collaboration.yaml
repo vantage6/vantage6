@@ -1,7 +1,13 @@
 summary: Get collaborations from organization
 
-description:
+description: |
   Returns a list of collaborations in which the organization is a participant of.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | View      | ❌                | ❌ | View all collaborations  |
+  | Collaboration   | Organization        | View      | ✅                | ✅ | View a list of collaborations that the organization is a part of |
 
 parameters:
   - in: path
@@ -17,7 +23,7 @@ responses:
   404:
     description: organization not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

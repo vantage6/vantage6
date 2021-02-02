@@ -1,7 +1,13 @@
 summary: Remove task
 
-description:
-  Remove task entirely from the database
+description: |
+  Remove tasks and their results entirely from the database.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Task  | Global | Delete | ❌ | ❌ | Delete a task |
+  | Task  | Organization | Delete | ❌ | ❌ | Delete a task from a collaboration in which your organization participates with |
 
 parameters:
   - in: path
@@ -17,7 +23,7 @@ responses:
   404:
     description: Task not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

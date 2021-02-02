@@ -1,8 +1,15 @@
 summary: List results
 
-description:
+description: |
   Returns a list of all results only if the node, user or container have the proper authorization
   to do so.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Result   | Global        | View      | ❌                | ❌ | View any result  |
+  | Result   | Organization        | View      | ✅                | ✅ | View the results of your organizations collaborations |
+
 
 parameters:
   - in: path

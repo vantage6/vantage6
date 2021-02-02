@@ -1,7 +1,13 @@
 summary: List tasks
 
-description:
-  Returns a list of tasks.
+description: |
+  Returns a list of tasks only if the authorisation belongs to the correct organization.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Task  | Global | View | ❌ | ❌ | View any task |
+  | Task  | Organization | View | ✅ | ✅ | View any task in your organization |
 
 responses:
   200:
@@ -9,7 +15,7 @@ responses:
   404:
     description: Task not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

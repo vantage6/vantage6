@@ -1,8 +1,14 @@
 summary: Update node
 
-description:
-  Update the node specified by the id. Only user or node that belongs to the organization of the node are allowed to update it.
+description: |
+  Update the node specified by the id. Only a user or node that belongs to the organization of the node are allowed to update it.
   If the node does not exists it is created as a new node.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Node   | Global        | Edit      | ❌                | ❌ | Update a node specified by id |
+  | Node   | Organization        | Edit      | ❌                | ❌ | Update a node specified by id which is part of your organization |
 
 parameters:
   - in: path

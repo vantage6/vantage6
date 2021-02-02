@@ -1,7 +1,8 @@
 summary: Update results
 
 description:
-  Update results if the organization_id is
+  Update results if the task_id belongs to the specific organization and comes from the correct node.
+  The user cannot access or tamper with any results, rather, the node that accesses this endpoint needs to be authenticated.
 
 parameters:
   - in: path
@@ -24,7 +25,7 @@ responses:
   400:
     description: not owner of this task or results already posted
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []
