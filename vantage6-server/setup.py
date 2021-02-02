@@ -41,7 +41,7 @@ setup(
         'Flask-JWT-Extended==3.24.1',
         'flask-marshmallow==0.11.0',
         'Flask-SocketIO==4.2.1',
-        'Flask-SQLAlchemy==2.4.1',
+        'SQLAlchemy==1.3.15',
         'Flask-Principal==0.4.0',
         'flasgger==0.9.5',
         'schema==0.7.1',
