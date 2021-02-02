@@ -11,6 +11,7 @@ import requests
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.client import serialization, deserialization
+from vantage6.client.filter import post_filtering
 from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
 
 
@@ -109,11 +110,6 @@ class ClientBase(object):
         return self.__port
 
     @property
-    def path(self):
-        """Path/endpoint from the server where the api resides."""
-        return self.__api_path
-
-    @property
     def base_path(self):
         """Combination of host, port and api-path."""
         if self.__port:
@@ -171,7 +167,7 @@ class ClientBase(object):
             #     and message={response.get('msg', 'None')}")
             self.log.error(
                 f'Server responded with error code: {response.status_code}')
-            self.log.debug(response.json().get("msg", ""))
+            self.log.error("msg:"+response.json().get("msg", ""))
 
             if first_try:
                 self.refresh_token()
@@ -437,14 +433,16 @@ class UserClient(ClientBase):
     """ User interface to the central server."""
 
     def authenticate(self, username: str, password: str):
-        """ User authentication at the central server.
+        """Authenticate as a user.
 
-            It also identifies itself by retrieving the organization to
-            which this user belongs. The server returns a JWT-token
-            that is used in all succeeding requests.
+        It also collects some additional info about your user.
 
-            :param username: username used to authenticate
-            :param password: password used to authenticate
+        Parameters
+        ----------
+        username : str
+            Your first name
+        password : str
+            Your password
         """
         super(UserClient, self).authenticate({
             "username": username,
@@ -469,9 +467,90 @@ class UserClient(ClientBase):
             organization_name=organization_name
         )
 
-    def get_results(self, id=None, state=None, include_task=False,
-                    task_id=None, node_id=None):
+    def view_server_version(self):
+        """View the version number of the vantage6-server.
 
+        Returns
+        -------
+        dict
+            A dict containing the version number
+        """
+        return self.request('version')
+
+    @post_filtering()
+    def view_my_collaborations(self):
+        """View your collaborations
+
+        Returns
+        -------
+        list of dicts
+            containing all collaborations you can use
+        """
+        return self.request(f'organization/{self.whoami.organization_id}'
+                            '/collaboration')
+
+    @post_filtering(iterable=False)
+    def view_collaboration(self, id_):
+        """View collaboration
+
+        Parameters
+        ----------
+        id_ : int
+            id from the collaboration you want to view
+
+        Returns
+        -------
+        dict
+            containing the collaboration information
+        """
+        return self.request(f'collaboration/{id_}')
+
+    @post_filtering(iterable=False)
+    def view_organization(self, id_=None):
+        """View organization information.
+
+        If no `id_` is specified your own organization is displayed.
+
+        Parameters
+        ----------
+        id_ : int, optional
+            organization id, by default None
+
+        Returns
+        -------
+        dict
+            containing the organization information
+        """
+        if not id_:
+            id_ = self.whoami.organization_id
+
+        return self.request(f'organization/{id_}')
+
+    @post_filtering(iterable=False)
+    def view_result(self, id, state=None, include_task=False,
+                    task_id=None, node_id=None):
+        """View results.
+
+        View the results from a computation task. Note that the result
+        might not be finished yet.
+
+        Parameters
+        ----------
+        id : int
+            Id of the result you want to view
+        state : str (optional)
+            State of the task
+        password : str (optional)
+            The password you use to login
+        organization : int (optional)
+            Organization id of the organization you want to be part of.
+            This can only done by super-users.
+
+        Returns
+        -------
+        dict
+            A dict containing the result
+        """
         results = super().get_results(
             id=id, state=state,
             include_task=include_task, task_id=task_id, node_id=node_id
@@ -486,6 +565,51 @@ class UserClient(ClientBase):
             unpacked_results.append(result)
 
         return unpacked_results
+
+    @post_filtering(iterable=False)
+    def update_user(self,user_id=None, firstname=None, lastname=None,
+                    password=None, organization=None, roles=[], rules=[]):
+        """Update user details.
+
+        In case you do not supply a user_id, your user is being updated.
+
+        Parameters
+        ----------
+        user_id : int
+            User id from the user you want to update
+        firstname : str
+            Your first name
+        lastname : str
+            Your last name
+        password : str
+            The password you use to login
+        organization : int
+            Organization id of the organization you want to be part of.
+            This can only done by super-users.
+        rules : list of ints
+            Rule ids that should be assigned to this user. All previous
+            assigned rules will be removed.
+        roles : list of ints
+            Role ids that should be assigned to this user. All previous
+            assigned roles will be removed.
+
+        Returns
+        -------
+        dict
+            A dict containing the user information
+        """
+        if not user_id:
+            user_id = self.whoami.id_
+
+        user = self.request(f'user/{user_id}', method='patch', json={
+            "firstname": firstname,
+            "lastname": lastname,
+            "password": password,
+            "organization_id": organization,
+            "rules": rules,
+            "roles": roles
+        })
+        return user
 
 
 class ContainerClient(ClientBase):
