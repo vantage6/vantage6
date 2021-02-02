@@ -317,10 +317,11 @@ class ServerApp:
 
         # set all nodes to offline
         # TODO: this is *not* the way
-        nodes, session = db.Node.get(with_session=True)
+        nodes = db.Node.get()
         for node in nodes:
             node.status = 'offline'
-        session.commit()
+            node.save()
+        # session.commit()
 
         kwargs.setdefault('log_output', False)
         self.socketio.run(self.app, *args, **kwargs)
