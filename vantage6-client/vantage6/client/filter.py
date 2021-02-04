@@ -104,4 +104,4 @@ def filter_dicts_keys(dicts: list, keys: list) -> list:
 
 
 def filter_dict_keys(dict_, keys):
-    return {k: dict_[k] for k in keys if k in dict_}
+        return {k: dict_[k] for k in keys if k in dict_} if keys else dict_
