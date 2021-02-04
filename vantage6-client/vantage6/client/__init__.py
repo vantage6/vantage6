@@ -8,8 +8,10 @@ import pickle
 import typing
 import jwt
 import requests
+import pyfiglet
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
+from vantage6.common.globals import APPNAME
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
@@ -162,6 +164,11 @@ class ClientBase(object):
                                params=params)
 
         # server says no!
+        if response.status_code == 401:
+            # unauthorized
+            self.log.error("Unauthorized!")
+            self.log.error(f"Reason: {response.json().get('msg')}")
+
         if response.status_code > 210:
             # self.log.debug(f"Server did respond code={response.status_code}\
             #     and message={response.get('msg', 'None')}")
@@ -428,9 +435,38 @@ class ClientBase(object):
 
         return results
 
+class SubClient:
+    def __init__(self, parent: ClientBase):
+            self.parent = parent
 
 class UserClient(ClientBase):
     """ User interface to the central server."""
+
+    def __init__(self, *args, verbose=False, **kwargs):
+        super(UserClient, self).__init__(*args, **kwargs)
+
+        self.verbose = verbose
+
+        self.util = self.Util(self)
+        self.collaboration = self.Collaboration(self)
+        self.organization = self.Organization(self)
+        self.user = self.User(self)
+        self.result = self.Result(self)
+        self.task = self.Task(self)
+        self.role = self.Role(self)
+
+
+        self.print(" Welcome to")
+        for line in pyfiglet.figlet_format(APPNAME, font='big').split('\n'):
+            self.print(line)
+        self.print(" --> Join us on Discord! https://discord.gg/rwRvwyK")
+        self.print(" --> Docs: https://docs.vantage6.ai")
+        self.print(" --> Blog: https://vantage6.ai")
+        self.print("-" * 45)
+
+    def print(self, msg):
+        if self.verbose:
+            print(f'{msg}')
 
     def authenticate(self, username: str, password: str):
         """Authenticate as a user.
@@ -466,65 +502,341 @@ class UserClient(ClientBase):
             organization_id=organization_id,
             organization_name=organization_name
         )
+        self.print(f" --> Succesfully authenticated")
+        self.print(f" --> Name: {name} (id={id_})")
+        self.print(f" --> Organization: {organization_name} (id={organization_id})")
 
-    def view_server_version(self):
-        """View the version number of the vantage6-server.
+    class Util(SubClient):
 
-        Returns
-        -------
-        dict
-            A dict containing the version number
-        """
-        return self.request('version')
+        def get_server_version(self):
+            """View the version number of the vantage6-server.
 
-    @post_filtering()
-    def view_my_collaborations(self):
-        """View your collaborations
+            Returns
+            -------
+            dict
+                A dict containing the version number
+            """
+            return self.parent.request('version')
 
-        Returns
-        -------
-        list of dicts
-            containing all collaborations you can use
-        """
-        return self.request(f'organization/{self.whoami.organization_id}'
-                            '/collaboration')
+        def get_server_health(self):
+            return self.parent.request('health')
 
-    @post_filtering(iterable=False)
-    def view_collaboration(self, id_):
-        """View collaboration
+        def reset_my_password(self, email: str=None, username: str=None):
+            assert email or username, "You need to provide username or email!"
+            msg = self.parent.request('recover/lost', method='post', json={
+                'username': username,
+                'email': email
+            })
+            print(f'--> {msg}')
 
-        Parameters
-        ----------
-        id_ : int
-            id from the collaboration you want to view
+        def set_my_password(self, token: str, password: str):
+            msg = self.parent.request('recover/reset', method='post', json={
+                'reset_token': token,
+                'password': password
+            })
+            print(f'--> {msg}')
 
-        Returns
-        -------
-        dict
-            containing the collaboration information
-        """
-        return self.request(f'collaboration/{id_}')
 
-    @post_filtering(iterable=False)
-    def view_organization(self, id_=None):
-        """View organization information.
+    class Collaboration(SubClient):
 
-        If no `id_` is specified your own organization is displayed.
+        @post_filtering()
+        def list(self, scope: str='organization') -> dict:
+            """View your collaborations
 
-        Parameters
-        ----------
-        id_ : int, optional
-            organization id, by default None
+            Parameters
+            ----------
+            scope : str
+                Scope of the list, accepted values are `organization` and
+                `global`. In case of `organization` you get the collaborations
+                in which your organization participates. If you specify global
+                you get the collaborations which you are allowed to see.
 
-        Returns
-        -------
-        dict
-            containing the organization information
-        """
-        if not id_:
-            id_ = self.whoami.organization_id
+            Returns
+            -------
+            list of dicts
+                Containing collabotation information
+            """
+            if scope == 'organization':
+                org_id = self.parent.whoami.organization_id
+                return self.parent.request(f'organization/{org_id}/collaboration')
+            elif scope == 'global':
+                return self.parent.request(f'collaboration')
+            else:
+                print('--> Unrecognized `scope`. Need to be `organization` or '
+                      '`global`')
 
-        return self.request(f'organization/{id_}')
+        @post_filtering(iterable=False)
+        def get(self, id_: int):
+            """View specific collaboration
+
+            Parameters
+            ----------
+            id_ : int
+                Id from the collaboration you want to view
+
+            Returns
+            -------
+            dict
+                Containing the collaboration information
+            """
+            return self.request(f'collaboration/{id_}')
+
+    class Organization(SubClient):
+
+        @post_filtering()
+        def list(self) -> list:
+            return self.parent.request(f'organization')
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int=None) -> dict:
+            """View organization information.
+
+            Parameters
+            ----------
+            id_ : int, optional
+                Organization `id` of the organization you want to view. In case
+                no `id` is profided it will display your own organization.
+
+            Returns
+            -------
+            dict
+                Containing the organization information
+            """
+            if not id_:
+                id_ = self.parent.whoami.organization_id
+
+            return self.parent.request(f'organization/{id_}')
+
+        @post_filtering(iterable=False)
+        def update(self, id_:int=None, name: str=None, address1: str=None,
+                   address2: str=None, zipcode: str=None, country: str=None,
+                   domain: str=None, public_key: str=None) -> dict:
+            """Update organization information
+
+            Parameters
+            ----------
+            id_ : int, optional
+                Organization id, by default None
+            name : str, optional
+                New organization name, by default None
+            address1 : str, optional
+                Address line 1, by default None
+            address2 : str, optional
+                Address line 2, by default None
+            zipcode : str, optional
+                Zipcode, by default None
+            country : str, optional
+                Country, by default None
+            domain : str, optional
+                Domain of the organization (e.g. `iknl.nl`), by default None
+            public_key : str, optional
+                public key, by default None
+
+            Returns
+            -------
+            dict
+                The information of the updated organization
+            """
+            return self.parent.request('organization', method='patch', json={
+                'name': name,
+                'address1': address1,
+                'address2': address2,
+                'zipcode': zipcode,
+                'county': country,
+                'domain': domain,
+                'public_key': public_key
+            })
+
+    class User(SubClient):
+
+        @post_filtering()
+        def list(self) -> list:
+            """List of users
+
+            Returns
+            -------
+            list
+                List of users
+            """
+            return self.parent.request('user')
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int=None) -> dict:
+            """View user information
+
+            Parameters
+            ----------
+            id_ : int, optional
+                User `id`, by default None. When no `id` is provided your own
+                user information is displayed
+
+            Returns
+            -------
+            dict
+                Containing user information
+            """
+            if not id_:
+                id_ = self.parent.whoami.id_
+            return self.request(f'user/{id_}')
+
+        @post_filtering(iterable=False)
+        def update(self, id_: int=None, firstname: str=None,
+                   lastname: str=None, password: str=None,
+                   organization: int=None, rules: list=None,
+                   roles: list=None) -> dict:
+            """Update user details.
+
+            In case you do not supply a user_id, your user is being updated.
+
+            Parameters
+            ----------
+            user_id : int
+                User id from the user you want to update
+            firstname : str
+                Your first name
+            lastname : str
+                Your last name
+            password : str
+                The password you use to login
+            organization : int
+                Organization id of the organization you want to be part of.
+                This can only done by super-users.
+            rules : list of ints
+                USE WITH CAUTION! Rule ids that should be assigned to this
+                user. All previous assigned rules will be removed!
+            roles : list of ints
+                USE WITH CAUTION! Role ids that should be assigned to this
+                user. All previous assigned roles will be removed!
+
+            Returns
+            -------
+            dict
+                A dict containing the user information
+            """
+            if not id_:
+                id_ = self.whoami.id_
+
+            user = self.request(f'user/{id_}', method='patch', json={
+                "firstname": firstname,
+                "lastname": lastname,
+                "password": password,
+                "organization_id": organization,
+                "rules": rules,
+                "roles": roles
+            })
+            return user
+
+        @post_filtering(iterable=False)
+        def create(self, username: str, firstname: str, lastname: str,
+                   password: str, email: str, organization: int=None,
+                   roles: list=[], rules: list=[]) -> dict:
+            """Create new user
+
+            Parameters
+            ----------
+            username : str
+                Used to login to the service. This can not be changed later.
+            firstname : str
+                Firstname of the new user
+            lastname : str
+                Lastname of the new user
+            password : str
+                Password of the new user
+            organization : int
+                Organization `id` this user should belong to
+            roles : list of ints
+                Role ids that are assigned to this user. Note that you can only
+                assign roles if you own the rules within this role
+            rules : list of ints
+                Rule ids that are assigned to this user. Note that you can only
+                assign rules that you own
+
+            Return
+            ----------
+            dict
+                Containing information about the new user
+            """
+            user_data = {
+                'username': username,
+                'firstname': firstname,
+                'lastname': lastname,
+                'password': password,
+                'email': email,
+                'organization': organization,
+                'roles': roles,
+                'rules': rules
+            }
+            return self.request('user', json=user_data, method='post')
+
+    class Role(SubClient):
+
+        @post_filtering()
+        def list(self) -> list:
+            return self.parent.request('role')
+
+        @post_filtering(iterable=True)
+        def get(self, id_: int):
+            return self.parent.request(f'roles/{id_}')
+
+        @post_filtering(iterable=True)
+        def create(self, name: str, description: str, rules: list,
+                   organization: int=None):
+            if not organization:
+                organization = self.parent.whoami.organization_id
+            return self.parent.request('roles', method='post', json={
+                'name': name,
+                'description': description,
+                'rules': rules,
+                'organization_id': organization
+            })
+
+        @post_filtering(iterable=True)
+        def update(self, role: int, name: str=None, description: str=None,
+                   rules: list=None) -> dict:
+            return self.parent.request(f'role/{role}', method='patch', json={
+                'name': name,
+                'description': description,
+                'rules': rules
+            })
+
+        def delete(self, role: int) -> dict:
+            res = self.parent.request(f'role/{role}', method='delete')
+            print(f'--> {res["msg"]}')
+
+    class Task(SubClient):
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int, include_results: bool=False):
+            params = {}
+            params['include'] = 'results' if include_results else None
+            return self.parent.request(f'task/{id_}', params=params)
+
+        @post_filtering()
+        def list(self, include_results: bool=False):
+            params = {}
+            params['include'] = 'results' if include_results else None
+            return self.parent.request('task', params=params)
+
+        @post_filtering(iterable=False)
+        def create(self, collaboration: int, organizations: list, name: str,
+                   image: str, description: str, input: dict,
+                   data_format=LEGACY):
+            return self.parent.post_task(name, image, collaboration, input,
+                                         description, organizations,
+                                         data_format)
+
+        def delete(self, id_: int):
+            msg = self.parent.request(f'task/{id_}', method='delete')
+            self.parent.print(f'--> {msg}')
+
+    class Result(SubClient):
+
+        def get(self, id_: int) -> dict:
+            return self.parent.request(f'result/{id_}')
+
+        def list(self):
+            self.parent.print('--> Results not decrypted...!')
+            return self.parent.request('result')
 
     @post_filtering(iterable=False)
     def view_result(self, id, state=None, include_task=False,
@@ -566,50 +878,6 @@ class UserClient(ClientBase):
 
         return unpacked_results
 
-    @post_filtering(iterable=False)
-    def update_user(self,user_id=None, firstname=None, lastname=None,
-                    password=None, organization=None, roles=[], rules=[]):
-        """Update user details.
-
-        In case you do not supply a user_id, your user is being updated.
-
-        Parameters
-        ----------
-        user_id : int
-            User id from the user you want to update
-        firstname : str
-            Your first name
-        lastname : str
-            Your last name
-        password : str
-            The password you use to login
-        organization : int
-            Organization id of the organization you want to be part of.
-            This can only done by super-users.
-        rules : list of ints
-            Rule ids that should be assigned to this user. All previous
-            assigned rules will be removed.
-        roles : list of ints
-            Role ids that should be assigned to this user. All previous
-            assigned roles will be removed.
-
-        Returns
-        -------
-        dict
-            A dict containing the user information
-        """
-        if not user_id:
-            user_id = self.whoami.id_
-
-        user = self.request(f'user/{user_id}', method='patch', json={
-            "firstname": firstname,
-            "lastname": lastname,
-            "password": password,
-            "organization_id": organization,
-            "rules": rules,
-            "roles": roles
-        })
-        return user
 
 
 class ContainerClient(ClientBase):
