@@ -1,7 +1,8 @@
 """
-Server IO
+vantage6 clients
 
-This module is an interface to the central server.
+This module is contains a base client. From this base client the container
+client (client used by master algorithms) and the user client are derived.
 """
 import logging
 import pickle
@@ -9,6 +10,8 @@ import typing
 import jwt
 import requests
 import pyfiglet
+
+from pathlib import Path
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
@@ -23,16 +26,14 @@ LEGACY = 'legacy'
 
 
 class ServerInfo(typing.NamedTuple):
-    """ Data-class to store the server info
-    """
+    """Data-class to store the server info."""
     host: str
     port: int
     path: str
 
 
 class WhoAmI(typing.NamedTuple):
-    """ Data-class to store Authenticable information in.
-    """
+    """ Data-class to store Authenticable information in."""
     type_: str
     id_: int
     name: str
@@ -43,29 +44,30 @@ class WhoAmI(typing.NamedTuple):
         return (f"<WhoAmI "
                 f"name={self.name}, "
                 f"type={self.type_}, "
-                f"organization={self.organization_name}"
+                f"organization={self.organization_name}, "
+                f"(id={self.organization_id})"
                 ">")
 
 
 class ClientBase(object):
     """Common interface to the central server.
 
-    It manages the connection settings and constructs request paths,
-    allows for authentication task creation and result retrieval.
+    Contains the basis for all other clients. This includes a basic interface
+    to authenticate, generic request, creating tasks and result retrieval.
     """
 
-    def __init__(self, host: str, port: int, path: str = '/api',
-                 private_key_file: str = None):
-        """ Initialization of the communcation protocol class.
 
-            :param host: hostname/ip including protocol (http/https)
-            :param port: port to which the central server listens
-            :param path: endpoint at the server to where the server
-                side application runs
-            :param private_key_file: local path to the private key file
-                of the organization.
+    def __init__(self, host: str, port: int, path: str = '/api'):
+        """Basic setup for the client
 
-            TODO private_key_file is not used here
+        Parameters
+        ----------
+        host : str
+            Adress (including protocol, e.g. `https://`) of the vantage6 server
+        port : int
+            port numer to which the server listens
+        path : str, optional
+            path of the api, by default '/api'
         """
 
         self.log = logging.getLogger(module_name)
@@ -84,69 +86,88 @@ class ClientBase(object):
         self.whoami = None
 
     @property
-    def name(self):
-        """Return the node's/client's name."""
+    def name(self) -> str:
+        """Return the node's/client's name"""
         return self.whoami.name
 
     @property
-    def headers(self):
-        """Headers that are send with each request."""
+    def headers(self) -> dict:
+        """Headers that are send with each request"""
         if self._access_token:
             return {'Authorization': 'Bearer ' + self._access_token}
         else:
             return {}
 
     @property
-    def token(self):
-        """Authorization token."""
+    def token(self) -> str:
+        """JWT Authorization token"""
         return self._access_token
 
     @property
-    def host(self):
-        """Host including protocol (HTTP/HTTPS)."""
+    def host(self) -> str:
+        """Host including protocol (HTTP/HTTPS)"""
         return self.__host
 
     @property
-    def port(self):
-        """Port from the central server."""
+    def port(self) -> int:
+        """Port to vantage6-server listens"""
         return self.__port
 
     @property
-    def base_path(self):
-        """Combination of host, port and api-path."""
+    def path(self) -> str:
+        """Path/endpoint at the server where the api resides"""
+        return self.__api_path
+
+    @property
+    def base_path(self) -> str:
+        """Combination of host, port and api-path"""
         if self.__port:
             return f"{self.host}:{self.port}{self.__api_path}"
 
         return f"{self.host}{self.__api_path}"
 
-    def generate_path_to(self, endpoint: str):
-        """ Generate URL from host, port and endpoint.
+    def generate_path_to(self, endpoint: str) -> str:
+        """Generate URL to endpoint using host, port and endpoint
 
-            :param endpoint: endpoint to reach at the server
+        Parameters
+        ----------
+        endpoint : str
+            endpoint to which a fullpath needs to be generated
+
+        Returns
+        -------
+        str
+            URL to the endpoint
         """
         if endpoint.startswith('/'):
             path = self.base_path + endpoint
         else:
             path = self.base_path + '/' + endpoint
 
-        # self.log.debug(f"Generated path to {path}")
         return path
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params=None, first_try=True):
-        """ Create HTTP(S) request to the central server.
+                params: dict=None, first_try: bool=True) -> dict:
+        """Create http(s) request to the vantage6 server
 
-            It can contain a payload (JSON) in case of a POST method.
+        Parameters
+        ----------
+        endpoint : str
+            Endpoint of the server
+        json : dict, optional
+            payload, by default None
+        method : str, optional
+            Http verb, by default 'get'
+        params : dict, optional
+            URL parameters, by default None
+        first_try : bool, optional
+            Whenever this is the first attemt of this request, by default True
 
-            :param endpoint: endpoint at the server to which the request
-                should be send
-            :param json: payload to send with the request
-            :param method: HTTP method to use
-            :param params: additional parameters to sent with the
-                request
+        Returns
+        -------
+        dict
+            Eesponse of the server
         """
-        assert self._access_token, \
-            "Sending a request can only be done after authentication"
 
         # get appropiate method
         rest_method = {
@@ -170,8 +191,7 @@ class ClientBase(object):
             self.log.error(f"Reason: {response.json().get('msg')}")
 
         if response.status_code > 210:
-            # self.log.debug(f"Server did respond code={response.status_code}\
-            #     and message={response.get('msg', 'None')}")
+
             self.log.error(
                 f'Server responded with error code: {response.status_code}')
             self.log.error("msg:"+response.json().get("msg", ""))
@@ -183,25 +203,21 @@ class ClientBase(object):
             else:
                 self.log.error("Nope, refreshing the token didn't fix it.")
 
-        # self.log.debug(f"Response data={response.json()}")
         return response.json()
 
-    def setup_encryption(self, private_key_file) -> CryptorBase:
-        """ Enable the encryption module for the communcation.
+    def setup_encryption(self, private_key_file: str) -> None:
+        """Enable the encryption module fot the communication
 
-            This will attach a Cryptor object to the server_io. It will
-            first check that the public_key stored at the server is the
-            same as the one that is locally derived from the private
-            key. If this is not the case, the new public key will be
-            uploaded to the server.
+        This will attach a Crypter object to the client. It will also
+        verify that the public key at the server matches the local
+        private key. In case they differ, the local public key is uploaded
+        to the server.
 
-            :param private_key_file: local path to the private key
-            :param disabled: boolean value to indicate that encryption
-                is disabled. Only recommended for testing or debugging
-                purposes.
+        Parameters
+        ----------
+        private_key_file : str
+            File path of the private key file
 
-            TODO update other parties when a new public_key is posted
-            TODO clean up this method can be shorter
         """
         assert self._access_token, \
             "Encryption can only be setup after authentication"
@@ -211,6 +227,9 @@ class ClientBase(object):
         if private_key_file is None:
             self.cryptor = DummyCryptor()
             return
+
+        if isinstance(private_key_file, str):
+            private_key_file = Path(private_key_file)
 
         cryptor = RSACryptor(private_key_file)
 
@@ -248,17 +267,25 @@ class ClientBase(object):
 
         self.cryptor = cryptor
 
-    def authenticate(self, credentials: dict, path="token/user"):
-        """Authenticate to the central server.
+    def authenticate(self, credentials: dict, path: str="token/user") -> None:
+        """Authenticate to the vantage6-server
 
-            It allows signin for all identities (user, node, container).
-            Therefore credentials can be either a username/password
-            combination or a JWT authorization token
+        It allows users, nodes and containers to sign in. Credentials can
+        either be a username/password combination or a JWT authorization
+        token.
 
-            :param credentials: username/password or apikey as a dict
-            :param path: path to authentication endpoint. For a user
-                this is `token/user`, for a node `token/node` and for
-                a container `token/container`.
+        Parameters
+        ----------
+        credentials : dict
+            Credentials used to authenticate
+        path : str, optional
+            Endpoint used for authentication. This differs for users, nodes and
+            containers, by default "token/user"
+
+        Raises
+        ------
+        Exception
+            Failed to authenticate
         """
         self.log.debug(f"Authenticating using {credentials}")
 
@@ -278,12 +305,14 @@ class ClientBase(object):
         self.__refresh_token = data.get("refresh_token")
         self.__refresh_url = data.get("refresh_url")
 
-    def refresh_token(self):
-        """ Refresh an expired token.
+    def refresh_token(self) -> None:
+        """Refresh an expired token using the refresh token
 
-            TODO create a more helpful Exception
+        Raises
+        ------
+        Exception
+            Authentication Error!
         """
-
         self.log.info("Refreshing token")
         assert self.__refresh_url, \
             "Refresh URL not found, did you authenticate?"
@@ -312,22 +341,36 @@ class ClientBase(object):
                   input_='', description='',
                   organization_ids: list = None,
                   data_format=LEGACY) -> dict:
-        """ Post a new task at the server.
+        """Post a new task at the server
 
-            It will also encrypt `input_` for each receiving
-            organization.
+        It will also encrypt `input_` for each receiving organization.
 
-            :param name: human-readable name of the task
-            :param image: docker image name of the task
-            :param collaboration_id: id of the collaboration in which
-                this task needs to be executed
-            :param input_: input for the algorithm
-            :param description: human readable description of the task
-            :param organization_ids: id's of the organizations that need
-                to execute the task
-            :param data_format: Type of data format to use to send and receive
-                data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
-                will use pickle serialization. Default is 'legacy'.
+        Parameters
+        ----------
+        name : str
+            Human readable name for the task
+        image : str
+            Docker image name containing the algorithm
+        collaboration_id : int
+            Collaboration `id` of the collaboration for which the task is
+            intended
+        input_ : str, optional
+            Task input, by default ''
+        description : str, optional
+            Human readable description of the task, by default ''
+        organization_ids : list, optional
+            Ids of organizations (within the collaboration) that need to
+            execute this task, by default None
+        data_format : str, optional
+            Type of data format to use to send and receive
+            data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
+            will use pickle serialization. Default is 'legacy'., by default
+            LEGACY
+
+        Returns
+        -------
+        dict
+            Containing the task meta-data
         """
         assert self.cryptor, "Encryption has not yet been setup!"
 
@@ -361,26 +404,37 @@ class ClientBase(object):
             "organizations": organization_json_list
         })
 
-    def get_results(self, id=None, state=None, include_task=False,
-                    task_id=None, node_id=None):
-        """Get task result(s) from the central server.
+    def get_results(self, id: int=None, state: str=None,
+                    include_task: bool=False, task_id: int=None,
+                    node_id: int=None) -> dict:
+        """Get task result(s) from the central server
 
-            Depending if a `id` is specified or not, either a single or
-            a list of results is returned. The input and result field
-            of the result are attempted te be decrypted. This fails if
-            the public key at the server is not derived from the
-            currently private key.
+        Depending if a `id` is specified or not, either a single or a
+        list of results is returned. The input and result field of the
+        result are attempted te be decrypted. This fails if the public
+        key at the server is not derived from the currently private key
+        or when the result is not from your organization.
 
-            :param id: id of the result
-            :param state: the state of the task (e.g. `open`)
-            :param include_task: whenever to include the orginating task
-            :param task_id: the id of the originating task, this will
-                return all results belonging to this task
-            :param node_id: the id of the node at which this result has
-                been produced, this will return all results from this
-                node
+        Parameters
+        ----------
+        id : int, optional
+            Id of the result, by default None
+        state : str, optional
+            The state of the task (e.g. `open`), by default None
+        include_task : bool, optional
+            Whenever to include the orginating task, by default False
+        task_id : int, optional
+            The id of the originating task, this will return all results
+            belonging to this task, by default None
+        node_id : int, optional
+            The id of the node at which this result has been produced,
+            this will return all results from this node, by default None
+
+        Returns
+        -------
+        dict
+            Containing the result(s)
         """
-
         def decrypt_result(res):
             """Helper to decrypt the keys 'input' and 'result' in dict.
 
@@ -435,18 +489,31 @@ class ClientBase(object):
 
         return results
 
-class SubClient:
-    def __init__(self, parent: ClientBase):
-            self.parent = parent
+    class SubClient:
+        """Create sub groups of commands using this SubClient"""
+        def __init__(self, parent):
+                self.parent = parent
+
 
 class UserClient(ClientBase):
-    """ User interface to the central server."""
+    r"""User interface to the vantage6-server"""
 
     def __init__(self, *args, verbose=False, **kwargs):
+        """Create user client
+
+        All paramters from `ClientBase` can be used here.
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            Whenever to print (info) messages, by default False
+        """
         super(UserClient, self).__init__(*args, **kwargs)
 
-        self.verbose = verbose
+        # Replace logger by print logger
+        self.log = self.Log(verbose)
 
+        # attach sub-clients
         self.util = self.Util(self)
         self.collaboration = self.Collaboration(self)
         self.organization = self.Organization(self)
@@ -454,31 +521,47 @@ class UserClient(ClientBase):
         self.result = self.Result(self)
         self.task = self.Task(self)
         self.role = self.Role(self)
+        self.node = self.Node(self)
 
-
-        self.print(" Welcome to")
+        # Display welcome message
+        self.log.info(" Welcome to")
         for line in pyfiglet.figlet_format(APPNAME, font='big').split('\n'):
-            self.print(line)
-        self.print(" --> Join us on Discord! https://discord.gg/rwRvwyK")
-        self.print(" --> Docs: https://docs.vantage6.ai")
-        self.print(" --> Blog: https://vantage6.ai")
-        self.print("-" * 45)
+            self.log.info(line)
+        self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
+        self.log.info(" --> Docs: https://docs.vantage6.ai")
+        self.log.info(" --> Blog: https://vantage6.ai")
+        self.log.info("-" * 45)
 
-    def print(self, msg):
-        if self.verbose:
-            print(f'{msg}')
+    class Log:
+        """Replaces the default logging meganism by print statements"""
+        def __init__(self, enabled: bool):
+            """Create print-logger
 
-    def authenticate(self, username: str, password: str):
-        """Authenticate as a user.
+            Parameters
+            ----------
+            enabled : bool
+                Whenever to enable logging
+            """
+            self.enabled = enabled
+            for level in ['debug', 'info', 'warn', 'warning', 'error',
+                          'critical']:
+                self.__setattr__(level, self.print)
+
+        def print(self, msg: str) -> None:
+            if self.enabled:
+                print(f'{msg}')
+
+    def authenticate(self, username: str, password: str) -> None:
+        """Authenticate as a user
 
         It also collects some additional info about your user.
 
         Parameters
         ----------
         username : str
-            Your first name
+            Username used to authenticate
         password : str
-            Your password
+            Password used to authenticate
         """
         super(UserClient, self).authenticate({
             "username": username,
@@ -487,29 +570,35 @@ class UserClient(ClientBase):
 
         # identify the user and the organization to which this user
         # belongs. This is usefull for some client side checks
-        type_ = "user"
-        id_ = jwt.decode(self.token, verify=False)['identity']
-        user = self.request(f"user/{id_}")
-        name = user.get("firstname")
-        organization_id = user.get("organization").get("id")
-        organization = self.request(f"organization/{organization_id}")
-        organization_name = organization.get("name")
+        try:
+            type_ = "user"
+            id_ = jwt.decode(self.token, verify=False)['identity']
+            user = self.request(f"user/{id_}")
+            name = user.get("firstname")
+            organization_id = user.get("organization").get("id")
+            organization = self.request(f"organization/{organization_id}")
+            organization_name = organization.get("name")
 
-        self.whoami = WhoAmI(
-            type_=type_,
-            id_=id_,
-            name=name,
-            organization_id=organization_id,
-            organization_name=organization_name
-        )
-        self.print(f" --> Succesfully authenticated")
-        self.print(f" --> Name: {name} (id={id_})")
-        self.print(f" --> Organization: {organization_name} (id={organization_id})")
+            self.whoami = WhoAmI(
+                type_=type_,
+                id_=id_,
+                name=name,
+                organization_id=organization_id,
+                organization_name=organization_name
+            )
 
-    class Util(SubClient):
+            self.log.info(f" --> Succesfully authenticated")
+            self.log.info(f" --> Name: {name} (id={id_})")
+            self.log.info(f" --> Organization: {organization_name} (id={organization_id})")
+        except Exception as e:
+            self.log.info(f'--> Retrieving additional user info failed!')
+            self.log.debug(e)
 
-        def get_server_version(self):
-            """View the version number of the vantage6-server.
+    class Util(ClientBase.SubClient):
+        """Collection of general utilities"""
+
+        def get_server_version(self) -> dict:
+            r"""View the version number of the vantage6-server
 
             Returns
             -------
@@ -518,26 +607,97 @@ class UserClient(ClientBase):
             """
             return self.parent.request('version')
 
-        def get_server_health(self):
+        def get_server_health(self) -> dict:
+            """View the health of the vantage6-server
+
+            Returns
+            -------
+            dict
+                Containing the server health information
+            """
             return self.parent.request('health')
 
-        def reset_my_password(self, email: str=None, username: str=None):
+        def reset_my_password(self, email: str=None, username: str=None) -> dict:
+            """Start reset password procedure
+
+            Either a username of email needs to be provided.
+
+            Parameters
+            ----------
+            email : str, optional
+                Email address of your account, by default None
+            username : str, optional
+                Username of your account, by default None
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
             assert email or username, "You need to provide username or email!"
-            msg = self.parent.request('recover/lost', method='post', json={
+            result = self.parent.request('recover/lost', method='post', json={
                 'username': username,
                 'email': email
             })
-            print(f'--> {msg}')
+            msg = result.get('msg')
+            self.parent.log.info(f'--> {msg}')
+            return result
 
-        def set_my_password(self, token: str, password: str):
-            msg = self.parent.request('recover/reset', method='post', json={
+        def set_my_password(self, token: str, password: str) -> dict:
+            """Set a new password using a recovery token
+
+            Token kan be obtained through `.reset_password(...)`
+
+            Parameters
+            ----------
+            token : str
+                Token obtained from `reset_password`
+            password : str
+                New password
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            result = self.parent.request('recover/reset', method='post', json={
                 'reset_token': token,
                 'password': password
             })
-            print(f'--> {msg}')
+            msg = result.get('msg')
+            self.parent.log.info(f'--> {msg}')
+            return result
 
+        def generate_private_key(self, file_: str=None) -> None:
+            """Generate new private key
 
-    class Collaboration(SubClient):
+            ....
+
+            Parameters
+            ----------
+            file_ : str, optional
+                Path where to store the private key, by default None
+            """
+
+            if not file_:
+                self.parent.log.info('--> Using current directory')
+                file_ = "private_key.pem"
+
+            if isinstance(file_, str):
+                file_ = Path(file_).absolute()
+
+            self.parent.log.info(f'--> Generating private key file: {file_}')
+            private_key = RSACryptor.create_new_rsa_key(file_)
+
+            self.parent.log.info('--> Assigning private key to client')
+            self.parent.cryptor.private_key = private_key
+
+            self.parent.log.info('--> Encrypting the client and uploading '
+                                 'the public key')
+            self.parent.setup_encryption(file_)
+
+    class Collaboration(ClientBase.SubClient):
+        """Collection of collaboration requests"""
 
         @post_filtering()
         def list(self, scope: str='organization') -> dict:
@@ -562,11 +722,11 @@ class UserClient(ClientBase):
             elif scope == 'global':
                 return self.parent.request(f'collaboration')
             else:
-                print('--> Unrecognized `scope`. Need to be `organization` or '
-                      '`global`')
+                self.parent.log.info('--> Unrecognized `scope`. Need to be '
+                                     '`organization` or `global`')
 
         @post_filtering(iterable=False)
-        def get(self, id_: int):
+        def get(self, id_: int) -> dict:
             """View specific collaboration
 
             Parameters
@@ -581,26 +741,161 @@ class UserClient(ClientBase):
             """
             return self.request(f'collaboration/{id_}')
 
-    class Organization(SubClient):
-
-        @post_filtering()
-        def list(self) -> list:
-            return self.parent.request(f'organization')
-
         @post_filtering(iterable=False)
-        def get(self, id_: int=None) -> dict:
-            """View organization information.
+        def create(self, name: str, organizations: list,
+                   encrypted: bool=False) -> dict:
+            """Create new collaboration
 
             Parameters
             ----------
-            id_ : int, optional
-                Organization `id` of the organization you want to view. In case
-                no `id` is profided it will display your own organization.
+            name : str
+                Name of the collaboration
+            organizations : list
+                List of organization ids which participate in the
+                collaboration
+            encrypted : bool, optional
+                Whenever the collaboration should be encrypted or not,
+                by default False
 
             Returns
             -------
             dict
-                Containing the organization information
+                Containing the new collaboration meta-data
+            """
+            return self.parent.request('collaboration', method='post', json={
+                'name': name,
+                'organization_ids': organizations,
+                'encrypted': encrypted
+            })
+
+    class Node(ClientBase.SubClient):
+        """Collection of node requests"""
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int) -> dict:
+            """View specific node
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the node you want to inspect
+
+            Returns
+            -------
+            dict
+                Containing the node meta-data
+            """
+            return self.parent.request(f'node/{id_}')
+
+        @post_filtering()
+        def list(self) -> list:
+            """List nodes
+
+            Returns
+            -------
+            list of dicts
+                Containing meta-data of the nodes
+            """
+            return self.parent.request('node')
+
+        @post_filtering(iterable=False)
+        def create(self, collaboration: int, organization: int=None) -> dict:
+            """Register new node
+
+            Parameters
+            ----------
+            collaboration : int
+                Collaboration id to which this node belongs
+            organization : int, optional
+                Organization id to which this node belongs. If no id provided
+                the users organization is used. By default None
+
+            Returns
+            -------
+            dict
+                Containing the meta-data of the new node
+            """
+            if not organization:
+                organization = self.parent.whoami.organization_id
+
+            return self.parent.request('node', method='post', json={
+                'organization_id': organization,
+                'collaboration_id': collaboration
+            })
+
+        @post_filtering(iterable=False)
+        def update(self, id_: int, name: str=None, organization: int=None,
+                   collaboration: int=None) -> dict:
+            """Update node information
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the node you want to update
+            name : str, optional
+                New node name, by default None
+            organization : int, optional
+                Change the owning organization of the node, by default
+                None
+            collaboration : int, optional
+                Changes the collaboration to which the node belongs, by
+                default None
+
+            Returns
+            -------
+            dict
+                Containing the meta-data of the updated node
+            """
+            return self.parent.request(f'node/{id_}', method='patch', json={
+                'name': name,
+                'organization_id': organization,
+                'collaboration_id': collaboration
+            })
+
+        def delete(self, id_: int) -> dict:
+            """Deletes a node
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the node you want to delete
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            return self.parent.request(f'node/{id_}', method='delete')
+
+    class Organization(ClientBase.SubClient):
+        """Collection of organization requests"""
+
+        @post_filtering()
+        def list(self) -> list:
+            """List of organizations
+
+            Returns
+            -------
+            list of dicts
+                Containing meta-data information of the organizations
+            """
+            return self.parent.request(f'organization')
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int=None) -> dict:
+            """View specific organization
+
+            Parameters
+            ----------
+            id_ : int, optional
+                Organization `id` of the organization you want to view.
+                In case no `id` is profided it will display your own
+                organization, default value is None.
+
+            Returns
+            -------
+            dict
+                Containing the organization meta-data
             """
             if not id_:
                 id_ = self.parent.whoami.organization_id
@@ -635,19 +930,26 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                The information of the updated organization
+                The meta-data of the updated organization
             """
-            return self.parent.request('organization', method='patch', json={
-                'name': name,
-                'address1': address1,
-                'address2': address2,
-                'zipcode': zipcode,
-                'county': country,
-                'domain': domain,
-                'public_key': public_key
-            })
+            if not id_:
+                id_ = self.parent.whoami.organization_id
 
-    class User(SubClient):
+            return self.parent.request(
+                f'organization/{id_}',
+                method='patch',
+                json={
+                    'name': name,
+                    'address1': address1,
+                    'address2': address2,
+                    'zipcode': zipcode,
+                    'county': country,
+                    'domain': domain,
+                    'public_key': public_key
+                }
+            )
+
+    class User(ClientBase.SubClient):
 
         @post_filtering()
         def list(self) -> list:
@@ -655,8 +957,8 @@ class UserClient(ClientBase):
 
             Returns
             -------
-            list
-                List of users
+            list of dicts
+                Containing the meta-data of the users
             """
             return self.parent.request('user')
 
@@ -667,8 +969,8 @@ class UserClient(ClientBase):
             Parameters
             ----------
             id_ : int, optional
-                User `id`, by default None. When no `id` is provided your own
-                user information is displayed
+                User `id`, by default None. When no `id` is provided
+                your own user information is displayed
 
             Returns
             -------
@@ -684,14 +986,15 @@ class UserClient(ClientBase):
                    lastname: str=None, password: str=None,
                    organization: int=None, rules: list=None,
                    roles: list=None) -> dict:
-            """Update user details.
+            """Update user details
 
-            In case you do not supply a user_id, your user is being updated.
+            In case you do not supply a user_id, your user is being
+            updated.
 
             Parameters
             ----------
             user_id : int
-                User id from the user you want to update
+                User `id` from the user you want to update
             firstname : str
                 Your first name
             lastname : str
@@ -699,24 +1002,24 @@ class UserClient(ClientBase):
             password : str
                 The password you use to login
             organization : int
-                Organization id of the organization you want to be part of.
-                This can only done by super-users.
+                Organization id of the organization you want to be part
+                of. This can only done by super-users.
             rules : list of ints
-                USE WITH CAUTION! Rule ids that should be assigned to this
-                user. All previous assigned rules will be removed!
+                USE WITH CAUTION! Rule ids that should be assigned to
+                this user. All previous assigned rules will be removed!
             roles : list of ints
-                USE WITH CAUTION! Role ids that should be assigned to this
-                user. All previous assigned roles will be removed!
+                USE WITH CAUTION! Role ids that should be assigned to
+                this user. All previous assigned roles will be removed!
 
             Returns
             -------
             dict
-                A dict containing the user information
+                A dict containing the updated user data
             """
             if not id_:
-                id_ = self.whoami.id_
+                id_ = self.parent.whoami.id_
 
-            user = self.request(f'user/{id_}', method='patch', json={
+            user = self.parent.request(f'user/{id_}', method='patch', json={
                 "firstname": firstname,
                 "lastname": lastname,
                 "password": password,
@@ -735,7 +1038,8 @@ class UserClient(ClientBase):
             Parameters
             ----------
             username : str
-                Used to login to the service. This can not be changed later.
+                Used to login to the service. This can not be changed
+                later.
             firstname : str
                 Firstname of the new user
             lastname : str
@@ -745,16 +1049,17 @@ class UserClient(ClientBase):
             organization : int
                 Organization `id` this user should belong to
             roles : list of ints
-                Role ids that are assigned to this user. Note that you can only
-                assign roles if you own the rules within this role
+                Role ids that are assigned to this user. Note that you
+                can only assign roles if you own the rules within this
+                role.
             rules : list of ints
-                Rule ids that are assigned to this user. Note that you can only
-                assign rules that you own
+                Rule ids that are assigned to this user. Note that you
+                can only assign rules that you own
 
             Return
             ----------
             dict
-                Containing information about the new user
+                Containing data of the new user
             """
             user_data = {
                 'username': username,
@@ -766,21 +1071,60 @@ class UserClient(ClientBase):
                 'roles': roles,
                 'rules': rules
             }
-            return self.request('user', json=user_data, method='post')
+            return self.parent.request('user', json=user_data, method='post')
 
-    class Role(SubClient):
+    class Role(ClientBase.SubClient):
 
         @post_filtering()
         def list(self) -> list:
+            """List of roles
+
+            Returns
+            -------
+            list of dicts
+                Containing roles meta-data
+            """
             return self.parent.request('role')
 
         @post_filtering(iterable=True)
-        def get(self, id_: int):
+        def get(self, id_: int) -> dict:
+            """View specific role
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the role you want to insepct
+
+            Returns
+            -------
+            dict
+                Containing meta-data of the role
+            """
             return self.parent.request(f'roles/{id_}')
 
         @post_filtering(iterable=True)
         def create(self, name: str, description: str, rules: list,
-                   organization: int=None):
+                   organization: int=None) -> dict:
+            """Register new role
+
+            Parameters
+            ----------
+            name : str
+                Role name
+            description : str
+                Human readable description of the role
+            rules : list
+                Rules that this role contains
+            organization : int, optional
+                Organization to which this role belongs. In case this is
+                not provided the users organization is used. By default
+                None
+
+            Returns
+            -------
+            dict
+                Containing meta-data of the new role
+            """
             if not organization:
                 organization = self.parent.whoami.organization_id
             return self.parent.request('roles', method='post', json={
@@ -793,6 +1137,26 @@ class UserClient(ClientBase):
         @post_filtering(iterable=True)
         def update(self, role: int, name: str=None, description: str=None,
                    rules: list=None) -> dict:
+            """Update role
+
+            Parameters
+            ----------
+            role : int
+                Id of the role that updated
+            name : str, optional
+                New name of the role, by default None
+            description : str, optional
+                New description of the role, by default None
+            rules : list, optional
+                CAUTION! This will not *add* rules but replace them. If
+                you remove rules from your own role you lose access. By
+                default None
+
+            Returns
+            -------
+            dict
+                Containing the updated role data
+            """
             return self.parent.request(f'role/{role}', method='patch', json={
                 'name': name,
                 'description': description,
@@ -800,19 +1164,59 @@ class UserClient(ClientBase):
             })
 
         def delete(self, role: int) -> dict:
-            res = self.parent.request(f'role/{role}', method='delete')
-            print(f'--> {res["msg"]}')
+            """Delete role
 
-    class Task(SubClient):
+            Parameters
+            ----------
+            role : int
+                CAUTION! Id of the role to be deleted. If you remove
+                roles that are attached to you, you might lose access!
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            res = self.parent.request(f'role/{role}', method='delete')
+            self.parent.log.info(f'--> {res.get("msg")}')
+
+    class Task(ClientBase.SubClient):
 
         @post_filtering(iterable=False)
-        def get(self, id_: int, include_results: bool=False):
+        def get(self, id_: int, include_results: bool=False) -> dict:
+            """View specific task
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the task you want to view
+            include_results : bool, optional
+                Whenever to include the results or not, by default False
+
+            Returns
+            -------
+            dict
+                Containing the task data
+            """
             params = {}
             params['include'] = 'results' if include_results else None
             return self.parent.request(f'task/{id_}', params=params)
 
         @post_filtering()
-        def list(self, include_results: bool=False):
+        def list(self, include_results: bool=False) -> list:
+            """List tasks
+
+            Parameters
+            ----------
+            include_results : bool, optional
+                Whenever to include the results in the tasks, by default
+                False
+
+            Returns
+            -------
+            list of dicts
+                Containing data of the tasks
+            """
             params = {}
             params['include'] = 'results' if include_results else None
             return self.parent.request('task', params=params)
@@ -820,64 +1224,105 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
-                   data_format=LEGACY):
+                   data_format: str=LEGACY) -> dict:
+            """Create a new task
+
+            Parameters
+            ----------
+            collaboration : int
+                Id of the collaboration to which this task belongs
+            organizations : list
+                Organization ids (within the collaboration) which need
+                to execute this task
+            name : str
+                Human readable name
+            image : str
+                Docker image name which contains the algorithm
+            description : str
+                Human readable description
+            input : dict
+                Algorithm input
+            data_format : str, optional
+                IO data format used, by default LEGACY
+
+            Returns
+            -------
+            dict
+                [description]
+            """
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
                                          data_format)
 
-        def delete(self, id_: int):
+        def delete(self, id_: int) -> dict:
+            """Delete a task
+
+            Also removes the related results.
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the task to be removed
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
             msg = self.parent.request(f'task/{id_}', method='delete')
-            self.parent.print(f'--> {msg}')
+            self.parent.log.info(f'--> {msg}')
 
-    class Result(SubClient):
+    class Result(ClientBase.SubClient):
 
-        def get(self, id_: int) -> dict:
-            return self.parent.request(f'result/{id_}')
+        @post_filtering(iterable=False)
+        def get(self, id_: int, include_task: bool=False) -> dict:
+            """View a specific result
 
-        def list(self):
-            self.parent.print('--> Results not decrypted...!')
-            return self.parent.request('result')
+            Parameters
+            ----------
+            id_ : int
+                id of the result you want to inspect
+            include_task : bool, optional
+                Whenever to include the task or not, by default False
 
-    @post_filtering(iterable=False)
-    def view_result(self, id, state=None, include_task=False,
-                    task_id=None, node_id=None):
-        """View results.
+            Returns
+            -------
+            dict
+                Containing the result data
+            """
+            self.parent.log.info('--> Attempting to decrypt results!')
 
-        View the results from a computation task. Note that the result
-        might not be finished yet.
+            # get_results also handles decryption
+            result = self.parent.get_results(id=id_, include_task=include_task)
+            result_data = result.get('result')
+            if result_data:
+                result['result'] = deserialization.load_data(result_data)
 
-        Parameters
-        ----------
-        id : int
-            Id of the result you want to view
-        state : str (optional)
-            State of the task
-        password : str (optional)
-            The password you use to login
-        organization : int (optional)
-            Organization id of the organization you want to be part of.
-            This can only done by super-users.
+            return result
 
-        Returns
-        -------
-        dict
-            A dict containing the result
-        """
-        results = super().get_results(
-            id=id, state=state,
-            include_task=include_task, task_id=task_id, node_id=node_id
-        )
+        @post_filtering()
+        def list(self, include_task: bool=False) -> list:
+            """List results
 
-        unpacked_results = []
-        for result in results:
-            if result.get("result"):
-                result["result"] = deserialization.load_data(
-                    result.get('result')
-                )
-            unpacked_results.append(result)
+            Parameters
+            ----------
+            include_task : bool, optional
+                Whenever to include the task or not, by default False
 
-        return unpacked_results
+            Returns
+            -------
+            list of dicts
+                Containing the results data
+            """
+            results = self.parent.get_results(include_task=include_task)
+            cleaned_results = []
+            for result in results:
+                if result.get('result'):
+                    des_res = deserialization.load_data(result.get('result'))
+                    result['result'] = des_res
+                cleaned_results.append(result)
 
+            return cleaned_results
 
 
 class ContainerClient(ClientBase):
