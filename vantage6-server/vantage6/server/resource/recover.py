@@ -125,9 +125,9 @@ class RecoverPassword(ServicesResources):
             "password reset",
             sender="support@vantage6.ai",
             recipients=[user.email],
-            text_body=render_template("mail/reset_password.txt",
+            text_body=render_template("mail/reset_password_token.txt",
                                       token=reset_token),
-            html_body=render_template("mail/reset_password.html",
+            html_body=render_template("mail/reset_password_token.html",
                                       token=reset_token)
         )
 

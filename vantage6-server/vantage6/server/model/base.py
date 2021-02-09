@@ -132,7 +132,7 @@ class ModelBase:
             session = Database().object_session(self)
         session.delete(self)
         session.commit()
-        session.remove()
+        # session.remove()
 
     def update(self, include=None, exclude=None, **kwargs):
         """Update this instance using a dictionary."""

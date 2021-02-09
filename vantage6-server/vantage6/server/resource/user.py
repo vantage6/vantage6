@@ -253,10 +253,10 @@ class User(ServicesResources):
 
         # request parser is awefull with lists
         json_data = request.get_json()
-        if json_data['roles']:
+        if 'roles' in json_data:
             # validate that these roles exist
             roles = []
-            for role_id in data['roles']:
+            for role_id in json_data['roles']:
                 role = db.Role.get(role_id) # somehow a nontype endup here
                 if not role:
                     return {'msg': f'Role={role_id} can not be found!'}, \
@@ -271,10 +271,10 @@ class User(ServicesResources):
 
             user.roles = roles
 
-        if json_data['rules']:
+        if 'rules' in json_data:
             # validate that these rules exist
             rules = []
-            for rule_id in data['rules']:
+            for rule_id in json_data['rules']:
                 rule = db.Rule.get(rule_id)
                 if not rule:
                     return {'msg': f'Rule={rule_id} can not be found!'}, \
