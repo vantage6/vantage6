@@ -1324,6 +1324,20 @@ class UserClient(ClientBase):
 
             return cleaned_results
 
+        def from_task(self, task_id: int, include_task: bool=False):
+            self.parent.log.info('--> Attempting to decrypt results!')
+
+            # get_results also handles decryption
+            results = self.parent.get_results(task_id=task_id,
+                                             include_task=include_task)
+            cleaned_results = []
+            for result in results:
+                if result.get('result'):
+                    des_res = deserialization.load_data(result.get('result'))
+                    result['result'] = des_res
+                cleaned_results.append(result)
+
+            return cleaned_results
 
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
