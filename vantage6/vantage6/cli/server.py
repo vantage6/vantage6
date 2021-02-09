@@ -571,10 +571,31 @@ def check_if_docker_deamon_is_running(docker_client):
 #   version
 #
 @cli_server.command(name='version')
-def cli_server_version():
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=
+              DEFAULT_SERVER_SYSTEM_FOLDERS)
+def cli_server_version(name, system_folders):
     """Returns current version of vantage6 services installed."""
-    click.echo(__version__)
 
+    client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+
+    running_servers = client.containers.list(
+        filters={"label": f"{APPNAME}-type=node"})
+    running_server_names = [node.name for node in running_servers]
+
+    if not name:
+        name = q.select("Select the server you wish to inspect:",
+                        choices=running_server_names).ask()
+    else:
+        post_fix = "system" if system_folders else "user"
+        name = f"{APPNAME}-{name}-{post_fix}"
+
+    if name in running_server_names:
+        container = client.containers.get(name)
+        version = container.exec_run(cmd='vserver-local version', stdout = True)
+        click.echo({"server": version.output.decode('utf-8'), "cli":__version__})
 
 def print_log_worker(logs_stream):
     for log in logs_stream:

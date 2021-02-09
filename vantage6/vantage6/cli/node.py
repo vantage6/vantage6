@@ -632,46 +632,13 @@ def cli_node_version(name, system_folders):
 
     if name in running_node_names:
         container = client.containers.get(name)
-        version = container.exec_run(cmd = 'vnode-local files -c /mnt/config.yaml',
-                                     stdout = True)
-        click.echo(version)
-
-    # if name is None:
-    #     click.echo(__version__)
-
-    # else:
-    #     client = docker.from_env()
-    #     check_if_docker_deamon_is_running(client)
-    #     running_nodes = client.containers.list(
-    #     filters={"label": f"{APPNAME}-type=node"})
-    #     running_node_names = [node.name for node in running_nodes]
-
-    #     if name not in running_node_names:
-    #         name = q.select("Select the node you wish to inspect:",
-    #                     choices=running_node_names).ask()
-
-    #     elif name in running_node_names:
-    #         container = client.containers.get(name)
-    #         version = container.exec_run(cmd = 'vnode-local version',
-    #                                      stdout = True)
-    #         Thread(target=print_current_version, args=(version,), daemon=True)\
-    #                         .start()
-    #         while True:
-    #             try:
-    #                 time.sleep(1)
-    #             except KeyboardInterrupt:
-    #                 info("Keyboard Interrupt.")
-    #                 exit(0)
-    #     else:
-    #         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
+        version = container.exec_run(cmd='vnode-local version', stdout = True)
+        click.echo({"node": version.output.decode('utf-8'), "cli":__version__})
 
 
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
-
-def print_current_version():
-    print(__version__)
 
 
 def check_if_docker_deamon_is_running(docker_client):
