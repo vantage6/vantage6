@@ -11,7 +11,7 @@ from traitlets.config import get_config
 from colorama import (Fore, Style)
 from sqlalchemy.engine.url import make_url
 
-from vantage6.common import (info, warning, error,
+from vantage6.common import (echo, info, warning, error,
                              check_config_write_permissions)
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME, STRING_ENCODING
@@ -23,6 +23,7 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
+from vantage6.cli import __version__
 
 
 def click_insert_context(func):
@@ -135,7 +136,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
     except Exception:
         warning("... alas, no dice!")
     else:
-        info(" ... succes!")
+        info(" ... success!")
 
     info("Creating mounts")
     mounts = [
@@ -200,7 +201,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
         tty=True
     )
 
-    info(f"Succes! container id = {container}")
+    info(f"Success! container id = {container}")
 
 #
 #   list
@@ -361,7 +362,7 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     except Exception:
         warning("... alas, no dice!")
     else:
-        info(" ... succes!")
+        info(" ... success!")
 
     info("Creating mounts")
     mounts = [
@@ -428,7 +429,7 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     logs = container.logs(stream=True, stdout=True)
     Thread(target=print_log_worker, args=(logs,), daemon=False).start()
 
-    info(f"Succes! container id = {container.id}")
+    info(f"Success! container id = {container.id}")
 
     # print_log_worker(container.logs(stream=True))
     # for log in container.logs(stream=True):
@@ -564,6 +565,15 @@ def check_if_docker_deamon_is_running(docker_client):
     except Exception:
         error("Docker socket can not be found. Make sure Docker is running.")
         exit()
+
+
+#
+#   version
+#
+@cli_server.command(name='version')
+def cli_server_version():
+    """Returns current version of vantage6 services installed."""
+    click.echo(__version__)
 
 
 def print_log_worker(logs_stream):

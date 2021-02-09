@@ -42,6 +42,7 @@ from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
 )
+from vantage6.cli import __version__
 
 
 @click.group(name="node")
@@ -605,9 +606,72 @@ def cli_node_clean():
     info("Done!")
 
 
+#
+#   version
+#
+@cli_node.command(name='version')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_version(name, system_folders):
+    """Returns current version of vantage6 services installed."""
+
+    client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+
+    running_nodes = client.containers.list(
+        filters={"label": f"{APPNAME}-type=node"})
+    running_node_names = [node.name for node in running_nodes]
+
+    if not name:
+        name = q.select("Select the node you wish to inspect:",
+                        choices=running_node_names).ask()
+    else:
+        post_fix = "system" if system_folders else "user"
+        name = f"{APPNAME}-{name}-{post_fix}"
+
+    if name in running_node_names:
+        container = client.containers.get(name)
+        version = container.exec_run(cmd = 'vnode-local files -c /mnt/config.yaml',
+                                     stdout = True)
+        click.echo(version)
+
+    # if name is None:
+    #     click.echo(__version__)
+
+    # else:
+    #     client = docker.from_env()
+    #     check_if_docker_deamon_is_running(client)
+    #     running_nodes = client.containers.list(
+    #     filters={"label": f"{APPNAME}-type=node"})
+    #     running_node_names = [node.name for node in running_nodes]
+
+    #     if name not in running_node_names:
+    #         name = q.select("Select the node you wish to inspect:",
+    #                     choices=running_node_names).ask()
+
+    #     elif name in running_node_names:
+    #         container = client.containers.get(name)
+    #         version = container.exec_run(cmd = 'vnode-local version',
+    #                                      stdout = True)
+    #         Thread(target=print_current_version, args=(version,), daemon=True)\
+    #                         .start()
+    #         while True:
+    #             try:
+    #                 time.sleep(1)
+    #             except KeyboardInterrupt:
+    #                 info("Keyboard Interrupt.")
+    #                 exit(0)
+    #     else:
+    #         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
+
+
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
+
+def print_current_version():
+    print(__version__)
 
 
 def check_if_docker_deamon_is_running(docker_client):
