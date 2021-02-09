@@ -36,6 +36,7 @@ setup(
        'PyJWT==1.7.1',
        'pandas',
        'vantage6-common >= 1.2.3',
+       'pyfiglet==0.8.post1'
     ],
     tests_require=["pytest"],
     package_data={

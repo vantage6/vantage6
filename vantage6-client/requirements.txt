@@ -1,4 +1,5 @@
 cryptography==2.8
 requests==2.23.0
-PyJWT
+PyJWT==1.7.1
 vantage6-common >= 1.0.0b13
+pyfiglet==0.8.post1
