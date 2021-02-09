@@ -106,7 +106,7 @@ class ModelBase:
                 result = session.query(cls).filter_by(id=id_).one()
             except NoResultFound:
                 result = None
-        session.remove()
+        # session.remove()
         return result
 
     def save(self):
@@ -118,7 +118,7 @@ class ModelBase:
             else:
                 session = Database().object_session(self)
             session.commit()
-            session.remove()
+            # session.remove()
         except Exception as e:
             Database().Session.rollback()
             log.error("Saving to the database failed!")
