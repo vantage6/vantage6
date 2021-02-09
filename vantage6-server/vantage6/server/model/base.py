@@ -19,6 +19,11 @@ log = logging.getLogger(module_name)
 
 
 class Database(metaclass=Singleton):
+    """A singleton we can destroy, a module we cannot.
+
+        Thats why we want a singlton. This is especially usefull when creating
+        unit test in which we want fresh databases every now and then.
+    """
 
     def __init__(self):
         self.engine = None
@@ -60,8 +65,16 @@ class Database(metaclass=Singleton):
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
         self.engine = create_engine(uri, convert_unicode=True)
+
+        # we can call Session() to create a new unique session
+        # (self.Session is a session factory). Its also possible to use
+        # implicit access to the Session (without calling it first). The
+        # scoped session is scoped to the local thread the process is running
+        # in.
         self.Session = scoped_session(sessionmaker(autocommit=False,
-                                                   autoflush=False))
+                                                   autoflush=True))
+
+         # short hand to obtain a object-session.
         self.object_session = Session.object_session
 
         self.Session.configure(bind=self.engine)
@@ -82,7 +95,7 @@ class ModelBase:
     id = Column(Integer, primary_key=True)
 
     @classmethod
-    def get(cls, id_=None, with_session=False):
+    def get(cls, id_=None):
 
         session = Database().Session
 
@@ -93,24 +106,24 @@ class ModelBase:
                 result = session.query(cls).filter_by(id=id_).one()
             except NoResultFound:
                 result = None
-
-        if with_session:
-            return result, session
-
+        session.remove()
         return result
 
     def save(self):
         try:
+            # new objects do not have an `id`
             if self.id is None:
                 session = Database().Session
                 session.add(self)
             else:
                 session = Database().object_session(self)
             session.commit()
+            session.remove()
         except Exception as e:
             Database().Session.rollback()
             log.error("Saving to the database failed!")
             raise e
+
 
     def delete(self):
         if not self.id:
@@ -119,6 +132,7 @@ class ModelBase:
             session = Database().object_session(self)
         session.delete(self)
         session.commit()
+        session.remove()
 
     def update(self, include=None, exclude=None, **kwargs):
         """Update this instance using a dictionary."""
