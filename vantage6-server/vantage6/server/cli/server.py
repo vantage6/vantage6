@@ -25,6 +25,7 @@ from vantage6.server.configuration.configuration_wizard import (
     configuration_wizard
 )
 from vantage6.cli.context import ServerContext
+from vantage6.server._version import __version__
 
 
 help_ = {
@@ -254,3 +255,12 @@ def cli_server_shell(ctx):
     import vantage6.server.db as db
 
     IPython.embed(config=c)
+
+
+#
+#   version
+#
+@cli_server.command(name='version')
+def cli_server_version():
+    """Returns current version of vantage6 services installed."""
+    click.echo(__version__)
