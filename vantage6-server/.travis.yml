@@ -5,6 +5,12 @@ python:
   # - 3.8
   # - 3.8-dev
 
+branches:
+  - master
+  - DEV
+  - hotfix
+  - release/(.+)
+
 install:
   - pip install coverage
   - pip install python-coveralls
