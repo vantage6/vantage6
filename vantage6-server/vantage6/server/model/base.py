@@ -9,7 +9,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.util.langhelpers import NoneType
+from typing_extensions import final
 
 from vantage6.common import logger_name, Singleton
 
@@ -98,72 +100,61 @@ class ModelBase:
     def get(cls, id_=None):
 
         session = Database().Session
+        result = None
+        try:
+            if id_ is None:
+                result = session.query(cls).all()
+            else:
+                try:
+                    result = session.query(cls).filter_by(id=id_).one()
+                except NoResultFound:
+                    result = None
+        except InvalidRequestError as e:
+            log.warning('Exception on getting!')
+            log.debug(e)
+            session.invalidate()
+            session.rollback()
+        finally:
+            session.close()
 
-        if id_ is None:
-            result = session.query(cls).all()
-        else:
-            try:
-                result = session.query(cls).filter_by(id=id_).one()
-            except NoResultFound:
-                result = None
-        # session.remove()
         return result
 
     def save(self):
+
+        # new objects do not have an `id`
+        session = Database().object_session(self) if self.id else \
+            Database().Session
+
         try:
-            # new objects do not have an `id`
-            if self.id is None:
-                session = Database().Session
+            if not self.id:
                 session.add(self)
-            else:
-                session = Database().object_session(self)
             session.commit()
-            # session.remove()
-        except Exception as e:
-            Database().Session.rollback()
-            log.error("Saving to the database failed!")
-            raise e
+
+        except InvalidRequestError as e:
+            log.error("Exception when saving!")
+            log.debug(e)
+            session.invalidate()
+            session.rollback()
+
+        finally:
+            session.close()
 
 
     def delete(self):
-        if not self.id:
-            session = Database().Session
-        else:
-            session = Database().object_session(self)
-        session.delete(self)
-        session.commit()
-        # session.remove()
+        session = Database().object_session(self) if self.id else \
+            Database().Session
 
-    def update(self, include=None, exclude=None, **kwargs):
-        """Update this instance using a dictionary."""
+        try:
+            session.delete(self)
+            session.commit()
 
-        # Get a list of attributes available to this class.
-        # This should exclude relationships!
-        inst = inspect(self)
-        cols = [c_attr.key for c_attr in inst.mapper.column_attrs]
-        cols = set(cols)
+        except InvalidRequestError as e:
+            log.info("Exception when deleting!")
+            log.debug(e)
+            session.invalidate()
+            session.rollback()
 
-        # Cast the list of attributes we're trying to update to a set.
-        keys = set(kwargs.keys())
-
-        # Only *keep* keys listed in `include`
-        if include:
-            if not isinstance(include, NoneType):
-                include = [include, ]
-            include = set(include)
-            keys = keys & include
-
-        # Remove any keys that are in `exclude`
-        if exclude:
-            if not isinstance(exclude, NoneType):
-                exclude = [exclude, ]
-            exclude = set(exclude)
-            keys = keys - exclude
-
-        # Keep only those keys that are proper attributes
-        attrs = cols.intersection(keys)
-        for attr in attrs:
-            setattr(self, attr, kwargs[attr])
-
+        finally:
+            session.close()
 
 Base = declarative_base(cls=ModelBase)

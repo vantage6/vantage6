@@ -4,6 +4,7 @@ import logging
 from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
+from sqlalchemy.exc import InvalidRequestError
 
 from vantage6.server.resource import ServicesResources
 from vantage6.common import logger_name
@@ -27,6 +28,13 @@ def setup(api, api_base, services):
         resource_class_kwargs=services
     )
 
+    api.add_resource(
+        Fix,
+        path + "/fix",
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
@@ -34,7 +42,7 @@ class Health(ServicesResources):
 
     @swag_from(str(Path(r"swagger/get_health.yaml")), endpoint='health')
     def get(self):
-        """displays the health of services."""
+        """displays the health of services"""
 
         # test DB
         session = Database().Session
@@ -47,3 +55,22 @@ class Health(ServicesResources):
             log.debug(e)
 
         return {'database': db_ok }, HTTPStatus.OK
+
+class Fix(ServicesResources):
+
+    def get(self):
+        """Experimental switch to fix db errors"""
+
+        session = Database().Session
+
+        try:
+            session.execute('SELECT 1')
+
+        except InvalidRequestError as e:
+            log.error("DB nudge... Does this work?")
+            log.debug(e)
+            session.invalidate()
+            session.rollback()
+
+        finally:
+            session.close()
