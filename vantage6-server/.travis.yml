@@ -9,7 +9,7 @@ branches:
   - master
   - DEV
   - hotfix
-  - release/(.+)
+  - /release/(.+)/
 
 install:
   - pip install coverage
