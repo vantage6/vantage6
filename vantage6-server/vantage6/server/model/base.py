@@ -11,7 +11,6 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.util.langhelpers import NoneType
-from typing_extensions import final
 
 from vantage6.common import logger_name, Singleton
 
