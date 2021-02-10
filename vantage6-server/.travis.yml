@@ -12,6 +12,10 @@ install:
   - pip install gevent==1.3.4
   - pip install greenlet==0.4.13
 
+before_script:
+  - source git-installs.sh
+
+
 script:
   - coverage run --source=vantage6 --omit="utest.py" ./utest.py
 
