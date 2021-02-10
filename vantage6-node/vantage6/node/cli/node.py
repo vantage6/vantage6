@@ -17,6 +17,7 @@ from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
 )
+from vantage6.node._version import __version__
 
 
 @click.group(name="vnode-local")
@@ -188,3 +189,12 @@ def cli_node_start(name, config, environment, system_folders, dockerized):
 
     # run the node application
     node.run(ctx)
+
+
+#
+#   version
+#
+@cli_node.command(name='version')
+def cli_node_version():
+    """Returns current version of vantage6 services installed."""
+    click.echo(__version__)
