@@ -73,7 +73,7 @@ class Database(metaclass=Singleton):
         # scoped session is scoped to the local thread the process is running
         # in.
         self.Session = scoped_session(sessionmaker(autocommit=False,
-                                                   autoflush=True))
+                                                   autoflush=False))
 
          # short hand to obtain a object-session.
         self.object_session = Session.object_session
@@ -99,6 +99,7 @@ class ModelBase:
     def get(cls, id_=None):
 
         session = Database().Session
+        # session.begin()
         result = None
         try:
             if id_ is None:
@@ -111,10 +112,10 @@ class ModelBase:
         except InvalidRequestError as e:
             log.warning('Exception on getting!')
             log.debug(e)
-            session.invalidate()
+            # session.invalidate()
             session.rollback()
-        finally:
-            session.close()
+        # finally:
+        #     session.close()
 
         return result
 
@@ -123,7 +124,7 @@ class ModelBase:
         # new objects do not have an `id`
         session = Database().object_session(self) if self.id else \
             Database().Session
-
+        # session.begin()
         try:
             if not self.id:
                 session.add(self)
@@ -132,16 +133,18 @@ class ModelBase:
         except InvalidRequestError as e:
             log.error("Exception when saving!")
             log.debug(e)
-            session.invalidate()
+            # session.invalidate()
             session.rollback()
 
-        finally:
-            session.close()
+        # finally:
+        #     session.close()
 
 
     def delete(self):
         session = Database().object_session(self) if self.id else \
             Database().Session
+
+        # session.begin()
 
         try:
             session.delete(self)
@@ -150,10 +153,10 @@ class ModelBase:
         except InvalidRequestError as e:
             log.info("Exception when deleting!")
             log.debug(e)
-            session.invalidate()
+            # session.invalidate()
             session.rollback()
 
-        finally:
-            session.close()
+        # finally:
+        #     session.close()
 
 Base = declarative_base(cls=ModelBase)
