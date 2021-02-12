@@ -10,6 +10,7 @@ import typing
 import jwt
 import requests
 import pyfiglet
+import json as json_lib
 
 from pathlib import Path
 
@@ -184,17 +185,15 @@ class ClientBase(object):
         response = rest_method(url, json=json, headers=self.headers,
                                params=params)
 
-        # server says no!
-        if response.status_code == 401:
-            # unauthorized
-            self.log.error("Unauthorized!")
-            self.log.error(f"Reason: {response.json().get('msg')}")
 
         if response.status_code > 210:
-
             self.log.error(
-                f'Server responded with error code: {response.status_code}')
-            self.log.error("msg:"+response.json().get("msg", ""))
+                    f'Server responded with error code: {response.status_code}')
+            try:
+                self.log.error("msg:"+response.json().get("msg", ""))
+            except json_lib.JSONDecodeError:
+                self.log.error('Did not find a message from the server')
+                self.log.debug(response.content)
 
             if first_try:
                 self.refresh_token()
@@ -496,7 +495,7 @@ class ClientBase(object):
 
 
 class UserClient(ClientBase):
-    r"""User interface to the vantage6-server"""
+    """User interface to the vantage6-server"""
 
     def __init__(self, *args, verbose=False, **kwargs):
         """Create user client
@@ -522,6 +521,7 @@ class UserClient(ClientBase):
         self.task = self.Task(self)
         self.role = self.Role(self)
         self.node = self.Node(self)
+        self.rule = self.Rule(self)
 
         # Display welcome message
         self.log.info(" Welcome to")
@@ -949,6 +949,51 @@ class UserClient(ClientBase):
                 }
             )
 
+        def create(self, name: str, address1: str, address2: str, zipcode: str,
+                   country: str, domain: str, public_key: str=None) -> dict:
+            """Create new organization
+
+            Parameters
+            ----------
+            name : str
+                Name of the organization
+            address1 : str
+                Street and number
+            address2 : str
+                City
+            zipcode : str
+                Zip or postal code
+            country : str
+                Country
+            domain : str
+                Domain of the organization (e.g. vantage6.ai)
+            public_key : str, optional
+                Public key of the organization. This can be set later,
+                by default None
+
+            Returns
+            -------
+            dict
+                Containing the information of the new organization
+            """
+            json_data = {
+                'name': name,
+                'address1': address1,
+                'address2': address2,
+                'zipcode': zipcode,
+                'country': country,
+                'domain': domain,
+            }
+
+            if public_key:
+                json_data['public_key'] = public_key
+
+            return self.parent.request(
+                'organization',
+                method='post',
+                json=json_data
+            )
+
     class User(ClientBase.SubClient):
 
         @post_filtering()
@@ -979,13 +1024,13 @@ class UserClient(ClientBase):
             """
             if not id_:
                 id_ = self.parent.whoami.id_
-            return self.request(f'user/{id_}')
+            return self.parent.request(f'user/{id_}')
 
         @post_filtering(iterable=False)
         def update(self, id_: int=None, firstname: str=None,
                    lastname: str=None, password: str=None,
                    organization: int=None, rules: list=None,
-                   roles: list=None) -> dict:
+                   roles: list=None, email: str=None) -> dict:
             """Update user details
 
             In case you do not supply a user_id, your user is being
@@ -1010,6 +1055,8 @@ class UserClient(ClientBase):
             roles : list of ints
                 USE WITH CAUTION! Role ids that should be assigned to
                 this user. All previous assigned roles will be removed!
+            email : str
+                New email from the user
 
             Returns
             -------
@@ -1019,14 +1066,21 @@ class UserClient(ClientBase):
             if not id_:
                 id_ = self.parent.whoami.id_
 
-            user = self.parent.request(f'user/{id_}', method='patch', json={
+            json_body = {
                 "firstname": firstname,
                 "lastname": lastname,
                 "password": password,
                 "organization_id": organization,
                 "rules": rules,
-                "roles": roles
-            })
+                "roles": roles,
+                "email": email
+            }
+
+            # only submit supplied keys
+            json_body = {k: v for k, v in json_body.items() if v is not None}
+
+            user = self.parent.request(f'user/{id_}', method='patch',
+                                       json=json_body)
             return user
 
         @post_filtering(iterable=False)
@@ -1100,7 +1154,7 @@ class UserClient(ClientBase):
             dict
                 Containing meta-data of the role
             """
-            return self.parent.request(f'roles/{id_}')
+            return self.parent.request(f'role/{id_}')
 
         @post_filtering(iterable=True)
         def create(self, name: str, description: str, rules: list,
@@ -1127,7 +1181,7 @@ class UserClient(ClientBase):
             """
             if not organization:
                 organization = self.parent.whoami.organization_id
-            return self.parent.request('roles', method='post', json={
+            return self.parent.request('role', method='post', json={
                 'name': name,
                 'description': description,
                 'rules': rules,
@@ -1338,6 +1392,35 @@ class UserClient(ClientBase):
                 cleaned_results.append(result)
 
             return cleaned_results
+
+    class Rule(ClientBase.SubClient):
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int) -> dict:
+            """View specific rule
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the rule you want to view
+
+            Returns
+            -------
+            dict
+                Containing the information about this rule
+            """
+            return self.parent.request(f'rule/{id_}')
+
+        @post_filtering()
+        def list(self) -> list:
+            """List of all available rules
+
+            Returns
+            -------
+            list of dicts
+                Containing all the rules from the vantage6 server
+            """
+            return self.parent.request('rule')
 
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
