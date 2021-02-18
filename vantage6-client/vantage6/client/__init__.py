@@ -739,7 +739,7 @@ class UserClient(ClientBase):
             dict
                 Containing the collaboration information
             """
-            return self.request(f'collaboration/{id_}')
+            return self.parent.request(f'collaboration/{id_}')
 
         @post_filtering(iterable=False)
         def create(self, name: str, organizations: list,
