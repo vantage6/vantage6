@@ -4,13 +4,13 @@ from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from .base import Base, Database
+from vantage6.server.model.base import Base
 
 
 class Result(Base):
     """Result of a Task as executed by a Node.
 
-    The result (and the input) is encrypted and can be only read by the 
+    The result (and the input) is encrypted and can be only read by the
     intended receiver of the message.
     """
 
@@ -23,7 +23,7 @@ class Result(Base):
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
     log = Column(Text)
-    
+
     # relationships
     task = relationship("Task", back_populates="results")
     organization = relationship("Organization", back_populates="results")
@@ -31,11 +31,13 @@ class Result(Base):
     @hybrid_property
     def complete(self):
         return self.finished_at is not None
-        
+
     def __repr__(self):
-        return ("<Result "
-            f"Result task:{self.task.name}, "
+        return (
+            "<Result "
+            f"task:{self.task.name}, "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.task.collaboration.name}, "
             f"is_complete: {self.complete}"
-        ">")
+            ">"
+        )

@@ -1,0 +1,31 @@
+summary: List tasks from collaboration
+
+description: |
+  Returns a list of all tasks that belong to the collaboration.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Task  | Global | View | ❌ | ❌ | View tasks |
+  | Task  | Organization | View | ✅ | ✅ | View tasks only when your organization participates in the collaboration |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized or missing permissions
+  404:
+    description: Collaboration not found
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

@@ -1,0 +1,18 @@
+summary: Displays the health of services
+
+description:
+  Checks if communication is stable with the database in the Server.
+  If not it throws an exception. Else it returns a 200 to signify that communication is stable.
+
+responses:
+  200:
+    description: Ok
+  # 404:
+  #   description: node with specified id is not found
+  # 401:
+  #   description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Database"]

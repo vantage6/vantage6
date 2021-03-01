@@ -1,0 +1,13 @@
+summary: List Rules
+
+description:
+  List of rules at the server.
+
+responses:
+  200:
+    description: Ok
+
+security:
+  - bearerAuth: []
+
+tags: ["Rule"]

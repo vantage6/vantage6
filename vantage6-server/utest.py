@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals, print_function
-
 import sys
 import os
 
@@ -10,7 +8,8 @@ import unittest
 from datetime import datetime
 from termcolor import colored
 
-from vantage6.server import util
+
+logging.basicConfig(level=logging.FATAL)
 
 
 class TestResult(unittest.TextTestResult):

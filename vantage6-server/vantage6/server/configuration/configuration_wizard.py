@@ -50,7 +50,8 @@ def server_configuration_questionaire(dirs, instance_name):
         }
     ])
 
-    res = q.select("Which level of logging would you like?",
+    res = q.select(
+        "Which level of logging would you like?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"]
     ).ask()
 
@@ -62,7 +63,7 @@ def server_configuration_questionaire(dirs, instance_name):
         "level": res,
         "file": f"{instance_name}.log",
         "use_console": True,
-        "backup_count":5,
+        "backup_count": 5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S"
@@ -70,11 +71,12 @@ def server_configuration_questionaire(dirs, instance_name):
 
     return config
 
+
 def configuration_wizard(instance_name, environment, system_folders):
 
     # for defaults and where to save the config
     dirs = ServerContext.instance_folders("server", instance_name,
-        system_folders)
+                                          system_folders)
 
     # prompt questionaire
     config = server_configuration_questionaire(dirs, instance_name)
@@ -96,11 +98,13 @@ def configuration_wizard(instance_name, environment, system_folders):
 
     return config_file
 
+
 # TODO deprecated, still used by server instance, should be replaced
 # by some sort of questionaire
 def get_config_location(ctx, config, force_create):
     """Ensure configuration file exists and return its location."""
     return config if config else ctx.config_file
+
 
 def select_configuration_questionaire(system_folders):
     """Asks which configuration the user want to use
@@ -119,12 +123,11 @@ def select_configuration_questionaire(system_folders):
                 title=f"{config_collection.name:25} {env}",
                 value=(config_collection.name, env)))
 
-
     if not choices:
         raise Exception("No configurations could be found!")
 
     # pop the question
     name, env = q.select("Select the configuration you want to use:",
-        choices=choices).ask()
+                         choices=choices).ask()
 
     return name, env

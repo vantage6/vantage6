@@ -1,0 +1,22 @@
+summary: View roles
+
+description: |
+  Returns a list of roles. Depending on your permission, you get all the
+  roles at the server or only the roles that belong to your organization.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Role  | Global | View | ❌ | ❌ | View all roles |
+  | Role  | Organization | View | ❌ | ❌ | View roles that are part of your organization |
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized or missing permissions
+
+security:
+  - bearerAuth: []
+
+tags: ["Role"]

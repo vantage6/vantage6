@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/recover'
-"""
-from __future__ import print_function, unicode_literals
-
 import logging
 import datetime
 
-from flask import request, jsonify, g, render_template
-from flask_restful import Resource
+from flask import request, render_template
 from flask_jwt_extended import (
     create_access_token,
     decode_token
@@ -19,16 +13,17 @@ from http import HTTPStatus
 from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6 import server
+from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.mail_service import send_email
-from vantage6.server.resource import with_node, only_for
+from vantage6.server.resource import (
+    ServicesResources
+)
 
-module_name = __name__.split('.')[-1]
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base):
+def setup(api, api_base, services):
 
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
@@ -37,21 +32,23 @@ def setup(api, api_base):
         ResetPassword,
         path+'/reset',
         endpoint="reset_password",
-        methods=('POST',)
+        methods=('POST',),
+        resource_class_kwargs=services
     )
 
     api.add_resource(
         RecoverPassword,
         path+'/lost',
         endpoint='recover_password',
-        methods=('POST',)
+        methods=('POST',),
+        resource_class_kwargs=services
     )
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class ResetPassword(Resource):
+class ResetPassword(ServicesResources):
     """user can use recover token to reset their password."""
 
     @swag_from(str(Path(r"swagger/post_reset_password.yaml")),
@@ -76,7 +73,6 @@ class ResetPassword(Resource):
 
         log.debug(user_id)
         user = db.User.get(user_id)
-        log.debug(user.username)
 
         # set password
         user.set_password(password)
@@ -87,7 +83,7 @@ class ResetPassword(Resource):
             HTTPStatus.OK
 
 
-class RecoverPassword(Resource):
+class RecoverPassword(ServicesResources):
     """send a mail containing a recover token"""
 
     @swag_from(str(Path(r"swagger/post_recover_password.yaml")),
@@ -125,13 +121,13 @@ class RecoverPassword(Resource):
             {"id": str(user.id)}, expires_delta=expires
         )
 
-        send_email(
+        self.mail.send_email(
             "password reset",
             sender="support@vantage6.ai",
             recipients=[user.email],
-            text_body=render_template("mail/reset_password.txt",
+            text_body=render_template("mail/reset_password_token.txt",
                                       token=reset_token),
-            html_body=render_template("mail/reset_password.html",
+            html_body=render_template("mail/reset_password_token.html",
                                       token=reset_token)
         )
 

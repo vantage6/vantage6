@@ -4,10 +4,10 @@ from .base import Base
 
 
 class Authenticatable(Base):
-    """Parent table of all entities that can authenticate. 
-    
+    """Parent table of all entities that can authenticate.
+
     Entities that can authenticate are nodes and users. Containers
-    can also authenticate but these are authenticated inderect 
+    can also authenticate but these are authenticated inderect
     through the nodes.
     """
 

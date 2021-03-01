@@ -1,29 +1,33 @@
 # -*- coding: utf-8 -*-
-import os
 import logging
 import datetime
 
 import enum
 import json
-
 import sqlalchemy as sql
 
-from .model import (
+# TODO this file is akward...
+from vantage6.server.model import (
     Base,
-    User,
-    Organization,
-    Authenticatable,
-    Node,
     Task,
-    Member,
     Result,
+    Organization,
+    User,
+    Node,
+    Authenticatable,
     Collaboration,
+    Member,
+    Permission,
+    Role,
+    Rule
 )
+from vantage6.common import logger_name
+from vantage6.common.globals import STRING_ENCODING
 
-from vantage6.server.util import logger_name
-from vantage6.server.globals import STRING_ENCODING
 
-log = logging.getLogger(logger_name(__name__))
+module_name = logger_name(__name__)
+log = logging.getLogger(module_name)
+
 
 def jsonable(value):
     """Convert a (list of) SQLAlchemy instance(s) to native Python objects."""
@@ -35,7 +39,8 @@ def jsonable(value):
         retval = dict()
         mapper = sql.inspect(value.__class__)
 
-        columns = [c.key for c in mapper.columns if c.key not in value._hidden_attributes]
+        columns = [c.key for c in mapper.columns
+                   if c.key not in value._hidden_attributes]
 
         for column in columns:
             # log.debug(f"processing column={column}")
@@ -61,5 +66,3 @@ def jsonable(value):
 def jsonify(value):
     """Convert a (list of) SQLAlchemy instance(s) to a JSON (string)."""
     return json.dumps(jsonable(value))
-
-

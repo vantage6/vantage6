@@ -1,47 +1,49 @@
 import logging
 import unittest
 import yaml
-import bcrypt
 import datetime
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.server.controller.fixture import load
-from vantage6.server.model.base import Database, Base
+from vantage6.server.model.base import Database
 from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
 
 from vantage6.server.model import (
-    Base,
     User,
     Organization,
     Collaboration,
     Task,
     Result,
-    Node
+    Node,
+    Rule,
+    Role
 )
+from vantage6.server.model.rule import Scope, Operation
+
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.CRITICAL
-
 logging.basicConfig(level=logging.CRITICAL)
+
 
 class TestBaseModel(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         Database().connect("sqlite://", allow_drop_all=True)
+
         # FIXME: move path generation to a function in vantage6.server
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
             cls.entities = yaml.safe_load(f.read())
-        load(cls.entities, drop_all=True)
+        load(cls.entities)
 
     @classmethod
     def tearDownClass(cls):
-        Database().drop_all()
+        Database().close()
 
 
 class TestUserModel(TestBaseModel):
@@ -67,11 +69,10 @@ class TestUserModel(TestBaseModel):
             username="unit",
             firstname="un",
             lastname="it",
-            roles="admin",
             organization=db_organization,
-            email="unit@org.org"
+            email="unit@org.org",
+            password="unit_pass"
         )
-        user.set_password("unit_pass")
         user.save()
         db_user = User.get_by_username("unit")
         self.assertEqual(db_user, user)
@@ -90,8 +91,6 @@ class TestUserModel(TestBaseModel):
 
         user2 = User(username="duplicate-user", email="something-else@org.org")
         self.assertRaises(IntegrityError, user2.save)
-        # Database().Session.rollback()
-
 
 
 class TestCollaborationModel(TestBaseModel):
@@ -99,7 +98,7 @@ class TestCollaborationModel(TestBaseModel):
     def test_read(self):
         for col in self.entities.get("collaborations"):
             db_collaboration = Collaboration.find_by_name(col.get("name"))
-            assert db_collaboration.name == col.get("name"), "incorrect name"
+            self.assertEqual(db_collaboration.name, col.get("name"))
 
     def test_insert(self):
         col = Collaboration(
@@ -107,7 +106,7 @@ class TestCollaborationModel(TestBaseModel):
         )
         col.save()
         db_col = Collaboration.find_by_name("unit_collaboration")
-        assert db_col == col, "Collaboration not correct stored in the database"
+        self.assertEqual(db_col, col)
 
     def test_methods(self):
         db_col = Collaboration.get(1)
@@ -120,7 +119,7 @@ class TestCollaborationModel(TestBaseModel):
     def test_relations(self):
         db_col = Collaboration.get(1)
         for node in db_col.nodes:
-            self.assertIsInstance(node,Node)
+            self.assertIsInstance(node, Node)
         for organization in db_col.organizations:
             self.assertIsInstance(organization, Organization)
 
@@ -145,11 +144,11 @@ class TestNodeModel(TestBaseModel):
 
         node = Node.get_by_api_key("that-we-never-use")
         self.assertIsNotNone(node)
-        self.assertIsInstance(node,Node)
-        self.assertEqual(node.name, "unit_node", "names do not match")
-        self.assertEqual(node.api_key, "that-we-never-use", "api-keys are messed up")
-        self.assertEqual(node.collaboration, collaboration, "collaboration do not match")
-        self.assertEqual(node.organization, organization, "names do not match")
+        self.assertIsInstance(node, Node)
+        self.assertEqual(node.name, "unit_node")
+        self.assertEqual(node.api_key, "that-we-never-use")
+        self.assertEqual(node.collaboration, collaboration)
+        self.assertEqual(node.organization, organization)
 
     def test_methods(self):
         node = Node.get()[0]
@@ -181,7 +180,10 @@ class TestOrganizationModel(TestBaseModel):
             for user in organization.get("users"):
                 db_user = User.get_by_username(user.get("username"))
                 self.assertIsNotNone(db_user)
-                self.assertEqual(db_user.organization.name, organization.get("name"))
+                self.assertEqual(
+                    db_user.organization.name,
+                    organization.get("name")
+                )
 
     def test_insert(self):
         col = Collaboration.get()
@@ -227,13 +229,12 @@ class TestResultModel(TestBaseModel):
     def test_insert(self):
         task = Task(name="unit_task")
         result = Result(
-            task = task,
+            task=task,
             organization=Organization.get()[0],
             input="something"
         )
         result.save()
         self.assertEqual(result, result)
-
 
     def test_methods(self):
         for result in Result.get():
@@ -270,6 +271,7 @@ class TestTaskModel(TestBaseModel):
             run_id=1
         )
         task.save()
+        db_task = None
         for task in Task.get():
             if task.name == "unit_task":
                 db_task = task
@@ -292,4 +294,50 @@ class TestTaskModel(TestBaseModel):
             for result in task.results:
                 self.assertIsInstance(result, Result)
             for user in task.collaboration.organizations[0].users:
+                self.assertIsInstance(user, User)
+
+
+class TestRuleModel(TestBaseModel):
+
+    def test_read(self):
+        rule = Rule(name="some-name", operation=Operation.CREATE,
+                    scope=Scope.GLOBAL)
+        rule.save()
+
+        rules = Rule.get()
+
+        # check that there are rules
+        self.assertTrue(rules)
+        # check their type
+        for rule in rules:
+            self.assertIsInstance(rule, Rule)
+
+    # def test_insert(self):
+    #     rule = Rule(
+    #         name="unittest",
+    #         description="A unittest rule",
+    #         scope=Scope.OWN,
+    #         operation=Operation.CREATE
+    #     )
+    #     rule.save()
+
+    def test_methods(self):
+
+        # check that error is raised
+        self.assertRaises(
+            NoResultFound,
+            Rule.get_by_("non-existant", 1, 1)
+        )
+
+    def test_relations(self):
+        rules = Rule.get()
+        for rule in rules:
+            self.assertIsInstance(rule.name, str)
+            self.assertIsInstance(rule.operation, Operation)
+            self.assertIsInstance(rule.scope, Scope)
+
+            for role in rule.roles:
+                self.assertIsInstance(role, Role)
+
+            for user in rule.users:
                 self.assertIsInstance(user, User)

@@ -1,4 +1,5 @@
 summary: Container login
+
 description:
   Allows for token-generation for a specific task, image and collaboration.
 
@@ -12,7 +13,7 @@ responses:
   200:
     description: Container token generated
   400:
-    description: Task does not excist or is already completed
+    description: Task does not exist or is already completed
   401:
     description: Key request for invalid image or task
 

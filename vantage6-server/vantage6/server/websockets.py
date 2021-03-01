@@ -18,6 +18,7 @@ class DefaultSocketNamespace(Namespace):
     generated for a client occur in the context of a single long running
     request.
     """
+    socketio = None
 
     log = logging.getLogger(logger_name(__name__))
 
@@ -43,7 +44,7 @@ class DefaultSocketNamespace(Namespace):
             emit("expired_token", "", room=request.sid)
 
         except Exception as e:
-            self.log.error("Could not connect client! No or Invalid JWT token?")
+            self.log.error("Couldn't connect client! No or Invalid JWT token?")
             self.log.exception(e)
             session.name = "no-sure-yet"
             self.__join_room_and_notify(request.sid)
@@ -61,12 +62,14 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        server.socketio.emit('node-status-changed', namespace='/admin')
+        self.socketio.emit('node-status-changed', namespace='/admin')
 
         # define socket-session variables.
         session.type = auth.type
         session.name = auth.username if session.type == 'user' else auth.name
-        self.log.info(f'Client identified as <{session.type}>: <{session.name}>')
+        self.log.info(
+            f'Client identified as <{session.type}>: <{session.name}>'
+        )
 
         # join appropiate rooms, nodes join a specific collaboration room.
         # users do not belong to specific collaborations.
@@ -96,7 +99,7 @@ class DefaultSocketNamespace(Namespace):
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
         self.log.warning('emitting to /admin')
-        server.socketio.emit('node-status-changed', namespace='/admin')
+        self.socketio.emit('node-status-changed', namespace='/admin')
 
         self.log.info(f'{session.name} disconnected')
 
@@ -196,4 +199,4 @@ class DefaultSocketNamespace(Namespace):
     def on_ping(self, node_id):
         # self.log.debug(f"ping from id={node_id}")
         room = f"node_{node_id}"
-        emit("pang","success!", room=room)
+        emit("pang", "success!", room=room)

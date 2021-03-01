@@ -1,83 +1,174 @@
 # -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/organization'
-"""
-from __future__ import print_function, unicode_literals
-
 import logging
-import base64
 
-from flask import request
-from flask_restful import Resource
+from flask import request, g
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
-from vantage6.server.resource import with_user_or_node, with_user, only_for
-from ._schema import *
+from vantage6.common import logger_name
+from vantage6.server import db
+from vantage6.server.permission import (
+    Scope as S,
+    Operation as P,
+    PermissionManager
+)
+from vantage6.server.resource import (
+    with_user_or_node, only_for,
+    ServicesResources
+)
+from vantage6.server.resource._schema import (
+    OrganizationSchema,
+    CollaborationSchema,
+    NodeSchema
+)
 
 
-module_name = __name__.split('.')[-1]
+module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, API_BASE):
+def setup(api, api_base, services):
 
-    path = "/".join([API_BASE, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    path = "/".join([api_base, module_name])
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         Organization,
         path,
         endpoint='organization_without_id',
-        methods=('GET', 'POST')
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
      )
     api.add_resource(
         Organization,
         path + '/<int:id>',
         endpoint='organization_with_id',
-        methods=('GET', 'PATCH')
+        methods=('GET', 'PATCH'),
+        resource_class_kwargs=services
     )
     api.add_resource(
         OrganizationCollaboration,
         path + '/<int:id>/collaboration',
         endpoint='organization_collaboration',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
     api.add_resource(
         OrganizationNode,
         path + '/<int:id>/node',
         endpoint='organization_node',
-        methods=('GET',)
+        methods=('GET',),
+        resource_class_kwargs=services
     )
+
+
+# -----------------------------------------------------------------------------
+# Permissions
+# -----------------------------------------------------------------------------
+def permissions(permissions: PermissionManager):
+    add = permissions.appender(module_name)
+
+    add(scope=S.GLOBAL, operation=P.VIEW,
+        description="view any organization")
+    add(scope=S.ORGANIZATION, operation=P.VIEW,
+        description="view your own organization info",
+        assign_to_container=True, assign_to_node=True)
+    add(scope=S.COLLABORATION, operation=P.VIEW,
+        description='view collaborating organizations',
+        assign_to_container=True, assign_to_node=True)
+    add(scope=S.GLOBAL, operation=P.EDIT,
+        description="edit any organization")
+    add(scope=S.ORGANIZATION, operation=P.EDIT,
+        description="edit your own organization info")
+    add(scope=S.GLOBAL, operation=P.CREATE,
+        description="create a new organization")
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Organization(Resource):
+class Organization(ServicesResources):
 
     org_schema = OrganizationSchema()
 
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
+
     @only_for(["user", "node", "container"])
     @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")),
-        endpoint='organization_with_id')
+               endpoint='organization_with_id')
     @swag_from(str(Path(r"swagger/get_organization_without_id.yaml")),
-        endpoint='organization_without_id')
+               endpoint='organization_without_id')
     def get(self, id=None):
-        organization = db.Organization.get(id)
-        if not organization:
-            return {"msg": f"organization id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
 
-        return self.org_schema.dump(organization, many=not id).data, \
-            HTTPStatus.OK
+        # determine the organization to which the auth belongs
+        if g.container:
+            auth_org_id = g.container["organization_id"]
+        elif g.node:
+            auth_org_id = g.node.organization_id
+        else:  # g.user:
+            auth_org_id = g.user.organization_id
+        auth_org = db.Organization.get(auth_org_id)
+
+        # retrieve requested organization
+        req_org = db.Organization.get(id)
+        accepted = False
+
+        # check if he want a single or all organizations
+        if id:
+            # Check if auth has enough permissions
+            if self.r.v_glo.can():
+                accepted = True
+            elif self.r.v_col.can():
+                # check if the organization is whithin a collaboration
+                for col in auth_org.collaborations:
+                    if req_org in col.organizations:
+                        accepted = True
+                if req_org == auth_org:
+                    accepted = True
+            elif self.r.v_org.can():
+                accepted = auth_org == req_org
+
+            if accepted:
+                return self.org_schema.dump(req_org, many=False).data, \
+                    HTTPStatus.OK
+
+        # filter de list of organizations based on the scope
+        else:
+            organizations = []
+            if self.r.v_glo.can():
+                organizations = req_org
+                accepted = True
+            elif self.r.v_col.can():
+                for col in auth_org.collaborations:
+                    for org in col.organizations:
+                        if org not in organizations:
+                            organizations.append(org)
+                organizations.append(auth_org)
+                accepted = True
+            elif self.r.v_org.can():
+                organizations = [auth_org]
+                accepted = True
+
+            if accepted:
+                return self.org_schema.dump(organizations, many=True).data, \
+                    HTTPStatus.OK
+
+        # If you get here you do not have permission to see anything
+        return {'msg': 'You do not have permission to do that!'}, \
+            HTTPStatus.UNAUTHORIZED
 
     @only_for(["user"])
     @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
-        endpoint='organization_without_id')
+               endpoint='organization_without_id')
     def post(self):
         """Create a new organization."""
+
+        if not self.r.c_glo.can():
+            return {'msg': 'You lack the permissions to do that!'},\
+                HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
         organization = db.Organization(
@@ -91,89 +182,93 @@ class Organization(Resource):
         )
         organization.save()
 
-        return self.org_schema.dump(
-            organization, many=False
-        ).data, HTTPStatus.CREATED
+        return self.org_schema.dump(organization, many=False).data, \
+            HTTPStatus.CREATED
 
     @only_for(["user", "node"])
+    @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
+        endpoint='organization_with_id')
     def patch(self, id):
         """Update organization."""
 
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": f"Organization with id {id} not found"}, \
+            return {"msg": f"Organization with id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
+        if not self.r.e_glo.can():
+            if not (self.r.e_org.can() and id == g.user.organization.id):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
         data = request.get_json()
-        fields = ["name", "address1", "address2", "zipcode", "country", \
-            "public_key", "domain"]
+        fields = ["name", "address1", "address2", "zipcode", "country",
+                  "public_key", "domain"]
         for field in fields:
             if data.get(field):
                 setattr(organization, field, data.get(field))
 
         organization.save()
-        return organization, HTTPStatus.OK
+        return self.org_schema.dump(organization, many=False).data, \
+            HTTPStatus.OK
 
-class OrganizationCollaboration(Resource):
+
+class OrganizationCollaboration(ServicesResources):
     """Collaborations for a specific organization."""
 
     col_schema = CollaborationSchema()
 
     @only_for(["user", "node"])
-    @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")), endpoint='organization_collaboration')
+    @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")),
+               endpoint='organization_collaboration')
     def get(self, id):
+
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": f"organization id={id} not found"}, \
+                HTTPStatus.NOT_FOUND
 
-        return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
+        if g.node:
+            auth_org_id = g.node.organization.id
+        else:  # g.user:
+            auth_org_id = g.user.organization.id
 
-    # @with_user
-    # def post(self, id):
-    #     organization = db.Organization.get(id)
-    #     if not organization:
-    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-    #
-    #     data = request.get_json()
-    #     collaboration = db.Collaboration.get(data['id'])
-    #     if not collaboration:
-    #         return {"msg": "collaboration id={} is not found".format(data['id'])}, HTTPStatus.NOT_FOUND
-    #
-    #     organization.collaborations.append(collaboration)
-    #     organization.save()
-    #     return self.col_schema.dump(organization.collaborations, many=True).data, HTTPStatus.OK
+        if not self.permissions.collaboration.v_glo.can():
+            if not (self.permissions.collaboration.v_org.can() and
+                    auth_org_id == id):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        return self.col_schema.dump(
+            organization.collaborations,
+            many=True
+        ).data, HTTPStatus.OK
 
 
-class OrganizationNode(Resource):
+class OrganizationNode(ServicesResources):
     """Resource for /api/organization/<int:id>/node."""
 
     nod_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_organization_node.yaml")), endpoint='organization_node')
+    @swag_from(str(Path(r"swagger/get_organization_node.yaml")),
+               endpoint='organization_node')
     def get(self, id):
         """Return a list of Nodes."""
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
+            return {"msg": f"organization id={id} not found"}, \
+                HTTPStatus.NOT_FOUND
 
-        return self.nod_schema.dump(organization.nodes, many=True).data, HTTPStatus.OK
+        if g.user:
+            auth_org_id = g.user.organization.id
+        else:  # g.node
+            auth_org_id = g.node.organization.id
 
-    # @with_user
-    # def post(self, id):
-    #     """Create new node"""
-    #     organization = db.Organization.get(id)
-    #     if not organization:
-    #         return {"msg": "organization id={} not found".format(id)}, HTTPStatus.NOT_FOUND
-    #
-    #     data = request.get_json()
-    #
-    #     db.Node(
-    #         name="{} - {} Node".format(organization.name, collaboration.name),
-    #         collaboration=collaboration,
-    #         organization=organization,
-    #         api_key=api_key
-    #     )
-    #     node.save()
-    #
-    #     return node
+        if not self.permissions.node.v_glo.can():
+            if not (self.permissions.node.v_org.can() and id == auth_org_id):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        return self.nod_schema.dump(organization.nodes, many=True).data, \
+            HTTPStatus.OK
