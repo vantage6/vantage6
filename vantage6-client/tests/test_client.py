@@ -107,7 +107,7 @@ class TestClient(TestCase):
         with patch.multiple('vantage6.client', requests=mock_requests, jwt=mock_jwt):
             client = TestClient.setup_client()
 
-            results = client.get_results(task_id=FAKE_ID)
+            results = client.result.from_task(task_id=FAKE_ID)
 
             return results
 
