@@ -228,6 +228,8 @@ class Node(object):
             # basename (i.e. filename + ext).
             database_uri = os.path.basename(database_uri)
 
+            self.__docker.database_is_file = True
+
         # Connect to the isolated algorithm network *only* if we're running in
         # a docker container.
         if ctx.running_in_docker:
