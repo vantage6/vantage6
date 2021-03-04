@@ -2,11 +2,20 @@ language: python
 python:
   - 3.6
   - 3.7
-  - 3.8
-  - 3.8-dev
+  # - 3.8
+  # - 3.8-dev
+
+branches:
+  - master
+  - DEV
+  - hotfix
+  - /release/(.+)/
 
 install:
   - pip install -e .[dev]
+
+before_script:
+  - source git-installs.sh
 
 script:
   - coverage run --source=vantage6 --omit="utest.py" utest.py
