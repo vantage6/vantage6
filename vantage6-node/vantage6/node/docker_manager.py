@@ -56,6 +56,7 @@ class DockerManager(object):
         self.database_uri = None
         self.database_is_file = False
         self.__tasks_dir = tasks_dir
+        self.algorithm_env = {}
 
         # Connect to docker daemon
         # self.docker = docker.DockerClient(base_url=docker_socket_path)
@@ -327,8 +328,15 @@ class DockerManager(object):
                 f"{data_folder}/{self.database_uri}"
         else:
              environment_variables["DATABASE_URI"] = self.database_uri
-
         self.log.debug(f"environment: {environment_variables}")
+
+        # Load additional environment variables
+        if self.algorithm_env:
+            environment_variables = \
+                {**environment_variables, **self.algorithm_env}
+            self.log.info('Custom environment variables are loaded!')
+            self.log.debug(f"custom environment: {self.algorithm_env}")
+
         self.log.debug(f"volumes: {volumes}")
 
         # attempt to run the image

@@ -241,6 +241,10 @@ class Node(object):
         # Let's keep it safe
         self.__docker.set_database_uri(database_uri)
 
+        # Load additional environment vars for the algorithms. This is
+        # for example usefull when a password is needed for the database
+        self.__docker.algorithm_env = self.config.get('algorithm_env', {})
+
         # Thread for sending results to the server when they come available.
         self.log.debug("Start thread for sending messages (results)")
         t = Thread(target=self.__speaking_worker, daemon=True)
