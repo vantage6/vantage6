@@ -18,6 +18,7 @@ class DefaultSocketNamespace(Namespace):
     generated for a client occur in the context of a single long running
     request.
     """
+    socketio = None
 
     log = logging.getLogger(logger_name(__name__))
 
@@ -61,7 +62,7 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        server.socketio.emit('node-status-changed', namespace='/admin')
+        self.socketio.emit('node-status-changed', namespace='/admin')
 
         # define socket-session variables.
         session.type = auth.type
@@ -98,7 +99,7 @@ class DefaultSocketNamespace(Namespace):
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
         self.log.warning('emitting to /admin')
-        server.socketio.emit('node-status-changed', namespace='/admin')
+        self.socketio.emit('node-status-changed', namespace='/admin')
 
         self.log.info(f'{session.name} disconnected')
 

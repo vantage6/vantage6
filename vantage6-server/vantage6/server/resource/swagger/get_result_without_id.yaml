@@ -1,7 +1,15 @@
 summary: List results
 
-description:
-  Returns a list of all results
+description: |
+  Returns a list of all results only if the node, user or container have the proper authorization
+  to do so.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Result   | Global        | View      | ❌                | ❌ | View any result  |
+  | Result   | Organization        | View      | ✅                | ✅ | View the results of your organizations collaborations |
+
 
 parameters:
   - in: path
@@ -17,10 +25,15 @@ parameters:
       type: string
     description: the state of the task ('open')
   - in: query
-    name: organization_id
+    name: task_id
     schema:
       type: integer
-    description: organization id
+    description: "unique task identifier"
+  - in: query
+    name: node_id
+    schema:
+      type: integer
+    description: node id
   - in: query
     name: include
     schema:
@@ -30,10 +43,6 @@ parameters:
 responses:
   200:
     description: Ok
-#  404:
-#    description: collaboration with specified id is not found
-#  403:
-#    description: you do not have permission to view this collaboration
   401:
     description: Unauthorized
 

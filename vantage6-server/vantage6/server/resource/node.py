@@ -90,7 +90,7 @@ class Node(ServicesResources):
     @swag_from(str(Path(r"swagger/get_node_without_id.yaml")),
                endpoint='node_without_id')
     def get(self, id=None):
-
+        """ View node that belong in the same organization"""
         node = db.Node.get(id)
         if not node:
             return {'msg': f'Node id={id} is not found!'}, HTTPStatus.NOT_FOUND
@@ -118,7 +118,7 @@ class Node(ServicesResources):
     @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")),
                endpoint='node_without_id')
     def post(self):
-
+        """ Create a new node account"""
         parser = reqparse.RequestParser()
         parser.add_argument("collaboration_id", type=int, required=True,
                             help="This field cannot be left blank!")

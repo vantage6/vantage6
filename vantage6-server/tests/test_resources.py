@@ -616,7 +616,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login()
         body["rules"] = [-1]
         result = self.app.post("/api/role", headers=headers, json=body)
-        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
     def test_edit_role(self):
         headers = self.login('root')

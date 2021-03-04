@@ -55,7 +55,7 @@ def setup(api, api_base, services):
         RoleRules,
         path + '/<int:id>/rule/<int:rule_id>',
         endpoint='role_rule_with_id',
-        methods=('DELETE', 'POST'),
+        methods=('GET', 'DELETE', 'POST'),
         resource_class_kwargs=services
     )
 
@@ -102,7 +102,7 @@ class Role(ServicesResources):
     def get(self, id=None):
         """View roles
 
-        Depending on your permissions you see no, your organization or all
+        Depending on permission, you can view nothing, your organization or all the
         available roles at the server.
         """
         if self.r.v_glo.can():
@@ -142,7 +142,7 @@ class Role(ServicesResources):
             rule = Rule.get(rule_id)
             if not rule:
                 return {"msg": f"Rule id={rule_id} not found."}, \
-                    HTTPStatus.BAD_REQUEST
+                    HTTPStatus.NOT_FOUND
             rules.append(rule)
 
         # And check that this used has the rules he is trying to assign
@@ -184,7 +184,7 @@ class Role(ServicesResources):
 
         role = db_Role.get(id)
         if not role:
-            return {"msg": "Role with id={id} not found."}, \
+            return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
         # check permission of the user
@@ -250,6 +250,10 @@ class RoleRules(ServicesResources):
         self.r = getattr(self.permissions, module_name)
 
     @with_user
+    @swag_from(str(Path(r"swagger/get_role_rule_without_id.yaml")),
+               endpoint='role_rule_without_id')
+    @swag_from(str(Path(r"swagger/get_role_rule_with_id.yaml")),
+               endpoint='role_rule_with_id')
     def get(self, id):
         """View all rules for a role."""
         role = db_Role.get(id)
@@ -267,6 +271,8 @@ class RoleRules(ServicesResources):
         return self.rule_schema.dump(rules, many=True).data, HTTPStatus.OK
 
     @with_user
+    @swag_from(str(Path(r"swagger/post_role_rule_with_id.yaml")),
+               endpoint='role_with_id')
     def post(self, id, rule_id):
         """Add rule to a role."""
         role = db_Role.get(id)
@@ -297,6 +303,8 @@ class RoleRules(ServicesResources):
             HTTPStatus.CREATED
 
     @with_user
+    @swag_from(str(Path(r"swagger/delete_role_rule_with_id.yaml")),
+               endpoint='role_rule_with_id')
     def delete(self, id, rule_id):
         """Remove rule from role."""
         role = db_Role.get(id)

@@ -117,7 +117,7 @@ class Result(ServicesResources):
             q = session.query(db_Result)
 
             if request.args.get('state') == 'open':
-                q = q.filter(db_Result.finished_at is None)
+                q = q.filter(db_Result.finished_at == None)
 
             # q = q.join(db_Result)
             if request.args.get('task_id'):

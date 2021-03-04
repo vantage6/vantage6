@@ -9,6 +9,12 @@ description: |
   ## Accessed as `Node`
   Nodes do not have permission to create tasks. This will return `401`.
 
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Task  | Global | Create | ❌ | ❌ | Create a new task |
+  | Task  | Organization | Create | ❌ | ❌ | Create a new task for the collaborations in which your organization participates with |
+
 requestBody:
   content:
     application/json:
@@ -21,7 +27,7 @@ responses:
   404:
     description: Collaboration having `colaboration_id` is not found
   401:
-    description: Unauthorized
+    description: Unauthorized or missing permission
 
 security:
   - bearerAuth: []

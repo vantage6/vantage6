@@ -30,7 +30,7 @@ log = logging.getLogger(module_name)
 
 def setup(api, api_base, services):
     path = "/".join([api_base, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         Task,
@@ -74,7 +74,7 @@ def permissions(permissions: PermissionManager):
     add(scope=S.ORGANIZATION, operation=P.CREATE,
         description=(
             "create a new task for collaborations in which your organization "
-            "participates"
+            "participates with"
         )
     )
 
@@ -83,7 +83,7 @@ def permissions(permissions: PermissionManager):
     add(scope=S.ORGANIZATION, operation=P.DELETE,
         description=(
             "delete a task from a collaboration in which your organization "
-            "participates"
+            "participates with"
         )
     )
 
@@ -107,7 +107,7 @@ class Task(ServicesResources):
     @swag_from(str(Path(r"swagger/get_task_without_id.yaml")),
                endpoint='task_without_id')
     def get(self, id=None):
-
+        """List tasks"""
         task = db.Task.get(id)
         if not task:
             return {"msg": f"task id={id} is not found"}, HTTPStatus.NOT_FOUND
@@ -169,7 +169,7 @@ class Task(ServicesResources):
         if not set(org_ids).issubset(db_ids):
             return {"msg": (
                 f"At least one of the supplied organizations in not within "
-                f"the collaboration"
+                f"the collaboration."
             )}, HTTPStatus.BAD_REQUEST
 
         # figure out the initiator organization of the task

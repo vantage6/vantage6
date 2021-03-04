@@ -3,7 +3,7 @@ import logging
 import sqlalchemy.exc
 
 from http import HTTPStatus
-from flask import g
+from flask import g, request
 from flask_restful import reqparse
 from flasgger import swag_from
 from pathlib import Path
@@ -141,12 +141,13 @@ class User(ServicesResources):
         parser.add_argument("username", type=str, required=True)
         parser.add_argument("firstname", type=str, required=True)
         parser.add_argument("lastname", type=str, required=True)
+        #TODO password should be send to the email, rather than setting it
         parser.add_argument("password", type=str, required=True)
+        parser.add_argument("email", type=str, required=True)
         parser.add_argument("organization_id", type=int, required=False,
                             help="This is only used if you're root")
         parser.add_argument("roles", type=int, action="append", required=False)
         parser.add_argument("rules", type=int, action="append", required=False)
-        parser.add_argument("email", type=str, required=True)
         data = parser.parse_args()
 
         # check unique constraints
@@ -162,7 +163,7 @@ class User(ServicesResources):
         if data['organization_id']:
             if data['organization_id'] != organization_id and \
                     not self.r.c_glo.can():
-                return {'msg': 'You lack the permission to do that!1'}, \
+                return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
             organization_id = data['organization_id']
 
@@ -218,7 +219,7 @@ class User(ServicesResources):
         user = db.User.get(id)
 
         if not user:
-            return {"msg": "user id={} not found".format(id)}, \
+            return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if not self.r.e_glo.can():
@@ -232,9 +233,12 @@ class User(ServicesResources):
         parser.add_argument("username", type=str, required=False)
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
-        parser.add_argument("roles", type=int, action='append', required=False)
-        parser.add_argument("rules", type=int, action='append', required=False)
+        # parser.add_argument("roles", type=int, action='append', required=False,
+        #                     default=[], store_missing=False)
+        # parser.add_argument("rules", type=int, action='append', required=False,
+        #                     default=[], store_missing=False)
         parser.add_argument("password", type=str, required=False)
+        parser.add_argument("email", type=str, required=False)
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
 
@@ -244,11 +248,16 @@ class User(ServicesResources):
             user.lastname = data["lastname"]
         if data["password"]:
             user.password = data["password"]
-        if data["roles"]:
+        if data["email"]:
+            user.email = data["email"]
+
+        # request parser is awefull with lists
+        json_data = request.get_json()
+        if 'roles' in json_data:
             # validate that these roles exist
             roles = []
-            for role_id in data['roles']:
-                role = db.Role.get(role_id)
+            for role_id in json_data['roles']:
+                role = db.Role.get(role_id) # somehow a nontype endup here
                 if not role:
                     return {'msg': f'Role={role_id} can not be found!'}, \
                         HTTPStatus.NOT_FOUND
@@ -262,10 +271,10 @@ class User(ServicesResources):
 
             user.roles = roles
 
-        if data['rules']:
+        if 'rules' in json_data:
             # validate that these rules exist
             rules = []
-            for rule_id in data['rules']:
+            for rule_id in json_data['rules']:
                 rule = db.Rule.get(rule_id)
                 if not rule:
                     return {'msg': f'Rule={rule_id} can not be found!'}, \
@@ -303,10 +312,10 @@ class User(ServicesResources):
     @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")),
                endpoint='user_with_id')
     def delete(self, id):
-
+        """Remove user from the database."""
         user = db.User.get(id)
         if not user:
-            return {"msg": "user id={} not found".format(id)}, \
+            return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         if not self.r.d_glo.can():

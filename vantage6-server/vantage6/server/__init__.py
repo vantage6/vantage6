@@ -73,6 +73,8 @@ class ServerApp:
             self.socketio = SocketIO(self.app, async_mode='gevent_uwsgi')
         except Exception:
             self.socketio = SocketIO(self.app)
+        # FIXME: temporary fix to get socket object into the namespace class
+        DefaultSocketNamespace.socket = self.socketio
         self.socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         # setup the permission manager for the API endpoints
@@ -96,6 +98,9 @@ class ServerApp:
         # Prevent logging from urllib3
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("socketIO-client").setLevel(logging.WARNING)
+        logging.getLogger("engineio.server").setLevel(logging.WARNING)
+        logging.getLogger("socketio.server").setLevel(logging.WARNING)
+
 
     def configure_flask(self):
         """All flask config settings should go here."""
@@ -130,9 +135,10 @@ class ServerApp:
 
         # Open Api Specification (f.k.a. swagger)
         self.app.config['SWAGGER'] = {
-            'title': APPNAME + ' API',
-            'uiversion': 3,
+            'title': APPNAME,
+            'uiversion': "3",
             'openapi': '3.0.0',
+            'version': __version__
         }
 
         # Mail settings
@@ -311,10 +317,11 @@ class ServerApp:
 
         # set all nodes to offline
         # TODO: this is *not* the way
-        nodes, session = db.Node.get(with_session=True)
+        nodes = db.Node.get()
         for node in nodes:
             node.status = 'offline'
-        session.commit()
+            node.save()
+        # session.commit()
 
         kwargs.setdefault('log_output', False)
         self.socketio.run(self.app, *args, **kwargs)
