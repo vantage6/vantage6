@@ -2,14 +2,23 @@ language: python
 python:
   - 3.6
   - 3.7
-  - 3.8
-  - 3.8-dev
+  # - 3.8
+  # - 3.8-dev
+
+branches:
+  - master
+  - DEV
+  - hotfix
+  - /release/(.+)/
 
 install:
   - pip install coverage==4.5.4
   - pip install python-coveralls
   - pip install pytest-cov
   - pip install -e .
+
+before_script:
+  - source git-installs.sh
 
 script:
   - pytest --cov tests/
