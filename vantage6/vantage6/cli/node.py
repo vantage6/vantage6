@@ -298,19 +298,18 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         f"{ctx.docker_container_name}-vol")
 
     info("Creating file & folder mounts")
-    # FIXME: should only mount /mnt/database.csv if it is a file!
     # FIXME: should obtain mount points from DockerNodeContext
     mounts = [
         # (target, source)
-        ("/mnt/database.csv", str(ctx.databases["default"])),
         ("/mnt/log", str(ctx.log_dir)),
         ("/mnt/data", data_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
 
+
     if mount_src:
-        # If mount_src is a relative path, docker willl consider it a volume.
+        # If mount_src is a relative path, docker will consider it a volume.
         mount_src = os.path.abspath(mount_src)
         mounts.append(('/vantage6', mount_src))
 
@@ -344,9 +343,17 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     # argument ;-).
     env = {
         "DATA_VOLUME_NAME": data_volume.name,
-        "DATABASE_URI": "/mnt/database.csv",
         "PRIVATE_KEY": "/mnt/private_key.pem"
     }
+
+    # only mount the DB if it is a file
+    info("Setting up database")
+    db_is_file = Path(ctx.databases["default"]).exists()
+    env['DATABASE_URI'] = "/mnt/database.csv" if db_is_file else \
+        ctx.databases['default']
+    info(f" - uri: {env['DATABASE_URI']}")
+    if db_is_file:
+        mounts.append(("/mnt/database.csv", str(ctx.databases["default"])))
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
