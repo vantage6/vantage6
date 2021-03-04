@@ -54,6 +54,7 @@ class DockerManager(object):
         self.log.debug("Initializing DockerManager")
         self.data_volume_name = data_volume_name
         self.database_uri = None
+        self.database_is_file = False
         self.__tasks_dir = tasks_dir
 
         # Connect to docker daemon
@@ -317,11 +318,15 @@ class DockerManager(object):
             "OUTPUT_FILE": f"{data_folder}/{task_folder_name}/output",
             "TOKEN_FILE": f"{data_folder}/{task_folder_name}/token",
             "TEMPORARY_FOLDER": tmp_folder,
-            "DATABASE_URI": data_folder + "/" + self.database_uri,
             "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
+        if self.database_is_file:
+            environment_variables["DATABASE_URI"] = \
+                f"{data_folder}/{self.database_uri}"
+        else:
+             environment_variables["DATABASE_URI"] = self.database_uri
 
         self.log.debug(f"environment: {environment_variables}")
         self.log.debug(f"volumes: {volumes}")
