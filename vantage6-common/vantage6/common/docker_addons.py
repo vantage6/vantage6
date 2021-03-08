@@ -1,8 +1,9 @@
 import logging
 import re
-
 import docker
 import requests
+import base64
+import json
 
 from dateutil.parser import parse
 from requests.api import request
@@ -15,8 +16,27 @@ log = logging.getLogger(logger)
 
 docker_client = docker.from_env()
 
-# logger needs to be setable as logging is used both inside and outside
-# our man application
+def registry_basic_auth_header(registry):
+
+    # Obtain the header used to be send to the docker deamon. We
+    # communicate directly with the registry therefore we need to
+    # change this headers.
+    header = docker.auth.get_config_header(docker_client.api, registry)
+    if not header:
+        log.debug(f'No credentials found for {registry}')
+        return
+
+    # decode header
+    header_json = json.loads(base64.b64decode(header))
+
+    # Extract username and password
+    basic_auth = f"{header_json['Username']}:{header_json['Password']}"
+
+    # Encode them back to base64 and as a dict
+    bytes_basic_auth = basic_auth.encode("utf-8")
+    b64_basic_auth = base64.b64encode(bytes_basic_auth).decode("utf-8")
+
+    return {'authorization': f'Basic {b64_basic_auth}'}
 
 
 def inspect_remote_image_timestamp(image: str, log=ClickLogger):
@@ -76,7 +96,7 @@ def inspect_remote_image_timestamp(image: str, log=ClickLogger):
                 f"{img_}/artifacts/{tag}"
 
     # retrieve info from the Harbor server
-    result = requests.get(image)
+    result = requests.get(image, headers=registry_basic_auth_header(reg))
 
     # verify that we got an result
     if result.status_code == 404:
