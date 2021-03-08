@@ -210,9 +210,10 @@ class DockerManager(object):
         try:
             self.log.info(f"Retrieving latest image: '{image}'")
             # self.docker.images.pull(image)
-            pull_if_newer(image, self.log)
+            pull_if_newer(self.docker, image, self.log)
 
         except Exception as e:
+            self.log.debug('Failed to pull image')
             self.log.error(e)
 
     def set_database_uri(self, database_uri):
