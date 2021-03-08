@@ -282,7 +282,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    # determine image-name. First we check if the option --image has been used.
+    # Determine image-name. First we check if the option --image has been used.
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if not image:
@@ -359,9 +359,12 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     db_is_file = Path(ctx.databases["default"]).exists()
     env['DATABASE_URI'] = "/mnt/database.csv" if db_is_file else \
         ctx.databases['default']
-    info(f" - uri: {env['DATABASE_URI']}")
+    info(f" - URI: {env['DATABASE_URI']}")
     if db_is_file:
         mounts.append(("/mnt/database.csv", str(ctx.databases["default"])))
+    else:
+        warning(' - Are you using a non file-based database?')
+        warning('   Or did you make a mistake in the database path?')
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
