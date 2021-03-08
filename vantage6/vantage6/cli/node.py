@@ -27,7 +27,12 @@ from vantage6.common import (
     warning, error, info, debug,
     bytes_to_base64s, check_config_write_permissions
 )
-from vantage6.common.globals import (STRING_ENCODING, APPNAME)
+from vantage6.common.globals import (
+    STRING_ENCODING,
+    APPNAME,
+    DEFAULT_DOCKER_REGISTRY,
+    DEFAULT_NODE_IMAGE
+)
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
@@ -277,10 +282,13 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     ctx.data_dir.mkdir(parents=True, exist_ok=True)
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    if image is None:
+    # determine image-name. First we check if the option --image has been used.
+    # Then we check if the image has been specified in the config file, and
+    # finally we use the default settings from the package.
+    if not image:
         image = ctx.config.get(
             "image",
-            "harbor.vantage6.ai/infrastructure/node:latest"
+            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
         )
 
     info(f"Pulling latest node image '{image}'")

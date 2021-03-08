@@ -14,7 +14,13 @@ from sqlalchemy.engine.url import make_url
 from vantage6.common import (echo, info, warning, error,
                              check_config_write_permissions)
 from vantage6.common.docker_addons import pull_if_newer
-from vantage6.common.globals import APPNAME, STRING_ENCODING
+from vantage6.common.globals import (
+    APPNAME,
+    STRING_ENCODING,
+    DEFAULT_DOCKER_REGISTRY,
+    DEFAULT_SERVER_IMAGE
+)
+
 # from vantage6.cli import fixture
 from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
                                   DEFAULT_SERVER_SYSTEM_FOLDERS)
@@ -123,11 +129,13 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
                   "is already running")
             exit(1)
 
-    # pull the server docker image
+    # Determine image-name. First we check if the option --image has been used.
+    # Then we check if the image has been specified in the config file, and
+    # finally we use the default settings from the package.
     if image is None:
         image = ctx.config.get(
             "image",
-            "harbor.vantage6.ai/infrastructure/server:latest"
+            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
         )
     info(f"Pulling latest server image '{image}'.")
     try:
