@@ -17,6 +17,26 @@ log = logging.getLogger(logger)
 docker_client = docker.from_env()
 
 def registry_basic_auth_header(registry):
+    """Obtain credentials for registry
+
+    This is a wrapper around docker-py to obtain the credentials used
+    to access a registry. Normally communication to the registry goes
+    through the Docker deamon API (locally), therefore we have to take
+    extra steps in order to communicate with the (Harbor) registry
+    directly.
+
+    Note that this has only been tested for the harbor registries.
+
+    Parameters
+    ----------
+    registry : str
+        registry name (e.g. harbor.vantage6.ai)
+
+    Returns
+    -------
+    dict
+        Containing a basic authorization header
+    """
 
     # Obtain the header used to be send to the docker deamon. We
     # communicate directly with the registry therefore we need to
