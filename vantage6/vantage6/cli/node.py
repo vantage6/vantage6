@@ -286,7 +286,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     info(f"Pulling latest node image '{image}'")
     try:
         # docker_client.images.pull(image)
-        pull_if_newer(image)
+        pull_if_newer(docker.from_env(), image)
 
     except Exception:
         warning(' ... alas, no dice!')
