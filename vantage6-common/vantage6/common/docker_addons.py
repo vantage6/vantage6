@@ -1,8 +1,9 @@
 import logging
 import re
-
 import docker
 import requests
+import base64
+import json
 
 from dateutil.parser import parse
 from requests.api import request
@@ -15,11 +16,51 @@ log = logging.getLogger(logger)
 
 docker_client = docker.from_env()
 
-# logger needs to be setable as logging is used both inside and outside
-# our man application
+def registry_basic_auth_header(docker_client, registry):
+    """Obtain credentials for registry
+
+    This is a wrapper around docker-py to obtain the credentials used
+    to access a registry. Normally communication to the registry goes
+    through the Docker deamon API (locally), therefore we have to take
+    extra steps in order to communicate with the (Harbor) registry
+    directly.
+
+    Note that this has only been tested for the harbor registries.
+
+    Parameters
+    ----------
+    registry : str
+        registry name (e.g. harbor.vantage6.ai)
+
+    Returns
+    -------
+    dict
+        Containing a basic authorization header
+    """
+
+    # Obtain the header used to be send to the docker deamon. We
+    # communicate directly with the registry therefore we need to
+    # change this headers.
+    header = docker.auth.get_config_header(docker_client.api, registry)
+    if not header:
+        log.debug(f'No credentials found for {registry}')
+        return
+
+    # decode header
+    header_json = json.loads(base64.b64decode(header))
+
+    # Extract username and password
+    # log.info(header_json)
+    basic_auth = f"{header_json['username']}:{header_json['password']}"
+
+    # Encode them back to base64 and as a dict
+    bytes_basic_auth = basic_auth.encode("utf-8")
+    b64_basic_auth = base64.b64encode(bytes_basic_auth).decode("utf-8")
+
+    return {'authorization': f'Basic {b64_basic_auth}'}
 
 
-def inspect_remote_image_timestamp(image: str, log=ClickLogger):
+def inspect_remote_image_timestamp(docker_client, image: str, log=ClickLogger):
     """
     Obtain creation timestamp object from remote image.
 
@@ -76,7 +117,8 @@ def inspect_remote_image_timestamp(image: str, log=ClickLogger):
                 f"{img_}/artifacts/{tag}"
 
     # retrieve info from the Harbor server
-    result = requests.get(image)
+    result = requests.get(image, headers=\
+        registry_basic_auth_header(docker_client, reg))
 
     # verify that we got an result
     if result.status_code == 404:
@@ -84,7 +126,7 @@ def inspect_remote_image_timestamp(image: str, log=ClickLogger):
         return
 
     if result.status_code != 200:
-        log.warn(f"Remote info could not be fetched! ({result.status_code})"
+        log.warn(f"Remote info could not be fetched! ({result.status_code}) "
                  f"{image}")
         return
 
@@ -95,7 +137,7 @@ def inspect_remote_image_timestamp(image: str, log=ClickLogger):
     return timestamp
 
 
-def inspect_local_image_timestamp(image: str, log=ClickLogger):
+def inspect_local_image_timestamp(docker_client, image: str, log=ClickLogger):
     """
     Obtain creation timestamp object from local image.
 
@@ -133,7 +175,7 @@ def inspect_local_image_timestamp(image: str, log=ClickLogger):
     return timestamp
 
 
-def pull_if_newer(image: str, log=ClickLogger):
+def pull_if_newer(docker_client, image: str, log=ClickLogger):
     """
     Docker pull only if the remote image is newer.
 
@@ -143,8 +185,8 @@ def pull_if_newer(image: str, log=ClickLogger):
         image to be pulled
     """
 
-    local_ = inspect_local_image_timestamp(image, log=log)
-    remote_ = inspect_remote_image_timestamp(image, log=log)
+    local_ = inspect_local_image_timestamp(docker_client, image, log=log)
+    remote_ = inspect_remote_image_timestamp(docker_client, image, log=log)
     pull = False
     if local_ and remote_:
         if remote_ > local_:
