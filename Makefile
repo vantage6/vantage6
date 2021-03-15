@@ -8,6 +8,7 @@ BRANCH ?= master
 help:
 	@echo "Available commands to 'make':"
 	@echo "  set-buildnr  : set buildnr in all vantage6 packages"
+	@echo "  set-version  : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
 	@echo "  uninstall    : uninstall all vantage6 packages"
 	@echo "  install      : do a regular install of all vantage6 packages"
 	@echo "  install-dev  : do an editable install of all vantage6 packages"
@@ -82,7 +83,7 @@ git-reset:
 	cd vantage6-server && git reset --hard
 
 set-version:
-	# --version --build --spec
+	# --version --build --spec --post
 	python tools\update-version.py ${FLAGS}
 
 community:

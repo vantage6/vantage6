@@ -5,17 +5,18 @@ from pathlib import Path
 
 from vantage6.common import info
 
-pattern = r"(version_info\s*=\s*\(*)(\s*\d+,\s*\d+,\s*\d+,)(\s*)('\w*')(,\s*__build__\)*)"
+pattern = r"(version_info\s*=\s*\(*)(\s*\d+,\s*\d+,\s*\d+,)(\s*)('\w*')(,\s*__build__)(,\s*)(\d+)(\)*)"
 
 def update_version_spec(spec: str) -> None:
     assert spec in ('final', 'beta', 'alpha', 'candidate')
-    files = Path(".").rglob("_version.py")
+    files = [file_ for file_ in Path(".").rglob("_version.py") if \
+        'build' not in str(file_)]
     for file in files:
         info(f'File: {file}')
         info(f'Updating spec to: {spec}')
         with open(file, 'r') as f:
             content = f.read()
-            new_content = re.sub(pattern, r"\1\2\3'{}'\5".format(spec), content)
+            new_content = re.sub(pattern, r"\1\2\g<3>'{}'\5\6\7\8".format(spec), content)
 
         info(f'Writing to file')
         with open(file, 'w') as f:
@@ -23,7 +24,8 @@ def update_version_spec(spec: str) -> None:
 
 def update_version(version: str) -> None:
     assert re.match(r"\d+.\d+.\d+", version)
-    files = Path(".").rglob("_version.py")
+    files = [file_ for file_ in Path(".").rglob("_version.py") if \
+        'build' not in str(file_)]
 
     for file in files:
         info(f'File: {file}')
@@ -31,7 +33,7 @@ def update_version(version: str) -> None:
         major, minor, patch = version.split(".")
         with open(file, 'r') as f:
             content = f.read()
-            new_content = re.sub(pattern, r"\1 {}, {}, {},\3\4\5".format(major, minor, patch), content)
+            new_content = re.sub(pattern, r"\1 {}, {}, {},\3\4\5\6\7\8".format(major, minor, patch), content)
 
         info(f'Writing to file')
         with open(file, 'w') as f:
@@ -39,19 +41,33 @@ def update_version(version: str) -> None:
 
 def update_build(build: int):
     files = Path(".").rglob("__build__")
-    # info([file for file in files])
+    info(f"Updating build number to {build}")
     for file in files:
         info(f'File: {file}')
-        info(f"Updating build number to {build}")
         with open(file, 'w') as f:
             f.write(build)
+
+def update_post(post):
+    files = [file_ for file_ in Path(".").rglob("_version.py") if \
+        'build' not in str(file_)]
+    info(f"Setting post-release version to: {post}")
+    for file_ in files:
+        info(f'File: {file_}')
+        with open(file_, 'r') as f:
+            content = f.read()
+            new_content = re.sub(pattern, r"\1\2\3\4\5\g<6>{}\8".format(post), content)
+
+        info(f'Writing to file')
+        with open(file_, 'w') as f:
+            f.write(new_content)
 
 @click.command()
 @click.option('--spec', default=None, help="final, candidate, beta, alpha")
 @click.option('--version', default=None, help="major.minor.patch")
 @click.option('--build', default=None,
               help="build number for non-final versions")
-def set_version(spec, version, build):
+@click.option('--post', default=None, help=".postN")
+def set_version(spec, version, build, post):
 
     if spec:
         update_version_spec(spec)
@@ -64,6 +80,10 @@ def set_version(spec, version, build):
     if build:
         update_build(build)
         info("Build number updated")
+
+    if post:
+        update_post(post)
+        info("Post release version set")
 
 if __name__ == '__main__':
     set_version()
