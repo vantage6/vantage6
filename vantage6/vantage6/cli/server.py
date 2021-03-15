@@ -131,7 +131,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
         )
     info(f"Pulling latest server image '{image}'.")
     try:
-        pull_if_newer(image)
+        pull_if_newer(docker.from_env(), image)
         # docker_client.images.pull(image)
     except Exception:
         warning("... alas, no dice!")
