@@ -110,8 +110,10 @@ def cli_server():
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
+@click.option('--attach/--detach', default=False,
+              help="Attach server logs to the console after start")
 @click_insert_context
-def cli_server_start(ctx, ip, port, debug, image, keep):
+def cli_server_start(ctx, ip, port, debug, image, keep, attach):
     """Start the server."""
 
     info("Starting server...")
@@ -210,6 +212,18 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
     )
 
     info(f"Success! container id = {container}")
+
+    if attach:
+        logs = container.attach(stream=True, logs=True, stdout=True)
+        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                info("Closing log file. Keyboard Interrupt.")
+                exit(0)
+
+
 
 #
 #   list
