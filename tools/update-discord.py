@@ -39,7 +39,7 @@ class PostUpdates(commands.Cog):
         description = (
             ':triangular_flag_on_post: A new **vantage6** release! :triangular_flag_on_post:\n\n'
             f'{summary}'
-            '\nSee the complete release notes [here](https://docs.vantage6.ai/release-notes-1/release-notes)\n\n'
+            '\nSee the complete release notes [here](https://docs.vantage6.ai/release-notes-1/2-harukas)\n\n'
             'To upgrade:'
             '```'
             f'pip install vantage6=={version}'
@@ -58,7 +58,7 @@ class PostUpdates(commands.Cog):
         )
 
         documentation = (
-            '[latest release notes](https://docs.vantage6.ai/release-notes-1/release-notes)\n'
+            '[latest release notes](https://docs.vantage6.ai/release-notes-1/2-harukas)\n'
             '[installation instructions](https://docs.vantage6.ai/installation/preliminaries)\n'
             '[How to contribute](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)'
         )
@@ -67,14 +67,13 @@ class PostUpdates(commands.Cog):
             '[harbor](https://harbor.vantage6.ai)\n'
             '[harbor2](https://harbor2.vantage6.ai)\n'
             '[Project website](https://vantage6.ai)\n'
-            '[Trolltunga admin](https://trolltunga.vantage6.ai/admin)\n'
             '[Build status](https://travis-ci.org/github/IKNL)'
         )
 
         embed=Embed(title=f"Release {version}", url="https://pypi.org", description=description, color=0x0593ff)
         embed.set_author(name="Frank Martin", icon_url="https://secure.gravatar.com/avatar/70ec8a99cb53dda559c7b191e24f3559?size=35")
         embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/789852327623786508/790610154491478076/train.png")
-        embed.add_field(name="Docker Images", value=f"harbor.vantage6.ai/infrastructure/node:{version} \n harbor.vantage6.ai/infrastructure/server:{version}", inline=False)
+        embed.add_field(name="Docker Images", value=f"harbor2.vantage6.ai/infrastructure/node:{version} \n harbor2.vantage6.ai/infrastructure/server:{version}", inline=False)
         embed.add_field(name="Documentation", value=documentation, inline=True)
         embed.add_field(name="Github", value=repositories, inline=True)
         embed.add_field(name="Usefull links", value=links, inline=True)
