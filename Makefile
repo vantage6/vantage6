@@ -19,10 +19,13 @@ help:
 	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  clean        : clean all built packages"
 	@echo "  git-checkout : git checkout a BRANCH"
-	@echo "  git-push     : push the active branch to the registry"
+	@echo "  git-push     : push the active branch to the registry (optional: FLAGS)"
 	@echo "  git-merge    : merge BRANCH into active branch"
 	@echo "  git-tag      : tag the current commit as a release TAG"
 	@echo "  git-commit   : Commit all repos and all changes using MSG"
+	@echo "  git-branch   : Create a new BRANCH"
+	@echo "  git-reset    : Resets current working tree DISCARDING all uncommited changes!"
+	@echo "  community    : Notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "Using tag: ${TAG}"
 
 git-checkout:
@@ -48,11 +51,11 @@ git-branch:
 	@echo "------------------------------------"
 
 git-commit:
-	cd vantage6-common && git commit -a -m ${MSG}
-	cd vantage6-client && git commit -a -m ${MSG}
-	cd vantage6 && git commit -a -m ${MSG}
-	cd vantage6-node && git commit -a -m ${MSG}
-	cd vantage6-server && git commit -a -m ${MSG}
+	cd vantage6-common && git commit -a -m "${MSG}"
+	cd vantage6-client && git commit -a -m "${MSG}"
+	cd vantage6 && git commit -a -m "${MSG}"
+	cd vantage6-node && git commit -a -m "${MSG}"
+	cd vantage6-server && git commit -a -m "${MSG}"
 
 git-push:
 	cd vantage6-common && git push ${FLAGS}
@@ -76,6 +79,9 @@ git-tag:
 	cd vantage6-server && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
 
 git-reset:
+	@echo "------------------------------------"
+	@echo "             GIT RESET              "
+	@echo "------------------------------------"
 	cd vantage6-common && git reset --hard
 	cd vantage6-client && git reset --hard
 	cd vantage6 && git reset --hard
@@ -123,7 +129,7 @@ image:
 docker-push:
 	docker push harbor.vantage6.ai/infrastructure/node:${TAG}
 	docker push harbor.vantage6.ai/infrastructure/server:${TAG}
-	docker push harbor2.vantage6.ai/infrastructure/server:${TAG}
+	docker push harbor2.vantage6.ai/infrastructure/node:${TAG}
 	docker push harbor2.vantage6.ai/infrastructure/server:${TAG}
 
 update-harukas:
@@ -132,10 +138,28 @@ update-harukas:
 	docker push harbor2.vantage6.ai/infrastructure/server:live
 
 rebuild:
+	@echo "------------------------------------"
+	@echo "         BUILDING PROJECT           "
+	@echo "------------------------------------"
+	@echo "------------------------------------"
+	@echo "         VANTAGE6 COMMON            "
+	@echo "------------------------------------"
 	cd vantage6-common && make rebuild
+	@echo "------------------------------------"
+	@echo "         VANTAGE6 CLIENT            "
+	@echo "------------------------------------"
 	cd vantage6-client && make rebuild
+	@echo "------------------------------------"
+	@echo "         VANTAGE6 CLI            "
+	@echo "------------------------------------"
 	cd vantage6 && make rebuild
+	@echo "------------------------------------"
+	@echo "         VANTAGE6 NODE            "
+	@echo "------------------------------------"
 	cd vantage6-node && make rebuild
+	@echo "------------------------------------"
+	@echo "         VANTAGE6 SERVER            "
+	@echo "------------------------------------"
 	cd vantage6-server && make rebuild
 
 publish-test:
@@ -153,6 +177,9 @@ publish:
 	cd vantage6-server && make publish
 
 clean:
+	@echo "------------------------------------"
+	@echo "       CLEANING BUILD FOLDERS       "
+	@echo "------------------------------------"
 	cd vantage6-common && make clean
 	cd vantage6-client && make clean
 	cd vantage6 && make clean

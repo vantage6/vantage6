@@ -5,6 +5,8 @@ LABEL infrastructure_version = "2.0.0"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>, Melle Sieswerda <m.sieswerda@iknl.nl>"
 
 # Enable SSH access in Azure App service
+RUN apt update -y
+RUN apt upgrade -y
 RUN apt install openssh-server sudo -y
 RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 test
 RUN  echo 'root:Docker!' | chpasswd
