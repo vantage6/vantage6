@@ -345,10 +345,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             warning(f"private key file provided {fullpath}, "
                     "but does not exists")
 
-    volumes = {}
-    for mount in mounts:
-        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
-
     # Be careful not to use 'environment' as it would override the function
     # argument ;-).
     env = {
@@ -373,6 +369,10 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
           f'{environment} --dockerized {system_folders_option}'
 
     info(f"Runing Docker container")
+    volumes = {}
+    for mount in mounts:
+        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
+
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
     # debug(f"  with environment: {env}")
