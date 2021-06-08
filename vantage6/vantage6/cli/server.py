@@ -204,7 +204,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep, attach):
             "name": ctx.config_file_name
         },
         environment=environment_vars,
-        ports={f"{port_}/tcp": ("127.0.0.1", port_)},
+        ports={f"{port_}/tcp": ("0.0.0.0", port_)},
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True
