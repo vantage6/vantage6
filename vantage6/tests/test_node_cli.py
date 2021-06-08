@@ -112,7 +112,8 @@ class NodeCLITest(unittest.TestCase):
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
 
-    def test_new_config_replace_whitespace_in_name(self):
+    @patch("vantage6.cli.node.configuration_wizard")
+    def test_new_config_replace_whitespace_in_name(self, _):
         """Whitespaces are replaced in the name."""
 
         runner = CliRunner()
@@ -221,7 +222,8 @@ class NodeCLITest(unittest.TestCase):
         ctx = MagicMock(
             data_dir=Path("data"),
             log_dir=Path("logs"),
-            config_dir=Path("configs")
+            config_dir=Path("configs"),
+            databases = {"default": "data.csv"}
         )
         ctx.get_data_file.return_value = "data.csv"
         context.return_value = ctx
@@ -354,7 +356,7 @@ class NodeCLITest(unittest.TestCase):
                 "iknl"
             ])
 
-            print(result.output)
+            # print(result.output)
 
         self.assertEqual(result.exit_code, 0)
 

@@ -1,17 +1,16 @@
 import click
 import questionary as q
-import IPython
 import docker
 import os
 import time
+import subprocess
 
 from threading import Thread
 from functools import wraps
-from traitlets.config import get_config
 from colorama import (Fore, Style)
 from sqlalchemy.engine.url import make_url
 
-from vantage6.common import (echo, info, warning, error,
+from vantage6.common import (info, warning, error, debug as debug_msg,
                              check_config_write_permissions)
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import (
@@ -110,8 +109,10 @@ def cli_server():
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
+@click.option('--attach/--detach', default=False,
+              help="Attach server logs to the console after start")
 @click_insert_context
-def cli_server_start(ctx, ip, port, debug, image, keep):
+def cli_server_start(ctx, ip, port, debug, image, keep, attach):
     """Start the server."""
 
     info("Starting server...")
@@ -210,6 +211,18 @@ def cli_server_start(ctx, ip, port, debug, image, keep):
     )
 
     info(f"Success! container id = {container}")
+
+    if attach:
+        logs = container.attach(stream=True, logs=True, stdout=True)
+        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                info("Closing log file. Keyboard Interrupt.")
+                exit(0)
+
+
 
 #
 #   list
@@ -453,35 +466,32 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     # fixture.load(entities, drop_all=drop_all)
 
 
-# DISABLED for now - use vserver-local instead
 #
 #   shell
 #
-# @cli_server.command(name='shell')
-# @click_insert_context
-# def cli_server_shell(ctx):
-#     """ Run a iPython shell. """
-#     # make db models available in shell
-#     try:
-#         from vantage6.server import db
-#     except ImportError:
-#         error("vantage6-server not installed")
-#         error(f"install using {Fore.RED}pip install "
-#               f"vantage6-server{Style.RESET_ALL}")
-#         exit(1)
-#
-#     c = get_config()
-#     c.InteractiveShellEmbed.colors = "Linux"
-#
-#     # Suppress logging (e.g. on tab-completion)
-#     import logging
-#     logging.getLogger('parso.cache').setLevel(logging.WARNING)
-#     logging.getLogger('parso.python.diff').setLevel(logging.WARNING)
-#     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-#     logging.getLogger('asyncio').setLevel(logging.WARNING)
-#     del logging
-#
-#     IPython.embed(config=c)
+@cli_server.command(name='shell')
+@click_insert_context
+def cli_server_shell(ctx):
+    """ Run a iPython shell. """
+
+    docker_client = docker.from_env()
+    # will print an error if not
+    check_if_docker_deamon_is_running(docker_client)
+
+    running_servers = docker_client.containers.list(
+        filters={"label": f"{APPNAME}-type=server"})
+
+    if not ctx.docker_container_name in [s.name for s in running_servers]:
+        error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} is not running?")
+        return
+
+    try:
+        subprocess.run(['docker', 'exec', '-it', ctx.docker_container_name,
+                        'vserver-local', 'shell', '-c', '/mnt/config.yaml'])
+    except Exception as e:
+        info("Failed to start subprocess...")
+        debug_msg(e)
+
 
 #
 #   stop

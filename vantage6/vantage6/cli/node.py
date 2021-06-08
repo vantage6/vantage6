@@ -222,10 +222,12 @@ help_ = {
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
+@click.option('--attach/--detach', default=False,
+              help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
               help="mount vantage6-master package source")
 def cli_node_start(name, config, environment, system_folders, image, keep,
-                   mount_src):
+                   mount_src, attach):
     """Start the node instance.
 
         If no name or config is specified the default.yaml configuation is
@@ -343,10 +345,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             warning(f"private key file provided {fullpath}, "
                     "but does not exists")
 
-    volumes = {}
-    for mount in mounts:
-        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
-
     # Be careful not to use 'environment' as it would override the function
     # argument ;-).
     env = {
@@ -371,6 +369,10 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
           f'{environment} --dockerized {system_folders_option}'
 
     info(f"Runing Docker container")
+    volumes = {}
+    for mount in mounts:
+        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
+
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
     # debug(f"  with environment: {env}")
@@ -393,6 +395,15 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
     info(f"Success! container id = {container}")
 
+    if attach:
+        logs = container.attach(stream=True, logs=True)
+        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                info("Closing log file. Keyboard Interrupt.")
+                exit(0)
 
 #
 #   stop
