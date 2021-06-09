@@ -324,10 +324,7 @@ class TestRuleModel(TestBaseModel):
     def test_methods(self):
 
         # check that error is raised
-        self.assertRaises(
-            NoResultFound,
-            Rule.get_by_("non-existant", 1, 1)
-        )
+        self.assertIsNone(Rule.get_by_("non-existant", 1, 1))
 
     def test_relations(self):
         rules = Rule.get()
