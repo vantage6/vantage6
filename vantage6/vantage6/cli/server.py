@@ -375,7 +375,7 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     if image is None:
         image = ctx.config.get(
             "image",
-            "harbor.vantage6.ai/infrastructure/server:latest"
+            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
         )
     info(f"Pulling latest server image '{image}'.")
     try:
