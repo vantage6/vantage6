@@ -1,6 +1,7 @@
 import json
 import pickle
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import patch, MagicMock
 
 import pandas as pd
 from pytest import raises
@@ -17,6 +18,7 @@ SEPARATOR = '.'
 SAMPLE_DB = pd.DataFrame([[1, 2]], columns=['column1', 'column2'])
 PICKLE_FORMAT = 'pickle'
 
+MOCK_SPARQL_ENDPOINT = 'sparql://some_triplestore'
 
 def test_old_pickle_input_wrapper(tmp_path):
     """
@@ -135,3 +137,38 @@ def run_docker_wrapper_with_echo_db(input_file, tmp_path):
 
         docker_wrapper.docker_wrapper(MODULE_NAME)
     return output_file
+
+
+@patch('vantage6.tools.docker_wrapper.dispact_rpc')
+@patch('vantage6.tools.docker_wrapper.os')
+@patch('vantage6.tools.docker_wrapper.SPARQLWrapper')
+def test_sparql_docker_wrapper_passes_dataframe(SPARQLWrapper: MagicMock, os: MagicMock, dispact_rpc: MagicMock,
+                                        tmp_path: Path):
+    input_file = tmp_path / 'input_file.pkl'
+    token_file = tmp_path / 'token.txt'
+    output_file = tmp_path / 'output.pkl'
+
+    environ = {'INPUT_FILE': str(input_file),
+               'TOKEN_FILE': str(token_file),
+               'DATABASE_URI': MOCK_SPARQL_ENDPOINT,
+               'OUTPUT_FILE': str(output_file)}
+
+    os.environ = environ
+
+    input_args = {'query': 'select *'}
+
+    with input_file.open('wb') as f:
+        pickle.dump(input_args, f)
+
+    with token_file.open('w') as f:
+        f.write(TOKEN)
+
+    dispact_rpc.return_value = pd.DataFrame()
+    SPARQLWrapper.return_value.query.return_value.convert.return_value = DATA.encode()
+
+    docker_wrapper.sparql_wrapper(MODULE_NAME)
+
+    dispact_rpc.assert_called_once()
+
+    target_df = pd.DataFrame([[1, 2]], columns=['column1', 'column2'])
+    pd.testing.assert_frame_equal(target_df, dispact_rpc.call_args[0][0])

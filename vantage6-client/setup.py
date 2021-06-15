@@ -36,7 +36,8 @@ setup(
        'PyJWT==1.7.1',
        'pandas',
        'vantage6-common >= 1.2.3',
-       'pyfiglet==0.8.post1'
+       'pyfiglet==0.8.post1',
+        'SPARQLWrapper==1.8.5'
     ],
     tests_require=["pytest"],
     package_data={

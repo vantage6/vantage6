@@ -7,7 +7,8 @@ algorithms with uniform input and output handling.
 
 import os
 import pickle
-
+import io
+from abc import ABC, abstractmethod
 import pandas
 
 from vantage6.tools.dispatch_rpc import dispact_rpc
@@ -15,82 +16,124 @@ from vantage6.tools.util import info
 from vantage6.tools import deserialization, serialization
 from vantage6.tools.data_format import DataFormat
 from vantage6.tools.exceptions import DeserializationException
+from SPARQLWrapper import SPARQLWrapper, CSV
 from typing import BinaryIO
 
 _DATA_FORMAT_SEPARATOR = '.'
 _MAX_FORMAT_STRING_LENGTH = 10
 
+_SPARQL_RETURN_FORMAT = CSV
+
 
 def docker_wrapper(module: str):
-    """
-    Wrap an algorithm module to provide input and output handling for the
-    vantage6 infrastructure.
+    wrapper = DockerWrapper()
+    wrapper.wrap_algorithm(module)
 
-    Data is received in the form of files, whose location should be specified
-    in the following environment variables:
-    - `INPUT_FILE`: input arguments for the algorithm
-    - `OUTPUT_FILE`: location where the results of the algorithm should be
-      stored
-    - `TOKEN_FILE`: access token for the vantage6 server REST api
-    - `DATABASE_URI`: either a database endpoint or path to a csv file.
 
-    The wrapper is able to parse a number of input file formats. The available
-    formats can be found in `vantage6.tools.data_format.DataFormat`. When the
-    input is not pickle (legacy), the format should be specified in the first
-    bytes of the input file, followed by a '.'.
+def sparql_wrapper(module: str):
+    wrapper = SparqlDockerWrapper()
+    wrapper.wrap_algorithm(module)
 
-    It is also possible to specify the desired output format. This is done by
-    including the parameter 'output_format' in the input parameters. Again, the
-    list of possible output formats can be found in
-    `vantage6.tools.data_format.DataFormat`.
 
-    It is still possible that output serialization will fail even if the
-    specified format is listed in the DataFormat enum. Algorithms can in
-    principle return any python object, but not every serialization format will
-    support arbitrary python objects. When dealing with unsupported algorithm
-    output, the user should use 'pickle' as output format, which is the
-    default.
+class WrapperBase(ABC):
 
-    The other serialization formats support the following algorithm output:
-    - built-in primitives (int, float, str, etc.)
-    - built-in collections (list, dict, tuple, etc.)
-    - pandas DataFrames
+    def wrap_algorithm(self, module):
+        """
+            Wrap an algorithm module to provide input and output handling for the
+            vantage6 infrastructure.
 
-    :param module: module that contains the vantage6 algorithms
-    :return:
-    """
-    info(f"wrapper for {module}")
+            Data is received in the form of files, whose location should be specified
+            in the following environment variables:
+            - `INPUT_FILE`: input arguments for the algorithm
+            - `OUTPUT_FILE`: location where the results of the algorithm should be
+              stored
+            - `TOKEN_FILE`: access token for the vantage6 server REST api
+            - `DATABASE_URI`: either a database endpoint or path to a csv file.
 
-    # read input from the mounted inputfile.
-    input_file = os.environ["INPUT_FILE"]
-    info(f"Reading input file {input_file}")
+            The wrapper is able to parse a number of input file formats. The available
+            formats can be found in `vantage6.tools.data_format.DataFormat`. When the
+            input is not pickle (legacy), the format should be specified in the first
+            bytes of the input file, followed by a '.'.
 
-    input_data = load_input(input_file)
+            It is also possible to specify the desired output format. This is done by
+            including the parameter 'output_format' in the input parameters. Again, the
+            list of possible output formats can be found in
+            `vantage6.tools.data_format.DataFormat`.
 
-    # all containers receive a token, however this is usually only
-    # used by the master method. But can be used by regular containers also
-    # for example to find out the node_id.
-    token_file = os.environ["TOKEN_FILE"]
-    info(f"Reading token file '{token_file}'")
-    with open(token_file) as fp:
-        token = fp.read().strip()
+            It is still possible that output serialization will fail even if the
+            specified format is listed in the DataFormat enum. Algorithms can in
+            principle return any python object, but not every serialization format will
+            support arbitrary python objects. When dealing with unsupported algorithm
+            output, the user should use 'pickle' as output format, which is the
+            default.
 
-    data_file = os.environ["DATABASE_URI"]
-    info(f"Using '{data_file}' as database")
-    # with open(data_file, "r") as fp:
-    data = pandas.read_csv(data_file)
+            The other serialization formats support the following algorithm output:
+            - built-in primitives (int, float, str, etc.)
+            - built-in collections (list, dict, tuple, etc.)
+            - pandas DataFrames
 
-    # make the actual call to the method/function
-    info("Dispatching ...")
-    output = dispact_rpc(data, input_data, module, token)
+            :param module: module that contains the vantage6 algorithms
+            :return:
+            """
+        info(f"wrapper for {module}")
 
-    # write output from the method to mounted output file. Which will be
-    # transfered back to the server by the node-instance.
-    output_file = os.environ["OUTPUT_FILE"]
-    info(f"Writing output to {output_file}")
+        # read input from the mounted inputfile.
+        input_file = os.environ["INPUT_FILE"]
+        info(f"Reading input file {input_file}")
 
-    output_format = input_data.get('output_format', None)
-    write_output(output_format, output, output_file)
+        input_data = load_input(input_file)
+
+        # all containers receive a token, however this is usually only
+        # used by the master method. But can be used by regular containers also
+        # for example to find out the node_id.
+        token_file = os.environ["TOKEN_FILE"]
+        info(f"Reading token file '{token_file}'")
+        with open(token_file) as fp:
+            token = fp.read().strip()
+
+        database_uri = os.environ["DATABASE_URI"]
+        info(f"Using '{database_uri}' as database")
+        # with open(data_file, "r") as fp:
+        data = self.load_data(database_uri, input_data)
+
+        # make the actual call to the method/function
+        info("Dispatching ...")
+        output = dispact_rpc(data, input_data, module, token)
+
+        # write output from the method to mounted output file. Which will be
+        # transfered back to the server by the node-instance.
+        output_file = os.environ["OUTPUT_FILE"]
+        info(f"Writing output to {output_file}")
+
+        output_format = input_data.get('output_format', None)
+        write_output(output_format, output, output_file)
+
+    @staticmethod
+    @abstractmethod
+    def load_data(database_uri, input_data):
+        pass
+
+
+class DockerWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        return pandas.read_csv(database_uri)
+
+
+class SparqlDockerWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        query = input_data['query']
+        return SparqlDockerWrapper._query_triplestore(database_uri, query)
+
+    @staticmethod
+    def _query_triplestore(endpoint: str, query: str):
+        sparql = SPARQLWrapper(endpoint, returnFormat=_SPARQL_RETURN_FORMAT)
+        sparql.setQuery(query)
+
+        result = sparql.query().convert().decode()
+
+        return pandas.read_csv(io.StringIO(result))
 
 
 def write_output(output_format, output, output_file):
