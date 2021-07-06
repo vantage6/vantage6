@@ -23,6 +23,7 @@ class Result(Base):
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
     log = Column(Text)
+    port = Column(Integer)
 
     # relationships
     task = relationship("Task", back_populates="results")

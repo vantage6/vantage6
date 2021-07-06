@@ -183,6 +183,7 @@ class Result(ServicesResources):
         result.finished_at = parse_datetime(data.get("finished_at"))
         result.result = data.get("result")
         result.log = data.get("log")
+        result.port = data.get("port")
         result.save()
 
         return result_schema.dump(result, many=False).data, HTTPStatus.OK
