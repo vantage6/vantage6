@@ -146,7 +146,10 @@ class Organization(ServicesResources):
                     for org in col.organizations:
                         if org not in organizations:
                             organizations.append(org)
-                organizations.append(auth_org)
+                # when you do not participate in any collaboration
+                # you still want to see your own organization
+                if not organizations:
+                    organizations.append(auth_org)
                 accepted = True
             elif self.r.v_org.can():
                 organizations = [auth_org]
