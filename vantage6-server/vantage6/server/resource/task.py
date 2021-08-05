@@ -97,8 +97,8 @@ class Task(ServicesResources):
     task_schema = TaskSchema()
     task_result_schema = TaskIncludedSchema()
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @only_for(["user", "node", "container"])
@@ -346,8 +346,8 @@ class TaskResult(ServicesResources):
 
     task_result_schema = TaskResultSchema()
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, "result")
 
     @only_for(['user', 'container'])

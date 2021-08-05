@@ -90,8 +90,8 @@ class Role(ServicesResources):
 
     role_schema = RoleSchema()
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @with_user
@@ -245,8 +245,8 @@ class RoleRules(ServicesResources):
     rule_schema = RuleSchema()
     role_schema = RoleSchema()
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @with_user

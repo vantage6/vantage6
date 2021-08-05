@@ -92,8 +92,8 @@ class Organization(ServicesResources):
 
     org_schema = OrganizationSchema()
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @only_for(["user", "node", "container"])
@@ -181,13 +181,14 @@ class Organization(ServicesResources):
             domain=data.get('domain', '')
         )
         organization.save()
+        print("here")
 
         return self.org_schema.dump(organization, many=False).data, \
             HTTPStatus.CREATED
 
     @only_for(["user", "node"])
     @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
-        endpoint='organization_with_id')
+               endpoint='organization_with_id')
     def patch(self, id):
         """Update organization."""
 

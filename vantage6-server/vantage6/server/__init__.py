@@ -101,7 +101,6 @@ class ServerApp:
         logging.getLogger("engineio.server").setLevel(logging.WARNING)
         logging.getLogger("socketio.server").setLevel(logging.WARNING)
 
-
     def configure_flask(self):
         """All flask config settings should go here."""
 
@@ -279,7 +278,8 @@ class ServerApp:
             "socketio": self.socketio,
             "mail": self.mail,
             "api": self.api,
-            "permissions": self.permissions
+            "permissions": self.permissions,
+            "config": self.ctx.config
         }
 
         for res in RESOURCES:

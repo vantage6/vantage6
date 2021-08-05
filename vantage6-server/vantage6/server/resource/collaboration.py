@@ -108,8 +108,8 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 class Collaboration(ServicesResources):
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @only_for(['user', 'node', 'container'])
@@ -295,7 +295,7 @@ class CollaborationOrganization(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-         # verify permissions
+        # verify permissions
         if not self.r.e_glo.can():
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED

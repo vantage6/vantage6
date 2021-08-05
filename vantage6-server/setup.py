@@ -54,6 +54,7 @@ setup(
         'psutil==5.7.0',
         'gevent==1.3.4',
         'Flask-Mail==0.9.1',
+        'requests-oauthlib==1.3.0',
         'vantage6 >= 1.2.3',
         'vantage6-common >= 1.2.3',
     ],
