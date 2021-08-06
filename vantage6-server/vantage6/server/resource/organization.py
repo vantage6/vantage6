@@ -181,7 +181,6 @@ class Organization(ServicesResources):
             domain=data.get('domain', '')
         )
         organization.save()
-        print("here")
 
         return self.org_schema.dump(organization, many=False).data, \
             HTTPStatus.CREATED
