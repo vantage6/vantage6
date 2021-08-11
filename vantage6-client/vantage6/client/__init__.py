@@ -944,7 +944,7 @@ class UserClient(ClientBase):
                     'address1': address1,
                     'address2': address2,
                     'zipcode': zipcode,
-                    'county': country,
+                    'country': country,
                     'domain': domain,
                     'public_key': public_key
                 }
