@@ -22,7 +22,6 @@ log = logging.getLogger(module_name)
 
 
 def setup(api, api_base, services):
-
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -51,7 +50,7 @@ class VPNConfig(ServicesResources):
         vpn_connector = EduVPNConnector(self.config['vpn_server'])
         ovpn_config = vpn_connector.get_ovpn_config()
 
-        return {'data': ovpn_config}, HTTPStatus.OK
+        return {'ovpn_config': ovpn_config}, HTTPStatus.OK
 
 
 class EduVPNConnector:
@@ -70,12 +69,15 @@ class EduVPNConnector:
 
         # obtain access token if not set
         if not self.session.token:
+            log.info("Acquiring EduVPN access token")
             self.set_access_token()
 
         # get the user's profile id
+        log.info("Getting EduVPN profile information")
         profile = self.get_profile()
         profile_id = profile['profile_list']['data'][0]['profile_id']
 
+        log.info("Obtaining OpenVPN configuration")
         # get the OVPN configuration for the selected user profile
         ovpn_config = self.get_config(profile_id)
 
@@ -89,12 +91,16 @@ class EduVPNConnector:
     def set_access_token(self):
         """ Obtain an access token to enable access to EduVPN API """
         # set PKCE data (code challenge and code verifier)
+        log.debug("Setting PKCE challenge")
         self._set_pkce()
         # login to the EduVPN portal
+        log.debug("Logging in to EduVPN portal")
         self._login()
         # call the authorization route of EduVPN to get authorization code
+        log.debug("Authorizing to EduVPN portal")
         self._authorize()
         # use authorization code to obtain token
+        log.debug("Obtaining token from EduVPN portal")
         self.session.token = self._get_token()
 
     def _set_pkce(self):
