@@ -306,6 +306,13 @@ class NodeClient(ClientBase):
 
         return self.request(f"result/{id}", json=result, method='patch')
 
+    def setup_vpn_connection(self):
+        response = self.request("vpnconfig")
+        ovpn_config = response.get("ovpn_config")
+        print(ovpn_config)
+        # TODO use the VPN config to make a VPN connection
+        pass
+
 
 # aliases for backward compatibility
 ClientContainerProtocol = ContainerClient

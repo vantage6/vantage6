@@ -152,6 +152,9 @@ class Node(object):
         # Setup encryption
         self.setup_encryption()
 
+        # Setup VPN connection
+        self.setup_vpn_connection()
+
         # Thread for proxy server for algorithm containers, so they can
         # communicate with the central server.
         self.log.info("Setting up proxy server")
@@ -506,6 +509,10 @@ class Node(object):
         else:
             self.log.warn('Disabling encryption!')
             self.server_io.setup_encryption(None)
+
+    def setup_vpn_connection(self):
+        """ Setup VPN connection """
+        self.server_io.setup_vpn_connection()
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
