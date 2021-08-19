@@ -80,7 +80,7 @@ def permissions(permissions: PermissionManager):
     add(scope=S.GLOBAL, operation=P.EDIT,
         description="edit any organization")
     add(scope=S.ORGANIZATION, operation=P.EDIT,
-        description="edit your own organization info")
+        description="edit your own organization info", assign_to_node=True)
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create a new organization")
 
@@ -199,10 +199,13 @@ class Organization(ServicesResources):
             return {"msg": f"Organization with id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.e_glo.can():
-            if not (self.r.e_org.can() and id == g.user.organization.id):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not (
+            self.r.e_glo.can() or
+            (self.r.e_org.can() and g.user and id == g.user.organization.id) or
+            (self.r.e_org.can() and g.node and id == g.node.organization.id)
+        ):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
         fields = ["name", "address1", "address2", "zipcode", "country",
