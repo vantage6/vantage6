@@ -19,6 +19,7 @@ from vantage6.common.globals import APPNAME
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
+from vantage6.client.exceptions import DeserializationException
 
 
 module_name = __name__.split('.')[1]
@@ -943,7 +944,7 @@ class UserClient(ClientBase):
                     'address1': address1,
                     'address2': address2,
                     'zipcode': zipcode,
-                    'county': country,
+                    'country': country,
                     'domain': domain,
                     'public_key': public_key
                 }
@@ -1372,7 +1373,13 @@ class UserClient(ClientBase):
             cleaned_results = []
             for result in results:
                 if result.get('result'):
-                    des_res = deserialization.load_data(result.get('result'))
+                    try:
+                        des_res = deserialization.load_data(result.get('result'))
+                    except DeserializationException:
+                        id_ = result.get('id')
+                        self.parent.log.warn(f'Could not deserialize result id='
+                                             f'{id_}')
+                        continue
                     result['result'] = des_res
                 cleaned_results.append(result)
 
