@@ -65,7 +65,8 @@ class Database(metaclass=Singleton):
         if URL.host is None and URL.database:
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
-        self.engine = create_engine(uri, convert_unicode=True)
+        self.engine = create_engine(uri, convert_unicode=True,
+                                    pool_pre_ping=True)
 
         # we can call Session() to create a new unique session
         # (self.Session is a session factory). Its also possible to use
