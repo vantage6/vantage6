@@ -1,4 +1,4 @@
-cryptography==2.8
+cryptography==3.3.2
 requests==2.23.0
 PyJWT==1.7.1
 vantage6-common >= 1.0.0b13
