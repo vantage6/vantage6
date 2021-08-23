@@ -263,6 +263,11 @@ class User(ServicesResources):
                         HTTPStatus.NOT_FOUND
                 roles.append(role)
 
+            # validate that user is not changing their own roles
+            if user == g.user:
+                return {'msg': "You can't changes your own roles!"}, \
+                    HTTPStatus.UNAUTHORIZED
+
             # validate that user can assign these
             for role in roles:
                 denied = self.permissions.verify_user_rules(role.rules)
@@ -280,6 +285,11 @@ class User(ServicesResources):
                     return {'msg': f'Rule={rule_id} can not be found!'}, \
                         HTTPStatus.NOT_FOUND
                 rules.append(rule)
+
+            # validate that user is not changing their own rules
+            if user == g.user:
+                return {'msg': "You can't changes your own rules!"}, \
+                    HTTPStatus.UNAUTHORIZED
 
             # validate that user can assign these
             denied = self.permissions.verify_user_rules(rules)
