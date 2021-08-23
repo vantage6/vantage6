@@ -31,12 +31,12 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
-       'cryptography==2.8',
-       'requests==2.23.0',
-       'PyJWT==1.7.1',
-       'pandas',
-       'vantage6-common >= 1.2.3',
-       'pyfiglet==0.8.post1',
+        'cryptography==2.8',
+        'requests==2.23.0',
+        'PyJWT==1.7.1',
+        'pandas',
+        'vantage6-common >= 1.2.3',
+        'pyfiglet==0.8.post1',
         'SPARQLWrapper==1.8.5'
     ],
     tests_require=["pytest"],

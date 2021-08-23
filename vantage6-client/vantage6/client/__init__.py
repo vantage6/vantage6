@@ -58,7 +58,6 @@ class ClientBase(object):
     to authenticate, generic request, creating tasks and result retrieval.
     """
 
-
     def __init__(self, host: str, port: int, path: str = '/api'):
         """Basic setup for the client
 
@@ -1351,7 +1350,11 @@ class UserClient(ClientBase):
             result = self.parent.get_results(id=id_, include_task=include_task)
             result_data = result.get('result')
             if result_data:
-                result['result'] = deserialization.load_data(result_data)
+                try:
+                    result['result'] = deserialization.load_data(result_data)
+                except Exception as e:
+                    self.parent.log.warn('--> Failed to deserialize')
+                    self.parent.log.debug(e)
 
             return result
 
@@ -1375,10 +1378,11 @@ class UserClient(ClientBase):
                 if result.get('result'):
                     try:
                         des_res = deserialization.load_data(result.get('result'))
-                    except DeserializationException:
+                    except Exception as e:
                         id_ = result.get('id')
                         self.parent.log.warn(f'Could not deserialize result id='
                                              f'{id_}')
+                        self.parent.log.debug(e)
                         continue
                     result['result'] = des_res
                 cleaned_results.append(result)
