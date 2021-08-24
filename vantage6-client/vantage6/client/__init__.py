@@ -1122,7 +1122,7 @@ class UserClient(ClientBase):
                 'lastname': lastname,
                 'password': password,
                 'email': email,
-                'organization': organization,
+                'organization_id': organization,
                 'roles': roles,
                 'rules': rules
             }
