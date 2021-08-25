@@ -3,7 +3,7 @@
 The docker manager is responsible for communicating with the docker-
 daemon and is a wrapper arround the docker module. It has methods
 for creating docker networks, docker volumes, start containers
-and retreive results from finisched containers
+and retreive results from finished containers
 
 TODO the task folder is also created by this class. This folder needs
 to be cleaned at some point.
@@ -14,13 +14,13 @@ import logging
 import docker
 import pathlib
 import re
-
-from typing import NamedTuple
+import json
+from typing import NamedTuple, List, Union, Dict
+from jwt.algorithms import Algorithm
 
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
-
 
 
 class Result(NamedTuple):
@@ -328,7 +328,7 @@ class DockerManager(object):
             environment_variables["DATABASE_URI"] = \
                 f"{data_folder}/{self.database_uri}"
         else:
-             environment_variables["DATABASE_URI"] = self.database_uri
+            environment_variables["DATABASE_URI"] = self.database_uri
         self.log.debug(f"environment: {environment_variables}")
 
         # Load additional environment variables
@@ -360,6 +360,9 @@ class DockerManager(object):
             self.log.error(e)
             return False
 
+        # setup forwarding of traffic VPN client to the algo container:
+        vpn_port = self._forward_vpn_traffic(algo_container=container)
+
         # keep track of the container
         self.active_tasks.append({
             "result_id": result_id,
@@ -367,7 +370,73 @@ class DockerManager(object):
             "output_file": os.path.join(task_folder_path, "output")
         })
 
-        return True
+        return vpn_port
+
+    def _forward_vpn_traffic(self, algo_container):
+        # iptables -t nat -A PREROUTING -i tun0 -p tcp \
+        #   --dport $vpn_client_port -j DNAT --to $isolated_algorithm_ip:$algorithm_port
+        # 1. find an empty port ->  this should become vpn_client_port
+        # 2. isolated_algorithm ip: retrieve as in stackoverlfow post
+        # ip_address = container.attrs['NetworkSettings']['IPAddress']
+        # 3. algorighm_port=8888,
+        # 4. run the command above
+        #
+
+        # # update attributes so that attached containers can be detected
+        # self._isolated_network.reload()
+        # print('self._isolated_network.attrs')
+        # print(self._isolated_network.attrs)
+
+        # TODO no constants here
+        _NETWORK_CONFIG_IMAGE = 'network-config'
+
+        # print('self.vpn_client_container.attrs')
+        # print(self.vpn_client_container.attrs)
+
+        # get port on the vpn client container to forward from. This is a
+        # port number between 5000 and 56000 that is not already occupied
+        self.vpn_client_container.reload()
+        occupied_client_ports = \
+            self.vpn_client_container.attrs['NetworkSettings']['Ports']
+        print('occupied_client_ports')
+        print(occupied_client_ports)
+        vpn_client_port_options = \
+            set(range(49152, 65535)) - set(occupied_client_ports)
+        vpn_client_port = next(iter(vpn_client_port_options))
+        print(vpn_client_port)
+        # TODO publish port to result table
+
+        # TODO prepare for the case that the algorithm container is not
+        # running, e.g. due to an error in the algorithm or because it finished
+        #  in 1second. Then the required settings are probably not available
+
+        # Get IP Address of the algorithm container
+        algo_container.reload()  # update attributes
+        print(algo_container.attrs['NetworkSettings'])
+        algorithm_container_ip = \
+            algo_container.attrs['NetworkSettings']['Networks'][self._isolated_network.name]['IPAddress']
+            # algo_container.attrs['NetworkSettings']['IPAddress']
+        print('algorithm_container_ip')
+        print(algorithm_container_ip)
+        algorithm_port = '8888'
+
+        # Set up
+        command = (
+            'sh -c "'
+            'iptables -t nat -A PREROUTING -i tun0 -p tcp '
+            f'--dport {vpn_client_port} -j DNAT '
+            f'--to {algorithm_container_ip}:{algorithm_port}'
+            '"'
+        )
+
+        self.docker.containers.run(
+            image=_NETWORK_CONFIG_IMAGE,
+            network='host',
+            cap_add='NET_ADMIN',
+            command=command
+        )
+        # TODO clean up routing rules
+        return vpn_client_port
 
     def get_result(self):
         """ Returns the oldest (FIFO) finished docker container.
@@ -447,3 +516,147 @@ class DockerManager(object):
             except docker.errors.APIError as e:
                 self.log.warn(f"Could not login to {registry.get('registry')}")
                 self.log.debug(e)
+
+    def connect_vpn(self, ovpn_file):
+        # define mounting of config file
+        ovpn_config_mounted_loc = '/data/vpn-config.ovpn.conf'
+        volumes = {
+            ovpn_file: {'bind': ovpn_config_mounted_loc, 'mode': 'rw'}
+        }
+        # set environment variables
+        env = {
+            'VPN_CONFIG': ovpn_config_mounted_loc
+        }
+
+        # start vpnclient
+        # TODO define names below properly...
+        # TODO maybe check if docker container vpn client is still running,
+        # otherwise stop and remove it
+        self.vpn_client_container_name = 'vtg6-vpn-client-container'
+        self.vpn_client_container = self.docker.containers.run(
+            image='algorithm-container-network_openvpn-client',
+            command="",  # commands to run are already defined in docker image
+            volumes=volumes,
+            detach=True,
+            environment=env,
+            name=self.vpn_client_container_name,
+            cap_add=['NET_ADMIN', 'SYSLOG'],
+            devices=['/dev/net/tun'],
+        )
+        # print('self.vpn_client_container.attrs')
+        # print(self.vpn_client_container.attrs)
+
+        # attach vpnclient to isolated network
+        self.connect_to_isolated_network(
+            container_name=self.vpn_client_container.name,
+            aliases=['vtg6-vpn-client-container']
+        )
+
+        # create network exception so that packet transfer between VPN network
+        # and the vpn client container is allowed
+        bridge_interface = self.find_isolated_bridge(
+            self.vpn_client_container.name
+        )
+        self.configure_host_namespace(
+            vpn_subnet=self.get_subnet(),
+            isolated_bridge=bridge_interface
+        )
+        # print('for now, removing container again')
+        # vpn_container.stop()
+        # vpn_container.remove()
+        # raise
+
+    def find_isolated_bridge(self, container_name: str):
+        """
+        Retrieve the linked network interface in the host namespace for network interface eth0 in the
+        container namespace.
+
+        :param container_id: container id of the docker container connected to an isolated network.
+        :return: the name of the network interface in the host namespace
+        """
+        # TODO no constants here
+        _NETWORK_CONFIG_IMAGE = 'network-config'
+        _HOST = 'host'
+
+        # Get network config from isolated container namespace
+        container = self.docker.containers.get(container_name)
+        _, isolated_interface = container.exec_run(
+            ['ip', '--json', 'addr', 'show', 'dev', 'eth0']
+        )
+
+        isolated_interface = json.loads(isolated_interface)
+        # print('isolated_interface')
+        # print(isolated_interface)
+
+        link_index = self._get_link_index(isolated_interface)
+
+        # Get network config from host namespace
+        host_interfaces = self.docker.containers.run(
+            image=_NETWORK_CONFIG_IMAGE,
+            network=_HOST,
+            command=['ip', '--json', 'addr']
+        )
+        host_interfaces = json.loads(host_interfaces)
+        # print('host_interfaces')
+        # print(host_interfaces)
+
+        linked_interface = self._get_if(host_interfaces, link_index)
+        # print('linked_interface')
+        # print(linked_interface)
+        bridge_interface = linked_interface['master']
+        return bridge_interface
+
+    def configure_host_namespace(self, vpn_subnet: str, isolated_bridge: str):
+        """
+        By default the internal bridge networks are configured to prohibit packet forwarding between
+        networks. Create an exception to this rule for forwarding traffic between the bridge and vpn
+        network.
+
+        :param vpn_subnet:
+        :param isolated_bridge:
+        :return:
+        """
+        # TODO no constants here
+        _NETWORK_CONFIG_IMAGE = 'network-config'
+        # print('configuring host')
+        # print(vpn_subnet)
+        # print(isolated_bridge)
+
+        command = (
+            'sh -c "'
+            f'iptables -I DOCKER-USER 1 -d {vpn_subnet} -i {isolated_bridge} '
+            '-j ACCEPT; '
+            f'iptables -I DOCKER-USER 1 -s {vpn_subnet} -o {isolated_bridge} '
+            '-j ACCEPT; '
+            '"'
+        )
+
+        self.docker.containers.run(
+            image=_NETWORK_CONFIG_IMAGE,
+            network='host',
+            cap_add='NET_ADMIN',
+            command=command
+        )
+
+    def get_subnet(self):
+        # return network.attrs['IPAM']['Config'][0]['Subnet']
+        # return "172.18.238.0/24"
+        return '10.76.0.0/12'
+
+    def _get_if(self, interfaces, index) -> Union[Dict, None]:
+        """
+        Get interface configuration based on interface index
+
+        :param index:
+        :return:
+        """
+        for interface in interfaces:
+            if int(interface['ifindex']) == index:
+                return interface
+
+        return None
+
+    def _get_link_index(self, if_json: Union[Dict, List]) -> int:
+        if isinstance(if_json, list):
+            if_json = if_json[-1]
+        return int(if_json['link_index'])

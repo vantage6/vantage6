@@ -306,12 +306,16 @@ class NodeClient(ClientBase):
 
         return self.request(f"result/{id}", json=result, method='patch')
 
-    def setup_vpn_connection(self):
+    def get_vpn_config(self):
+        """ Obtain VPN configuration from the server """
         response = self.request("vpnconfig")
         ovpn_config = response.get("ovpn_config")
-        print(ovpn_config)
-        # TODO use the VPN config to make a VPN connection
-        pass
+
+        # replace windows line endings to linux style to prevent extra
+        # whitespace in writing the file
+        ovpn_config = ovpn_config.replace("\r\n", "\n")
+
+        return ovpn_config
 
 
 # aliases for backward compatibility

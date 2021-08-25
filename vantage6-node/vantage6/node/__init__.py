@@ -152,9 +152,6 @@ class Node(object):
         # Setup encryption
         self.setup_encryption()
 
-        # Setup VPN connection
-        self.setup_vpn_connection()
-
         # Thread for proxy server for algorithm containers, so they can
         # communicate with the central server.
         self.log.info("Setting up proxy server")
@@ -212,6 +209,9 @@ class Node(object):
         self.__docker.login_to_registries(
             self.ctx.config.get("docker_registries", [])
         )
+
+        # Setup VPN connection
+        self.setup_vpn_connection()
 
         # If we're running in a docker container, database_uri would point
         # to a path on the *host* (since it's been read from the config
@@ -294,6 +294,7 @@ class Node(object):
         # app.debug = True
         app.config["SERVER_IO"] = self.server_io
 
+        # this is where we try to find a port for the proxyserver
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
@@ -365,13 +366,15 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        self.__docker.run(
+        vpn_port = self.__docker.run(
             result_id=taskresult["id"],
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
             token=token
         )
+
+        self.server_io.request("result", {"port": vpn_port}, method="POST")
 
     def __listening_worker(self):
         """ Listen for incoming (websocket) messages from the server.
@@ -511,8 +514,30 @@ class Node(object):
             self.server_io.setup_encryption(None)
 
     def setup_vpn_connection(self):
-        """ Setup VPN connection """
-        self.server_io.setup_vpn_connection()
+        """ Setup VPN connection
+
+            .... Details here ....
+        """
+        # TODO remember that line endings for entry.sh have been adapted from CRLF to LF
+        # TODO make Djura's images (vpn-client and network-config) available in harbour
+
+        # get the ovpn configuration from the server
+        ovpn_config = self.server_io.get_vpn_config()
+
+        # write ovpn config to node docker volume
+        # TODO replace the text in following line with constants
+        ovpn_file = os.path.join(self.ctx.data_dir, 'data', 'vpn-config.ovpn.conf')
+        with open(ovpn_file, 'w') as f:
+            f.write(ovpn_config)
+
+        # set up the VPN connection via docker containers
+        self.__docker.connect_vpn(ovpn_file=ovpn_file)
+
+        # TODO when firing up an algo container, we need to forward the traffic
+        # from the vpn client to the algo container. To achieve this, run the
+        # following in the network-config docker image:
+        # iptables -t nat -A PREROUTING -i tun0 -p tcp \
+        #   --dport $vpn_client_port -j DNAT --to $isolated_algorithm_ip:$algorithm_port
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
