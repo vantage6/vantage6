@@ -230,4 +230,8 @@ class Node(ServicesResources):
                         f'{collaboration.id}'}
             node.collaboration = collaboration
 
+        if 'ip' in data:
+            node.ip = data['ip']
+            node.save()
+
         return self.node_schema.dump(node).data, HTTPStatus.OK

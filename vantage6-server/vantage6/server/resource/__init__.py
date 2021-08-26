@@ -77,7 +77,6 @@ def get_and_update_authenticatable_info(auth_id):
     """Get DB entity from ID and update info."""
     auth = db.Authenticatable.get(auth_id)
     auth.last_seen = datetime.datetime.utcnow()
-    auth.ip = request.remote_addr
     auth.save()
     return auth
 
