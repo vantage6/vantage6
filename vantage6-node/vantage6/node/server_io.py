@@ -167,8 +167,6 @@ class NodeClient(ClientBase):
         """ A node is always for a single collaboration."""
         super().__init__(*args, **kwargs)
 
-        # FIXME: It seems the following attributes overlap with self.whoami?
-        self.id = None
         # self.name = None
         self.collaboration_id = None
         self.whoami = None

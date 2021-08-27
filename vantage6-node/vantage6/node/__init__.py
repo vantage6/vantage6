@@ -366,6 +366,7 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
+        # TODO modify run() function so that it never returns a bool
         vpn_port = self.__docker.run(
             result_id=taskresult["id"],
             image=task["image"],
@@ -374,7 +375,18 @@ class Node(object):
             token=token
         )
 
-        self.server_io.request("result", {"port": vpn_port}, method="POST")
+        self.server_io.request(
+            f"result/{taskresult['id']}", {"port": vpn_port}, method="PATCH"
+        )
+        node_id = self.server_io.whoami.id_
+        print(node_id)
+        # node_ip = self.__docker.get_vpn_ip()
+        # raise
+        # self.server_io.request(
+        #     f"node/{node_id}",
+        #     {"ip": node_ip}, method="PATCH"
+        # )
+        # TODO patch IP address of VPN client container to Authenticatable
 
     def __listening_worker(self):
         """ Listen for incoming (websocket) messages from the server.
@@ -532,12 +544,7 @@ class Node(object):
 
         # set up the VPN connection via docker containers
         self.__docker.connect_vpn(ovpn_file=ovpn_file)
-
-        # TODO when firing up an algo container, we need to forward the traffic
-        # from the vpn client to the algo container. To achieve this, run the
-        # following in the network-config docker image:
-        # iptables -t nat -A PREROUTING -i tun0 -p tcp \
-        #   --dport $vpn_client_port -j DNAT --to $isolated_algorithm_ip:$algorithm_port
+        # self.__docker.get_vpn_ip()
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
