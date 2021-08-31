@@ -4,6 +4,7 @@ import docker
 import requests
 import base64
 import json
+import signal
 
 from dateutil.parser import parse
 from requests.api import request
@@ -15,6 +16,19 @@ logger = logger_name(__name__)
 log = logging.getLogger(logger)
 
 docker_client = docker.from_env()
+
+
+class ContainerKillListener:
+    """ Listen for signals that the docker container should be shut down """
+    kill_now = False
+
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, *args):
+        self.kill_now = True
+
 
 def registry_basic_auth_header(docker_client, registry):
     """Obtain credentials for registry
@@ -117,8 +131,9 @@ def inspect_remote_image_timestamp(docker_client, image: str, log=ClickLogger):
                 f"{img_}/artifacts/{tag}"
 
     # retrieve info from the Harbor server
-    result = requests.get(image, headers=\
-        registry_basic_auth_header(docker_client, reg))
+    result = requests.get(
+        image, headers=registry_basic_auth_header(docker_client, reg)
+    )
 
     # verify that we got an result
     if result.status_code == 404:
