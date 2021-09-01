@@ -16,6 +16,7 @@ import pathlib
 import re
 import json
 from typing import NamedTuple, List, Union, Dict
+from docker.models.networks import Network
 from jwt.algorithms import Algorithm
 
 from vantage6.common.docker_addons import pull_if_newer
@@ -361,7 +362,7 @@ class DockerManager(object):
         # setup forwarding of traffic VPN client to the algo container:
         vpn_port = self._forward_vpn_traffic(algo_container=container)
         # Direct algorithm container traffic to the VPN
-        self._route_algo_container_to_vpn()
+        self._route_algo_container_to_vpn(algo_container=container)
 
         # keep track of the container
         self.active_tasks.append({
@@ -372,14 +373,8 @@ class DockerManager(object):
 
         return vpn_port
 
-    def _route_algo_container_to_vpn(self):
+    def _route_algo_container_to_vpn(self, algo_container):
         # get address of the vpn client
-
-        # TODO is this part relevant? (copied from other function)
-        # container = self.docker.containers.get(self.vpn_client_container_name)
-        # _, vpn_ip_info = container.exec_run(
-        #     ['ip', '--json', 'addr', 'show', 'dev', 'eth0']
-        # )
         cmd = "ip --json addr show dev eth0"
         vpn_ip_info = self.docker.containers.run(
             image='network-config',
@@ -396,10 +391,18 @@ class DockerManager(object):
         print('gateway')
         print(gateway)
 
+        # print(algo_container.attrs)
+        # print(algo_container)
+        # print(algo_container.id)
+        # raise
+
+        network = 'container:' + algo_container.id
+        print(network)
         cmd = f"ip route replace default via {gateway}"
         self.docker.containers.run(
             image='alpine',
-            network=self._isolated_network.name,
+            network=network,
+            # network=self._isolated_network.name,
             cap_add='NET_ADMIN',
             command=cmd,
             # auto_remove=True,
@@ -408,7 +411,6 @@ class DockerManager(object):
     def _forward_vpn_traffic(self, algo_container):
         # TODO no constants here
         _NETWORK_CONFIG_IMAGE = 'network-config'
-
 
         # get port on the vpn client container to forward from. This port
         # should not yet be occupied
@@ -429,6 +431,10 @@ class DockerManager(object):
             algo_container.attrs['NetworkSettings']['Networks']
                                 [self._isolated_network.name]['IPAddress']
         )
+        print('algo_container.attrs')
+        print(algo_container.attrs)
+        print('algorithm_container_ip')
+        print(algorithm_container_ip)
         algorithm_port = '8888'
 
         # Set up
