@@ -18,6 +18,9 @@ import questionary as q
 import docker
 import time
 import os.path
+import re
+import shutil
+import itertools
 
 from pathlib import Path
 from threading import Thread
@@ -619,12 +622,8 @@ def cli_node_remove(name, environment, system_folders):
     - if the node is still running, exit and tell user to run vnode stop first
     - remove configuration file
     - remove log file
-    TODO remove task files
     - remove docker volumes attached to the node
-    TODO delete node from following database tables: authenticatable, node
-
-    TODO Delete the node database (and any other data files such as VPN config files)
-    TODO check if there are tasks open for this node. In principle, a node could be removed while an algorithm is still waiting for that node to complete its tasks. Maybe we want to handle this with a warning ('Tasks are still open for this node, are you sure you want to delete it?')
+    - remove docker (isolated) networks of the node
     """
     # select configuration name if none supplied
     name, environment = select_node(name, environment, system_folders)
@@ -642,38 +641,47 @@ def cli_node_remove(name, environment, system_folders):
               "deleting it.")
         exit(1)
 
-    # if not q.confirm(
-    #     "This node will be deleted permanently. Are you sure?", default=False
-    # ).ask():
-    #     info("Node will not be deleted")
-    #     exit(0)
+    if not q.confirm(
+        "This node will be deleted permanently including its configuration. "
+        "Are you sure?", default=False
+    ).ask():
+        info("Node will not be deleted")
+        exit(0)
 
     # create node context
     ctx = NodeContext(name, environment=environment,
                       system_folders=system_folders)
 
-    # # remove the config file and log file
-    # os.remove(ctx.config_file)
-    # info(f"Removed configuration file {ctx.config_file}")
-    # os.remove(ctx.log_file)
-    # info(f"Removed log file {ctx.log_file}")
-
-    # remove from data directory
-    # TODO shutil.rmtree() deletes a directory and all its contents.
-    info(f"data folders       = {ctx.data_dir}")
-    info(f"Database labels and files")
-    for label, path in ctx.databases.items():
-        info(f" - {label:15} = {path}")
-
-    # remove the docker volume
+    # remove the docker volume and any temporary volumes
+    debug(f"Deleting docker volumes")
     volumes = client.volumes.list()
     for vol in volumes:
-        if vol.name.startswith(f"{APPNAME}-{name}-{post_fix}"):
+        if vol.name.startswith(ctx.docker_volume_name):  # includes tmp volumes
             info(f"Deleting docker volume {vol.name}")
-            # vol.remove()
+            vol.remove()
 
+    # remove the docker network attached to the node
+    debug(f"Deleting docker networks")
+    try:
+        network_name = ctx.docker_network_name + '-net'
+        network = client.networks.get(network_name)
+        info(f"Deleting docker network {network_name}")
+        network.remove()
+    except docker.errors.NotFound:
+        pass  # no docker network available for node, nothing to delete
 
+    # TODO remove the VPN configuration (requires merge with that git branch)
 
+    # remove the config file
+    info(f"Removing configuration file {ctx.config_file}")
+    os.remove(ctx.config_file)
+
+    # remove the log file. As this process opens the log file above, the log
+    # handlers need to be closed before deleting
+    info(f"Removing log file {ctx.log_file}")
+    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+        handler.close()
+    os.remove(ctx.log_file)
 
 #
 #   version
