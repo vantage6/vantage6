@@ -222,7 +222,7 @@ class DockerManager(object):
         self.database_uri = database_uri
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: int, token: str) -> bool:
+            tmp_vol_name: int, token: str) -> int:
         """Runs the docker-image in detached mode.
 
             It will will attach all mounts (input, output and datafile)
@@ -239,13 +239,13 @@ class DockerManager(object):
         if not self.is_docker_image_allowed(image):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
-            return False
+            return None
 
         # Check that this task is not already running
         if self.is_running(result_id):
             self.log.warn("Task is already being executed, discarding task")
             self.log.debug(f"result_id={result_id} is discarded")
-            return False
+            return None
 
         # Try to pull the latest image
         self.pull(image)
@@ -357,7 +357,10 @@ class DockerManager(object):
         except Exception as e:
             self.log.error('Could not run docker image!?')
             self.log.error(e)
-            return False
+            return None
+
+        # TODO implement something to make the algorithm container wait until
+        # the VPN is properly set up. Otherwise algorithm may fail
 
         # setup forwarding of traffic VPN client to the algo container:
         vpn_port = self._forward_vpn_traffic(algo_container=container)
@@ -373,7 +376,7 @@ class DockerManager(object):
 
         return vpn_port
 
-    def _route_algo_container_to_vpn(self, algo_container):
+    def get_vpn_ip(self):
         # get local ip address of the vpn client
         self._isolated_network.reload()
         vpn_local_ip = None
@@ -385,49 +388,32 @@ class DockerManager(object):
             raise KeyError("Local VPN IP address not found")
         # remove significant bit suffix as it is not accepted by `ip route` cmd
         vpn_local_ip = vpn_local_ip[0:vpn_local_ip.find('/')]
-        print('vpn_local_ip')
-        print(vpn_local_ip)
 
+    def _route_algo_container_to_vpn(self, algo_container):
+        """ Ensure outgoing algorithm container traffic is directed to the
+            VPN client container
+        """
+        vpn_local_ip = self.get_vpn_ip()
+
+        # direct outgoing algorithm container traffic to the VPN container
         network = 'container:' + algo_container.id
-        # cmd = "ip --json addr show dev eth0"
-        # vpn_ip_info = self.docker.containers.run(
-        #     image='network-config',
-        #     network=network,  # TODO via dockerpy
-        #     # network=self._isolated_network.name,
-        #     cap_add='NET_ADMIN',
-        #     command=cmd,
-        #     # auto_remove=True,
-        # )
-        # vpn_ip_info = json.loads(vpn_ip_info)
-        # print('vpn_ip_info')
-        # print(vpn_ip_info)
-
-        # gateway = vpn_ip_info[0]['addr_info'][0]['local']
-        # print('gateway')
-        # print(gateway)
-
-        # print(algo_container.attrs)
-        # print(algo_container)
-        # print(algo_container.id)
-        # raise
-
-        print(network)
         cmd = f"ip route replace default via {vpn_local_ip}"
         self.docker.containers.run(
             image='alpine',
             network=network,
-            # network=self._isolated_network.name,
             cap_add='NET_ADMIN',
             command=cmd,
-            # auto_remove=True,
+            auto_remove=True,
         )
 
     def _forward_vpn_traffic(self, algo_container):
-        # TODO no constants here
-        _NETWORK_CONFIG_IMAGE = 'network-config'
-
+        """ Forward traffic that comes into the VPN client container to the
+            algorithm container
+        """
         # get port on the vpn client container to forward from. This port
         # should not yet be occupied
+        # TODO this doesn't work yet: occupied ports are not found in this
+        # manner. Look for occupied ports in another way
         self.vpn_client_container.reload()
         occupied_client_ports = \
             self.vpn_client_container.attrs['NetworkSettings']['Ports']
@@ -441,18 +427,14 @@ class DockerManager(object):
 
         # Get IP Address of the algorithm container
         algo_container.reload()  # update attributes
-        # TODO check if this is ok
         algorithm_container_ip = (
             algo_container.attrs['NetworkSettings']['Networks']
                                 [self._isolated_network.name]['IPAddress']
         )
-        print('algo_container.attrs')
-        print(algo_container.attrs)
-        print('algorithm_container_ip')
-        print(algorithm_container_ip)
+        # Set port at which algorithm containers receive traffic
         algorithm_port = '8888'
 
-        # Set up
+        # Set up forwarding VPN traffic in VPN client container
         command = (
             'sh -c "'
             'iptables -t nat -A PREROUTING -i tun0 -p tcp '
@@ -460,16 +442,7 @@ class DockerManager(object):
             f'--to {algorithm_container_ip}:{algorithm_port}'
             '"'
         )
-
         self.vpn_client_container.exec_run(command)
-        # self.docker.containers.run(
-        #     image=_NETWORK_CONFIG_IMAGE,
-        #     network=self._isolated_network.name,
-        #     cap_add='NET_ADMIN',
-        #     command=command,
-        #     auto_remove=True,
-        # )
-        # TODO clean up routing rules
         return vpn_client_port
 
     def get_result(self):
@@ -564,8 +537,8 @@ class DockerManager(object):
 
         # start vpnclient
         # TODO define names below properly...
-        # TODO maybe check if docker container vpn client is still running,
-        # otherwise stop and remove it
+        # TODO this fails when vpn client container is still running from
+        # previous `vnode start`, prevent this
         self.vpn_client_container_name = 'vtg6-vpn-client-container'
         self.vpn_client_container = self.docker.containers.run(
             image='algorithm-container-network_openvpn-client',
@@ -577,9 +550,6 @@ class DockerManager(object):
             cap_add=['NET_ADMIN', 'SYSLOG'],
             devices=['/dev/net/tun'],
         )
-        # self.vpn_client_container.reload()
-        # print(self.vpn_client_container.attrs)
-        # raise
 
         # attach vpnclient to isolated network
         self.connect_to_isolated_network(
@@ -597,44 +567,20 @@ class DockerManager(object):
             isolated_bridge=bridge_interface
         )
 
-    # TODO get the VPN IP address
-    def get_vpn_ip(self):
-        # self, container: str, command: Union[list, str]
-        # # ):
-        #     """ Run command in container
-
-        #     Parameters
-        #     ---------
-        #     container: str
-        #         Name or id of a running docker container
-        #     command: str or list of str
-        #         Command to execute
-
-        #     Returns
-        #     ------
-        #     Output of the docker command
-        #     """
-        # TODO generalize (overlaps with find_isolated_bridge function also)
-        container = self.docker.containers.get(self.vpn_client_container_name)
-        _, vpn_info = container.exec_run(
-            'ip --json addr show dev tun0'
-            # ['ip', '--json', 'addr', 'show', 'dev', 'tun0']
-        )
-        print(_)
-        print(vpn_info)
-        vpn_info = json.loads(vpn_info)
-        print(vpn_info)
-        # from pprint import pprint
-        # pprint(vpn_info)
-        # raise
-
     def find_isolated_bridge(self, vpn_client_container: str):
         """
-        Retrieve the linked network interface in the host namespace for network interface eth0 in the
-        container namespace.
+        Retrieve the linked network interface in the host namespace for
+        network interface eth0 in the container namespace.
 
-        :param container_id: container id of the docker container connected to an isolated network.
-        :return: the name of the network interface in the host namespace
+        Parameters
+        ----------
+        vpn_client_container: str
+            id or name of the VPN client container
+
+        Returns
+        -------
+        string
+            The name of the network interface in the host namespace
         """
         # TODO no constants here
         _NETWORK_CONFIG_IMAGE = 'network-config'
@@ -647,12 +593,8 @@ class DockerManager(object):
         )
 
         isolated_interface = json.loads(isolated_interface)
-        # print('isolated_interface')
-        # print(isolated_interface)
 
         link_index = self._get_link_index(isolated_interface)
-        # print('link_index')
-        # print(link_index)
 
         # Get network config from host namespace
         host_interfaces = self.docker.containers.run(
@@ -661,34 +603,29 @@ class DockerManager(object):
             command=['ip', '--json', 'addr']
         )
         host_interfaces = json.loads(host_interfaces)
-        # print('host_interfaces')
-        # print(host_interfaces)
 
         linked_interface = self._get_if(host_interfaces, link_index)
-        # print('linked_interface')
-        # print(linked_interface)
         bridge_interface = linked_interface['master']
-        # print('isolated_bridge')
-        # print(bridge_interface)
         return bridge_interface
 
     def configure_host_namespace(self, vpn_subnet: str, isolated_bridge: str):
         """
-        By default the internal bridge networks are configured to prohibit packet forwarding between
-        networks. Create an exception to this rule for forwarding traffic between the bridge and vpn
-        network.
+        By default the internal bridge networks are configured to prohibit
+        packet forwarding between networks. Create an exception to this rule
+        for forwarding traffic between the bridge and vpn network.
 
-        :param vpn_subnet:
-        :param isolated_bridge:
-        :return:
+        Parameters
+        ----------
+        vpn_subnet: string
+            Subnet of allowed VPN IP addresses
+        isolated_bridge: string
+            Name of the network interface in the host namespace
         """
         # TODO no constants here
         _NETWORK_CONFIG_IMAGE = 'network-config'
 
-        # TODO remove comments
-        # To look at this interactively, do something like:
-        # docker run --rm -it --network host --cap-add NET_ADMIN --entrypoint sh network-config
-
+        # The following command inserts rules that traffic from the VPN subnet
+        # will be accepted into the isolated network
         command = (
             'sh -c "'
             f'iptables -I DOCKER-USER 1 -d {vpn_subnet} -i {isolated_bridge} '
@@ -711,12 +648,7 @@ class DockerManager(object):
         return '10.76.0.0/16'
 
     def _get_if(self, interfaces, index) -> Union[Dict, None]:
-        """
-        Get interface configuration based on interface index
-
-        :param index:
-        :return:
-        """
+        """ Get interface configuration based on interface index """
         for interface in interfaces:
             if int(interface['ifindex']) == index:
                 return interface

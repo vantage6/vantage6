@@ -375,18 +375,19 @@ class Node(object):
             token=token
         )
 
-        self.server_io.request(
-            f"result/{taskresult['id']}", {"port": vpn_port}, method="PATCH"
-        )
-        node_id = self.server_io.whoami.id_
-        print(node_id)
-        # node_ip = self.__docker.get_vpn_ip()
-        # raise
-        # self.server_io.request(
-        #     f"node/{node_id}",
-        #     {"ip": node_ip}, method="PATCH"
-        # )
-        # TODO patch IP address of VPN client container to Authenticatable
+        if vpn_port:
+            self.server_io.request(
+                f"result/{taskresult['id']}", {"port": vpn_port}, method="PATCH"
+            )
+            node_id = self.server_io.whoami.id_
+            print(node_id)
+            # TODO patch IP address of VPN client container to Authenticatable
+            # node_ip = self.__docker.get_vpn_ip()
+            # raise
+            # self.server_io.request(
+            #     f"node/{node_id}",
+            #     {"ip": node_ip}, method="PATCH"
+            # )
 
     def __listening_worker(self):
         """ Listen for incoming (websocket) messages from the server.
@@ -526,25 +527,19 @@ class Node(object):
             self.server_io.setup_encryption(None)
 
     def setup_vpn_connection(self):
-        """ Setup VPN connection
-
-            .... Details here ....
-        """
-        # TODO remember that line endings for entry.sh have been adapted from CRLF to LF
-        # TODO make Djura's images (vpn-client and network-config) available in harbour
-
+        """ Setup VPN connection """
         # get the ovpn configuration from the server
         ovpn_config = self.server_io.get_vpn_config()
 
         # write ovpn config to node docker volume
         # TODO replace the text in following line with constants
+        # TODO this works with `vnode-local` but probably not with `vnode`
         ovpn_file = os.path.join(self.ctx.data_dir, 'data', 'vpn-config.ovpn.conf')
         with open(ovpn_file, 'w') as f:
             f.write(ovpn_config)
 
         # set up the VPN connection via docker containers
         self.__docker.connect_vpn(ovpn_file=ovpn_file)
-        # self.__docker.get_vpn_ip()
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
