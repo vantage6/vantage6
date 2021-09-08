@@ -374,31 +374,45 @@ class DockerManager(object):
         return vpn_port
 
     def _route_algo_container_to_vpn(self, algo_container):
-        # get address of the vpn client
-        cmd = "ip --json addr show dev eth0"
-        vpn_ip_info = self.docker.containers.run(
-            image='network-config',
-            network=self._isolated_network.name,
-            cap_add='NET_ADMIN',
-            command=cmd,
-            # auto_remove=True,
-        )
-        vpn_ip_info = json.loads(vpn_ip_info)
-        print('vpn_ip_info')
-        print(vpn_ip_info)
+        # get local ip address of the vpn client
+        self._isolated_network.reload()
+        vpn_local_ip = None
+        isol_net_containers = self._isolated_network.attrs['Containers']
+        for id, container_dict in isol_net_containers.items():
+            if container_dict['Name'] == self.vpn_client_container_name:
+                vpn_local_ip = container_dict['IPv4Address']
+        if not vpn_local_ip:
+            raise KeyError("Local VPN IP address not found")
+        # remove significant bit suffix as it is not accepted by `ip route` cmd
+        vpn_local_ip = vpn_local_ip[0:vpn_local_ip.find('/')]
+        print('vpn_local_ip')
+        print(vpn_local_ip)
 
-        gateway = vpn_ip_info[0]['addr_info'][0]['local']
-        print('gateway')
-        print(gateway)
+        network = 'container:' + algo_container.id
+        # cmd = "ip --json addr show dev eth0"
+        # vpn_ip_info = self.docker.containers.run(
+        #     image='network-config',
+        #     network=network,  # TODO via dockerpy
+        #     # network=self._isolated_network.name,
+        #     cap_add='NET_ADMIN',
+        #     command=cmd,
+        #     # auto_remove=True,
+        # )
+        # vpn_ip_info = json.loads(vpn_ip_info)
+        # print('vpn_ip_info')
+        # print(vpn_ip_info)
+
+        # gateway = vpn_ip_info[0]['addr_info'][0]['local']
+        # print('gateway')
+        # print(gateway)
 
         # print(algo_container.attrs)
         # print(algo_container)
         # print(algo_container.id)
         # raise
 
-        network = 'container:' + algo_container.id
         print(network)
-        cmd = f"ip route replace default via {gateway}"
+        cmd = f"ip route replace default via {vpn_local_ip}"
         self.docker.containers.run(
             image='alpine',
             network=network,
@@ -427,6 +441,7 @@ class DockerManager(object):
 
         # Get IP Address of the algorithm container
         algo_container.reload()  # update attributes
+        # TODO check if this is ok
         algorithm_container_ip = (
             algo_container.attrs['NetworkSettings']['Networks']
                                 [self._isolated_network.name]['IPAddress']
@@ -446,13 +461,14 @@ class DockerManager(object):
             '"'
         )
 
-        self.docker.containers.run(
-            image=_NETWORK_CONFIG_IMAGE,
-            network=self._isolated_network.name,
-            cap_add='NET_ADMIN',
-            command=command,
-            auto_remove=True,
-        )
+        self.vpn_client_container.exec_run(command)
+        # self.docker.containers.run(
+        #     image=_NETWORK_CONFIG_IMAGE,
+        #     network=self._isolated_network.name,
+        #     cap_add='NET_ADMIN',
+        #     command=command,
+        #     auto_remove=True,
+        # )
         # TODO clean up routing rules
         return vpn_client_port
 
@@ -692,7 +708,7 @@ class DockerManager(object):
 
     def get_subnet(self):
         # TODO get VPN IP range from config?!
-        return '10.76.0.0/12'
+        return '10.76.0.0/16'
 
     def _get_if(self, interfaces, index) -> Union[Dict, None]:
         """
