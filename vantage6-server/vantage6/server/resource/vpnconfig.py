@@ -45,6 +45,13 @@ class VPNConfig(ServicesResources):
     )
     def get(self):
         """ Return configuration to enable connection to EduVPN. """
+        # TODO We are now collecting a config file completely time and time
+        # again. It would be more efficient to only refresh necessary parts,
+        # and this may also save on the number of IP addresses handed out.
+        # The procedure could be changed to:
+        # 1. if config file doesn't exist, use current procedure to get one
+        # 2. else, try logging in
+        # 3. if doesn't work, simply refresh the key pair and it should work
 
         # obtain VPN config by calling EduVPN API
         vpn_connector = EduVPNConnector(self.config['vpn_server'])
