@@ -60,7 +60,8 @@ def permissions(permission: PermissionManager):
 
     add(scope=S.GLOBAL, operation=P.EDIT, description="edit any node")
     add(scope=S.ORGANIZATION, operation=P.EDIT,
-        description="edit node that is part of your organization")
+        description="edit node that is part of your organization",
+        assign_to_node=True)
 
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create node for any organization")
@@ -187,7 +188,7 @@ class Node(ServicesResources):
         node.delete()
         return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK  # 200
 
-    @with_user
+    @with_user_or_node
     @swag_from(str(Path(r"swagger/patch_node_with_id.yaml")),
                endpoint='node_with_id')
     def patch(self, id):
@@ -203,7 +204,6 @@ class Node(ServicesResources):
             if not (self.r.e_org.can() and own):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
-
 
         data = request.get_json()
 
