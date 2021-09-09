@@ -433,7 +433,10 @@ class DockerManager(object):
         # get port on the vpn client container to forward from. This port
         # should not yet be occupied
         # TODO this doesn't work yet: occupied ports are not found in this
-        # manner. Look for occupied ports in another way
+        # manner. We need to change this to running something like:
+        # `iptables -t nat -L PREROUTING`
+        # in the VPN container and get the occupied ports from there
+        # maybe use python-iptables to parse the result? https://github.com/ldx/python-iptables
         self.vpn_client_container.reload()
         occupied_client_ports = \
             self.vpn_client_container.attrs['NetworkSettings']['Ports']
