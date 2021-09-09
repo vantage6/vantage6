@@ -360,7 +360,10 @@ class DockerManager(object):
             return None
 
         # TODO implement something to make the algorithm container wait until
-        # the VPN is properly set up. Otherwise algorithm may fail
+        # the VPN is properly set up. Otherwise algorithm may fail.
+        # Alternatively, prepare steps below for the case that the
+        # algorithm container is not running, e.g. due to an error or because
+        # it finished quickly.
 
         # setup forwarding of traffic VPN client to the algo container:
         vpn_port = self._forward_vpn_traffic(algo_container=container)
@@ -377,6 +380,22 @@ class DockerManager(object):
         return vpn_port
 
     def get_vpn_ip(self):
+        """ Get VPN IP address in VPN server namespace (10.76.x.x) """
+        # TODO this sleep has been put here because the VPN container will
+        # otherwise give the error "device tun0 does not exist" because VPN
+        # setup is not complete yet
+        # Obviously we need something more reliable than a sleep...
+        import time
+        print("sleeping 10s")
+        time.sleep(10)
+
+        _, vpn_interface = self.vpn_client_container.exec_run(
+            'ip --json addr show dev tun0'
+        )
+        vpn_interface = json.loads(vpn_interface)
+        return vpn_interface[0]['addr_info'][0]['local']
+
+    def get_local_vpn_ip(self):
         # get local ip address of the vpn client
         self._isolated_network.reload()
         vpn_local_ip = None
@@ -388,22 +407,23 @@ class DockerManager(object):
             raise KeyError("Local VPN IP address not found")
         # remove significant bit suffix as it is not accepted by `ip route` cmd
         vpn_local_ip = vpn_local_ip[0:vpn_local_ip.find('/')]
+        return vpn_local_ip
 
     def _route_algo_container_to_vpn(self, algo_container):
         """ Ensure outgoing algorithm container traffic is directed to the
             VPN client container
         """
-        vpn_local_ip = self.get_vpn_ip()
-
         # direct outgoing algorithm container traffic to the VPN container
+        vpn_local_ip = self.get_local_vpn_ip()
         network = 'container:' + algo_container.id
+
         cmd = f"ip route replace default via {vpn_local_ip}"
+
         self.docker.containers.run(
             image='alpine',
             network=network,
             cap_add='NET_ADMIN',
             command=cmd,
-            auto_remove=True,
         )
 
     def _forward_vpn_traffic(self, algo_container):
@@ -420,10 +440,6 @@ class DockerManager(object):
         vpn_client_port_options = \
             set(range(49152, 65535)) - set(occupied_client_ports)
         vpn_client_port = next(iter(vpn_client_port_options))
-
-        # TODO prepare for the case that the algorithm container is not
-        # running, e.g. due to an error in the algorithm or because it finished
-        #  in 1second. Then the required settings are probably not available
 
         # Get IP Address of the algorithm container
         algo_container.reload()  # update attributes
@@ -559,23 +575,16 @@ class DockerManager(object):
 
         # create network exception so that packet transfer between VPN network
         # and the vpn client container is allowed
-        bridge_interface = self.find_isolated_bridge(
-            self.vpn_client_container.name
-        )
+        bridge_interface = self.find_isolated_bridge()
         self.configure_host_namespace(
             vpn_subnet=self.get_subnet(),
             isolated_bridge=bridge_interface
         )
 
-    def find_isolated_bridge(self, vpn_client_container: str):
+    def find_isolated_bridge(self):
         """
         Retrieve the linked network interface in the host namespace for
         network interface eth0 in the container namespace.
-
-        Parameters
-        ----------
-        vpn_client_container: str
-            id or name of the VPN client container
 
         Returns
         -------
@@ -587,8 +596,7 @@ class DockerManager(object):
         _HOST = 'host'
 
         # Get network config from VPN client container
-        container = self.docker.containers.get(vpn_client_container)
-        _, isolated_interface = container.exec_run(
+        _, isolated_interface = self.vpn_client_container.exec_run(
             ['ip', '--json', 'addr', 'show', 'dev', 'eth0']
         )
 

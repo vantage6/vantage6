@@ -366,7 +366,6 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        # TODO modify run() function so that it never returns a bool
         vpn_port = self.__docker.run(
             result_id=taskresult["id"],
             image=task["image"],
@@ -376,18 +375,18 @@ class Node(object):
         )
 
         if vpn_port:
+            # Save port of VPN client container at which it redirects traffic
+            # to the algorithm container
             self.server_io.request(
-                f"result/{taskresult['id']}", {"port": vpn_port}, method="PATCH"
+                f"result/{taskresult['id']}", json={"port": vpn_port},
+                method="PATCH"
             )
+            # Save IP address of VPN container
             node_id = self.server_io.whoami.id_
-            print(node_id)
-            # TODO patch IP address of VPN client container to Authenticatable
-            # node_ip = self.__docker.get_vpn_ip()
-            # raise
-            # self.server_io.request(
-            #     f"node/{node_id}",
-            #     {"ip": node_ip}, method="PATCH"
-            # )
+            node_ip = self.__docker.get_vpn_ip()
+            self.server_io.request(
+                f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
+            )
 
     def __listening_worker(self):
         """ Listen for incoming (websocket) messages from the server.
