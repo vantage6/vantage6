@@ -106,13 +106,15 @@ def cli_server():
 @click.option('-p', '--port', default=None, type=int, help='port to listen on')
 @click.option('--debug', is_flag=True,
               help='run server in debug mode (auto-restart)')
-@click.option('-i', '--image', default=None, help="Node Docker image to use")
+@click.option('-i', '--image', default=None, help="Server Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
+@click.option('--mount-src', default='',
+              help="mount vantage6-master package source")
 @click.option('--attach/--detach', default=False,
               help="Attach server logs to the console after start")
 @click_insert_context
-def cli_server_start(ctx, ip, port, debug, image, keep, attach):
+def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
     """Start the server."""
 
     info("Starting server...")
@@ -153,6 +155,10 @@ def cli_server_start(ctx, ip, port, debug, image, keep, attach):
             "/mnt/config.yaml", str(ctx.config_file), type="bind"
         )
     ]
+
+    if mount_src:
+        mount_src = os.path.abspath(mount_src)
+        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
 
     # FIXME: code duplication with cli_server_import()
     # try to mount database

@@ -368,7 +368,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
           f'{environment} --dockerized {system_folders_option}'
 
-    info(f"Runing Docker container")
+    info("Running Docker container")
     volumes = {}
     for mount in mounts:
         volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
