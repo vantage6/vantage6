@@ -2,7 +2,6 @@ import uuid
 import logging
 
 import vantage6.server.model as db
-from vantage6.server.model.base import Database
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -11,11 +10,12 @@ log = logging.getLogger(module_name)
 def load(fixtures, drop_all=False):
     # TODO we are not sure the DB is connected here....
 
-    if drop_all:
-        Database().drop_all()
+    # if drop_all:
+    #     Database().drop_all()
 
     log.info("Create Organizations and Users")
     for org in fixtures.get("organizations", {}):
+        # print(org)
 
         # create organization
         organization = db.Organization(**{k: org[k] for k in [

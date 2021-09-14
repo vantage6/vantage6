@@ -7,9 +7,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.server.controller.fixture import load
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
 
+from vantage6.server import db
 from vantage6.server.model import (
     User,
     Organization,
@@ -43,7 +44,15 @@ class TestBaseModel(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Database().close()
+        Database().clear_data()
+
+    @classmethod
+    def setUp(cls):
+        DatabaseSessionManager.get_session()
+
+    @classmethod
+    def tearDown(cls):
+        DatabaseSessionManager.clear_session()
 
 
 class TestUserModel(TestBaseModel):
@@ -80,17 +89,22 @@ class TestUserModel(TestBaseModel):
     def test_methods(self):
         """"Test model methods."""
         user = self.entities.get("organizations")[0].get("users")[0]
+        # print(user)
+        # print(User.get())
         assert User.get_by_username(user.get("username"))
         assert User.username_exists(user.get("username"))
         assert User.get_user_list()
 
     def test_duplicate_user(self):
         """Duplicate usernames are not permitted."""
+        # print(User.get())
         user1 = User(username="duplicate-user", email="unique@org.org")
         user1.save()
 
         user2 = User(username="duplicate-user", email="something-else@org.org")
         self.assertRaises(IntegrityError, user2.save)
+
+        db.session.remove()
 
 
 class TestCollaborationModel(TestBaseModel):

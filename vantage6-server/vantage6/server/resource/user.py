@@ -10,6 +10,7 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -20,6 +21,7 @@ from vantage6.server.resource import (
     only_for,
     ServicesResources
 )
+from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource._schema import UserSchema
 
 
@@ -32,7 +34,7 @@ def setup(api, api_base, services):
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        User,
+        Users,
         path,
         endpoint='user_without_id',
         methods=('GET', 'POST'),
@@ -79,58 +81,59 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class User(ServicesResources):
+user_schema = UserSchema()
 
-    user_schema = UserSchema()
 
+class UserBase(ServicesResources):
     def __init__(self, socketio, mail, api, permissions):
         super().__init__(socketio, mail, api, permissions)
         self.r = getattr(self.permissions, module_name)
 
+
+class Users(UserBase):
     @only_for(['user'])
-    @swag_from(str(Path(r"swagger/get_user_with_id.yaml")),
-               endpoint='user_with_id')
-    @swag_from(str(Path(r"swagger/get_user_without_id.yaml")),
-               endpoint='user_without_id')
-    def get(self, id=None):
-        """Return user details."""
-        many = not id
-        user = db.User.get(id)
-        if not user:
-            return {"msg": f"user={id} is not found"}, HTTPStatus.NOT_FOUND
+    def get(self):
+        """List users
+        ---
+        description: >-
+            Returns a list of users that are within the organization of the
+            user. In case of an **administrator** all users from all
+            organizations are returned. This also returns the info for the
+            users given that they have authorization and only request
+            information on the users from within the same scope.\n\n
 
-        # global scope can see all
-        if self.r.v_glo.can():
-            return self.user_schema.dump(user, many=many).data, \
-                HTTPStatus.OK
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |User|Global|View|❌|❌|View any user details|\n
+            |User|Organization|View|❌|❌|View users from your organization|\n\n
 
-        # organization scope can see their own organization users
-        if self.r.v_org.can():
-            if many:
-                filtered_users = [user for user in user if user.organization
-                                  == g.user.organization]
-                return self.user_schema.dump(filtered_users, many=True).data, \
-                    HTTPStatus.OK
+        responses:
+            200:
+                description: Ok
+            401:
+                description: Unauthorized or missing permission
+
+        security:
+            - bearerAuth: []
+
+        tags: ["User"]
+        """
+        q = DatabaseSessionManager.get_session().query(db.User)
+
+        # check permissions and apply filter if neccassary
+        if not self.r.v_glo.can():
+            if self.r.v_org.can():
+                q = q.filter(db.User.organization_id == g.user.organization_id)
             else:
-                if user.organization != g.user.organization:
-                    return {'msg': 'You lack the permission to do that!'}, \
-                        HTTPStatus.UNAUTHORIZED
-                return self.user_schema.dump(user, many=False).data, \
-                    HTTPStatus.OK
-
-        # own scope can see their own user info
-        if self.r.v_own.can():
-            if not id:
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
-            if user.id != g.user.id:
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            return self.user_schema.dump(user, many=False).data, HTTPStatus.OK
 
-        # if you get here... you do not have any permissions
-        return {'msg': 'You lack the permission to do that!'}, \
-            HTTPStatus.UNAUTHORIZED
+        # paginate results
+        page = Pagination.from_query(q, request)
+
+        # model serialization
+        return self.response(page, user_schema)
 
     @with_user
     @swag_from(str(Path(r"swagger/post_user_without_id.yaml")),
@@ -141,7 +144,7 @@ class User(ServicesResources):
         parser.add_argument("username", type=str, required=True)
         parser.add_argument("firstname", type=str, required=True)
         parser.add_argument("lastname", type=str, required=True)
-        #TODO password should be send to the email, rather than setting it
+        # TODO password should be send to the email, rather than setting it
         parser.add_argument("password", type=str, required=True)
         parser.add_argument("email", type=str, required=True)
         parser.add_argument("organization_id", type=int, required=False,
@@ -209,7 +212,66 @@ class User(ServicesResources):
         )
         user.save()
 
-        return self.user_schema.dump(user).data, HTTPStatus.CREATED
+        return user_schema.dump(user).data, HTTPStatus.CREATED
+
+
+class User(UserBase):
+    @only_for(['user'])
+    def get(self, id):
+        """Get user
+        ---
+        description: >-
+            Returns the user specified by the id as well as be able to view the
+            info on the users within the same scope.\n\n
+
+            ### Permission Table\n
+            |Rulename|Scope|Operation|Node|Container|Description|\n
+            |-- |--|--|--|--|--|\n
+            |User|Global|View|❌|❌|View any user details|\n
+            |User|Organization|View|❌|❌|View users from your
+            organization|\n\n
+
+        parameters:
+            - in: path
+                name: id
+                schema:
+                type: integer
+                description: user id
+                required: true
+
+        responses:
+            200:
+                description: Ok
+            404:
+                description: User not found
+            401:
+                description: Unauthorized or missing permission
+
+        security:
+            - bearerAuth: []
+
+        tags: ["User"]
+        """
+        user = db.User.get(id)
+        if not user:
+            return {"msg": f"user id={id} is not found"}, HTTPStatus.NOT_FOUND
+
+        same_user = g.user.id == user.id
+        same_org = g.user.organization.id == user.organization_id
+
+        # allow user to be returned if:
+        # 1. auth can see all users
+        # 2. auth can see organization users and user is within organization
+        # 3. auth is requesting own user details and is allowed to do so
+        if (
+            self.r.v_glo.can() or
+            (self.r.v_org.can() and same_org) or
+            (self.r.v_own.can() and same_user)
+        ):
+            return user_schema.dump(user, many=False).data, HTTPStatus.OK
+        else:
+            return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
 
     @with_user
     @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")),
@@ -233,10 +295,6 @@ class User(ServicesResources):
         parser.add_argument("username", type=str, required=False)
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
-        # parser.add_argument("roles", type=int, action='append', required=False,
-        #                     default=[], store_missing=False)
-        # parser.add_argument("rules", type=int, action='append', required=False,
-        #                     default=[], store_missing=False)
         parser.add_argument("password", type=str, required=False)
         parser.add_argument("email", type=str, required=False)
         parser.add_argument("organization_id", type=int, required=False)
@@ -257,7 +315,7 @@ class User(ServicesResources):
             # validate that these roles exist
             roles = []
             for role_id in json_data['roles']:
-                role = db.Role.get(role_id) # somehow a nontype endup here
+                role = db.Role.get(role_id)  # somehow a nontype endup here
                 if not role:
                     return {'msg': f'Role={role_id} can not be found!'}, \
                         HTTPStatus.NOT_FOUND
@@ -316,7 +374,7 @@ class User(ServicesResources):
             log.error(e)
             user.session.rollback()
 
-        return self.user_schema.dump(user).data, HTTPStatus.OK
+        return user_schema.dump(user).data, HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")),

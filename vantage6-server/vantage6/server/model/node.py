@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
 
 
@@ -33,7 +33,7 @@ class Node(Authenticatable):
 
         Returns None if no Node is associated with api_key.
         """
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
 
         try:
             return session.query(cls).filter_by(api_key=api_key).one()
@@ -42,17 +42,16 @@ class Node(Authenticatable):
 
     @classmethod
     def exists(cls, organization_id, collaboration_id):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         return session.query(cls).filter_by(
             organization_id=organization_id,
             collaboration_id=collaboration_id
         ).scalar()
 
-
     def __repr__(self):
         return (
             "<Node "
-            f"name: {self.name}, "
+            f"{self.id}: '{self.name}', "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.collaboration.name}, "
             f"api_key: {self.api_key} "

@@ -7,6 +7,8 @@ from flask import g
 from flasgger import swag_from
 from pathlib import Path
 from flask_restful import reqparse
+from vantage6.server import db
+from vantage6.server.model.base import DatabaseSessionManager
 
 from vantage6.server.resource import (
     with_user,
@@ -17,9 +19,8 @@ from vantage6.server.permission import (
     PermissionManager
 )
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.model import Role as db_Role, Rule, Organization
 from vantage6.server.resource._schema import RoleSchema, RuleSchema
-
+from vantage6.server.resource.pagination import Pagination
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -31,7 +32,7 @@ def setup(api, api_base, services):
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        Role,
+        Roles,
         path,
         endpoint='role_without_id',
         methods=('GET', 'POST'),
@@ -86,37 +87,85 @@ def permissions(permission: PermissionManager):
 # -----------------------------------------------------------------------------
 # Resources / API's
 # -----------------------------------------------------------------------------
-class Role(ServicesResources):
+role_schema = RoleSchema()
+rule_schema = RuleSchema()
 
-    role_schema = RoleSchema()
+
+class RoleBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions):
         super().__init__(socketio, mail, api, permissions)
         self.r = getattr(self.permissions, module_name)
 
+
+class Roles(RoleBase):
+
     @with_user
-    @swag_from(str(Path(r"swagger/get_role_with_id.yaml")),
-               endpoint='role_with_id')
-    @swag_from(str(Path(r"swagger/get_role_without_id.yaml")),
-               endpoint='role_without_id')
-    def get(self, id=None):
-        """View roles
+    def get(self):
+        """Returns a list of roles
+        ---
 
-        Depending on permission, you can view nothing, your organization or all
-        the available roles at the server.
+        description: >-
+            Returns a list of roles. Depending on your permission, you get all
+            the roles at the server or only the roles that belong to your
+            organization.\n\n
+
+            ### Permission Table\n
+            |Rulename|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Role|Global|View|❌|❌|View all roles|\n
+            |Role|Organization|View|❌|❌|View roles that are part of your
+            organization|\n\n
+
+            Accesible for: `user`.\n\n
+
+            Results can be paginated by using the parameter `page`. The
+            pagination metadata can be included using `include=metadata`, note
+            that this will put the actual data in an envelope.
+
+        parameters:
+            - in: query
+              name: include
+              schema:
+                type: string (can be multiple)
+              description: what to include ('metadata')
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
+
+        responses:
+            200:
+                description: Ok
+            401:
+                description: Unauthorized or missing permissions
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Role"]
         """
-        if self.r.v_glo.can():
-            # view all roles at the server
-            roles = db_Role.get(id)
-        elif self.r.v_org.can():
-            # view all roles from your organization
-            roles = [role for role in db_Role.get(id)
-                     if role.organization == g.user.organization]
-        else:
-            return {"msg": "You do not have permission to view this."}, \
-                HTTPStatus.UNAUTHORIZED
+        q = DatabaseSessionManager.get_session().query(db.Role)
 
-        return self.role_schema.dump(roles, many=not id).data, HTTPStatus.OK
+        auth_org_id = self.obtain_organization_id()
+
+        if not self.r.v_glo.can():
+            if self.r.v_org.can():
+                q = q.join(db.Organization)\
+                    .filter(db.Role.organization_id == auth_org_id)
+            else:
+                return {"msg": "You do not have permission to view this."}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        page = Pagination.from_query(query=q, request=request)
+
+        return self.response(page, role_schema)
 
     @with_user
     @swag_from(str(Path(r"swagger/post_role_without_id.yaml")),
@@ -139,7 +188,7 @@ class Role(ServicesResources):
         # obtain the requested rules from the DB.
         rules = []
         for rule_id in data["rules"]:
-            rule = Rule.get(rule_id)
+            rule = db.Rule.get(rule_id)
             if not rule:
                 return {"msg": f"Rule id={rule_id} not found."}, \
                     HTTPStatus.NOT_FOUND
@@ -158,7 +207,7 @@ class Role(ServicesResources):
             organization_id = data["organization_id"]
 
             # verify that the organization exists
-            if not Organization.get(organization_id):
+            if not db.Organization.get(organization_id):
                 return {'msg': f'organization "{organization_id}" does not '
                         'exist!'}, HTTPStatus.NOT_FOUND
         elif (not data['organization_id'] and self.r.c_glo.can()) or \
@@ -169,11 +218,29 @@ class Role(ServicesResources):
                 HTTPStatus.UNAUTHORIZED
 
         # create the actual role
-        role = db_Role(name=data["name"], description=data["description"],
+        role = db.Role(name=data["name"], description=data["description"],
                        rules=rules, organization_id=organization_id)
         role.save()
 
-        return self.role_schema.dump(role, many=False).data, HTTPStatus.CREATED
+        return role_schema.dump(role, many=False).data, HTTPStatus.CREATED
+
+
+class Role(RoleBase):
+
+    @with_user
+    @swag_from(str(Path(r"swagger/get_role_with_id.yaml")),
+               endpoint='role_with_id')
+    def get(self, id):
+        role = db.Role.get(id)
+
+        # check permissions
+        if not self.r.v_glo.can():
+            if not (self.r.v_org.can()
+                    and role.organization == g.user.organization):
+                return {"msg": "You do not have permission to view this."},\
+                     HTTPStatus.UNAUTHORIZED
+
+        return role_schema.dump(role, many=False).data, HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/patch_role_with_id.yaml")),
@@ -182,7 +249,7 @@ class Role(ServicesResources):
         """Update role."""
         data = request.get_json()
 
-        role = db_Role.get(id)
+        role = db.Role.get(id)
         if not role:
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
@@ -204,7 +271,7 @@ class Role(ServicesResources):
         if 'rules' in data:
             rules = []
             for rule_id in data['rules']:
-                rule = Rule.get(rule_id)
+                rule = db.Rule.get(rule_id)
                 if not rule:
                     return {'msg': f'rule with id={rule_id} not found!'}, \
                         HTTPStatus.NOT_FOUND
@@ -215,14 +282,14 @@ class Role(ServicesResources):
             role.rules = rules
         role.save()
 
-        return self.role_schema.dump(role, many=False).data, HTTPStatus.OK
+        return role_schema.dump(role, many=False).data, HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_role_with_id.yaml")),
                endpoint='role_with_id')
     def delete(self, id):
 
-        role = db_Role.get(id)
+        role = db.Role.get(id)
         if not role:
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
@@ -240,45 +307,93 @@ class Role(ServicesResources):
         return {"msg": "Role removed from the database."}, HTTPStatus.OK
 
 
-class RoleRules(ServicesResources):
-
-    rule_schema = RuleSchema()
-    role_schema = RoleSchema()
-
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
-        self.r = getattr(self.permissions, module_name)
+class RoleRules(RoleBase):
 
     @with_user
-    @swag_from(str(Path(r"swagger/get_role_rule_without_id.yaml")),
-               endpoint='role_rule_without_id')
-    @swag_from(str(Path(r"swagger/get_role_rule_with_id.yaml")),
-               endpoint='role_rule_with_id')
     def get(self, id):
-        """View all rules for a role."""
-        role = db_Role.get(id)
+        """Returns the rules for a specific role
+        ---
+        description: >-
+            View the rules that belong to a specific role.\n\n
+
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Role|Global|View|❌|❌|View any role rule|\n
+            |Role|Organization|View|❌|❌|View all role rules in your
+            organization|\n\n
+
+            Accessible for: `user`\n\n
+
+            Results can be paginated by using the parameter `page`. The
+            pagination metadata can be included using `include=metadata`, note
+            that this will put the actual data in an envelope.
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              minimum: 1
+              description: Role id
+              required: true
+            - in: query
+              name: include
+              schema:
+                 type: string (can be multiple)
+              description: what to include ('task', 'metadata')
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
+
+        responses:
+            200:
+                description: Ok
+            404:
+                description: Node with specified id is not found
+            401:
+                description: Unauthorized or missing permission
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Role"]
+        """
+        role = db.Role.get(id)
 
         if not role:
             return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
 
+        # obtain auth organization model
+        auth_org = self.obtain_auth_organization()
+
+        # check permission
         if not self.r.v_glo.can():
-            if not (self.r.v_org.can() and
-                    g.user.organization == role.organization):
+            if not (self.r.v_org.can() and auth_org == role.organization):
                 return {'msg': 'You lack permissions to do that'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        rules = role.rules
-        return self.rule_schema.dump(rules, many=True).data, HTTPStatus.OK
+        # paginate elements
+        page = Pagination.from_list(role.rules, request)
+
+        return self.response(page, rule_schema)
 
     @with_user
     @swag_from(str(Path(r"swagger/post_role_rule_with_id.yaml")),
                endpoint='role_with_id')
     def post(self, id, rule_id):
         """Add rule to a role."""
-        role = db_Role.get(id)
+        role = db.Role.get(id)
         if not role:
             return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
-        rule = Rule.get(rule_id)
+        rule = db.Rule.get(rule_id)
         if not rule:
             return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
@@ -299,7 +414,7 @@ class RoleRules(ServicesResources):
         role.rules.append(rule)
         role.save()
 
-        return self.rule_schema.dump(role.rules, many=False).data, \
+        return rule_schema.dump(role.rules, many=False).data, \
             HTTPStatus.CREATED
 
     @with_user
@@ -307,10 +422,10 @@ class RoleRules(ServicesResources):
                endpoint='role_rule_with_id')
     def delete(self, id, rule_id):
         """Remove rule from role."""
-        role = db_Role.get(id)
+        role = db.Role.get(id)
         if not role:
             return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
-        rule = Rule.get(rule_id)
+        rule = db.Rule.get(rule_id)
         if not rule:
             return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
@@ -333,5 +448,5 @@ class RoleRules(ServicesResources):
         # Ok jumped all hoopes, remove it..
         role.rules.remove(rule)
 
-        return self.rule_schema.dump(role.rules, many=False).data, \
+        return rule_schema.dump(role.rules, many=False).data, \
             HTTPStatus.OK

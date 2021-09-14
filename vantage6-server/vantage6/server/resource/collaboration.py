@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 
-from flask import request, g
+from flask import request
 from flask_restful import reqparse
 from flasgger import swag_from
 from http import HTTPStatus
 from pathlib import Path
 
 from vantage6.server import db
+from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -37,7 +38,7 @@ def setup(api, api_base, services):
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        Collaboration,
+        Collaborations,
         path,
         endpoint='collaboration_without_id',
         methods=('GET', 'POST'),
@@ -79,6 +80,7 @@ tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
 
+
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
@@ -106,58 +108,84 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Collaboration(ServicesResources):
+class CollaborationBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions):
         super().__init__(socketio, mail, api, permissions)
         self.r = getattr(self.permissions, module_name)
 
-    @only_for(['user', 'node', 'container'])
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")),
-               endpoint='collaboration_with_id')
-    @swag_from(str(Path(r"swagger/get_collaboration_without_id.yaml")),
-               endpoint='collaboration_without_id')
-    def get(self, id=None):
-        """collaboration or list of collaborations in case no id is provided"""
-        collaboration = db.Collaboration.get(id)
 
-        # check that collaboration exists, unlikely to happen without ID
-        if not collaboration:
-            return {"msg": f"collaboration having id={id} not found"},\
-                HTTPStatus.NOT_FOUND
+class Collaborations(CollaborationBase):
 
-        if g.user:
-            auth_org_id = g.user.organization.id
-        elif g.node:
-            auth_org_id = g.node.organization.id
-        else:  # g.container
-            auth_org_id = g.container["organization_id"]
+    @with_user
+    def get(self):
+        """Returns a list of collaborations
+        ---
 
-        if id:
+        description: >-
+            Returns a list of collaborations. Depending on your permission, all
+            collaborations are shown or only collaborations in which your
+            organization participates. See the table bellow.\n\n
 
-            # verify that the user/node organization is within the
-            # collaboration
-            ids = [org.id for org in collaboration.organizations]
-            if not self.r.v_glo.can():
-                if not (self.r.v_org.can() and auth_org_id in ids):
-                    return {'msg': 'You lack the permission to do that!'}, \
-                        HTTPStatus.UNAUTHORIZED
+            ### Permission Table\n
+            |Rulename|Scope|Operation|Node|Container|Description|\n
+            | -- | -- | -- | -- | -- | -- |\n
+            |Collaboration|Global|View|❌|❌|All collaborations|\n
+            |Collaboration|Organization|View|✅|✅|Collaborations in which
+            your organization participates |\n\n
 
-            return collaboration_schema.dump(collaboration, many=False).data, \
-                HTTPStatus.OK  # 200
+            Accessable as: `user`.'\n\n
 
-        else:
-            if self.r.v_glo.can():
-                allowed_collaborations = collaboration
+            Results can be paginated by using the parameter `page`. The
+            pagination metadata can be included using `include=metadata`, note
+            that this will put the actual data in an envelope.
 
-            elif self.r.v_org.can():
-                allowed_collaborations = []
-                for col in collaboration:
-                    if auth_org_id in [org.id for org in col.organizations]:
-                        allowed_collaborations.append(col)
+        parameters:
+            - in: query
+              name: include
+              schema:
+                type: string
+              description: what to include in the output ('metadata')
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
 
-            return collaboration_schema.dump(collaboration, many=True)\
-                .data, HTTPStatus.OK  # 200
+        responses:
+            200:
+                description: Ok
+            401:
+                description: Unauthorized
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
+
+        # obtain organization from authenticated
+        auth_org_id = self.obtain_organization_id()
+        q = DatabaseSessionManager.get_session().query(db.Collaboration)
+
+        # filter based on permissions
+        if not self.r.v_glo.can():
+            if self.r.v_org.can():
+                q = q.join(db.Organization, db.Collaboration.organizations)\
+                    .filter(db.Collaboration.organizations.any(id=auth_org_id))
+            else:
+                return {'msg': 'You lack the permission to do that!'}
+
+        # paginate the results
+        page = Pagination.from_query(query=q, request=request)
+
+        # serialize models, include metadata if requested
+        return self.response(page, collaboration_schema)
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")),
@@ -197,6 +225,35 @@ class Collaboration(ServicesResources):
         collaboration.save()
         return collaboration_schema.dump(collaboration).data, HTTPStatus.OK
 
+
+class Collaboration(CollaborationBase):
+
+    @only_for(['user', 'node', 'container'])
+    @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")),
+               endpoint='collaboration_with_id')
+    def get(self, id):
+        """collaboration or list of collaborations in case no id is provided"""
+        collaboration = db.Collaboration.get(id)
+
+        # check that collaboration exists, unlikely to happen without ID
+        if not collaboration:
+            return {"msg": f"collaboration having id={id} not found"},\
+                HTTPStatus.NOT_FOUND
+
+        # obtain the organization id of the authenticated
+        auth_org_id = self.obtain_organization_id()
+
+        # verify that the user/node organization is within the
+        # collaboration
+        ids = [org.id for org in collaboration.organizations]
+        if not self.r.v_glo.can():
+            if not (self.r.v_org.can() and auth_org_id in ids):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        return collaboration_schema.dump(collaboration, many=False).data, \
+            HTTPStatus.OK  # 200
+
     @with_user
     @swag_from(str(Path(r"swagger/patch_collaboration_with_id.yaml")),
                endpoint='collaboration_with_id')
@@ -225,6 +282,9 @@ class Collaboration(ServicesResources):
                 for org_id in data['organization_ids']
                 if db.Organization.get(org_id)
             ]
+        if 'encrypted' in data:
+            collaboration.encrypted = data['encrypted']
+
         collaboration.save()
 
         return collaboration_schema.dump(collaboration, many=False).data, \
@@ -259,34 +319,85 @@ class CollaborationOrganization(ServicesResources):
         self.r = getattr(self.permissions, module_name)
 
     @only_for(["node", "user", "container"])
-    @swag_from(str(Path(r"swagger/get_collaboration_organization.yaml")),
-               endpoint='collaboration_with_id_organization')
     def get(self, id):
-        """Return organizations for a specific collaboration."""
-        collaboration = db.Collaboration.get(id)
-        if not collaboration:
-            return {"msg": f"collaboration having collaboration_id={id} can "
-                    "not be found"}, HTTPStatus.NOT_FOUND
+        """Returns organizations that participate in the collaboration
+        ---
+        description: >-
+            Returns a list of all organizations that belong to the specified
+            collaboration.
 
-        if g.user:
-            auth_org_id = g.user.organization.id
-        elif g.node:
-            auth_org_id = g.node.organization.id
-        else:  # g.container
-            auth_org_id = g.container["organization_id"]
+            ### Permission Table\n
+            |Rulename|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Collaboration|Global|View|❌|❌|All collaborations|\n
+            |Collaboration|Organization|View|✅|✅|Collaborations
+            in which your organization participates|\n\n
 
+            Accessable as: `user`, `node` and `container`.'\n\n
+
+            Results can be paginated by using the parameter `page`. The
+            pagination metadata can be included using `include=metadata`, note
+            that this will put the actual data in an envelope.
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              description: collaboration id
+              required: true
+            - in: query
+              name: include
+              schema:
+                type: string
+              description: what to include in the output ('metadata')
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
+
+        responses:
+            200:
+                description: Ok
+            404:
+                description: Collaboration specified by id does not exists
+            401:
+                description: Unauthorized
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
+        col = db.Collaboration.get(id)
+        if not col:
+            return {'msg': f'collaboration (id={id}) can not be found'},\
+                HTTPStatus.NOT_FOUND
+
+        # check permission
         if not self.r.v_glo.can():
-            org_ids = [org.id for org in collaboration.organizations]
-            if not (self.r.v_org.can() and auth_org_id in org_ids):
+            auth_org = self.obtain_auth_organization()
+            if not (self.r.v_org.can() and auth_org in col.organizations):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return org_schema.dump(collaboration.organizations, many=True).data, \
-            HTTPStatus.OK
+        # paginate organizations
+        page = Pagination.from_list(col.organizations, request)
+
+        # model serialization
+        return self.response(page, org_schema)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
-               endpoint='collaboration_with_id_organization')
+    @swag_from(
+        str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
+        endpoint='collaboration_with_id_organization'
+    )
     def post(self, id):
         """Add an organizations to a specific collaboration."""
         # get collaboration to which te organization should be added
@@ -295,7 +406,7 @@ class CollaborationOrganization(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-         # verify permissions
+        # verify permissions
         if not self.r.e_glo.can():
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
@@ -350,23 +461,77 @@ class CollaborationNode(ServicesResources):
         self.r = getattr(self.permissions, module_name)
 
     @with_user
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id_node.yaml")),
-               endpoint='collaboration_with_id_node')
     def get(self, id):
-        """"Return a list of nodes that belong to the collaboration."""
-        collaboration = db.Collaboration.get(id)
-        if not collaboration:
+        """List nodes in collaboration.
+        ---
+        description: >-
+            Returns a list of node(s) which belong to the specified
+            collaboration.\n\n
+
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Collaboration|Global|View|❌|❌|List nodes in a specified
+            collaboration|\n
+            |Collaboration|Organization|View|✅|✅|List nodes in a specified
+            collaboration|\n\n
+
+            Accessable as: `user`.'\n\n
+
+            Results can be paginated by using the parameter `page`. The
+            pagination metadata can be included using `include=metadata`, note
+            that this will put the actual data in an envelope.
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              description: collaboration id
+              required: true
+            - in: query
+              name: include
+              schema:
+                type: string
+              description: what to include in the output ('metadata')
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
+
+        responses:
+            200:
+                description: Ok
+            404:
+                description: collaboration not found
+            401:
+                description: Unauthorized
+
+        tags: ["Collaboration"]
+        """
+        col = db.Collaboration.get(id)
+        if not col:
             return {"msg": f"collaboration id={id} can not be found"},\
                 HTTPStatus.NOT_FOUND
 
+        # check permission
         if not self.r.v_glo.can():
-            org_ids = [org.id for org in collaboration.organizations]
-            if not (self.r.v_org.can() and g.user.organization.id in org_ids):
+            auth_org = self.obtain_auth_organization()
+            if not (self.r.v_org.can() and auth_org in col.organizations):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return node_schema.dump(collaboration.nodes, many=True).data, \
-            HTTPStatus.OK
+        # paginate nodes
+        page = Pagination.from_list(col.nodes, request)
+
+        # model serialization
+        return self.response(page, node_schema)
 
     @with_user
     @swag_from(str(Path(r"swagger/post_collaboration_with_id_node.yaml")),
@@ -431,25 +596,79 @@ class CollaborationTask(ServicesResources):
         self.r = getattr(self.permissions, 'task')
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id_task.yaml")),
-               endpoint='collaboration_with_id_task')
     def get(self, id):
-        """List of tasks that belong to a collaboration"""
-        collaboration = db.Collaboration.get(id)
-        if not collaboration:
+        """List tasks from collaboration
+        ---
+        description: >-
+            Returns a list of all tasks that belong to the collaboration.\n\n
+
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Task|Global|View|❌|❌|View tasks|\n
+            |Task|Organization|View|✅|✅|View tasks only when your
+            organization participates in the collaboration|\n\n
+
+
+            Accessible as: `user` and `node`.\n\n
+
+            Results can be paginated by using the parameter `page`. The
+            pagination metadata can be included using `include=metadata`, note
+            that this will put the actual data in an envelope.
+
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              description: collaboration id
+              required: true
+            - in: query
+              name: include
+              schema:
+                type: string
+              description: what to include in the output ('metadata')
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
+
+        responses:
+            200:
+                description: Ok
+            401:
+                description: Unauthorized or missing permissions
+            404:
+                description: Collaboration not found
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Collaboration"]
+
+        """
+        col = db.Collaboration.get(id)
+        if not col:
             return {"msg": f"collaboration id={id} can not be found"},\
                 HTTPStatus.NOT_FOUND
 
-        if g.user:
-            auth_org_id = g.user.organization.id
-        else: #g.node:
-            auth_org_id = g.node.organization.id
+        # obtain auth's organization id
+        auth_org = self.obtain_auth_organization()
 
         if not self.r.v_glo.can():
-            org_ids = [org.id for org in collaboration.organizations]
-            if not (self.r.v_org.can() and auth_org_id in org_ids):
+            if not (self.r.v_org.can() and auth_org in col.organizations):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return tasks_schema.dump(collaboration.tasks, many=True).data, \
-            HTTPStatus.OK
+        # paginate tasks
+        page = Pagination.from_list(col.tasks, request)
+
+        # model serialization
+        return self.response(page, tasks_schema)

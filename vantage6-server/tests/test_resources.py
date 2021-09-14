@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 from uuid import uuid1
+from flask.globals import g
 import yaml
 import unittest
 import logging
@@ -16,13 +17,13 @@ from werkzeug.utils import cached_property
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.server.globals import PACAKAGE_FOLDER
-from vantage6.server import ServerApp
+from vantage6.server import ServerApp, db
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
                                    Collaboration, Task, Result)
 from vantage6.server.model.rule import Scope, Operation
 from vantage6.server import context
 from vantage6.server._version import __version__
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller.fixture import load
 
 
@@ -55,6 +56,7 @@ class TestResources(unittest.TestCase):
             "unittest_config.yaml")
 
         server = ServerApp(ctx)
+        cls.server = server
 
         file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
@@ -85,22 +87,39 @@ class TestResources(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Database().close()
+        Database().clear_data()
+
+    @classmethod
+    def setUp(cls):
+        # set db.session
+        DatabaseSessionManager.get_session()
+
+    @classmethod
+    def tearDown(cls):
+        # unset db.session
+        DatabaseSessionManager.clear_session()
 
     def login(self, type_='root'):
-        tokens = self.app.post(
-            '/api/token/user',
-            json=self.credentials[type_]
-        ).json
-        headers = {
-            'Authorization': 'Bearer {}'.format(tokens['access_token'])
-        }
+        with self.server.app.test_client() as client:
+            tokens = client.post(
+                '/api/token/user',
+                json=self.credentials[type_]
+            ).json
+        if 'access_token' in tokens:
+            headers = {
+                'Authorization': 'Bearer {}'.format(tokens['access_token'])
+            }
+        else:
+            print('something wrong, during login:')
+            print(tokens)
+
         return headers
 
     def create_user(self, organization=None, rules=[]):
 
         if not organization:
             organization = Organization(name="some-organization")
+            organization.save()
 
         # user details
         username = str(uuid.uuid1())
@@ -446,7 +465,6 @@ class TestResources(unittest.TestCase):
 
     def test_user_patch(self):
         headers = self.login("root")
-        # print(self.app.get("/api/user/2", headers=headers).json)
         result = self.app.patch("/api/user/2", headers=headers, json={
             "firstname": "Henk",
             "lastname": "Martin"
@@ -632,6 +650,8 @@ class TestResources(unittest.TestCase):
             "name": "a-different-role-name",
             "description": "some description of this role..."
         })
+
+        db.session.refresh(role)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(role.name, "a-different-role-name")
         self.assertEqual(role.description, "some description of this role...")
@@ -721,6 +741,7 @@ class TestResources(unittest.TestCase):
 
         # role without rules
         result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(len(result.json), 0)
 
@@ -1028,6 +1049,7 @@ class TestResources(unittest.TestCase):
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'yeah'
         })
+        db.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("yeah", user.firstname)
 
@@ -1038,6 +1060,7 @@ class TestResources(unittest.TestCase):
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'whatever'
         })
+        db.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("whatever", user.firstname)
 
@@ -1049,6 +1072,7 @@ class TestResources(unittest.TestCase):
             'lastname': 'and again',
             'password': 'keep-it-safe'
         })
+        db.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("again", user.firstname)
         self.assertEqual("and again", user.lastname)
@@ -1670,14 +1694,18 @@ class TestResources(unittest.TestCase):
     def test_add_collaboration_node_permissions(self):
 
         org = Organization()
+        org.save()
         col = Collaboration(organizations=[org])
+        col.save()
         node = Node(organization=org)
         node.save()
 
         # try non-existant collaboration
         headers = self.create_user_and_login()
+
         results = self.app.post('/api/collaboration/-1/node', headers=headers,
                                 json={'id': node.id})
+
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # try without proper permissions
@@ -2159,7 +2187,6 @@ class TestResources(unittest.TestCase):
         })
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
-
     def test_create_task_permissions_as_container(self):
         org = Organization()
         col = Collaboration(organizations=[org])
@@ -2171,17 +2198,18 @@ class TestResources(unittest.TestCase):
         # test wrong image name
         headers = self.login_container(collaboration=col, organization=org,
                                        task=parent_task)
-        results = self.app.post(f'/api/task', headers=headers, json={
+        results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
             'collaboration_id': col.id,
             'image': 'other-image'
         })
+
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test other collaboration_id
         col2 = Collaboration(organizations=[org])
         col2.save()
-        results = self.app.post(f'/api/task', headers=headers, json={
+        results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
             'collaboration_id': col2.id,
             'image': 'some-image'
@@ -2189,7 +2217,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with correct parameters
-        results = self.app.post(f'/api/task', headers=headers, json={
+        results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
             'collaboration_id': col.id,
             'image': 'some-image'
@@ -2206,12 +2234,11 @@ class TestResources(unittest.TestCase):
         })
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
-
     def test_delete_task_permissions(self):
 
         # test non-existing task
         headers = self.create_user_and_login()
-        self.app.delete(f'/api/task/-1', headers=headers)
+        self.app.delete('/api/task/-1', headers=headers)
 
         # test with organization permissions from other organization
         org = Organization()
@@ -2241,9 +2268,10 @@ class TestResources(unittest.TestCase):
         task = Task(collaboration=col)
         res = Result(task=task)
         res.save()
+        result_id = res.id  # cannot access this after deletion
         results = self.app.delete(f'/api/task/{task.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertIsNone(Task.get(res.id))
+        self.assertIsNone(Task.get(result_id))
 
     def test_view_task_result_permissions_as_user(self):
 

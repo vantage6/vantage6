@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.server.model.node import Node
-from vantage6.server.model.base import Base, Database
+from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Task(Base):
@@ -44,7 +44,7 @@ class Task(Base):
 
     @classmethod
     def next_run_id(cls):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         max_run_id = session.query(sql.func.max(cls.run_id)).scalar()
         if max_run_id:
             return max_run_id + 1
@@ -54,7 +54,7 @@ class Task(Base):
     def __repr__(self):
         return (
             f"<Task "
-            f"name:{self.name}, "
+            f"{self.id}: '{self.name}', "
             f"collaboration:{self.collaboration.name}"
             ">"
         )

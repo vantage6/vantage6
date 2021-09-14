@@ -89,7 +89,7 @@ class TestRunner(unittest.TextTestRunner):
     resultclass = TestResult
 
     def __init__(self, log, stream=sys.stderr, descriptions=True, verbosity=1,
-                 failfast=False, buffer=False, resultclass=None):
+                 failfast=True, buffer=False, resultclass=None):
         super(TestRunner, self).__init__(stream, descriptions, verbosity, failfast,
                                          buffer, resultclass)
         self.log = log

@@ -1,27 +1,22 @@
 # -*- coding: utf-8 -*-
 import logging
-from operator import ipow
-from os import name
 import uuid
-import json
 
 from pathlib import Path
 from http import HTTPStatus
 from flasgger.utils import swag_from
 from flask import g, request
 from flask_restful import reqparse
-from sqlalchemy.sql.operators import Operators, notendswith_op
+
 
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
+from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server import db
-from vantage6.server.resource._schema import (
-    TaskIncludedSchema,
-    TaskSchema,
-    NodeSchema
-)
+from vantage6.server.resource._schema import NodeSchema
 
 
 module_name = __name__.split('.')[-1]
@@ -33,7 +28,7 @@ def setup(api, api_base, services):
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        Node,
+        Nodes,
         path,
         endpoint='node_without_id',
         methods=('GET', 'POST'),
@@ -75,44 +70,83 @@ def permissions(permission: PermissionManager):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Node(ServicesResources):
+node_schema = NodeSchema()
+
+
+class NodeBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions):
         super().__init__(socketio, mail, api, permissions)
         self.r = getattr(self.permissions, module_name)
 
-    # Schemas
-    node_schema = NodeSchema()
+
+class Nodes(NodeBase):
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_node_with_id.yaml")),
-               endpoint='node_with_id')
-    @swag_from(str(Path(r"swagger/get_node_without_id.yaml")),
-               endpoint='node_without_id')
-    def get(self, id=None):
-        """ View node that belong in the same organization"""
-        node = db.Node.get(id)
-        if not node:
-            return {'msg': f'Node id={id} is not found!'}, HTTPStatus.NOT_FOUND
+    def get(self):
+        """Returns a list of nodes
+        ---
+        description: >-
+            Returns a list of nodes which are part of the organization to which
+            the user or node belongs. In case an administrator account makes
+            this request, all nodes from all organizations are returned.\n\n
 
-        auth = g.user or g.node
-        if id:
-            if not self.r.v_glo.can():
-                same_org = auth.organization.id == node.organization.id
-                if not (self.r.v_org.can() and same_org):
-                    return {'msg': 'You lack the permission to do that!'}, \
-                        HTTPStatus.UNAUTHORIZED
-        else:
-            if not self.r.v_glo.can():
-                if self.r.v_org.can():
-                    # only the results of the user's organization are returned
-                    org_id = auth.organization_id
-                    node = [n for n in node if n.organization_id == org_id]
-                else:
-                    return {'msg': 'You lack the permission to do that!'}, \
-                        HTTPStatus.UNAUTHORIZED
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Node|Global|View|❌|❌|View any node information|\n
+            |Node|Organization|View|✅|✅|View node information for nodes that
+            belong to your organization|\n\n
 
-        return self.node_schema.dump(node, many=not id).data, HTTPStatus.OK
+            Accessible as: `user` and `node`.\n\n
+
+            Results can be paginated by using the parameter `page`. The
+            pagination metadata can be included using `include=metadata`, note
+            that this will put the actual data in an envelope.\n\n
+
+        parameters:
+            - in: query
+              name: include
+              schema:
+                type: string
+              description: what to include in the output ('metadata')
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
+
+        responses:
+            200:
+                description: Ok
+            401:
+                description: Unauthorized or missing permissions
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Node"]
+        """
+        q = DatabaseSessionManager.get_session().query(db.Node)
+        auth_org_id = self.obtain_organization_id()
+        if not self.r.v_glo.can():
+            if self.r.v_org.can():
+                # only the results of the user's organization are returned
+                q = q.filter(db.Node.organization_id == auth_org_id)
+            else:
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        # paginate results
+        page = Pagination.from_query(q, request)
+
+        # model serialization
+        return self.response(page, node_schema)
 
     @with_user
     @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")),
@@ -131,7 +165,6 @@ class Node(ServicesResources):
         if not collaboration:
             return {"msg": f"collaboration id={data['collaboration_id']} "
                     "does not exist"}, HTTPStatus.NOT_FOUND  # 404
-
 
         # check permissions
         org_id = data["organization_id"]
@@ -167,7 +200,31 @@ class Node(ServicesResources):
         )
         node.save()
 
-        return self.node_schema.dump(node).data, HTTPStatus.CREATED  # 201
+        return node_schema.dump(node).data, HTTPStatus.CREATED  # 201
+
+
+class Node(NodeBase):
+
+    @with_user_or_node
+    @swag_from(str(Path(r"swagger/get_node_with_id.yaml")),
+               endpoint='node_with_id')
+    def get(self, id):
+        """ View node that belong in the same organization"""
+        node = db.Node.get(id)
+        if not node:
+            return {'msg': f'Node id={id} is not found!'}, HTTPStatus.NOT_FOUND
+
+        # obtain authenticated model
+        auth = self.obtain_auth()
+
+        # check permissions
+        if not self.r.v_glo.can():
+            same_org = auth.organization.id == node.organization.id
+            if not (self.r.v_org.can() and same_org):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        return node_schema.dump(node, many=False).data, HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/delete_node_with_id.yaml")),
@@ -176,7 +233,7 @@ class Node(ServicesResources):
         """delete node account"""
         node = db.Node.get(id)
         if not node:
-            return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND  # 404
+            return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
 
         if not self.r.d_glo.can():
             own = node.organization == g.user.organization
@@ -185,7 +242,7 @@ class Node(ServicesResources):
                     HTTPStatus.UNAUTHORIZED
 
         node.delete()
-        return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK  # 200
+        return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/patch_node_with_id.yaml")),
@@ -203,7 +260,6 @@ class Node(ServicesResources):
             if not (self.r.e_org.can() and own):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
-
 
         data = request.get_json()
 
@@ -224,10 +280,10 @@ class Node(ServicesResources):
 
         if 'collaboration_id' in data:
             collaboration = db.Collaboration.get(data['collaboration_id'])
-            if not auth.organization in collaboration.organizations:
+            if auth.organization not in collaboration.organizations:
                 return {'msg': f'Organization id={auth.organization.id} of '
                         'this node is not part of this collaboration id='
                         f'{collaboration.id}'}
             node.collaboration = collaboration
 
-        return self.node_schema.dump(node).data, HTTPStatus.OK
+        return node_schema.dump(node).data, HTTPStatus.OK
