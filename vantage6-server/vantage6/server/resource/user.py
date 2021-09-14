@@ -160,14 +160,20 @@ class Users(UserBase):
         if db.User.exists("email", data["email"]):
             return {"msg": "email already exists."}, HTTPStatus.BAD_REQUEST
 
-        # check if the organization has been profided, if this is the case the
+        # check if the organization has been provided, if this is the case the
         # user needs global permissions in case it is not their own
         organization_id = g.user.organization_id
         if data['organization_id']:
-            if data['organization_id'] != organization_id and \
-                    not self.r.c_glo.can():
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+            if data['organization_id'] != organization_id:
+                if self.r.c_glo.can():
+                    # check if organization exists
+                    org = db.Organization.get(data['organization_id'])
+                    if not org:
+                        return {'msg': "Organization does not exist."}, \
+                            HTTPStatus.NOT_FOUND
+                else:  # not-root user cant create users for other organization
+                    return {'msg': 'You lack the permission to do that!'}, \
+                        HTTPStatus.UNAUTHORIZED
             organization_id = data['organization_id']
 
         # check that user is allowed to create users
@@ -356,23 +362,30 @@ class User(UserBase):
 
             user.rules = rules
 
-        if data["organization_id"]:
-            if not (self.r.e_glo.can() and data["organization_id"] !=
-                    g.user.organization_id):
+        if data["organization_id"] and \
+                data["organization_id"] != g.user.organization_id:
+            if not self.r.e_glo.can():
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
             else:
-                log.warn(
-                    f'Running as root and assigning (new) '
-                    f'organization_id={data["organization_id"]}'
-                )
-                user.organization_id = data["organization_id"]
+                # check that newly assigned organization exists
+                org = db.Organization.get(data['organization_id'])
+                if not org:
+                    return {'msg': 'Organization does not exist.'}, \
+                        HTTPStatus.NOT_FOUND
+                else:
+                    log.warn(
+                        f'Running as root and assigning (new) '
+                        f'organization_id={data["organization_id"]}'
+                    )
+                    user.organization_id = data["organization_id"]
 
         try:
             user.save()
         except sqlalchemy.exc.IntegrityError as e:
             log.error(e)
             user.session.rollback()
+            # TODO BvB 2021-08-27 return msg that user was not updated?
 
         return user_schema.dump(user).data, HTTPStatus.OK
 
