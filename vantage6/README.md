@@ -8,7 +8,7 @@
 <h3 align="center">
 
 [![PyPI version](https://badge.fury.io/py/vantage6.svg)](https://badge.fury.io/py/vantage6)
-[![Build Status](https://travis-ci.org/IKNL/vantage6.svg?branch=master)](https://travis-ci.org/IKNL/vantage6)
+[![CI](https://github.com/IKNL/vantage6/actions/workflows/ci.yaml/badge.svg)](https://github.com/IKNL/vantage6/actions/workflows/ci.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/vantage6/badge.svg?branch=master)](https://coveralls.io/github/IKNL/vantage6?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6ea309088ccd48febd41bd1176a9db55)](https://www.codacy.com/gh/IKNL/vantage6?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=IKNL/vantage6&amp;utm_campaign=Badge_Grade)
 [![DOI](https://zenodo.org/badge/120275991.svg)](https://zenodo.org/badge/latestdoi/120275991)
@@ -32,7 +32,7 @@ This repository is part of **vantage6**, our **priVAcy preserviNg federaTed leAr
 * [vantage6-node](https://github.com/iknl/vantage6-node)
 * [vantage6-client](https://github.com/iknl/vantage6-client)
 * [vantage6-UI](https://github.com/IKNL/Vantage6-UI)
-* [vantage6-master](https://github.com/iknl/vantage6-master)  
+* [vantage6-master](https://github.com/iknl/vantage6-master)
 
 ## :pray: Motivation
 The growing complexity of cancer diagnosis and treatment requires data sets that are larger than currently available in a single hospital or even in cancer registries. However, sharing patient data is often difficult due to patient privacy and data protection needs. Federated learning technology has the potential to overcome these limitations. In this approach, organizations can collaborate by exchanging aggregated data and/or statistics while keeping the underlying data safely on site and undisclosed. This repository contains software (and instructions) to setup a federated learning infrastructure using vantage6.
@@ -42,7 +42,7 @@ The following is a short cheat sheet of how to install and use vantage6. For a m
 
 ## :cd: Installation
 This repository contains a command-line-interface (CLI) to manage Docker versions of servers and nodes. If you are setting up either of them, you only need to install this repository. This can be done in two different ways:
- 
+
 ### Option 1 - Directly from `pypi`
 ```bash
 pip install vantage6
