@@ -160,13 +160,14 @@ class TestNodeModel(TestBaseModel):
         self.assertIsNotNone(node)
         self.assertIsInstance(node, Node)
         self.assertEqual(node.name, "unit_node")
-        self.assertEqual(node.api_key, "that-we-never-use")
+        self.assertTrue(node.check_key("that-we-never-use"))
         self.assertEqual(node.collaboration, collaboration)
         self.assertEqual(node.organization, organization)
 
     def test_methods(self):
-        node = Node.get()[0]
-        self.assertIsInstance(Node.get_by_api_key(node.api_key), Node)
+        node = Node(name="la chuck", api_key="some-secret-monkeys")
+        node.save()
+        self.assertIsInstance(Node.get_by_api_key("some-secret-monkeys"), Node)
 
     def test_relations(self):
         node = Node.get()[0]

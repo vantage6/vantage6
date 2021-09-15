@@ -48,12 +48,7 @@ class User(Authenticatable):
 
     @validates("password")
     def _validate_password(self, key, password):
-        return self.hash_password(password)
-
-    @staticmethod
-    def hash_password(password: str):
-        return bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())\
-            .decode('utf8')
+        return self.hash(password)
 
     def set_password(self, pw):
         self.password = pw
