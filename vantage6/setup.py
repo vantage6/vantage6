@@ -51,8 +51,6 @@ setup(
             'coverage==4.5.4'
         ]
     },
-        ]
-    },
     package_data={
         'vantage6.cli': [
             '__build__',
