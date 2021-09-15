@@ -192,10 +192,11 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
                 "is reachable from the Docker container")
         info("Consider using the docker-compose method to start a server")
 
-    ip_ = f"--ip {ip}" if ip else ""
-    port_ = f"--port {port}" if port else ""
+    # The `ip` and `port` refer here to the ip and port within the container.
+    # So we do not really care that is it listening on all interfaces.
+    internal_port = 5000
     cmd = f'vserver-local start -c /mnt/config.yaml -e {ctx.environment} ' \
-          f'{ip_} {port_}'
+          f'--ip 0.0.0.0 --port {internal_port}'
     info(cmd)
 
     info("Run Docker container")
@@ -210,7 +211,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
             "name": ctx.config_file_name
         },
         environment=environment_vars,
-        ports={f"{port_}/tcp": ("0.0.0.0", port_)},
+        ports={f"{internal_port}/tcp": (ip, port_)},
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True
