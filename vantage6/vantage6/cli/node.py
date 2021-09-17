@@ -222,12 +222,15 @@ help_ = {
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
+@click.option('--skipp-db-exist-check/--db-exist-check', default=False,
+              help="Skipp the check of the existence of the DB (always try to \
+              mount)")
 @click.option('--attach/--detach', default=False,
               help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
               help="mount vantage6-master package source")
 def cli_node_start(name, config, environment, system_folders, image, keep,
-                   mount_src, attach):
+                   mount_src, attach, skipp_db_exist_check):
     """Start the node instance.
 
         If no name or config is specified the default.yaml configuation is
@@ -358,7 +361,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     env['DATABASE_URI'] = "/mnt/database.csv" if db_is_file else \
         ctx.databases['default']
     info(f" - URI: {env['DATABASE_URI']}")
-    if db_is_file:
+    if db_is_file or skipp_db_exist_check:
         mounts.append(("/mnt/database.csv", str(ctx.databases["default"])))
     else:
         warning(' - Are you using a non file-based database?')
