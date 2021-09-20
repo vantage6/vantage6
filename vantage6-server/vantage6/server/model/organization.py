@@ -6,8 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common.globals import STRING_ENCODING
-
-from .base import Base, Database
+from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Organization(Base):
@@ -38,7 +37,7 @@ class Organization(Base):
 
     @classmethod
     def get_by_name(cls, name):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         try:
             return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
@@ -67,7 +66,7 @@ class Organization(Base):
         number_of_users = len(self.users)
         return (
             "<Organization "
-            f"name:{self.name}, "
+            f"{self.id}: '{self.name}', "
             f"domain:{self.domain}, "
             f"users:{number_of_users}"
             ">"

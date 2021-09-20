@@ -153,8 +153,8 @@ class NodeToken(ServicesResources):
         node = db.Node.get_by_api_key(api_key)
 
         if not node:  # login failed
-            log.error("Api key is not recognised")
-            return {"msg": "Api key is not recognised!"}
+            log.error("Api key is not recognized")
+            return {"msg": "Api key is not recognized!"}
 
         token = create_access_token(node)
         ret = {

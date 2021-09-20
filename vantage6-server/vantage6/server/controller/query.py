@@ -7,7 +7,7 @@ from vantage6.server.model import (
     Organization,
     Result
 )
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import DatabaseSessionManager
 
 
 def get_node(self, result: Result):
@@ -20,7 +20,7 @@ def get_node(self, result: Result):
     derived from the Result while the collaboration can be found from
     the originating task.
     """
-    session = Database().Session
+    session = DatabaseSessionManager.get_session()
     node = session.query(Node)\
         .join(Collaboration)\
         .join(Task)\
@@ -46,7 +46,7 @@ def tasks(self, collaboration: Collaboration, organization: Organization):
     # find node of the organization that is within the collaboration
     node = collaboration.get_node_from_organization(organization)
 
-    session = Database().Session
+    session = DatabaseSessionManager.get_session()
     tasks = session.query(Task)\
         .join(Collaboration)\
         .join(Node)\

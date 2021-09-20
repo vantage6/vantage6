@@ -10,7 +10,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/IKNL/vantage6-server/badge.svg?branch=master)](https://coveralls.io/github/IKNL/vantage6-server?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/707833fa47a94393b3f8ab9f2c598034)](https://www.codacy.com/gh/IKNL/vantage6-server?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=IKNL/vantage6-server&amp;utm_campaign=Badge_Grade)
 [![PyPI version](https://badge.fury.io/py/vantage6-server.svg)](https://badge.fury.io/py/vantage6-server)
-[![Build Status](https://travis-ci.org/IKNL/ppDLI.svg?branch=master)](https://travis-ci.org/IKNL/vantage6-server)
+[![Tests](https://github.com/IKNL/vantage6-server/actions/workflows/python-app.yml/badge.svg)](https://github.com/IKNL/vantage6-server/actions/workflows/python-app.yml)
 
 </h3>
 

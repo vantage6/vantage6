@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm.exc import NoResultFound
+import bcrypt
 
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import DatabaseSessionManager
+from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Column, Integer, String, ForeignKey
+
 from vantage6.server.model.authenticable import Authenticatable
 
 
@@ -27,32 +28,44 @@ class Node(Authenticatable):
         'polymorphic_identity': 'node',
     }
 
+    @validates("api_key")
+    def _validate_api_key(self, key, api_key):
+        return self.hash(api_key)
+
+    def check_key(self, key):
+        if self.api_key is not None:
+            expected_hash = self.api_key.encode('utf8')
+            return bcrypt.checkpw(key.encode('utf8'), expected_hash)
+        return False
+
     @classmethod
     def get_by_api_key(cls, api_key):
         """returns Node based on the provided API key.
 
         Returns None if no Node is associated with api_key.
         """
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
 
-        try:
-            return session.query(cls).filter_by(api_key=api_key).one()
-        except NoResultFound:
-            return None
+        nodes = session.query(cls).all()
+        for node in nodes:
+            is_correct_key = node.check_key(api_key)
+            if is_correct_key:
+                return node
+        # no node found with matching API key
+        return None
 
     @classmethod
     def exists(cls, organization_id, collaboration_id):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         return session.query(cls).filter_by(
             organization_id=organization_id,
             collaboration_id=collaboration_id
         ).scalar()
 
-
     def __repr__(self):
         return (
             "<Node "
-            f"name: {self.name}, "
+            f"{self.id}: '{self.name}', "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.collaboration.name}, "
             f"api_key: {self.api_key} "

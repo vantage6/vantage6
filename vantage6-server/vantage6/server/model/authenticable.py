@@ -1,3 +1,5 @@
+import bcrypt
+
 from sqlalchemy import Column, String, DateTime
 
 from .base import Base
@@ -20,3 +22,8 @@ class Authenticatable(Base):
     ip = Column(String)
     last_seen = Column(DateTime)
     status = Column(String)
+
+    @staticmethod
+    def hash(secret: str):
+        return bcrypt.hashpw(secret.encode('utf8'), bcrypt.gensalt())\
+            .decode('utf8')

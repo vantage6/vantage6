@@ -3,7 +3,7 @@ import bcrypt
 from sqlalchemy import Column, String, Integer, ForeignKey, exists
 from sqlalchemy.orm import relationship, validates
 
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
 
 
@@ -48,12 +48,7 @@ class User(Authenticatable):
 
     @validates("password")
     def _validate_password(self, key, password):
-        return self.hash_password(password)
-
-    @staticmethod
-    def hash_password(password: str):
-        return bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())\
-            .decode('utf8')
+        return self.hash(password)
 
     def set_password(self, pw):
         self.password = pw
@@ -66,26 +61,27 @@ class User(Authenticatable):
 
     @classmethod
     def get_by_username(cls, username):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         return session.query(cls).filter_by(username=username).one()
 
     @classmethod
     def get_by_email(cls, email):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         return session.query(cls).filter_by(email=email).one()
 
     @classmethod
     def get_user_list(cls, filters=None):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         return session.query(cls).all()
 
     @classmethod
     def username_exists(cls, username):
-        session = Database().Session
-        return session.query(exists().where(cls.username == username)).scalar()
+        session = DatabaseSessionManager.get_session()
+        return session.query(exists().where(cls.username == username))\
+            .scalar()
 
     @classmethod
     def exists(cls, field, value):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         return session.query(exists().where(getattr(cls, field) == value))\
             .scalar()

@@ -5,6 +5,8 @@ import os
 import uuid
 import json
 
+
+from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
 from flask import Flask, make_response, current_app
 from flask_cors import CORS
@@ -16,6 +18,7 @@ from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 
 from vantage6.server import db
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource._schema import HATEOASModelSchema
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
@@ -100,6 +103,7 @@ class ServerApp:
         logging.getLogger("socketIO-client").setLevel(logging.WARNING)
         logging.getLogger("engineio.server").setLevel(logging.WARNING)
         logging.getLogger("socketio.server").setLevel(logging.WARNING)
+        logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 
     def configure_flask(self):
         """All flask config settings should go here."""
@@ -149,6 +153,53 @@ class ServerApp:
             "support@vantage6.ai"
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
+
+        # before request
+        @self.app.before_request
+        def set_db_session():
+            """Before every flask request method.
+
+            This will obtain a (scoped) db session from the session factory
+            that is linked to the flask request global `g`. In every endpoint
+            we then can access the database by using this session. We ensure
+            that the session is removed (and uncommited changes are rolled
+            back) at the end of every request.
+            """
+            DatabaseSessionManager.new_session()
+
+        @self.app.after_request
+        def remove_db_session(response):
+            """After every flask request.
+
+            This will close the database session created by the
+            `before_request`.
+            """
+            DatabaseSessionManager.clear_session()
+            return response
+
+        @self.app.errorhandler(HTTPException)
+        def error_remove_db_session(error):
+            """In case an HTTP-exception occurs during the request.
+
+            It is important to close the db session to avoid having dangling
+            sessions.
+            """
+            log.warn('Error occured during request')
+            log.debug(error)
+            DatabaseSessionManager.clear_session()
+            return error.get_response()
+
+        @self.app.errorhandler(Exception)
+        def error2_remove_db_session(error):
+            """In case an HTTP-exception occurs during the request.
+
+            It is important to close the db session to avoid having dangling
+            sessions.
+            """
+            log.warn('Error occured during request')
+            log.debug(error)
+            DatabaseSessionManager.clear_session()
+            return {'msg': f'Error: {error}'}, 500
 
     def configure_api(self):
         """"Define global API output."""
@@ -209,7 +260,7 @@ class ServerApp:
         @self.jwt.user_loader_callback_loader
         def user_loader_callback(identity):
             auth_identity = Identity(identity)
-            # in case of a user or node an auth id is shared as identity,
+            # in case of a user or node an auth id is shared as identity
             if isinstance(identity, int):
 
                 # auth_identity = Identity(identity)

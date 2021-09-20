@@ -28,6 +28,11 @@ from vantage6.common.globals import STRING_ENCODING
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
+# DB connection session. This is used by the iPython shell (from db import
+# session). It is important to mention that the flask requests obtain their
+# session from `g.session` which is initialized on `pre_request`.
+session = None
+
 
 def jsonable(value):
     """Convert a (list of) SQLAlchemy instance(s) to native Python objects."""

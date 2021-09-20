@@ -37,7 +37,7 @@ setup(
         'appdirs==1.4.3',
         'flask==1.1.1',
         'Flask-RESTful==0.3.8',
-        'Flask-Cors==3.0.8',
+        'Flask-Cors==3.0.9',
         'Flask-JWT-Extended==3.24.1',
         'flask-marshmallow==0.11.0',
         'Flask-SocketIO==4.2.1',

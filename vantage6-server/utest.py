@@ -22,8 +22,8 @@ class TestResult(unittest.TextTestResult):
         unittest.result.TestResult.startTest(self, test)
 
         if self.showAll:
-            # self.stream.write("%-85s " % self.getDescription(test))
-            self.stream.write("%-85s " % str(test))
+            # self.stream.write("%-120s " % self.getDescription(test))
+            self.stream.write("%-120s " % str(test))
             self.stream.flush()
 
     def addError(self, test, err):
@@ -36,7 +36,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write('E')
             self.stream.flush()
 
-        self.log.error("%-85s %s" % (test, error))
+        self.log.error("%-120s %s" % (test, error))
         self.log.exception(err[1])
 
     def addFailure(self, test, err):
@@ -49,7 +49,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write('F')
             self.stream.flush()
 
-        self.log.error("%-85s %s" % (test, fail))
+        self.log.error("%-120s %s" % (test, fail))
         # self.log.error(self.separator1)
         # self.log.error("%s: %s" % ('FAIL', self.getDescription(test)))
         # self.log.error(self.separator2)
@@ -70,7 +70,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write("s")
             self.stream.flush()
 
-        self.log.info("%-85s %s" % (test, skipped))
+        self.log.info("%-120s %s" % (test, skipped))
 
     def addSuccess(self, test):
         unittest.result.TestResult.addSuccess(self, test)
@@ -89,7 +89,7 @@ class TestRunner(unittest.TextTestRunner):
     resultclass = TestResult
 
     def __init__(self, log, stream=sys.stderr, descriptions=True, verbosity=1,
-                 failfast=False, buffer=False, resultclass=None):
+                 failfast=True, buffer=False, resultclass=None):
         super(TestRunner, self).__init__(stream, descriptions, verbosity, failfast,
                                          buffer, resultclass)
         self.log = log
@@ -130,9 +130,9 @@ def find_tests(path=None):
 
 def run_tests(suites):
     log = logging.getLogger('utest')
-    print('-' * 90)
+    print('-' * 135)
     print('Started: ' + datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
-    print('-' * 90)
+    print('-' * 135)
 
     # Setting verbosity=1 will display dots instead.
     result = TestRunner(log, verbosity=2).run(suites)

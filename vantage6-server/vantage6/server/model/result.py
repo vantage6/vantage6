@@ -36,7 +36,7 @@ class Result(Base):
     def __repr__(self):
         return (
             "<Result "
-            f"task:{self.task.name}, "
+            f"{self.id}: '{self.task.name}', "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.task.collaboration.name}, "
             f"is_complete: {self.complete}"
