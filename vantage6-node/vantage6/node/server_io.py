@@ -306,7 +306,7 @@ class NodeClient(ClientBase):
 
     def get_vpn_config(self):
         """ Obtain VPN configuration from the server """
-        response = self.request("vpnconfig")
+        response = self.request("vpn")
         ovpn_config = response.get("ovpn_config")
 
         # replace windows line endings to linux style to prevent extra

@@ -451,6 +451,7 @@ class DockerManager(object):
                                 [self._isolated_network.name]['IPAddress']
         )
         # Set port at which algorithm containers receive traffic
+        # TODO obtain this port from the Dockerfile description (EXPOSE)
         algorithm_port = '8888'
 
         # Set up forwarding VPN traffic in VPN client container
