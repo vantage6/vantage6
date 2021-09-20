@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 import logging
-
-from flasgger import swag_from
-from pathlib import Path
-from http import HTTPStatus
-from requests_oauthlib import OAuth2Session
 import os
 import json
 import base64
-import os
 import hashlib
 import re
 import urllib.parse as urlparse
 
+from http import HTTPStatus
+from flask.globals import g
+import requests
+from requests_oauthlib import OAuth2Session
+
 from vantage6.common import logger_name
 from vantage6.server.resource import with_node, ServicesResources
-from vantage6.server._version import __version__
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -40,29 +39,65 @@ def setup(api, api_base, services):
 class VPNConfig(ServicesResources):
 
     @with_node
-    @swag_from(
-        str(Path(r"swagger/get_vpn_config.yaml")), endpoint='vpn_config'
-    )
     def get(self):
-        """ Return configuration to enable connection to EduVPN. """
-        # TODO We are now collecting a config file completely time and time
-        # again. It would be more efficient to only refresh necessary parts,
-        # and this may also save on the number of IP addresses handed out.
-        # The procedure could be changed to:
-        # 1. if config file doesn't exist, use current procedure to get one
-        # 2. else, try logging in
-        # 3. if doesn't work, simply refresh the key pair and it should work
+        """Get OVPN configuration file
+        ---
+        description: >-
+            Returns the contents of an OVPN configuration file. This
+            configuration allows the node to connect to EduVPN. To access this
+            endpoint, the node needs to be authenticated.\n\n
+
+            Accesible for: `node`\n\n
+
+        responses:
+            200:
+                description: Ok
+            401:
+                description: Unauthorized or missing permission
+            501:
+                description: The vantage6-server has no VPN service
+            503:
+                description: The VPN server is not reachable
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Other"]
+
+        """
+        # check if the VPN server is configured
+        if 'vpn_server' not in self.config:
+            log.debug(f'Node <{g.node.id}> tries to obtain a vpn config but '
+                      'this server has not configured a VPN server!')
+            return {'msg': 'This server does not support VPN'}, \
+                HTTPStatus.NOT_IMPLEMENTED
 
         # obtain VPN config by calling EduVPN API
         vpn_connector = EduVPNConnector(self.config['vpn_server'])
-        ovpn_config = vpn_connector.get_ovpn_config()
+
+        try:
+            ovpn_config = vpn_connector.get_ovpn_config()
+        except requests.ConnectionError as e:
+            log.critical(f'Node <{g.node.id}> tries to obtain a vpn config. '
+                         'However the VPN server is unreachable!')
+            log.debug(e)
+            return {'msg': 'VPN server unreachable'}, \
+                HTTPStatus.SERVICE_UNAVAILABLE
 
         return {'ovpn_config': ovpn_config}, HTTPStatus.OK
 
 
 class EduVPNConnector:
-    """ Connector to access EduVPN API """
+
     def __init__(self, vpn_config):
+        """
+        Provides API access to the VPN server
+
+        Parameters
+        ----------
+        vpn_config : dict
+            Contains the VPN server info
+        """
         self.config = vpn_config
         self.session = OAuth2Session(vpn_config['client_id'])
 
@@ -71,27 +106,37 @@ class EduVPNConnector:
             else self.config['url']
         self.API_URL = f'{self.PORTAL_URL}/api.php'
 
-    def get_ovpn_config(self):
-        """ Obtain OVPN configuration file from EduVPN API """
+    def get_ovpn_config(self) -> str:
+        """
+        Obtain a configuration file from the VPN server. This file contains
+        all details needed for a node to connect to the VPN server.
+
+        Returns
+        -------
+        str (ovpn format)
+            Open-vpn configuration file
+        """
 
         # obtain access token if not set
         if not self.session.token:
-            log.info("Acquiring EduVPN access token")
+            log.debug("Acquiring EduVPN access token")
             self.set_access_token()
 
         # get the user's profile id
-        log.info("Getting EduVPN profile information")
+        log.debug("Getting EduVPN profile information")
         profile = self.get_profile()
         profile_id = profile['profile_list']['data'][0]['profile_id']
 
-        log.info("Obtaining OpenVPN configuration")
         # get the OVPN configuration for the selected user profile
+        log.debug("Obtaining OpenVPN configuration template")
         ovpn_config = self.get_config(profile_id)
 
         # get a key and certificate for the client
+        log.debug("Obtaining OpenVPN key-pair")
         cert, key = self.get_key_pair()
 
         # add the client credentials to the ovpn file
+        log.debug('parsing VPN configuration file')
         ovpn_config = self._insert_keypair_into_config(ovpn_config, cert, key)
         return ovpn_config
 
@@ -146,6 +191,8 @@ class EduVPNConnector:
             'code_challenge_method': 'S256',
             'code_challenge': self.code_challenge,
         }
+        log.debug(f'VPN auth-code params: {params}')
+
         # Call authorization route, but prevent redirect. By preventing the
         # redirect, the authorization code can be used in the current session
         # which allows us to use the PKCE code verifier without having to save
@@ -171,6 +218,8 @@ class EduVPNConnector:
             'client_secret': self.config['client_secret'],
             'code_verifier': self.code_verifier,
         }
+        log.debug(f'VPN token params: {data}')
+
         r = self.session.post(
             f'{self.PORTAL_URL}/oauth.php/token',
             data=data,
@@ -178,9 +227,8 @@ class EduVPNConnector:
         )
         return json.loads(r.content.decode('utf-8'))
 
-    def _insert_keypair_into_config(
-        self, ovpn_config: str, cert: str, key: str
-    ):
+    def _insert_keypair_into_config(self, ovpn_config: str, cert: str,
+                                    key: str):
         """
         Insert the client's key pair into the correct place into the OVPN file
         (i.e. before the <tls-crypt> field)
