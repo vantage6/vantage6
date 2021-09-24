@@ -93,8 +93,8 @@ rule_schema = RuleSchema()
 
 class RoleBase(ServicesResources):
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
 

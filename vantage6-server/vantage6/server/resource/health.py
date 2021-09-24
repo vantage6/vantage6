@@ -9,7 +9,6 @@ from flask.globals import g
 
 from vantage6.server.resource import ServicesResources
 from vantage6.common import logger_name
-from vantage6.server.model.base import Database
 
 
 module_name = logger_name(__name__)

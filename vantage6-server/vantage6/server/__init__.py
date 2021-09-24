@@ -329,7 +329,8 @@ class ServerApp:
             "socketio": self.socketio,
             "mail": self.mail,
             "api": self.api,
-            "permissions": self.permissions
+            "permissions": self.permissions,
+            "config": self.ctx.config
         }
 
         for res in RESOURCES:

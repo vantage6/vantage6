@@ -110,8 +110,8 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 class CollaborationBase(ServicesResources):
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
 
@@ -314,8 +314,8 @@ class Collaboration(CollaborationBase):
 class CollaborationOrganization(ServicesResources):
     """Resource for /api/collaboration/<int:id>/organization."""
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @only_for(["node", "user", "container"])
@@ -456,8 +456,8 @@ class CollaborationOrganization(ServicesResources):
 class CollaborationNode(ServicesResources):
     """Resource for /api/collaboration/<int:id>/node."""
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @with_user
@@ -591,8 +591,8 @@ class CollaborationNode(ServicesResources):
 class CollaborationTask(ServicesResources):
     """Resource for /api/collaboration/<int:id>/task."""
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, 'task')
 
     @with_user_or_node

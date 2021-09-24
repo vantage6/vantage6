@@ -85,12 +85,14 @@ user_schema = UserSchema()
 
 
 class UserBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
 
 class Users(UserBase):
+
     @only_for(['user'])
     def get(self):
         """List users
@@ -222,6 +224,7 @@ class Users(UserBase):
 
 
 class User(UserBase):
+
     @only_for(['user'])
     def get(self, id):
         """Get user

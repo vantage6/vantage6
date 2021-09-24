@@ -55,7 +55,8 @@ def permissions(permission: PermissionManager):
 
     add(scope=S.GLOBAL, operation=P.EDIT, description="edit any node")
     add(scope=S.ORGANIZATION, operation=P.EDIT,
-        description="edit node that is part of your organization")
+        description="edit node that is part of your organization",
+        assign_to_node=True)
 
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create node for any organization")
@@ -75,8 +76,8 @@ node_schema = NodeSchema()
 
 class NodeBase(ServicesResources):
 
-    def __init__(self, socketio, mail, api, permissions):
-        super().__init__(socketio, mail, api, permissions)
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
 
@@ -231,7 +232,6 @@ class Node(NodeBase):
 
         return node_schema.dump(node, many=False).data, HTTPStatus.OK
 
-
     @with_user
     @swag_from(str(Path(r"swagger/delete_node_with_id.yaml")),
                endpoint='node_with_id')
@@ -250,7 +250,7 @@ class Node(NodeBase):
         node.delete()
         return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK
 
-    @with_user
+    @with_user_or_node
     @swag_from(str(Path(r"swagger/patch_node_with_id.yaml")),
                endpoint='node_with_id')
     def patch(self, id):
@@ -291,5 +291,9 @@ class Node(NodeBase):
                         'this node is not part of this collaboration id='
                         f'{collaboration.id}'}
             node.collaboration = collaboration
+
+        if 'ip' in data:
+            node.ip = data['ip']
+            node.save()
 
         return node_schema.dump(node).data, HTTPStatus.OK
