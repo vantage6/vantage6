@@ -121,7 +121,11 @@ class DatabaseSessionManager:
     @staticmethod
     def get_session():
         if DatabaseSessionManager.in_flask_request():
-            # print(f'g.session={g.session}')
+
+            # needed for SocketIO requests
+            if not g.session:
+                DatabaseSessionManager.new_session()
+
             return g.session
         else:
             # log.critical('Obtaining non flask session')
