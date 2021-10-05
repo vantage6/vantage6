@@ -97,8 +97,6 @@ class Database(metaclass=Singleton):
         # short hand to obtain a object-session.
         self.object_session = Session.object_session
 
-        self.Session.configure(bind=self.engine)
-
         Base.metadata.create_all(bind=self.engine)
         log.info("Database initialized!")
 
