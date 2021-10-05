@@ -16,8 +16,7 @@ import pathlib
 import re
 import json
 from typing import NamedTuple, List, Union, Dict
-from docker.models.networks import Network
-from jwt.algorithms import Algorithm
+from json.decoder import JSONDecodeError
 
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME
@@ -381,18 +380,20 @@ class DockerManager(object):
 
     def get_vpn_ip(self):
         """ Get VPN IP address in VPN server namespace (10.76.x.x) """
-        # TODO this sleep has been put here because the VPN container will
-        # otherwise give the error "device tun0 does not exist" because VPN
-        # setup is not complete yet
-        # Obviously we need something more reliable than a sleep...
-        import time
-        print("sleeping 10s")
-        time.sleep(10)
 
-        _, vpn_interface = self.vpn_client_container.exec_run(
-            'ip --json addr show dev tun0'
-        )
-        vpn_interface = json.loads(vpn_interface)
+        # poll to see if VPN is set up. When it is, extract the IP address.
+        MAX_ATTEMPTS = 60  # TODO where should this go in configs?
+        n_attempt = 0
+        while n_attempt < MAX_ATTEMPTS:
+            n_attempt += 1
+            try:
+                _, vpn_interface = self.vpn_client_container.exec_run(
+                    'ip --json addr show dev tun0'
+                )
+                vpn_interface = json.loads(vpn_interface)
+                break
+            except JSONDecodeError:
+                time.sleep(1)
         return vpn_interface[0]['addr_info'][0]['local']
 
     def get_local_vpn_ip(self):
