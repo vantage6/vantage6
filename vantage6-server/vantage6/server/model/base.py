@@ -123,7 +123,7 @@ class DatabaseSessionManager:
         if DatabaseSessionManager.in_flask_request():
 
             # needed for SocketIO requests
-            if not g.session:
+            if 'session' not in g:
                 DatabaseSessionManager.new_session()
 
             return g.session
