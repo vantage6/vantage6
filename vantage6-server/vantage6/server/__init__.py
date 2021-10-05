@@ -5,6 +5,7 @@ import os
 import uuid
 import json
 
+from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
 from flask import Flask, make_response, current_app
 from flask_cors import CORS
