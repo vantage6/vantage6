@@ -119,6 +119,9 @@ class DatabaseSessionManager:
     def get_session():
         if DatabaseSessionManager.in_flask_request():
             # print(f'g.session={g.session}')
+            if 'session' not in g:
+                DatabaseSessionManager.new_session()
+
             return g.session
         else:
             # log.critical('Obtaining non flask session')
