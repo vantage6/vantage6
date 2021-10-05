@@ -671,6 +671,8 @@ def cli_node_remove(name, environment, system_folders):
         pass  # no docker network available for node, nothing to delete
 
     # TODO remove the VPN configuration (requires merge with that git branch)
+    # TODO is removing the VPN config file also necessary? It might just be
+    # written in the docker volume
 
     # remove the config file
     info(f"Removing configuration file {ctx.config_file}")
