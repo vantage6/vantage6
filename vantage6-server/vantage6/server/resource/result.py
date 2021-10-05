@@ -210,7 +210,7 @@ class Results(ResultBase):
 
         # custom filters
         if args.get('state') == 'open':
-            q = q.filter(db_Result.finished_at is None)
+            q = q.filter(db_Result.finished_at == None)
 
         q = q.join(Organization).join(Node).join(Task, db_Result.task)\
             .join(Collaboration)
