@@ -430,18 +430,23 @@ class DockerManager(object):
         """ Forward traffic that comes into the VPN client container to the
             algorithm container
         """
-        # get port on the vpn client container to forward from. This port
-        # should not yet be occupied
-        # TODO this doesn't work yet: occupied ports are not found in this
-        # manner. We need to change this to running something like:
-        # `iptables -t nat -L PREROUTING`
-        # in the VPN container and get the occupied ports from there
-        # maybe use python-iptables to parse the result? https://github.com/ldx/python-iptables
-        self.vpn_client_container.reload()
-        occupied_client_ports = \
-            self.vpn_client_container.attrs['NetworkSettings']['Ports']
+        # Get ports that are already occupied to exclude those as options
+        # TODO the following is quite and ugly command to extract the ports
+        # being used from the iptables rules. Maybe use python-iptables to
+        # parse the result? https://github.com/ldx/python-iptables
+        cmd = (
+            'sh -c '
+            '"iptables -t nat -L PREROUTING | awk \'{print $7}\' | cut -c 5-"'
+        )
+
+        occupied_ports = self.vpn_client_container.exec_run(cmd=cmd)
+        occupied_ports = occupied_ports.output.decode('utf-8')
+        occupied_ports = occupied_ports.split('\n')
+        occupied_ports = \
+            [int(port) for port in occupied_ports if port is not '']
+
         vpn_client_port_options = \
-            set(range(49152, 65535)) - set(occupied_client_ports)
+            set(range(49152, 65535)) - set(occupied_ports)
         vpn_client_port = next(iter(vpn_client_port_options))
 
         # Get IP Address of the algorithm container
