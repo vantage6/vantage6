@@ -22,8 +22,6 @@ from vantage6.server.resource._schema import (
 )
 
 
-
-
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 

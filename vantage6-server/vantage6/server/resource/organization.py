@@ -187,7 +187,7 @@ class Organization(ServicesResources):
 
     @only_for(["user", "node"])
     @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
-        endpoint='organization_with_id')
+               endpoint='organization_with_id')
     def patch(self, id):
         """Update organization."""
 

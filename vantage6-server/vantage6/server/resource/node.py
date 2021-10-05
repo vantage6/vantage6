@@ -1,27 +1,19 @@
 # -*- coding: utf-8 -*-
 import logging
-from operator import ipow
-from os import name
 import uuid
-import json
 
 from pathlib import Path
 from http import HTTPStatus
 from flasgger.utils import swag_from
 from flask import g, request
 from flask_restful import reqparse
-from sqlalchemy.sql.operators import Operators, notendswith_op
 
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
 from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
 from vantage6.server import db
-from vantage6.server.resource._schema import (
-    TaskIncludedSchema,
-    TaskSchema,
-    NodeSchema
-)
+from vantage6.server.resource._schema import NodeSchema
 
 
 module_name = __name__.split('.')[-1]
@@ -132,7 +124,6 @@ class Node(ServicesResources):
             return {"msg": f"collaboration id={data['collaboration_id']} "
                     "does not exist"}, HTTPStatus.NOT_FOUND  # 404
 
-
         # check permissions
         org_id = data["organization_id"]
         user_org_id = g.user.organization.id
@@ -176,7 +167,7 @@ class Node(ServicesResources):
         """delete node account"""
         node = db.Node.get(id)
         if not node:
-            return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND  # 404
+            return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
 
         if not self.r.d_glo.can():
             own = node.organization == g.user.organization
@@ -185,7 +176,7 @@ class Node(ServicesResources):
                     HTTPStatus.UNAUTHORIZED
 
         node.delete()
-        return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK  # 200
+        return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK
 
     @with_user
     @swag_from(str(Path(r"swagger/patch_node_with_id.yaml")),
@@ -203,7 +194,6 @@ class Node(ServicesResources):
             if not (self.r.e_org.can() and own):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
-
 
         data = request.get_json()
 
@@ -224,7 +214,7 @@ class Node(ServicesResources):
 
         if 'collaboration_id' in data:
             collaboration = db.Collaboration.get(data['collaboration_id'])
-            if not auth.organization in collaboration.organizations:
+            if auth.organization not in collaboration.organizations:
                 return {'msg': f'Organization id={auth.organization.id} of '
                         'this node is not part of this collaboration id='
                         f'{collaboration.id}'}

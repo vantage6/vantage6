@@ -2,7 +2,7 @@ from sqlalchemy import Column, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.server.model.base import Base, Database
+from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Role(Base):
@@ -23,7 +23,7 @@ class Role(Base):
 
     @classmethod
     def get_by_name(cls, name):
-        session = Database().Session
+        session = session = DatabaseSessionManager.get_session()
         try:
             return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
@@ -32,8 +32,8 @@ class Role(Base):
     def __repr__(self):
         return (
             f"<Role {self.id}, "
-            f"name: {self.name}, "
+            f"{self.id}: '{self.name}', "
             f"description: {self.description}, "
-            f"users: {len(self.users)}"
+            f"{len(self.users)} user(s)"
             ">"
         )

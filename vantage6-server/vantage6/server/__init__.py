@@ -17,6 +17,7 @@ from flask_socketio import SocketIO
 
 from vantage6.server import db
 from vantage6.server.resource._schema import HATEOASModelSchema
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
@@ -150,6 +151,49 @@ class ServerApp:
             "support@vantage6.ai"
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
+
+        # before request
+        @self.app.before_request
+        def set_db_session():
+            """Before every flask request method.
+            This will obtain a (scoped) db session from the session factory
+            that is linked to the flask request global `g`. In every endpoint
+            we then can access the database by using this session. We ensure
+            that the session is removed (and uncommited changes are rolled
+            back) at the end of every request.
+            """
+            DatabaseSessionManager.new_session()
+
+        @self.app.after_request
+        def remove_db_session(response):
+            """After every flask request.
+            This will close the database session created by the
+            `before_request`.
+            """
+            DatabaseSessionManager.clear_session()
+            return response
+
+        @self.app.errorhandler(HTTPException)
+        def error_remove_db_session(error):
+            """In case an HTTP-exception occurs during the request.
+            It is important to close the db session to avoid having dangling
+            sessions.
+            """
+            log.warn('Error occured during request')
+            log.debug(error)
+            DatabaseSessionManager.clear_session()
+            return error.get_response()
+
+        @self.app.errorhandler(Exception)
+        def error2_remove_db_session(error):
+            """In case an HTTP-exception occurs during the request.
+            It is important to close the db session to avoid having dangling
+            sessions.
+            """
+            log.warn('Error occured during request')
+            log.debug(error)
+            DatabaseSessionManager.clear_session()
+            return {'msg': f'Error: {error}'}, 500
 
     def configure_api(self):
         """"Define global API output."""

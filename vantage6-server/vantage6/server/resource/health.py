@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from flask.globals import g
 from http import HTTPStatus
 from flasgger import swag_from
 from pathlib import Path
@@ -35,6 +36,7 @@ def setup(api, api_base, services):
         resource_class_kwargs=services
     )
 
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
@@ -45,32 +47,24 @@ class Health(ServicesResources):
         """displays the health of services"""
 
         # test DB
-        session = Database().Session
         db_ok = False
         try:
-            session.execute('SELECT 1')
+            g.session.execute('SELECT 1')
             db_ok = True
         except Exception as e:
             log.error("DB not responding")
             log.debug(e)
 
-        return {'database': db_ok }, HTTPStatus.OK
+        return {'database': db_ok}, HTTPStatus.OK
+
 
 class Fix(ServicesResources):
 
     def get(self):
         """Experimental switch to fix db errors"""
 
-        session = Database().Session
-
         try:
-            session.execute('SELECT 1')
-
-        except InvalidRequestError as e:
-            log.error("DB nudge... Does this work?")
+            g.session.execute('SELECT 1')
+        except (InvalidRequestError, Exception) as e:
+            log.error("DB FIX IS NOT IMPLEMENTED ANYMORE")
             log.debug(e)
-            session.invalidate()
-            session.rollback()
-
-        finally:
-            session.close()

@@ -30,7 +30,7 @@ from vantage6.server.model import (
     Collaboration,
     Organization
 )
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import DatabaseSessionManager
 
 
 module_name = logger_name(__name__)
@@ -98,8 +98,8 @@ class Result(ServicesResources):
             auth_org = g.user.organization
         elif g.node:
             auth_org = g.node.organization
-        else: # g.container
-            auth_org =  Organization.get(g.container['organization_id'])
+        else:  # g.container
+            auth_org = Organization.get(g.container['organization_id'])
 
         if id:
             result = db_Result.get(id)
@@ -113,11 +113,11 @@ class Result(ServicesResources):
                         HTTPStatus.UNAUTHORIZED
         else:
 
-            session = Database().Session
+            session = DatabaseSessionManager.get_session()
             q = session.query(db_Result)
 
             if request.args.get('state') == 'open':
-                q = q.filter(db_Result.finished_at == None)
+                q = q.filter(db_Result.finished_at is None)
 
             # q = q.join(db_Result)
             if request.args.get('task_id'):
@@ -175,7 +175,7 @@ class Result(ServicesResources):
 
         # notify collaboration nodes/users that the task has an update
         self.socketio.emit("status_update", {'result_id': id},
-                           namespace='/tasks', room='collaboration_'+\
+                           namespace='/tasks', room='collaboration_' +
                            str(result.task.collaboration.id))
 
         result.started_at = parse_datetime(data.get("started_at"),

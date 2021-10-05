@@ -1,7 +1,8 @@
 import logging
 import os
 
-from sqlalchemy import Column, Integer, inspect
+from flask.globals import g
+from sqlalchemy import Column, Integer
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 
@@ -10,10 +11,9 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import InvalidRequestError
-from sqlalchemy.util.langhelpers import NoneType
 
 from vantage6.common import logger_name, Singleton
-
+from vantage6.server import db
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -48,6 +48,14 @@ class Database(metaclass=Singleton):
         self.allow_drop_all = False
         self.URI = None
 
+    def clear_data(self):
+        meta = Base.metadata
+        session = DatabaseSessionManager.get_session()
+        for table in reversed(meta.sorted_tables):
+            session.execute(table.delete())
+        session.commit()
+        DatabaseSessionManager.clear_session()
+
     def connect(self, uri='sqlite:////tmp/test.db', allow_drop_all=False):
 
         self.allow_drop_all = allow_drop_all
@@ -68,21 +76,87 @@ class Database(metaclass=Singleton):
         self.engine = create_engine(uri, convert_unicode=True,
                                     pool_pre_ping=True)
 
-        # we can call Session() to create a new unique session
-        # (self.Session is a session factory). Its also possible to use
-        # implicit access to the Session (without calling it first). The
-        # scoped session is scoped to the local thread the process is running
-        # in.
-        self.Session = scoped_session(sessionmaker(autocommit=False,
-                                                   autoflush=False))
+        # we can call Session() to create a session, if a session already
+        # exists it will return the same session (!). implicit access to the
+        # Session (without calling it first). The scoped session is scoped to
+        # the local thread the process is running in.
+        self.session_a = scoped_session(sessionmaker(autocommit=False,
+                                                     autoflush=False))
+        self.session_a.configure(bind=self.engine)
 
-         # short hand to obtain a object-session.
+        # because the Session factory returns the same session (if one exists
+        # already) we need a second factory to create an alternative session.
+        # this is required if we use both the flask session and the iPython.
+        # Because the flask session is managed by the hooks `pre_request` and
+        # `post request`. If we would use the same session for other tasks, the
+        # session can be terminated unexpectedly.
+        self.session_b = scoped_session(sessionmaker(autocommit=False,
+                                                     autoflush=False))
+        self.session_b.configure(bind=self.engine)
+
+        # short hand to obtain a object-session.
         self.object_session = Session.object_session
 
         self.Session.configure(bind=self.engine)
 
         Base.metadata.create_all(bind=self.engine)
         log.info("Database initialized!")
+
+
+class DatabaseSessionManager:
+    """Class to manage DB sessions from.
+    There are 2 different ways a session can be obtained. Either a session used
+    within a request or a session used else where (e.g. iPython or within the
+    application itself).
+    In case of the flask-request the session is stored in the flask global `g`.
+    So that it can be accessed in every endpoint.
+    In all other cases the session is attached to the db module.
+    """
+
+    @staticmethod
+    def in_flask_request():
+        return True if g else False
+
+    @staticmethod
+    def get_session():
+        if DatabaseSessionManager.in_flask_request():
+            # print(f'g.session={g.session}')
+            return g.session
+        else:
+            # log.critical('Obtaining non flask session')
+            if not db.session:
+                DatabaseSessionManager.new_session()
+                # log.critical('WE NEED TO MAKE A NEW ONE')
+
+            # print(f'db.session {db.session}')
+            return db.session
+
+    @staticmethod
+    def new_session():
+        # log.critical('Create new DB session')
+        if DatabaseSessionManager.in_flask_request():
+
+            g.session = Database().session_a
+            log.debug(f"FLASK session {g.session}")
+
+            # g.session.refresh()
+            # print('new flask session')
+        else:
+            db.session = Database().session_b
+
+    @staticmethod
+    def clear_session():
+        log.debug('Clearing DB session')
+        if DatabaseSessionManager.in_flask_request():
+            # print(f"gsession: {g.session}")
+            g.session.remove()
+            # g.session = None
+        else:
+            if db.session:
+                db.session.remove()
+                db.session = None
+            else:
+                print('No DB session found to clear!')
 
 
 class ModelBase:
@@ -99,65 +173,36 @@ class ModelBase:
     @classmethod
     def get(cls, id_=None):
 
-        session = Database().Session
-        # session.begin()
+        session = DatabaseSessionManager.get_session()
+
         result = None
-        try:
-            if id_ is None:
-                result = session.query(cls).all()
-            else:
-                try:
-                    result = session.query(cls).filter_by(id=id_).one()
-                except NoResultFound:
-                    result = None
-        except InvalidRequestError as e:
-            log.warning('Exception on getting!')
-            log.debug(e)
-            # session.invalidate()
-            session.rollback()
-        # finally:
-        #     session.close()
+
+        if id_ is None:
+            result = session.query(cls).all()
+        else:
+            try:
+                result = session.query(cls).filter_by(id=id_).one()
+            except NoResultFound:
+                result = None
 
         return result
 
-    def save(self):
+    def save(self) -> None:
+
+        session = DatabaseSessionManager.get_session()
 
         # new objects do not have an `id`
-        session = Database().object_session(self) if self.id else \
-            Database().Session
-        # session.begin()
-        try:
-            if not self.id:
-                session.add(self)
-            session.commit()
+        if not self.id:
+            session.add(self)
 
-        except InvalidRequestError as e:
-            log.error("Exception when saving!")
-            log.debug(e)
-            # session.invalidate()
-            session.rollback()
+        session.commit()
 
-        # finally:
-        #     session.close()
+    def delete(self) -> None:
 
+        session = DatabaseSessionManager.get_session()
 
-    def delete(self):
-        session = Database().object_session(self) if self.id else \
-            Database().Session
+        session.delete(self)
+        session.commit()
 
-        # session.begin()
-
-        try:
-            session.delete(self)
-            session.commit()
-
-        except InvalidRequestError as e:
-            log.info("Exception when deleting!")
-            log.debug(e)
-            # session.invalidate()
-            session.rollback()
-
-        # finally:
-        #     session.close()
 
 Base = declarative_base(cls=ModelBase)

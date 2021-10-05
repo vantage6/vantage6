@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Boolean, exists
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from .base import Base, Database
+from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Collaboration(Base):
@@ -40,7 +40,7 @@ class Collaboration(Base):
 
         If multiple collaborations share the same name, the first
         collaboration found is returned."""
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         try:
             return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
@@ -48,7 +48,7 @@ class Collaboration(Base):
 
     @classmethod
     def name_exists(cls, name):
-        session = Database().Session
+        session = DatabaseSessionManager.get_session()
         return session.query(exists().where(cls.name == name)).scalar()
 
     def __repr__(self):
