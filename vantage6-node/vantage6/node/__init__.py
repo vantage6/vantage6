@@ -529,12 +529,18 @@ class Node(object):
     def setup_vpn_connection(self):
         """ Setup VPN connection """
         # get the ovpn configuration from the server
-        ovpn_config = self.server_io.get_vpn_config()
+        success, ovpn_config = self.server_io.get_vpn_config()
+        if not success:
+            self.log.warn("Obtaining VPN configuration not successful!")
+            self.log.warn("Disabling node-to-node communication via VPN")
+            self.__docker.has_vpn = False
+            return
 
         # write ovpn config to node docker volume
         # TODO replace the text in following line with constants
         # TODO this works with `vnode-local` but probably not with `vnode`
-        ovpn_file = os.path.join(self.ctx.data_dir, 'data', 'vpn-config.ovpn.conf')
+        ovpn_file = os.path.join(self.ctx.data_dir, 'data',
+                                 'vpn-config.ovpn.conf')
         with open(ovpn_file, 'w') as f:
             f.write(ovpn_config)
 

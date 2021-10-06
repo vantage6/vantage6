@@ -57,6 +57,7 @@ class DockerManager(object):
         self.database_is_file = False
         self.__tasks_dir = tasks_dir
         self.algorithm_env = {}
+        self.has_vpn = True
 
         # Connect to docker daemon
         # self.docker = docker.DockerClient(base_url=docker_socket_path)
@@ -360,14 +361,16 @@ class DockerManager(object):
 
         # TODO implement something to make the algorithm container wait until
         # the VPN is properly set up. Otherwise algorithm may fail.
-        # Alternatively, prepare steps below for the case that the
-        # algorithm container is not running, e.g. due to an error or because
-        # it finished quickly.
+        # TODO prepare steps below for the case that the algorithm container is
+        # not running, e.g. due to an error
 
-        # setup forwarding of traffic VPN client to the algo container:
-        vpn_port = self._forward_vpn_traffic(algo_container=container)
-        # Direct algorithm container traffic to the VPN
-        self._route_algo_container_to_vpn(algo_container=container)
+        if self.has_vpn:
+            # setup forwarding of traffic VPN client to the algo container:
+            vpn_port = self._forward_vpn_traffic(algo_container=container)
+            # Direct algorithm container traffic to the VPN
+            self._route_algo_container_to_vpn(algo_container=container)
+        else:
+            vpn_port = None
 
         # keep track of the container
         self.active_tasks.append({
