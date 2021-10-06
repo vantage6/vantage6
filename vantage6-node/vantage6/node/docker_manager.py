@@ -31,6 +31,7 @@ class Result(NamedTuple):
     data: str
     status_code: int
 
+
 class DockerManager(object):
     """ Wrapper for the docker module, to be used specifically for vantage6.
 
@@ -364,6 +365,10 @@ class DockerManager(object):
         # TODO prepare steps below for the case that the algorithm container is
         # not running, e.g. due to an error
 
+        # Probably the best solution for the TODO's above is to define an IP
+        # for the algorithm container (check which ones are taken), set up the
+        # rules as below and then start up the container afterwards
+
         if self.has_vpn:
             # setup forwarding of traffic VPN client to the algo container:
             vpn_port = self._forward_vpn_traffic(algo_container=container)
@@ -446,6 +451,7 @@ class DockerManager(object):
             network=network,
             cap_add='NET_ADMIN',
             command=cmd,
+            remove=True
         )
 
     def _forward_vpn_traffic(self, algo_container):
@@ -628,13 +634,23 @@ class DockerManager(object):
 
         # create network exception so that packet transfer between VPN network
         # and the vpn client container is allowed
-        bridge_interface = self.find_isolated_bridge()
+        bridge_interface = self._find_isolated_bridge()
         self.configure_host_namespace(
             vpn_subnet=self.get_subnet(),
             isolated_bridge=bridge_interface
         )
 
-    def find_isolated_bridge(self) -> str:
+    def exit_vpn(self) -> None:
+        """
+        Gracefully shutdown the VPN and clean up
+        """
+        if not self.has_vpn:
+            return
+        self.log.debug("Stopping and removing the VPN client container")
+        self.vpn_client_container.kill()
+        self.vpn_client_container.remove()
+
+    def _find_isolated_bridge(self) -> str:
         """
         Retrieve the linked network interface in the host namespace for
         network interface eth0 in the container namespace.
@@ -661,7 +677,8 @@ class DockerManager(object):
         host_interfaces = self.docker.containers.run(
             image=_NETWORK_CONFIG_IMAGE,
             network=_HOST,
-            command=['ip', '--json', 'addr']
+            command=['ip', '--json', 'addr'],
+            remove=True
         )
         host_interfaces = json.loads(host_interfaces)
 

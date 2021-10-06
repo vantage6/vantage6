@@ -630,6 +630,7 @@ class Node(object):
         except KeyboardInterrupt:
             self.log.debug("Caught a keyboard interupt, shutting down...")
             self.socketIO.disconnect()
+            self.__docker.exit_vpn()
             sys.exit()
 
 
