@@ -525,6 +525,7 @@ class Node(object):
             self.log.warn('Disabling encryption!')
             self.server_io.setup_encryption(None)
 
+    # TODO make sure making VPN connection is optional
     def setup_vpn_connection(self):
         """ Setup VPN connection """
         # get the ovpn configuration from the server
