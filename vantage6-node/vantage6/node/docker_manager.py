@@ -15,6 +15,7 @@ import docker
 import pathlib
 import re
 import json
+import ipaddress
 from typing import NamedTuple, List, Union, Dict
 from json.decoder import JSONDecodeError
 from docker.models.containers import Container
@@ -137,22 +138,61 @@ class DockerManager(object):
                 "This happens because you use 'vnode-local'!"
             )
 
+        # define configuration for the subnet in which the network is created
+        subnet = self._get_available_subnet()
+        gateway = str(ipaddress.ip_address(self._remove_mask(subnet)) + 1)
+        ipam_pool = docker.types.IPAMPool(subnet=subnet, gateway=gateway)
+        ipam_config = docker.types.IPAMConfig(pool_configs=[ipam_pool])
+
         network = self.docker.networks.create(
             name,
             driver="bridge",
             internal=internal_,
-            scope="local"
+            scope="local",
+            ipam=ipam_config
         )
-
         return network
 
-    def connect_to_isolated_network(self, container_name, aliases):
+    def _get_available_subnet(self) -> str:
+        """
+        Get a subnet to be used for isolated network that is not occupied on
+        the host
+
+        Returns
+        ------
+        str
+            Subnet to be used for isolated network
+        """
+        # find which subnets are already taken by other docker networks
+        ALGO_SUBNET_PREFIX = '172.'  # TODO put this elsewhere
+        occupied_subnets = []
+        for network in self.docker.networks.list():
+            config = network.attrs['IPAM']['Config']
+            if len(config) and "Subnet" in config[0]:
+                occupied_subnets.append(
+                    ipaddress.ip_network(config[0]['Subnet'])
+                )
+        # for all docker other docker nets, extract the second octet
+        occupied_subnets = [
+            int(str(s).split('.')[1]) for s in occupied_subnets
+            if str(s).startswith(ALGO_SUBNET_PREFIX)
+        ]
+
+        # select a second octet for the new subnet
+        second_octet_options = set(range(1, 256)) - set(occupied_subnets)
+        second_octet_new = next(iter(second_octet_options))
+        return ALGO_SUBNET_PREFIX + str(second_octet_new) + '.0.0/16'
+
+    def connect_to_isolated_network(self, container_name, aliases=None,
+                                    ipv4=None):
         """Connect to the isolated network."""
         msg = f"Connecting to isolated network '{self.network_name}'"
         self.log.debug(msg)
 
         # If the network already exists, this is a no-op.
-        self._isolated_network.connect(container_name, aliases=aliases)
+        self._isolated_network.connect(
+            container_name, aliases=aliases, ipv4_address=ipv4
+        )
 
     def create_volume(self, volume_name: str):
         """Create a temporary volume for a single run.
@@ -340,6 +380,17 @@ class DockerManager(object):
 
         self.log.debug(f"volumes: {volumes}")
 
+        # get IP address within the isolated network for the new algo container
+        algo_ip = self._get_ip_in_isolated_netw()
+        if algo_ip is None:
+            self.has_vpn = False
+
+        if self.has_vpn:
+            # setup forwarding of traffic VPN client to the algo container:
+            vpn_port = self._forward_vpn_traffic(algo_ip=algo_ip)
+        else:
+            vpn_port = None
+
         # attempt to run the image
         try:
             self.log.info(f"Run docker image={image}")
@@ -347,7 +398,6 @@ class DockerManager(object):
                 image,
                 detach=True,
                 environment=environment_variables,
-                network=self._isolated_network.name,
                 volumes=volumes,
                 labels={
                     f"{APPNAME}-type": "algorithm",
@@ -355,27 +405,26 @@ class DockerManager(object):
                     "result_id": str(result_id)
                 }
             )
+            # connect algorithm to isolated network with designated IP address
+            self.connect_to_isolated_network(
+                container_name=container.id,
+                ipv4=str(algo_ip)
+            )
+        except Exception as e:
+            self.log.error('Could not create algorithm container from image!?')
+            self.log.error(e)
+            return None
+
+        if self.has_vpn:
+            # Direct algorithm container traffic to the VPN
+            self._route_algo_container_to_vpn(algo_container=container)
+
+        try:
+            container.start()
         except Exception as e:
             self.log.error('Could not run docker image!?')
             self.log.error(e)
             return None
-
-        # TODO implement something to make the algorithm container wait until
-        # the VPN is properly set up. Otherwise algorithm may fail.
-        # TODO prepare steps below for the case that the algorithm container is
-        # not running, e.g. due to an error
-
-        # Probably the best solution for the TODO's above is to define an IP
-        # for the algorithm container (check which ones are taken), set up the
-        # rules as below and then start up the container afterwards
-
-        if self.has_vpn:
-            # setup forwarding of traffic VPN client to the algo container:
-            vpn_port = self._forward_vpn_traffic(algo_container=container)
-            # Direct algorithm container traffic to the VPN
-            self._route_algo_container_to_vpn(algo_container=container)
-        else:
-            vpn_port = None
 
         # keep track of the container
         self.active_tasks.append({
@@ -385,6 +434,52 @@ class DockerManager(object):
         })
 
         return vpn_port
+
+    # TODO maybe move following to utils?
+    def _remove_mask(self, ip):
+        return ip[0:ip.find('/')]
+
+    def _get_ip_in_isolated_netw(self) -> str:
+        """
+        Get a non-used IP address in the isolated network
+
+        Returns
+        -------
+        str
+            IP address in isolated network
+        """
+        # ensure isolated network attributes are updated
+        self._isolated_network.reload()
+
+        # get subnet
+        subnet = ipaddress.ip_network(
+            self._isolated_network.attrs['IPAM']['Config'][0]['Subnet']
+        )
+
+        # get occupied IP addresses
+        containers_info = self._isolated_network.attrs['Containers'].items()
+        occupied_ips = []
+        for cont_id, cont_info in containers_info:
+            occupied_ips.append(ipaddress.ip_address(
+                self._remove_mask(cont_info['IPv4Address'])
+            ))
+        occupied_ips = sorted(occupied_ips)
+        max_occupied_ip = occupied_ips[-1] if occupied_ips \
+            else ipaddress.ip_address(
+                self._isolated_network.attrs['IPAM']['Config'][0]['Gateway']
+            )
+
+        # increment IP address (as this is IPv4Address object this works)
+        new_ip = max_occupied_ip + 1
+
+        # check that the new IP address is within the subnet
+        if new_ip not in subnet:
+            self.log.error("No IP addresses available within the isolated "
+                           "network")
+            self.log.error("Turning off VPN")
+            return None
+
+        return new_ip
 
     def get_vpn_ip(self) -> str:
         """
@@ -454,15 +549,20 @@ class DockerManager(object):
             remove=True
         )
 
-    def _forward_vpn_traffic(self, algo_container):
+    def _forward_vpn_traffic(self, algo_ip: str) -> int:
         """
         Forward incoming traffic from the VPN client container to the
         algorithm container
 
         Parameters
         ----------
-        algo_container: docker.models.containers.Container
-            Docker algorithm container
+        algo_ip: str
+            IP address of the algorithm container in the isolated network
+
+        Returns
+        -------
+        int
+            Port on the VPN client that forwards traffic to the algo container
         """
         # Exclude ports on VPN container that are already occupied
         # TODO the following is quite and ugly command to extract the ports
@@ -484,12 +584,6 @@ class DockerManager(object):
             set(range(49152, 65535)) - set(occupied_ports)
         vpn_client_port = next(iter(vpn_client_port_options))
 
-        # Get IP Address of the algorithm container
-        algo_container.reload()  # update attributes
-        algorithm_container_ip = (
-            algo_container.attrs['NetworkSettings']['Networks']
-                                [self._isolated_network.name]['IPAddress']
-        )
         # Set port at which algorithm containers receive traffic
         # TODO obtain this port from the Dockerfile description (EXPOSE)
         algorithm_port = '8888'
@@ -499,7 +593,7 @@ class DockerManager(object):
             'sh -c "'
             'iptables -t nat -A PREROUTING -i tun0 -p tcp '
             f'--dport {vpn_client_port} -j DNAT '
-            f'--to {algorithm_container_ip}:{algorithm_port}'
+            f'--to {algo_ip}:{algorithm_port}'
             '"'
         )
         self.vpn_client_container.exec_run(command)
@@ -649,6 +743,7 @@ class DockerManager(object):
         self.log.debug("Stopping and removing the VPN client container")
         self.vpn_client_container.kill()
         self.vpn_client_container.remove()
+        # TODO clean up host network changes
 
     def _find_isolated_bridge(self) -> str:
         """
