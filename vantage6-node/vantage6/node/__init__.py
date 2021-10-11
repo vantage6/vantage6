@@ -31,10 +31,12 @@ from gevent.pywsgi import WSGIServer
 
 from . import globals as cs
 
-from vantage6.node.docker_manager import DockerManager
 from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
+from vantage6.node.docker.docker_manager import DockerManager
+from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.node.docker.vpn_manager import VPNManager
 
 
 class NodeTaskNamespace(SocketIONamespace):
@@ -196,22 +198,24 @@ class Node(object):
         else:
             task_dir = ctx.data_dir
 
+        # setup docker isolated network manager
+        isolated_network_mgr = \
+            IsolatedNetworkManager(f"{ctx.docker_network_name}-net")
+
+        # Setup VPN connection
+        self.vpn_manager = self.make_vpn_connection(isolated_network_mgr)
+
+        # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
             allowed_images=self.config.get("allowed_images"),
             tasks_dir=task_dir,
-            isolated_network_name=f"{ctx.docker_network_name}-net",
+            isolated_network_mgr=isolated_network_mgr,
             node_name=ctx.name,
             data_volume_name=ctx.docker_volume_name,
+            docker_registries=self.ctx.config.get("docker_registries", []),
+            vpn_manager=self.vpn_manager
         )
-
-        # login to the registries
-        self.__docker.login_to_registries(
-            self.ctx.config.get("docker_registries", [])
-        )
-
-        # Setup VPN connection
-        self.setup_vpn_connection()
 
         # If we're running in a docker container, database_uri would point
         # to a path on the *host* (since it's been read from the config
@@ -236,7 +240,7 @@ class Node(object):
         # Connect to the isolated algorithm network *only* if we're running in
         # a docker container.
         if ctx.running_in_docker:
-            self.__docker.connect_to_isolated_network(
+            isolated_network_mgr.connect(
                 ctx.docker_container_name,
                 aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
             )
@@ -383,7 +387,7 @@ class Node(object):
             )
             # Save IP address of VPN container
             node_id = self.server_io.whoami.id_
-            node_ip = self.__docker.get_vpn_ip()
+            node_ip = self.vpn_manager.get_vpn_ip()
             self.server_io.request(
                 f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
             )
@@ -514,7 +518,7 @@ class Node(object):
 
         if encrypted_collaboration != encrypted_node:
             # You can't force it if it just ain't right, you know?
-            raise Exception("Expectations on encryption don't match!?")
+            raise Exception("Expectations on encryption don't match?!")
 
         if encrypted_collaboration:
             self.log.warn('Enabling encryption!')
@@ -525,15 +529,22 @@ class Node(object):
             self.log.warn('Disabling encryption!')
             self.server_io.setup_encryption(None)
 
-    # TODO make sure making VPN connection is optional
-    def setup_vpn_connection(self):
-        """ Setup VPN connection """
+    def make_vpn_connection(
+            self, isolated_network_mgr: IsolatedNetworkManager) -> VPNManager:
+        """
+        Setup container which has a VPN connection
+
+        Returns
+        -------
+        VPNManager
+            Manages the VPN connection
+        """
         # get the ovpn configuration from the server
         success, ovpn_config = self.server_io.get_vpn_config()
         if not success:
-            self.log.warn("Obtaining VPN configuration not successful!")
+            self.log.warn("Obtaining VPN configuration file not successful!")
             self.log.warn("Disabling node-to-node communication via VPN")
-            self.__docker.has_vpn = False
+            self.has_vpn = False
             return
 
         # write ovpn config to node docker volume
@@ -545,7 +556,10 @@ class Node(object):
             f.write(ovpn_config)
 
         # set up the VPN connection via docker containers
-        self.__docker.connect_vpn(ovpn_file=ovpn_file)
+        self.log.debug("Setting up VPN client container")
+        vpn_manager = VPNManager(isolated_network_mgr)
+        vpn_manager.connect_vpn(ovpn_file=ovpn_file)
+        return vpn_manager
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
@@ -630,7 +644,7 @@ class Node(object):
         except KeyboardInterrupt:
             self.log.debug("Caught a keyboard interupt, shutting down...")
             self.socketIO.disconnect()
-            self.__docker.exit_vpn()
+            self.vpn_manager.exit_vpn()
             sys.exit()
 
 
