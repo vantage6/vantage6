@@ -15,6 +15,7 @@ import docker
 import re
 
 from typing import NamedTuple
+from docker.models.containers import Container
 
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME
@@ -398,6 +399,9 @@ class DockerManager(object):
         container = finished_task["container"]
         log = container.logs().decode('utf8')
 
+        # remove the VPN helper container
+        self._remove_vpn_helper_container(finished_task['result_id'])
+
         # report if the container has a different status than 0
         status_code = container.attrs["State"]["ExitCode"]
 
@@ -408,12 +412,7 @@ class DockerManager(object):
             self.log.info(log)
 
         else:
-            try:
-                container.remove()
-
-            except Exception as e:
-                self.log.error(f"Failed to remove container {container.name}")
-                self.log.debug(e)
+            self._remove_container(container)
 
         self.active_tasks.remove(finished_task)
 
@@ -427,6 +426,48 @@ class DockerManager(object):
             data=results,
             status_code=status_code
         )
+
+    def _remove_container(self, container: docker.models.containers.Container,
+                          kill: bool = False) -> None:
+        """
+        Removes a docker container
+
+        Parameters
+        ----------
+        container: docker.models.containers.Container
+            The container that should be removed
+        kill: bool
+            Whether or not container should be killed before it is removed
+        """
+        try:
+            if kill:
+                container.kill()
+            container.remove()
+        except Exception as e:
+            self.log.error(f"Failed to remove container {container.name}")
+            self.log.debug(e)
+
+    def _remove_vpn_helper_container(self, result_id: int) -> None:
+        """
+        Remove the container that is created just before an algorithm container
+        is created so that VPN setup can be completed before running the
+        algorithm. This function should be called upon algorithm completion.
+
+        Parameters
+        ----------
+        result_id: int
+            The result id of the finished algorithm container
+        """
+        helper_containers = self.docker.containers.list(filters={
+            "label": [
+                f"{APPNAME}-type=algorithm-helper",
+                f"node={self.node_name}",
+                f"result_id={result_id}"
+            ]
+        })
+        # note that the following list in practice only contains one container
+        for container in helper_containers:
+            self._remove_container(container, kill=True)
 
     def login_to_registries(self, registies: list = []) -> None:
 
