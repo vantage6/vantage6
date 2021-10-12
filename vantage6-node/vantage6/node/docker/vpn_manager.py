@@ -23,9 +23,10 @@ class VPNManager(object):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, isolated_network_mgr: IsolatedNetworkManager):
+    def __init__(self, isolated_network_mgr: IsolatedNetworkManager,
+                 node_name: str):
         self.isolated_network_mgr = isolated_network_mgr
-        self.vpn_client_container_name = f'{APPNAME}-vpn-client'
+        self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
 
         self.has_vpn = False
 
@@ -109,7 +110,13 @@ class VPNManager(object):
                 time.sleep(1)
         return vpn_interface[0]['addr_info'][0]['local']
 
-    def route_algo_container_to_vpn(self, algo_container: Container) -> None:
+    def forward_vpn_traffic(self, algo_container: Container) -> int:
+        vpn_port = self._forward_traffic_to_algorithm(algo_container)
+        self._forward_traffic_from_algorithm(algo_container)
+        return vpn_port
+
+    def _forward_traffic_from_algorithm(
+            self, algo_container: Container) -> None:
         """
         Direct outgoing algorithm container traffic to the VPN client container
 
@@ -123,6 +130,11 @@ class VPNManager(object):
         vpn_local_ip = self.isolated_network_mgr.get_container_ip(
             self.vpn_client_container_name
         )
+        if not vpn_local_ip:
+            self.log.error("VPN client container not found, turning off VPN")
+            self.has_vpn = False
+            return
+
         network = 'container:' + algo_container.id
 
         # add IP route line to the algorithm container network
@@ -135,7 +147,7 @@ class VPNManager(object):
             remove=True
         )
 
-    def forward_vpn_traffic(self, algo_ip: str) -> int:
+    def _forward_traffic_to_algorithm(self, algo_container: Container) -> int:
         """
         Forward incoming traffic from the VPN client container to the
         algorithm container
@@ -167,6 +179,13 @@ class VPNManager(object):
         vpn_client_port_options = set(FREE_PORT_RANGE) - set(occupied_ports)
         vpn_client_port = next(iter(vpn_client_port_options))
 
+        # Get IP Address of the algorithm container
+        algo_container.reload()  # update attributes
+        algo_ip = (
+            algo_container.attrs['NetworkSettings']['Networks']
+                                [self.isolated_network_mgr.network_name]
+                                ['IPAddress']
+        )
         # Set port at which algorithm containers receive traffic
         # TODO obtain this port from the Dockerfile description (EXPOSE)
         algorithm_port = '8888'

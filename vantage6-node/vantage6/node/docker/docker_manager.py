@@ -138,17 +138,14 @@ class DockerManager(object):
 
     def is_running(self, result_id):
         """Return True if a container is already running for <result_id>."""
-        # TODO docstring is wrong: True/False is not returned, but (I think) a
-        # list of containers that may/may not be empty. Correct this.
-        container = self.docker.containers.list(filters={
+        running_containers = self.docker.containers.list(filters={
             "label": [
                 f"{APPNAME}-type=algorithm",
                 f"node={self.node_name}",
                 f"result_id={result_id}"
             ]
         })
-
-        return container
+        return bool(running_containers)
 
     def pull(self, image):
         """Pull the latest image."""
@@ -166,17 +163,31 @@ class DockerManager(object):
 
     def run_algorithm(self, image, environment_variables, volumes, result_id,
                       task_folder):
-        # get IP address within the isolated network for the new algo container
-        algo_ip = self.isolated_network_mgr.get_available_ip()
-        if algo_ip is None:
-            # FIXME in this case, there may already be containers with a VPN
-            # connection but the new container cannot get the same connection.
-            # What to do?
-            self.log.warn("Disabling VPN as IP address cannot be assigned")
-            self.vpn_manager.has_vpn = False
+        labels = {
+            "node": self.node_name,
+            "result_id": str(result_id)
+        }
 
-        # setup forwarding of traffic VPN client to the algo container
-        vpn_port = self.vpn_manager.forward_vpn_traffic(algo_ip=algo_ip)
+        vpn_port = None
+        if self.vpn_manager.has_vpn:
+            # if VPN is active, network exceptions must be configured
+            # First, start a container that runs indefinitely. The algorithm
+            # container will run in the same network and network exceptions
+            # will therefore also affect the algorithm.
+            # TODO TODO When algorithm finishes, also clean up this container
+            helper_labels = labels
+            helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
+            config_container = self.docker.containers.run(
+                command='sleep infinity',
+                image='alpine',
+                labels=helper_labels,
+                network=self.isolated_network_mgr.network_name,
+                detach=True
+            )
+            # setup forwarding of traffic via VPN client to and from the
+            # algorithm container:
+            vpn_port = self.vpn_manager.forward_vpn_traffic(
+                algo_container=config_container)
 
         # Try to pull the latest image
         self.pull(image)
@@ -184,42 +195,20 @@ class DockerManager(object):
         # attempt to run the image
         try:
             self.log.info(f"Run docker image={image}")
-            # container = self.docker.containers.create(
+            algo_labels = labels
+            algo_labels[f"{APPNAME}-type"] = "algorithm"
             container = self.docker.containers.run(
                 image,
                 detach=True,
                 environment=environment_variables,
+                network='container:' + config_container.id,
                 volumes=volumes,
-                labels={
-                    f"{APPNAME}-type": "algorithm",
-                    "node": self.node_name,
-                    "result_id": str(result_id)
-                }
-            )
-            # connect algorithm to isolated network with designated IP address
-            self.isolated_network_mgr.connect(
-                container_name=container.id,
-                ipv4=str(algo_ip)
+                labels=algo_labels
             )
         except Exception as e:
             self.log.error('Could not run docker image!?')
-            # self.log.error('Could not create algorithm container from image!?')
             self.log.error(e)
             return None
-
-        # Direct algorithm container traffic to the VPN
-        # FIXME there is still a potential racing condition here, because the
-        # following sets exception to allow traffic forwarding from algorithm
-        # container via VPN to other nodes. However, container is already
-        # running so algorithm might try sending data before this is completed
-        self.vpn_manager.route_algo_container_to_vpn(algo_container=container)
-
-        # try:
-        #     container.start()
-        # except Exception as e:
-        #     self.log.error('Could not run docker image!?')
-        #     self.log.error(e)
-        #     return None
 
         # keep track of the container
         self.active_tasks.append({
@@ -231,7 +220,7 @@ class DockerManager(object):
         return vpn_port
 
     def _make_task_folders(self, result_id):
-        # FIXME: We should have a seperate mount/volume for this. At the
+        # FIXME: We should have a separate mount/volume for this. At the
         #   moment this is a potential leak as containers might access input,
         #   output and token from other containers.
         #

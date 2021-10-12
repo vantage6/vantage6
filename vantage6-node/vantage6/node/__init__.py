@@ -557,7 +557,10 @@ class Node(object):
 
         # set up the VPN connection via docker containers
         self.log.debug("Setting up VPN client container")
-        vpn_manager = VPNManager(isolated_network_mgr)
+        vpn_manager = VPNManager(
+            isolated_network_mgr=isolated_network_mgr,
+            node_name=self.ctx.name
+        )
         vpn_manager.connect_vpn(ovpn_file=ovpn_file)
         return vpn_manager
 
