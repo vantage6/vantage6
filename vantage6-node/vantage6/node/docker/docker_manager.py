@@ -15,7 +15,6 @@ import docker
 import re
 
 from typing import Dict, List, NamedTuple
-from docker.api import container
 from docker.models.containers import Container
 
 from vantage6.common.docker_addons import pull_if_newer
@@ -43,7 +42,7 @@ class DockerTask(object):
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
                  result_id: int, tasks_dir: Path,
                  isolated_network_mgr: IsolatedNetworkManager,
-                 database_uri: str):
+                 database_uri: str, database_is_file: bool):
         # TODO make vars private
         self.image = image
         self.vpn_manager = vpn_manager
@@ -52,6 +51,7 @@ class DockerTask(object):
         self.__tasks_dir = tasks_dir
         self.isolated_network_mgr = isolated_network_mgr
         self.database_uri = database_uri
+        self.database_is_file = database_is_file
 
         self.docker = docker.from_env()
         self.container = None
@@ -217,7 +217,11 @@ class DockerTask(object):
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
-        environment_variables["DATABASE_URI"] = self.database_uri
+        if self.database_is_file:
+            environment_variables["DATABASE_URI"] = \
+                f"{self.data_folder}/{self.database_uri}"
+        else:
+            environment_variables["DATABASE_URI"] = self.database_uri
         self.log.debug(f"environment: {environment_variables}")
 
         # Load additional environment variables
@@ -264,8 +268,7 @@ class DockerTask(object):
         if not self.status_code:
             self._remove_container(self.container)
 
-    def _remove_container(self, container: docker.models.containers.Container,
-                          kill: bool = False) -> None:
+    def _remove_container(self, container: Container, kill=False) -> None:
         """
         Removes a docker container
 
@@ -300,7 +303,7 @@ class DockerManager(object):
                  isolated_network_mgr: IsolatedNetworkManager,
                  node_name: str, data_volume_name: str,
                  docker_registries: list, vpn_manager: VPNManager,
-                 algorithm_env: Dict) -> None:
+                 algorithm_env: Dict, database_is_file: bool) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -315,6 +318,7 @@ class DockerManager(object):
         self.__tasks_dir = tasks_dir
         self.algorithm_env = algorithm_env
         self.vpn_manager = vpn_manager
+        self.database_is_file = database_is_file
 
         # Connect to docker daemon
         self.docker = docker.from_env()
@@ -428,7 +432,8 @@ class DockerManager(object):
             node_name=self.node_name,
             tasks_dir=self.__tasks_dir,
             isolated_network_mgr=self.isolated_network_mgr,
-            database_uri=self.database_uri
+            database_uri=self.database_uri,
+            database_is_file=self.database_is_file
         )
         vpn_port = task.run(
             docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
@@ -473,6 +478,9 @@ class DockerManager(object):
 
         # Retrieve results from file
         results = finished_task.get_results()
+
+        # remove finished tasks from active task list
+        self.active_tasks.remove(finished_task)
 
         return Result(
             result_id=finished_task.result_id,

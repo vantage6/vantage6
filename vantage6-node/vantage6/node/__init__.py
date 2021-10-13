@@ -198,6 +198,26 @@ class Node(object):
         else:
             task_dir = ctx.data_dir
 
+        # If we're running in a docker container, database_uri would point
+        # to a path on the *host* (since it's been read from the config
+        # file). That's no good here. Therefore, we expect the CLI to set
+        # the environment variable for us. This has the added bonus that we
+        # can override the URI from the command line as well.
+        default_uri = self.config['databases']['default']
+        database_uri = os.environ.get('DATABASE_URI', default_uri)
+
+        database_is_file = False
+        if Path(database_uri).exists():
+            # We'll copy the file to the folder `data` in our task_dir.
+            self.log.info(f'Copying {database_uri} to {task_dir}')
+            shutil.copy(database_uri, task_dir)
+
+            # Since we've copied the database to the folder 'data' in the root
+            # of the volume: '/data/<database.csv>'. We'll just keep the
+            # basename (i.e. filename + ext).
+            database_uri = os.path.basename(database_uri)
+            database_is_file = True
+
         # setup docker isolated network manager
         isolated_network_mgr = \
             IsolatedNetworkManager(f"{ctx.docker_network_name}-net")
@@ -215,29 +235,9 @@ class Node(object):
             data_volume_name=ctx.docker_volume_name,
             docker_registries=self.ctx.config.get("docker_registries", []),
             vpn_manager=self.vpn_manager,
-            algorithm_env=self.config.get('algorithm_env', {})
+            algorithm_env=self.config.get('algorithm_env', {}),
+            database_is_file=database_is_file
         )
-
-        # If we're running in a docker container, database_uri would point
-        # to a path on the *host* (since it's been read from the config
-        # file). That's no good here. Therefore, we expect the CLI to set
-        # the environment variable for us. This has the added bonus that we
-        # can override the URI from the command line as well.
-        default_uri = self.config['databases']['default']
-        database_uri = os.environ.get('DATABASE_URI', default_uri)
-
-        if Path(database_uri).exists():
-            # We'll copy the file to the folder `data` in our task_dir.
-            self.log.info(f'Copying {database_uri} to {task_dir}')
-            shutil.copy(database_uri, task_dir)
-
-            # Since we've copied the database to the folder 'data' in the root
-            # of the volume: '/data/<database.csv>'. We'll just keep the
-            # basename (i.e. filename + ext).
-            database_uri = os.path.basename(database_uri)
-
-            self.__docker.database_is_file = True
-        # Let's keep it safe
         self.__docker.set_database_uri(database_uri)
 
         # Connect to the isolated algorithm network *only* if we're running in
