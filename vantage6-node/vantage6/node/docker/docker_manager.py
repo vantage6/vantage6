@@ -14,7 +14,8 @@ import logging
 import docker
 import re
 
-from typing import NamedTuple
+from typing import Dict, List, NamedTuple
+from docker.api import container
 from docker.models.containers import Container
 
 from vantage6.common.docker_addons import pull_if_newer
@@ -34,6 +35,255 @@ class Result(NamedTuple):
     data: str
     status_code: int
 
+from pathlib import Path
+
+class DockerTask(object):
+    log = logging.getLogger(logger_name(__name__))
+
+    def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
+                 result_id: int, tasks_dir: Path,
+                 isolated_network_mgr: IsolatedNetworkManager,
+                 database_uri: str):
+        # TODO make vars private
+        self.image = image
+        self.vpn_manager = vpn_manager
+        self.node_name = node_name
+        self.result_id = result_id
+        self.__tasks_dir = tasks_dir
+        self.isolated_network_mgr = isolated_network_mgr
+        self.database_uri = database_uri
+
+        self.docker = docker.from_env()
+        self.container = None
+        self.status_code = None
+
+        self.labels = {
+            f"{APPNAME}-type": "algorithm",
+            "node": self.node_name,
+            "result_id": str(result_id)
+        }
+        self.helper_labels = self.labels
+        self.helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
+
+        # FIXME: these values should be retrieved from DockerNodeContext
+        #   in some way.
+        self.tmp_folder = "/mnt/tmp"
+        self.data_folder = "/mnt/data"
+
+    def is_finished(self):
+        """ Return True if algorithm container is finished """
+        self.container.reload()
+        return self.container.status == 'exited'
+
+    def report_status(self):
+        logs = self.container.logs().decode('utf8')
+
+        # report if the container has a different status than 0
+        self.status_code = self.container.attrs["State"]["ExitCode"]
+        if self.status_code:
+            self.log.error(f"Received non-zero exitcode: {self.status_code}")
+            self.log.error(f"  Container id: {self.container.id}")
+            self.log.warn("Will not remove container")
+            self.log.info(logs)
+        return logs
+
+    def get_results(self):
+        with open(self.output_file, "rb") as fp:
+            results = fp.read()
+        return results
+
+    def pull(self):
+        """Pull the latest image."""
+        try:
+            self.log.info(f"Retrieving latest image: '{self.image}'")
+            pull_if_newer(self.docker, self.image, self.log)
+
+        except Exception as e:
+            self.log.debug('Failed to pull image')
+            self.log.error(e)
+
+    def run_algorithm(self):
+        vpn_port = None
+        if self.vpn_manager.has_vpn:
+            # if VPN is active, network exceptions must be configured
+            # First, start a container that runs indefinitely. The algorithm
+            # container will run in the same network and network exceptions
+            # will therefore also affect the algorithm.
+            self.helper_container = self.docker.containers.run(
+                command='sleep infinity',
+                image='alpine',
+                labels=self.helper_labels,
+                network=self.isolated_network_mgr.network_name,
+                detach=True
+            )
+            # setup forwarding of traffic via VPN client to and from the
+            # algorithm container:
+            vpn_port = self.vpn_manager.forward_vpn_traffic(
+                algo_container=self.helper_container)
+
+        # Try to pull the latest image
+        self.pull()
+
+        # attempt to run the image
+        try:
+            self.log.info(f"Run docker image={self.image}")
+            self.container = self.docker.containers.run(
+                self.image,
+                detach=True,
+                environment=self.environment_variables,
+                network='container:' + self.helper_container.id,
+                volumes=self.volumes,
+                labels=self.labels
+            )
+        except Exception as e:
+            self.log.error('Could not run docker image!?')
+            self.log.error(e)
+            return None
+
+        return vpn_port
+
+    def _make_task_folders(self):
+        # FIXME: We should have a separate mount/volume for this. At the
+        #   moment this is a potential leak as containers might access input,
+        #   output and token from other containers.
+        #
+        #   This was not possible yet as mounting volumes from containers
+        #   is terrible when working from windows (as you have to convert
+        #   from windows to unix several times...).
+
+        # If we're running in docker __tasks_dir will point to a location on
+        # the data volume.
+        # Alternatively, if we're not running in docker it should point to the
+        # folder on the host that can act like a data volume. In both cases,
+        # we can just copy the required files to it
+        self.task_folder_name = f"task-{self.result_id:09d}"
+        self.task_folder_path = \
+            os.path.join(self.__tasks_dir, self.task_folder_name)
+        os.makedirs(self.task_folder_path, exist_ok=True)
+        self.output_file = os.path.join(self.task_folder_path, "output")
+
+    def _prepare_volumes(self, docker_input, tmp_vol_name, token):
+        if isinstance(docker_input, str):
+            docker_input = docker_input.encode('utf8')
+
+        # Create I/O files & token for the algorithm container
+        self.log.debug("prepare IO files in docker volume")
+        io_files = [
+            ('input', docker_input),
+            ('output', b''),
+            ('token', token.encode("ascii")),
+        ]
+
+        for (filename, data) in io_files:
+            filepath = os.path.join(self.task_folder_path, filename)
+
+            with open(filepath, 'wb') as fp:
+                fp.write(data)
+
+        volumes = {
+            tmp_vol_name: {"bind": self.tmp_folder, "mode": "rw"},
+        }
+
+        if running_in_docker():
+            volumes[self.data_volume_name] = \
+                {"bind": self.data_folder, "mode": "rw"}
+        else:
+            volumes[self.__tasks_dir] = \
+                {"bind": self.data_folder, "mode": "rw"}
+        return volumes
+
+    def _setup_environment_vars(self, algorithm_env: Dict = {}):
+        try:
+            proxy_host = os.environ['PROXY_SERVER_HOST']
+
+        except Exception:
+            print('-' * 80)
+            print(os.environ)
+            print('-' * 80)
+            proxy_host = 'host.docker.internal'
+
+        # define enviroment variables for the docker-container, the
+        # host, port and api_path are from the local proxy server to
+        # facilitate indirect communication with the central server
+        # FIXME: we should only prepend data_folder if database_uri is a
+        #   filename
+        environment_variables = {
+            "INPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/input",
+            "OUTPUT_FILE":
+                f"{self.data_folder}/{self.task_folder_name}/output",
+            "TOKEN_FILE": f"{self.data_folder}/{self.task_folder_name}/token",
+            "TEMPORARY_FOLDER": self.tmp_folder,
+            "HOST": f"http://{proxy_host}",
+            "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
+            "API_PATH": "",
+        }
+        environment_variables["DATABASE_URI"] = self.database_uri
+        self.log.debug(f"environment: {environment_variables}")
+
+        # Load additional environment variables
+        if algorithm_env:
+            environment_variables = \
+                {**environment_variables, **algorithm_env}
+            self.log.info('Custom environment variables are loaded!')
+            self.log.debug(f"custom environment: {algorithm_env}")
+        return environment_variables
+
+    def run(self, docker_input: bytes, tmp_vol_name: int, token: str,
+            algorithm_env: Dict) -> int:
+        """Runs the docker-image in detached mode.
+
+            It will will attach all mounts (input, output and datafile)
+            to the docker image. And will supply some environment
+            variables.
+
+            :param result_id: server result identifier
+            :param image: docker image name
+            :param docker_input: input that can be read by docker container
+            :param run_id: identifieer of the run sequence
+            :param token: Bearer token that the container can use
+        """
+        # generate task folders
+        self._make_task_folders()
+
+        # prepare volumes
+        self.volumes = self._prepare_volumes(
+            docker_input, tmp_vol_name, token
+        )
+        self.log.debug(f"volumes: {self.volumes}")
+
+        # setup environment variables
+        self.environment_variables = \
+            self._setup_environment_vars(algorithm_env=algorithm_env)
+
+        # run the algorithm as docker container
+        vpn_port = self.run_algorithm()
+        return vpn_port
+
+    def cleanup(self):
+        self._remove_container(self.helper_container, kill=True)
+        if not self.status_code:
+            self._remove_container(self.container)
+
+    def _remove_container(self, container: docker.models.containers.Container,
+                          kill: bool = False) -> None:
+        """
+        Removes a docker container
+
+        Parameters
+        ----------
+        container: docker.models.containers.Container
+            The container that should be removed
+        kill: bool
+            Whether or not container should be killed before it is removed
+        """
+        try:
+            if kill:
+                container.kill()
+            container.remove()
+        except Exception as e:
+            self.log.error(f"Failed to remove container {container.name}")
+            self.log.debug(e)
+
 
 class DockerManager(object):
     """ Wrapper for the docker module, to be used specifically for vantage6.
@@ -49,7 +299,8 @@ class DockerManager(object):
     def __init__(self, allowed_images, tasks_dir,
                  isolated_network_mgr: IsolatedNetworkManager,
                  node_name: str, data_volume_name: str,
-                 docker_registries: list, vpn_manager: VPNManager) -> None:
+                 docker_registries: list, vpn_manager: VPNManager,
+                 algorithm_env: Dict) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -62,14 +313,14 @@ class DockerManager(object):
         self.database_uri = None
         self.database_is_file = False
         self.__tasks_dir = tasks_dir
-        self.algorithm_env = {}
+        self.algorithm_env = algorithm_env
         self.vpn_manager = vpn_manager
 
         # Connect to docker daemon
         self.docker = docker.from_env()
 
         # keep track of the running containers
-        self.active_tasks = []
+        self.active_tasks: List[DockerTask] = []
 
         # before a task is executed it gets exposed to these regex
         self._allowed_images = allowed_images
@@ -87,12 +338,6 @@ class DockerManager(object):
 
         # login to the registries
         self.login_to_registries(docker_registries)
-
-    def __refresh_container_statuses(self):
-        """ Refreshes the states of the containers.
-        """
-        for task in self.active_tasks:
-            task["container"].reload()
 
     def create_volume(self, volume_name: str):
         """Create a temporary volume for a single run.
@@ -146,171 +391,9 @@ class DockerManager(object):
         })
         return bool(running_containers)
 
-    def pull(self, image):
-        """Pull the latest image."""
-        try:
-            self.log.info(f"Retrieving latest image: '{image}'")
-            pull_if_newer(self.docker, image, self.log)
-
-        except Exception as e:
-            self.log.debug('Failed to pull image')
-            self.log.error(e)
-
     def set_database_uri(self, database_uri):
         """A setter for clarity."""
         self.database_uri = database_uri
-
-    def run_algorithm(self, image, environment_variables, volumes, result_id,
-                      task_folder):
-        labels = {
-            "node": self.node_name,
-            "result_id": str(result_id)
-        }
-
-        vpn_port = None
-        if self.vpn_manager.has_vpn:
-            # if VPN is active, network exceptions must be configured
-            # First, start a container that runs indefinitely. The algorithm
-            # container will run in the same network and network exceptions
-            # will therefore also affect the algorithm.
-            helper_labels = labels
-            helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
-            config_container = self.docker.containers.run(
-                command='sleep infinity',
-                image='alpine',
-                labels=helper_labels,
-                network=self.isolated_network_mgr.network_name,
-                detach=True
-            )
-            # setup forwarding of traffic via VPN client to and from the
-            # algorithm container:
-            vpn_port = self.vpn_manager.forward_vpn_traffic(
-                algo_container=config_container)
-
-        # Try to pull the latest image
-        self.pull(image)
-
-        # attempt to run the image
-        try:
-            self.log.info(f"Run docker image={image}")
-            algo_labels = labels
-            algo_labels[f"{APPNAME}-type"] = "algorithm"
-            container = self.docker.containers.run(
-                image,
-                detach=True,
-                environment=environment_variables,
-                network='container:' + config_container.id,
-                volumes=volumes,
-                labels=algo_labels
-            )
-        except Exception as e:
-            self.log.error('Could not run docker image!?')
-            self.log.error(e)
-            return None
-
-        # keep track of the container
-        self.active_tasks.append({
-            "result_id": result_id,
-            "container": container,
-            "output_file": os.path.join(task_folder, "output")
-        })
-
-        return vpn_port
-
-    def _make_task_folders(self, result_id):
-        # FIXME: We should have a separate mount/volume for this. At the
-        #   moment this is a potential leak as containers might access input,
-        #   output and token from other containers.
-        #
-        #   This was not possible yet as mounting volumes from containers
-        #   is terrible when working from windows (as you have to convert
-        #   from windows to unix several times...).
-
-        # If we're running in docker __tasks_dir will point to a location on
-        # the data volume.
-        # Alternatively, if we're not running in docker it should point to the
-        # folder on the host that can act like a data volume. In both cases,
-        # we can just copy the required files to it
-        task_folder_name = f"task-{result_id:09d}"
-        task_folder_path = os.path.join(self.__tasks_dir, task_folder_name)
-        os.makedirs(task_folder_path, exist_ok=True)
-        return task_folder_name, task_folder_path
-
-    def _prepare_volumes(
-            self, docker_input, task_folder_path, tmp_vol_name, token):
-        if isinstance(docker_input, str):
-            docker_input = docker_input.encode('utf8')
-
-        # Create I/O files & token for the algorithm container
-        self.log.debug("prepare IO files in docker volume")
-        io_files = [
-            ('input', docker_input),
-            ('output', b''),
-            ('token', token.encode("ascii")),
-        ]
-
-        for (filename, data) in io_files:
-            filepath = os.path.join(task_folder_path, filename)
-
-            with open(filepath, 'wb') as fp:
-                fp.write(data)
-
-        # FIXME: these values should be retrieved from DockerNodeContext
-        #   in some way. TODO TODO TODO
-        tmp_folder = "/mnt/tmp"
-        data_folder = "/mnt/data"
-
-        volumes = {
-            tmp_vol_name: {"bind": tmp_folder, "mode": "rw"},
-        }
-
-        if running_in_docker():
-            volumes[self.data_volume_name] = \
-                {"bind": data_folder, "mode": "rw"}
-
-        else:
-            volumes[self.__tasks_dir] = {"bind": data_folder, "mode": "rw"}
-        return volumes, data_folder, tmp_folder
-
-    def _setup_environment_vars(
-            self, data_folder, task_folder_name, tmp_folder):
-        try:
-            proxy_host = os.environ['PROXY_SERVER_HOST']
-
-        except Exception:
-            print('-' * 80)
-            print(os.environ)
-            print('-' * 80)
-            proxy_host = 'host.docker.internal'
-
-        # define enviroment variables for the docker-container, the
-        # host, port and api_path are from the local proxy server to
-        # facilitate indirect communication with the central server
-        # FIXME: we should only prepend data_folder if database_uri is a
-        #   filename
-        environment_variables = {
-            "INPUT_FILE": f"{data_folder}/{task_folder_name}/input",
-            "OUTPUT_FILE": f"{data_folder}/{task_folder_name}/output",
-            "TOKEN_FILE": f"{data_folder}/{task_folder_name}/token",
-            "TEMPORARY_FOLDER": tmp_folder,
-            "HOST": f"http://{proxy_host}",
-            "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
-            "API_PATH": "",
-        }
-        if self.database_is_file:
-            environment_variables["DATABASE_URI"] = \
-                f"{data_folder}/{self.database_uri}"
-        else:
-            environment_variables["DATABASE_URI"] = self.database_uri
-        self.log.debug(f"environment: {environment_variables}")
-
-        # Load additional environment variables
-        if self.algorithm_env:
-            environment_variables = \
-                {**environment_variables, **self.algorithm_env}
-            self.log.info('Custom environment variables are loaded!')
-            self.log.debug(f"custom environment: {self.algorithm_env}")
-        return environment_variables
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
             tmp_vol_name: int, token: str) -> int:
@@ -338,24 +421,22 @@ class DockerManager(object):
             self.log.debug(f"result_id={result_id} is discarded")
             return None
 
-        # generate task folders
-        task_folder_name, task_folder_path = self._make_task_folders(result_id)
-
-        # prepare volumes
-        volumes, data_folder, tmp_folder = self._prepare_volumes(
-            docker_input, task_folder_path, tmp_vol_name, token
+        task = DockerTask(
+            image=image,
+            result_id=result_id,
+            vpn_manager=self.vpn_manager,
+            node_name=self.node_name,
+            tasks_dir=self.__tasks_dir,
+            isolated_network_mgr=self.isolated_network_mgr,
+            database_uri=self.database_uri
         )
-        self.log.debug(f"volumes: {volumes}")
-
-        # setup environment variables
-        environment_variables = self._setup_environment_vars(
-            data_folder, task_folder_name, tmp_folder
+        vpn_port = task.run(
+            docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
+            algorithm_env=self.algorithm_env
         )
 
-        # run the algorithm as docker container
-        vpn_port = self.run_algorithm(
-            image, environment_variables, volumes, result_id, task_folder_path
-        )
+        # keep track of the active container
+        self.active_tasks.append(task)
 
         return vpn_port
 
@@ -376,98 +457,31 @@ class DockerManager(object):
         # get finished results and get the first one, if no result is available
         # this is blocking
         finished_tasks = []
-
         while not finished_tasks:
-            self.__refresh_container_statuses()
-
-            finished_tasks = [t for t in self.active_tasks
-                              if t['container'].status == 'exited']
-
+            finished_tasks = [t for t in self.active_tasks if t.is_finished()]
             time.sleep(1)
 
         # at least one task is finished
         finished_task = finished_tasks.pop()
+        self.log.debug(f"Result id={finished_task.result_id} is finished")
 
-        self.log.debug(
-            f"Result id={finished_task['result_id']} is finished"
-        )
+        # Check exit status and report
+        logs = finished_task.report_status()
 
-        # get all info from the container and cleanup
-        container = finished_task["container"]
-        log = container.logs().decode('utf8')
+        # Cleanup containers
+        finished_task.cleanup()
 
-        # remove the VPN helper container
-        self._remove_vpn_helper_container(finished_task['result_id'])
-
-        # report if the container has a different status than 0
-        status_code = container.attrs["State"]["ExitCode"]
-
-        if status_code:
-            self.log.error(f"Received non-zero exitcode: {status_code}")
-            self.log.error(f"  Container id: {container.id}")
-            self.log.warn("Will not remove container")
-            self.log.info(log)
-
-        else:
-            self._remove_container(container)
-
-        self.active_tasks.remove(finished_task)
-
-        # retrieve results from file
-        with open(finished_task["output_file"], "rb") as fp:
-            results = fp.read()
+        # Retrieve results from file
+        results = finished_task.get_results()
 
         return Result(
-            result_id=finished_task["result_id"],
-            logs=log,
+            result_id=finished_task.result_id,
+            logs=logs,
             data=results,
-            status_code=status_code
+            status_code=finished_task.status_code
         )
 
-    def _remove_container(self, container: docker.models.containers.Container,
-                          kill: bool = False) -> None:
-        """
-        Removes a docker container
-
-        Parameters
-        ----------
-        container: docker.models.containers.Container
-            The container that should be removed
-        kill: bool
-            Whether or not container should be killed before it is removed
-        """
-        try:
-            if kill:
-                container.kill()
-            container.remove()
-        except Exception as e:
-            self.log.error(f"Failed to remove container {container.name}")
-            self.log.debug(e)
-
-    def _remove_vpn_helper_container(self, result_id: int) -> None:
-        """
-        Remove the container that is created just before an algorithm container
-        is created so that VPN setup can be completed before running the
-        algorithm. This function should be called upon algorithm completion.
-
-        Parameters
-        ----------
-        result_id: int
-            The result id of the finished algorithm container
-        """
-        helper_containers = self.docker.containers.list(filters={
-            "label": [
-                f"{APPNAME}-type=algorithm-helper",
-                f"node={self.node_name}",
-                f"result_id={result_id}"
-            ]
-        })
-        # note that the following list in practice only contains one container
-        for container in helper_containers:
-            self._remove_container(container, kill=True)
-
     def login_to_registries(self, registies: list = []) -> None:
-
         for registry in registies:
             try:
                 self.docker.login(

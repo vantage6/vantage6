@@ -214,7 +214,8 @@ class Node(object):
             node_name=ctx.name,
             data_volume_name=ctx.docker_volume_name,
             docker_registries=self.ctx.config.get("docker_registries", []),
-            vpn_manager=self.vpn_manager
+            vpn_manager=self.vpn_manager,
+            algorithm_env=self.config.get('algorithm_env', {})
         )
 
         # If we're running in a docker container, database_uri would point
@@ -236,6 +237,8 @@ class Node(object):
             database_uri = os.path.basename(database_uri)
 
             self.__docker.database_is_file = True
+        # Let's keep it safe
+        self.__docker.set_database_uri(database_uri)
 
         # Connect to the isolated algorithm network *only* if we're running in
         # a docker container.
@@ -244,13 +247,6 @@ class Node(object):
                 container_name=ctx.docker_container_name,
                 aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
             )
-
-        # Let's keep it safe
-        self.__docker.set_database_uri(database_uri)
-
-        # Load additional environment vars for the algorithms. This is
-        # for example usefull when a password is needed for the database
-        self.__docker.algorithm_env = self.config.get('algorithm_env', {})
 
         # Thread for sending results to the server when they come available.
         self.log.debug("Start thread for sending messages (results)")
