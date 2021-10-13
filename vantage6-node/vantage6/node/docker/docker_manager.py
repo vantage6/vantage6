@@ -13,9 +13,11 @@ import time
 import logging
 import docker
 import re
+import shutil
 
 from typing import Dict, List, NamedTuple
 from docker.models.containers import Container
+from pathlib import Path
 
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.common.globals import APPNAME
@@ -34,7 +36,6 @@ class Result(NamedTuple):
     data: str
     status_code: int
 
-from pathlib import Path
 
 class DockerTask(object):
     log = logging.getLogger(logger_name(__name__))
@@ -299,11 +300,9 @@ class DockerManager(object):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, allowed_images, tasks_dir,
+    def __init__(self, ctx, config,
                  isolated_network_mgr: IsolatedNetworkManager,
-                 node_name: str, data_volume_name: str,
-                 docker_registries: list, vpn_manager: VPNManager,
-                 algorithm_env: Dict, database_is_file: bool) -> None:
+                 vpn_manager: VPNManager) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -312,13 +311,9 @@ class DockerManager(object):
             :param tasks_dir: folder to store task related data.
         """
         self.log.debug("Initializing DockerManager")
-        self.data_volume_name = data_volume_name
-        self.database_uri = None
-        self.database_is_file = False
-        self.__tasks_dir = tasks_dir
-        self.algorithm_env = algorithm_env
+        self.data_volume_name = ctx.docker_volume_name
+        self.algorithm_env = config.get('algorithm_env', {})
         self.vpn_manager = vpn_manager
-        self.database_is_file = database_is_file
 
         # Connect to docker daemon
         self.docker = docker.from_env()
@@ -327,7 +322,7 @@ class DockerManager(object):
         self.active_tasks: List[DockerTask] = []
 
         # before a task is executed it gets exposed to these regex
-        self._allowed_images = allowed_images
+        self._allowed_images = config.get("allowed_images")
 
         # isolated network to which algorithm containers can attach
         self.isolated_network_mgr = isolated_network_mgr
@@ -338,10 +333,68 @@ class DockerManager(object):
         # different server. Using a different server means that there
         # could be duplicate result_id's running at the node at the same
         # time.
-        self.node_name = node_name
+        self.node_name = ctx.name
 
         # login to the registries
+        docker_registries = ctx.config.get("docker_registries", [])
         self.login_to_registries(docker_registries)
+
+        # set (and possibly create) the task directories
+        self._set_task_dir(ctx)
+
+        # set database uri and whether or not it is a file
+        self._set_database(config)
+
+    def _set_task_dir(self, ctx):
+        # If we're in a 'regular' context, we'll copy the dataset to our data
+        # dir and mount it in any algorithm container that's run; bind mounts
+        # on a folder will work just fine.
+        #
+        # If we're running in dockerized mode we *cannot* bind mount a folder,
+        # because the folder is in the container and not in the host. We'll
+        # have to use a docker volume instead. This means:
+        #  1. we need to know the name of the volume so we can pass it along
+        #  2. need to have this volume mounted so we can copy files to it.
+        #
+        #  Ad 1: We'll use a default name that can be overridden by an
+        #        environment variable.
+        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
+        #        is OK, since ctx will be a DockerNodeContext.
+        #
+        #  This also means that the volume will have to be created & mounted
+        #  *before* this node is started, so we won't do anything with it here.
+
+        # We'll create a subfolder in the data_dir. We need this subfolder so
+        # we can easily mount it in the algorithm containers; the root folder
+        # may contain the private key, which which we don't want to share.
+        # We'll only do this if we're running outside docker, otherwise we
+        # would create '/data' on the data volume.
+        if not ctx.running_in_docker:
+            self.__tasks_dir = ctx.data_dir / 'data'
+            os.makedirs(self.__tasks_dir, exist_ok=True)
+        else:
+            self.__tasks_dir = ctx.data_dir
+
+    def _set_database(self, config):
+        # If we're running in a docker container, database_uri would point
+        # to a path on the *host* (since it's been read from the config
+        # file). That's no good here. Therefore, we expect the CLI to set
+        # the environment variable for us. This has the added bonus that we
+        # can override the URI from the command line as well.
+        default_uri = config['databases']['default']
+        self.database_uri = os.environ.get('DATABASE_URI', default_uri)
+
+        self.database_is_file = False
+        if Path(self.database_uri).exists():
+            # We'll copy the file to the folder `data` in our task_dir.
+            self.log.info(f'Copying {self.database_uri} to {self.__tasks_dir}')
+            shutil.copy(self.database_uri, self.__tasks_dir)
+
+            # Since we've copied the database to the folder 'data' in the root
+            # of the volume: '/data/<database.csv>'. We'll just keep the
+            # basename (i.e. filename + ext).
+            self.database_uri = os.path.basename(self.database_uri)
+            self.database_is_file = True
 
     def create_volume(self, volume_name: str):
         """Create a temporary volume for a single run.
@@ -394,10 +447,6 @@ class DockerManager(object):
             ]
         })
         return bool(running_containers)
-
-    def set_database_uri(self, database_uri):
-        """A setter for clarity."""
-        self.database_uri = database_uri
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
             tmp_vol_name: int, token: str) -> int:

@@ -21,7 +21,6 @@ import time
 import datetime
 import logging
 import queue
-import shutil
 import json
 
 from pathlib import Path
@@ -168,56 +167,6 @@ class Node(object):
         self.log.debug("Fetching tasks that were posted while offline")
         self.__sync_task_queue_with_server()
 
-        # If we're in a 'regular' context, we'll copy the dataset to our data
-        # dir and mount it in any algorithm container that's run; bind mounts
-        # on a folder will work just fine.
-        #
-        # If we're running in dockerized mode we *cannot* bind mount a folder,
-        # because the folder is in the container and not in the host. We'll
-        # have to use a docker volume instead. This means:
-        #  1. we need to know the name of the volume so we can pass it along
-        #  2. need to have this volume mounted so we can copy files to it.
-        #
-        #  Ad 1: We'll use a default name that can be overridden by an
-        #        environment variable.
-        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
-        #        is OK, since ctx will be a DockerNodeContext.
-        #
-        #  This also means that the volume will have to be created & mounted
-        #  *before* this node is started, so we won't do anything with it here.
-
-        # We'll create a subfolder in the data_dir. We need this subfolder so
-        # we can easily mount it in the algorithm containers; the root folder
-        # may contain the private key, which which we don't want to share.
-        # We'll only do this if we're running outside docker, otherwise we
-        # would create '/data' on the data volume.
-        if not ctx.running_in_docker:
-            task_dir = ctx.data_dir / 'data'
-            os.makedirs(task_dir, exist_ok=True)
-
-        else:
-            task_dir = ctx.data_dir
-
-        # If we're running in a docker container, database_uri would point
-        # to a path on the *host* (since it's been read from the config
-        # file). That's no good here. Therefore, we expect the CLI to set
-        # the environment variable for us. This has the added bonus that we
-        # can override the URI from the command line as well.
-        default_uri = self.config['databases']['default']
-        database_uri = os.environ.get('DATABASE_URI', default_uri)
-
-        database_is_file = False
-        if Path(database_uri).exists():
-            # We'll copy the file to the folder `data` in our task_dir.
-            self.log.info(f'Copying {database_uri} to {task_dir}')
-            shutil.copy(database_uri, task_dir)
-
-            # Since we've copied the database to the folder 'data' in the root
-            # of the volume: '/data/<database.csv>'. We'll just keep the
-            # basename (i.e. filename + ext).
-            database_uri = os.path.basename(database_uri)
-            database_is_file = True
-
         # setup docker isolated network manager
         isolated_network_mgr = \
             IsolatedNetworkManager(f"{ctx.docker_network_name}-net")
@@ -228,20 +177,14 @@ class Node(object):
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
-            allowed_images=self.config.get("allowed_images"),
-            tasks_dir=task_dir,
+            ctx=ctx,
+            config=self.config,
             isolated_network_mgr=isolated_network_mgr,
-            node_name=ctx.name,
-            data_volume_name=ctx.docker_volume_name,
-            docker_registries=self.ctx.config.get("docker_registries", []),
             vpn_manager=self.vpn_manager,
-            algorithm_env=self.config.get('algorithm_env', {}),
-            database_is_file=database_is_file
         )
-        self.__docker.set_database_uri(database_uri)
 
-        # Connect to the isolated algorithm network *only* if we're running in
-        # a docker container.
+        # Connect the node to the isolated algorithm network *only* if we're
+        # running in a docker container.
         if ctx.running_in_docker:
             isolated_network_mgr.connect(
                 container_name=ctx.docker_container_name,
