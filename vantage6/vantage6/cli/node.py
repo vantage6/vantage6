@@ -356,16 +356,26 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     }
 
     # only mount the DB if it is a file
-    info("Setting up database")
-    db_is_file = Path(ctx.databases["default"]).exists()
-    env['DATABASE_URI'] = "/mnt/database.csv" if db_is_file else \
-        ctx.databases['default']
-    info(f" - URI: {env['DATABASE_URI']}")
-    if db_is_file or skipp_db_exist_check:
-        mounts.append(("/mnt/database.csv", str(ctx.databases["default"])))
-    else:
-        warning(' - Are you using a non file-based database?')
-        warning('   Or did you make a mistake in the database path?')
+    info("Setting up databases")
+    db_labels = ctx.databases.keys()
+    for label in db_labels:
+
+        info(f"  Processing database '{label}:{uri}'")
+        LABEL = label.upper()
+        uri = ctx.databases[label]
+
+        file_based = Path(uri).exists()
+        if not file_based:
+            warning('  - Are you using a non file-based database?')
+            warning('    Or did you make a mistake in the database path?')
+            env[f'{LABEL}_DATABASE_URI'] = uri
+        else:
+            env[f'{LABEL}_DATABASE_URI'] = f'/mnt/{label}.csv'
+            mounts.append((f'/mnt/{label}.csv', str(uri)))
+
+        # FIXME legacy to support < 2.1.3 can be removed from 3+
+        if label == 'default':
+            env['DATABASE_URI'] = '/mnt/default.csv'
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
