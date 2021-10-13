@@ -44,9 +44,9 @@ class VPNManager(object):
             File location of the OVPN config file
         """
         # define mounting of OVPN config file
-        volumes = {ovpn_file: {'bind': VPN_CONFIG_FILE, 'mode': 'rw'}}
+        volumes = {ovpn_file: {'bind': '/' + VPN_CONFIG_FILE, 'mode': 'rw'}}
         # set environment variables
-        env = {'VPN_CONFIG': VPN_CONFIG_FILE}
+        env = {'VPN_CONFIG': '/' + VPN_CONFIG_FILE}
 
         # start vpnclient
         self.vpn_client_container = self.docker.containers.run(
@@ -69,7 +69,7 @@ class VPNManager(object):
         # create network exception so that packet transfer between VPN network
         # and the vpn client container is allowed
         bridge_interface = self._find_isolated_bridge()
-        self._configure_host_namespace(isolated_bridge=bridge_interface)
+        self._configure_host_network(isolated_bridge=bridge_interface)
 
         # set successful initiation of VPN connection
         self.has_vpn = True
@@ -84,7 +84,19 @@ class VPNManager(object):
         self.log.debug("Stopping and removing the VPN client container")
         self.vpn_client_container.kill()
         self.vpn_client_container.remove()
-        # TODO clean up host network changes
+
+        # Clean up host network changes. We have added two rules to the front
+        # of the DOCKER-USER chain. Now we remove the first two rules (which is
+        # done by removing rule number 1 twice)
+        command = \
+            'sh -c "iptables -D DOCKER-USER 1; iptables -D DOCKER-USER 1;"'
+        self.docker.containers.run(
+            image=NETWORK_CONFIG_IMAGE,
+            network='host',
+            cap_add='NET_ADMIN',
+            command=command,
+            remove=True,
+        )
 
     def get_vpn_ip(self) -> str:
         """
@@ -231,7 +243,7 @@ class VPNManager(object):
         bridge_interface = linked_interface['master']
         return bridge_interface
 
-    def _configure_host_namespace(self, isolated_bridge: str) -> None:
+    def _configure_host_network(self, isolated_bridge: str) -> None:
         """
         By default the internal bridge networks are configured to prohibit
         packet forwarding between networks. Create an exception to this rule

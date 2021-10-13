@@ -241,7 +241,7 @@ class Node(object):
         # a docker container.
         if ctx.running_in_docker:
             isolated_network_mgr.connect(
-                ctx.docker_container_name,
+                container_name=ctx.docker_container_name,
                 aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
             )
 
@@ -548,10 +548,7 @@ class Node(object):
             return
 
         # write ovpn config to node docker volume
-        # TODO replace the text in following line with constants
-        # TODO this works with `vnode-local` but probably not with `vnode`
-        ovpn_file = os.path.join(self.ctx.data_dir, 'data',
-                                 'vpn-config.ovpn.conf')
+        ovpn_file = os.path.join(self.ctx.data_dir, cs.VPN_CONFIG_FILE)
         with open(ovpn_file, 'w') as f:
             f.write(ovpn_config)
 

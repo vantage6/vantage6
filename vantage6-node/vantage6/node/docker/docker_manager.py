@@ -85,8 +85,6 @@ class DockerManager(object):
         # time.
         self.node_name = node_name
 
-        # TODO self.vpn_client_container_name
-
         # login to the registries
         self.login_to_registries(docker_registries)
 
@@ -175,7 +173,6 @@ class DockerManager(object):
             # First, start a container that runs indefinitely. The algorithm
             # container will run in the same network and network exceptions
             # will therefore also affect the algorithm.
-            # TODO TODO When algorithm finishes, also clean up this container
             helper_labels = labels
             helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
             config_container = self.docker.containers.run(
