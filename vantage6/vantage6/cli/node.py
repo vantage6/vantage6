@@ -360,9 +360,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     db_labels = ctx.databases.keys()
     for label in db_labels:
 
+        uri = ctx.databases[label]
         info(f"  Processing database '{label}:{uri}'")
         LABEL = label.upper()
-        uri = ctx.databases[label]
 
         file_based = Path(uri).exists()
         if not file_based:
