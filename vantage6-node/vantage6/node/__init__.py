@@ -178,7 +178,6 @@ class Node(object):
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
             ctx=ctx,
-            config=self.config,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
         )
