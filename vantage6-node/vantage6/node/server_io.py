@@ -11,6 +11,7 @@ by master containers).
 """
 import jwt
 import datetime
+from typing import Tuple
 
 # from vantage6.node.encryption import Cryptor, NoCryptor
 from vantage6.client import ClientBase
@@ -167,8 +168,6 @@ class NodeClient(ClientBase):
         """ A node is always for a single collaboration."""
         super().__init__(*args, **kwargs)
 
-        # FIXME: It seems the following attributes overlap with self.whoami?
-        self.id = None
         # self.name = None
         self.collaboration_id = None
         self.whoami = None
@@ -308,6 +307,29 @@ class NodeClient(ClientBase):
             self.log.debug("Just patchin'")
 
         return self.request(f"result/{id}", json=result, method='patch')
+
+    def get_vpn_config(self) -> Tuple[bool, str]:
+        """
+        Obtain VPN configuration from the server
+
+        Returns
+        -------
+        bool
+            Whether or not obtaining VPN config was successful
+        str
+            OVPN configuration file content
+        """
+        response = self.request("vpn")
+
+        ovpn_config = response.get("ovpn_config")
+        if ovpn_config is None:
+            return False, ''
+
+        # replace windows line endings to linux style to prevent extra
+        # whitespace in writing the file
+        ovpn_config = ovpn_config.replace("\r\n", "\n")
+
+        return True, ovpn_config
 
 
 # aliases for backward compatibility

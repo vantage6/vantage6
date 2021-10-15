@@ -21,7 +21,6 @@ import time
 import datetime
 import logging
 import queue
-import shutil
 import json
 
 from pathlib import Path
@@ -29,13 +28,16 @@ from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
+# TODO: relative import
 from . import globals as cs
 
 from vantage6.common.docker_addons import ContainerKillListener
-from vantage6.node.docker_manager import DockerManager
 from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
+from vantage6.node.docker.docker_manager import DockerManager
+from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.node.docker.vpn_manager import VPNManager
 
 
 class NodeTaskNamespace(SocketIONamespace):
@@ -167,84 +169,28 @@ class Node(object):
         self.log.debug("Fetching tasks that were posted while offline")
         self.__sync_task_queue_with_server()
 
-        # If we're in a 'regular' context, we'll copy the dataset to our data
-        # dir and mount it in any algorithm container that's run; bind mounts
-        # on a folder will work just fine.
-        #
-        # If we're running in dockerized mode we *cannot* bind mount a folder,
-        # because the folder is in the container and not in the host. We'll
-        # have to use a docker volume instead. This means:
-        #  1. we need to know the name of the volume so we can pass it along
-        #  2. need to have this volume mounted so we can copy files to it.
-        #
-        #  Ad 1: We'll use a default name that can be overridden by an
-        #        environment variable.
-        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
-        #        is OK, since ctx will be a DockerNodeContext.
-        #
-        #  This also means that the volume will have to be created & mounted
-        #  *before* this node is started, so we won't do anything with it here.
+        # setup docker isolated network manager
+        isolated_network_mgr = \
+            IsolatedNetworkManager(f"{ctx.docker_network_name}-net")
 
-        # We'll create a subfolder in the data_dir. We need this subfolder so
-        # we can easily mount it in the algorithm containers; the root folder
-        # may contain the private key, which which we don't want to share.
-        # We'll only do this if we're running outside docker, otherwise we
-        # would create '/data' on the data volume.
-        if not ctx.running_in_docker:
-            task_dir = ctx.data_dir / 'data'
-            os.makedirs(task_dir, exist_ok=True)
+        # Setup VPN connection
+        self.vpn_manager = self.make_vpn_connection(isolated_network_mgr)
 
-        else:
-            task_dir = ctx.data_dir
-
+        # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
-            allowed_images=self.config.get("allowed_images"),
-            tasks_dir=task_dir,
-            isolated_network_name=f"{ctx.docker_network_name}-net",
-            node_name=ctx.name,
-            data_volume_name=ctx.docker_volume_name,
+            ctx=ctx,
+            isolated_network_mgr=isolated_network_mgr,
+            vpn_manager=self.vpn_manager,
         )
 
-        # login to the registries
-        self.__docker.login_to_registries(
-            self.ctx.config.get("docker_registries", [])
-        )
-
-        # If we're running in a docker container, database_uri would point
-        # to a path on the *host* (since it's been read from the config
-        # file). That's no good here. Therefore, we expect the CLI to set
-        # the environment variable for us. This has the added bonus that we
-        # can override the URI from the command line as well.
-        default_uri = self.config['databases']['default']
-        database_uri = os.environ.get('DATABASE_URI', default_uri)
-
-        if Path(database_uri).exists():
-            # We'll copy the file to the folder `data` in our task_dir.
-            self.log.info(f'Copying {database_uri} to {task_dir}')
-            shutil.copy(database_uri, task_dir)
-
-            # Since we've copied the database to the folder 'data' in the root
-            # of the volume: '/data/<database.csv>'. We'll just keep the
-            # basename (i.e. filename + ext).
-            database_uri = os.path.basename(database_uri)
-
-            self.__docker.database_is_file = True
-
-        # Connect to the isolated algorithm network *only* if we're running in
-        # a docker container.
+        # Connect the node to the isolated algorithm network *only* if we're
+        # running in a docker container.
         if ctx.running_in_docker:
-            self.__docker.connect_to_isolated_network(
-                ctx.docker_container_name,
+            isolated_network_mgr.connect(
+                container_name=ctx.docker_container_name,
                 aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
             )
-
-        # Let's keep it safe
-        self.__docker.set_database_uri(database_uri)
-
-        # Load additional environment vars for the algorithms. This is
-        # for example usefull when a password is needed for the database
-        self.__docker.algorithm_env = self.config.get('algorithm_env', {})
 
         # Thread for sending results to the server when they come available.
         self.log.debug("Start thread for sending messages (results)")
@@ -292,6 +238,7 @@ class Node(object):
         # app.debug = True
         app.config["SERVER_IO"] = self.server_io
 
+        # this is where we try to find a port for the proxyserver
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
@@ -363,13 +310,27 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        self.__docker.run(
+        vpn_port = self.__docker.run(
             result_id=taskresult["id"],
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
             token=token
         )
+
+        if vpn_port:
+            # Save port of VPN client container at which it redirects traffic
+            # to the algorithm container
+            self.server_io.request(
+                f"result/{taskresult['id']}", json={"port": vpn_port},
+                method="PATCH"
+            )
+            # Save IP address of VPN container
+            node_id = self.server_io.whoami.id_
+            node_ip = self.vpn_manager.get_vpn_ip()
+            self.server_io.request(
+                f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
+            )
 
     def __listening_worker(self):
         """ Listen for incoming (websocket) messages from the server.
@@ -497,7 +458,7 @@ class Node(object):
 
         if encrypted_collaboration != encrypted_node:
             # You can't force it if it just ain't right, you know?
-            raise Exception("Expectations on encryption don't match!?")
+            raise Exception("Expectations on encryption don't match?!")
 
         if encrypted_collaboration:
             self.log.warn('Enabling encryption!')
@@ -507,6 +468,38 @@ class Node(object):
         else:
             self.log.warn('Disabling encryption!')
             self.server_io.setup_encryption(None)
+
+    def make_vpn_connection(
+            self, isolated_network_mgr: IsolatedNetworkManager) -> VPNManager:
+        """
+        Setup container which has a VPN connection
+
+        Returns
+        -------
+        VPNManager
+            Manages the VPN connection
+        """
+        # get the ovpn configuration from the server
+        success, ovpn_config = self.server_io.get_vpn_config()
+        if not success:
+            self.log.warn("Obtaining VPN configuration file not successful!")
+            self.log.warn("Disabling node-to-node communication via VPN")
+            self.has_vpn = False
+            return
+
+        # write ovpn config to node docker volume
+        ovpn_file = os.path.join(self.ctx.data_dir, cs.VPN_CONFIG_FILE)
+        with open(ovpn_file, 'w') as f:
+            f.write(ovpn_config)
+
+        # set up the VPN connection via docker containers
+        self.log.debug("Setting up VPN client container")
+        vpn_manager = VPNManager(
+            isolated_network_mgr=isolated_network_mgr,
+            node_name=self.ctx.name
+        )
+        vpn_manager.connect_vpn(ovpn_file=ovpn_file)
+        return vpn_manager
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
@@ -595,6 +588,7 @@ class Node(object):
         except (KeyboardInterrupt, InterruptedError):
             self.log.info("Vnode is interrupted, shutting down...")
             self.socketIO.disconnect()
+            self.vpn_manager.exit_vpn()
             sys.exit()
 
 
