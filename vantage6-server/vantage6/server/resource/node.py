@@ -220,4 +220,5 @@ class Node(ServicesResources):
                         f'{collaboration.id}'}
             node.collaboration = collaboration
 
+        node.save()
         return self.node_schema.dump(node).data, HTTPStatus.OK
