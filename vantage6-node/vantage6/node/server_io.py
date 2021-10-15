@@ -285,14 +285,17 @@ class NodeClient(ClientBase):
             FIXME: public keys should be cached
         """
         if "result" in result:
-            msg = f"retrieving public key from organization={initiator_id}"
+            msg = f"Retrieving public key from organization={initiator_id}"
             self.log.debug(msg)
 
             org = self.request(f"organization/{initiator_id}")
-            public_key = org["public_key"]
-
-            # self.log.info('Found result (base64 encoded):')
-            # self.log.info(bytes_to_base64s(result["result"]))
+            public_key = None
+            try:
+                public_key = org["public_key"]
+            except KeyError as e:
+                self.log.critical('Public key could not be retrieved...')
+                self.log.critical('Does the initiating organization belong to your '
+                                  'organization?')
 
             result["result"] = self.cryptor.encrypt_bytes_to_str(
                 result["result"],
