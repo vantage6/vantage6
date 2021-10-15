@@ -7,7 +7,7 @@ import json
 
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
-from flask import Flask, make_response, current_app
+from flask import Flask, make_response, current_app, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
@@ -180,7 +180,7 @@ class ServerApp:
             It is important to close the db session to avoid having dangling
             sessions.
             """
-            log.warn('Error occured during request')
+            log.warn(f'Error occured during request @ {request.url}')
             log.debug(error)
             DatabaseSessionManager.clear_session()
             return error.get_response()
