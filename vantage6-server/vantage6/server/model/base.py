@@ -137,7 +137,7 @@ class DatabaseSessionManager:
         if DatabaseSessionManager.in_flask_request():
 
             g.session = Database().session_a
-            log.debug(f"FLASK session {g.session}")
+            #log.debug(f"FLASK session {g.session}")
 
             # g.session.refresh()
             # print('new flask session')
@@ -146,7 +146,7 @@ class DatabaseSessionManager:
 
     @staticmethod
     def clear_session():
-        log.debug('Clearing DB session')
+        #log.debug('Clearing DB session')
         if DatabaseSessionManager.in_flask_request():
             # print(f"gsession: {g.session}")
             g.session.remove()
