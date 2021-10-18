@@ -58,6 +58,7 @@ def cli_node():
     """Subcommand `vnode`."""
     pass
 
+
 #
 #   list
 #
@@ -111,6 +112,7 @@ def cli_node_list():
         warning(
              f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
 
+
 #
 #   new
 #
@@ -161,6 +163,7 @@ def cli_node_new_configuration(name, environment, system_folders):
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
     info(f"You can start the node by running "
          f"{Fore.GREEN}vnode start {flag}{Style.RESET_ALL}")
+
 
 #
 #   files
@@ -251,8 +254,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             else:
                 error("Config file couldn't be loaded")
                 sys.exit(0)
-
-
         ctx = NodeContext(name, environment, system_folders)
 
     # check that this node is not already running
@@ -303,7 +304,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
-
 
     if mount_src:
         # If mount_src is a relative path, docker will consider it a volume.
@@ -391,6 +391,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 exit(0)
+
 
 #
 #   stop
@@ -685,6 +686,7 @@ def cli_node_remove(name, environment, system_folders):
         handler.close()
     os.remove(ctx.log_file)
 
+
 #
 #   version
 #
@@ -709,8 +711,9 @@ def cli_node_version(name, system_folders):
 
     if name in running_node_names:
         container = client.containers.get(name)
-        version = container.exec_run(cmd='vnode-local version', stdout = True)
-        click.echo({"node": version.output.decode('utf-8'), "cli":__version__})
+        version = container.exec_run(cmd='vnode-local version', stdout=True)
+        click.echo(
+            {"node": version.output.decode('utf-8'), "cli": __version__})
 
 
 def print_log_worker(logs_stream):
@@ -748,6 +751,7 @@ def create_client_and_authenticate(ctx):
 
     return client
 
+
 def select_node(name, environment, system_folders):
     """ Let user select node through questionnaire if name is yet unknown """
     name, environment = (name, environment) if name else \
@@ -762,6 +766,7 @@ def select_node(name, environment, system_folders):
         )
         exit(1)
     return name, environment
+
 
 def find_running_node_names(client):
     running_nodes = client.containers.list(
