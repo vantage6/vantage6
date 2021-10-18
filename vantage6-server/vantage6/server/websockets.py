@@ -4,6 +4,7 @@ import jwt
 from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
+from sqlalchemy.orm.session import Session
 
 from vantage6 import server
 from vantage6.common import logger_name
@@ -54,10 +55,10 @@ class DefaultSocketNamespace(Namespace):
             return
 
         # get identity from token.
-        user_or_node_id = get_jwt_identity()
-        session.auth = auth = db.Authenticatable.get(user_or_node_id)
-        session.auth.status = 'online'
-        session.auth.save()
+        session.auth_id = get_jwt_identity()
+        auth = db.Authenticatable.get(session.auth_id)
+        auth.status = 'online'
+        auth.save()
 
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
@@ -92,8 +93,9 @@ class DefaultSocketNamespace(Namespace):
             # self.__leave_room_and_notify(room)
             self.__leave_room_and_notify(room)
 
-        session.auth.status = 'offline'
-        session.auth.save()
+        auth = db.Authenticatable.get(session.auth_id)
+        auth.status = 'offline'
+        auth.save()
 
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
