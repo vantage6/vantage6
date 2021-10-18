@@ -106,13 +106,15 @@ def cli_server():
 @click.option('-p', '--port', default=None, type=int, help='port to listen on')
 @click.option('--debug', is_flag=True,
               help='run server in debug mode (auto-restart)')
-@click.option('-i', '--image', default=None, help="Node Docker image to use")
+@click.option('-i', '--image', default=None, help="Server Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
+@click.option('--mount-src', default='',
+              help="mount vantage6-master package source")
 @click.option('--attach/--detach', default=False,
               help="Attach server logs to the console after start")
 @click_insert_context
-def cli_server_start(ctx, ip, port, debug, image, keep, attach):
+def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
     """Start the server."""
 
     info("Starting server...")
@@ -154,6 +156,10 @@ def cli_server_start(ctx, ip, port, debug, image, keep, attach):
         )
     ]
 
+    if mount_src:
+        mount_src = os.path.abspath(mount_src)
+        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
+
     # FIXME: code duplication with cli_server_import()
     # try to mount database
     uri = ctx.config['uri']
@@ -186,10 +192,11 @@ def cli_server_start(ctx, ip, port, debug, image, keep, attach):
                 "is reachable from the Docker container")
         info("Consider using the docker-compose method to start a server")
 
-    ip_ = f"--ip {ip}" if ip else ""
-    port_ = f"--port {port}" if port else ""
+    # The `ip` and `port` refer here to the ip and port within the container.
+    # So we do not really care that is it listening on all interfaces.
+    internal_port = 5000
     cmd = f'vserver-local start -c /mnt/config.yaml -e {ctx.environment} ' \
-          f'{ip_} {port_}'
+          f'--ip 0.0.0.0 --port {internal_port}'
     info(cmd)
 
     info("Run Docker container")
@@ -204,7 +211,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep, attach):
             "name": ctx.config_file_name
         },
         environment=environment_vars,
-        ports={f"{port_}/tcp": ("0.0.0.0", port_)},
+        ports={f"{internal_port}/tcp": (ip, port_)},
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True

@@ -48,7 +48,7 @@ setup(
     ],
     extras_require={
         'dev': [
-            'coverage==5.0.4'
+            'coverage==4.5.4'
         ]
     },
     package_data={
