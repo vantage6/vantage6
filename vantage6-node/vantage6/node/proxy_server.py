@@ -22,7 +22,6 @@ from vantage6.node.util import (
     base64s_to_bytes,
     bytes_to_base64s
 )
-from vantage6.node.globals import STRING_ENCODING
 from vantage6.node.server_io import ClientNodeProtocol
 from vantage6.client.encryption import CryptorBase, DummyCryptor, RSACryptor
 
@@ -30,6 +29,7 @@ from vantage6.client.encryption import CryptorBase, DummyCryptor, RSACryptor
 app = Flask(__name__)
 log = logging.getLogger(logger_name(__name__))
 app.config["SERVER_IO"] = None
+
 
 def server_info():
     """ Retrieve proxy server details environment variables set by the
@@ -141,6 +141,7 @@ def proxy_task():
 
     return jsonify(response.json())
 
+
 @app.route('/task/<int:id>/result', methods=["GET"])
 def proxy_task_result(id):
     url = server_info()
@@ -174,6 +175,7 @@ def proxy_task_result(id):
 
     return jsonify(unencrypted)
 
+
 @app.route('/result/<int:id>', methods=["GET"])
 def proxy_results(id):
     """ Obtain result `id` from the server.
@@ -206,7 +208,9 @@ def proxy_results(id):
 
     return jsonify(response.json())
 
-@app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+
+@app.route('/<path:central_server_path>',
+           methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
 def proxy(central_server_path):
     """ Generic endpoint that will forward everything to the central server.
 
@@ -255,6 +259,6 @@ def proxy(central_server_path):
 
     if response.status_code > 200:
         log.error(f"server response code {response.status_code}")
-        log.debug(response.json().get("msg","no description..."))
+        log.debug(response.json().get("msg", "no description..."))
 
     return jsonify(response.json())
