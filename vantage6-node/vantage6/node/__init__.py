@@ -589,6 +589,7 @@ class Node(object):
             self.log.info("Vnode is interrupted, shutting down...")
             self.socketIO.disconnect()
             self.vpn_manager.exit_vpn()
+            self.__docker.cleanup()
             sys.exit()
 
 

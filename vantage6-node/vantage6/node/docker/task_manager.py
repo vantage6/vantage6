@@ -175,15 +175,14 @@ class DockerTaskManager(object):
         vpn_port = self._run_algorithm()
         return vpn_port
 
-    def cleanup(self) -> None:
+    def cleanup(self, kill_algorithm=False) -> None:
         """
         Cleanup the containers generated for this task. Only clean up the
         algorithm container if it exited successfully
         """
-        # TODO cleanup temporary docker volume?
         self._remove_container(self.helper_container, kill=True)
-        if not self.status_code:
-            self._remove_container(self.container)
+        if kill_algorithm or not self.status_code:
+            self._remove_container(self.container, kill=kill_algorithm)
 
     def _run_algorithm(self) -> int:
         """
@@ -369,9 +368,12 @@ class DockerTaskManager(object):
         kill: bool
             Whether or not container should be killed before it is removed
         """
-        try:
-            if kill:
+        if kill:
+            try:
                 container.kill()
+            except Exception as e:
+                pass  # allow failure here, maybe container had already exited
+        try:
             container.remove()
         except Exception as e:
             self.log.error(f"Failed to remove container {container.name}")
