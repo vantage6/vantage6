@@ -43,6 +43,7 @@ class DefaultSocketNamespace(Namespace):
         except jwt.exceptions.ExpiredSignatureError:
             self.log.error("JWT has expired")
             emit("expired_token", "", room=request.sid)
+            return
 
         except Exception as e:
             self.log.error("Couldn't connect client! No or Invalid JWT token?")
