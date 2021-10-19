@@ -20,3 +20,5 @@ DEFAULT_SERVER_IMAGE = "infrastructure/server:harukas"
 #   COMMON GLOBALS
 #
 PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
+
+VPN_CONFIG_FILE = 'data/vpn-config.ovpn.conf'
