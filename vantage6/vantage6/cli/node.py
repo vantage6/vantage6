@@ -34,7 +34,7 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE
 )
-from vantage6.node.globals import VPN_CONFIG_FILE  # TODO move to common?!
+from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
