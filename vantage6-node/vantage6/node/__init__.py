@@ -28,10 +28,9 @@ from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
-# TODO: relative import
-from . import globals as cs
-
 from vantage6.common.docker_addons import ContainerKillListener
+from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
 from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
@@ -189,7 +188,7 @@ class Node(object):
         if ctx.running_in_docker:
             isolated_network_mgr.connect(
                 container_name=ctx.docker_container_name,
-                aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
+                aliases=[NODE_PROXY_SERVER_HOSTNAME]
             )
 
         # Thread for sending results to the server when they come available.
@@ -218,9 +217,9 @@ class Node(object):
         os.environ["SERVER_PATH"] = self.server_io.path
 
         if self.ctx.running_in_docker:
-            # cs.NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
+            # NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
             # when running in the isolated docker network.
-            default_proxy_host = cs.NODE_PROXY_SERVER_HOSTNAME
+            default_proxy_host = NODE_PROXY_SERVER_HOSTNAME
         else:
             # If we're running non-dockerized, assume that the proxy is
             # accessible from within the docker algorithm container on
@@ -488,7 +487,7 @@ class Node(object):
             return
 
         # write ovpn config to node docker volume
-        ovpn_file = os.path.join(self.ctx.data_dir, cs.VPN_CONFIG_FILE)
+        ovpn_file = os.path.join(self.ctx.data_dir, VPN_CONFIG_FILE)
         with open(ovpn_file, 'w') as f:
             f.write(ovpn_config)
 

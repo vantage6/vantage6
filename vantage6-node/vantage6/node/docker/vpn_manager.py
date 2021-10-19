@@ -7,11 +7,11 @@ from json.decoder import JSONDecodeError
 from typing import List, Union, Dict
 from docker.models.containers import Container
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
-    VPN_CONFIG_FILE, VPN_SUBNET, FREE_PORT_RANGE
+    VPN_SUBNET, FREE_PORT_RANGE
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 
