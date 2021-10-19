@@ -18,8 +18,6 @@ import questionary as q
 import docker
 import time
 import os.path
-import re
-import shutil
 import itertools
 
 from pathlib import Path
@@ -36,6 +34,7 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE
 )
+from vantage6.node.globals import VPN_CONFIG_FILE  # TODO move to common?!
 from vantage6.common.docker_addons import pull_if_newer
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
@@ -199,14 +198,12 @@ def cli_node_files(name, environment, system_folders):
 #
 #   start
 #
-help_ = {
-    'config': 'absolute path to configuration-file; overrides NAME',
-    'environment': 'configuration environment to use',
-}
 @cli_node.command(name='start')
 @click.option("-n", "--name", default=None, help="configuration name")
-@click.option("-c", "--config", default=None, help=help_['config'])
-@click.option('-e', '--environment', default=N_ENV, help=help_['environment'])
+@click.option("-c", "--config", default=None,
+              help='absolute path to configuration-file; overrides NAME')
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
@@ -629,7 +626,6 @@ def cli_node_remove(name, environment, system_folders):
     - remove configuration file
     - remove log file
     - remove docker volumes attached to the node
-    - remove docker (isolated) networks of the node
     """
     # select configuration name if none supplied
     name, environment = select_node(name, environment, system_folders)
@@ -666,19 +662,11 @@ def cli_node_remove(name, environment, system_folders):
             info(f"Deleting docker volume {vol.name}")
             vol.remove()
 
-    # remove the docker network attached to the node
-    debug(f"Deleting docker networks")
-    try:
-        network_name = ctx.docker_network_name + '-net'
-        network = client.networks.get(network_name)
-        info(f"Deleting docker network {network_name}")
-        network.remove()
-    except docker.errors.NotFound:
-        pass  # no docker network available for node, nothing to delete
-
-    # TODO remove the VPN configuration (requires merge with that git branch)
-    # TODO is removing the VPN config file also necessary? It might just be
-    # written in the docker volume
+    # remove the VPN configuration file
+    vpn_config_file = os.path.join(ctx.data_dir, VPN_CONFIG_FILE)
+    if os.path.isfile(vpn_config_file):
+        info(f"Deleting VPN configuration file")
+        os.remove(vpn_config_file)
 
     # remove the config file
     info(f"Removing configuration file {ctx.config_file}")
