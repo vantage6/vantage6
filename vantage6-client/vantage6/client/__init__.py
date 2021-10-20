@@ -6,6 +6,7 @@ client (client used by master algorithms) and the user client are derived.
 """
 import logging
 import pickle
+import time
 import typing
 import jwt
 import requests
@@ -182,10 +183,19 @@ class ClientBase(object):
         # send request to server
         url = self.generate_path_to(endpoint)
         self.log.debug(f'Making request: {method.upper()} | {url} | {params}')
-        response = rest_method(url, json=json, headers=self.headers,
-                               params=params)
 
+        try:
+            response = rest_method(url, json=json, headers=self.headers,
+                                   params=params)
+        except requests.exceptions.ConnectionError as e:
+            # we can safely retry as this is a connection error. And we
+            # keep trying!
+            self.log.error('Connection error... Retrying')
+            self.log.debug(e)
+            time.sleep(1)
+            return self.request(endpoint, json, method, params)
 
+        # TODO: should check for a non 2xx response
         if response.status_code > 210:
             self.log.error(
                     f'Server responded with error code: {response.status_code}')
