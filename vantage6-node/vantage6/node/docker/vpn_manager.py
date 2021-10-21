@@ -73,6 +73,7 @@ class VPNManager(object):
 
         # set successful initiation of VPN connection
         self.has_vpn = True
+        self.log.debug("VPN client container started")
 
     def exit_vpn(self) -> None:
         """
