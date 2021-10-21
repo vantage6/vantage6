@@ -104,6 +104,8 @@ class ServerApp:
         logging.getLogger("engineio.server").setLevel(logging.WARNING)
         logging.getLogger("socketio.server").setLevel(logging.WARNING)
         logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+        logging.getLogger('requests_oauthlib.oauth2_session')\
+            .setLevel(logging.WARNING)
 
     def configure_flask(self):
         """All flask config settings should go here."""
