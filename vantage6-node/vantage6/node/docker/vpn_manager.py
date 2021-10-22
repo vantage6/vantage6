@@ -74,6 +74,23 @@ class VPNManager(object):
         # set successful initiation of VPN connection
         self.has_vpn = True
 
+    def has_connection(self) -> bool:
+        """ Return True if VPN connection is active """
+        if not self.has_vpn:
+            return False
+        # check if the VPN container has an IP address in the VPN namespace
+        try:
+            # if there is a VPN connection, the following command will return
+            # a json vpn interface. If not, it will return "Device "tun0" does
+            # not exist."
+            _, vpn_interface = self.vpn_client_container.exec_run(
+                'ip --json addr show dev tun0'
+            )
+            vpn_interface = json.loads(vpn_interface)
+        except JSONDecodeError:
+            return False
+        return True
+
     def exit_vpn(self) -> None:
         """
         Gracefully shutdown the VPN and clean up
