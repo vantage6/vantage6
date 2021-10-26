@@ -18,6 +18,7 @@ import questionary as q
 import docker
 import time
 import os.path
+import re
 
 from pathlib import Path
 from threading import Thread
@@ -132,6 +133,9 @@ def cli_node_new_configuration(name, environment, system_folders):
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
 
+    # check if config name is allowed docker name
+    check_config_name_allowed(name)
+
     # remove spaces, from name
     name_new = name.replace(" ", "-")
     if name != name_new:
@@ -243,6 +247,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     info("Finding Docker deamon")
     docker_client = docker.from_env()
     check_if_docker_deamon_is_running(docker_client)
+
+    # check if config name is allowed docker name, else exit
+    check_config_name_allowed(name)
 
     NodeContext.LOGGING_ENABLED = False
     if config:
@@ -673,6 +680,14 @@ def cli_node_version(name, system_folders):
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
+
+
+def check_config_name_allowed(name: str) -> None:
+    """ Check if configuration name is allowed """
+    if not re.match('^[a-zA-Z0-9_.-]+$', name):
+        error(f"Name '{name}' is not allowed. Please use only the following "
+              "characters: a-zA-Z0-9_.-")
+        exit(1)
 
 
 def check_if_docker_deamon_is_running(docker_client):

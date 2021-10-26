@@ -4,6 +4,7 @@ import docker
 import os
 import time
 import subprocess
+import re
 
 from threading import Thread
 from functools import wraps
@@ -35,7 +36,7 @@ def click_insert_context(func):
 
     # add option decorators
     @click.option('-n', '--name', default=None,
-                  help="name of the configutation you want to use.")
+                  help="name of the configuration you want to use.")
     @click.option('-c', '--config', default=None,
                   help='absolute path to configuration-file; overrides NAME')
     @click.option('-e', '--environment',
@@ -122,6 +123,9 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
     docker_client = docker.from_env()
     # will print an error if not
     check_if_docker_deamon_is_running(docker_client)
+
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(ctx.name)
 
     # check that this server is not already running
     running_servers = docker_client.containers.list(
@@ -320,6 +324,9 @@ def cli_server_new(name, environment, system_folders):
             info(f"Replaced spaces from configuration name: {name}")
             name = name_new
 
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(name)
+
     # check that this config does not exist
     try:
         if ServerContext.config_exists(name, environment, system_folders):
@@ -370,7 +377,7 @@ def cli_server_new(name, environment, system_folders):
 def cli_server_import(ctx, file_, drop_all, image, keep):
     """ Import organizations/collaborations/users and tasks.
 
-        Especially usefull for testing purposes.
+        Especially useful for testing purposes.
     """
     info("Starting server...")
     info("Finding Docker daemon.")
@@ -378,7 +385,10 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     # will print an error if not
     check_if_docker_deamon_is_running(docker_client)
 
-    # pull lastest Docker image
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(ctx.name)
+
+    # pull latest Docker image
     if image is None:
         image = ctx.config.get(
             "image",
@@ -582,6 +592,14 @@ def cli_server_attach(name, system_folders):
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
+
+
+def check_config_name_allowed(name: str) -> None:
+    """ Check if configuration name is allowed """
+    if not re.match('^[a-zA-Z0-9_.-]+$', name):
+        error(f"Name '{name}' is not allowed. Please use only the following "
+              "characters: a-zA-Z0-9_.-")
+        exit(1)
 
 
 def check_if_docker_deamon_is_running(docker_client):
