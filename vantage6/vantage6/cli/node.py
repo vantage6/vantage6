@@ -498,7 +498,9 @@ def cli_node_attach(name, system_folders):
 #
 @cli_node.command(name='create-private-key')
 @click.option("-n", "--name", default=None, help="configuration name")
-@click.option('-e', '--environment', default="",
+@click.option("-c", "--config", default=None,
+              help='absolute path to configuration-file; overrides NAME')
+@click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
@@ -506,26 +508,30 @@ def cli_node_attach(name, system_folders):
 @click.option("-o", "--organization-name", default=None,
               help="Organization name")
 @click.option('--overwrite', 'overwrite', flag_value=True, default=False)
-def cli_node_create_private_key(name, environment, system_folders, upload,
-                                organization_name, overwrite):
+def cli_node_create_private_key(name, config, environment, system_folders,
+                                upload, organization_name, overwrite):
     """Create and upload a new private key (use with caughtion)"""
 
-    # retrieve context
-    name, environment = (name, environment) if name else \
-        select_configuration_questionaire("node", system_folders)
-
-    # raise error if config could not be found
     NodeContext.LOGGING_ENABLED = False
-    if not NodeContext.config_exists(name, environment, system_folders):
-        error(
-            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
-            f"not be found."
-        )
-        exit(1)
+    if config:
+        name = Path(config).stem
+        ctx = NodeContext(name, environment, system_folders, config)
+    else:
+        # retrieve context
+        name, environment = (name, environment) if name else \
+            select_configuration_questionaire("node", system_folders)
 
-    # Create node context
-    ctx = NodeContext(name, environment, system_folders)
+        # raise error if config could not be found
+        if not NodeContext.config_exists(name, environment, system_folders):
+            error(
+                f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+                f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
+                f"not be found."
+            )
+            exit(1)
+
+        # Create node context
+        ctx = NodeContext(name, environment, system_folders)
 
     # Authenticate with the server to obtain organization name if it wasn't
     # provided
