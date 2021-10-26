@@ -18,7 +18,6 @@ import questionary as q
 import docker
 import time
 import os.path
-import re
 
 from pathlib import Path
 from threading import Thread
@@ -47,6 +46,9 @@ from vantage6.cli.globals import (
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
+)
+from vantage6.cli.utils import (
+    check_config_name_allowed, check_if_docker_deamon_is_running
 )
 from vantage6.cli import __version__
 
@@ -680,22 +682,6 @@ def cli_node_version(name, system_folders):
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
-
-
-def check_config_name_allowed(name: str) -> None:
-    """ Check if configuration name is allowed """
-    if not re.match('^[a-zA-Z0-9_.-]+$', name):
-        error(f"Name '{name}' is not allowed. Please use only the following "
-              "characters: a-zA-Z0-9_.-")
-        exit(1)
-
-
-def check_if_docker_deamon_is_running(docker_client):
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
-        exit(1)
 
 
 def create_client_and_authenticate(ctx):

@@ -4,7 +4,6 @@ import docker
 import os
 import time
 import subprocess
-import re
 
 from threading import Thread
 from functools import wraps
@@ -28,6 +27,9 @@ from vantage6.cli.context import ServerContext
 from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
+)
+from vantage6.cli.utils import (
+    check_config_name_allowed, check_if_docker_deamon_is_running
 )
 from vantage6.cli import __version__
 
@@ -592,22 +594,6 @@ def cli_server_attach(name, system_folders):
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
-
-
-def check_config_name_allowed(name: str) -> None:
-    """ Check if configuration name is allowed """
-    if not re.match('^[a-zA-Z0-9_.-]+$', name):
-        error(f"Name '{name}' is not allowed. Please use only the following "
-              "characters: a-zA-Z0-9_.-")
-        exit(1)
-
-
-def check_if_docker_deamon_is_running(docker_client):
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
-        exit()
 
 
 #
