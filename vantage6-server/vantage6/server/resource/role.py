@@ -181,18 +181,19 @@ class Roles(RoleBase):
         parser = reqparse.RequestParser()
         parser.add_argument("name", type=str, required=True)
         parser.add_argument("description", type=str, required=True)
-        parser.add_argument("rules", type=int, action='append', required=True)
+        parser.add_argument("rules", type=int, action='append', required=False)
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
 
         # obtain the requested rules from the DB.
         rules = []
-        for rule_id in data["rules"]:
-            rule = db.Rule.get(rule_id)
-            if not rule:
-                return {"msg": f"Rule id={rule_id} not found."}, \
-                    HTTPStatus.NOT_FOUND
-            rules.append(rule)
+        if data['rules']:
+            for rule_id in data["rules"]:
+                rule = db.Rule.get(rule_id)
+                if not rule:
+                    return {"msg": f"Rule id={rule_id} not found."}, \
+                        HTTPStatus.NOT_FOUND
+                rules.append(rule)
 
         # And check that this used has the rules he is trying to assign
         denied = self.permissions.verify_user_rules(rules)
