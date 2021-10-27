@@ -2,7 +2,6 @@ import docker
 import ipaddress
 import logging
 
-from vantage6.node.globals import LOCAL_SUBNET_START
 from vantage6.node.util import logger_name
 from vantage6.node.docker.utils import running_in_docker
 
