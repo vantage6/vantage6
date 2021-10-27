@@ -286,14 +286,29 @@ class Node(NodeBase):
 
         if 'collaboration_id' in data:
             collaboration = db.Collaboration.get(data['collaboration_id'])
-            if auth.organization not in collaboration.organizations:
-                return {'msg': f'Organization id={auth.organization.id} of '
-                        'this node is not part of this collaboration id='
-                        f'{collaboration.id}'}
+            if not collaboration:
+                return {'msg': f'collaboration id={data["collaboration_id"]}'
+                        'not found!'}, HTTPStatus.NOT_FOUND
+
+            if not self.r.e_glo.can():
+                if auth.organization not in collaboration.organizations:
+                    return {'msg': f'Organization id={auth.organization.id} of '
+                            'this node is not part of this collaboration id='
+                            f'{collaboration.id}'}
+
             node.collaboration = collaboration
 
         if 'ip' in data:
             node.ip = data['ip']
-            node.save()
 
+         # validate that node does not already exist when we change either
+        # the organization and/or collaboration
+        if 'organization_id' in data or 'collaboration_id' in data:
+            if db.Node.exists(node.organization.id, node.collaboration.id):
+                return {'msg': 'A node with organization id='
+                        f'{node.organization.id} and collaboration id='
+                        f'{node.collaboration.id} already exists!'}, \
+                            HTTPStatus.BAD_REQUEST
+
+        node.save()
         return node_schema.dump(node).data, HTTPStatus.OK
