@@ -243,7 +243,8 @@ class DockerManager(object):
         Note: the temporary docker volumes are kept as they may still be used
         by a master container
         """
-        self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
+        if self.active_tasks:
+            self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup(kill_algorithm=True)

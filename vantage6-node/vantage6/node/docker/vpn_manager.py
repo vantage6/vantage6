@@ -55,6 +55,7 @@ class VPNManager(object):
             volumes=volumes,
             detach=True,
             environment=env,
+            restart_policy={"Name": "always"},
             name=self.vpn_client_container_name,
             cap_add=['NET_ADMIN', 'SYSLOG'],
             devices=['/dev/net/tun'],
@@ -100,7 +101,10 @@ class VPNManager(object):
             return
         self.has_vpn = False
         self.log.debug("Stopping and removing the VPN client container")
-        self.vpn_client_container.kill()
+        try:
+            self.vpn_client_container.kill()
+        except Exception as e:
+            self.log.warn("Tried to kill VPN container but it was not running")
         self.vpn_client_container.remove()
 
         # Clean up host network changes. We have added two rules to the front
