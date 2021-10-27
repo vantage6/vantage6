@@ -280,7 +280,8 @@ class DockerManager(object):
             tasks_dir=self.__tasks_dir,
             isolated_network_mgr=self.isolated_network_mgr,
             database_uri=self.database_uri,
-            database_is_file=self.database_is_file
+            database_is_file=self.database_is_file,
+            docker_volume_name=self.data_volume_name
         )
         vpn_port = task.run(
             docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,

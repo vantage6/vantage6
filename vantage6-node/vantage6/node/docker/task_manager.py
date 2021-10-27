@@ -30,7 +30,8 @@ class DockerTaskManager(object):
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
                  result_id: int, tasks_dir: Path,
                  isolated_network_mgr: IsolatedNetworkManager,
-                 database_uri: str, database_is_file: bool):
+                 database_uri: str, database_is_file: bool,
+                 docker_volume_name: str):
         """
         Initialization creates DockerTaskManager instance
 
@@ -52,6 +53,8 @@ class DockerTaskManager(object):
             Location of the database
         database_is_file: bool
             Whether or not the database is a file
+        docker_volume_name: str
+            Name of the docker volume
         """
         self.image = image
         self.__vpn_manager = vpn_manager
@@ -60,6 +63,7 @@ class DockerTaskManager(object):
         self.__isolated_network_mgr = isolated_network_mgr
         self.__database_uri = database_uri
         self.database_is_file = database_is_file
+        self.data_volume_name = docker_volume_name
 
         self.docker = docker.from_env()
         self.container = None
