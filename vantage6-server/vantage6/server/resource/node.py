@@ -292,16 +292,16 @@ class Node(NodeBase):
 
             if not self.r.e_glo.can():
                 if auth.organization not in collaboration.organizations:
-                    return {'msg': f'Organization id={auth.organization.id} of '
-                            'this node is not part of this collaboration id='
-                            f'{collaboration.id}'}
+                    return {'msg': f'Organization id={auth.organization.id} '
+                            'of this node is not part of this collaboration id'
+                            f'={collaboration.id}'}
 
             node.collaboration = collaboration
 
         if 'ip' in data:
             node.ip = data['ip']
 
-         # validate that node does not already exist when we change either
+        # validate that node does not already exist when we change either
         # the organization and/or collaboration
         if 'organization_id' in data or 'collaboration_id' in data:
             if db.Node.exists(node.organization.id, node.collaboration.id):
