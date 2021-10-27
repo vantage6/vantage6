@@ -484,8 +484,7 @@ class Node(object):
         if not success:
             self.log.warn("Obtaining VPN configuration file not successful!")
             self.log.warn("Disabling node-to-node communication via VPN")
-            self.has_vpn = False
-            return
+            return None
 
         # write ovpn config to node docker volume
         ovpn_file = os.path.join(self.ctx.data_dir, cs.VPN_CONFIG_FILE)

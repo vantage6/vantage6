@@ -202,7 +202,7 @@ class DockerTaskManager(object):
             Port number assigned for VPN communication. None if VPN is inactive
         """
         vpn_port = None
-        if self.__vpn_manager.has_vpn:
+        if self.__vpn_manager:
             # if VPN is active, network exceptions must be configured
             # First, start a container that runs indefinitely. The algorithm
             # container will run in the same network and network exceptions
