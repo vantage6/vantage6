@@ -55,5 +55,8 @@ class Rule(ServicesResources):
         """List rules."""
 
         rules = db_Rule.get(id)
+        if id and not rules:
+            return {'msg': f'Rule id={id} not found!'}, HTTPStatus.NOT_FOUND
+
         return self.rule_schema.dump(rules, many=not id).data,\
             HTTPStatus.OK
