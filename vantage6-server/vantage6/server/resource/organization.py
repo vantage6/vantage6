@@ -205,8 +205,8 @@ class Organization(ServicesResources):
         fields = ["name", "address1", "address2", "zipcode", "country",
                   "public_key", "domain"]
         for field in fields:
-            if data.get(field):
-                setattr(organization, field, data.get(field))
+            if field in data:
+                setattr(organization, field, data[field])
 
         organization.save()
         return self.org_schema.dump(organization, many=False).data, \
