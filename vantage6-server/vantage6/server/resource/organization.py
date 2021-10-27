@@ -114,8 +114,11 @@ class Organization(ServicesResources):
 
         # retrieve requested organization
         req_org = db.Organization.get(id)
-        accepted = False
+        if not req_org:
+            return {'msg': f'Organization id={id} not found!'}, \
+                HTTPStatus.NOT_FOUND
 
+        accepted = False
         # check if he want a single or all organizations
         if id:
             # Check if auth has enough permissions
