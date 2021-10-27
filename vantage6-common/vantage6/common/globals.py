@@ -11,9 +11,9 @@ APPNAME = "vantage6"
 
 DEFAULT_DOCKER_REGISTRY = "harbor2.vantage6.ai"
 
-DEFAULT_NODE_IMAGE = "infrastructure/node:harukas"
+DEFAULT_NODE_IMAGE = "infrastructure/node:petronas"
 
-DEFAULT_SERVER_IMAGE = "infrastructure/server:harukas"
+DEFAULT_SERVER_IMAGE = "infrastructure/server:petronas"
 
 
 #
