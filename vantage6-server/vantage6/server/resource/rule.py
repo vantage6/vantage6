@@ -121,6 +121,8 @@ class Rule(ServicesResources):
         responses:
             200:
                 description: Ok
+            404:
+                description: Rule not found
             401:
                 description: Unauthorized
 
@@ -130,4 +132,7 @@ class Rule(ServicesResources):
         tags: ["Rule"]
         """
         rule = db.Rule.get(id)
+        if not rule:
+            return {'msg': f'Rule id={id} not found!'}, HTTPStatus.NOT_FOUND
+
         return rule_schema.dump(rule, many=False).data, HTTPStatus.OK

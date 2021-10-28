@@ -188,7 +188,7 @@ class Organizations(OrganizationBase):
         else:
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
-        log.debug(q.all())
+
         # paginate the results
         page = Pagination.from_query(query=q, request=request)
 
@@ -233,10 +233,11 @@ class Organization(OrganizationBase):
 
         # retrieve requested organization
         req_org = db.Organization.get(id)
+        if not req_org:
+            return {'msg': f'Organization id={id} not found!'}, \
+                HTTPStatus.NOT_FOUND
+
         accepted = False
-
-        # check if he want a single or all organizations
-
         # Check if auth has enough permissions
         if self.r.v_glo.can():
             accepted = True
@@ -281,8 +282,8 @@ class Organization(OrganizationBase):
         fields = ["name", "address1", "address2", "zipcode", "country",
                   "public_key", "domain"]
         for field in fields:
-            if data.get(field):
-                setattr(organization, field, data.get(field))
+            if field in data:
+                setattr(organization, field, data[field])
 
         organization.save()
         return org_schema.dump(organization, many=False).data, \

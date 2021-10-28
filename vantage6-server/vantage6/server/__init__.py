@@ -153,6 +153,10 @@ class ServerApp:
             "support@vantage6.ai"
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
+        self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS",
+                                                          True)
+        self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL",
+                                                          False)
 
         # before request
         @self.app.before_request
