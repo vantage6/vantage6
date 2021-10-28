@@ -78,6 +78,7 @@ tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
 
+
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
@@ -284,8 +285,10 @@ class CollaborationOrganization(ServicesResources):
             HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
-               endpoint='collaboration_with_id_organization')
+    @swag_from(
+        str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
+        endpoint='collaboration_with_id_organization'
+    )
     def post(self, id):
         """Add an organizations to a specific collaboration."""
         # get collaboration to which te organization should be added
@@ -294,7 +297,7 @@ class CollaborationOrganization(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-         # verify permissions
+        # verify permissions
         if not self.r.e_glo.can():
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
@@ -418,6 +421,7 @@ class CollaborationNode(ServicesResources):
                     f"collaboration id={id}"}, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.remove(node)
+        collaboration.save()
         return {"msg": f"node id={data['id']} removed from collaboration "
                 f"id={id}"}, HTTPStatus.OK
 
@@ -441,7 +445,7 @@ class CollaborationTask(ServicesResources):
 
         if g.user:
             auth_org_id = g.user.organization.id
-        else: #g.node:
+        else:  # g.node:
             auth_org_id = g.node.organization.id
 
         if not self.r.v_glo.can():
