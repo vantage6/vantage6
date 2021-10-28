@@ -9,6 +9,7 @@ import urllib.parse as urlparse
 
 from http import HTTPStatus
 from flask.globals import g
+from flask import request
 import requests
 from requests_oauthlib import OAuth2Session
 
@@ -29,6 +30,14 @@ def setup(api, api_base, services):
         path,
         endpoint='vpn_config',
         methods=('GET',),
+        resource_class_kwargs=services
+    )
+
+    api.add_resource(
+        VPNConfig,
+        path + '/update',
+        endpoint='vpn_config_update',
+        methods=('POST',),
         resource_class_kwargs=services
     )
 
@@ -66,9 +75,7 @@ class VPNConfig(ServicesResources):
 
         """
         # check if the VPN server is configured
-        if 'vpn_server' not in self.config:
-            log.debug(f'Node <{g.node.id}> tries to obtain a vpn config but '
-                      'this server has not configured a VPN server!')
+        if not self._is_server_configured():
             return {'msg': 'This server does not support VPN'}, \
                 HTTPStatus.NOT_IMPLEMENTED
 
@@ -85,6 +92,68 @@ class VPNConfig(ServicesResources):
                 HTTPStatus.SERVICE_UNAVAILABLE
 
         return {'ovpn_config': ovpn_config}, HTTPStatus.OK
+
+    @with_node
+    def post(self):
+        """ Update an OVPN configuration file
+        ---
+        description: >-
+            Returns an OVPN configuration file with renewed keypair. This
+            allows the node to connect to EduVPN when the keypair was
+            invalidated. To access this endpoint, the node needs to be
+            authenticated.\n\n
+
+            Accesible for: `node`\n\n
+
+        responses:
+            200:
+                description: Ok
+            401:
+                description: Unauthorized or missing permission
+            501:
+                description: The vantage6-server has no VPN service
+            503:
+                description: The VPN server is not reachable
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Other"]
+
+        """
+        # check if the VPN server is configured
+        if not self._is_server_configured():
+            return {'msg': 'This server does not support VPN'}, \
+                HTTPStatus.NOT_IMPLEMENTED
+
+        # retrieve user based on email or username
+        body = request.get_json()
+        vpn_config = body.get("vpn_config")
+        if not vpn_config:
+            return {"msg": "vpn_config is missing!"}, \
+                HTTPStatus.BAD_REQUEST
+
+        # obtain VPN config by calling EduVPN API
+        vpn_connector = EduVPNConnector(self.config['vpn_server'])
+
+        try:
+            ovpn_config = vpn_connector.refresh_keypair(vpn_config)
+        except requests.ConnectionError as e:
+            log.critical(f'Node <{g.node.id}> tries to obtain a vpn config. '
+                         'However the VPN server is unreachable!')
+            log.debug(e)
+            return {'msg': 'VPN server unreachable'}, \
+                HTTPStatus.SERVICE_UNAVAILABLE
+
+        return {'ovpn_config': ovpn_config}, HTTPStatus.OK
+
+    def _is_server_configured(self) -> bool:
+        """ Check if vpn server is available in configuration"""
+        if 'vpn_server' not in self.config:
+            log.debug(f'Node <{g.node.id}> tries to obtain a vpn config but '
+                      'this server has not configured a VPN server!')
+            return False
+        return True
 
 
 class EduVPNConnector:
@@ -118,9 +187,7 @@ class EduVPNConnector:
         """
 
         # obtain access token if not set
-        if not self.session.token:
-            log.debug("Acquiring EduVPN access token")
-            self.set_access_token()
+        self.set_access_token()
 
         # get the user's profile id
         log.debug("Getting EduVPN profile information")
@@ -131,17 +198,52 @@ class EduVPNConnector:
         log.debug("Obtaining OpenVPN configuration template")
         ovpn_config = self.get_config(profile_id)
 
+        # add the keypair
+        return self._add_key_pair(ovpn_config=ovpn_config)
+
+    def refresh_keypair(self, ovpn_config: str) -> str:
+        """
+        Obtain a new keypair from the VPN server and refreshes the keypair so
+        that the configuration file can be used to connect the VPN server
+        again.
+
+        Returns
+        -------
+        str (ovpn format)
+            Open-vpn configuration file
+        """
+        # obtain access token if not set
+        self.set_access_token()
+
+        # remove current keypair from the file
+        ovpn_config = self._remove_keypair(ovpn_config)
+
+        # add the keypair
+        return self._add_key_pair(ovpn_config=ovpn_config)
+
+    def _add_key_pair(self, ovpn_config: str) -> str:
+        """
+        Obtain a keypair from the VPN server and add it to the configuration
+
+        Returns
+        -------
+        str (ovpn format)
+            Open-vpn configuration file
+        """
         # get a key and certificate for the client
         log.debug("Obtaining OpenVPN key-pair")
         cert, key = self.get_key_pair()
 
         # add the client credentials to the ovpn file
-        log.debug('parsing VPN configuration file')
+        log.debug('Parsing VPN configuration file')
         ovpn_config = self._insert_keypair_into_config(ovpn_config, cert, key)
         return ovpn_config
 
     def set_access_token(self):
         """ Obtain an access token to enable access to EduVPN API """
+        if self.session.token:
+            log.debug("Acquiring EduVPN access token")
+            return
         # set PKCE data (code challenge and code verifier)
         log.debug("Setting PKCE challenge")
         self._set_pkce()
@@ -253,6 +355,26 @@ class EduVPNConnector:
             '<cert>\n' + cert + '\n</cert>\n' +
             '<key>\n' + key + '\n</key>\n' +
             ovpn_config[insert_loc:]
+        )
+
+    def _remove_keypair(self, ovpn_config: str) -> str:
+        """
+        Remove the keypair from the configuration
+
+        Returns
+        -------
+        str (ovpn format)
+            Open-vpn configuration file without key pair
+        """
+        # keypair starts at '<cert>' and ends at '</key>\n'
+        start_remove_pos = ovpn_config.find('<cert>')
+        end_key = '</key>\n'
+        end_remove_pos = ovpn_config.find(end_key)
+        print(start_remove_pos, end_remove_pos)
+        print(ovpn_config[0:start_remove_pos] + ovpn_config[end_remove_pos:])
+        return (
+            ovpn_config[0:start_remove_pos] +
+            ovpn_config[end_remove_pos+len(end_key):]
         )
 
     def get_profile(self):
