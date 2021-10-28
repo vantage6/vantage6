@@ -7,11 +7,11 @@ from json.decoder import JSONDecodeError
 from typing import List, Union, Dict
 from docker.models.containers import Container
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
-    VPN_CONFIG_FILE, VPN_SUBNET, FREE_PORT_RANGE
+    VPN_SUBNET, FREE_PORT_RANGE
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 
@@ -55,6 +55,7 @@ class VPNManager(object):
             volumes=volumes,
             detach=True,
             environment=env,
+            restart_policy={"Name": "always"},
             name=self.vpn_client_container_name,
             cap_add=['NET_ADMIN', 'SYSLOG'],
             devices=['/dev/net/tun'],
@@ -73,6 +74,24 @@ class VPNManager(object):
 
         # set successful initiation of VPN connection
         self.has_vpn = True
+        self.log.debug("VPN client container started")
+
+    def has_connection(self) -> bool:
+        """ Return True if VPN connection is active """
+        if not self.has_vpn:
+            return False
+        # check if the VPN container has an IP address in the VPN namespace
+        try:
+            # if there is a VPN connection, the following command will return
+            # a json vpn interface. If not, it will return "Device "tun0" does
+            # not exist."
+            _, vpn_interface = self.vpn_client_container.exec_run(
+                'ip --json addr show dev tun0'
+            )
+            vpn_interface = json.loads(vpn_interface)
+        except JSONDecodeError:
+            return False
+        return True
 
     def exit_vpn(self) -> None:
         """
@@ -82,7 +101,10 @@ class VPNManager(object):
             return
         self.has_vpn = False
         self.log.debug("Stopping and removing the VPN client container")
-        self.vpn_client_container.kill()
+        try:
+            self.vpn_client_container.kill()
+        except Exception as e:
+            self.log.warn("Tried to kill VPN container but it was not running")
         self.vpn_client_container.remove()
 
         # Clean up host network changes. We have added two rules to the front

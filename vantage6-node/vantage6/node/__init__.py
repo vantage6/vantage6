@@ -28,10 +28,9 @@ from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
 
-# TODO: relative import
-from . import globals as cs
-
 from vantage6.common.docker_addons import ContainerKillListener
+from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
 from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
@@ -189,7 +188,7 @@ class Node(object):
         if ctx.running_in_docker:
             isolated_network_mgr.connect(
                 container_name=ctx.docker_container_name,
-                aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
+                aliases=[NODE_PROXY_SERVER_HOSTNAME]
             )
 
         # Thread for sending results to the server when they come available.
@@ -218,9 +217,9 @@ class Node(object):
         os.environ["SERVER_PATH"] = self.server_io.path
 
         if self.ctx.running_in_docker:
-            # cs.NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
+            # NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
             # when running in the isolated docker network.
-            default_proxy_host = cs.NODE_PROXY_SERVER_HOSTNAME
+            default_proxy_host = NODE_PROXY_SERVER_HOSTNAME
         else:
             # If we're running non-dockerized, assume that the proxy is
             # accessible from within the docker algorithm container on
@@ -479,17 +478,23 @@ class Node(object):
         VPNManager
             Manages the VPN connection
         """
-        # get the ovpn configuration from the server
-        success, ovpn_config = self.server_io.get_vpn_config()
-        if not success:
-            self.log.warn("Obtaining VPN configuration file not successful!")
-            self.log.warn("Disabling node-to-node communication via VPN")
-            return None
+        ovpn_file = os.path.join(self.ctx.data_dir, VPN_CONFIG_FILE)
 
-        # write ovpn config to node docker volume
-        ovpn_file = os.path.join(self.ctx.data_dir, cs.VPN_CONFIG_FILE)
-        with open(ovpn_file, 'w') as f:
-            f.write(ovpn_config)
+        # if vpn config doesn't exist, get it and write to disk
+        if not os.path.isfile(ovpn_file):
+            # get the ovpn configuration from the server
+            success, ovpn_config = self.server_io.get_vpn_config()
+            if not success:
+                self.log.warn(
+                    "Obtaining VPN configuration file not successful!")
+                self.log.warn("Disabling node-to-node communication via VPN")
+                return None
+
+            # write ovpn config to node docker volume
+            with open(ovpn_file, 'w') as f:
+                f.write(ovpn_config)
+        else:
+            self.log.debug("Using existing VPN configuration file")
 
         # set up the VPN connection via docker containers
         self.log.debug("Setting up VPN client container")
@@ -497,7 +502,20 @@ class Node(object):
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name
         )
-        vpn_manager.connect_vpn(ovpn_file=ovpn_file)
+        try:
+            vpn_manager.connect_vpn(ovpn_file=ovpn_file)
+        except Exception:
+            self.log.debug(
+                "Could not connect to VPN. Trying to refresh keypair...")
+            # Connecting VPN failed, which may be due to an expired keypair.
+            # Refresh the client's keypair and try to connect again
+            success = self.server_io.refresh_vpn_keypair(ovpn_file=ovpn_file)
+            if not success:
+                self.log.warn("Refreshing VPN keypair not successful!")
+                self.log.warn("Disabling node-to-node communication via VPN")
+                # TODO refresh entire VPN config file?
+                return
+            vpn_manager.connect_vpn(ovpn_file=ovpn_file)
         return vpn_manager
 
     def connect_to_socket(self):
@@ -588,6 +606,7 @@ class Node(object):
             self.log.info("Vnode is interrupted, shutting down...")
             self.socketIO.disconnect()
             self.vpn_manager.exit_vpn()
+            self.__docker.cleanup()
             sys.exit()
 
 
