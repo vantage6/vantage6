@@ -370,8 +370,6 @@ class EduVPNConnector:
         start_remove_pos = ovpn_config.find('<cert>')
         end_key = '</key>\n'
         end_remove_pos = ovpn_config.find(end_key)
-        print(start_remove_pos, end_remove_pos)
-        print(ovpn_config[0:start_remove_pos] + ovpn_config[end_remove_pos:])
         return (
             ovpn_config[0:start_remove_pos] +
             ovpn_config[end_remove_pos+len(end_key):]
