@@ -172,6 +172,9 @@ class Node(object):
         isolated_network_mgr = \
             IsolatedNetworkManager(f"{ctx.docker_network_name}-net")
 
+        # Setup tasks dir
+        self._set_task_dir(ctx)
+
         # Setup VPN connection
         self.vpn_manager = self.make_vpn_connection(isolated_network_mgr)
 
@@ -181,6 +184,7 @@ class Node(object):
             ctx=ctx,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
+            tasks_dir=self.__tasks_dir
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
@@ -468,6 +472,47 @@ class Node(object):
             self.log.warn('Disabling encryption!')
             self.server_io.setup_encryption(None)
 
+    def _set_task_dir(self, ctx) -> None:
+        """
+        Set the task dir
+
+        Parameters
+        ----------
+        ctx: DockerNodeContext or NodeContext
+            Context object containing settings
+        """
+        # If we're in a 'regular' context, we'll copy the dataset to our data
+        # dir and mount it in any algorithm container that's run; bind mounts
+        # on a folder will work just fine.
+        #
+        # If we're running in dockerized mode we *cannot* bind mount a folder,
+        # because the folder is in the container and not in the host. We'll
+        # have to use a docker volume instead. This means:
+        #  1. we need to know the name of the volume so we can pass it along
+        #  2. need to have this volume mounted so we can copy files to it.
+        #
+        #  Ad 1: We'll use a default name that can be overridden by an
+        #        environment variable.
+        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
+        #        is OK, since ctx will be a DockerNodeContext.
+        #
+        #  This also means that the volume will have to be created & mounted
+        #  *before* this node is started, so we won't do anything with it here.
+
+        # We'll create a subfolder in the data_dir. We need this subfolder so
+        # we can easily mount it in the algorithm containers; the root folder
+        # may contain the private key, which which we don't want to share.
+        # We'll only do this if we're running outside docker, otherwise we
+        # would create '/data' on the data volume.
+        if not ctx.running_in_docker:
+            self.__tasks_dir = ctx.data_dir / 'data'
+            os.makedirs(self.__tasks_dir, exist_ok=True)
+            self.__vpn_dir = ctx.data_dir / 'vpn'
+            os.makedirs(self.__vpn_dir, exist_ok=True)
+        else:
+            self.__tasks_dir = ctx.data_dir
+            self.__vpn_dir = ctx.vpn_dir
+
     def make_vpn_connection(
             self, isolated_network_mgr: IsolatedNetworkManager) -> VPNManager:
         """
@@ -478,7 +523,7 @@ class Node(object):
         VPNManager
             Manages the VPN connection
         """
-        ovpn_file = os.path.join(self.ctx.data_dir, VPN_CONFIG_FILE)
+        ovpn_file = os.path.join(self.__vpn_dir, VPN_CONFIG_FILE)
 
         # if vpn config doesn't exist, get it and write to disk
         if not os.path.isfile(ovpn_file):
@@ -500,21 +545,25 @@ class Node(object):
         self.log.debug("Setting up VPN client container")
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
-            node_name=self.ctx.name
+            node_name=self.ctx.name,
+            vpn_volume_name=self.ctx.docker_vpn_volume_name
         )
         try:
-            vpn_manager.connect_vpn(ovpn_file=ovpn_file)
-        except Exception:
+            vpn_manager.connect_vpn()
+        # TODO catch more specific error: is VPN not connecting due to
+        # deprecated config or not?
+        except Exception as e:
             self.log.debug(
                 "Could not connect to VPN. Trying to refresh keypair...")
+            self.log.debug(f"Exception: {e}")
             # Connecting VPN failed, which may be due to an expired keypair.
             # Refresh the client's keypair and try to connect again
             success = self.server_io.refresh_vpn_keypair(ovpn_file=ovpn_file)
             if not success:
                 self.log.warn("Refreshing VPN keypair not successful!")
                 self.log.warn("Disabling node-to-node communication via VPN")
-                # TODO refresh entire VPN config file?
-                return
+                # TODO refresh entire VPN config file? Recurse?!
+                return None
             vpn_manager.connect_vpn(ovpn_file=ovpn_file)
         return vpn_manager
 
@@ -605,7 +654,8 @@ class Node(object):
         except (KeyboardInterrupt, InterruptedError):
             self.log.info("Vnode is interrupted, shutting down...")
             self.socketIO.disconnect()
-            self.vpn_manager.exit_vpn()
+            if self.vpn_manager:
+                self.vpn_manager.exit_vpn()
             self.__docker.cleanup()
             sys.exit()
 

@@ -34,6 +34,7 @@ class DockerNodeContext(NodeContext):
         self.log_dir = dirs.get("log")
         self.data_dir = dirs.get("data")
         self.config_dir = dirs.get("config")
+        self.vpn_dir = dirs.get("vpn")
 
     @staticmethod
     def instance_folders(instance_type, instance_name, system_folders):
@@ -45,7 +46,8 @@ class DockerNodeContext(NodeContext):
         return {
             "log": mnt / "log",
             "data": mnt / "data",
-            "config": mnt / "config"
+            "config": mnt / "config",
+            "vpn": mnt / "vpn"
         }
 
 

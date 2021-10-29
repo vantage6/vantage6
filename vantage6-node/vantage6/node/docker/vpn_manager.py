@@ -24,31 +24,33 @@ class VPNManager(object):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, isolated_network_mgr: IsolatedNetworkManager,
-                 node_name: str):
+                 node_name: str, vpn_volume_name: str):
         self.isolated_network_mgr = isolated_network_mgr
         self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
+        self.vpn_volume_name = vpn_volume_name
 
         self.has_vpn = False
 
         # Connect to docker daemon
         self.docker = docker.from_env()
 
-    def connect_vpn(self, ovpn_file: str) -> None:
+    def connect_vpn(self) -> None:
         """
         Start VPN client container and configure network to allow
         algorithm-to-algoritm communication
-
-        Parameters
-        ----------
-        ovpn_file: str
-            File location of the OVPN config file
         """
-        # define mounting of OVPN config file
-        volumes = {ovpn_file: {'bind': '/' + VPN_CONFIG_FILE, 'mode': 'rw'}}
+        self.log.debug("Mounting VPN configuration file")
+        # add volume containing OVPN config file
+        data_path = '/mnt/vpn/'  # TODO obtain from DockerNodeContext
+        volumes = {
+            self.vpn_volume_name: {'bind': data_path, 'mode': 'rw'},
+        }
         # set environment variables
-        env = {'VPN_CONFIG': '/' + VPN_CONFIG_FILE}
+        vpn_config = data_path + VPN_CONFIG_FILE
+        env = {'VPN_CONFIG': vpn_config}
 
         # start vpnclient
+        self.log.debug("Starting VPN client container")
         self.vpn_client_container = self.docker.containers.run(
             image=VPN_CLIENT_IMAGE,
             command="",  # commands to run are already defined in docker image
@@ -62,6 +64,7 @@ class VPNManager(object):
         )
 
         # attach vpnclient to isolated network
+        self.log.debug("Connecting VPN client container to isolated network")
         self.isolated_network_mgr.connect(
             container_name=self.vpn_client_container_name,
             aliases=[self.vpn_client_container_name]
