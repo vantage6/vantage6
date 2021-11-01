@@ -564,7 +564,7 @@ class Node(object):
                 self.log.warn("Disabling node-to-node communication via VPN")
                 # TODO refresh entire VPN config file? Recurse?!
                 return None
-            vpn_manager.connect_vpn(ovpn_file=ovpn_file)
+            vpn_manager.connect_vpn()
         return vpn_manager
 
     def connect_to_socket(self):
