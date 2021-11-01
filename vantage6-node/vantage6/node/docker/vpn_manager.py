@@ -49,6 +49,17 @@ class VPNManager(object):
         vpn_config = data_path + VPN_CONFIG_FILE
         env = {'VPN_CONFIG': vpn_config}
 
+        # if a VPN container is already running, kill and remove it
+        self.vpn_client_container = self.check_running()
+        # TODO refactor with other functions
+        if self.vpn_client_container:
+            self.log.warn("Removing VPN container that was already running")
+            try:
+                self.vpn_client_container.kill()
+            except Exception as e:
+                pass
+            self.vpn_client_container.remove()
+
         # start vpnclient
         self.log.debug("Starting VPN client container")
         self.vpn_client_container = self.docker.containers.run(
@@ -78,6 +89,21 @@ class VPNManager(object):
         # set successful initiation of VPN connection
         self.has_vpn = True
         self.log.debug("VPN client container started")
+
+    def check_running(self) -> Container:
+        """
+        Check if VPN container exists
+
+        Returns
+        -------
+        Container or None
+            VPN container if it exists, else None
+        TODO refactor?!
+        """
+        running_containers = self.docker.containers.list(all=True, filters={
+            "name": self.vpn_client_container_name
+        })
+        return running_containers[0] if running_containers else None
 
     def has_connection(self) -> bool:
         """ Return True if VPN connection is active """
