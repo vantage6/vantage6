@@ -4,34 +4,9 @@ from vantage6.server.model import (
     Node,
     Collaboration,
     Task,
-    Organization,
-    Result
+    Organization
 )
 from vantage6.server.model.base import DatabaseSessionManager
-
-
-def get_node(self, result: Result):
-    """A node is assigned by an organization to an collaboration.
-    Tasks, that is responsible for a set of Results, are assigned
-    to these collaborations.
-
-    A Result is therefore directly related to a single node by it's
-    organization and collaboration. Organization can be directly
-    derived from the Result while the collaboration can be found from
-    the originating task.
-    """
-    session = DatabaseSessionManager.get_session()
-    node = session.query(Node)\
-        .join(Collaboration)\
-        .join(Task)\
-        .join(Organization)\
-        .join(Result)\
-        .filter_by(result_id=result.id)\
-        .filter(Task.organization_id == Node.organization_id)\
-        .filter(Task.collaboration_id == Node.collaboration_id)\
-        .one()
-
-    return node
 
 
 def tasks(self, collaboration: Collaboration, organization: Organization):
