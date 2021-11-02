@@ -351,6 +351,8 @@ class NodeClient(ClientBase):
         )
         ovpn_config = response.get("ovpn_config")
         if not ovpn_config:
+            self.log.warn("Refreshing VPN keypair not successful!")
+            self.log.warn("Disabling node-to-node communication via VPN")
             return False
 
         # write new configuration back to file

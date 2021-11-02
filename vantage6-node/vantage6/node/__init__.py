@@ -27,6 +27,7 @@ from pathlib import Path
 from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
+from enum import Enum
 
 from vantage6.common.docker_addons import ContainerKillListener
 from vantage6.common.globals import VPN_CONFIG_FILE
@@ -38,6 +39,10 @@ from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
 
+class VPNConnectMode(Enum):
+    FIRST_TRY = 1
+    REFRESH_KEYPAIR = 2
+    REFRESH_COMPLETE = 3
 
 class NodeTaskNamespace(SocketIONamespace):
     """Class that handles incoming websocket events."""
@@ -176,7 +181,7 @@ class Node(object):
         self._set_task_dir(ctx)
 
         # Setup VPN connection
-        self.vpn_manager = self.make_vpn_connection(isolated_network_mgr)
+        self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, ctx)
 
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
@@ -513,8 +518,9 @@ class Node(object):
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def make_vpn_connection(
-            self, isolated_network_mgr: IsolatedNetworkManager) -> VPNManager:
+    def setup_vpn_connection(
+            self, isolated_network_mgr: IsolatedNetworkManager, ctx
+    ) -> VPNManager:
         """
         Setup container which has a VPN connection
 
@@ -525,47 +531,91 @@ class Node(object):
         """
         ovpn_file = os.path.join(self.__vpn_dir, VPN_CONFIG_FILE)
 
-        # if vpn config doesn't exist, get it and write to disk
-        if not os.path.isfile(ovpn_file):
-            # get the ovpn configuration from the server
-            success, ovpn_config = self.server_io.get_vpn_config()
-            if not success:
-                self.log.warn(
-                    "Obtaining VPN configuration file not successful!")
-                self.log.warn("Disabling node-to-node communication via VPN")
-                return None
-
-            # write ovpn config to node docker volume
-            with open(ovpn_file, 'w') as f:
-                f.write(ovpn_config)
-        else:
-            self.log.debug("Using existing VPN configuration file")
-
-        # set up the VPN connection via docker containers
         self.log.debug("Setting up VPN client container")
+        vpn_volume_name = self.ctx.docker_vpn_volume_name \
+            if ctx.running_in_docker else self.__vpn_dir
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name,
-            vpn_volume_name=self.ctx.docker_vpn_volume_name
+            vpn_volume_name=vpn_volume_name,
         )
-        try:
-            vpn_manager.connect_vpn()
-        # TODO catch more specific error: is VPN not connecting due to
-        # deprecated config or not?
-        except Exception as e:
-            self.log.debug(
-                "Could not connect to VPN. Trying to refresh keypair...")
-            self.log.debug(f"Exception: {e}")
-            # Connecting VPN failed, which may be due to an expired keypair.
-            # Refresh the client's keypair and try to connect again
-            success = self.server_io.refresh_vpn_keypair(ovpn_file=ovpn_file)
-            if not success:
-                self.log.warn("Refreshing VPN keypair not successful!")
-                self.log.warn("Disabling node-to-node communication via VPN")
-                # TODO refresh entire VPN config file? Recurse?!
-                return None
-            vpn_manager.connect_vpn()
+        # if vpn config doesn't exist, get it and write to disk
+        if not os.path.isfile(ovpn_file):
+            self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE,
+                              ovpn_file)
+        else:
+            self._connect_vpn(vpn_manager, VPNConnectMode.FIRST_TRY, ovpn_file)
+
         return vpn_manager
+
+    def _connect_vpn(self, vpn_manager: VPNManager,
+                     connect_mode: VPNConnectMode, ovpn_file: str) -> None:
+        """
+        Connect to the VPN by starting up a VPN client container. If no VPN
+        config file exists, we only try once after first obtaining a config
+        file. If a VPN config file already exists, we first try to connect,
+        then try to refresh the keypair, and finally try to renew the entire
+        config file, until a connection is established.
+
+        Parameters
+        ----------
+        vpn_manager: VPNManager
+            Manages the VPN connection
+        connect_mode: VPNConnectMode
+            Specifies which parts of a config file to refresh before attempting
+            to connect
+        ovpn_file: str
+            Path to the VPN configuration file
+        """
+        do_try = True
+        if connect_mode == VPNConnectMode.FIRST_TRY:
+            self.log.debug("Using existing config file to connect to VPN")
+            next_mode = VPNConnectMode.REFRESH_KEYPAIR
+        elif connect_mode == VPNConnectMode.REFRESH_KEYPAIR:
+            self.log.debug("Refreshing VPN keypair...")
+            do_try = self.server_io.refresh_vpn_keypair(ovpn_file=ovpn_file)
+            next_mode = VPNConnectMode.REFRESH_COMPLETE
+        elif connect_mode == VPNConnectMode.REFRESH_COMPLETE:
+            self.log.debug("Requesting new VPN configuration file...")
+            do_try = self._get_vpn_config_file(ovpn_file)
+            next_mode = None  # if new config file doesn't work, give up
+
+        if do_try:
+            # try connecting to VPN
+            try:
+                vpn_manager.connect_vpn()
+            except Exception as e:
+                self.log.debug("Could not connect to VPN.")
+                self.log.debug(f"Exception: {e}")
+                # try again in another fashion
+                if next_mode:
+                    self._connect_vpn(vpn_manager, next_mode, ovpn_file)
+
+    def _get_vpn_config_file(self, ovpn_file: str) -> bool:
+        """
+        Obtain VPN configuration file from the server
+
+        Parameters
+        ----------
+        ovpn_file: str
+            Path to the VPN configuration file
+
+        Returns
+        -------
+        bool
+            Whether or not configuration file was successfully obtained
+        """
+        # get the ovpn configuration from the server
+        success, ovpn_config = self.server_io.get_vpn_config()
+        if not success:
+            self.log.warn("Obtaining VPN configuration file not successful!")
+            self.log.warn("Disabling node-to-node communication via VPN")
+            return False
+
+        # write ovpn config to node docker volume
+        with open(ovpn_file, 'w') as f:
+            f.write(ovpn_config)
+        return True
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
