@@ -31,3 +31,4 @@ NETWORK_CONFIG_IMAGE = 'harbor2.vantage6.ai/infrastructure/vpn-configurator'
 VPN_SUBNET = '10.76.0.0/16'
 MAX_CHECK_VPN_ATTEMPTS = 60   # max attempts to obtain VPN IP (1 second apart)
 FREE_PORT_RANGE = range(49152, 65535)
+DEFAULT_ALGO_VPN_PORT = '8888'  # default VPN port for algorithm container

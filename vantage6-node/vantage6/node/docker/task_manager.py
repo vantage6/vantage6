@@ -216,7 +216,9 @@ class DockerTaskManager(object):
             # setup forwarding of traffic via VPN client to and from the
             # algorithm container:
             vpn_port = self.__vpn_manager.forward_vpn_traffic(
-                algo_container=self.helper_container)
+                helper_container=self.helper_container,
+                algo_image_name=self.image
+            )
 
         # Try to pull the latest image
         self.pull()

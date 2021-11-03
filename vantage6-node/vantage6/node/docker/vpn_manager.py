@@ -11,7 +11,7 @@ from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
-    VPN_SUBNET, FREE_PORT_RANGE
+    VPN_SUBNET, FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 
@@ -173,20 +173,38 @@ class VPNManager(object):
                 time.sleep(1)
         return vpn_interface[0]['addr_info'][0]['local']
 
-    def forward_vpn_traffic(self, algo_container: Container) -> int:
-        vpn_port = self._forward_traffic_to_algorithm(algo_container)
-        self._forward_traffic_from_algorithm(algo_container)
+    def forward_vpn_traffic(self, helper_container: Container,
+                            algo_image_name: str) -> int:
+        """
+        Setup rules so that traffic is properly forwarded between the VPN
+        container and the algorithm container (and its helper container)
+
+        Parameters
+        ----------
+        algo_helper_container: Container
+            Helper algorithm container
+        algo_image_name: str
+            Name of algorithm image that is run
+
+        Returns
+        -------
+        int
+            Port on the VPN client that forwards traffic to the algo container
+        """
+        vpn_port = self._forward_traffic_to_algorithm(
+            helper_container, algo_image_name)
+        self._forward_traffic_from_algorithm(helper_container)
         return vpn_port
 
     def _forward_traffic_from_algorithm(
-            self, algo_container: Container) -> None:
+            self, algo_helper_container: Container) -> None:
         """
         Direct outgoing algorithm container traffic to the VPN client container
 
         Parameters
         ----------
-        algo_container: docker.models.containers.Container
-            Docker algorithm container
+        algo_helper_container: Container
+            Helper algorithm container
         """
         if not self.has_vpn:
             return  # ignore if VPN is not active
@@ -198,7 +216,7 @@ class VPNManager(object):
             self.has_vpn = False
             return
 
-        network = 'container:' + algo_container.id
+        network = 'container:' + algo_helper_container.id
 
         # add IP route line to the algorithm container network
         cmd = f"ip route replace default via {vpn_local_ip}"
@@ -210,15 +228,18 @@ class VPNManager(object):
             remove=True
         )
 
-    def _forward_traffic_to_algorithm(self, algo_container: Container) -> int:
+    def _forward_traffic_to_algorithm(self, algo_helper_container: Container,
+                                      algo_image_name: str) -> int:
         """
         Forward incoming traffic from the VPN client container to the
         algorithm container
 
         Parameters
         ----------
-        algo_ip: str
-            IP address of the algorithm container in the isolated network
+        algo_helper_container: Container
+            Helper algorithm container
+        algo_image_name: str
+            Name of algorithm image that is run
 
         Returns
         -------
@@ -243,15 +264,14 @@ class VPNManager(object):
         vpn_client_port = next(iter(vpn_client_port_options))
 
         # Get IP Address of the algorithm container
-        algo_container.reload()  # update attributes
+        algo_helper_container.reload()  # update attributes
         algo_ip = (
-            algo_container.attrs['NetworkSettings']['Networks']
-                                [self.isolated_network_mgr.network_name]
-                                ['IPAddress']
+            algo_helper_container.attrs['NetworkSettings']['Networks']
+                                       [self.isolated_network_mgr.network_name]
+                                       ['IPAddress']
         )
         # Set port at which algorithm containers receive traffic
-        # TODO obtain this port from the Dockerfile description (EXPOSE)
-        algorithm_port = '8888'
+        algorithm_port = self._find_exposed_port(algo_image_name)
 
         # Set up forwarding VPN traffic to algorithm container
         command = (
@@ -262,6 +282,41 @@ class VPNManager(object):
         )
         self.vpn_client_container.exec_run(command)
         return vpn_client_port
+
+    def _find_exposed_port(self, image: str) -> str:
+        """
+        Find which ports were exposed via the EXPOSE keyword in the dockerfile
+        of the algorithm image. This port will be used for VPN traffic. If no
+        port is specified, the default port is used
+
+        Parameters
+        ----------
+        image: str
+            Algorithm image name
+
+        Returns
+        -------
+        str:
+            Port number to forward VPN traffic to (as str)
+        """
+        n2n_image = self.docker.images.get(image)
+        exposed_ports = n2n_image.attrs['Config']['ExposedPorts']
+        port = DEFAULT_ALGO_VPN_PORT
+        if len(exposed_ports) == 1:
+            port = list(exposed_ports)[0]
+            port = port[0:port.find('/')]
+            try:
+                int(port)
+            except ValueError:
+                self.log.warn("Could not parse port specified in algorithm "
+                              f"docker image {image}: {port}. Using default "
+                              f"port {DEFAULT_ALGO_VPN_PORT}")
+                return DEFAULT_ALGO_VPN_PORT
+        elif len(exposed_ports) > 1:
+            self.log.warn("More than 1 port exposed in docker image. "
+                          f"Using default port {port}.")
+        # else: no exposed port specified, return default
+        return port
 
     def _find_isolated_bridge(self) -> str:
         """
