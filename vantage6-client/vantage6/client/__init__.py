@@ -149,7 +149,7 @@ class ClientBase(object):
         return path
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params: dict=None, first_try: bool=True) -> dict:
+                params: dict = None, first_try: bool = True) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -168,7 +168,7 @@ class ClientBase(object):
         Returns
         -------
         dict
-            Eesponse of the server
+            Response of the server
         """
 
         # get appropiate method
@@ -393,7 +393,8 @@ class ClientBase(object):
 
             organization_json_list.append({
                 "id": org_id,
-                "input": self.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
+                "input": self.cryptor.encrypt_bytes_to_str(serialized_input,
+                                                           pub_key)
             })
 
         return self.request('task', method='post', json={
@@ -404,9 +405,9 @@ class ClientBase(object):
             "organizations": organization_json_list
         })
 
-    def get_results(self, id: int=None, state: str=None,
-                    include_task: bool=False, task_id: int=None,
-                    node_id: int=None) -> dict:
+    def get_results(self, id: int = None, state: str = None,
+                    include_task: bool = False, task_id: int = None,
+                    node_id: int = None) -> dict:
         """Get task result(s) from the central server
 
         Depending if a `id` is specified or not, either a single or a
@@ -492,7 +493,7 @@ class ClientBase(object):
     class SubClient:
         """Create sub groups of commands using this SubClient"""
         def __init__(self, parent):
-                self.parent = parent
+            self.parent = parent
 
 
 class UserClient(ClientBase):
