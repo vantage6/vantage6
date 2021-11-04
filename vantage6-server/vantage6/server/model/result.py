@@ -43,9 +43,9 @@ class Result(Base):
         session = DatabaseSessionManager.get_session()
         node = session.query(Node)\
             .join(Collaboration)\
-            .join(Task)\
             .join(Organization)\
             .join(Result)\
+            .join(Task)\
             .filter(Result.id == self.id)\
             .filter(self.organization_id == Node.organization_id)\
             .filter(Task.collaboration_id == Node.collaboration_id)\
