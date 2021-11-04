@@ -479,6 +479,10 @@ class ClientBase(object):
         # self.log.debug(f"Retrieving results using query parameters:{params}")
         results = self.request(endpoint=endpoint, params=params)
 
+        if not isinstance(results, dict):
+            self.log.warn("Requesting results failed")
+            return {}
+
         if id:
             # Single result
             decrypt_result(results)
