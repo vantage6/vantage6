@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-// import { Router } from '@angular/router'
+import { Router } from '@angular/router'
+import { Location } from '@angular/common';
 
 import { AuthService } from '../services/auth.service';
 import { TokenStorageService } from '../services/token-storage.service';
@@ -23,7 +24,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private tokenStorage: TokenStorageService,
-    // private router: Router
+    private location: Location
   ) { }
 
   ngOnInit(): void {
@@ -42,7 +43,9 @@ export class LoginComponent implements OnInit {
 
         this.isLoginFailed = false;
         this.isLoggedIn = true;
-        // this.router.navigate('/')
+
+        // go back to last page before login
+        this.location.back()
       },
       err => {
         this.errorMessage = err.error.msg;
