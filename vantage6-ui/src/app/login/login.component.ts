@@ -3,7 +3,7 @@ import { Router } from '@angular/router'
 import { Location } from '@angular/common';
 
 import { AuthService } from '../services/auth.service';
-import { TokenStorageService } from '../services/token-storage.service';
+// import { TokenStorageService } from '../services/token-storage.service';
 
 @Component({
   selector: 'app-login',
@@ -23,12 +23,18 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private tokenStorage: TokenStorageService,
+    // private tokenStorage: TokenStorageService,
     private location: Location
   ) { }
 
   ngOnInit(): void {
-    if (this.tokenStorage.getToken()) {
+    this.authService.getErrorMessage().subscribe((msg: string) => {
+      console.log("getting message", msg)
+      this.isLoginFailed = true; // TODO cleanup
+      this.errorMessage = msg;
+    });
+
+    if (this.authService.getToken()) {
       this.isLoggedIn = true;
     }
   }
@@ -36,22 +42,7 @@ export class LoginComponent implements OnInit {
   onSubmit(): void {
     const { username, password } = this.form;
 
-    this.authService.login(username, password).subscribe(
-      data => {
-        this.tokenStorage.saveToken(data.access_token);
-        this.tokenStorage.saveUser(data);
-
-        this.isLoginFailed = false;
-        this.isLoggedIn = true;
-
-        // go back to last page before login
-        this.location.back()
-      },
-      err => {
-        this.errorMessage = err.error.msg;
-        this.isLoginFailed = true;
-      }
-    );
+    this.authService.login(username, password);
   }
 
   reloadPage(): void {
