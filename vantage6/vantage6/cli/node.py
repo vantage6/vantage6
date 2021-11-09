@@ -371,7 +371,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             debug('  - non file-based database added')
             env[f'{LABEL}_DATABASE_URI'] = uri
         else:
-            debug('  - file-baased database added')
+            debug('  - file-based database added')
             env[f'{LABEL}_DATABASE_URI'] = f'/mnt/{label}.csv'
             mounts.append((f'/mnt/{label}.csv', str(uri)))
 
