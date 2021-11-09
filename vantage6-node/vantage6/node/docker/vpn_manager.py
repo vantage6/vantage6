@@ -169,7 +169,9 @@ class VPNManager(object):
                 )
                 vpn_interface = json.loads(vpn_interface)
                 break
-            except JSONDecodeError:
+            except (JSONDecodeError, docker.errors.APIError):
+                # JSONDecodeError if VPN is not setup yet, APIError if VPN
+                # container is restarting (e.g. due to connection errors)
                 time.sleep(1)
         return vpn_interface[0]['addr_info'][0]['local']
 
@@ -379,7 +381,9 @@ class VPNManager(object):
             network='host',
             cap_add='NET_ADMIN',
             command=command,
-            auto_remove=True,
+            # auto_remove=True,
+            # # TODO figure out why this needs to be commented out (leads to
+            # crash otherwise)
         )
 
     def _get_if(self, interfaces, index) -> Union[Dict, None]:

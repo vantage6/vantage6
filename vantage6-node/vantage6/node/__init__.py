@@ -39,10 +39,12 @@ from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
 
+
 class VPNConnectMode(Enum):
     FIRST_TRY = 1
     REFRESH_KEYPAIR = 2
     REFRESH_COMPLETE = 3
+
 
 class NodeTaskNamespace(SocketIONamespace):
     """Class that handles incoming websocket events."""
@@ -374,7 +376,7 @@ class Node(object):
             if results.status_code:
                 self.socket_tasks.emit(
                     'container_failed',
-                    self.server_io.id,
+                    self.server_io.whoami.id_,
                     results.status_code,
                     results.result_id,
                     self.server_io.collaboration_id
