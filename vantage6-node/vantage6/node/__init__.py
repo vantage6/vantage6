@@ -211,25 +211,41 @@ class Node(object):
             self.ctx.config.get("docker_registries", [])
         )
 
+        databases = {}
+
+        # Check that the `default` database label is present. If this is
+        # not the case, older algorithms will break
+        db_labels = self.config['databases'].keys()
+        if 'default' not in db_labels:
+            self.log.error("'default' database not specified in the config!")
+            self.log.debug(f'databases in config={db_labels}')
+
         # If we're running in a docker container, database_uri would point
         # to a path on the *host* (since it's been read from the config
         # file). That's no good here. Therefore, we expect the CLI to set
-        # the environment variable for us. This has the added bonus that we
+        # the environment variables for us. This has the added bonus that we
         # can override the URI from the command line as well.
-        default_uri = self.config['databases']['default']
-        database_uri = os.environ.get('DATABASE_URI', default_uri)
+        for label in db_labels:
+            label_upper = label.upper()
+            if self.__docker.running_in_docker():
+                uri = os.environ[f'{label_upper}_DATABASE_URI']
+            else:
+                uri = self.config['databases'][label]
 
-        if Path(database_uri).exists():
-            # We'll copy the file to the folder `data` in our task_dir.
-            self.log.info(f'Copying {database_uri} to {task_dir}')
-            shutil.copy(database_uri, task_dir)
+            db_is_file = Path(uri).exists()
+            if db_is_file:
+                # We'll copy the file to the folder `data` in our task_dir.
+                self.log.info(f'Copying {uri} to {task_dir}')
+                shutil.copy(uri, task_dir)
 
-            # Since we've copied the database to the folder 'data' in the root
-            # of the volume: '/data/<database.csv>'. We'll just keep the
-            # basename (i.e. filename + ext).
-            database_uri = os.path.basename(database_uri)
+                # Since we've copied the database to the folder 'data' in the
+                # root of the volume: '/data/<database.csv>'. We'll just keep
+                # the basename (i.e. filename + ext).
+                uri = os.path.basename(uri)
 
-            self.__docker.database_is_file = True
+                self.__docker.database_is_file = True
+
+            databases[label] = {'uri': uri, 'is_file': db_is_file}
 
         # Connect to the isolated algorithm network *only* if we're running in
         # a docker container.
@@ -240,7 +256,7 @@ class Node(object):
             )
 
         # Let's keep it safe
-        self.__docker.set_database_uri(database_uri)
+        self.__docker.set_databases(databases)
 
         # Load additional environment vars for the algorithms. This is
         # for example usefull when a password is needed for the database
@@ -368,7 +384,8 @@ class Node(object):
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
-            token=token
+            token=token,
+            database=task['database']
         )
 
     def __listening_worker(self):
