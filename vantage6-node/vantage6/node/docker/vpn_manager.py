@@ -302,8 +302,14 @@ class VPNManager(object):
             Port number to forward VPN traffic to (as str)
         """
         n2n_image = self.docker.images.get(image)
-        exposed_ports = n2n_image.attrs['Config']['ExposedPorts']
         port = DEFAULT_ALGO_VPN_PORT
+
+        exposed_ports = []
+        try:
+            exposed_ports = n2n_image.attrs['Config']['ExposedPorts']
+        except KeyError:
+            return port  # No exposed ports defined, use default
+
         if len(exposed_ports) == 1:
             port = list(exposed_ports)[0]
             port = port[0:port.find('/')]
