@@ -173,7 +173,7 @@ class Task(ServicesResources):
         # figure out the initiator organization of the task
         if g.user:
             initiator = g.user.organization
-        else: #g.container:
+        else:  # g.container:
             initiator = db.Node.get(g.container["node_id"]).organization
 
         # Create the new task in the database
@@ -198,7 +198,8 @@ class Task(ServicesResources):
         # permissions ok, create record
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
-                       database=data.get('database', ''), initiator=initiator)
+                       database=data.get('database', 'default'),
+                       initiator=initiator)
 
         # create run_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new run_id. Tasks created
