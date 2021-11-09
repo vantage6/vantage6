@@ -20,7 +20,9 @@ export class AuthService {
   isLoginFailed = false;
   errorMessage = new BehaviorSubject<string>('');
 
-  constructor(private http: HttpClient, private location: Location) {}
+  constructor(private http: HttpClient, private location: Location) {
+    this.signOut(); // TODO remove when rest works
+  }
 
   login(username: string, password: string): void {
     console.log('logging in auth service');

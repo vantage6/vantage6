@@ -46,29 +46,4 @@ export class AppComponent {
 
     // }
   }
-
-  ngAfterViewInit() {
-    this.observer
-      .observe(['(max-width: 800px)'])
-      .pipe(delay(1))
-      .subscribe((res) => {
-        if (res.matches) {
-          this.sidenav.mode = 'over';
-          this.sidenav.close();
-        } else {
-          this.sidenav.mode = 'side';
-          this.sidenav.open();
-        }
-      });
-  }
-
-  logout(): void {
-    // this.tokenStorageService.signOut();
-    this.authService.signOut();
-    window.location.reload();
-  }
-
-  echo(): void {
-    console.log('click');
-  }
 }

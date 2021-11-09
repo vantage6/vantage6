@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router'
+import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
 import { AuthService } from '../services/auth.service';
@@ -8,12 +8,12 @@ import { AuthService } from '../services/auth.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit {
   form: any = {
     username: null,
-    password: null
+    password: null,
   };
   isLoggedIn = false;
   isLoginFailed = false;
@@ -25,12 +25,14 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
     // private tokenStorage: TokenStorageService,
     private location: Location
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.authService.getErrorMessage().subscribe((msg: string) => {
-      console.log("getting message", msg)
-      this.isLoginFailed = true; // TODO cleanup
+      console.log('getting message', msg);
+      if (msg) {
+        this.isLoginFailed = true; // TODO cleanup
+      }
       this.errorMessage = msg;
     });
 
