@@ -198,7 +198,6 @@ class Task(ServicesResources):
         # permissions ok, create record
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
-                       database=data.get('database', 'default'),
                        initiator=initiator)
 
         # create run_id. Users can only create top-level -tasks (they will not
@@ -206,8 +205,10 @@ class Task(ServicesResources):
         # by containers are always sub-tasks
         if g.user:
             task.run_id = task.next_run_id()
+            task.database = data.get('database', 'default')
             log.debug(f"New run_id {task.run_id}")
         elif g.container:
+            task.database = data.get('database', g.container['database'])
             task.parent_id = g.container["task_id"]
             task.run_id = db.Task.get(g.container["task_id"]).run_id
             log.debug(f"Sub task from parent_id={task.parent_id}")
