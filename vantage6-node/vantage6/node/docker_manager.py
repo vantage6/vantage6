@@ -22,7 +22,6 @@ from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
 
 
-
 class Result(NamedTuple):
     """ Data class to store the result of the docker image."""
     result_id: int
@@ -53,8 +52,7 @@ class DockerManager(object):
         """
         self.log.debug("Initializing DockerManager")
         self.data_volume_name = data_volume_name
-        self.database_uri = None
-        self.database_is_file = False
+        self.databases = None
         self.__tasks_dir = tasks_dir
         self.algorithm_env = {}
 
@@ -218,23 +216,33 @@ class DockerManager(object):
             self.log.debug('Failed to pull image')
             self.log.error(e)
 
-    def set_database_uri(self, database_uri):
+    def set_databases(self, databases):
         """A setter for clarity."""
-        self.database_uri = database_uri
+        self.databases = databases
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: int, token: str) -> bool:
-        """Runs the docker-image in detached mode.
+            tmp_vol_name: int, token: str, database: str) -> bool:
+        """Run the algorithm container
 
-            It will will attach all mounts (input, output and datafile)
-            to the docker image. And will supply some environment
-            variables.
+        Parameters
+        ----------
+        result_id : int
+            Id of the result at the server
+        image : str
+            Docker image name of the algorithm
+        docker_input : bytes
+            Input to the algorithm
+        tmp_vol_name : int
+            Docker volume name of the temporary storage
+        token : str
+            JWT token to access the server from the algorithm
+        database : str
+            Name of the database to be used
 
-            :param result_id: server result identifier
-            :param image: docker image name
-            :param docker_input: input that can be read by docker container
-            :param run_id: identifieer of the run sequence
-            :param token: Bearer token that the container can use
+        Returns
+        -------
+        bool
+            True if the container was succesfully kicked of
         """
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image):
@@ -310,11 +318,9 @@ class DockerManager(object):
             print('-' * 80)
             proxy_host = 'host.docker.internal'
 
-        # define enviroment variables for the docker-container, the
+        # Define enviroment variables for the docker-container, the
         # host, port and api_path are from the local proxy server to
         # facilitate indirect communication with the central server
-        # FIXME: we should only prepend data_folder if database_uri is a
-        #   filename
         environment_variables = {
             "INPUT_FILE": f"{data_folder}/{task_folder_name}/input",
             "OUTPUT_FILE": f"{data_folder}/{task_folder_name}/output",
@@ -324,11 +330,26 @@ class DockerManager(object):
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
-        if self.database_is_file:
+
+        # Only prepend the data_folder is it is a file-based database
+        # note that this part of the code is in preperation for 3+. This
+        # would allow algorithms to access multiple data-sources at the
+        # same time
+        for label in self.databases:
+            db = self.databases[label]
+            var_name = f'{label.upper()}_DATABASE_URI'
+            environment_variables[var_name] = f"{data_folder}/{db['uri']}" if \
+                db['is_file'] else db['uri']
+
+        # Support legacy algorithms
+        try:
             environment_variables["DATABASE_URI"] = \
-                f"{data_folder}/{self.database_uri}"
-        else:
-             environment_variables["DATABASE_URI"] = self.database_uri
+                self.databases[database]['uri']
+        except KeyError as e:
+            self.log.error(f"'{database}' database missing! This could crash "
+                           "legacy algorithms")
+            self.log.debug(e)
+
         self.log.debug(f"environment: {environment_variables}")
 
         # Load additional environment variables
