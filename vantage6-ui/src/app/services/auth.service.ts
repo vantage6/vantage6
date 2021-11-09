@@ -21,7 +21,10 @@ export class AuthService {
   errorMessage = new BehaviorSubject<string>('');
 
   constructor(private http: HttpClient, private location: Location) {
-    this.signOut(); // TODO remove when rest works
+    if (this.getToken()) {
+      this.loggedIn = true;
+      this.loggedInBhs.next(this.loggedIn);
+    }
   }
 
   login(username: string, password: string): void {
