@@ -227,7 +227,7 @@ help_ = {
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click.option('--force-db-mount', is_flag=True,
-              help="Skipp the check of the existence of the DB (always try to "
+              help="Skip the check of the existence of the DB (always try to "
                    "mount)")
 @click.option('--attach/--detach', default=False,
               help="Attach node logs to the console after start")
