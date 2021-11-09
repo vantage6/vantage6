@@ -19,8 +19,7 @@ from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
-from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
-from vantage6.client.exceptions import DeserializationException
+from vantage6.client.encryption import RSACryptor, DummyCryptor
 
 
 module_name = __name__.split('.')[1]
@@ -349,7 +348,7 @@ class ClientBase(object):
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_='', description='',
                   organization_ids: list = None,
-                  data_format=LEGACY) -> dict:
+                  data_format=LEGACY, database: str='default') -> dict:
         """Post a new task at the server
 
         It will also encrypt `input_` for each receiving organization.
@@ -410,7 +409,8 @@ class ClientBase(object):
             "image": image,
             "collaboration_id": collaboration_id,
             "description": description,
-            "organizations": organization_json_list
+            "organizations": organization_json_list,
+            'database': database
         })
 
     def get_results(self, id: int=None, state: str=None,
@@ -1288,7 +1288,7 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
-                   data_format: str=LEGACY) -> dict:
+                   data_format: str=LEGACY, database: str='default') -> dict:
             """Create a new task
 
             Parameters
@@ -1316,7 +1316,7 @@ class UserClient(ClientBase):
             """
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
-                                         data_format)
+                                         data_format, database)
 
         def delete(self, id_: int) -> dict:
             """Delete a task
@@ -1473,6 +1473,7 @@ class ContainerClient(ClientBase):
         # obtain the identity from the token
         container_identity = jwt.decode(token, verify=False)['identity']
         self.image = container_identity.get("image")
+        self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.log.info(
@@ -1540,7 +1541,8 @@ class ContainerClient(ClientBase):
             collaboration_id=self.collaboration_id,
             organization_ids=organization_ids,
             input_=input_,
-            image=self.image
+            image=self.image,
+            database=self.database
         )
 
     def get_organizations_in_my_collaboration(self):
@@ -1557,7 +1559,7 @@ class ContainerClient(ClientBase):
 
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_: str = '', description='',
-                  organization_ids: list = []) -> dict:
+                  organization_ids: list = [], database='default') -> dict:
         """ Post a new task at the central server.
 
             ! To create a new task from the algorithm container you
@@ -1597,7 +1599,8 @@ class ContainerClient(ClientBase):
             "image": image,
             "collaboration_id": collaboration_id,
             "description": description,
-            "organizations": organization_json_list
+            "organizations": organization_json_list,
+            "database": database
         })
 
 
