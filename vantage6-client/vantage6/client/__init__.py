@@ -479,8 +479,9 @@ class ClientBase(object):
         # self.log.debug(f"Retrieving results using query parameters:{params}")
         results = self.request(endpoint=endpoint, params=params)
 
-        if not isinstance(results, dict):
+        if isinstance(results, str):
             self.log.warn("Requesting results failed")
+            self.log.debug(f"Results message: {results}")
             return {}
 
         if id:
