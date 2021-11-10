@@ -135,14 +135,14 @@ def cli_node_new_configuration(name, environment, system_folders):
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
 
-    # check if config name is allowed docker name
-    check_config_name_allowed(name)
-
     # remove spaces, from name
     name_new = name.replace(" ", "-")
     if name != name_new:
         info(f"Replaced spaces from configuration name: {name_new}")
         name = name_new
+
+    # check if config name is allowed docker name
+    check_config_name_allowed(name)
 
     if not environment:
         environment = q.select(
