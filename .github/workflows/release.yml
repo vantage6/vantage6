@@ -1,0 +1,28 @@
+on:
+  push:
+    tags:
+      - 'version/**'
+
+jobs:
+  # retrieve version from tag: major.minor.patch.preN
+  get-version-from-tag:
+    name: Obtain version info
+
+  # set version in all submodules (?)
+  set-version-in-submodule:
+    name: Set version in modules
+    needs: get-version-from-tag
+
+  # build packages
+  build:
+    name: Build all submodule
+    needs: set-version-in-submodule
+
+  upload-to-pypi:
+    name: Upload to PyPi
+    needs: build
+
+  # notify community
+  notify-community:
+    name: Notify Discor community'
+    needs: upload-to-PyPi
