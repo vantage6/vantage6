@@ -108,7 +108,7 @@ class AppContext(metaclass=Singleton):
         self_.log = logging.getLogger(module_name)
         if self_.LOGGING_ENABLED:
             self_.setup_logging()
-        self_.log.debug("Test!")
+
         return self_
 
     @classmethod
