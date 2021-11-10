@@ -1,7 +1,7 @@
 FROM python:3.7-slim-buster
 
-LABEL version="0.0.1"
-LABEL infrastructure_version = "0.3.0"
+LABEL version="1"
+LABEL infrastructure_version = "2"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
 # slim buster does not have gcc installed
