@@ -1,14 +1,16 @@
 from discord import Embed
-import discord
+# import discord
 import os
 import click
 from discord.ext import tasks, commands
 
-from vantage6.common import info
-from dotenv import load_dotenv
+# from vantage6.common import info
+# from dotenv import load_dotenv
 
+def info(msg):
+    print(msg)
 
-load_dotenv()
+# load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.bot.Bot('$')
