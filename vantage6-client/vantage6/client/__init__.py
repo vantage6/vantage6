@@ -444,33 +444,6 @@ class ClientBase(object):
         dict
             Containing the result(s)
         """
-        def decrypt_result(res):
-            """Helper to decrypt the keys 'input' and 'result' in dict.
-
-            Keys are replaced, but object reference remains intact: changes are
-            made *in-place*.
-            """
-            cryptor = self.cryptor
-            try:
-                self.log.info('Decrypting input')
-                # TODO this only works when the results belong to the
-                # same organization... We should make different implementation
-                # of get_results
-                res["input"] = cryptor.decrypt_str_to_bytes(res["input"])
-
-            except Exception as e:
-                self.log.debug(e)
-
-            try:
-                if res["result"]:
-                    self.log.info('Decrypting result')
-                    res["result"] = cryptor.decrypt_str_to_bytes(res["result"])
-
-            except ValueError as e:
-                self.log.error("Could not decrypt/decode input or result.")
-                self.log.error(e)
-                # raise
-
         # Determine endpoint and create dict with query parameters
         endpoint = 'result' if not id else f'result/{id}'
         params = dict()
@@ -489,14 +462,42 @@ class ClientBase(object):
 
         if id:
             # Single result
-            decrypt_result(results)
+            self._decrypt_result(results)
 
         else:
             # Multiple results
             for result in results:
-                decrypt_result(result)
+                self._decrypt_result(result)
 
         return results
+
+    def _decrypt_result(self, result):
+        """Helper to decrypt the keys 'input' and 'result' in dict.
+
+        Keys are replaced, but object reference remains intact: changes are
+        made *in-place*.
+        """
+        cryptor = self.cryptor
+        try:
+            self.log.info('Decrypting input')
+            # TODO this only works when the results belong to the
+            # same organization... We should make different implementation
+            # of get_results
+            result["input"] = cryptor.decrypt_str_to_bytes(result["input"])
+
+        except Exception as e:
+            self.log.debug(e)
+
+        try:
+            if result["result"]:
+                self.log.info('Decrypting result')
+                result["result"] = \
+                    cryptor.decrypt_str_to_bytes(result["result"])
+
+        except ValueError as e:
+            self.log.error("Could not decrypt/decode input or result.")
+            self.log.error(e)
+            # raise
 
     class SubClient:
         """Create sub groups of commands using this SubClient"""
@@ -1446,7 +1447,7 @@ class UserClient(ClientBase):
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
 
-        A algorithm container (should) never communicate directly to the
+        An algorithm container should never communicate directly to the
         central server. Therefore the algorithm container has no
         internet connection. The algorithm can, however, talk to a local
         proxy server which has interface to the central server. This way
@@ -1459,8 +1460,8 @@ class ContainerClient(ClientBase):
 
     def __init__(self, token: str, *args, **kwargs):
         """Container client.
-        A client which can be used by algorithms. All permissions of the container are
-        derived from the token.
+        A client which can be used by algorithms. All permissions of the
+        container are derived from the token.
 
         Parameters
         ----------
@@ -1511,8 +1512,10 @@ class ContainerClient(ClientBase):
             f"task/{task_id}/result"
         )
 
-        res = [pickle.loads(base64s_to_bytes(result.get("result")))
-               for result in results]
+        res = []
+        for result in results:
+            self._decrypt_result(result)
+            res.append(result.get("result"))
 
         return res
 
