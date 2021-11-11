@@ -138,6 +138,10 @@ class TaskResultSchema(HATEOASModelSchema):
     class Meta:
         model = db.Result
 
+    node = fields.Function(
+        func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
+    )
+
 
 class ResultSchema(HATEOASModelSchema):
     class Meta:
