@@ -122,14 +122,10 @@ install-dev:
 	cd vantage6-server && pip install -e .
 
 image:
-	docker build -t harbor.vantage6.ai/infrastructure/node:${TAG} .
-	docker tag harbor.vantage6.ai/infrastructure/node:${TAG} harbor.vantage6.ai/infrastructure/server:${TAG}
-	docker tag harbor.vantage6.ai/infrastructure/server:${TAG} harbor2.vantage6.ai/infrastructure/server:${TAG}
-	docker tag harbor.vantage6.ai/infrastructure/node:${TAG} harbor2.vantage6.ai/infrastructure/node:${TAG}
+	docker build -t harbor2.vantage6.ai/infrastructure/node:${TAG} .
+	docker tag harbor2.vantage6.ai/infrastructure/node:${TAG} harbor2.vantage6.ai/infrastructure/server:${TAG}
 
 docker-push:
-	docker push harbor.vantage6.ai/infrastructure/node:${TAG}
-	docker push harbor.vantage6.ai/infrastructure/server:${TAG}
 	docker push harbor2.vantage6.ai/infrastructure/node:${TAG}
 	docker push harbor2.vantage6.ai/infrastructure/server:${TAG}
 

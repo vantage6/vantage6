@@ -51,6 +51,16 @@ jobs:
       build: ${{ needs.version.outputs.build }}
 
     steps:
+
+      - name: Login to Harbor2
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          echo "::debug::$USERNAME"
+          echo "::debug::$PASSWORD"
+          docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
       - name: checkout repo
         uses: actions/checkout@v2
         with:
@@ -92,8 +102,14 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           make publish
+
+      - name: Build Docker image
+        run: make image TAG=$version
+
+      - name: Push Docker image
+        run: make docker-push TAG=$version
+
       - name: Notify community
-        runs-on: ubuntu-latest
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_RELEASE_TOKEN }}
         run: |
