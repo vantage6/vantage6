@@ -158,11 +158,12 @@ def proxy_task_result(id):
 
         unencrypted = []
         for result in results:
-            result["result"] = server_io.cryptor.decrypt_str_to_bytes(
-                result["result"]
-            )
+            if result['result']:
+                result["result"] = server_io.cryptor.decrypt_str_to_bytes(
+                    result["result"]
+                )
+                result["result"] = bytes_to_base64s(result["result"])
 
-            result["result"] = bytes_to_base64s(result["result"])
             unencrypted.append(
                 result
             )
