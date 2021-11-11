@@ -90,11 +90,12 @@ git-reset:
 
 set-version:
 	# --version --build --spec --post
-	python tools\update-version.py ${FLAGS}
+	cd tools && ls
+	cd tools && python update-version.py ${FLAGS}
 
 community:
 	#  make community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'"
-	python tools\update-discord.py ${FLAGS}
+	cd tools && python update-discord.py ${FLAGS}
 
 set-buildnr:
 	find ./ -name __build__ -exec sh -c "echo ${BUILDNR} > {}" \;
