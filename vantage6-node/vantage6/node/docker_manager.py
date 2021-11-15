@@ -344,7 +344,7 @@ class DockerManager(object):
         # Support legacy algorithms
         try:
             environment_variables["DATABASE_URI"] = \
-                self.databases[database]['uri']
+                f"{data_folder}/{self.databases[database]['uri']}"
         except KeyError as e:
             self.log.error(f"'{database}' database missing! This could crash "
                            "legacy algorithms")
