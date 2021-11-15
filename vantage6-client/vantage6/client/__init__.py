@@ -1308,11 +1308,15 @@ class UserClient(ClientBase):
                 Algorithm input
             data_format : str, optional
                 IO data format used, by default LEGACY
+            database: str, optional
+                Name of the database to use. This should match the key
+                in the node configuration files. If not specified the
+                default database will be tried.
 
             Returns
             -------
             dict
-                [description]
+                Containing the task information
             """
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
