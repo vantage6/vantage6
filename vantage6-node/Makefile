@@ -6,9 +6,6 @@ TAG ?= latest
 rebuild: clean build-dist
 
 build-dist:
-	# Increase the build number
-	python inc-build.py vantage6/node/__build__
-
 	# Build the PyPI package
 	python setup.py sdist bdist_wheel
 
