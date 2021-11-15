@@ -88,7 +88,6 @@ jobs:
           pip install click
           pip install wheel
           pip install twine
-          pip install discord.py
 
       - name: Update version in packages
         id: set
@@ -133,6 +132,11 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Install dependancies
+        run: |
+          pip install discord.py
+          pip install click
 
       - name: Notify Discord community
         env:
