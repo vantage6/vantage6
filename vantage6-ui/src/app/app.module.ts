@@ -9,19 +9,17 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { CommonModule } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { AccessGuard } from './access-guard.guard';
+import { NavbarComponent } from './navbar/navbar.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    LoginComponent,
-    HomeComponent
-  ],
+  declarations: [AppComponent, LoginComponent, HomeComponent, NavbarComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -34,8 +32,9 @@ import { AccessGuard } from './access-guard.guard';
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
+    CommonModule,
   ],
   providers: [AccessGuard],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

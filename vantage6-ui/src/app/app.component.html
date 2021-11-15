@@ -1,1 +1,7 @@
-<router-outlet></router-outlet>
+<div *ngIf="!isLoggedIn">
+    <router-outlet></router-outlet>
+</div>
+<!-- The navbar component wraps the router-outlet with navigation bar and sidebar -->
+<div *ngIf="isLoggedIn">
+    <app-navbar></app-navbar>
+</div>

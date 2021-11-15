@@ -1,0 +1,48 @@
+<mat-toolbar class="mat-elevation-z8">
+  <button mat-icon-button *ngIf="sidenav.mode === 'over'" (click)="sidenav.toggle()">
+    <mat-icon *ngIf="!sidenav.opened">
+      menu
+    </mat-icon>
+    <mat-icon *ngIf="sidenav.opened">
+      close
+    </mat-icon>
+  </button>
+  <img class="logo" src="../assets/images/vantage6_logo.png" />
+
+  <span class="spacer"></span>
+
+  <button class="btn-primary" mat-button (click)="logout()">
+    Logout
+  </button>
+</mat-toolbar>
+
+<mat-sidenav-container>
+  <mat-sidenav #sidenav="matSidenav" class="mat-elevation-z8">
+
+  <button mat-button class="menu-button" routerLink="/" routerLinkActive="active">
+    <mat-icon>home</mat-icon>
+    <span>Home</span>
+  </button>
+  <button mat-button class="menu-button">
+    <mat-icon>person</mat-icon>
+    <span>Profile</span>
+  </button>
+  <button mat-button class="menu-button">
+    <mat-icon>info</mat-icon>
+    <span>About</span>
+  </button>
+
+  <mat-divider></mat-divider>
+
+  <button mat-button class="menu-button">
+    <mat-icon>help</mat-icon>
+    <span>Help</span>
+  </button>
+
+  </mat-sidenav>
+  <mat-sidenav-content>
+  <div class="content mat-elevation-z8">
+      <router-outlet></router-outlet>
+  </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
