@@ -4,7 +4,9 @@ on:
       - 'version/**'
 
 jobs:
-  # retrieve version from tag: major.minor.patch.preN
+
+  # Check that the tag that is being used starts with `version/`. If
+  # this is not the case, this tag is not intended for release.
   verify:
     name: Verify version tag
     runs-on: ubuntu-latest
@@ -12,6 +14,11 @@ jobs:
       - id: verify
         if: startsWith(github.ref, 'refs/tags/version') != true
         uses: andymckay/cancel-action@0.2
+
+  # From the tag we split the individual version components:
+  # major.minor.patch.stage<N>. Note that post releases are not part
+  # of this schema as they are only used for releasing updated docker
+  # images.
   version:
     name: Obtain version
     runs-on: ubuntu-latest
@@ -37,9 +44,13 @@ jobs:
       stage: ${{ steps.split.outputs.stage }}
       build: ${{ steps.split.outputs.build }}
 
-  # set version in all submodules (?)
-  build:
-    name: Set version in modules
+  # Build an release all the vantage6 infrastructure packakes. For all
+  # the packages it will (1) update the version as specified in the tag,
+  # (2) build the package, (3) upload it to pypi, and (4) build and push
+  # the Docker image
+  build-n-release:
+
+    name: Build and release the project
     runs-on: ubuntu-latest
     needs: version
     env:
@@ -52,7 +63,7 @@ jobs:
 
     steps:
 
-      - name: Login to Harbor2
+      - name: Login to harbor2.vantage6.ai
         env:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_TOKEN }}
@@ -61,25 +72,26 @@ jobs:
           echo "::debug::$PASSWORD"
           docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
-      - name: checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v2
         with:
           submodules: 'true'
-      - name: peep
-        run: |
-          echo "::debug::$(cd vantage6 && ls)"
+
       - name: Set up Python 3.7
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
-      - name: install deps
+
+      - name: Install dependancies
         run: |
           python -m pip install --upgrade pip
           pip install click
           pip install wheel
           pip install twine
           pip install discord.py
-      - id: set
+
+      - name: Update version in packages
+        id: set
         run: |
           BUILD="--build 0"; if [[ -n $build ]]; then BUILD="--build $build"; fi
           SPEC="--spec final"
@@ -89,13 +101,14 @@ jobs:
           FLAGS="--version ${major}.${minor}.${patch} $BUILD --post 0 $SPEC"
           echo "::debug::$FLAGS"
           make set-version FLAGS="$FLAGS"
-      - id: make
+
+      - name: Build project
+        id: make
         run: |
           make rebuild
-      - id: peep
-        run: |
-          echo "::debug::$(cd vantage6 && cd dist && ls)"
-      - id: publish
+
+      - name: Publish project to PyPi
+        id: publish
         if: ${{ !env.ACT }}
         env:
           TWINE_USERNAME: __token__
@@ -109,14 +122,17 @@ jobs:
       - name: Push Docker image
         run: make docker-push TAG=$version
 
-      - name: Notify community
+  # When the project is build and released the Discord community is
+  # notified.
+  notify:
+    runs-on: ubuntu-latest
+    needs: [version, build-n-release]
+    env:
+      version: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Notify Discord community
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_RELEASE_TOKEN }}
         run: |
-          make community FLAGS="--version $version --notes 'todo' --post-notes 'also todo'"
-
-  # # notify community
-  # notify-community:
-  #   name: Notify Discor community
-  #   runs-on: ubuntu-latest
-  #   needs: upload-to-PyPi
+          make community FLAGS="--version $version --notes '' \
+            --post-notes ''"
