@@ -130,6 +130,10 @@ jobs:
     env:
       version: ${{ needs.version.outputs.version }}
     steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Notify Discord community
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_RELEASE_TOKEN }}
