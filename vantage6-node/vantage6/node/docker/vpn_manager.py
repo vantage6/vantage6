@@ -388,9 +388,7 @@ class VPNManager(object):
             network='host',
             cap_add='NET_ADMIN',
             command=command,
-            # auto_remove=True,
-            # # TODO figure out why this needs to be commented out (leads to
-            # crash otherwise)
+            remove=True,
         )
 
     def _get_if(self, interfaces, index) -> Union[Dict, None]:
