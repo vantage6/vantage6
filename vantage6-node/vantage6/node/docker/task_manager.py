@@ -64,6 +64,7 @@ class DockerTaskManager(object):
         self.__database_uri = database_uri
         self.database_is_file = database_is_file
         self.data_volume_name = docker_volume_name
+        self.node_name = node_name
 
         self.docker = docker.from_env()
         self.container = None
@@ -201,6 +202,8 @@ class DockerTaskManager(object):
             Port number assigned for VPN communication. None if VPN is inactive
         """
         vpn_port = None
+        container_name = f'{APPNAME}-{self.node_name}-result-{self.result_id}'
+        helper_container_name = container_name + '-helper'
         if self.__vpn_manager:
             # if VPN is active, network exceptions must be configured
             # First, start a container that runs indefinitely. The algorithm
@@ -211,6 +214,7 @@ class DockerTaskManager(object):
                 image='alpine',
                 labels=self.helper_labels,
                 network=self.__isolated_network_mgr.network_name,
+                name=helper_container_name,
                 detach=True
             )
             # setup forwarding of traffic via VPN client to and from the
@@ -232,6 +236,7 @@ class DockerTaskManager(object):
                 environment=self.environment_variables,
                 network='container:' + self.helper_container.id,
                 volumes=self.volumes,
+                name=container_name,
                 labels=self.labels
             )
         except Exception as e:

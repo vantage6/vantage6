@@ -85,7 +85,7 @@ class IsolatedNetworkManager(object):
         )
 
     def cleanup(self):
-        """ Delete the isolated network """
+        """Delete the isolated network"""
         try:
             self.isolated_network.remove()
         except Exception as e:

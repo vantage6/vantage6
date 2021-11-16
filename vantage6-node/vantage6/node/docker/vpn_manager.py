@@ -11,7 +11,7 @@ from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
-    VPN_SUBNET, FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT
+    FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 
@@ -24,10 +24,11 @@ class VPNManager(object):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, isolated_network_mgr: IsolatedNetworkManager,
-                 node_name: str, vpn_volume_name: str):
+                 node_name: str, vpn_volume_name: str, vpn_subnet: str):
         self.isolated_network_mgr = isolated_network_mgr
         self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
         self.vpn_volume_name = vpn_volume_name
+        self.subnet = vpn_subnet
 
         self.has_vpn = False
 
@@ -375,9 +376,9 @@ class VPNManager(object):
         # will be accepted into the isolated network
         command = (
             'sh -c "'
-            f'iptables -I DOCKER-USER 1 -d {VPN_SUBNET} -i {isolated_bridge} '
+            f'iptables -I DOCKER-USER 1 -d {self.subnet} -i {isolated_bridge} '
             '-j ACCEPT; '
-            f'iptables -I DOCKER-USER 1 -s {VPN_SUBNET} -o {isolated_bridge} '
+            f'iptables -I DOCKER-USER 1 -s {self.subnet} -o {isolated_bridge} '
             '-j ACCEPT; '
             '"'
         )
