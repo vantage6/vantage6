@@ -85,6 +85,10 @@ class VPNManager(object):
         # create network exception so that packet transfer between VPN network
         # and the vpn client container is allowed
         bridge_interface = self._find_isolated_bridge()
+        if not bridge_interface:
+            self.log.error("Setting up VPN failed: could not find bridge "
+                           "interface of isolated network")
+            return
         self._configure_host_network(isolated_bridge=bridge_interface)
 
         # set successful initiation of VPN connection
@@ -175,6 +179,26 @@ class VPNManager(object):
                 # container is restarting (e.g. due to connection errors)
                 time.sleep(1)
         return vpn_interface[0]['addr_info'][0]['local']
+
+    # TODO this function may also be used outside VPN manager, refactor!
+    def get_local_ip(self, container) -> str:
+        """
+        Get address of a container in the isolated network
+
+        Parameters
+        ----------
+        container: Container
+            Docker container whose IP address should be obtained
+
+        Returns
+        -------
+        str
+            IP address of a container in isolated network
+        """
+        container.reload()
+        return container.attrs[
+            'NetworkSettings']['Networks'][
+            self.isolated_network_mgr.network_name]['IPAddress']
 
     def forward_vpn_traffic(self, helper_container: Container,
                             algo_image_name: str) -> int:
@@ -268,11 +292,8 @@ class VPNManager(object):
 
         # Get IP Address of the algorithm container
         algo_helper_container.reload()  # update attributes
-        algo_ip = (
-            algo_helper_container.attrs['NetworkSettings']['Networks']
-                                       [self.isolated_network_mgr.network_name]
-                                       ['IPAddress']
-        )
+        algo_ip = self.get_local_ip(algo_helper_container)
+
         # Set port at which algorithm containers receive traffic
         algorithm_port = self._find_exposed_port(algo_image_name)
 
@@ -337,13 +358,12 @@ class VPNManager(object):
         string
             The name of the network interface in the host namespace
         """
-        # Get network config from VPN client container
-        _, isolated_interface = self.vpn_client_container.exec_run(
-            ['ip', '--json', 'addr', 'show', 'dev', 'eth0']
-        )
-
-        isolated_interface = json.loads(isolated_interface)
-        link_index = self._get_link_index(isolated_interface)
+        # Get the isolated network interface and extract its link index
+        isolated_interface = self._get_isolated_interface()
+        if isolated_interface:
+            link_index = self._get_link_index(isolated_interface)
+        else:
+            return None  # cannot setup host rules if link is not found
 
         # Get network config from host namespace
         host_interfaces = self.docker.containers.run(
@@ -357,6 +377,33 @@ class VPNManager(object):
         linked_interface = self._get_if(host_interfaces, link_index)
         bridge_interface = linked_interface['master']
         return bridge_interface
+
+    def _get_isolated_interface(self):
+        """
+        Get the isolated network interface
+
+        Get all network descriptions from ip addr and match the isolated
+        network's interface by VPN ip address: this should be the same in the
+        VPN container's attributes and in the network interface
+        """
+        isolated_interface = None
+        _, interfaces = self.vpn_client_container.exec_run("ip --json addr")
+        interfaces = json.loads(interfaces)
+        vpn_ip_isolated_netw = self.get_local_ip(self.vpn_client_container)
+        for ip_interface in interfaces:
+            if self.is_isolated_interface(ip_interface, vpn_ip_isolated_netw):
+                isolated_interface = ip_interface
+        return isolated_interface
+
+    def is_isolated_interface(self, ip_interface, vpn_ip_isolated_netw):
+        # check if attributes exist in json, if not it is not the right
+        # interface
+        if ('addr_info' in ip_interface and len(ip_interface['addr_info']) and
+                'local' in ip_interface['addr_info'][0]):
+            return vpn_ip_isolated_netw == \
+                ip_interface['addr_info'][0]['local']
+        else:
+            return False
 
     def _configure_host_network(self, isolated_bridge: str) -> None:
         """
