@@ -140,7 +140,17 @@ class Node(object):
         self.log = logging.getLogger(logger_name(__name__))
 
         self.ctx = ctx
-        self.config = ctx.config
+
+        # Initialize the node. If it crashes, shut down the parts that started
+        # already
+        try:
+            self.initialize()
+        except Exception as e:
+            self.cleanup()
+            raise
+
+    def initialize(self):
+        self.config = self.ctx.config
         self.queue = queue.Queue()
         self._using_encryption = None
 
@@ -177,18 +187,19 @@ class Node(object):
 
         # setup docker isolated network manager
         isolated_network_mgr = \
-            IsolatedNetworkManager(f"{ctx.docker_network_name}-net")
+            IsolatedNetworkManager(f"{self.ctx.docker_network_name}-net")
 
         # Setup tasks dir
-        self._set_task_dir(ctx)
+        self._set_task_dir(self.ctx)
 
         # Setup VPN connection
-        self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, ctx)
+        self.vpn_manager = self.setup_vpn_connection(
+            isolated_network_mgr, self.ctx)
 
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
-            ctx=ctx,
+            ctx=self.ctx,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
             tasks_dir=self.__tasks_dir
@@ -196,9 +207,9 @@ class Node(object):
 
         # Connect the node to the isolated algorithm network *only* if we're
         # running in a docker container.
-        if ctx.running_in_docker:
+        if self.ctx.running_in_docker:
             isolated_network_mgr.connect(
-                container_name=ctx.docker_container_name,
+                container_name=self.ctx.docker_container_name,
                 aliases=[NODE_PROXY_SERVER_HOSTNAME]
             )
 
@@ -706,11 +717,16 @@ class Node(object):
 
         except (KeyboardInterrupt, InterruptedError):
             self.log.info("Vnode is interrupted, shutting down...")
-            self.socketIO.disconnect()
-            if self.vpn_manager:
-                self.vpn_manager.exit_vpn()
-            self.__docker.cleanup()
+            self.cleanup()
             sys.exit()
+
+    def cleanup(self):
+        if hasattr(self, 'socketIO') and self.socketIO:
+            self.socketIO.disconnect()
+        if hasattr(self, 'vpn_manager') and self.vpn_manager:
+            self.vpn_manager.exit_vpn()
+        if hasattr(self, '__docker') and self.__docker:
+            self.__docker.cleanup()
 
 
 # ------------------------------------------------------------------------------
