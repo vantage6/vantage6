@@ -16,6 +16,7 @@ from typing import Dict, List, NamedTuple, Union
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
+from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
@@ -32,7 +33,7 @@ class Result(NamedTuple):
     status_code: int
 
 
-class DockerManager(object):
+class DockerManager(DockerBaseManager):
     """ Wrapper for the docker module, to be used specifically for vantage6.
 
         It handles docker images names to results `run(image)`. It manages
@@ -60,23 +61,19 @@ class DockerManager(object):
                 Directory in which this task's data are stored
         """
         self.log.debug("Initializing DockerManager")
+        super().__init__(isolated_network_mgr)
+
         self.data_volume_name = ctx.docker_volume_name
         config = ctx.config
         self.algorithm_env = config.get('algorithm_env', {})
         self.vpn_manager = vpn_manager
         self.__tasks_dir = tasks_dir
 
-        # Connect to docker daemon
-        self.docker = docker.from_env()
-
         # keep track of the running containers
         self.active_tasks: List[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these regex
         self._allowed_images = config.get("allowed_images")
-
-        # isolated network to which algorithm containers can attach
-        self.isolated_network_mgr = isolated_network_mgr
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at

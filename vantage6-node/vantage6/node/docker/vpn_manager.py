@@ -14,9 +14,10 @@ from vantage6.node.globals import (
     FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.node.docker.docker_base import DockerBaseManager
 
 
-class VPNManager(object):
+class VPNManager(DockerBaseManager):
     """
     Setup a VPN client in a Docker container and configure the network so that
     the VPN container can forward traffic to and from algorithm containers.
@@ -25,15 +26,13 @@ class VPNManager(object):
 
     def __init__(self, isolated_network_mgr: IsolatedNetworkManager,
                  node_name: str, vpn_volume_name: str, vpn_subnet: str):
-        self.isolated_network_mgr = isolated_network_mgr
+        super().__init__(isolated_network_mgr)
+
         self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
         self.vpn_volume_name = vpn_volume_name
         self.subnet = vpn_subnet
 
         self.has_vpn = False
-
-        # Connect to docker daemon
-        self.docker = docker.from_env()
 
     def connect_vpn(self) -> None:
         """
@@ -51,15 +50,12 @@ class VPNManager(object):
         env = {'VPN_CONFIG': vpn_config}
 
         # if a VPN container is already running, kill and remove it
-        self.vpn_client_container = self.check_running()
-        # TODO refactor with other functions
+        self.vpn_client_container = self.get_container(
+            name=self.vpn_client_container_name
+        )
         if self.vpn_client_container:
             self.log.warn("Removing VPN container that was already running")
-            try:
-                self.vpn_client_container.kill()
-            except Exception as e:
-                pass
-            self.vpn_client_container.remove()
+            self.remove_container(self.vpn_client_container, kill=True)
 
         # start vpnclient
         self.log.debug("Starting VPN client container")
@@ -93,22 +89,7 @@ class VPNManager(object):
 
         # set successful initiation of VPN connection
         self.has_vpn = True
-        self.log.debug("VPN client container started")
-
-    def check_running(self) -> Container:
-        """
-        Check if VPN container exists
-
-        Returns
-        -------
-        Container or None
-            VPN container if it exists, else None
-        TODO refactor?!
-        """
-        running_containers = self.docker.containers.list(all=True, filters={
-            "name": self.vpn_client_container_name
-        })
-        return running_containers[0] if running_containers else None
+        self.log.debug("VPN client container was started")
 
     def has_connection(self) -> bool:
         """ Return True if VPN connection is active """
@@ -124,7 +105,9 @@ class VPNManager(object):
             )
             vpn_interface = json.loads(vpn_interface)
         except JSONDecodeError:
+            self.has_vpn = False
             return False
+        self.has_vpn = True  # TODO rid boolean and only use this function?
         return True
 
     def exit_vpn(self) -> None:
@@ -135,11 +118,7 @@ class VPNManager(object):
             return
         self.has_vpn = False
         self.log.debug("Stopping and removing the VPN client container")
-        try:
-            self.vpn_client_container.kill()
-        except Exception as e:
-            self.log.warn("Tried to kill VPN container but it was not running")
-        self.vpn_client_container.remove()
+        self.remove_container(self.vpn_client_container, kill=True)
 
         # Clean up host network changes. We have added two rules to the front
         # of the DOCKER-USER chain. Now we remove the first two rules (which is
@@ -179,26 +158,6 @@ class VPNManager(object):
                 # container is restarting (e.g. due to connection errors)
                 time.sleep(1)
         return vpn_interface[0]['addr_info'][0]['local']
-
-    # TODO this function may also be used outside VPN manager, refactor!
-    def get_local_ip(self, container) -> str:
-        """
-        Get address of a container in the isolated network
-
-        Parameters
-        ----------
-        container: Container
-            Docker container whose IP address should be obtained
-
-        Returns
-        -------
-        str
-            IP address of a container in isolated network
-        """
-        container.reload()
-        return container.attrs[
-            'NetworkSettings']['Networks'][
-            self.isolated_network_mgr.network_name]['IPAddress']
 
     def forward_vpn_traffic(self, helper_container: Container,
                             algo_image_name: str) -> int:
@@ -292,7 +251,7 @@ class VPNManager(object):
 
         # Get IP Address of the algorithm container
         algo_helper_container.reload()  # update attributes
-        algo_ip = self.get_local_ip(algo_helper_container)
+        algo_ip = self.get_isolated_netw_ip(algo_helper_container)
 
         # Set port at which algorithm containers receive traffic
         algorithm_port = self._find_exposed_port(algo_image_name)
@@ -389,17 +348,37 @@ class VPNManager(object):
         isolated_interface = None
         _, interfaces = self.vpn_client_container.exec_run("ip --json addr")
         interfaces = json.loads(interfaces)
-        vpn_ip_isolated_netw = self.get_local_ip(self.vpn_client_container)
+        vpn_ip_isolated_netw = self.get_isolated_netw_ip(
+            self.vpn_client_container)
         for ip_interface in interfaces:
             if self.is_isolated_interface(ip_interface, vpn_ip_isolated_netw):
                 isolated_interface = ip_interface
         return isolated_interface
 
-    def is_isolated_interface(self, ip_interface, vpn_ip_isolated_netw):
-        # check if attributes exist in json, if not it is not the right
+    def is_isolated_interface(self, ip_interface: Dict,
+                              vpn_ip_isolated_netw: str):
+        """
+        Return True if a network interface is the isolated network
+        interface. Identify this based on the IP address of the VPN client in
+        the isolated network
+
+        Parameters
+        ----------
+        ip_interface: dict
+            IP interface obtained by executing `ip --json addr` command
+        vpn_ip_isolated_netw: str
+            IP address of VPN container in isolated network
+
+        Returns
+        -------
+        boolean:
+            True if this is the interface describing the isolated network
+        """
+        # check if attributes exist in json: if not then it is not the right
         # interface
         if ('addr_info' in ip_interface and len(ip_interface['addr_info']) and
                 'local' in ip_interface['addr_info'][0]):
+            # Right attributes are present: check if IP addresses match
             return vpn_ip_isolated_netw == \
                 ip_interface['addr_info'][0]['local']
         else:

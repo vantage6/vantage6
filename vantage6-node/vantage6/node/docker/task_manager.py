@@ -1,10 +1,8 @@
 """ TODO the task folder is also created by this class. This folder needs
 to be cleaned at some point. """
 import logging
-import docker
 import os
 
-from docker.models.containers import Container
 from typing import Dict
 from pathlib import Path
 
@@ -12,11 +10,12 @@ from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.utils import running_in_docker
 from vantage6.common.docker_addons import pull_if_newer
 
 
-class DockerTaskManager(object):
+class DockerTaskManager(DockerBaseManager):
     """
     Manager for running a Vantage6 algorithm container within docker.
 
@@ -56,17 +55,16 @@ class DockerTaskManager(object):
         docker_volume_name: str
             Name of the docker volume
         """
+        super().__init__(isolated_network_mgr)
         self.image = image
         self.__vpn_manager = vpn_manager
         self.result_id = result_id
         self.__tasks_dir = tasks_dir
-        self.__isolated_network_mgr = isolated_network_mgr
         self.__database_uri = database_uri
         self.database_is_file = database_is_file
         self.data_volume_name = docker_volume_name
         self.node_name = node_name
 
-        self.docker = docker.from_env()
         self.container = None
         self.status_code = None
 
@@ -185,9 +183,9 @@ class DockerTaskManager(object):
         Cleanup the containers generated for this task. Only clean up the
         algorithm container if it exited successfully
         """
-        self._remove_container(self.helper_container, kill=True)
+        self.remove_container(self.helper_container, kill=True)
         if kill_algorithm or not self.status_code:
-            self._remove_container(self.container, kill=kill_algorithm)
+            self.remove_container(self.container, kill=kill_algorithm)
 
     def _run_algorithm(self) -> int:
         """
@@ -213,7 +211,7 @@ class DockerTaskManager(object):
                 command='sleep infinity',
                 image='alpine',
                 labels=self.helper_labels,
-                network=self.__isolated_network_mgr.network_name,
+                network=self.isolated_network_mgr.network_name,
                 name=helper_container_name,
                 detach=True
             )
@@ -367,25 +365,3 @@ class DockerTaskManager(object):
             self.log.info('Custom environment variables are loaded!')
             self.log.debug(f"custom environment: {algorithm_env}")
         return environment_variables
-
-    def _remove_container(self, container: Container, kill=False) -> None:
-        """
-        Removes a docker container
-
-        Parameters
-        ----------
-        container: Container
-            The container that should be removed
-        kill: bool
-            Whether or not container should be killed before it is removed
-        """
-        if kill:
-            try:
-                container.kill()
-            except Exception as e:
-                pass  # allow failure here, maybe container had already exited
-        try:
-            container.remove()
-        except Exception as e:
-            self.log.error(f"Failed to remove container {container.name}")
-            self.log.debug(e)
