@@ -1,15 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 const AUTH_API = 'http://localhost:5000/api/';
 const TOKEN_KEY = 'auth-token';
 const USER_KEY = 'auth-user';
-
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-};
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +16,7 @@ export class AuthService {
   isLoginFailed = false;
   errorMessage = new BehaviorSubject<string>('');
 
-  constructor(private http: HttpClient, private location: Location) {
+  constructor(private http: HttpClient, private router: Router) {
     if (this.getToken()) {
       this.loggedIn = true;
       this.loggedInBhs.next(this.loggedIn);
@@ -28,7 +24,6 @@ export class AuthService {
   }
 
   login(username: string, password: string): void {
-    console.log('logging in auth service');
     this.http
       .post<any>(AUTH_API + 'token/user', {
         username,
@@ -36,8 +31,6 @@ export class AuthService {
       })
       .subscribe(
         (data) => {
-          console.log('data');
-          console.log(data);
           this.saveToken(data.access_token);
           this.saveUser(data);
 
@@ -45,16 +38,11 @@ export class AuthService {
           this.loggedIn = true;
           this.loggedInBhs.next(true);
 
-          // TODO if last page was already login page, go to home
-          // go back to last page before login
-          // window.location.reload();
-          this.location.back();
+          // after login, go to home
+          this.router.navigateByUrl('/home');
         },
         (err) => {
-          console.log('err');
-          console.log(err);
           this.errorMessage.next(err.error.msg);
-          console.log(this.errorMessage);
           this.isLoginFailed = true;
           this.loggedIn = false;
         }
@@ -66,29 +54,12 @@ export class AuthService {
   }
 
   isLoggedIn(): Observable<boolean> {
-    console.log(this.loggedIn);
-    console.log(
-      'isLoggedIn() returns',
-      this.loggedInBhs.asObservable()
-      // this.loggedIn
-    );
     return this.loggedInBhs.asObservable();
   }
-
-  // TODO logout procedure should be here
-
-  // register(username: string, email: string, password: string): Observable<any> {
-  //   return this.http.post(AUTH_API + 'signup', {
-  //     username,
-  //     email,
-  //     password
-  //   }, httpOptions);
-  // }
 
   signOut(): void {
     this.loggedIn = false;
     this.loggedInBhs.next(false);
-    console.log('Logging out in signOut()');
     window.sessionStorage.clear();
   }
 

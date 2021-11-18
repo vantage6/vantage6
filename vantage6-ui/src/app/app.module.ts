@@ -17,9 +17,16 @@ import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { AccessGuard } from './access-guard.guard';
 import { NavbarComponent } from './navbar/navbar.component';
+import { OrganizationComponent } from './organization/organization.component';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, HomeComponent, NavbarComponent],
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    HomeComponent,
+    NavbarComponent,
+    OrganizationComponent,
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,

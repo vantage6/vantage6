@@ -1,6 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { Location } from '@angular/common';
 
 import { AuthService } from '../services/auth.service';
 // import { TokenStorageService } from '../services/token-storage.service';
@@ -21,17 +19,12 @@ export class LoginComponent implements OnInit {
 
   // TODO count number of times login failed?
 
-  constructor(
-    private authService: AuthService,
-    // private tokenStorage: TokenStorageService,
-    private location: Location
-  ) {}
+  constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
     this.authService.getErrorMessage().subscribe((msg: string) => {
-      console.log('getting message', msg);
       if (msg) {
-        this.isLoginFailed = true; // TODO cleanup
+        this.isLoginFailed = true;
       }
       this.errorMessage = msg;
     });
@@ -43,7 +36,6 @@ export class LoginComponent implements OnInit {
 
   onSubmit(): void {
     const { username, password } = this.form;
-
     this.authService.login(username, password);
   }
 

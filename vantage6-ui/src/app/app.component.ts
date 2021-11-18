@@ -1,8 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-// import { TokenStorageService } from './services/token-storage.service';
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
-import { delay } from 'rxjs/operators';
 import { AuthService } from './services/auth.service';
 
 @Component({
@@ -11,7 +8,6 @@ import { AuthService } from './services/auth.service';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-  private roles: string[] = [];
   isLoggedIn: boolean;
   showAdminBoard = false;
   showModeratorBoard = false;
@@ -20,30 +16,13 @@ export class AppComponent {
   @ViewChild(MatSidenav)
   sidenav!: MatSidenav;
 
-  constructor(
-    // private tokenStorageService: TokenStorageService,
-    private observer: BreakpointObserver,
-    private authService: AuthService
-  ) {
+  constructor(private authService: AuthService) {
     this.isLoggedIn = false;
   }
 
   ngOnInit(): void {
     this.authService.isLoggedIn().subscribe((loggedIn: boolean) => {
       this.isLoggedIn = loggedIn;
-      console.log('logged in', this.isLoggedIn);
     });
-
-    // this.isLoggedIn = !!this.tokenStorageService.getToken();
-
-    // if (this.isLoggedIn) {
-    //   const user = this.tokenStorageService.getUser();
-
-    // this.roles = user.roles;
-    // this.showAdminBoard = this.roles.includes('ROLE_ADMIN');
-    // this.showModeratorBoard = this.roles.includes('ROLE_MODERATOR');
-    // this.username = user.username;
-
-    // }
   }
 }

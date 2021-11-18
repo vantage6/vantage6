@@ -20,21 +20,13 @@ export class AccessGuard implements CanActivate {
   ngOnInit(): void {
     this.authService.isLoggedIn().subscribe((loggedIn: boolean) => {
       this.isLoggedIn = loggedIn;
-      console.log('logged in from guard', this.isLoggedIn);
     });
   }
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
-    console.log('can activate?');
     const requiresLogin = route.data.requiresLogin || false;
-    if (requiresLogin) {
-      console.log('here');
-      if (!this.authService.loggedIn) {
-        console.log('not logged in');
-        this.router.navigate(['login']);
-      } else {
-        console.log('logged in');
-      }
+    if (requiresLogin && !this.authService.loggedIn) {
+      this.router.navigate(['login']);
     }
     return true;
   }
