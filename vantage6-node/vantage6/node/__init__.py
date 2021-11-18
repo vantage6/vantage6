@@ -187,7 +187,7 @@ class Node(object):
 
         # setup docker isolated network manager
         isolated_network_mgr = \
-            IsolatedNetworkManager(f"{self.ctx.docker_network_name}-net")
+            IsolatedNetworkManager(self.ctx.docker_network_name)
 
         # Setup tasks dir
         self._set_task_dir(self.ctx)
