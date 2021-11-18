@@ -71,7 +71,7 @@ class VPNConfig(ServicesResources):
         security:
             - bearerAuth: []
 
-        tags: ["Other"]
+        tags: ["VPN"]
 
         """
         # check if the VPN server is configured
@@ -108,6 +108,8 @@ class VPNConfig(ServicesResources):
         responses:
             200:
                 description: Ok
+            400:
+                description: No VPN configuration found in request body
             401:
                 description: Unauthorized or missing permission
             501:
@@ -118,7 +120,7 @@ class VPNConfig(ServicesResources):
         security:
             - bearerAuth: []
 
-        tags: ["Other"]
+        tags: ["VPN"]
 
         """
         # check if the VPN server is configured
