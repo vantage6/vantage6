@@ -116,7 +116,7 @@ class NodeContext(AppContext):
 
     @property
     def docker_network_name(self):
-        return f"{APPNAME}-{self.name}-{self.scope}"
+        return f"{APPNAME}-{self.name}-{self.scope}-net"
 
     @property
     def docker_volume_name(self):
