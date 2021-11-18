@@ -138,6 +138,10 @@ class TaskResultSchema(HATEOASModelSchema):
     class Meta:
         model = db.Result
 
+    node = fields.Function(
+        func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
+    )
+
 
 class ResultSchema(HATEOASModelSchema):
     class Meta:
@@ -145,10 +149,20 @@ class ResultSchema(HATEOASModelSchema):
 
     organization = fields.Method("organization")
     task = fields.Method("task")
+    node = fields.Function(
+        func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
+    )
 
 
 class ResultTaskIncludedSchema(ResultSchema):
     task = fields.Nested('TaskSchema', many=False, exclude=["results"])
+
+
+class ResultNodeSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Node
+        exclude = ('type', 'api_key', 'collaboration', 'organization',
+                   'last_seen')
 
 
 class OrganizationSchema(HATEOASModelSchema):

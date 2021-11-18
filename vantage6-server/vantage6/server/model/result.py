@@ -1,4 +1,5 @@
 import datetime
+from flask.globals import session
 
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
@@ -6,6 +7,14 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.server.model.base import Base
 
+
+from vantage6.server.model import (
+    Node,
+    Collaboration,
+    Task,
+    Organization
+)
+from vantage6.server.model.base import DatabaseSessionManager
 
 class Result(Base):
     """Result of a Task as executed by a Node.
@@ -28,6 +37,20 @@ class Result(Base):
     # relationships
     task = relationship("Task", back_populates="results")
     organization = relationship("Organization", back_populates="results")
+
+    @property
+    def node(self):
+        session = DatabaseSessionManager.get_session()
+        node = session.query(Node)\
+            .join(Collaboration)\
+            .join(Organization)\
+            .join(Result)\
+            .join(Task)\
+            .filter(Result.id == self.id)\
+            .filter(self.organization_id == Node.organization_id)\
+            .filter(Task.collaboration_id == Node.collaboration_id)\
+            .one()
+        return node
 
     @hybrid_property
     def complete(self):

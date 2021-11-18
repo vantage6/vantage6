@@ -101,7 +101,7 @@ class TaskBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
-        
+
 class Tasks(TaskBase):
 
     @only_for(['user', 'node', 'container'])
