@@ -307,8 +307,10 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         info(" ... success!")
 
     info("Creating Docker data volume")
+
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
+
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
