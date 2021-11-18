@@ -4,3 +4,7 @@ tools/.env
 tools/__pycache__/
 
 .vscode/
+
+.coverage
+
+.env

@@ -1,14 +1,16 @@
 from discord import Embed
-import discord
+# import discord
 import os
 import click
 from discord.ext import tasks, commands
 
-from vantage6.common import info
-from dotenv import load_dotenv
+# from vantage6.common import info
+# from dotenv import load_dotenv
 
+def info(msg):
+    print(msg)
 
-load_dotenv()
+# load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.bot.Bot('$')
@@ -39,7 +41,7 @@ class PostUpdates(commands.Cog):
         description = (
             ':triangular_flag_on_post: A new **vantage6** release! :triangular_flag_on_post:\n\n'
             f'{summary}'
-            '\nSee the complete release notes [here](https://docs.vantage6.ai/release-notes-1/2-harukas)\n\n'
+            '\nSee the complete release notes [here](https://docs.vantage6.ai/v/petronas/release-notes-1/3-petronas)\n\n'
             'To upgrade:'
             '```'
             f'pip install vantage6=={version}'
@@ -58,16 +60,16 @@ class PostUpdates(commands.Cog):
         )
 
         documentation = (
-            '[latest release notes](https://docs.vantage6.ai/release-notes-1/2-harukas)\n'
-            '[installation instructions](https://docs.vantage6.ai/installation/preliminaries)\n'
-            '[How to contribute](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)'
+            '[latest release notes](https://docs.vantage6.ai/v/petronas/release-notes-1/3-petronas)\n'
+            '[installation instructions](https://docs.vantage6.ai/v/petronas/installation/what-to-install)\n'
+            '[How to contribute](https://docs.vantage6.ai/v/petronas/how-to-contribute/how-to-contribute)'
         )
 
         links = (
             '[harbor](https://harbor.vantage6.ai)\n'
             '[harbor2](https://harbor2.vantage6.ai)\n'
             '[Project website](https://vantage6.ai)\n'
-            '[Build status](https://travis-ci.org/github/IKNL)'
+            '[Build status](https://github.com/IKNL/vantage6-master/actions)'
         )
 
         embed=Embed(title=f"Release {version}", url="https://pypi.org", description=description, color=0x0593ff)
