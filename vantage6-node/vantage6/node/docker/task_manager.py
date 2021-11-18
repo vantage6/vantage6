@@ -1,10 +1,8 @@
 """ TODO the task folder is also created by this class. This folder needs
 to be cleaned at some point. """
 import logging
-import docker
 import os
 
-from docker.models.containers import Container
 from typing import Dict
 from pathlib import Path
 
@@ -12,11 +10,12 @@ from vantage6.common.globals import APPNAME
 from vantage6.node.util import logger_name
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.utils import running_in_docker
 from vantage6.common.docker_addons import pull_if_newer
 
 
-class DockerTaskManager(object):
+class DockerTaskManager(DockerBaseManager):
     """
     Manager for running a Vantage6 algorithm container within docker.
 
@@ -56,16 +55,16 @@ class DockerTaskManager(object):
         docker_volume_name: str
             Name of the docker volume
         """
+        super().__init__(isolated_network_mgr)
         self.image = image
         self.__vpn_manager = vpn_manager
         self.result_id = result_id
         self.__tasks_dir = tasks_dir
-        self.__isolated_network_mgr = isolated_network_mgr
         self.__database_uri = database_uri
         self.database_is_file = database_is_file
         self.data_volume_name = docker_volume_name
+        self.node_name = node_name
 
-        self.docker = docker.from_env()
         self.container = None
         self.status_code = None
 
@@ -179,15 +178,14 @@ class DockerTaskManager(object):
         vpn_port = self._run_algorithm()
         return vpn_port
 
-    def cleanup(self) -> None:
+    def cleanup(self, kill_algorithm=False) -> None:
         """
         Cleanup the containers generated for this task. Only clean up the
         algorithm container if it exited successfully
         """
-        # TODO cleanup temporary docker volume?
-        self._remove_container(self.helper_container, kill=True)
-        if not self.status_code:
-            self._remove_container(self.container)
+        self.remove_container(self.helper_container, kill=True)
+        if kill_algorithm or not self.status_code:
+            self.remove_container(self.container, kill=kill_algorithm)
 
     def _run_algorithm(self) -> int:
         """
@@ -202,7 +200,9 @@ class DockerTaskManager(object):
             Port number assigned for VPN communication. None if VPN is inactive
         """
         vpn_port = None
-        if self.__vpn_manager.has_vpn:
+        container_name = f'{APPNAME}-{self.node_name}-result-{self.result_id}'
+        helper_container_name = container_name + '-helper'
+        if self.__vpn_manager:
             # if VPN is active, network exceptions must be configured
             # First, start a container that runs indefinitely. The algorithm
             # container will run in the same network and network exceptions
@@ -211,13 +211,16 @@ class DockerTaskManager(object):
                 command='sleep infinity',
                 image='alpine',
                 labels=self.helper_labels,
-                network=self.__isolated_network_mgr.network_name,
+                network=self.isolated_network_mgr.network_name,
+                name=helper_container_name,
                 detach=True
             )
             # setup forwarding of traffic via VPN client to and from the
             # algorithm container:
             vpn_port = self.__vpn_manager.forward_vpn_traffic(
-                algo_container=self.helper_container)
+                helper_container=self.helper_container,
+                algo_image_name=self.image
+            )
 
         # Try to pull the latest image
         self.pull()
@@ -231,6 +234,7 @@ class DockerTaskManager(object):
                 environment=self.environment_variables,
                 network='container:' + self.helper_container.id,
                 volumes=self.volumes,
+                name=container_name,
                 labels=self.labels
             )
         except Exception as e:
@@ -361,22 +365,3 @@ class DockerTaskManager(object):
             self.log.info('Custom environment variables are loaded!')
             self.log.debug(f"custom environment: {algorithm_env}")
         return environment_variables
-
-    def _remove_container(self, container: Container, kill=False) -> None:
-        """
-        Removes a docker container
-
-        Parameters
-        ----------
-        container: Container
-            The container that should be removed
-        kill: bool
-            Whether or not container should be killed before it is removed
-        """
-        try:
-            if kill:
-                container.kill()
-            container.remove()
-        except Exception as e:
-            self.log.error(f"Failed to remove container {container.name}")
-            self.log.debug(e)

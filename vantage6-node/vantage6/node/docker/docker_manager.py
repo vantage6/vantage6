@@ -16,6 +16,7 @@ from typing import Dict, List, NamedTuple, Union
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
+from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
@@ -32,7 +33,7 @@ class Result(NamedTuple):
     status_code: int
 
 
-class DockerManager(object):
+class DockerManager(DockerBaseManager):
     """ Wrapper for the docker module, to be used specifically for vantage6.
 
         It handles docker images names to results `run(image)`. It manages
@@ -44,7 +45,7 @@ class DockerManager(object):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, ctx, isolated_network_mgr: IsolatedNetworkManager,
-                 vpn_manager: VPNManager) -> None:
+                 vpn_manager: VPNManager, tasks_dir: Path) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -56,24 +57,23 @@ class DockerManager(object):
                 Manager for the isolated network
             vpn_manager: VPNManager
                 VPN Manager object
+            tasks_dir: Path
+                Directory in which this task's data are stored
         """
         self.log.debug("Initializing DockerManager")
+        super().__init__(isolated_network_mgr)
+
         self.data_volume_name = ctx.docker_volume_name
         config = ctx.config
         self.algorithm_env = config.get('algorithm_env', {})
         self.vpn_manager = vpn_manager
-
-        # Connect to docker daemon
-        self.docker = docker.from_env()
+        self.__tasks_dir = tasks_dir
 
         # keep track of the running containers
         self.active_tasks: List[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these regex
         self._allowed_images = config.get("allowed_images")
-
-        # isolated network to which algorithm containers can attach
-        self.isolated_network_mgr = isolated_network_mgr
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at
@@ -87,49 +87,8 @@ class DockerManager(object):
         docker_registries = ctx.config.get("docker_registries", [])
         self.login_to_registries(docker_registries)
 
-        # set (and possibly create) the task directories
-        self._set_task_dir(ctx)
-
         # set database uri and whether or not it is a file
         self._set_database(config)
-
-    def _set_task_dir(self, ctx) -> None:
-        """
-        Set the task dir
-
-        Parameters
-        ----------
-        ctx: DockerNodeContext or NodeContext
-            Context object containing settings
-        """
-        # If we're in a 'regular' context, we'll copy the dataset to our data
-        # dir and mount it in any algorithm container that's run; bind mounts
-        # on a folder will work just fine.
-        #
-        # If we're running in dockerized mode we *cannot* bind mount a folder,
-        # because the folder is in the container and not in the host. We'll
-        # have to use a docker volume instead. This means:
-        #  1. we need to know the name of the volume so we can pass it along
-        #  2. need to have this volume mounted so we can copy files to it.
-        #
-        #  Ad 1: We'll use a default name that can be overridden by an
-        #        environment variable.
-        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
-        #        is OK, since ctx will be a DockerNodeContext.
-        #
-        #  This also means that the volume will have to be created & mounted
-        #  *before* this node is started, so we won't do anything with it here.
-
-        # We'll create a subfolder in the data_dir. We need this subfolder so
-        # we can easily mount it in the algorithm containers; the root folder
-        # may contain the private key, which which we don't want to share.
-        # We'll only do this if we're running outside docker, otherwise we
-        # would create '/data' on the data volume.
-        if not ctx.running_in_docker:
-            self.__tasks_dir = ctx.data_dir / 'data'
-            os.makedirs(self.__tasks_dir, exist_ok=True)
-        else:
-            self.__tasks_dir = ctx.data_dir
 
     def _set_database(self, config: Dict) -> None:
         """"
@@ -235,6 +194,20 @@ class DockerManager(object):
             ]
         })
         return bool(running_containers)
+
+    def cleanup(self) -> None:
+        """
+        Stop all active tasks and delete the isolated network
+
+        Note: the temporary docker volumes are kept as they may still be used
+        by a master container
+        """
+        if self.active_tasks:
+            self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
+        while self.active_tasks:
+            task = self.active_tasks.pop()
+            task.cleanup(kill_algorithm=True)
+        self.isolated_network_mgr.cleanup()
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
             tmp_vol_name: str, token: str) -> Union[int, None]:

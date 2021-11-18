@@ -331,6 +331,35 @@ class NodeClient(ClientBase):
 
         return True, ovpn_config
 
+    def refresh_vpn_keypair(self, ovpn_file: str) -> bool:
+        """
+        Refresh the client's keypair in an ovpn configuration file
+
+        Parameters
+        ----------
+        ovpn_file: str
+            The path to the current ovpn configuration on disk
+        """
+        # Extract the contents of the VPN file
+        with open(ovpn_file, 'r') as file:
+            ovpn_config = file.read()
+
+        response = self.request(
+            "vpn/update",
+            method="POST",
+            json={'vpn_config': ovpn_config},
+        )
+        ovpn_config = response.get("ovpn_config")
+        if not ovpn_config:
+            self.log.warn("Refreshing VPN keypair not successful!")
+            self.log.warn("Disabling node-to-node communication via VPN")
+            return False
+
+        # write new configuration back to file
+        with open(ovpn_file, 'w') as f:
+            f.write(ovpn_config)
+        return True
+
 
 # aliases for backward compatibility
 ClientContainerProtocol = ContainerClient

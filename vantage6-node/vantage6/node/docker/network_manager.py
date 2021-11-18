@@ -1,22 +1,34 @@
 import docker
-import ipaddress
 import logging
 
-from vantage6.node.globals import LOCAL_SUBNET_START
 from vantage6.node.util import logger_name
 from vantage6.node.docker.utils import running_in_docker
 
 
 # TODO maybe move following to utils?
-def remove_subnet_mask(ip):
+def remove_subnet_mask(ip: str) -> str:
+    """
+    Remove the subnet mask of an ip address, e.g. 172.1.0.0/16 -> 172.1.0.0
+    """
     return ip[0:ip.find('/')]
 
 
 class IsolatedNetworkManager(object):
+    """
+    Handle the isolated docker network
+    """
 
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, network_name):
+    def __init__(self, network_name: str):
+        """
+        Initialize the IsolatedNetworkManager
+
+        Parameters
+        ----------
+        network_name: str
+            Name of the isolated network
+        """
         self.network_name = network_name
 
         # Connect to docker daemon
@@ -30,11 +42,6 @@ class IsolatedNetworkManager(object):
         Creates an internal (docker) network
 
         Used by algorithm containers to communicate with the node API.
-
-        Parameters
-        ----------
-        network_name: str
-            Name of the network to be created
 
         Returns
         -------
@@ -76,6 +83,14 @@ class IsolatedNetworkManager(object):
         self.isolated_network.connect(
             container_name, aliases=aliases, ipv4_address=ipv4
         )
+
+    def cleanup(self):
+        """Delete the isolated network"""
+        try:
+            self.isolated_network.remove()
+        except Exception as e:
+            self.log.error("Could not remove isolated network")
+            self.log.error(e)
 
     def get_container_ip(self, container_name: str) -> str:
         """

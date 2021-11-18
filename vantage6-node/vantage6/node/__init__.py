@@ -27,17 +27,23 @@ from pathlib import Path
 from threading import Thread
 from socketIO_client import SocketIO, SocketIONamespace
 from gevent.pywsgi import WSGIServer
-
-# TODO: relative import
-from . import globals as cs
+from enum import Enum
 
 from vantage6.common.docker_addons import ContainerKillListener
+from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
 from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
+
+
+class VPNConnectMode(Enum):
+    FIRST_TRY = 1
+    REFRESH_KEYPAIR = 2
+    REFRESH_COMPLETE = 3
 
 
 class NodeTaskNamespace(SocketIONamespace):
@@ -134,7 +140,17 @@ class Node(object):
         self.log = logging.getLogger(logger_name(__name__))
 
         self.ctx = ctx
-        self.config = ctx.config
+
+        # Initialize the node. If it crashes, shut down the parts that started
+        # already
+        try:
+            self.initialize()
+        except Exception as e:
+            self.cleanup()
+            raise
+
+    def initialize(self):
+        self.config = self.ctx.config
         self.queue = queue.Queue()
         self._using_encryption = None
 
@@ -171,25 +187,30 @@ class Node(object):
 
         # setup docker isolated network manager
         isolated_network_mgr = \
-            IsolatedNetworkManager(f"{ctx.docker_network_name}-net")
+            IsolatedNetworkManager(self.ctx.docker_network_name)
+
+        # Setup tasks dir
+        self._set_task_dir(self.ctx)
 
         # Setup VPN connection
-        self.vpn_manager = self.make_vpn_connection(isolated_network_mgr)
+        self.vpn_manager = self.setup_vpn_connection(
+            isolated_network_mgr, self.ctx)
 
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
-            ctx=ctx,
+            ctx=self.ctx,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
+            tasks_dir=self.__tasks_dir
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
         # running in a docker container.
-        if ctx.running_in_docker:
+        if self.ctx.running_in_docker:
             isolated_network_mgr.connect(
-                container_name=ctx.docker_container_name,
-                aliases=[cs.NODE_PROXY_SERVER_HOSTNAME]
+                container_name=self.ctx.docker_container_name,
+                aliases=[NODE_PROXY_SERVER_HOSTNAME]
             )
 
         # Thread for sending results to the server when they come available.
@@ -218,9 +239,9 @@ class Node(object):
         os.environ["SERVER_PATH"] = self.server_io.path
 
         if self.ctx.running_in_docker:
-            # cs.NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
+            # NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
             # when running in the isolated docker network.
-            default_proxy_host = cs.NODE_PROXY_SERVER_HOSTNAME
+            default_proxy_host = NODE_PROXY_SERVER_HOSTNAME
         else:
             # If we're running non-dockerized, assume that the proxy is
             # accessible from within the docker algorithm container on
@@ -366,7 +387,7 @@ class Node(object):
             if results.status_code:
                 self.socket_tasks.emit(
                     'container_failed',
-                    self.server_io.id,
+                    self.server_io.whoami.id_,
                     results.status_code,
                     results.result_id,
                     self.server_io.collaboration_id
@@ -469,8 +490,50 @@ class Node(object):
             self.log.warn('Disabling encryption!')
             self.server_io.setup_encryption(None)
 
-    def make_vpn_connection(
-            self, isolated_network_mgr: IsolatedNetworkManager) -> VPNManager:
+    def _set_task_dir(self, ctx) -> None:
+        """
+        Set the task dir
+
+        Parameters
+        ----------
+        ctx: DockerNodeContext or NodeContext
+            Context object containing settings
+        """
+        # If we're in a 'regular' context, we'll copy the dataset to our data
+        # dir and mount it in any algorithm container that's run; bind mounts
+        # on a folder will work just fine.
+        #
+        # If we're running in dockerized mode we *cannot* bind mount a folder,
+        # because the folder is in the container and not in the host. We'll
+        # have to use a docker volume instead. This means:
+        #  1. we need to know the name of the volume so we can pass it along
+        #  2. need to have this volume mounted so we can copy files to it.
+        #
+        #  Ad 1: We'll use a default name that can be overridden by an
+        #        environment variable.
+        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
+        #        is OK, since ctx will be a DockerNodeContext.
+        #
+        #  This also means that the volume will have to be created & mounted
+        #  *before* this node is started, so we won't do anything with it here.
+
+        # We'll create a subfolder in the data_dir. We need this subfolder so
+        # we can easily mount it in the algorithm containers; the root folder
+        # may contain the private key, which which we don't want to share.
+        # We'll only do this if we're running outside docker, otherwise we
+        # would create '/data' on the data volume.
+        if not ctx.running_in_docker:
+            self.__tasks_dir = ctx.data_dir / 'data'
+            os.makedirs(self.__tasks_dir, exist_ok=True)
+            self.__vpn_dir = ctx.data_dir / 'vpn'
+            os.makedirs(self.__vpn_dir, exist_ok=True)
+        else:
+            self.__tasks_dir = ctx.data_dir
+            self.__vpn_dir = ctx.vpn_dir
+
+    def setup_vpn_connection(
+            self, isolated_network_mgr: IsolatedNetworkManager, ctx
+    ) -> VPNManager:
         """
         Setup container which has a VPN connection
 
@@ -479,27 +542,94 @@ class Node(object):
         VPNManager
             Manages the VPN connection
         """
+        ovpn_file = os.path.join(self.__vpn_dir, VPN_CONFIG_FILE)
+
+        self.log.debug("Setting up VPN client container")
+        vpn_volume_name = self.ctx.docker_vpn_volume_name \
+            if ctx.running_in_docker else self.__vpn_dir
+        vpn_manager = VPNManager(
+            isolated_network_mgr=isolated_network_mgr,
+            node_name=self.ctx.name,
+            vpn_volume_name=vpn_volume_name,
+            vpn_subnet=self.config.get('vpn_subnet')
+        )
+        # if vpn config doesn't exist, get it and write to disk
+        if not os.path.isfile(ovpn_file):
+            self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE,
+                              ovpn_file)
+        else:
+            self._connect_vpn(vpn_manager, VPNConnectMode.FIRST_TRY, ovpn_file)
+
+        return vpn_manager
+
+    def _connect_vpn(self, vpn_manager: VPNManager,
+                     connect_mode: VPNConnectMode, ovpn_file: str) -> None:
+        """
+        Connect to the VPN by starting up a VPN client container. If no VPN
+        config file exists, we only try once after first obtaining a config
+        file. If a VPN config file already exists, we first try to connect,
+        then try to refresh the keypair, and finally try to renew the entire
+        config file, until a connection is established.
+
+        Parameters
+        ----------
+        vpn_manager: VPNManager
+            Manages the VPN connection
+        connect_mode: VPNConnectMode
+            Specifies which parts of a config file to refresh before attempting
+            to connect
+        ovpn_file: str
+            Path to the VPN configuration file
+        """
+        do_try = True
+        if connect_mode == VPNConnectMode.FIRST_TRY:
+            self.log.debug("Using existing config file to connect to VPN")
+            next_mode = VPNConnectMode.REFRESH_KEYPAIR
+        elif connect_mode == VPNConnectMode.REFRESH_KEYPAIR:
+            self.log.debug("Refreshing VPN keypair...")
+            do_try = self.server_io.refresh_vpn_keypair(ovpn_file=ovpn_file)
+            next_mode = VPNConnectMode.REFRESH_COMPLETE
+        elif connect_mode == VPNConnectMode.REFRESH_COMPLETE:
+            self.log.debug("Requesting new VPN configuration file...")
+            do_try = self._get_vpn_config_file(ovpn_file)
+            next_mode = None  # if new config file doesn't work, give up
+
+        if do_try:
+            # try connecting to VPN
+            try:
+                vpn_manager.connect_vpn()
+            except Exception as e:
+                self.log.debug("Could not connect to VPN.")
+                self.log.debug(f"Exception: {e}")
+                # try again in another fashion
+                if next_mode:
+                    self._connect_vpn(vpn_manager, next_mode, ovpn_file)
+
+    def _get_vpn_config_file(self, ovpn_file: str) -> bool:
+        """
+        Obtain VPN configuration file from the server
+
+        Parameters
+        ----------
+        ovpn_file: str
+            Path to the VPN configuration file
+
+        Returns
+        -------
+        bool
+            Whether or not configuration file was successfully obtained
+        """
         # get the ovpn configuration from the server
         success, ovpn_config = self.server_io.get_vpn_config()
         if not success:
             self.log.warn("Obtaining VPN configuration file not successful!")
             self.log.warn("Disabling node-to-node communication via VPN")
-            self.has_vpn = False
-            return
+            return False
 
         # write ovpn config to node docker volume
-        ovpn_file = os.path.join(self.ctx.data_dir, cs.VPN_CONFIG_FILE)
         with open(ovpn_file, 'w') as f:
             f.write(ovpn_config)
-
-        # set up the VPN connection via docker containers
-        self.log.debug("Setting up VPN client container")
-        vpn_manager = VPNManager(
-            isolated_network_mgr=isolated_network_mgr,
-            node_name=self.ctx.name
-        )
-        vpn_manager.connect_vpn(ovpn_file=ovpn_file)
-        return vpn_manager
+        return True
 
     def connect_to_socket(self):
         """ Create long-lasting websocket connection with the server.
@@ -587,9 +717,16 @@ class Node(object):
 
         except (KeyboardInterrupt, InterruptedError):
             self.log.info("Vnode is interrupted, shutting down...")
-            self.socketIO.disconnect()
-            self.vpn_manager.exit_vpn()
+            self.cleanup()
             sys.exit()
+
+    def cleanup(self):
+        if hasattr(self, 'socketIO') and self.socketIO:
+            self.socketIO.disconnect()
+        if hasattr(self, 'vpn_manager') and self.vpn_manager:
+            self.vpn_manager.exit_vpn()
+        if hasattr(self, '__docker') and self.__docker:
+            self.__docker.cleanup()
 
 
 # ------------------------------------------------------------------------------
