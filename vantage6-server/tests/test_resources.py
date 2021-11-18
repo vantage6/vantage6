@@ -1772,7 +1772,6 @@ class TestResources(unittest.TestCase):
                                   headers=headers, json={'id': node.id})
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
-
     def test_view_collaboration_task_permissions_as_user(self):
 
         org = Organization()
@@ -2100,7 +2099,6 @@ class TestResources(unittest.TestCase):
         results = self.app.get(f'/api/task', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
-
     def test_view_task_permissions_as_node_and_container(self):
         # test node with id
         org = Organization()
@@ -2288,6 +2286,8 @@ class TestResources(unittest.TestCase):
         org = Organization()
         col = Collaboration(organizations=[org])
         task = Task(collaboration=col)
+        # NB: node is used implicitly in task/{id}/result schema
+        node = Node(organization=org, collaboration=col)
         res = Result(task=task, organization=org)
         res.save()
 
