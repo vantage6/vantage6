@@ -12,6 +12,7 @@ export class TokenStorageService {
   loggedInBhs = new BehaviorSubject<boolean>(false);
 
   constructor() {
+    // FIXME this is not secure enough I think, token might just have non-valid value
     this.loggedIn = this.getToken() != null;
     this.loggedInBhs.next(this.loggedIn);
   }

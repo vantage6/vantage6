@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 
 import { API_URL } from '../constants';
-import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-organization',
@@ -10,23 +9,18 @@ import { AuthService } from '../services/auth.service';
   styleUrls: ['./organization.component.scss'],
 })
 export class OrganizationComponent implements OnInit {
-  // token: string | null;
+  organization_details: any = null;
 
-  constructor(private http: HttpClient, private authService: AuthService) {
-    // this.token = authService.getToken();
-  }
+  constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     this.getOrganizationDetails();
   }
 
   getOrganizationDetails(): void {
-    // TODO use token, see eg
-    // https://stackoverflow.com/questions/48017603/angular-sending-token-with-get-and-other-requests
-    // console.log(this.token);
-    this.http.get<any>(API_URL + 'organization/1').subscribe(
+    this.http.get<any>(API_URL + 'organization/2').subscribe(
       (data) => {
-        console.log(data);
+        this.organization_details = data;
       },
       (err) => {
         console.log(err);

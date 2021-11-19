@@ -1,1 +1,12 @@
-<p>organization works!</p>
+<div *ngIf="organization_details!==null">
+    <div  *ngFor="let obj of organization_details | keyvalue">
+        <div>
+            <strong>{{obj.key}}:</strong>
+            {{obj.value}}
+        </div>
+        <!-- <div *ngFor="let inner of obj.value | keyvalue" style="margin-left: 10px;">
+            <span>{{inner.key}}</span> -
+            <span>{{inner.value}}</span>
+        </div> -->
+    </div>
+</div>
