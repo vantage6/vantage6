@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../services/auth.service';
-// import { TokenStorageService } from '../services/token-storage.service';
+import { TokenStorageService } from '../services/token-storage.service';
 
 @Component({
   selector: 'app-login',
@@ -18,25 +19,40 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
 
   // TODO count number of times login failed?
+  // TODO if user is logged in, force that it redirects to HomeComponent
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private tokenStorage: TokenStorageService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.authService.getErrorMessage().subscribe((msg: string) => {
-      if (msg) {
-        this.isLoginFailed = true;
-      }
-      this.errorMessage = msg;
-    });
-
-    if (this.authService.getToken()) {
+    if (this.tokenStorage.getToken()) {
       this.isLoggedIn = true;
     }
   }
 
   onSubmit(): void {
     const { username, password } = this.form;
-    this.authService.login(username, password);
+    this.authService.login(username, password).subscribe(
+      (data) => {
+        this.tokenStorage.saveToken(data.access_token);
+        this.tokenStorage.saveUser(data);
+        this.tokenStorage.setLoggedIn(true);
+
+        this.isLoginFailed = false;
+        this.isLoggedIn = true;
+
+        // after login, go to home
+        this.router.navigateByUrl('/home');
+      },
+      (err) => {
+        this.errorMessage = err.error.msg;
+        this.isLoginFailed = true;
+        this.isLoggedIn = false;
+      }
+    );
   }
 
   reloadPage(): void {

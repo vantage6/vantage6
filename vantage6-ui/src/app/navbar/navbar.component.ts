@@ -4,7 +4,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
 import { delay } from 'rxjs/operators';
 
-import { AuthService } from '../services/auth.service';
+import { TokenStorageService } from '../services/token-storage.service';
 
 @Component({
   selector: 'app-navbar',
@@ -19,7 +19,7 @@ export class NavbarComponent implements OnInit {
 
   constructor(
     private observer: BreakpointObserver,
-    private authService: AuthService,
+    private tokenStorage: TokenStorageService,
     private router: Router
   ) {}
 
@@ -41,7 +41,7 @@ export class NavbarComponent implements OnInit {
   }
 
   logout(): void {
-    this.authService.signOut();
+    this.tokenStorage.signOut();
     this.router.navigateByUrl('/login');
   }
 }

@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
-import { AuthService } from './services/auth.service';
+import { TokenStorageService } from './services/token-storage.service';
 
 @Component({
   selector: 'app-root',
@@ -16,12 +16,12 @@ export class AppComponent {
   @ViewChild(MatSidenav)
   sidenav!: MatSidenav;
 
-  constructor(private authService: AuthService) {
+  constructor(private tokenStorage: TokenStorageService) {
     this.isLoggedIn = false;
   }
 
   ngOnInit(): void {
-    this.authService.isLoggedIn().subscribe((loggedIn: boolean) => {
+    this.tokenStorage.isLoggedIn().subscribe((loggedIn: boolean) => {
       this.isLoggedIn = loggedIn;
     });
   }

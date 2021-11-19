@@ -7,25 +7,28 @@ import {
   UrlTree,
 } from '@angular/router';
 
-import { AuthService } from './services/auth.service';
+import { TokenStorageService } from './services/token-storage.service';
 
 @Injectable()
 export class AccessGuard implements CanActivate {
   isLoggedIn: boolean;
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(
+    private tokenStorage: TokenStorageService,
+    private router: Router
+  ) {
     this.isLoggedIn = false;
   }
 
   ngOnInit(): void {
-    this.authService.isLoggedIn().subscribe((loggedIn: boolean) => {
+    this.tokenStorage.isLoggedIn().subscribe((loggedIn: boolean) => {
       this.isLoggedIn = loggedIn;
     });
   }
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
     const requiresLogin = route.data.requiresLogin || false;
-    if (requiresLogin && !this.authService.loggedIn) {
+    if (requiresLogin && !this.tokenStorage.loggedIn) {
       this.router.navigate(['login']);
     }
     return true;
