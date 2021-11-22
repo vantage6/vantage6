@@ -116,13 +116,20 @@ class NodeContext(AppContext):
 
     @property
     def docker_network_name(self):
-        return f"{APPNAME}-{self.name}-{self.scope}"
+        return f"{APPNAME}-{self.name}-{self.scope}-net"
 
     @property
     def docker_volume_name(self):
         return os.environ.get(
             'DATA_VOLUME_NAME',
             f"{self.docker_container_name}-vol"
+        )
+
+    @property
+    def docker_vpn_volume_name(self):
+        return os.environ.get(
+            'VPN_VOLUME_NAME',
+            f"{self.docker_container_name}-vpn-vol"
         )
 
     def docker_temporary_volume_name(self, run_id):
