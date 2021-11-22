@@ -623,7 +623,12 @@ def run(ctx):
     logging.getLogger("socketIO-client").setLevel(logging.WARNING)
 
     # initialize node, connect to the server using websockets
-    node = Node(ctx)
+    try:
+        node = Node(ctx)
+    except Exception as e:
+        log = logging.getLogger(logger_name(__name__))
+        log.critical(e)
+        exit(1)
 
     # put the node to work, executing tasks that are in the que
     node.run_forever()
