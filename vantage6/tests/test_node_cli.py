@@ -223,9 +223,10 @@ class NodeCLITest(unittest.TestCase):
             data_dir=Path("data"),
             log_dir=Path("logs"),
             config_dir=Path("configs"),
-            databases = {"default": "data.csv"}
+            databases={"default": "data.csv"}
         )
         ctx.get_data_file.return_value = "data.csv"
+        ctx.name = 'some-name'
         context.return_value = ctx
 
         runner = CliRunner()

@@ -250,9 +250,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     docker_client = docker.from_env()
     check_if_docker_deamon_is_running(docker_client)
 
-    # check if config name is allowed docker name, else exit
-    check_config_name_allowed(name)
-
     NodeContext.LOGGING_ENABLED = False
     if config:
         name = Path(config).stem
@@ -277,8 +274,10 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
                 error("Config file couldn't be loaded")
                 sys.exit(0)
 
-
         ctx = NodeContext(name, environment, system_folders)
+
+    # check if config name is allowed docker name, else exit
+    check_config_name_allowed(ctx.name)
 
     # check that this node is not already running
     running_nodes = docker_client.containers.list(
