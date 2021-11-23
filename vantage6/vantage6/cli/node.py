@@ -296,7 +296,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
 
-
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
     mounts = [
@@ -668,20 +667,17 @@ def cli_node_remove(name, environment, system_folders):
 
     # remove the VPN configuration file
     vpn_config_file = os.path.join(ctx.data_dir, VPN_CONFIG_FILE)
-    if os.path.isfile(vpn_config_file):
-        info(f"Deleting VPN configuration file")
-        os.remove(vpn_config_file)
+    remove_file(vpn_config_file, 'VPN configuration')
 
     # remove the config file
-    info(f"Removing configuration file {ctx.config_file}")
-    os.remove(ctx.config_file)
+    remove_file(ctx.config_file, 'configuration')
 
     # remove the log file. As this process opens the log file above, the log
     # handlers need to be closed before deleting
     info(f"Removing log file {ctx.log_file}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    os.remove(ctx.log_file)
+    remove_file(ctx.log_file, 'log')
 
 
 #
@@ -769,3 +765,15 @@ def find_running_node_names(client):
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
     return [node.name for node in running_nodes]
+
+
+def remove_file(file: str, file_type: str):
+    if os.path.isfile(file):
+        info(f"Removing {file_type} file: {file}")
+        try:
+            os.remove(file)
+        except Exception as e:
+            error(f"Could not delete file: {file}")
+            error(e)
+    else:
+        warning(f"Could not remove {file_type} file: {file} does not exist")
