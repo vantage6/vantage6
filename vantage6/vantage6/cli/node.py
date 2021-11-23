@@ -58,6 +58,7 @@ def cli_node():
     """Subcommand `vnode`."""
     pass
 
+
 #
 #   list
 #
@@ -116,6 +117,7 @@ def cli_node_list():
         warning(
              f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
 
+
 #
 #   new
 #
@@ -170,6 +172,7 @@ def cli_node_new_configuration(name, environment, system_folders):
     info(f"You can start the node by running "
          f"{Fore.GREEN}vnode start {flag}{Style.RESET_ALL}")
 
+
 #
 #   files
 #
@@ -215,14 +218,12 @@ def cli_node_files(name, environment, system_folders):
 #
 #   start
 #
-help_ = {
-    'config': 'absolute path to configuration-file; overrides NAME',
-    'environment': 'configuration environment to use',
-}
 @cli_node.command(name='start')
 @click.option("-n", "--name", default=None, help="configuration name")
-@click.option("-c", "--config", default=None, help=help_['config'])
-@click.option('-e', '--environment', default=N_ENV, help=help_['environment'])
+@click.option("-c", "--config", default=None,
+              help='absolute path to configuration-file; overrides NAME')
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
@@ -319,7 +320,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
 
-
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
     mounts = [
@@ -330,7 +330,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
-
 
     if mount_src:
         # If mount_src is a relative path, docker will consider it a volume.
@@ -419,6 +418,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 exit(0)
+
 
 #
 #   stop
@@ -678,8 +678,10 @@ def cli_node_version(name, system_folders):
 
     if name in running_node_names:
         container = client.containers.get(name)
-        version = container.exec_run(cmd='vnode-local version', stdout = True)
-        click.echo({"node": version.output.decode('utf-8'), "cli":__version__})
+        version = container.exec_run(cmd='vnode-local version', stdout=True)
+        click.echo({
+            "node": version.output.decode('utf-8'), "cli": __version__
+        })
 
 
 def print_log_worker(logs_stream):
