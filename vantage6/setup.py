@@ -36,7 +36,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'schema==0.7.1',
-        'click==7.1.1',
+        'click==8.0.3',
         'SQLAlchemy==1.3.15',
         'docker==4.2.0',
         'colorama==0.4.3',
