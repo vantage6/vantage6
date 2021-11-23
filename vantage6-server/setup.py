@@ -55,8 +55,10 @@ setup(
         'gevent==20.9.0',
         'Flask-Mail==0.9.1',
         'requests-oauthlib==1.3.0',
-        # 'vantage6 >= 1.2.3',
-        # 'vantage6-common >= 1.2.3'
+        'gevent-websocket==0.10.1',
+        'eventlet==0.33.0',
+        'vantage6 >= 1.2.3',
+        'vantage6-common >= 1.2.3'
     ],
     extras_require={
         'dev': [
