@@ -664,6 +664,10 @@ def cli_node_remove(name, environment, system_folders):
         if vol.name.startswith(ctx.docker_volume_name):  # includes tmp volumes
             info(f"Deleting docker volume {vol.name}")
             vol.remove()
+        # remove docker vpn volume
+        if vol.name == ctx.docker_vpn_volume_name:
+            info(f"Deleting VPN docker volume {vol.name}")
+            vol.remove()
 
     # remove the VPN configuration file
     vpn_config_file = os.path.join(ctx.data_dir, VPN_CONFIG_FILE)
