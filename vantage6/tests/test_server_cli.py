@@ -98,6 +98,10 @@ class ServerCLITest(unittest.TestCase):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
 
+        ctx = MagicMock()
+        ctx.name = 'some-name'
+        context.return_value = ctx
+
         runner = CliRunner()
         with runner.isolated_filesystem():
             with open("some.yaml", "w") as fp:
