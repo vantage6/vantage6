@@ -25,7 +25,7 @@ import json
 
 from pathlib import Path
 from threading import Thread
-from socketIO_client import SocketIO, SocketIONamespace
+from socketio import ClientNamespace, Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
@@ -46,12 +46,11 @@ class VPNConnectMode(Enum):
     REFRESH_COMPLETE = 3
 
 
-class NodeTaskNamespace(SocketIONamespace):
+class NodeTaskNamespace(ClientNamespace):
     """Class that handles incoming websocket events."""
 
     # reference to the node objects, so a callback can edit the
     # node instance.
-    # FIXME: why is this a *class* attribute?
     node_worker_ref = None
 
     def __init__(self, *args, **kwargs):
@@ -638,33 +637,27 @@ class Node(object):
             new tasks.
         """
 
-        self.socketIO = SocketIO(
-            self.server_io.host,
-            port=self.server_io.port,
+        self.socketIO = SocketIO()
+        self.socketIO.connect(
+            url=f'{self.server_io.host}:{self.server_io.port}',
             headers=self.server_io.headers,
-            wait_for_connection=True
+            namespaces=['/tasks']
         )
 
-        # define() returns the instantiated action_handler
-        self.socket_tasks = self.socketIO.define(NodeTaskNamespace, '/tasks')
-        self.socket_tasks.set_node_worker(self)
+        NodeTaskNamespace.node_worker_ref = self
+        self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
 
         # Log the outcome
-        if self.socketIO.connected:
-            msg = 'connected to host={host} on port={port}'
-            msg = msg.format(
-                host=self.server_io.host,
-                port=self.server_io.port
-            )
-            self.log.info(msg)
+        while not self.socketIO.connected:
+            self.log.debug('waiting for socket connection...')
+            time.sleep(1)
 
-        else:
-            msg = 'could *not* connect to {host} on port={port}'
-            msg = msg.format(
-                host=self.server_io.host,
-                port=self.server_io.port
-            )
-            self.log.critical(msg)
+        msg = 'connected to host={host} on port={port}'
+        msg = msg.format(
+            host=self.server_io.host,
+            port=self.server_io.port
+        )
+        self.log.info(msg)
 
     def get_task_and_add_to_queue(self, task_id):
         """Fetches (open) task with task_id from the server.
@@ -734,7 +727,7 @@ def run(ctx):
     """ Start the node."""
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("socketIO-client").setLevel(logging.WARNING)
+    logging.getLogger("engineio.client").setLevel(logging.WARNING)
 
     # initialize node, connect to the server using websockets
     node = Node(ctx)
