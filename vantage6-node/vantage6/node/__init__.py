@@ -58,17 +58,6 @@ class NodeTaskNamespace(ClientNamespace):
         """
         super().__init__(*args, **kwargs)
         self.log = logging.getLogger(logger_name(__name__))
-        self.node_worker_ref = None
-
-    def set_node_worker(self, node_worker):
-        """ Reference Node that created this Namespace.
-
-            This way we can call methods from the nodeworking, allowing
-            for actions to be taken.
-
-            :param node_worker: Node object
-        """
-        self.node_worker_ref = node_worker
 
     def on_message(self, data):
         self.log.info(data)
