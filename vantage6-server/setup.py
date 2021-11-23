@@ -35,12 +35,12 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'appdirs==1.4.3',
-        'flask==1.1.1',
-        'Flask-RESTful==0.3.8',
+        'flask==2.0.2',
+        'Flask-RESTful==0.3.9',
         'Flask-Cors==3.0.9',
         'Flask-JWT-Extended==3.24.1',
         'flask-marshmallow==0.11.0',
-        'Flask-SocketIO==4.2.1',
+        'Flask-SocketIO==5.1.1',
         'SQLAlchemy==1.3.15',
         'Flask-Principal==0.4.0',
         'flasgger==0.9.5',
@@ -52,11 +52,11 @@ setup(
         'ipython==7.13.0',
         'requests==2.23.0',
         'psutil==5.7.0',
-        'gevent==1.3.4',
+        'gevent==20.9.0',
         'Flask-Mail==0.9.1',
         'requests-oauthlib==1.3.0',
-        'vantage6 >= 1.2.3',
-        'vantage6-common >= 1.2.3'
+        # 'vantage6 >= 1.2.3',
+        # 'vantage6-common >= 1.2.3'
     ],
     extras_require={
         'dev': [
