@@ -2,7 +2,7 @@ import docker
 import logging
 
 from vantage6.node.util import logger_name
-from vantage6.node.docker.utils import running_in_docker
+from vantage6.node.docker.utils import running_in_docker, remove_container
 
 
 # TODO maybe move following to utils?
@@ -48,16 +48,9 @@ class IsolatedNetworkManager(object):
         docker.models.networks.Network
             Created docker network
         """
-        try:
-            network = self.docker.networks.get(self.network_name)
-            self.log.debug(
-                f"Network {self.network_name} already exists. Deleting it.")
-            network.remove()
-        except Exception:
-            self.log.debug("No network found...")
-
         self.log.debug(
             f"Creating isolated docker-network {self.network_name}!")
+        self._delete_existing_network()
 
         internal_ = running_in_docker()
         if not internal_:
@@ -73,6 +66,28 @@ class IsolatedNetworkManager(object):
             scope="local",
         )
         return network
+
+    def _delete_existing_network(self):
+        """ Delete isolated network before creating a new one """
+        networks = self.docker.networks.list(
+            names=[self.network_name]
+        )
+
+        # network = self.docker.networks.get(self.network_name)
+        self.log.debug(
+            f"Network {self.network_name} already exists. Deleting it.")
+        for network in networks:
+            # delete any containers that were still attached to the network
+            network.reload()
+            for container in network.containers:
+                self.log.warn(
+                    f"Removing container {container.name} in old network")
+                remove_container(container, kill=True)
+            # then remove the network
+            try:
+                network.remove()
+            except Exception:
+                self.log.warn("Could not delete existing isolated network")
 
     def connect(self, container_name, aliases=None, ipv4=None):
         """Connect to the isolated network."""

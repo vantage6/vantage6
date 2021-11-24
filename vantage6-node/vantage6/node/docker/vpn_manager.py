@@ -15,6 +15,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
+from vantage6.node.docker.utils import remove_container
 
 
 class VPNManager(DockerBaseManager):
@@ -50,12 +51,7 @@ class VPNManager(DockerBaseManager):
         env = {'VPN_CONFIG': vpn_config}
 
         # if a VPN container is already running, kill and remove it
-        self.vpn_client_container = self.get_container(
-            name=self.vpn_client_container_name
-        )
-        if self.vpn_client_container:
-            self.log.warn("Removing VPN container that was already running")
-            self.remove_container(self.vpn_client_container, kill=True)
+        self.remove_container_if_exists(name=self.vpn_client_container_name)
 
         # start vpnclient
         self.log.debug("Starting VPN client container")
@@ -118,7 +114,7 @@ class VPNManager(DockerBaseManager):
             return
         self.has_vpn = False
         self.log.debug("Stopping and removing the VPN client container")
-        self.remove_container(self.vpn_client_container, kill=True)
+        remove_container(self.vpn_client_container, kill=True)
 
         # Clean up host network changes. We have added two rules to the front
         # of the DOCKER-USER chain. Now we remove the first two rules (which is

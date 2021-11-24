@@ -206,7 +206,7 @@ class DockerManager(DockerBaseManager):
             self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
         while self.active_tasks:
             task = self.active_tasks.pop()
-            task.cleanup(kill_algorithm=True)
+            task.cleanup()
         self.isolated_network_mgr.cleanup()
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
