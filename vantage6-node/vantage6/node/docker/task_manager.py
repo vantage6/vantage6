@@ -110,7 +110,6 @@ class DockerTaskManager(DockerBaseManager):
         if self.status_code:
             self.log.error(f"Received non-zero exitcode: {self.status_code}")
             self.log.error(f"  Container id: {self.container.id}")
-            self.log.warn("Will not remove container")
             self.log.info(logs)
         return logs
 
