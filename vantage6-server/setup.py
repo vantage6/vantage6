@@ -57,8 +57,8 @@ setup(
         'requests-oauthlib==1.3.0',
         'gevent-websocket==0.10.1',
         'eventlet==0.33.0',
-        'vantage6 >= 1.2.3',
-        'vantage6-common >= 1.2.3'
+        f'vantage6 == {version_ns["__version__"]}',
+        f'vantage6-common == {version_ns["__version__"]}'
     ],
     extras_require={
         'dev': [
