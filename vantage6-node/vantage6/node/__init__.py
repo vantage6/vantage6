@@ -373,12 +373,13 @@ class Node(object):
 
             # notify all of a crashed container
             if results.status_code:
-                self.socket_tasks.emit(
+                self.socketIO.emit(
                     'container_failed',
                     self.server_io.whoami.id_,
                     results.status_code,
                     results.result_id,
-                    self.server_io.collaboration_id
+                    self.server_io.collaboration_id,
+                    namespace='/tasks'
                 )
 
             self.log.info(
