@@ -1525,6 +1525,19 @@ class ContainerClient(ClientBase):
 
         return res
 
+    def get_other_node_ip_and_port(self, task_id: int):
+        """
+        Return IP address and port number of other nodes involved in a task
+        so that VPN can be used for communication
+        """
+        results = self.request(f"task/{task_id}/result")
+
+        res = []
+        for result in results:
+            d = {'ip' : result['node']['ip'], 'port': result['port']}
+            res.append(d)
+        return res
+
     def get_task(self, task_id: int):
         return self.request(
             f"task/{task_id}"
