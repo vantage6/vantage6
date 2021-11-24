@@ -707,7 +707,7 @@ class Node(object):
             self.socketIO.disconnect()
         if hasattr(self, 'vpn_manager') and self.vpn_manager:
             self.vpn_manager.exit_vpn()
-        if hasattr(self, '__docker') and self.__docker:
+        if hasattr(self, '_Node__docker') and self.__docker:
             self.__docker.cleanup()
 
 
