@@ -35,14 +35,15 @@ export class LoginComponent implements OnInit {
 
   onSubmit(): void {
     const { username, password } = this.form;
+
+    this.login(username, password);
+  }
+
+  login(username: string, password: string): void {
     this.authService.login(username, password).subscribe(
       (data) => {
-        this.tokenStorage.saveToken(data.access_token);
-        this.tokenStorage.saveUser(data);
-        this.tokenStorage.setLoggedIn(true);
-
-        this.isLoginFailed = false;
-        this.isLoggedIn = true;
+        // on successfull login
+        this._onSuccessfulLogin(data);
 
         // after login, go to home
         this.router.navigateByUrl('/home');
@@ -53,6 +54,16 @@ export class LoginComponent implements OnInit {
         this.isLoggedIn = false;
       }
     );
+  }
+
+  private async _onSuccessfulLogin(data: any): Promise<void> {
+    await this.tokenStorage.setLoginData(data);
+
+    this.isLoginFailed = false;
+    this.isLoggedIn = true;
+
+    // obtain user rules
+    this.tokenStorage.setUserPermissions();
   }
 
   reloadPage(): void {

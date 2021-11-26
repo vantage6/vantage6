@@ -13,6 +13,8 @@ import { TokenStorageService } from '../services/token-storage.service';
 export class AuthInterceptor implements HttpInterceptor {
   constructor(public tokenStorage: TokenStorageService) {}
 
+  // TODO include refresh token somehow
+
   intercept(
     request: HttpRequest<any>,
     next: HttpHandler
