@@ -21,7 +21,11 @@ const routes: Routes = [
   {
     path: 'organization',
     component: OrganizationComponent,
-    data: { requiresLogin: true },
+    data: {
+      requiresLogin: true,
+      permissionType: 'view',
+      permissionResource: 'organization',
+    },
     canActivate: [AccessGuard],
   },
 ];

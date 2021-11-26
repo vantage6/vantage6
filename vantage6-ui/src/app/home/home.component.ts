@@ -8,12 +8,12 @@ import { UserPermissionService } from '../services/user-permission.service';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
-  permissions: string[] = [];
+  permissions: any[] = [];
 
   constructor(private userPermission: UserPermissionService) {}
 
   ngOnInit() {
-    this.userPermission.getUserRules().subscribe((rules: string[]) => {
+    this.userPermission.getUserRules().subscribe((rules: any[]) => {
       this.permissions = rules;
     });
   }

@@ -5,13 +5,15 @@ import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 import { TokenStorageService } from './token-storage.service';
 import { API_URL, SERVER_URL } from '../constants';
 
+type Permission = { type: string; resource: string; scope: string };
+
 @Injectable({
   providedIn: 'root',
 })
 export class UserPermissionService {
   userUrl: string = '';
-  userRules: string[] = [];
-  userRulesBhs = new BehaviorSubject<string[]>([]);
+  userRules: Permission[] = [];
+  userRulesBhs = new BehaviorSubject<Permission[]>([]);
   userIdBhs = new BehaviorSubject<number>(0);
 
   constructor(
@@ -26,7 +28,7 @@ export class UserPermissionService {
     this.setUserPermissions();
   }
 
-  getUserRules(): Observable<string[]> {
+  getUserRules(): Observable<Permission[]> {
     return this.userRulesBhs.asObservable();
   }
 
@@ -39,7 +41,22 @@ export class UserPermissionService {
     this.userRules = [];
     this.userRulesBhs.next([]);
     this.userIdBhs.next(0);
-    console.log('all clear');
+  }
+
+  hasPermission(type: string, resource: string, scope: string): boolean {
+    if (type == '*' && resource == '*' && scope == '*') {
+      // no permissions required: return true even if user has 0 permissions
+      return true;
+    }
+    // filter user permissions. If any are left that fulfill permission
+    // criteria, user has permission
+    const relevant_permissions = this.userRules.filter(
+      (p: any) =>
+        (p.type === type || type === '*') &&
+        (p.resource === resource || resource === '*') &&
+        (p.scope === scope || scope === '*')
+    );
+    return relevant_permissions.length > 0;
   }
 
   private _setUserUrl(): void {
@@ -93,9 +110,14 @@ export class UserPermissionService {
   private _addRules(rules: any, all_rules: any) {
     if (rules !== null) {
       rules.forEach((rule: any) => {
+        // match the rule descriptions with the current user rule id
         let rule_descr = all_rules.find((r: any) => r.id === rule.id);
-        var new_rule: string =
-          `${rule_descr.operation}_${rule_descr.name}_${rule_descr.scope}`.toLowerCase();
+        // add new permission
+        var new_rule: Permission = {
+          type: rule_descr.operation.toLowerCase(),
+          resource: rule_descr.name.toLowerCase(),
+          scope: rule_descr.scope.toLowerCase(),
+        };
         this.userRules.push(new_rule);
       });
     }

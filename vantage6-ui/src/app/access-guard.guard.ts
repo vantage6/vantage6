@@ -1,13 +1,8 @@
 import { Injectable } from '@angular/core';
-import {
-  Router,
-  ActivatedRouteSnapshot,
-  CanActivate,
-  RouterStateSnapshot,
-  UrlTree,
-} from '@angular/router';
+import { Router, ActivatedRouteSnapshot, CanActivate } from '@angular/router';
 
 import { TokenStorageService } from './services/token-storage.service';
+import { UserPermissionService } from './services/user-permission.service';
 
 @Injectable()
 export class AccessGuard implements CanActivate {
@@ -15,6 +10,7 @@ export class AccessGuard implements CanActivate {
 
   constructor(
     private tokenStorage: TokenStorageService,
+    private userPermission: UserPermissionService,
     private router: Router
   ) {
     this.isLoggedIn = false;
@@ -30,6 +26,13 @@ export class AccessGuard implements CanActivate {
     const requiresLogin = route.data.requiresLogin || false;
     if (requiresLogin && !this.tokenStorage.loggedIn) {
       this.router.navigate(['login']);
+    }
+    const permType = route.data.permissionType || '*';
+    const permResource = route.data.permissionResource || '*';
+    const permScope = route.data.permissionScope || '*';
+    if (!this.userPermission.hasPermission(permType, permResource, permScope)) {
+      alert('No permission!'); // TODO improve?!
+      return false;
     }
     return true;
   }
