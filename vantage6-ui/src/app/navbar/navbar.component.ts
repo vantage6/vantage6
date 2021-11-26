@@ -5,6 +5,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { delay } from 'rxjs/operators';
 
 import { TokenStorageService } from '../services/token-storage.service';
+import { UserPermissionService } from '../services/user-permission.service';
 
 @Component({
   selector: 'app-navbar',
@@ -20,6 +21,7 @@ export class NavbarComponent implements OnInit {
   constructor(
     private observer: BreakpointObserver,
     private tokenStorage: TokenStorageService,
+    private userPermission: UserPermissionService,
     private router: Router
   ) {}
 
@@ -42,6 +44,7 @@ export class NavbarComponent implements OnInit {
 
   logout(): void {
     this.tokenStorage.signOut();
+    this.userPermission.clearPermissions();
     this.router.navigateByUrl('/login');
   }
 }

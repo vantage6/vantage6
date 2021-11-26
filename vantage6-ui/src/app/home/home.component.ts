@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { TokenStorageService } from '../services/token-storage.service';
+import { UserPermissionService } from '../services/user-permission.service';
 
 @Component({
   selector: 'app-home',
@@ -10,10 +10,10 @@ import { TokenStorageService } from '../services/token-storage.service';
 export class HomeComponent implements OnInit {
   permissions: string[] = [];
 
-  constructor(private tokenStorage: TokenStorageService) {}
+  constructor(private userPermission: UserPermissionService) {}
 
   ngOnInit() {
-    this.tokenStorage.getUserRules().subscribe((rules: string[]) => {
+    this.userPermission.getUserRules().subscribe((rules: string[]) => {
       this.permissions = rules;
     });
   }

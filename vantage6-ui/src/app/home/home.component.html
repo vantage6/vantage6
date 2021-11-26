@@ -1,1 +1,9 @@
-<p>You have the following permissions: {{permissions.join(', ')}}</p>
+<div *ngIf="permissions.length > 0">
+    <p>You have the following permissions: {{permissions.join(', ')}}</p>
+</div>
+<div *ngIf="permissions.length===0">
+    <p>
+        You do not have any user permissions! Please contact your organization
+        administrator to enable you to view and/or modify resources.
+    </p>
+</div>

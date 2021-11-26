@@ -4,6 +4,7 @@ import { map, mergeMap, switchMap } from 'rxjs/operators';
 
 import { API_URL } from '../constants';
 import { TokenStorageService } from '../services/token-storage.service';
+import { UserPermissionService } from '../services/user-permission.service';
 
 @Component({
   selector: 'app-organization',
@@ -12,15 +13,16 @@ import { TokenStorageService } from '../services/token-storage.service';
 })
 export class OrganizationComponent implements OnInit {
   organization_details: any = null;
-  userId: number | null = null;
+  userId: number = 0;
 
   constructor(
     private http: HttpClient,
-    private tokenStorage: TokenStorageService
+    private tokenStorage: TokenStorageService,
+    private userPermission: UserPermissionService
   ) {}
 
   ngOnInit(): void {
-    this.tokenStorage.getUserId().subscribe((id) => {
+    this.userPermission.getUserId().subscribe((id) => {
       this.userId = id;
       this.getOrganizationDetails();
     });

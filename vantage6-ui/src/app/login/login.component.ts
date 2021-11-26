@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { AuthService } from '../services/auth.service';
 import { TokenStorageService } from '../services/token-storage.service';
+import { UserPermissionService } from '../services/user-permission.service';
 
 @Component({
   selector: 'app-login',
@@ -24,6 +25,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private tokenStorage: TokenStorageService,
+    private userPermission: UserPermissionService,
     private router: Router
   ) {}
 
@@ -57,13 +59,14 @@ export class LoginComponent implements OnInit {
   }
 
   private async _onSuccessfulLogin(data: any): Promise<void> {
+    // TODO ensure await is functional
     await this.tokenStorage.setLoginData(data);
 
     this.isLoginFailed = false;
     this.isLoggedIn = true;
 
-    // obtain user rules
-    this.tokenStorage.setUserPermissions();
+    // set user permissions
+    this.userPermission.setup();
   }
 
   reloadPage(): void {
