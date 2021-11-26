@@ -16,6 +16,7 @@ export class TokenStorageService {
   userUrl: string = '';
   userRules: string[] = [];
   userRulesBhs = new BehaviorSubject<string[]>([]);
+  userIdBhs = new BehaviorSubject<number>(0);
 
   constructor(private http: HttpClient) {
     // FIXME this is not secure enough I think, token might just have non-valid value
@@ -48,6 +49,10 @@ export class TokenStorageService {
     return this.userRulesBhs.asObservable();
   }
 
+  getUserId(): Observable<number> {
+    return this.userIdBhs.asObservable();
+  }
+
   public saveToken(token: string): void {
     window.sessionStorage.removeItem(TOKEN_KEY);
     window.sessionStorage.setItem(TOKEN_KEY, token);
@@ -59,6 +64,8 @@ export class TokenStorageService {
 
   public saveUserId(user: any): void {
     this.userUrl = user.user_url;
+    let userId = this.userUrl.split('/').pop();
+    if (userId !== undefined) this.userIdBhs.next(parseInt(userId));
   }
 
   public setUserPermissions(): void {

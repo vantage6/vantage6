@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { map, mergeMap, switchMap } from 'rxjs/operators';
 
 import { API_URL } from '../constants';
+import { TokenStorageService } from '../services/token-storage.service';
 
 @Component({
   selector: 'app-organization',
@@ -10,21 +12,38 @@ import { API_URL } from '../constants';
 })
 export class OrganizationComponent implements OnInit {
   organization_details: any = null;
+  userId: number | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private tokenStorage: TokenStorageService
+  ) {}
 
   ngOnInit(): void {
-    this.getOrganizationDetails();
+    this.tokenStorage.getUserId().subscribe((id) => {
+      this.userId = id;
+      this.getOrganizationDetails();
+    });
   }
 
   getOrganizationDetails(): void {
-    this.http.get<any>(API_URL + 'organization/2').subscribe(
-      (data) => {
-        this.organization_details = data;
-      },
-      (err) => {
-        console.log(err);
-      }
-    );
+    if (this.userId === 0) return;
+    // first obtain user information to get organization id, then obtain
+    // organization information
+    this.http
+      .get<any>(API_URL + '/user/' + this.userId)
+      .pipe(
+        mergeMap((user_data) =>
+          this.http.get(API_URL + '/organization/' + user_data.organization.id)
+        )
+      )
+      .subscribe(
+        (data) => {
+          this.organization_details = data;
+        },
+        (err) => {
+          console.log(err);
+        }
+      );
   }
 }
