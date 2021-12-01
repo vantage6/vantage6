@@ -375,10 +375,12 @@ class Node(object):
             if results.status_code:
                 self.socketIO.emit(
                     'container_failed',
-                    self.server_io.whoami.id_,
-                    results.status_code,
-                    results.result_id,
-                    self.server_io.collaboration_id,
+                    data={
+                        'node_id': self.server_io.whoami.id_,
+                        'status_code': results.status_code,
+                        'result_id': results.result_id,
+                        'collaboration_id': self.server_io.collaboration_id
+                    },
                     namespace='/tasks'
                 )
 
