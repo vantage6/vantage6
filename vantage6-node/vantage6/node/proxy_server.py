@@ -109,8 +109,8 @@ def proxy_task():
         #         json.dumps(input_).encode(STRING_ENCODING)
         #     )
 
-        log.warn('Trying to unpack input:')
-        log.warn(input_)
+        # log.warn('Trying to unpack input:')
+        # log.warn(input_)
 
         input_unpacked = base64s_to_bytes(input_)
 
