@@ -24,8 +24,11 @@ export class UserPermissionService {
   }
 
   setup(): void {
-    this._setUserUrl();
-    this.setUserPermissions();
+    let user = this.tokenStorage.getUserInfo();
+    if (Object.keys(user).length !== 0) {
+      this._setUserUrl(user);
+      this.setUserPermissions();
+    }
   }
 
   getUserRules(): Observable<Permission[]> {
@@ -59,15 +62,10 @@ export class UserPermissionService {
     return relevant_permissions.length > 0;
   }
 
-  private _setUserUrl(): void {
-    let user = this.tokenStorage.getUserInfo();
-    if (user !== null) {
-      this.userUrl = user.user_url;
-      let userId = this.userUrl.split('/').pop();
-      if (userId !== undefined) this.userIdBhs.next(parseInt(userId));
-    } else {
-      console.log('Could not find user'); // TODO raise issue
-    }
+  private _setUserUrl(user: any): void {
+    this.userUrl = user.user_url;
+    let userId = this.userUrl.split('/').pop();
+    if (userId !== undefined) this.userIdBhs.next(parseInt(userId));
   }
 
   public setUserPermissions(): void {
