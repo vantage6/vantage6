@@ -5,6 +5,8 @@ import { AuthService } from '../services/auth.service';
 import { TokenStorageService } from '../services/token-storage.service';
 import { UserPermissionService } from '../services/user-permission.service';
 
+let BACKGROUND_IMAGES = ['cuppolone.jpg', 'taipei101.png', 'trolltunga.jpg'];
+
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -18,6 +20,7 @@ export class LoginComponent implements OnInit {
   isLoggedIn = false;
   isLoginFailed = false;
   errorMessage = '';
+  background_img = '';
 
   // TODO count number of times login failed?
   // TODO if user is logged in, force that it redirects to HomeComponent
@@ -33,6 +36,7 @@ export class LoginComponent implements OnInit {
     if (this.tokenStorage.getToken()) {
       this.isLoggedIn = true;
     }
+    this.background_img = this._pickBackgroundImage();
   }
 
   onSubmit(): void {
@@ -71,5 +75,16 @@ export class LoginComponent implements OnInit {
 
   reloadPage(): void {
     window.location.reload();
+  }
+
+  private _pickBackgroundImage(): string {
+    // pick random background image
+    return BACKGROUND_IMAGES[
+      Math.floor(Math.random() * BACKGROUND_IMAGES.length)
+    ];
+  }
+
+  _getBackgroundImage() {
+    return `url('../assets/images/login_backgrounds/${this.background_img}')`;
   }
 }

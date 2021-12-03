@@ -25,6 +25,7 @@ export class UserPermissionService {
 
   setup(): void {
     let user = this.tokenStorage.getUserInfo();
+    // if user is logged in, set their properties
     if (Object.keys(user).length !== 0) {
       this._setUserUrl(user);
       this.setUserPermissions();
