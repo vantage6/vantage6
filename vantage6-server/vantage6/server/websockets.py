@@ -1,4 +1,5 @@
 import logging
+from typing import Dict
 import jwt
 
 from flask import request, session
@@ -139,8 +140,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.__join_room_and_notify(room)
 
-    def on_container_failed(self, node_id: int, status_code: int,
-                            result_id: int, collaboration_id: int):
+    def on_container_failed(self, data: Dict):
         """
         An algorithm container has crashed at a node.
 
@@ -158,7 +158,11 @@ class DefaultSocketNamespace(Namespace):
         collaboration_id : int
             collaboration for which the task was running
         """
-        # obtain run id,
+        result_id = data.get('result_id')
+        collaboration_id = data.get('collaboration_id')
+        status_code = data.get('status_code')
+        node_id = data.get('node_id')
+
         run_id = db.Result.get(result_id).task.run_id
 
         self.log.critical(
