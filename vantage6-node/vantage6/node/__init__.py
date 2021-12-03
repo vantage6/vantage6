@@ -629,15 +629,15 @@ class Node(object):
             new tasks.
         """
 
-        self.socketIO = SocketIO()
+        self.socketIO = SocketIO(request_timeout=60)
         self.socketIO.connect(
             url=f'{self.server_io.host}:{self.server_io.port}',
             headers=self.server_io.headers,
             namespaces=['/tasks']
         )
 
-        NodeTaskNamespace.node_worker_ref = self
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
+        NodeTaskNamespace.node_worker_ref = self
 
         # Log the outcome
         while not self.socketIO.connected:
