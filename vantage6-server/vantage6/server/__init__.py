@@ -73,9 +73,10 @@ class ServerApp:
 
         # Setup websocket channel
         try:
-            self.socketio = SocketIO(self.app, async_mode='gevent_uwsgi')
+            self.socketio = SocketIO(self.app, async_mode='gevent_uwsgi',
+                                     ping_timeout=60)
         except Exception:
-            self.socketio = SocketIO(self.app)
+            self.socketio = SocketIO(self.app, ping_timeout=60)
         # FIXME: temporary fix to get socket object into the namespace class
         DefaultSocketNamespace.socket = self.socketio
         self.socketio.on_namespace(DefaultSocketNamespace("/tasks"))
