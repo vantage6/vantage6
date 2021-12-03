@@ -1519,9 +1519,19 @@ class ContainerClient(ClientBase):
         )
 
         res = []
-        for result in results:
-            self._decrypt_result(result)
-            res.append(result.get("result"))
+        # Encryption is not done at the client level for the container.
+        # Although I am not completely sure that the format is always
+        # a pickle.
+        # for result in results:
+        #     self._decrypt_result(result)
+        #     res.append(result.get("result"))
+        #
+        try:
+            res = [pickle.loads(base64s_to_bytes(result.get("result")))
+                    for result in results if result.get("result")]
+        except Exception as e:
+            self.log.error('Unable to unpickle result')
+            self.log.debug(e)
 
         return res
 
