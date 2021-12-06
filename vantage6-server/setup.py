@@ -50,7 +50,7 @@ setup(
         'marshmallow==2.16.3',
         'marshmallow-sqlalchemy==0.15.0',
         'ipython==7.13.0',
-        'requests==2.23.0',
+        'requests==2.25.1',
         'psutil==5.7.0',
         'gevent==20.9.0',
         'Flask-Mail==0.9.1',
