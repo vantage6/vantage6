@@ -33,7 +33,7 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
-        'requests==2.23.0',
+        'requests==2.25.1',
         'gevent==20.9.0',
         'python-socketio==5.5.0',
         'docker==4.2.0',
