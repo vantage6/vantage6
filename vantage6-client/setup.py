@@ -32,7 +32,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'cryptography==2.8',
-        'requests==2.23.0',
+        'requests==2.25.1',
         'PyJWT==1.7.1',
         'pandas',
         f'vantage6-common=={version_ns["__version__"]}',
