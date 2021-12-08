@@ -1,13 +1,10 @@
 import datetime
-from flask.globals import session
 
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.server.model.base import Base
-
-
 from vantage6.server.model import (
     Node,
     Collaboration,
@@ -15,6 +12,7 @@ from vantage6.server.model import (
     Organization
 )
 from vantage6.server.model.base import DatabaseSessionManager
+
 
 class Result(Base):
     """Result of a Task as executed by a Node.
@@ -37,6 +35,7 @@ class Result(Base):
     # relationships
     task = relationship("Task", back_populates="results")
     organization = relationship("Organization", back_populates="results")
+    algorithm_port = relationship("AlgorithmPort", back_populates="result")
 
     @property
     def node(self):
