@@ -146,7 +146,7 @@ class ResetAPIKey(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        
+
         # obtain permissions to check if user is allowed to modify nodes
         self.r = getattr(self.permissions, 'node')
 
@@ -183,7 +183,7 @@ class ResetAPIKey(ServicesResources):
             400:
                 description: id missing from json body
             401:
-                description: Unauthorized: no permission to alter this node
+                description: Unauthorized, no permission to alter this node
             404:
                 description: Node not found
 

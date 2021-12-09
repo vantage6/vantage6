@@ -242,11 +242,11 @@ class User(UserBase):
 
         parameters:
             - in: path
-                name: id
-                schema:
+              name: id
+              schema:
                 type: integer
-                description: user id
-                required: true
+              description: user id
+              required: true
 
         responses:
             200:
