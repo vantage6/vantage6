@@ -532,31 +532,17 @@ class Node(object):
             namespaces=['/tasks']
         )
 
-        # define() returns the instantiated action_handler
+        # Connect to the /tasks namespace
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
         NodeTaskNamespace.node_worker_ref = self
-        # self.socket_tasks = self.socketIO.define(, '/tasks')
-        # self.socket_tasks.set_node_worker(self)
 
         # Log the outcome
         while not self.socketIO.connected:
             self.log.debug('waiting for socket connection...')
             time.sleep(1)
 
-        msg = 'connected to host={host} on port={port}'
-        msg = msg.format(
-            host=self.server_io.host,
-            port=self.server_io.port
-        )
-        self.log.info(msg)
-
-        # else:
-        #     msg = 'could *not* connect to {host} on port={port}'
-        #     msg = msg.format(
-        #         host=self.server_io.host,
-        #         port=self.server_io.port
-        #     )
-        #     self.log.critical(msg)
+        self.log.info(f'connected to host={self.server_io.host} '
+                      f'on port={self.server_io.port}')
 
     def get_task_and_add_to_queue(self, task_id):
         """Fetches (open) task with task_id from the server.
