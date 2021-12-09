@@ -525,7 +525,7 @@ class Node(object):
             new tasks.
         """
 
-        self.socketIO = SocketIO()
+        self.socketIO = SocketIO(request_timeout=60)
         self.socketIO.connect(
             url=f'{self.server_io.host}:{self.server_io.port}',
             headers=self.server_io.headers,
@@ -533,8 +533,8 @@ class Node(object):
         )
 
         # define() returns the instantiated action_handler
-        NodeTaskNamespace.node_worker_ref = self
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
+        NodeTaskNamespace.node_worker_ref = self
         # self.socket_tasks = self.socketIO.define(, '/tasks')
         # self.socket_tasks.set_node_worker(self)
 
