@@ -30,12 +30,11 @@ class Result(Base):
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
     log = Column(Text)
-    port = Column(Integer)
 
     # relationships
     task = relationship("Task", back_populates="results")
     organization = relationship("Organization", back_populates="results")
-    algorithm_port = relationship("AlgorithmPort", back_populates="result")
+    ports = relationship("AlgorithmPort", back_populates="result")
 
     @property
     def node(self):

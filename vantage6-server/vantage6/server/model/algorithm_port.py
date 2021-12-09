@@ -16,4 +16,4 @@ class AlgorithmPort(Base):
     result_id = Column(Integer, ForeignKey("result.id"))
     label = Column(String)
 
-    result = relationship("Result", back_populates="algorithm_port")
+    result = relationship("Result", back_populates="ports")

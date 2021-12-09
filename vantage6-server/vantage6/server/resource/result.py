@@ -336,7 +336,24 @@ class Result(ResultBase):
         result.finished_at = parse_datetime(data.get("finished_at"))
         result.result = data.get("result")
         result.log = data.get("log")
-        result.port = data.get("port")
         result.save()
+
+        port_info = data.get("ports")
+        if port_info:
+            # remove any old claimed ports that may be present in the database
+            # e.g. when an algorithm is killed before it finishes
+            DatabaseSessionManager.get_session().query(
+                db.AlgorithmPort
+            ).filter(
+                db.AlgorithmPort.result_id == id
+            ).delete()
+            # Add newly claimed ports in algorithmPort table
+            for port_dict in port_info:
+                port = db.AlgorithmPort(
+                    port=port_dict['port'],
+                    result_id=id,
+                    label=port_dict['label'],
+                )
+                port.save()
 
         return result_schema.dump(result, many=False).data, HTTPStatus.OK

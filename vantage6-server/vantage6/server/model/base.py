@@ -164,7 +164,6 @@ class DatabaseSessionManager:
                 print('No DB session found to clear!')
 
 
-
 class ModelBase:
     """Declarative base that defines default attributes."""
     _hidden_attributes = []
