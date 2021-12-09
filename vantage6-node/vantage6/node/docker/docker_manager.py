@@ -210,7 +210,7 @@ class DockerManager(DockerBaseManager):
         self.isolated_network_mgr.cleanup()
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: str, token: str) -> Union[int, None]:
+            tmp_vol_name: str, token: str) -> Union[List[Dict], None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
@@ -230,8 +230,9 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        int or None:
-            Port number assigned for VPN communication. None if VPN is inactive
+        List[Dict] or None
+            Description of each port on the VPN client that forwards traffic to
+            the algo container. None if VPN is not set up.
         """
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image):
@@ -256,7 +257,7 @@ class DockerManager(DockerBaseManager):
             database_is_file=self.database_is_file,
             docker_volume_name=self.data_volume_name
         )
-        vpn_port = task.run(
+        vpn_ports = task.run(
             docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
             algorithm_env=self.algorithm_env
         )
@@ -264,7 +265,7 @@ class DockerManager(DockerBaseManager):
         # keep track of the active container
         self.active_tasks.append(task)
 
-        return vpn_port
+        return vpn_ports
 
     def get_result(self) -> Result:
         """

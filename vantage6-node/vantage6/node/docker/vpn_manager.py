@@ -156,7 +156,7 @@ class VPNManager(DockerBaseManager):
         return vpn_interface[0]['addr_info'][0]['local']
 
     def forward_vpn_traffic(self, helper_container: Container,
-                            algo_image_name: str) -> int:
+                            algo_image_name: str) -> List[Dict]:
         """
         Setup rules so that traffic is properly forwarded between the VPN
         container and the algorithm container (and its helper container)
@@ -170,13 +170,14 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        int
-            Port on the VPN client that forwards traffic to the algo container
+        List[Dict] or None
+            Description of each port on the VPN client that forwards traffic to
+            the algo container. None if VPN is not set up.
         """
-        vpn_port = self._forward_traffic_to_algorithm(
+        ports = self._forward_traffic_to_algorithm(
             helper_container, algo_image_name)
         self._forward_traffic_from_algorithm(helper_container)
-        return vpn_port
+        return ports
 
     def _forward_traffic_from_algorithm(
             self, algo_helper_container: Container) -> None:
@@ -211,7 +212,7 @@ class VPNManager(DockerBaseManager):
         )
 
     def _forward_traffic_to_algorithm(self, algo_helper_container: Container,
-                                      algo_image_name: str) -> int:
+                                      algo_image_name: str) -> List[Dict]:
         """
         Forward incoming traffic from the VPN client container to the
         algorithm container
@@ -225,11 +226,20 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        int
-            Port on the VPN client that forwards traffic to the algo container
+        List[Dict] or None
+            Description of each port on the VPN client that forwards traffic to
+            the algo container. None if VPN is not set up.
         """
         if not self.has_vpn:
             return None  # no port assigned if no VPN is available
+
+        # Get IP Address of the algorithm container
+        algo_helper_container.reload()  # update attributes
+        algo_ip = self.get_isolated_netw_ip(algo_helper_container)
+
+        # Set ports at which algorithm containers receive traffic
+        ports = self._find_exposed_ports(algo_image_name)
+
         # Find ports on VPN container that are already occupied
         cmd = (
             'sh -c '
@@ -243,26 +253,26 @@ class VPNManager(DockerBaseManager):
 
         # take first available port
         vpn_client_port_options = set(FREE_PORT_RANGE) - set(occupied_ports)
-        vpn_client_port = next(iter(vpn_client_port_options))
-
-        # Get IP Address of the algorithm container
-        algo_helper_container.reload()  # update attributes
-        algo_ip = self.get_isolated_netw_ip(algo_helper_container)
-
-        # Set port at which algorithm containers receive traffic
-        algorithm_port = self._find_exposed_port(algo_image_name)
+        for port in ports:
+            port['port'] = vpn_client_port_options.pop()
 
         # Set up forwarding VPN traffic to algorithm container
-        command = (
-            'sh -c '
-            '"iptables -t nat -A PREROUTING -i tun0 -p tcp '
-            f'--dport {vpn_client_port} -j DNAT '
-            f'--to {algo_ip}:{algorithm_port}"'
-        )
+        command = 'sh -c "'
+        for port in ports:
+            command += (
+                'iptables -t nat -A PREROUTING -i tun0 -p tcp '
+                f'--dport {port["port"]} -j DNAT '
+                f'--to {algo_ip}:{port["algo_port"]};'
+            )
+            # remove the algorithm ports from the dictionaries as these are no
+            # longer necessary
+            del port['algo_port']
+        command += '"'
         self.vpn_client_container.exec_run(command)
-        return vpn_client_port
 
-    def _find_exposed_port(self, image: str) -> str:
+        return ports
+
+    def _find_exposed_ports(self, image: str) -> List[Dict]:
         """
         Find which ports were exposed via the EXPOSE keyword in the dockerfile
         of the algorithm image. This port will be used for VPN traffic. If no
@@ -275,33 +285,44 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        str:
-            Port number to forward VPN traffic to (as str)
+        List[Dict]:
+            List of ports forward VPN traffic to. For each port, a dictionary
+            containing port number and label is given
         """
         n2n_image = self.docker.images.get(image)
-        port = DEFAULT_ALGO_VPN_PORT
+        default_ports = [{'algo_port': DEFAULT_ALGO_VPN_PORT, 'label': None}]
 
         exposed_ports = []
         try:
             exposed_ports = n2n_image.attrs['Config']['ExposedPorts']
         except KeyError:
-            return port  # No exposed ports defined, use default
+            return default_ports
 
-        if len(exposed_ports) == 1:
-            port = list(exposed_ports)[0]
+        # find any labels defined in the docker image
+        labels = []
+        try:
+            labels = n2n_image.attrs['Config']['Labels']
+        except KeyError:
+            pass  # No labels found, ignore
+
+        ports = []
+        for port in exposed_ports:
             port = port[0:port.find('/')]
             try:
                 int(port)
             except ValueError:
                 self.log.warn("Could not parse port specified in algorithm "
-                              f"docker image {image}: {port}. Using default "
-                              f"port {DEFAULT_ALGO_VPN_PORT}")
-                return DEFAULT_ALGO_VPN_PORT
-        elif len(exposed_ports) > 1:
-            self.log.warn("More than 1 port exposed in docker image. "
-                          f"Using default port {port}.")
-        # else: no exposed port specified, return default
-        return port
+                              f"docker image {image}: {port}")
+            # get port label: this should be defined as 'p1234' for port 1234
+            label = labels.get('p' + port)
+            ports.append({'algo_port': port, 'label': label})
+
+        if not ports:
+            self.log.warn(
+                "None of the ports in the algorithm image could be parsed. "
+                f"Using default port {DEFAULT_ALGO_VPN_PORT} instead")
+
+        return ports if ports else default_ports
 
     def _find_isolated_bridge(self) -> str:
         """
