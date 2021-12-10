@@ -31,6 +31,7 @@ class HATEOASModelSchema(ModelSchema):
         setattr(self, "user", lambda obj: self.hateos("user", obj))
         setattr(self, "result", lambda obj: self.hateos("result", obj))
         setattr(self, "task", lambda obj: self.hateos("task", obj))
+        setattr(self, "port", lambda obj: self.hateos("port", obj))
         setattr(self, "parent_",
                 lambda obj: self.hateos("parent", obj, endpoint="task"))
 
@@ -43,6 +44,7 @@ class HATEOASModelSchema(ModelSchema):
         setattr(self, "users", lambda obj: self.hateos_list("user", obj))
         setattr(self, "results", lambda obj: self.hateos_list("result", obj))
         setattr(self, "tasks", lambda obj: self.hateos_list("task", obj))
+        setattr(self, "ports", lambda obj: self.hateos_list("port", obj))
         setattr(self, "children",
                 lambda obj: self.hateos_list(
                     "children",
@@ -152,6 +154,7 @@ class ResultSchema(HATEOASModelSchema):
     node = fields.Function(
         func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
     )
+    ports = fields.Method("ports")
 
 
 class ResultTaskIncludedSchema(ResultSchema):
@@ -163,6 +166,11 @@ class ResultNodeSchema(HATEOASModelSchema):
         model = db.Node
         exclude = ('type', 'api_key', 'collaboration', 'organization',
                    'last_seen')
+
+
+class PortSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.AlgorithmPort
 
 
 class OrganizationSchema(HATEOASModelSchema):

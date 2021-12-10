@@ -250,11 +250,11 @@ class Result(ResultBase):
             Returns a result from a task specified by an id. \n\n
 
             ### Permission Table\n
-            | Rule name | Scope | Operation | Node| Container | Description |\n
-            | -- | -- | -- | -- | -- | -- |\n
-            | Result | Global | View | ❌ | ❌ | View any result |\n
-            | Result | Organization | View | ✅ | ✅ | View the results of
-            your organizations collaborations | \n
+            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Result|Global|View|❌|❌|View any result|\n
+            |Result|Organization|View|✅|✅|View the results of your
+            organizations collaborations|\n
 
             Accessable as: `node`, `user` and `container`.
 

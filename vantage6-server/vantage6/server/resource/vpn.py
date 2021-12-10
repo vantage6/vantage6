@@ -295,7 +295,6 @@ class EduVPNConnector:
             'code_challenge_method': 'S256',
             'code_challenge': self.code_challenge,
         }
-        log.debug(f'VPN auth-code params: {params}')
 
         # Call authorization route, but prevent redirect. By preventing the
         # redirect, the authorization code can be used in the current session
@@ -322,7 +321,6 @@ class EduVPNConnector:
             'client_secret': self.config['client_secret'],
             'code_verifier': self.code_verifier,
         }
-        log.debug(f'VPN token params: {data}')
 
         r = self.session.post(
             f'{self.PORTAL_URL}/oauth.php/token',
