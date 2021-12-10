@@ -3,12 +3,9 @@ import logging
 
 from flask import g, request
 from http import HTTPStatus
-from flasgger import swag_from
-from pathlib import Path
 from sqlalchemy import desc
 
 from vantage6.common import logger_name
-from vantage6.server import db
 from vantage6.server.permission import (
     PermissionManager,
     Scope as S,
@@ -17,7 +14,6 @@ from vantage6.server.permission import (
 from vantage6.server.resource import (
     with_node,
     only_for,
-    parse_datetime,
     ServicesResources
 )
 from vantage6.server.resource.pagination import Pagination
@@ -25,10 +21,7 @@ from vantage6.server.resource._schema import PortSchema
 from vantage6.server.model import (
     Result,
     AlgorithmPort,
-    Node,
-    Task,
     Collaboration,
-    Organization
 )
 from vantage6.server.model.base import DatabaseSessionManager
 
@@ -226,9 +219,9 @@ class Ports(PortBase):
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
         result_id = data.get('result_id', '')
-        port_result = DatabaseSessionManager.get_session().query(
+        linked_result = DatabaseSessionManager.get_session().query(
             Result).filter(Result.id == result_id).one()
-        if g.node.id != port_result.node.id:
+        if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
@@ -283,9 +276,9 @@ class Ports(PortBase):
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
         result_id = args['result_id']
-        port_result = DatabaseSessionManager.get_session().query(
+        linked_result = DatabaseSessionManager.get_session().query(
             Result).filter(Result.id == result_id).one()
-        if g.node.id != port_result.node.id:
+        if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
