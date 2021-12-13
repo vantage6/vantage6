@@ -143,6 +143,9 @@ class TaskResultSchema(HATEOASModelSchema):
     node = fields.Function(
         func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
     )
+    ports = fields.Function(
+        func=lambda obj: ResultPortSchema().dump(obj.ports, many=True).data
+    )
 
 
 class ResultSchema(HATEOASModelSchema):
@@ -154,7 +157,9 @@ class ResultSchema(HATEOASModelSchema):
     node = fields.Function(
         func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
     )
-    ports = fields.Method("ports")
+    ports = fields.Function(
+        func=lambda obj: ResultPortSchema().dump(obj.ports, many=True).data
+    )
 
 
 class ResultTaskIncludedSchema(ResultSchema):
@@ -171,6 +176,12 @@ class ResultNodeSchema(HATEOASModelSchema):
 class PortSchema(HATEOASModelSchema):
     class Meta:
         model = db.AlgorithmPort
+
+
+class ResultPortSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.AlgorithmPort
+        exclude = ('result',)
 
 
 class OrganizationSchema(HATEOASModelSchema):
