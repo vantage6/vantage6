@@ -1535,7 +1535,7 @@ class ContainerClient(ClientBase):
 
         return res
 
-    def get_vpn_addresses(self, task_id: int):
+    def get_algorithm_addresses(self, task_id: int):
         """
         Return IP address and port number of other algorithm containers
         involved in a task so that VPN can be used for communication
@@ -1551,6 +1551,16 @@ class ContainerClient(ClientBase):
                     'label': port['label']
                 })
         return algorithm_addresses
+
+    def get_algorithm_address_by_label(self, task_id: int, label: str) -> str:
+        """
+        Return the IP address plus port number of a given port label
+        """
+        algorithm_addresses = self.get_algorithm_addresses(task_id=task_id)
+        for address in algorithm_addresses:
+            if address['label'] == label:
+                return f"{address['ip']}:{address['port']}"
+        return None
 
     def get_task(self, task_id: int):
         return self.request(
