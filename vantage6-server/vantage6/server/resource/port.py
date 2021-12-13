@@ -22,6 +22,7 @@ from vantage6.server.model import (
     Result,
     AlgorithmPort,
     Collaboration,
+    Task
 )
 from vantage6.server.model.base import DatabaseSessionManager
 
@@ -39,7 +40,7 @@ def setup(api, api_base, services):
         Ports,
         path,
         endpoint='port_without_id',
-        methods=('GET', 'POST', 'DELETE'), # TODO implement delete
+        methods=('GET', 'POST', 'DELETE'),
         resource_class_kwargs=services
     )
     api.add_resource(
@@ -147,17 +148,21 @@ class Ports(PortBase):
 
         tags: ["VPN"]
         """
-        # TODO filter for params task_id, run_id, parent_id
         auth_org = self.obtain_auth_organization()
         args = request.args
 
         q = DatabaseSessionManager.get_session().query(AlgorithmPort)
 
         # relation filters
-        if 'task_id' in args:
-            q = q.join(Result).filter(Result.task_id == args['task_id'])
         if 'result_id' in args:
             q = q.filter(AlgorithmPort.result_id == args['result_id'])
+        if 'task_id' in args:
+            q = q.join(Result).filter(Result.task_id == args['task_id'])
+        if 'run_id' in args:
+            # check if Result was already joined in 'task_id' arg
+            if Result not in [joined.class_ for joined in q._join_entities]:
+                q = q.join(Result)
+            q = q.join(Task).filter(Task.run_id == args['run_id'])
 
         # filter based on permissions
         if not self.r.v_glo.can():
