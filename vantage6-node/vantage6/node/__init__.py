@@ -38,6 +38,7 @@ from vantage6.node.util import logger_name
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.docker.utils import is_docker_running
 
 
 class VPNConnectMode(Enum):
@@ -138,6 +139,13 @@ class Node(object):
             raise
 
     def initialize(self):
+        # check if docker is running, otherwise exit with error
+        if not is_docker_running():
+            self.log.critical("Cannot reach the Docker engine! Please make "
+                              "sure Docker is running")
+            self.log.warn("Exiting...")
+            exit(1)
+
         self.config = self.ctx.config
         self.queue = queue.Queue()
         self._using_encryption = None

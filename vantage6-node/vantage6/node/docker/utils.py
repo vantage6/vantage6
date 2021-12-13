@@ -1,11 +1,23 @@
 import pathlib
 import logging
+import docker
 
 from docker.models.containers import Container
 
 from vantage6.node.util import logger_name
 
 log = logging.getLogger(logger_name(__name__))
+
+
+def is_docker_running() -> bool:
+    """ Return True if docker engine is running"""
+    try:
+        client = docker.from_env()
+        client.ping()
+    except Exception as e:
+        log.error(e)
+        return False
+    return True
 
 
 def running_in_docker() -> bool:
