@@ -12,7 +12,7 @@ class AlgorithmPort(Base):
     """
 
     # fields
-    port = Column(String)
+    port = Column(Integer)
     result_id = Column(Integer, ForeignKey("result.id"))
     label = Column(String)
 
