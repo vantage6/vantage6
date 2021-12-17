@@ -4,11 +4,11 @@
     <mat-card>
 
         {{organization_details.name}}
-        <br>
+        <br/>
         {{organization_details.address1}}
-        <br>
+        <br/>
         {{organization_details.address2}}
-        <br>
+        <br/>
         {{organization_details.country}}
     </mat-card>
 
@@ -18,8 +18,8 @@
         <h3>Users</h3>
 
       <ul>
-        <li *ngFor="let user of organization_details.users">
-          {{user.id}}, {{user.link}}
+        <li *ngFor="let user of organization_users">
+          {{user.first_name}} {{user.last_name}}
         </li>
       </ul>
     </mat-card>

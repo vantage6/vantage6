@@ -6,6 +6,11 @@ import { environment } from 'src/environments/environment';
 
 import { UserPermissionService } from '../services/user-permission.service';
 
+interface User {
+  first_name: string;
+  last_name: string;
+}
+
 @Component({
   selector: 'app-organization',
   templateUrl: './organization.component.html',
@@ -13,6 +18,7 @@ import { UserPermissionService } from '../services/user-permission.service';
 })
 export class OrganizationComponent implements OnInit {
   organization_details: any = null;
+  organization_users: User[] = [];
   userId: number = 0;
 
   constructor(
@@ -43,11 +49,36 @@ export class OrganizationComponent implements OnInit {
       .subscribe(
         (data) => {
           this.organization_details = data;
+          this.collectUsers();
           console.log(data);
         },
         (err) => {
           console.log(err);
         }
       );
+  }
+
+  collectUsers(): void {
+    this.organization_users = [];
+    for (let user of this.organization_details.users) {
+      console.log(user);
+      this.http.get(environment.server_url + user.link).subscribe(
+        (data: any) => {
+          this.organization_users.push({
+            first_name: data.firstname,
+            last_name: data.lastname,
+          });
+          console.log(this.organization_users);
+          console.log(data);
+          console.log(data.firstname, data.lastname);
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+    }
+    // <li *ngFor="let user of organization_details.users">
+    //       {{user.id}}, {{user.link}}
+    //     </li>
   }
 }
