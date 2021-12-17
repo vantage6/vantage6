@@ -20,6 +20,7 @@ import { AccessGuard } from './access-guard.guard';
 import { NavbarComponent } from './navbar/navbar.component';
 import { OrganizationComponent } from './organization/organization.component';
 import { AuthInterceptor } from './helpers/auth.interceptor';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
   declarations: [
@@ -43,6 +44,7 @@ import { AuthInterceptor } from './helpers/auth.interceptor';
     MatDividerModule,
     MatCardModule,
     CommonModule,
+    NgbModule,
   ],
   providers: [
     AccessGuard,

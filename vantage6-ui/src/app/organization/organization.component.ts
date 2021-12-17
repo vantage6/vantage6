@@ -50,7 +50,6 @@ export class OrganizationComponent implements OnInit {
         (data) => {
           this.organization_details = data;
           this.collectUsers();
-          console.log(data);
         },
         (err) => {
           console.log(err);
@@ -61,16 +60,12 @@ export class OrganizationComponent implements OnInit {
   collectUsers(): void {
     this.organization_users = [];
     for (let user of this.organization_details.users) {
-      console.log(user);
       this.http.get(environment.server_url + user.link).subscribe(
         (data: any) => {
           this.organization_users.push({
             first_name: data.firstname,
             last_name: data.lastname,
           });
-          console.log(this.organization_users);
-          console.log(data);
-          console.log(data.firstname, data.lastname);
         },
         (error) => {
           console.log(error);
