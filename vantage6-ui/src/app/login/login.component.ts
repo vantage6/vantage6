@@ -55,7 +55,11 @@ export class LoginComponent implements OnInit {
         this.router.navigateByUrl('/home');
       },
       (err) => {
-        this.errorMessage = err.error.msg;
+        if (err.status === 0) {
+          this.errorMessage = 'Cannot connect to server!';
+        } else {
+          this.errorMessage = err.error.msg;
+        }
         this.isLoginFailed = true;
         this.isLoggedIn = false;
       }
