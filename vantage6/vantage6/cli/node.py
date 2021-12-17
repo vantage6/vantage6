@@ -661,6 +661,10 @@ def cli_node_version(name, system_folders):
     running_node_names = [node.name for node in running_nodes]
 
     if not name:
+        if not running_node_names:
+            error("No nodes are running! You can only check the version for "
+                  "nodes that are running")
+            exit(1)
         name = q.select("Select the node you wish to inspect:",
                         choices=running_node_names).ask()
     else:
@@ -673,6 +677,8 @@ def cli_node_version(name, system_folders):
         click.echo({
             "node": version.output.decode('utf-8'), "cli": __version__
         })
+    else:
+        error(f"Node {name} is not running! Cannot provide version...")
 
 
 def print_log_worker(logs_stream):
