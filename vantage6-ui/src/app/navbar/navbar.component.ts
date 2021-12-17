@@ -21,7 +21,7 @@ export class NavbarComponent implements OnInit {
   constructor(
     private observer: BreakpointObserver,
     private tokenStorage: TokenStorageService,
-    private userPermission: UserPermissionService,
+    public userPermission: UserPermissionService,
     private router: Router
   ) {}
 

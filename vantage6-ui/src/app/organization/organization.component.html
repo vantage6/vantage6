@@ -1,13 +1,32 @@
-<p>User id: {{userId}}</p>
+<!-- <p>User id: {{userId}}</p> -->
 <div *ngIf="organization_details!==null">
-    <div  *ngFor="let obj of organization_details | keyvalue">
+
+    <mat-card>
+
+        {{organization_details.name}}
+        <br>
+        {{organization_details.address1}}
+        <br>
+        {{organization_details.address2}}
+        <br>
+        {{organization_details.country}}
+    </mat-card>
+
+    <mat-card>
+
+
+        <h3>Users</h3>
+
+      <ul>
+        <li *ngFor="let user of organization_details.users">
+          {{user.id}}, {{user.link}}
+        </li>
+      </ul>
+    </mat-card>
+    <!-- <div  *ngFor="let obj of organization_details | keyvalue">
         <div>
             <strong>{{obj.key}}:</strong>
             {{obj.value}}
         </div>
-        <!-- <div *ngFor="let inner of obj.value | keyvalue" style="margin-left: 10px;">
-            <span>{{inner.key}}</span> -
-            <span>{{inner.value}}</span>
-        </div> -->
-    </div>
+    </div> -->
 </div>

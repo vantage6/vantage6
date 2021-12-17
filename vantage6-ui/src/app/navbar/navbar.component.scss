@@ -1,10 +1,6 @@
-$vtg-blue: #0656b1;
+$vtg-blue: rgba(6, 86, 177, 1);
+$vtg-blue-opaque: rgba(6, 86, 177, 0.3);
 $white: white;
-$lightgray: lightgray;
-
-// Donkerblauw: #0F497B
-// Lichtblauw: #AABFCE
-// Oranje: #F9AC23
 
 $toolbar_height: 70px;
 
@@ -24,6 +20,7 @@ mat-toolbar {
 
 mat-sidenav {
   margin: 16px;
+  margin-top: 6px;
   width: 200px;
   border-right: none;
   background: $vtg-blue;
@@ -34,21 +31,18 @@ mat-sidenav {
 }
 
 .content {
-  height: calc(100vh - 98px);
+  height: calc(100vh - 88px);
   border-radius: 10px;
-  margin: 16px;
+  margin: 6px;
   margin-left: 32px;
 
   display: flex;
-  // justify-content: center;
-  // align-items: center;
-
-  // font-size: 2rem;
-  // color: $lightgray;
+  background-color: $vtg-blue-opaque;
 }
 
 mat-sidenav-container {
   height: calc(100vh - 65px);
+  background-color: $white;
 }
 
 .btn-primary {

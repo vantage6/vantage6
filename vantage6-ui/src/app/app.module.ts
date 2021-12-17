@@ -7,6 +7,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule } from '@angular/common';
@@ -40,6 +41,7 @@ import { AuthInterceptor } from './helpers/auth.interceptor';
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
+    MatCardModule,
     CommonModule,
   ],
   providers: [

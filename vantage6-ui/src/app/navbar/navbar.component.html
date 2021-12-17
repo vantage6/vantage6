@@ -16,18 +16,19 @@
   </button>
 </mat-toolbar>
 
-<mat-sidenav-container>
+<mat-sidenav-container class="sidenav-container">
   <mat-sidenav #sidenav="matSidenav" class="mat-elevation-z8">
 
   <button mat-button class="menu-button" routerLink="/" routerLinkActive="active">
     <mat-icon>home</mat-icon>
     <span>Home</span>
   </button>
-  <!-- <button mat-button class="menu-button" routerLink="/organization" routerLinkActive="active" disabled="true"> -->
-  <button mat-button class="menu-button" routerLink="/organization" routerLinkActive="active">
-    <mat-icon>location_city</mat-icon>
-    <span>Organization</span>
-  </button>
+  <div *ngIf="userPermission.hasPermission('view', 'organization', '*')">
+    <button mat-button class="menu-button" routerLink="/organization" routerLinkActive="active" >
+      <mat-icon>location_city</mat-icon>
+      <span>Organization</span>
+    </button>
+  </div>
   <button mat-button class="menu-button">
     <mat-icon>person</mat-icon>
     <span>Profile</span>
@@ -46,8 +47,8 @@
 
   </mat-sidenav>
   <mat-sidenav-content>
-  <div class="content mat-elevation-z8">
-      <router-outlet></router-outlet>
-  </div>
+    <div class="content mat-elevation-z8">
+        <router-outlet></router-outlet>
+    </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

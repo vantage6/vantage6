@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 
 import { TokenStorageService } from './token-storage.service';
-import { API_URL, SERVER_URL } from '../constants';
+import { environment } from 'src/environments/environment';
 
 type Permission = { type: string; resource: string; scope: string };
 
@@ -21,6 +21,8 @@ export class UserPermissionService {
     private tokenStorage: TokenStorageService
   ) {
     this.setup();
+    // TODO ensure that this doesn't finish until the tokenstorage service has provided
+    // the required data
   }
 
   setup(): void {
@@ -71,9 +73,11 @@ export class UserPermissionService {
 
   public setUserPermissions(): void {
     // request the rules for the current user
-    let req_userRules = this.http.get<any>(SERVER_URL + this.userUrl);
+    let req_userRules = this.http.get<any>(
+      environment.server_url + this.userUrl
+    );
     // request description of all rules
-    let req_all_rules = this.http.get<any>(API_URL + '/rule');
+    let req_all_rules = this.http.get<any>(environment.api_url + '/rule');
 
     // join user rules and all rules to get user permissions
     forkJoin([req_userRules, req_all_rules]).subscribe(
@@ -132,7 +136,7 @@ export class UserPermissionService {
   }
 
   private _addRulesForRole(role: any, all_rules: any): number[] {
-    this.http.get<any>(SERVER_URL + role.link).subscribe(
+    this.http.get<any>(environment.server_url + role.link).subscribe(
       (data) => {
         this._addRules(data.rules, all_rules);
       },
