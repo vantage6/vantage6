@@ -19,12 +19,12 @@
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav #sidenav="matSidenav" class="mat-elevation-z8">
 
-  <button mat-button class="menu-button" routerLink="/" routerLinkActive="active">
+  <button mat-button class="menu-button" routerLink="/home" routerLinkActive="menu-is-active">
     <mat-icon>home</mat-icon>
     <span>Home</span>
   </button>
   <div *ngIf="userPermission.hasPermission('view', 'organization', '*')">
-    <button mat-button class="menu-button" routerLink="/organization" routerLinkActive="active" >
+    <button mat-button class="menu-button" routerLink="/organization" routerLinkActive="menu-is-active">
       <mat-icon>location_city</mat-icon>
       <span>Organization</span>
     </button>
