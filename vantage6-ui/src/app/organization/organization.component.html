@@ -1,13 +1,21 @@
 <!-- <p>User id: {{userId}}</p> -->
 <div *ngIf="organization_details!==null">
   <div class="container">
-    <div class="row justify-content-md-center">
-      <button class="btn-primary">New user</button>
+    <div class="top-space"></div>
+    <div class="row justify-content-end">
+      <button mat-button class="add-button">
+        <mat-icon>add_circle_outline</mat-icon>
+        <span>New role</span>
+      </button>
+      <button mat-button class="add-button">
+        <mat-icon>add_circle_outline</mat-icon>
+        <span>New user</span>
+      </button>
     </div>
     <div class="row justify-content-md-center">
       <div class="col-md">
           <mat-card>
-          {{organization_details.name}}
+          <b>{{organization_details.name}}</b>
           <br/>
           {{organization_details.address1}}
           <br/>

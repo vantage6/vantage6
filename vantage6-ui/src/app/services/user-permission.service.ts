@@ -73,6 +73,7 @@ export class UserPermissionService {
 
   public setUserPermissions(): void {
     // request the rules for the current user
+    // TODO put this request in new user-service
     let req_userRules = this.http.get<any>(
       environment.server_url + this.userUrl
     );

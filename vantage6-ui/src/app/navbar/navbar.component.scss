@@ -1,13 +1,10 @@
-$vtg-blue: rgba(6, 86, 177, 1);
-$vtg-blue-opaque: rgba(6, 86, 177, 0.3);
-$white: white;
-$white-opaque: rgba(1, 1, 1, 0.5);
+@use '../globals/variables' as v;
 
 $toolbar_height: 70px;
 
 mat-toolbar {
-  background: $white;
-  color: $vtg-blue;
+  background: v.$white;
+  color: v.$vtg-blue;
   height: $toolbar_height;
 
   .logo {
@@ -24,8 +21,8 @@ mat-sidenav {
   margin-top: 6px;
   width: 200px;
   border-right: none;
-  background: $vtg-blue;
-  color: $white;
+  background: v.$vtg-blue;
+  color: v.$white;
   border-radius: 10px;
   padding: 16px;
   text-align: center;
@@ -38,17 +35,17 @@ mat-sidenav {
   margin-left: 32px;
 
   // display: flex;
-  background-color: $vtg-blue-opaque;
+  background-color: v.$vtg-blue-opaque;
 }
 
 mat-sidenav-container {
   height: calc(100vh - 65px);
-  background-color: $white;
+  background-color: v.$white;
 }
 
 .btn-primary {
-  background-color: $vtg-blue;
-  color: $white;
+  background-color: v.$vtg-blue;
+  color: v.$white;
 }
 
 .menu-button {
@@ -70,5 +67,5 @@ mat-divider {
 }
 
 .menu-is-active {
-  background-color: $white-opaque;
+  background-color: v.$white-opaque;
 }

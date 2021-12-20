@@ -1,12 +1,45 @@
+@use '../globals/variables' as v;
+
 .column {
   float: center;
   width: 50%;
 }
 
-// .row {
-// }
-
 mat-card {
-  margin-top: 30px;
+  margin-top: 10px;
   min-width: 50%;
+}
+
+.add-button {
+  background-color: v.$transparent;
+  color: v.$vtg-blue;
+  margin-right: 15px;
+  transition-duration: 0.2s;
+
+  margin: {
+    top: 4px;
+    bottom: 4px;
+    left: 0px;
+    right: 15px;
+  }
+
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.add-button:hover {
+  background-color: v.$white;
+  border-color: v.$vtg-blue;
+}
+
+.top-space {
+  height: 25px;
 }
