@@ -59,6 +59,44 @@ def server_configuration_questionaire(dirs, instance_name):
     if constant_jwt_secret:
         config["jwt_secret_key"] = str(uuid.uuid1())
 
+    is_add_vpn = q.confirm(
+        "Do you want to add a VPN server?", default=False).ask()
+    if is_add_vpn:
+        vpn_config = q.prompt([
+            {
+                "type": "text",
+                "name": "url",
+                "message": "VPN server URL:",
+            },
+            {
+                "type": "text",
+                "name": "portal_username",
+                "message": "VPN portal username:",
+            },
+            {
+                "type": "password",
+                "name": "portal_userpass",
+                "message": "VPN portal password:",
+            },
+            {
+                "type": "text",
+                "name": "client_id",
+                "message": "VPN client username:",
+            },
+            {
+                "type": "password",
+                "name": "client_secret",
+                "message": "VPN client password:",
+            },
+            {
+                "type": "text",
+                "name": "redirect_url",
+                "message": "Redirect url (should be local address of server)",
+                "default": "http://localhost"
+            }
+        ])
+        config['vpn_server'] = vpn_config
+
     config["logging"] = {
         "level": res,
         "file": f"{instance_name}.log",
