@@ -75,6 +75,14 @@ def node_configuration_questionaire(dirs, instance_name):
                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
                             "NOTSET"]).ask()
 
+    is_add_vpn = q.confirm(
+        "Do you want to connect to a VPN server?", default=False).ask()
+    if is_add_vpn:
+        config['vpn_subnet'] = q.text(
+            message="Subnet of the VPN server you want to connect to:",
+            default='1.2.3.4/16'
+        ).ask()
+
     config["logging"] = {
         "level": res,
         "file": f"{instance_name}.log",

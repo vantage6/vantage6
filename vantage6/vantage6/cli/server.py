@@ -314,7 +314,6 @@ def cli_server_files(ctx):
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 def cli_server_new(name, environment, system_folders):
     """Create new configuration."""
-
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
         name_new = name.replace(" ", "-")
