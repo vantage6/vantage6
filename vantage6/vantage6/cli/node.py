@@ -48,7 +48,7 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire
 )
 from vantage6.cli import __version__
-
+from vantage6.node.docker.utils import remove_container_if_exists
 
 @click.group(name="node")
 def cli_node():
@@ -381,6 +381,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
     # debug(f"  with environment: {env}")
+    remove_container_if_exists(
+        docker_client=docker_client, name=ctx.docker_container_name
+    )
 
     container = docker_client.containers.run(
         image,
