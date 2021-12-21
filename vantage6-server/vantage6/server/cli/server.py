@@ -20,9 +20,9 @@ from vantage6.cli.globals import (
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 )
 from vantage6.server.controller import fixture
-from vantage6.server.configuration.configuration_wizard import (
-    select_configuration_questionaire,
-    configuration_wizard
+from vantage6.cli.configuration_wizard import (
+    configuration_wizard,
+    select_configuration_questionaire
 )
 from vantage6.cli.context import ServerContext
 from vantage6.server._version import __version__
@@ -209,7 +209,9 @@ def cli_server_new(name, environment, system_folders):
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(name, environment, system_folders)
+    cfg_file = configuration_wizard(
+        "server", name, environment, system_folders
+    )
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # info(f"root user created.")
