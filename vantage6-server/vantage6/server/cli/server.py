@@ -102,6 +102,7 @@ def cli_server():
     """Subcommand `vserver`."""
     pass
 
+
 #
 #   start
 #
@@ -122,6 +123,7 @@ def cli_server_start(ctx, ip, port, debug):
     info(f"ip: {ip}, port: {port}")
     app = ServerApp(ctx)
     app.run(ip, port, debug=debug)
+
 
 #
 #   list
@@ -155,6 +157,7 @@ def cli_server_configuration_list():
             f"{len(f1)+len(f2)}{Style.RESET_ALL}"
         )
 
+
 #
 #   files
 #
@@ -165,6 +168,7 @@ def cli_server_files(ctx):
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
     info(f"Database           = {ctx.get_database_uri()}")
+
 
 #
 #   new
@@ -214,6 +218,7 @@ def cli_server_new(name, environment, system_folders):
         f"{Fore.GREEN}vserver start{Style.RESET_ALL}."
     )
 
+
 #
 #   import
 #
@@ -232,6 +237,7 @@ def cli_server_import(ctx, file_, drop_all):
 
     info("Adding entities to database.")
     fixture.load(entities, drop_all=drop_all)
+
 
 #
 #   shell
