@@ -11,7 +11,9 @@ from vantage6.node.util import logger_name
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.utils import running_in_docker, remove_container
+from vantage6.node.docker.utils import (
+    remove_container_if_exists, running_in_docker, remove_container
+)
 from vantage6.common.docker_addons import pull_if_newer
 
 
@@ -199,8 +201,12 @@ class DockerTaskManager(DockerBaseManager):
         helper_container_name = container_name + '-helper'
 
         # remove algorithm containers if they were already running
-        self.remove_container_if_exists(name=container_name)
-        self.remove_container_if_exists(name=helper_container_name)
+        remove_container_if_exists(
+            docker_client=self.docker, name=container_name
+        )
+        remove_container_if_exists(
+            docker_client=self.docker, name=helper_container_name
+        )
 
         if self.__vpn_manager:
             # if VPN is active, network exceptions must be configured

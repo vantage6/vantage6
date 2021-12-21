@@ -15,7 +15,9 @@ from vantage6.node.globals import (
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.utils import remove_container
+from vantage6.node.docker.utils import (
+    remove_container, remove_container_if_exists
+)
 
 
 class VPNManager(DockerBaseManager):
@@ -51,7 +53,9 @@ class VPNManager(DockerBaseManager):
         env = {'VPN_CONFIG': vpn_config}
 
         # if a VPN container is already running, kill and remove it
-        self.remove_container_if_exists(name=self.vpn_client_container_name)
+        remove_container_if_exists(
+            docker_client=self.docker, name=self.vpn_client_container_name
+        )
 
         # start vpnclient
         self.log.debug("Starting VPN client container")
