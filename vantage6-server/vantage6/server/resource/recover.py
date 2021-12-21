@@ -69,7 +69,7 @@ class ResetPassword(ServicesResources):
         password = body.get("password")
 
         if not reset_token or not password:
-            return {"msg": "reset token and/or password is missing!"}, \
+            return {"msg": "The reset token and/or password is missing!"}, \
                 HTTPStatus.BAD_REQUEST
 
         # obtain user
@@ -86,7 +86,7 @@ class ResetPassword(ServicesResources):
         user.save()
 
         log.info(f"Successfull password reset for '{user.username}'")
-        return {"msg": "password successfully been reset!"}, \
+        return {"msg": "The password has successfully been reset!"}, \
             HTTPStatus.OK
 
 
@@ -100,7 +100,7 @@ class RecoverPassword(ServicesResources):
 
         # default return string
         ret = {"msg": "If the username or email is in our database you "
-                      "will soon receive an email"}
+                      "will soon receive an email."}
 
         # obtain username/email from request'
         body = request.get_json()
