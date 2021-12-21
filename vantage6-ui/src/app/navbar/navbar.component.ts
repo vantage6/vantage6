@@ -44,7 +44,6 @@ export class NavbarComponent implements OnInit {
 
   logout(): void {
     this.tokenStorage.signOut();
-    this.userPermission.clearPermissions();
     this.router.navigateByUrl('/login');
   }
 }

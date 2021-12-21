@@ -16,8 +16,6 @@ export class TokenStorageService {
     // FIXME this is not secure enough I think, token might just have non-valid value
     this.loggedIn = this.getToken() != null;
     this.loggedInBhs.next(this.loggedIn);
-    // TODO find way to set user permissions outside of constructor. Probably need to refactor
-    //   this.setUserPermissions();
   }
 
   public setLoginData(data: any) {

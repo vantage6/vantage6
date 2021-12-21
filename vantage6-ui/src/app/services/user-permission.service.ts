@@ -5,6 +5,8 @@ import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 import { TokenStorageService } from './token-storage.service';
 import { environment } from 'src/environments/environment';
 
+const PERMISSION_KEY = 'permissions-user';
+
 type Permission = { type: string; resource: string; scope: string };
 
 @Injectable({
@@ -13,7 +15,6 @@ type Permission = { type: string; resource: string; scope: string };
 export class UserPermissionService {
   userUrl: string = '';
   userRules: Permission[] = [];
-  userRulesBhs = new BehaviorSubject<Permission[]>([]);
   userIdBhs = new BehaviorSubject<number>(0);
 
   constructor(
@@ -21,8 +22,21 @@ export class UserPermissionService {
     private tokenStorage: TokenStorageService
   ) {
     this.setup();
-    // TODO ensure that this doesn't finish until the tokenstorage service has provided
-    // the required data
+  }
+
+  public savePermissions(permissions: any[]): void {
+    window.sessionStorage.removeItem(PERMISSION_KEY);
+    window.sessionStorage.setItem(PERMISSION_KEY, JSON.stringify(permissions));
+  }
+
+  public getPermissions(): Permission[] {
+    let perm_text = window.sessionStorage.getItem(PERMISSION_KEY);
+    if (perm_text === null) {
+      return [];
+    } else {
+      let permissions: Permission[] = JSON.parse(perm_text);
+      return permissions;
+    }
   }
 
   setup(): void {
@@ -34,29 +48,19 @@ export class UserPermissionService {
     }
   }
 
-  getUserRules(): Observable<Permission[]> {
-    return this.userRulesBhs.asObservable();
-  }
-
   getUserId(): Observable<number> {
     return this.userIdBhs.asObservable();
   }
 
-  clearPermissions(): void {
-    this.userUrl = '';
-    this.userRules = [];
-    this.userRulesBhs.next([]);
-    this.userIdBhs.next(0);
-  }
-
   hasPermission(type: string, resource: string, scope: string): boolean {
+    let permissions: Permission[] = this.getPermissions();
     if (type == '*' && resource == '*' && scope == '*') {
       // no permissions required: return true even if user has 0 permissions
       return true;
     }
     // filter user permissions. If any are left that fulfill permission
     // criteria, user has permission
-    const relevant_permissions = this.userRules.filter(
+    const relevant_permissions = permissions.filter(
       (p: any) =>
         (p.type === type || type === '*') &&
         (p.resource === resource || resource === '*') &&
@@ -103,15 +107,19 @@ export class UserPermissionService {
 
     // remove double rules
     this.userRules = [...new Set(this.userRules)];
-    this.userRulesBhs.next(this.userRules);
+
+    // save permissions
+    this.savePermissions(this.userRules);
   }
 
   private async _setRules(userRules: any, all_rules: any) {
-    this._addRules(userRules.rules, all_rules);
-    this._addRoles(userRules.roles, all_rules);
+    await Promise.all([
+      this._addRules(userRules.rules, all_rules),
+      this._addRoles(userRules.roles, all_rules),
+    ]);
   }
 
-  private _addRules(rules: any, all_rules: any) {
+  private async _addRules(rules: any, all_rules: any) {
     if (rules !== null) {
       rules.forEach((rule: any) => {
         // match the rule descriptions with the current user rule id
@@ -127,25 +135,22 @@ export class UserPermissionService {
     }
   }
 
-  private _addRoles(roles: any, all_rules: any) {
+  private async _addRoles(roles: any, all_rules: any) {
     // Add rules from each role to the existing rules
-    if (roles !== null) {
-      roles.forEach((role: any) => {
-        this._addRulesForRole(role, all_rules);
-      });
-    }
+    await Promise.all(
+      roles.map(async (role: any) => {
+        if (role !== null) {
+          await this._addRulesForRole(role, all_rules);
+        }
+      })
+    );
   }
 
-  private _addRulesForRole(role: any, all_rules: any): number[] {
-    this.http.get<any>(environment.server_url + role.link).subscribe(
-      (data) => {
-        this._addRules(data.rules, all_rules);
-      },
-      (err) => {
-        // TODO raise error if user permissions cannot be determined
-        console.log(err);
-      }
-    );
-    return [];
+  private async _addRulesForRole(role: any, all_rules: any) {
+    let response = await this.http
+      .get<any>(environment.server_url + role.link)
+      .toPromise();
+
+    await this._addRules(response.rules, all_rules);
   }
 }

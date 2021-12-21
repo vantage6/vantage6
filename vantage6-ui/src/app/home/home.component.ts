@@ -13,8 +13,6 @@ export class HomeComponent implements OnInit {
   constructor(private userPermission: UserPermissionService) {}
 
   ngOnInit() {
-    this.userPermission.getUserRules().subscribe((rules: any[]) => {
-      this.permissions = rules;
-    });
+    this.permissions = this.userPermission.getPermissions();
   }
 }
