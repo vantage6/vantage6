@@ -43,6 +43,8 @@ setup(
         'bcrypt==3.1.7',
         'vantage6 >= 1.2.3',
         'vantage6-client >= 1.2.3',
+        'python-engineio==3.10.0',
+        'python-socketio==4.4.0'
     ],
     extras_require={
         'dev': [
