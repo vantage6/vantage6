@@ -1,9 +1,10 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 
 import { TokenStorageService } from './token-storage.service';
-import { environment } from 'src/environments/environment';
+import { UserService } from './api/user.service';
+import { RuleService } from './api/rule.service';
+import { RoleService } from './api/role.service';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -13,13 +14,15 @@ type Permission = { type: string; resource: string; scope: string };
   providedIn: 'root',
 })
 export class UserPermissionService {
-  userUrl: string = '';
+  userId: number = 0;
   userRules: Permission[] = [];
   userIdBhs = new BehaviorSubject<number>(0);
 
   constructor(
-    private http: HttpClient,
-    private tokenStorage: TokenStorageService
+    private tokenStorage: TokenStorageService,
+    private userService: UserService,
+    private ruleService: RuleService,
+    private roleService: RoleService
   ) {
     this.setup();
   }
@@ -43,7 +46,7 @@ export class UserPermissionService {
     let user = this.tokenStorage.getUserInfo();
     // if user is logged in, set their properties
     if (Object.keys(user).length !== 0) {
-      this._setUserUrl(user);
+      this._setUserId(user);
       this.setUserPermissions();
     }
   }
@@ -69,20 +72,20 @@ export class UserPermissionService {
     return relevant_permissions.length > 0;
   }
 
-  private _setUserUrl(user: any): void {
-    this.userUrl = user.user_url;
-    let userId = this.userUrl.split('/').pop();
-    if (userId !== undefined) this.userIdBhs.next(parseInt(userId));
+  private _setUserId(user: any): void {
+    let userId = user.user_url.split('/').pop();
+    if (userId !== undefined) {
+      this.userId = userId;
+      this.userIdBhs.next(parseInt(userId));
+    }
   }
 
   public setUserPermissions(): void {
     // request the rules for the current user
-    // TODO put this request in new user-service
-    let req_userRules = this.http.get<any>(
-      environment.server_url + this.userUrl
-    );
+    let req_userRules = this.userService.get(this.userId);
+
     // request description of all rules
-    let req_all_rules = this.http.get<any>(environment.api_url + '/rule');
+    let req_all_rules = this.ruleService.list();
 
     // join user rules and all rules to get user permissions
     forkJoin([req_userRules, req_all_rules]).subscribe(
@@ -147,9 +150,7 @@ export class UserPermissionService {
   }
 
   private async _addRulesForRole(role: any, all_rules: any) {
-    let response = await this.http
-      .get<any>(environment.server_url + role.link)
-      .toPromise();
+    let response = await this.roleService.get(role.id).toPromise();
 
     await this._addRules(response.rules, all_rules);
   }

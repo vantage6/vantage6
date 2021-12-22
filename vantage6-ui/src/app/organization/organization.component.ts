@@ -4,9 +4,12 @@ import { mergeMap } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
 
-import { UserPermissionService } from '../services/user-permission.service';
 import { User } from '../interfaces/user';
 import { Role } from '../interfaces/role';
+
+import { UserPermissionService } from '../services/user-permission.service';
+import { UserService } from '../services/api/user.service';
+import { OrganizationService } from '../services/api/organization.service';
 
 @Component({
   selector: 'app-organization',
@@ -19,8 +22,9 @@ export class OrganizationComponent implements OnInit {
   userId: number = 0;
 
   constructor(
-    private http: HttpClient,
-    private userPermission: UserPermissionService
+    private userPermission: UserPermissionService,
+    private userService: UserService,
+    private organizationService: OrganizationService
   ) {}
 
   ngOnInit(): void {
@@ -34,13 +38,11 @@ export class OrganizationComponent implements OnInit {
     if (this.userId === 0) return;
     // first obtain user information to get organization id, then obtain
     // organization information
-    this.http
-      .get<any>(environment.api_url + '/user/' + this.userId)
+    this.userService
+      .get(this.userId)
       .pipe(
         mergeMap((user_data) =>
-          this.http.get(
-            environment.api_url + '/organization/' + user_data.organization.id
-          )
+          this.organizationService.get(user_data.organization.id)
         )
       )
       .subscribe(
@@ -56,29 +58,28 @@ export class OrganizationComponent implements OnInit {
 
   collectUsers(): void {
     this.organization_users = [];
-    for (let user of this.organization_details.users) {
-      this.http.get(environment.server_url + user.link).subscribe(
-        (data: any) => {
-          console.log(data);
+    this.userService.list(this.organization_details.id).subscribe(
+      (data: any) => {
+        for (let user of data) {
           let roles: Role[] = [];
-          if (data.roles) {
-            data.roles.forEach((role: any) => {
+          if (user.roles) {
+            user.roles.forEach((role: any) => {
               roles.push({ id: role.id });
             });
           }
           this.organization_users.push({
-            id: data.id,
-            first_name: data.firstname,
-            last_name: data.lastname,
-            email: data.email,
+            id: user.id,
+            first_name: user.firstname,
+            last_name: user.lastname,
+            email: user.email,
             roles: roles,
-            rules: data.rules,
+            rules: user.rules,
           });
-        },
-        (error) => {
-          console.log(error);
         }
-      );
-    }
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
   }
 }
