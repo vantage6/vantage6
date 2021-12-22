@@ -180,7 +180,7 @@ class Users(UserBase):
 
         # check that user is allowed to create users
         if not (self.r.c_glo.can() or self.r.c_org.can()):
-            return {'msg': 'You lack the permission to do that!2'}, \
+            return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
         # process the required roles. It is only possible to assign roles with
@@ -196,6 +196,15 @@ class Users(UserBase):
                     if denied:
                         return denied, HTTPStatus.UNAUTHORIZED
                     roles.append(role_)
+
+                    # validate that the assigned role is either a general role
+                    # or a role pertaining to that organization
+                    if (role_.organization.id != organization_id and
+                            role_.organization.id is not None):
+                        return {'msg': (
+                            "You can't assign that role as the role belongs to"
+                            " a different organization than the user."
+                        )}, HTTPStatus.UNAUTHORIZED
 
         # You can only assign rules that you already have to others.
         potential_rules = data["rules"]
@@ -340,6 +349,15 @@ class User(UserBase):
                 denied = self.permissions.verify_user_rules(role.rules)
                 if denied:
                     return denied, HTTPStatus.UNAUTHORIZED
+
+            # validate that the assigned role is either a general role or a
+            # role pertaining to that organization
+            if (role.organization.id != user.organization_id and
+                    role.organization.id is not None):
+                return {'msg': (
+                    "You can't assign that role to that user as the role "
+                    "belongs to a different organization than the user "
+                )}, HTTPStatus.UNAUTHORIZED
 
             user.roles = roles
 
