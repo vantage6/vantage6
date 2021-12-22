@@ -33,7 +33,9 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE
 )
-from vantage6.common.docker_addons import pull_if_newer
+from vantage6.common.docker_addons import (
+    pull_if_newer, remove_container_if_exists
+)
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
 
@@ -48,7 +50,7 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire
 )
 from vantage6.cli import __version__
-from vantage6.node.docker.utils import remove_container_if_exists
+
 
 @click.group(name="node")
 def cli_node():
