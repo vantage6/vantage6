@@ -384,9 +384,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
           f'{environment} --dockerized {system_folders_option}'
 
     info("Running Docker container")
-    volumes = {}
+    volumes = []
     for mount in mounts:
-        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
+        volumes.append(f'{mount[1]}:{mount[0]}')
 
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
