@@ -1007,14 +1007,15 @@ class TestResources(unittest.TestCase):
 
     def test_patch_user_permissions(self):
 
+        org = Organization()
         user = User(firstname="Firstname", lastname="Lastname",
                     username="Username", password="Password", email="a@b.c",
-                    organization=Organization())
+                    organization=org)
         user.save()
         self.credentials[user.username] = {'username': user.username,
                                            'password': "Password"}
 
-        # check non-exsitsing user
+        # check non-existing user
         headers = self.create_user_and_login()
         result = self.app.patch(f'/api/user/-1', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
@@ -1093,7 +1094,7 @@ class TestResources(unittest.TestCase):
 
         # test that you cannot assign role that has rules that you do not own
         role = Role(name="somename", rules=[not_owning_rule],
-                    organization=Organization())
+                    organization=org)
         role.save()
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'rules': [role.id]
@@ -1117,6 +1118,15 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
         user_role_ids = [role['id'] for role in result.json['roles']]
         self.assertIn(role.id, user_role_ids)
+
+        # test that you CANNOT assign roles from different organization
+        other_org_role = Role(name="somename", rules=[not_owning_rule],
+                              organization=Organization())
+        headers = self.create_user_and_login(rules=[rule, not_owning_rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'roles': [other_org_role.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test missing role
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
