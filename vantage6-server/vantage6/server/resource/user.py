@@ -199,8 +199,8 @@ class Users(UserBase):
 
                     # validate that the assigned role is either a general role
                     # or a role pertaining to that organization
-                    if (role_.organization.id != organization_id and
-                            role_.organization.id is not None):
+                    if (role_.organization and
+                            role_.organization.id != organization_id):
                         return {'msg': (
                             "You can't assign that role as the role belongs to"
                             " a different organization than the user."
@@ -352,8 +352,8 @@ class User(UserBase):
 
             # validate that the assigned role is either a general role or a
             # role pertaining to that organization
-            if (role.organization.id != user.organization_id and
-                    role.organization.id is not None):
+            if (role.organization and
+                    role.organization.id != user.organization_id):
                 return {'msg': (
                     "You can't assign that role to that user as the role "
                     "belongs to a different organization than the user "
