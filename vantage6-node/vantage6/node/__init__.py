@@ -371,13 +371,14 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
+        local_db = task['database'] if task['database'] else 'default'
         self.__docker.run(
             result_id=taskresult["id"],
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
             token=token,
-            database=task['database']
+            database=local_db
         )
 
     def __listening_worker(self):

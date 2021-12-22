@@ -221,7 +221,7 @@ class DockerManager(object):
         self.databases = databases
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: int, token: str, database: str) -> bool:
+            tmp_vol_name: int, token: str, database: str = 'default') -> bool:
         """Run the algorithm container
 
         Parameters
