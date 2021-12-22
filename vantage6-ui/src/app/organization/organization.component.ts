@@ -1,14 +1,23 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { map, mergeMap, switchMap } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
 
 import { UserPermissionService } from '../services/user-permission.service';
 
+interface Role {
+  id: number;
+}
+
 interface User {
+  id: number;
   first_name: string;
   last_name: string;
+  email: string;
+  roles: Role[];
+  rules: string[];
 }
 
 @Component({
@@ -62,9 +71,20 @@ export class OrganizationComponent implements OnInit {
     for (let user of this.organization_details.users) {
       this.http.get(environment.server_url + user.link).subscribe(
         (data: any) => {
+          console.log(data);
+          let roles: Role[] = [];
+          if (data.roles) {
+            data.roles.forEach((role: any) => {
+              roles.push({ id: role.id });
+            });
+          }
           this.organization_users.push({
+            id: data.id,
             first_name: data.firstname,
             last_name: data.lastname,
+            email: data.email,
+            roles: roles,
+            rules: data.rules,
           });
         },
         (error) => {
@@ -72,8 +92,5 @@ export class OrganizationComponent implements OnInit {
         }
       );
     }
-    // <li *ngFor="let user of organization_details.users">
-    //       {{user.id}}, {{user.link}}
-    //     </li>
   }
 }

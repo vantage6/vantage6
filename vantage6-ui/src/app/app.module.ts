@@ -8,6 +8,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule } from '@angular/common';
@@ -43,6 +44,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     MatIconModule,
     MatDividerModule,
     MatCardModule,
+    MatExpansionModule,
     CommonModule,
     NgbModule,
   ],

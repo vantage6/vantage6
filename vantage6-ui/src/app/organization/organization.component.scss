@@ -5,8 +5,8 @@
   width: 50%;
 }
 
-mat-card {
-  margin-top: 10px;
+mat-expansion-panel {
+  margin-bottom: 10px;
   min-width: 50%;
 }
 
@@ -18,7 +18,7 @@ mat-card {
 
   margin: {
     top: 4px;
-    bottom: 4px;
+    bottom: 10px;
     left: 0px;
     right: 15px;
   }

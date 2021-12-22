@@ -25,11 +25,26 @@
         </mat-card>
       </div>
       <div class="col-md">
-        <div *ngFor="let user of organization_users">
-          <mat-card>
-            {{user.first_name}} {{user.last_name}}
-          </mat-card>
-        </div>
+        <mat-accordion>
+          <div *ngFor="let user of organization_users">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{user.first_name}} {{user.last_name}}
+                </mat-panel-title>
+                <mat-panel-description>
+                  <div *ngIf="user.id===userId">
+                    It's you!
+                  </div>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              {{user.email}}
+              <div *ngFor="let role of user.roles">
+                {{role.id}}
+              </div>
+            </mat-expansion-panel>
+          </div>
+        </mat-accordion>
       </div>
     </div>
   </div>
