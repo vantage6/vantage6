@@ -1,17 +1,7 @@
 <!-- <p>User id: {{userId}}</p> -->
 <div *ngIf="organization_details!==null">
   <div class="container">
-    <div class="top-space"></div>
-    <div class="row justify-content-end">
-      <button mat-button class="add-button">
-        <mat-icon>add_circle_outline</mat-icon>
-        <span>New role</span>
-      </button>
-      <button mat-button class="add-button">
-        <mat-icon>add_circle_outline</mat-icon>
-        <span>New user</span>
-      </button>
-    </div>
+    <div class="vertical-spacer"></div>
     <div class="row justify-content-md-center">
       <div class="col-md">
           <mat-card>
@@ -24,31 +14,42 @@
         </mat-card>
 
         <mat-card>
-          <h3>Your roles</h3>
+          <h4>Roles</h4>
+          <button mat-button class="add-button">
+            <mat-icon>add_circle_outline</mat-icon>
+            <span>New role</span>
+          </button>
           <p>...information on this organization's roles...</p>
         </mat-card>
       </div>
       <div class="col-md">
-        <mat-accordion>
-          <div *ngFor="let user of organization_users">
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  {{user.first_name}} {{user.last_name}}
-                </mat-panel-title>
-                <mat-panel-description>
-                  <div *ngIf="user.id===userId">
-                    It's you!
-                  </div>
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              {{user.email}}
-              <div *ngFor="let role of user.roles">
-                {{role.id}}
-              </div>
-            </mat-expansion-panel>
-          </div>
-        </mat-accordion>
+        <mat-card>
+          <h4>Users</h4>
+          <button mat-button class="add-button">
+            <mat-icon>add_circle_outline</mat-icon>
+            <span>New user</span>
+          </button>
+          <mat-accordion>
+            <div *ngFor="let user of organization_users">
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    {{user.first_name}} {{user.last_name}}
+                  </mat-panel-title>
+                  <mat-panel-description>
+                    <div *ngIf="user.id===userId">
+                      It's you!
+                    </div>
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+                {{user.email}}
+                <div *ngFor="let role of user.roles">
+                  {{role.id}}
+                </div>
+              </mat-expansion-panel>
+            </div>
+          </mat-accordion>
+        </mat-card>
       </div>
     </div>
   </div>

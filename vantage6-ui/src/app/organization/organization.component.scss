@@ -6,7 +6,7 @@
 }
 
 mat-expansion-panel {
-  margin-bottom: 10px;
+  margin-top: 10px;
 }
 
 mat-card {
@@ -16,13 +16,14 @@ mat-card {
 .add-button {
   background-color: v.$transparent;
   color: v.$vtg-blue;
-  margin-right: 15px;
   transition-duration: 0.2s;
+  position: absolute;
+  right: 0;
+  display: inline-block;
+  vertical-align: middle;
 
   margin: {
-    top: 4px;
-    bottom: 10px;
-    left: 0px;
+    top: -7px;
     right: 15px;
   }
 
@@ -43,6 +44,10 @@ mat-card {
   border-color: v.$vtg-blue;
 }
 
-.top-space {
+.vertical-spacer {
   height: 25px;
+}
+
+h4 {
+  display: inline-block;
 }
