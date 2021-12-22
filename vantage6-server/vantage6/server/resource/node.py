@@ -274,7 +274,9 @@ class Node(NodeBase):
             node.name = data['name']
 
         # organization goes before collaboration (!)
-        if 'organization_id' in data:
+        org_id = data.get('organization_id')
+        updated_org = org_id and org_id != node.organization.id
+        if updated_org:
             if not self.r.e_glo.can():
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -284,7 +286,9 @@ class Node(NodeBase):
                         'not found!'}, HTTPStatus.NOT_FOUND
             node.organization = organization
 
-        if 'collaboration_id' in data:
+        col_id = data.get('collaboration_id')
+        updated_col = col_id and col_id != node.collaboration.id
+        if updated_col:
             collaboration = db.Collaboration.get(data['collaboration_id'])
             if not collaboration:
                 return {'msg': f'collaboration id={data["collaboration_id"]}'
@@ -303,7 +307,7 @@ class Node(NodeBase):
 
         # validate that node does not already exist when we change either
         # the organization and/or collaboration
-        if 'organization_id' in data or 'collaboration_id' in data:
+        if updated_org or updated_col:
             if db.Node.exists(node.organization.id, node.collaboration.id):
                 return {'msg': 'A node with organization id='
                         f'{node.organization.id} and collaboration id='
