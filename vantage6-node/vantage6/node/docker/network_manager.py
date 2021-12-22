@@ -1,8 +1,9 @@
 import docker
 import logging
 
+from vantage6.common.docker_addons import remove_container
 from vantage6.node.util import logger_name
-from vantage6.node.docker.utils import running_in_docker, remove_container
+from vantage6.node.docker.utils import running_in_docker
 
 
 # TODO maybe move following to utils?

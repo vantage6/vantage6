@@ -1,14 +1,6 @@
 import docker
 
-import logging
-
-from docker.models.containers import Container
-
-from vantage6.node.util import logger_name
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
-from vantage6.node.docker.utils import remove_container
-
-log = logging.getLogger(logger_name(__name__))
 
 
 class DockerBaseManager(object):
