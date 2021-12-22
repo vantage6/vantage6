@@ -1,24 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { map, mergeMap, switchMap } from 'rxjs/operators';
+import { mergeMap } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
 
 import { UserPermissionService } from '../services/user-permission.service';
-
-interface Role {
-  id: number;
-}
-
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  roles: Role[];
-  rules: string[];
-}
+import { User } from '../interfaces/user';
+import { Role } from '../interfaces/role';
 
 @Component({
   selector: 'app-organization',

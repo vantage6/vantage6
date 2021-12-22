@@ -15,13 +15,17 @@
     <div class="row justify-content-md-center">
       <div class="col-md">
           <mat-card>
-          <b>{{organization_details.name}}</b>
-          <br/>
+          <h3>{{organization_details.name}}</h3>
           {{organization_details.address1}}
           <br/>
           {{organization_details.address2}}
           <br/>
           {{organization_details.country}}
+        </mat-card>
+
+        <mat-card>
+          <h3>Your roles</h3>
+          <p>...information on this organization's roles...</p>
         </mat-card>
       </div>
       <div class="col-md">
