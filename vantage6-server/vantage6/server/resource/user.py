@@ -110,6 +110,18 @@ class Users(UserBase):
             |User|Global|View|❌|❌|View any user details|\n
             |User|Organization|View|❌|❌|View users from your organization|\n\n
 
+        parameters:
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: page number for pagination
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: number of items per page
+
         responses:
             200:
                 description: Ok
