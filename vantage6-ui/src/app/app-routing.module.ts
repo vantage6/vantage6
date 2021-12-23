@@ -5,6 +5,7 @@ import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { AccessGuard } from './access-guard.guard';
 import { OrganizationComponent } from './organization/organization.component';
+import { ModalNewUserComponent } from './organization/modal-new-user/modal-new-user/modal-new-user.component';
 
 const routes: Routes = [
   {
@@ -25,6 +26,16 @@ const routes: Routes = [
       requiresLogin: true,
       permissionType: 'view',
       permissionResource: 'organization',
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'user/create',
+    component: ModalNewUserComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: 'create',
+      permissionResource: 'user',
     },
     canActivate: [AccessGuard],
   },

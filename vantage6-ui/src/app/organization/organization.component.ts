@@ -1,8 +1,6 @@
-import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { mergeMap } from 'rxjs/operators';
-
-import { environment } from 'src/environments/environment';
+import { Router } from '@angular/router';
 
 import { User } from '../interfaces/user';
 import { Role } from '../interfaces/role';
@@ -10,6 +8,7 @@ import { Role } from '../interfaces/role';
 import { UserPermissionService } from '../services/user-permission.service';
 import { UserService } from '../services/api/user.service';
 import { OrganizationService } from '../services/api/organization.service';
+import { ModalService } from '../services/modal.service';
 
 @Component({
   selector: 'app-organization',
@@ -24,7 +23,8 @@ export class OrganizationComponent implements OnInit {
   constructor(
     private userPermission: UserPermissionService,
     private userService: UserService,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -81,5 +81,9 @@ export class OrganizationComponent implements OnInit {
         console.log(error);
       }
     );
+  }
+
+  createUser(): void {
+    this.router.navigate(['user/create']); //child
   }
 }
