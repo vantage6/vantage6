@@ -212,23 +212,21 @@ class ModelBase:
 
     @classmethod
     def help(cls) -> str:
-        properties = [f' ->{a.key}\n' for a in inspect(cls).mapper.column_attrs]
-        properties = ''.join(properties)
-        relations = [f' ->{a[0]}\n' for a in inspect(cls).relationships.items()]
-        relations = ''.join(relations)
+        i = inspect(cls)
+        properties = ''.join([f' ->{a.key}\n' for a in i.mapper.column_attrs])
+        relations = ''.join([f' ->{a[0]}\n' for a in i.relationships.items()])
         methods = class_inspect.getmembers(cls,
                                            predicate=class_inspect.isroutine)
-        methods = [f' ->{key[0]}\n' for key in methods if not key[0].startswith('_')]
-        methods = ''.join(methods)
 
-        help = (
+        methods = ''.join([f' ->{key[0]}\n' for key in methods
+                          if not key[0].startswith('_')])
+
+        print(
             f'Table: {cls.__tablename__}\n\n'
             f'Properties: \n{properties}\n'
             f'Relations: \n{relations}\n'
             f'Methods: \n{methods}\n'
         )
-        print(help)
-        # return help
 
 
 Base = declarative_base(cls=ModelBase)
