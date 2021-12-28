@@ -203,7 +203,7 @@ def cli_node_files(name, environment, system_folders):
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
     info(f"data folders       = {ctx.data_dir}")
-    info(f"Database labels and files")
+    info("Database labels and files")
 
     for label, path in ctx.databases.items():
         info(f" - {label:15} = {path}")
@@ -260,7 +260,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         if not NodeContext.config_exists(name, environment, system_folders):
             question = f"Configuration '{name}' using environment"
             question += f" '{environment}' does not exist.\n  Do you want to"
-            question += f" create this config now?"
+            question += " create this config now?"
 
             if q.confirm(question).ask():
                 configuration_wizard("node", name, environment, system_folders)
@@ -549,7 +549,7 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
     if file_.exists() and not overwrite:
         error("Could not create private key!")
         warning(
-            f"If you're **sure** you want to create a new key, "
+            "If you're **sure** you want to create a new key, "
             f"please run this command with the '--overwrite' flag"
         )
         warning("Continuing with existing key instead!")
@@ -629,7 +629,7 @@ def cli_node_clean():
             msg += volume.name + ","
     info(msg)
 
-    confirm = q.confirm(f"Are you sure?")
+    confirm = q.confirm("Are you sure?")
     if confirm.ask():
         for volume in canditates:
             try:
