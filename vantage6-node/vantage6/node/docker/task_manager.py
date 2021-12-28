@@ -29,8 +29,7 @@ class DockerTaskManager(DockerBaseManager):
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
                  result_id: int, tasks_dir: Path,
                  isolated_network_mgr: IsolatedNetworkManager,
-                 database_uri: str, database_is_file: bool,
-                 docker_volume_name: str):
+                 databases: dict, docker_volume_name: str):
         """
         Initialization creates DockerTaskManager instance
 
@@ -48,10 +47,8 @@ class DockerTaskManager(DockerBaseManager):
             Directory in which this task's data are stored
         isolated_network_mgr: IsolatedNetworkManager
             Manager of isolated network to which algorithm needs to connect
-        database_uri: str
-            Location of the database
-        database_is_file: bool
-            Whether or not the database is a file
+        databases: Dict
+            List of databases
         docker_volume_name: str
             Name of the docker volume
         """
@@ -60,8 +57,7 @@ class DockerTaskManager(DockerBaseManager):
         self.__vpn_manager = vpn_manager
         self.result_id = result_id
         self.__tasks_dir = tasks_dir
-        self.__database_uri = database_uri
-        self.database_is_file = database_is_file
+        self.databases = databases
         self.data_volume_name = docker_volume_name
         self.node_name = node_name
 
@@ -351,11 +347,17 @@ class DockerTaskManager(DockerBaseManager):
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
-        if self.database_is_file:
-            environment_variables["DATABASE_URI"] = \
-                f"{self.data_folder}/{self.__database_uri}"
-        else:
-            environment_variables["DATABASE_URI"] = self.__database_uri
+
+        # Only prepend the data_folder is it is a file-based database
+        # This allows algorithms to access multiple data-sources at the
+        # same time
+        for label in self.databases:
+            db = self.databases[label]
+            var_name = f'{label.upper()}_DATABASE_URI'
+            environment_variables[var_name] = \
+                f"{self.data_folder}/{db['uri']}" if db['is_file'] \
+                else db['uri']
+
         self.log.debug(f"environment: {environment_variables}")
 
         # Load additional environment variables
