@@ -19,7 +19,8 @@ from vantage6.server.model import (
     Member,
     Permission,
     Role,
-    Rule
+    Rule,
+    AlgorithmPort
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
