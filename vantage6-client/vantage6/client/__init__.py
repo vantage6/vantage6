@@ -727,29 +727,50 @@ class UserClient(ClientBase):
         """Collection of collaboration requests"""
 
         @post_filtering()
-        def list(self, scope: str='organization') -> dict:
+        def list(self, scope: str = 'organization', page: int = 1,
+                 per_page: int = 20, include_metadata: bool = True) -> dict:
             """View your collaborations
 
             Parameters
             ----------
-            scope : str
+            scope : str, optional
                 Scope of the list, accepted values are `organization` and
                 `global`. In case of `organization` you get the collaborations
                 in which your organization participates. If you specify global
                 you get the collaborations which you are allowed to see.
+            page: int, optional
+                Pagination page, by default 1
+            per_page: int, optional
+                Number of items on a single page, by default 20
+            include_metadata: bool, optional
+                Whenever to include the pagination metadata. If this is
+                set to False the output is no longer wrapped in a
+                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing collabotation information
+
+            Notes
+            -----
+            - pagination does not work in combination with scope
+              `organization` as pagination is missing at endpoint
+              /organization/<id>/collaboration
             """
+            includes = ['metadata'] if include_metadata else []
+            params = {'page': page, 'per_page': per_page, 'include': includes}
             if scope == 'organization':
+                self.parent.log.info('pagination for scope `organization` '
+                                     'not available')
                 org_id = self.parent.whoami.organization_id
-                return self.parent.request(f'organization/{org_id}/collaboration')
+                return self.parent.request(
+                    f'organization/{org_id}/collaboration'
+                )
             elif scope == 'global':
-                return self.parent.request(f'collaboration')
+                return self.parent.request('collaboration', params=params)
             else:
-                self.parent.log.info('--> Unrecognized `scope`. Need to be '
+                self.parent.log.info('--> Unrecognized `scope`. Needs to be '
                                      '`organization` or `global`')
 
         @post_filtering(iterable=False)
@@ -815,15 +836,30 @@ class UserClient(ClientBase):
             return self.parent.request(f'node/{id_}')
 
         @post_filtering()
-        def list(self) -> list:
+        def list(self, page: int = 1, per_page: int = 20,
+                 include_metadata: bool = True) -> list:
             """List nodes
+
+            Parameters
+            ----------
+            page: int, optional
+                Pagination page, by default 1
+            per_page: int, optional
+                Number of items on a single page, by default 20
+            include_metadata: bool, optional
+                Whenever to include the pagination metadata. If this is
+                set to False the output is no longer wrapped in a
+                dictonairy, by default True
 
             Returns
             -------
+
             list of dicts
                 Containing meta-data of the nodes
             """
-            return self.parent.request('node')
+            includes = ['metadata'] if include_metadata else []
+            params = {'page': page, 'per_page': per_page, 'include': includes}
+            return self.parent.request('node', params=params)
 
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organization: int=None) -> dict:
@@ -898,15 +934,30 @@ class UserClient(ClientBase):
         """Collection of organization requests"""
 
         @post_filtering()
-        def list(self) -> list:
-            """List of organizations
+        def list(self, page: int = None, per_page: int = None,
+                 include_metadata: bool = False) -> list:
+            """List organizations
+
+            Parameters
+            ----------
+            page: int, optional
+                Pagination page, by default 1
+            per_page: int, optional
+                Number of items on a single page, by default 20
+            include_metadata: bool, optional
+                Whenever to include the pagination metadata. If this is
+                set to False the output is no longer wrapped in a
+                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing meta-data information of the organizations
             """
-            return self.parent.request(f'organization')
+            includes = ['metadata'] if include_metadata else []
+            params = {'page': page, 'per_page': per_page,
+                      'include': includes}
+            return self.parent.request('organization', params=params)
 
         @post_filtering(iterable=False)
         def get(self, id_: int=None) -> dict:
@@ -1024,15 +1075,29 @@ class UserClient(ClientBase):
     class User(ClientBase.SubClient):
 
         @post_filtering()
-        def list(self) -> list:
-            """List of users
+        def list(self, page: int = 1, per_page: int = 20,
+                 include_metadata: bool = True) -> list:
+            """List users
+
+            Parameters
+            ----------
+            page: int, optional
+                Pagination page, by default 1
+            per_page: int, optional
+                Number of items on a single page, by default 20
+            include_metadata: bool, optional
+                Whenever to include the pagination metadata. If this is
+                set to False the output is no longer wrapped in a
+                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing the meta-data of the users
             """
-            return self.parent.request('user')
+            includes = ['metadata'] if include_metadata else []
+            params = {'page': page, 'per_page': per_page, 'include': includes}
+            return self.parent.request('user', params=params)
 
         @post_filtering(iterable=False)
         def get(self, id_: int=None) -> dict:
@@ -1157,15 +1222,29 @@ class UserClient(ClientBase):
     class Role(ClientBase.SubClient):
 
         @post_filtering()
-        def list(self) -> list:
+        def list(self, page: int = 1, per_page: int = 20,
+                 include_metadata: bool = True) -> list:
             """List of roles
+
+            Parameters
+            ----------
+            page: int, optional
+                Pagination page, by default 1
+            per_page: int, optional
+                Number of items on a single page, by default 20
+            include_metadata: bool, optional
+                Whenever to include the pagination metadata. If this is
+                set to False the output is no longer wrapped in a
+                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing roles meta-data
             """
-            return self.parent.request('role')
+            includes = ['metadata'] if include_metadata else []
+            params = {'page': page, 'per_page': per_page, 'include': includes}
+            return self.parent.request('role', params=params)
 
         @post_filtering(iterable=True)
         def get(self, id_: int) -> dict:
@@ -1558,15 +1637,29 @@ class UserClient(ClientBase):
             return self.parent.request(f'rule/{id_}')
 
         @post_filtering()
-        def list(self) -> list:
+        def list(self, page: int = 1, per_page: int = 20,
+                 include_metadata: bool = True) -> list:
             """List of all available rules
+
+            Parameters
+            ----------
+            page: int, optional
+                Pagination page, by default 1
+            per_page: int, optional
+                Number of items on a single page, by default 20
+            include_metadata: bool, optional
+                Whenever to include the pagination metadata. If this is
+                set to False the output is no longer wrapped in a
+                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing all the rules from the vantage6 server
             """
-            return self.parent.request('rule')
+            includes = ['metadata'] if include_metadata else []
+            params = {'page': page, 'per_page': per_page, 'include': includes}
+            return self.parent.request('rule', params=params)
 
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
