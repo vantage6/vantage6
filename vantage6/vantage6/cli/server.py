@@ -611,10 +611,14 @@ def cli_server_version(name, system_folders):
     check_if_docker_deamon_is_running(client)
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"})
-    running_server_names = [node.name for node in running_servers]
+        filters={"label": f"{APPNAME}-type=server"})
+    running_server_names = [server.name for server in running_servers]
 
     if not name:
+        if not running_server_names:
+            error("No servers are running! You can only check the version for "
+                  "servers that are running")
+            exit(1)
         name = q.select("Select the server you wish to inspect:",
                         choices=running_server_names).ask()
     else:
@@ -627,6 +631,8 @@ def cli_server_version(name, system_folders):
         click.echo({
             "server": version.output.decode('utf-8'), "cli": __version__
         })
+    else:
+        error(f"Server {name} is not running! Cannot provide version...")
 
 
 def print_log_worker(logs_stream):
