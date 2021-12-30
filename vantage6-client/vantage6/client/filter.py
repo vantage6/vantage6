@@ -79,7 +79,6 @@ def post_filtering(iterable=True):
         return wrapper_filter
     return decorator
 
-
 #
 # Helper functions
 #

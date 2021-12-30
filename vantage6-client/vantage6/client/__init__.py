@@ -14,13 +14,13 @@ import pyfiglet
 import json as json_lib
 
 from pathlib import Path
+from typing import Tuple
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
-from vantage6.client.encryption import CryptorBase, RSACryptor, DummyCryptor
-from vantage6.client.exceptions import DeserializationException
+from vantage6.client.encryption import RSACryptor, DummyCryptor
 
 
 module_name = __name__.split('.')[1]
@@ -416,7 +416,7 @@ class ClientBase(object):
 
     def get_results(self, id: int = None, state: str = None,
                     include_task: bool = False, task_id: int = None,
-                    node_id: int = None) -> dict:
+                    node_id: int = None, params: dict = {}) -> dict:
         """Get task result(s) from the central server
 
         Depending if a `id` is specified or not, either a single or a
@@ -447,7 +447,6 @@ class ClientBase(object):
         """
         # Determine endpoint and create dict with query parameters
         endpoint = 'result' if not id else f'result/{id}'
-        params = dict()
 
         if state:
             params['state'] = state
@@ -466,6 +465,12 @@ class ClientBase(object):
             self.log.debug(f"Results message: {results}")
             return {}
 
+        # hack: in the case that the pagination metadata is included we
+        # need to strip that for decrypting
+        if isinstance(results, dict):
+            wrapper = results
+            results = results['data']
+
         if id:
             # Single result
             self._decrypt_result(results)
@@ -475,6 +480,10 @@ class ClientBase(object):
             for result in results:
                 self._decrypt_result(result)
 
+        if 'wrapper' in locals():
+            wrapper['data'] = results
+            results = wrapper
+
         return results
 
     def _decrypt_result(self, result):
@@ -483,6 +492,7 @@ class ClientBase(object):
         Keys are replaced, but object reference remains intact: changes are
         made *in-place*.
         """
+        assert self.cryptor, "Encryption has not been initialized"
         cryptor = self.cryptor
         try:
             self.log.info('Decrypting input')
@@ -508,7 +518,7 @@ class ClientBase(object):
     class SubClient:
         """Create sub groups of commands using this SubClient"""
         def __init__(self, parent):
-            self.parent = parent
+            self.parent: UserClient = parent
 
 
 class UserClient(ClientBase):
@@ -1254,7 +1264,7 @@ class UserClient(ClientBase):
     class Task(ClientBase.SubClient):
 
         @post_filtering(iterable=False)
-        def get(self, id_: int, include_results: bool=False) -> dict:
+        def get(self, id_: int, include_results: bool = False) -> dict:
             """View specific task
 
             Parameters
@@ -1274,22 +1284,68 @@ class UserClient(ClientBase):
             return self.parent.request(f'task/{id_}', params=params)
 
         @post_filtering()
-        def list(self, include_results: bool=False) -> list:
+        def list(self, initiator: int = None, collaboration: int = None,
+                 image: str = None, parent: int = None, run: int = None,
+                 name: str = None, include_results: bool = False,
+                 page: int = 1, per_page: int = 20,
+                 include_metadata: bool = True) -> dict:
             """List tasks
 
             Parameters
             ----------
+            name: str, optional
+                Filter by the name of the task. It will match with a
+                Like operator. I.e. E% will search for task names that
+                start with an 'E'.
+            initiator: int, optional
+                Filter by initiating organization
+            collaboration: int, optional
+                Filter by collaboration
+            image: str, optional
+                Filter by Docker image name
+            parent: int, optional
+                Filter by parent task
+            run: int, optional
+                Filter by run
             include_results : bool, optional
                 Whenever to include the results in the tasks, by default
                 False
+            page: int, optional
+                Pagination page, by default 1
+            per_page: int, optional
+                Number of items on a single page, by default 20
+            include_metadata: bool, optional
+                Whenever to include the pagination metadata. If this is
+                set to False the output is no longer wrapped in a
+                dictonairy, by default True
 
             Returns
             -------
-            list of dicts
-                Containing data of the tasks
+            dict
+                dictonairy containing the key 'data' which contains the
+                tasks and a key 'links' containing the pagination
+                metadata
+
+            OR
+
+            list
+                when 'include_metadata' is set to false, it removes the
+                metadata wrapper. I.e. directly returning the 'data'
+                key.
             """
-            params = {}
-            params['include'] = 'results' if include_results else None
+            # if the param is None, it will not be passed on to the
+            # request
+            params = {'initiator_id': initiator,
+                      'collaboration_id': collaboration, 'image': image,
+                      'parent_id': parent, 'run_id': run, 'name': name,
+                      'page': page, 'per_page': per_page}
+            includes = []
+            if include_results:
+                includes.append('results')
+            if include_metadata:
+                includes.append('metadata')
+            params['include'] = includes
+
             return self.parent.request('task', params=params)
 
         @post_filtering(iterable=False)
@@ -1376,33 +1432,95 @@ class UserClient(ClientBase):
             return result
 
         @post_filtering()
-        def list(self, include_task: bool=False) -> list:
+        def list(self, task: int = None, organization: int = None,
+                 state: str = None, node: int = None,
+                 include_task: bool = False, started: Tuple[str, str] = None,
+                 assigned: Tuple[str, str] = None,
+                 finished: Tuple[str, str] = None, page: int = None,
+                 per_page: int = None, include_metadata: bool = True) -> list:
             """List results
 
             Parameters
             ----------
+            task: int, optional
+                Filter by task id
+            organization: int, optional
+                Filter by organization id
+            state: int, optional
+                Filter by state: ('open',)
+            node: int, optional
+                Filter by node id
             include_task : bool, optional
                 Whenever to include the task or not, by default False
+            started: Tuple[str, str], optional
+                Filter on a range of start times (format: yyyy-mm-dd)
+            assigned: Tuple[str, str], optional
+                Filter on a range of assign times (format: yyyy-mm-dd)
+            finished: Tuple[str, str], optional
+                Filter on a range of finished times (format: yyyy-mm-dd)
+            page: int, optional
+                Pagination page number, defaults to 1
+            per_page: int, optional
+                Number of items per page, defaults to 20
+            include_metedata: bool, optional
+                Whenevet to include pagination metadata, defaults to
+                True
 
             Returns
             -------
+            dict
+                Containing the key 'data' which contains a list of
+                results, and a key 'links' which contains the pagination
+                metadata
+
+            OR
+
             list of dicts
-                Containing the results data
+                When include_metadata is set to False, the metadata wrapper
+                is stripped and only a list of results is returned
             """
-            results = self.parent.get_results(include_task=include_task)
+            includes = []
+            if include_metadata:
+                includes.append('metadata')
+            if include_task:
+                includes.append('task')
+
+            s_from, s_till = started if started else (None, None)
+            a_from, a_till = assigned if assigned else (None, None)
+            f_from, f_till = finished if finished else (None, None)
+
+            params = {'task_id': task, 'organization_id': organization,
+                      'state': state, 'node_id': node, 'page': page,
+                      'per_page': per_page, 'include': includes,
+                      'started_from': s_from, 'started_till': s_till,
+                      'assigned_from': a_from, 'assigned_till': a_till,
+                      'finished_from': f_from, 'finished_till': f_till}
+
+            results = self.parent.get_results(params=params)
+
+            if isinstance(results, dict):
+                wrapper = results
+                results = results['data']
+
             cleaned_results = []
             for result in results:
                 if result.get('result'):
                     try:
-                        des_res = deserialization.load_data(result.get('result'))
+                        des_res = deserialization.load_data(
+                            result.get('result')
+                        )
                     except Exception as e:
                         id_ = result.get('id')
-                        self.parent.log.warn(f'Could not deserialize result id='
+                        self.parent.log.warn('Could not deserialize result id='
                                              f'{id_}')
                         self.parent.log.debug(e)
                         continue
                     result['result'] = des_res
                 cleaned_results.append(result)
+
+            if 'wrapper' in locals():
+                wrapper['data'] = cleaned_results
+                cleaned_results = wrapper
 
             return cleaned_results
 
