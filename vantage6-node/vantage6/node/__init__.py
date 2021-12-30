@@ -319,7 +319,7 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        vpn_port = self.__docker.run(
+        vpn_ports = self.__docker.run(
             result_id=taskresult["id"],
             image=task["image"],
             docker_input=taskresult['input'],
@@ -327,13 +327,17 @@ class Node(object):
             token=token
         )
 
-        if vpn_port:
+        if vpn_ports:
             # Save port of VPN client container at which it redirects traffic
-            # to the algorithm container
+            # to the algorithm container. First delete any existing port
+            # assignments in case algorithm has crashed
             self.server_io.request(
-                f"result/{taskresult['id']}", json={"port": vpn_port},
-                method="PATCH"
+                'port', params={'result_id': taskresult['id']}, method="DELETE"
             )
+            for port in vpn_ports:
+                port['result_id'] = taskresult['id']
+                self.server_io.request('port', method='POST', json=port)
+
             # Save IP address of VPN container
             node_id = self.server_io.whoami.id_
             node_ip = self.vpn_manager.get_vpn_ip()
