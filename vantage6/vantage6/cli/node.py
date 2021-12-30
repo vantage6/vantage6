@@ -33,7 +33,9 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE
 )
-from vantage6.common.docker_addons import pull_if_newer
+from vantage6.common.docker_addons import (
+    pull_if_newer, remove_container_if_exists
+)
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
 
@@ -381,6 +383,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
     # debug(f"  with environment: {env}")
+    remove_container_if_exists(
+        docker_client=docker_client, name=ctx.docker_container_name
+    )
 
     container = docker_client.containers.run(
         image,
