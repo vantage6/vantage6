@@ -1007,14 +1007,15 @@ class TestResources(unittest.TestCase):
 
     def test_patch_user_permissions(self):
 
+        org = Organization()
         user = User(firstname="Firstname", lastname="Lastname",
                     username="Username", password="Password", email="a@b.c",
-                    organization=Organization())
+                    organization=org)
         user.save()
         self.credentials[user.username] = {'username': user.username,
                                            'password': "Password"}
 
-        # check non-exsitsing user
+        # check non-existing user
         headers = self.create_user_and_login()
         result = self.app.patch(f'/api/user/-1', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
@@ -1093,7 +1094,7 @@ class TestResources(unittest.TestCase):
 
         # test that you cannot assign role that has rules that you do not own
         role = Role(name="somename", rules=[not_owning_rule],
-                    organization=Organization())
+                    organization=org)
         role.save()
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'rules': [role.id]
@@ -1117,6 +1118,15 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
         user_role_ids = [role['id'] for role in result.json['roles']]
         self.assertIn(role.id, user_role_ids)
+
+        # test that you CANNOT assign roles from different organization
+        other_org_role = Role(name="somename", rules=[not_owning_rule],
+                              organization=Organization())
+        headers = self.create_user_and_login(rules=[rule, not_owning_rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'roles': [other_org_role.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test missing role
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
@@ -1724,7 +1734,7 @@ class TestResources(unittest.TestCase):
                                 headers=headers, json={'id': -1})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
-         # add a node!
+        # add a node!
         results = self.app.post(f'/api/collaboration/{col.id}/node',
                                 headers=headers, json={'id': node.id})
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
@@ -1764,10 +1774,10 @@ class TestResources(unittest.TestCase):
         node2 = Node()
         node2.save()
         results = self.app.delete(f'/api/collaboration/{col.id}/node',
-                                headers=headers, json={'id': node2.id})
+                                  headers=headers, json={'id': node2.id})
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
-         # delete a node!
+        # delete a node!
         results = self.app.delete(f'/api/collaboration/{col.id}/node',
                                   headers=headers, json={'id': node.id})
         self.assertEqual(results.status_code, HTTPStatus.OK)
@@ -1920,7 +1930,7 @@ class TestResources(unittest.TestCase):
         node_id = results.json.get('id')
         results = self.app.post('/api/node', headers=headers, json={
             'collaboration_id': col.id,
-            'organization_id': org2.id # <-------
+            'organization_id': org2.id  # <-------
         })
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -2047,7 +2057,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(org2, rules=[rule])
         results = self.app.patch(f'/api/node/{node.id}', headers=headers,
                                  json={'collaboration_id': col2.id,
-                                 'organization_id': org2.id})
+                                       'organization_id': org2.id})
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(results.json['organization']['id'], org2.id)
         self.assertEqual(results.json['collaboration']['id'], col2.id)
@@ -2227,7 +2237,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
         # test already completed task
-        parent_res.finished_at = datetime.date(2020,1,1)
+        parent_res.finished_at = datetime.date(2020, 1, 1)
         parent_res.save()
         results = self.app.post(f'/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
