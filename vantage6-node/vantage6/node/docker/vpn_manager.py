@@ -40,6 +40,16 @@ class VPNManager(DockerBaseManager):
         Start VPN client container and configure network to allow
         algorithm-to-algoritm communication
         """
+        if not self.subnet:
+            self.log.warn("VPN subnet is not defined! Disabling VPN...")
+            self.log.info("Define the 'vpn_subnet' field in your configuration"
+                          " if you want to use VPN")
+            return
+        elif not self._is_ipv4_subnet(self.subnet):
+            self.log.error(f"VPN subnet {self.subnet} is not a valid subnet! "
+                           "Disabling VPN...")
+            return
+
         self.log.debug("Mounting VPN configuration file")
         # add volume containing OVPN config file
         data_path = '/mnt/vpn/'  # TODO obtain from DockerNodeContext
@@ -425,3 +435,16 @@ class VPNManager(DockerBaseManager):
         if isinstance(if_json, list):
             if_json = if_json[-1]
         return int(if_json['link_index'])
+
+    def _is_ipv4_subnet(self, subnet: str) -> bool:
+        """
+        Validate if subnet has format '12.34.56.78/16'
+        """
+        parts = subnet.split('/')
+        if len(parts) != 2:
+            return False
+        if not parts[1].isdigit() or int(parts[1]) > 32:
+            return False
+        octets = parts[0].split(".")
+        return len(octets) == 4 and \
+            all(o.isdigit() and 0 <= int(o) < 256 for o in octets)
