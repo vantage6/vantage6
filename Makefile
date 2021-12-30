@@ -20,6 +20,7 @@ help:
 	@echo "  clean        : clean all built packages"
 	@echo "  git-checkout : git checkout a BRANCH"
 	@echo "  git-push     : push the active branch to the registry (optional: FLAGS)"
+	@echo "  git-push     : pull the active"
 	@echo "  git-merge    : merge BRANCH into active branch"
 	@echo "  git-tag      : tag the current commit as a release TAG"
 	@echo "  git-commit   : Commit all repos and all changes using MSG"
@@ -63,6 +64,13 @@ git-push:
 	cd vantage6 && git push ${FLAGS}
 	cd vantage6-node && git push ${FLAGS}
 	cd vantage6-server && git push ${FLAGS}
+
+git-pull:
+	cd vantage6-common && git pull
+	cd vantage6-client && git pull
+	cd vantage6 && git pull
+	cd vantage6-node && git pull
+	cd vantage6-server && git pull
 
 git-merge:
 	cd vantage6-common && git merge ${BRANCH}
