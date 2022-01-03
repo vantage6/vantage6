@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 import logging
 
 from http import HTTPStatus
@@ -35,10 +36,36 @@ def setup(api, api_base, services):
         resource_class_kwargs=services
     )
 
+    api.add_resource(
+        Long,
+        path + "/long",
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
+
+    api.add_resource(
+        Short,
+        path + "/short",
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
+class Long(ServicesResources):
+
+    def get(self):
+        time.sleep(10)
+        return "Long"
+
+
+class Short(ServicesResources):
+
+    def get(self):
+        return "Short"
+
 class Health(ServicesResources):
 
     @swag_from(str(Path(r"swagger/get_health.yaml")), endpoint='health')
