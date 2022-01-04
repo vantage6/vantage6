@@ -14,7 +14,7 @@ def is_docker_running() -> bool:
     try:
         client = docker.from_env()
         client.ping()
-    except Exception as e:
+    except docker.errors.APIError as e:
         log.error(e)
         return False
     return True
