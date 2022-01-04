@@ -1,9 +1,9 @@
 import logging
 import os
-
+import inspect as class_inspect
 from flask.globals import g
 
-from sqlalchemy import Column, Integer
+from sqlalchemy import Column, Integer, inspect
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import create_engine
@@ -208,6 +208,24 @@ class ModelBase:
 
         session.delete(self)
         session.commit()
+
+    @classmethod
+    def help(cls) -> str:
+        i = inspect(cls)
+        properties = ''.join([f' ->{a.key}\n' for a in i.mapper.column_attrs])
+        relations = ''.join([f' ->{a[0]}\n' for a in i.relationships.items()])
+        methods = class_inspect.getmembers(cls,
+                                           predicate=class_inspect.isroutine)
+
+        methods = ''.join([f' ->{key[0]}\n' for key in methods
+                          if not key[0].startswith('_')])
+
+        print(
+            f'Table: {cls.__tablename__}\n\n'
+            f'Properties: \n{properties}\n'
+            f'Relations: \n{relations}\n'
+            f'Methods: \n{methods}\n'
+        )
 
 
 Base = declarative_base(cls=ModelBase)
