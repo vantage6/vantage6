@@ -80,7 +80,7 @@ def node_configuration_questionaire(dirs, instance_name):
     if is_add_vpn:
         config['vpn_subnet'] = q.text(
             message="Subnet of the VPN server you want to connect to:",
-            default='1.2.3.4/16'
+            default='10.76.0.0/16'
         ).ask()
 
     config["logging"] = {
