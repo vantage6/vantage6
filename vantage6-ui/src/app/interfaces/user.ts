@@ -1,4 +1,5 @@
 import { Role } from './role';
+import { Rule } from './rule';
 
 export interface User {
   id: number;
@@ -6,5 +7,5 @@ export interface User {
   last_name: string;
   email: string;
   roles: Role[];
-  rules: string[];
+  rules: Rule[];
 }

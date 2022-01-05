@@ -26,6 +26,15 @@
               <span class="form-label">Last name:</span>
               <input type="text" [(ngModel)]="last_name"/>
           </div>
+          <div class="form-row">
+            <span class="form-label">Email:</span>
+            <input type="text" [(ngModel)]="email"/>
+        </div>
+        <!-- TODO
+            Add role dropdown
+            Add rule dropdown
+            Add organization dropdown (only if root, otherwise just put immutable text)
+         -->
       </div>
       {{ password }}
     </mat-card>

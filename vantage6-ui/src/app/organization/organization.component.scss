@@ -13,19 +13,12 @@ mat-card {
   margin-bottom: 10px;
 }
 
-.add-button {
+.btn-add {
   background-color: v.$transparent;
   color: v.$vtg-blue;
   transition-duration: 0.2s;
-  position: absolute;
-  right: 0;
   display: inline-block;
   vertical-align: middle;
-
-  margin: {
-    top: -7px;
-    right: 15px;
-  }
 
   border: {
     color: v.$vtg-blue;
@@ -33,15 +26,67 @@ mat-card {
     width: 2px;
     radius: 4px;
   }
+}
+
+.btn-add:hover {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+}
+
+.btn-right {
+  position: absolute;
+  right: 0;
+
+  margin: {
+    top: -7px;
+    right: 15px;
+  }
 
   mat-icon {
     margin-right: 8px;
   }
 }
 
-.add-button:hover {
-  background-color: v.$white;
-  border-color: v.$vtg-blue;
+.inline {
+  display: inline;
+}
+
+.btn-detail {
+  background-color: v.$vtg-blue-opaque;
+  color: v.$white;
+  margin-right: 3px;
+  // vertical-align: middle;
+
+  border: {
+    color: v.$vtg-blue-opaque;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+}
+
+.btn-detail:hover {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+}
+
+.btn-edit {
+  background-color: v.$vtg-orange;
+  color: v.$white;
+  // margin-right: 3px;
+  // vertical-align: middle;
+}
+
+table {
+  margin-bottom: 15px;
+}
+
+table td {
+  vertical-align: top;
+}
+
+tr {
+  margin-bottom: 3px;
 }
 
 h4 {

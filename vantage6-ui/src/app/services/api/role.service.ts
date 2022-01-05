@@ -10,7 +10,14 @@ import { environment } from 'src/environments/environment';
 export class RoleService {
   constructor(private http: HttpClient) {}
 
-  list() {}
+  list(organization_id: number | null = null, include_root: boolean = false) {
+    let params: any = {};
+    if (organization_id !== null) {
+      params['organization_id'] = organization_id;
+    }
+    params['include_root'] = include_root;
+    return this.http.get(environment.api_url + '/role', { params: params });
+  }
 
   get(id: number) {
     return this.http.get<any>(environment.api_url + '/role/' + id);

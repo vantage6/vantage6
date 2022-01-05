@@ -5,18 +5,19 @@ import { TokenStorageService } from './token-storage.service';
 import { UserService } from './api/user.service';
 import { RuleService } from './api/rule.service';
 import { RoleService } from './api/role.service';
+import { Rule } from '../interfaces/rule';
 
 const PERMISSION_KEY = 'permissions-user';
-
-type Permission = { type: string; resource: string; scope: string };
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserPermissionService {
   userId: number = 0;
-  userRules: Permission[] = [];
+  userRules: Rule[] = [];
   userIdBhs = new BehaviorSubject<number>(0);
+  allRules: Rule[] = [];
+  allRulesBhs = new BehaviorSubject<Rule[]>([]);
 
   constructor(
     private tokenStorage: TokenStorageService,
@@ -32,12 +33,12 @@ export class UserPermissionService {
     window.sessionStorage.setItem(PERMISSION_KEY, JSON.stringify(permissions));
   }
 
-  public getPermissions(): Permission[] {
+  public getPermissions(): Rule[] {
     let perm_text = window.sessionStorage.getItem(PERMISSION_KEY);
     if (perm_text === null) {
       return [];
     } else {
-      let permissions: Permission[] = JSON.parse(perm_text);
+      let permissions: Rule[] = JSON.parse(perm_text);
       return permissions;
     }
   }
@@ -55,8 +56,12 @@ export class UserPermissionService {
     return this.userIdBhs.asObservable();
   }
 
+  getRuleDescriptions(): Observable<Rule[]> {
+    return this.allRulesBhs.asObservable();
+  }
+
   hasPermission(type: string, resource: string, scope: string): boolean {
-    let permissions: Permission[] = this.getPermissions();
+    let permissions: Rule[] = this.getPermissions();
     if (type == '*' && resource == '*' && scope == '*') {
       // no permissions required: return true even if user has 0 permissions
       return true;
@@ -93,12 +98,26 @@ export class UserPermissionService {
         let userRules = data[0];
         let all_rules = data[1];
         this._setPermissions(userRules, all_rules);
+        this._setAllRules(all_rules);
       },
       (err) => {
         // TODO raise error if user permissions cannot be determined
         console.log(err);
       }
     );
+  }
+
+  private _setAllRules(all_rules: any[]) {
+    this.allRules = [];
+    for (let rule of all_rules) {
+      this.allRules.push({
+        id: rule.id,
+        type: rule.operation.toLowerCase(),
+        resource: rule.name.toLowerCase(),
+        scope: rule.scope.toLowerCase(),
+      });
+    }
+    this.allRulesBhs.next(this.allRules);
   }
 
   private async _setPermissions(userRules: any, all_rules: any) {
@@ -128,7 +147,8 @@ export class UserPermissionService {
         // match the rule descriptions with the current user rule id
         let rule_descr = all_rules.find((r: any) => r.id === rule.id);
         // add new permission
-        var new_rule: Permission = {
+        var new_rule: Rule = {
+          id: rule.id,
           type: rule_descr.operation.toLowerCase(),
           resource: rule_descr.name.toLowerCase(),
           scope: rule_descr.scope.toLowerCase(),
