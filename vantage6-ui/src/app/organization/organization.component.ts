@@ -109,6 +109,7 @@ export class OrganizationComponent implements OnInit {
           }
           this.organization_users.push({
             id: user.id,
+            username: user.username,
             first_name: user.firstname,
             last_name: user.lastname,
             email: user.email,

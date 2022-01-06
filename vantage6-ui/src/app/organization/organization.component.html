@@ -9,6 +9,10 @@
         {{organization_details.address2}}
         <br/>
         {{organization_details.country}}
+        <br/>
+        <button mat-button class="btn-edit">
+          Edit
+        </button>
       </mat-card>
 
       <mat-card>
@@ -58,33 +62,40 @@
                 <col span="1" style="width: 80%;"/>
               </colgroup>
               <tr>
+                <td>Username:</td>
+                <td>{{user.username}}</td>
+              </tr>
+              <tr>
                 <td>Email:</td>
                 <td>{{user.email}}</td>
               </tr>
               <tr>
-                <td>Roles:</td>
+                <td>Role(s):</td>
                 <td>
                   <div *ngFor="let role of user.roles" class="inline">
-                      <button mat-button class="btn-detail inline">
+                      <button mat-button class="btn-detail inline" disabled>
                         {{role.name}}
                       </button>
                   </div>
-                  <button mat-button class="btn-add inline">
+                  <div *ngIf="user.roles.length===0">
+                    This user has no roles!
+                  </div>
+                  <!-- <button mat-button class="btn-add inline">
                     <mat-icon>add_circle_outline</mat-icon>
-                  </button>
+                  </button> -->
                 </td>
               </tr>
-              <tr>
+              <tr *ngIf="user.rules.length > 0">
                 <td>Extra rules:</td>
                 <td>
                   <div *ngFor="let rule of user.rules" class="inline">
-                      <button mat-button class="btn-detail inline">
-                        {{rule.type}} {{rule.resource}} ({{rule.scope}})
-                      </button>
+                    <button mat-button class="btn-detail inline" disabled>
+                      {{rule.type}} {{rule.resource}} ({{rule.scope}})
+                    </button>
                   </div>
-                  <button mat-button class="btn-add inline">
+                  <!-- <button mat-button class="btn-add inline">
                     <mat-icon>add_circle_outline</mat-icon>
-                  </button>
+                  </button> -->
                 </td>
               </tr>
             </table>

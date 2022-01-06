@@ -18,7 +18,6 @@ mat-card {
   color: v.$vtg-blue;
   transition-duration: 0.2s;
   display: inline-block;
-  vertical-align: middle;
 
   border: {
     color: v.$vtg-blue;
@@ -54,8 +53,8 @@ mat-card {
 .btn-detail {
   background-color: v.$vtg-blue-opaque;
   color: v.$white;
-  margin-right: 3px;
-  // vertical-align: middle;
+  margin-right: 5px;
+  margin-bottom: 5px;
 
   border: {
     color: v.$vtg-blue-opaque;
@@ -65,16 +64,13 @@ mat-card {
   }
 }
 
-.btn-detail:hover {
-  background-color: v.$vtg-blue;
+.mat-button.mat-button-disabled.mat-button-disabled {
   color: v.$white;
 }
 
 .btn-edit {
   background-color: v.$vtg-orange;
   color: v.$white;
-  // margin-right: 3px;
-  // vertical-align: middle;
 }
 
 table {
