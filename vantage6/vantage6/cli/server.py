@@ -98,6 +98,7 @@ def cli_server():
     """Subcommand `vserver`."""
     pass
 
+
 #
 #   start
 #
@@ -230,7 +231,6 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
                 exit(0)
 
 
-
 #
 #   list
 #
@@ -288,6 +288,7 @@ def cli_server_configuration_list():
         warning(
              f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
 
+
 #
 #   files
 #
@@ -298,6 +299,7 @@ def cli_server_files(ctx):
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
     info(f"Database           = {ctx.get_database_uri()}")
+
 
 #
 #   new
@@ -333,7 +335,7 @@ def cli_server_new(name, environment, system_folders):
         print(e)
         exit(1)
 
-     # Check that we can write in this folder
+    # Check that we can write in this folder
     if not check_config_write_permissions(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(f"Create a new server using '{Fore.GREEN}vserver new "
@@ -355,6 +357,7 @@ def cli_server_new(name, environment, system_folders):
         f"You can start the server by running "
         f"{Fore.GREEN}vserver start {flag}{Style.RESET_ALL}"
     )
+
 
 #
 #   import
@@ -488,7 +491,7 @@ def cli_server_shell(ctx):
     running_servers = docker_client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
 
-    if not ctx.docker_container_name in [s.name for s in running_servers]:
+    if ctx.docker_container_name not in [s.name for s in running_servers]:
         error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} is not running?")
         return
 
@@ -545,6 +548,7 @@ def cli_server_stop(name, system_folders, all_servers):
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
 
+
 #
 #   attach
 #
@@ -598,8 +602,8 @@ def check_if_docker_deamon_is_running(docker_client):
 @cli_server.command(name='version')
 @click.option("-n", "--name", default=None, help="configuration name")
 @click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=
-              DEFAULT_SERVER_SYSTEM_FOLDERS)
+@click.option('--user', 'system_folders', flag_value=False,
+              default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 def cli_server_version(name, system_folders):
     """Returns current version of vantage6 services installed."""
 
@@ -607,10 +611,14 @@ def cli_server_version(name, system_folders):
     check_if_docker_deamon_is_running(client)
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"})
-    running_server_names = [node.name for node in running_servers]
+        filters={"label": f"{APPNAME}-type=server"})
+    running_server_names = [server.name for server in running_servers]
 
     if not name:
+        if not running_server_names:
+            error("No servers are running! You can only check the version for "
+                  "servers that are running")
+            exit(1)
         name = q.select("Select the server you wish to inspect:",
                         choices=running_server_names).ask()
     else:
@@ -619,8 +627,13 @@ def cli_server_version(name, system_folders):
 
     if name in running_server_names:
         container = client.containers.get(name)
-        version = container.exec_run(cmd='vserver-local version', stdout = True)
-        click.echo({"server": version.output.decode('utf-8'), "cli":__version__})
+        version = container.exec_run(cmd='vserver-local version', stdout=True)
+        click.echo({
+            "server": version.output.decode('utf-8'), "cli": __version__
+        })
+    else:
+        error(f"Server {name} is not running! Cannot provide version...")
+
 
 def print_log_worker(logs_stream):
     for log in logs_stream:

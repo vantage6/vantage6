@@ -36,15 +36,15 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'schema==0.7.1',
-        'click==7.1.1',
+        'click==8.0.3',
         'SQLAlchemy==1.3.15',
         'docker==4.2.0',
         'colorama==0.4.3',
         'questionary==1.5.2',
         'iPython==7.13.0',
         'SQLAlchemy==1.3.15',
-        'vantage6-common >= 1.2.3',
-        'vantage6-client >= 1.2.3',
+        f'vantage6-common == {version_ns["__version__"]}',
+        f'vantage6-client == {version_ns["__version__"]}',
     ],
     extras_require={
         'dev': [

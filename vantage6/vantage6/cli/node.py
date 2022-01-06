@@ -33,7 +33,9 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE
 )
-from vantage6.common.docker_addons import pull_if_newer
+from vantage6.common.docker_addons import (
+    pull_if_newer, remove_container_if_exists
+)
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
 
@@ -211,16 +213,12 @@ def cli_node_files(name, environment, system_folders):
 #
 #   start
 #
-help_ = {
-    'config': 'absolute path to configuration-file; overrides NAME',
-    'environment': 'configuration environment to use',
-}
-
-
 @cli_node.command(name='start')
 @click.option("-n", "--name", default=None, help="configuration name")
-@click.option("-c", "--config", default=None, help=help_['config'])
-@click.option('-e', '--environment', default=N_ENV, help=help_['environment'])
+@click.option("-c", "--config", default=None,
+              help='absolute path to configuration-file; overrides NAME')
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
@@ -264,6 +262,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             question = (f"Configuration '{name}' using environment "
                         "'{environment}' does not exist.\n  Do you want to "
                         "create this config now?")
+
 
             if q.confirm(question).ask():
                 configuration_wizard("node", name, environment, system_folders)
@@ -310,8 +309,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         info(" ... success!")
 
     info("Creating Docker data volume")
-    data_volume = docker_client.volumes.create(
-        f"{ctx.docker_container_name}-vol")
+
+    data_volume = docker_client.volumes.create(ctx.docker_volume_name)
+    vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
@@ -319,6 +319,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         # (target, source)
         ("/mnt/log", str(ctx.log_dir)),
         ("/mnt/data", data_volume.name),
+        ("/mnt/vpn", vpn_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
@@ -354,6 +355,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     # argument ;-).
     env = {
         "DATA_VOLUME_NAME": data_volume.name,
+        "VPN_VOLUME_NAME": vpn_volume.name,
         "PRIVATE_KEY": "/mnt/private_key.pem"
     }
 
@@ -384,13 +386,16 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
           f'{environment} --dockerized {system_folders_option}'
 
     info("Running Docker container")
-    volumes = {}
+    volumes = []
     for mount in mounts:
-        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
+        volumes.append(f'{mount[1]}:{mount[0]}')
 
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
     # debug(f"  with environment: {env}")
+    remove_container_if_exists(
+        docker_client=docker_client, name=ctx.docker_container_name
+    )
 
     container = docker_client.containers.run(
         image,
@@ -671,6 +676,10 @@ def cli_node_version(name, system_folders):
     running_node_names = [node.name for node in running_nodes]
 
     if not name:
+        if not running_node_names:
+            error("No nodes are running! You can only check the version for "
+                  "nodes that are running")
+            exit(1)
         name = q.select("Select the node you wish to inspect:",
                         choices=running_node_names).ask()
     else:
@@ -680,8 +689,11 @@ def cli_node_version(name, system_folders):
     if name in running_node_names:
         container = client.containers.get(name)
         version = container.exec_run(cmd='vnode-local version', stdout=True)
-        click.echo({"node": version.output.decode('utf-8'),
-                    "cli": __version__})
+        click.echo({
+            "node": version.output.decode('utf-8'), "cli": __version__
+        })
+    else:
+        error(f"Node {name} is not running! Cannot provide version...")
 
 
 def print_log_worker(logs_stream):
