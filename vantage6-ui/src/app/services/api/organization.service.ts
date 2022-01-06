@@ -10,7 +10,9 @@ import { environment } from 'src/environments/environment';
 export class OrganizationService {
   constructor(private http: HttpClient) {}
 
-  list() {}
+  list() {
+    return this.http.get(environment.api_url + '/organization');
+  }
 
   get(id: number) {
     return this.http.get(environment.api_url + '/organization/' + id);

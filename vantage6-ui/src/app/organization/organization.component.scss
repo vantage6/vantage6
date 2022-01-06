@@ -73,6 +73,18 @@ mat-card {
   color: v.$white;
 }
 
+.btn-dropdown {
+  color: v.$vtg-blue;
+  background-color: v.$transparent;
+  // vertical-align: middle;
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+}
+
 table {
   margin-bottom: 15px;
 }

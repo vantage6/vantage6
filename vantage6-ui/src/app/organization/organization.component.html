@@ -1,15 +1,33 @@
-<!-- <p>User id: {{userId}}</p> -->
-<div *ngIf="organization_details!==null">
+<div *ngIf="userPermission.hasPermission('view', 'organization', 'global')">
+  <mat-card>
+    Select organization:
+    <div class="inline">
+      <div ngbDropdown class="d-inline-block">
+        <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>{{current_organization.name}}</button>
+        <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
+          <div *ngFor="let org of organizations">
+            <button ngbDropdownItem (click)="selectOrganizationDropdown(org.id)">{{org.name}}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-card>
+</div>
+<div *ngIf="current_organization.id!==-1">
   <div class="row justify-content-md-center">
-    <div class="col-md">
-        <mat-card>
-        <h3>{{organization_details.name}}</h3>
-        {{organization_details.address1}}
+    <div class="col-lg">
+      <mat-card>
+        <h3>{{current_organization.name}}</h3>
+        {{current_organization.address1}}
         <br/>
-        {{organization_details.address2}}
+        {{current_organization.address2}}
         <br/>
-        {{organization_details.country}}
+        {{current_organization.country}}
         <br/>
+        <br/>
+        {{current_organization.domain}}
+        <br/>
+        <!-- {{current_organization.public_key}} -->
         <button mat-button class="btn-edit">
           Edit
         </button>
@@ -21,8 +39,12 @@
           <mat-icon>add_circle_outline</mat-icon>
           <span>New role</span>
         </button>
+        <div *ngIf="current_org_role_count===0">
+          This organization has no roles!
+        </div>
         <div *ngFor="let role of roles">
-          <div *ngIf="role.organization_id === organization_details.id">
+          <div *ngIf="(role.organization_id === current_organization.id) ||
+                      (role.organization_id === null && current_organization.id === 1)">
             <mat-expansion-panel>
               <mat-expansion-panel-header>
                 <mat-panel-title>
@@ -37,13 +59,16 @@
         </div>
       </mat-card>
     </div>
-    <div class="col-md">
+    <div class="col-lg">
       <mat-card>
         <h4>Users</h4>
         <button mat-button class="btn-add btn-right" (click)="createUser()">
           <mat-icon>add_circle_outline</mat-icon>
           <span>New user</span>
         </button>
+        <div *ngIf="organization_users.length===0">
+          This organization has no users!
+        </div>
         <div *ngFor="let user of organization_users">
           <mat-expansion-panel>
             <mat-expansion-panel-header>
