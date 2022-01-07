@@ -18,16 +18,17 @@
     <div class="col-lg">
       <mat-card>
         <h3>{{current_organization.name}}</h3>
-        {{current_organization.address1}}
+        <address>
+          {{current_organization.address1}}<br/>
+          {{current_organization.address2}}<br/>
+          {{current_organization.country}}<br/>
+          {{current_organization.domain}}
+        </address>
         <br/>
-        {{current_organization.address2}}
+        <!-- TODO show button with 'show public key' or so to display public key
+        {{current_organization.public_key}}
         <br/>
-        {{current_organization.country}}
-        <br/>
-        <br/>
-        {{current_organization.domain}}
-        <br/>
-        <!-- {{current_organization.public_key}} -->
+        -->
         <button mat-button class="btn-edit">
           Edit
         </button>
@@ -155,7 +156,7 @@
                   <td>Role(s):</td>
                   <td>
                     <div *ngFor="let role of user.roles" class="inline">
-                        <button mat-button class="btn-delete inline">
+                        <button mat-button class="btn-delete inline" (click)="removeRole(user, role)">
                           <mat-icon>remove_circle</mat-icon>
                           <span>{{role.name}}</span>
                         </button>
@@ -167,8 +168,7 @@
                       </button>
                       <div ngbDropdownMenu aria-labelledby="dropdownRoles">
                         <div *ngFor="let role of roles">
-                          <button ngbDropdownItem>{{role.name}}</button>
-                          <!-- (click)="addRole(user, role.id)" -->
+                          <button ngbDropdownItem (click)="addRole(user, role)">{{role.name}}</button>
                         </div>
                       </div>
                     </div>
@@ -181,7 +181,7 @@
                   <td>Extra rules:</td>
                   <td>
                     <div *ngFor="let rule of user.rules" class="inline">
-                      <button mat-button class="btn-delete inline">
+                      <button mat-button class="btn-delete inline" (click)="removeRule(user, rule)">
                       <!-- <button mat-button class="btn-delete inline" disabled> -->
                         <mat-icon>remove_circle</mat-icon>
                         <span>{{rule.type}} {{rule.resource}} ({{rule.scope}})</span>
@@ -193,9 +193,9 @@
                         <span class="align-top">Add rule</span>
                       </button>
                       <div ngbDropdownMenu aria-labelledby="dropdownRules">
-                        <div *ngFor="let role of roles">
-                          <button ngbDropdownItem>{{role.name}}</button>
-                          <!-- (click)="addRole(user, role.id)" -->
+                        <!-- TODO change this or have rules instead of roles -->
+                        <div *ngFor="let rule of roles">
+                          <button ngbDropdownItem (click)="addRule(user, rule)">{{rule.name}}</button>
                         </div>
                       </div>
                     </div>

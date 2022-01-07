@@ -191,12 +191,29 @@ export class OrganizationComponent implements OnInit {
   deepcopy(obj: any): any {
     return Object.assign({}, obj);
   }
+  removeMatchedIdFromArray(array: any[], obj: any): any[] {
+    // remove the elements from an array that have the same id value as an
+    // object
+    return array.filter(function (elem: any) {
+      return elem.id !== obj.id;
+    });
+  }
 
   editUser(user: User): void {
     this.users_edit_originals.push(this.deepcopy(user));
-    console.log('editing');
-    console.log(this.users_edit_originals);
-    // console.log(this.users_edit_mode.includes(username));
+  }
+
+  removeRole(user: User, role: Role): void {
+    user.roles = this.removeMatchedIdFromArray(user.roles, role);
+  }
+  removeRule(user: User, rule: Rule): void {
+    user.rules = this.removeMatchedIdFromArray(user.rules, rule);
+  }
+  addRole(user: User, role: Role): void {
+    user.roles.push(role);
+  }
+  addRule(user: User, rule: Rule): void {
+    user.rules.push(rule);
   }
 
   isUserBeingEdited(user_id: number) {
