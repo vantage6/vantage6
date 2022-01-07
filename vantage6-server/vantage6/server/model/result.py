@@ -1,9 +1,12 @@
 import datetime
+import logging
 
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from vantage6.common import logger_name
 from vantage6.server.model.base import Base
 from vantage6.server.model import (
     Node,
@@ -12,6 +15,8 @@ from vantage6.server.model import (
     Organization
 )
 from vantage6.server.model.base import DatabaseSessionManager
+
+log_ = logging.getLogger(logger_name(__name__))
 
 
 class Result(Base):
@@ -39,15 +44,20 @@ class Result(Base):
     @property
     def node(self):
         session = DatabaseSessionManager.get_session()
-        node = session.query(Node)\
-            .join(Collaboration)\
-            .join(Organization)\
-            .join(Result)\
-            .join(Task)\
-            .filter(Result.id == self.id)\
-            .filter(self.organization_id == Node.organization_id)\
-            .filter(Task.collaboration_id == Node.collaboration_id)\
-            .one()
+        try:
+            node = session.query(Node)\
+                .join(Collaboration)\
+                .join(Organization)\
+                .join(Result)\
+                .join(Task)\
+                .filter(Result.id == self.id)\
+                .filter(self.organization_id == Node.organization_id)\
+                .filter(Task.collaboration_id == Node.collaboration_id)\
+                .one()
+        except NoResultFound:
+            log_.warn("No node exists for organization_id "
+                      f"{self.organization_id} in the current collaboration!")
+            return None
         return node
 
     @hybrid_property
