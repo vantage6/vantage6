@@ -1,4 +1,5 @@
 @use '../globals/variables' as v;
+@import "~@angular/material/theming";
 
 .column {
   float: center;
@@ -11,6 +12,15 @@ mat-expansion-panel {
 
 mat-card {
   margin-bottom: 10px;
+}
+
+.btn {
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
 }
 
 .btn-add {
@@ -40,10 +50,9 @@ mat-card {
     top: -7px;
     right: 15px;
   }
-
-  mat-icon {
-    margin-right: 8px;
-  }
+}
+mat-icon {
+  margin-right: 8px;
 }
 
 .inline {
@@ -64,6 +73,15 @@ mat-card {
   }
 }
 
+.btn-save {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+  border: {
+    color: v.$vtg-blue;
+  }
+  margin-right: 5px;
+}
+
 .mat-button.mat-button-disabled.mat-button-disabled {
   color: v.$white;
 }
@@ -76,13 +94,33 @@ mat-card {
 .btn-dropdown {
   color: v.$vtg-blue;
   background-color: v.$transparent;
-  // vertical-align: middle;
+  vertical-align: middle;
   border: {
     color: v.$vtg-blue;
     style: solid;
     width: 2px;
     radius: 4px;
   }
+  .mat-icon {
+    vertical-align: bottom;
+  }
+}
+
+.btn-delete {
+  background-color: v.$white;
+  color: v.$red;
+  border: {
+    color: v.$red;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.align-top {
+  vertical-align: top;
 }
 
 table {

@@ -13,6 +13,7 @@ import { UserService } from '../services/api/user.service';
 import { OrganizationService } from '../services/api/organization.service';
 import { ModalService } from '../services/modal.service';
 import { RoleService } from '../services/api/role.service';
+import { couldStartTrivia } from 'typescript';
 
 @Component({
   selector: 'app-organization',
@@ -36,6 +37,7 @@ export class OrganizationComponent implements OnInit {
   roles: Role[] = [];
   current_org_role_count: number = 0;
   all_rules: Rule[] = [];
+  users_edit_originals: User[] = [];
   userId: number = 0;
 
   constructor(
@@ -73,7 +75,7 @@ export class OrganizationComponent implements OnInit {
         let organization_data = data[1];
         this.user_organization_id = current_user_data.organization.id;
         this.setOrganizations(organization_data);
-        this.collectUsers();
+        this.collectUserAndRoles();
       },
       (error) => {
         console.log(error);
@@ -88,7 +90,7 @@ export class OrganizationComponent implements OnInit {
         break;
       }
     }
-    this.collectUsers();
+    this.collectUserAndRoles();
   }
 
   setOrganizations(organization_data: any[]) {
@@ -115,11 +117,13 @@ export class OrganizationComponent implements OnInit {
     };
   }
 
-  collectUsers(): void {
+  collectUserAndRoles(): void {
+    /* Renew the organization's users and roles */
     if (this.current_organization === null) {
       return;
     }
     this.organization_users = [];
+    this.users_edit_originals = [];
 
     // collect users for current organization
     let req_users = this.userService.list(this.current_organization.id);
@@ -183,8 +187,29 @@ export class OrganizationComponent implements OnInit {
     );
   }
 
+  // TODO to utils?
+  deepcopy(obj: any): any {
+    return Object.assign({}, obj);
+  }
+
+  editUser(user: User): void {
+    this.users_edit_originals.push(this.deepcopy(user));
+    console.log('editing');
+    console.log(this.users_edit_originals);
+    // console.log(this.users_edit_mode.includes(username));
+  }
+
+  isUserBeingEdited(user_id: number) {
+    return this.users_edit_originals.some((u) => u.id === user_id);
+  }
+
   createUser(): void {
     this.router.navigate(['user/create']);
+  }
+
+  changeInput(): void {
+    // console.log(this.users_edit_originals);
+    // console.log(this.organization_users);
   }
 
   private _getDescription(id: number, descriptions: any[]) {
