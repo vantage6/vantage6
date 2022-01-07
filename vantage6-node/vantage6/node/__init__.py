@@ -29,7 +29,9 @@ from socketio import ClientNamespace, Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
-from vantage6.common.docker_addons import ContainerKillListener
+from vantage6.common.docker_addons import (
+    ContainerKillListener, check_docker_running
+)
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
 from vantage6.node.server_io import NodeClient
@@ -38,7 +40,6 @@ from vantage6.node.util import logger_name
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
-from vantage6.node.docker.utils import is_docker_running
 
 
 class VPNConnectMode(Enum):
@@ -140,11 +141,7 @@ class Node(object):
 
     def initialize(self):
         # check if docker is running, otherwise exit with error
-        if not is_docker_running():
-            self.log.critical("Cannot reach the Docker engine! Please make "
-                              "sure Docker is running")
-            self.log.warn("Exiting...")
-            exit(1)
+        check_docker_running()
 
         self.config = self.ctx.config
         self.queue = queue.Queue()
