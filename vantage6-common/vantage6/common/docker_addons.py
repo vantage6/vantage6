@@ -7,7 +7,8 @@ import json
 import signal
 
 from dateutil.parser import parse
-from requests.api import request
+from docker.client import DockerClient
+from docker.models.containers import Container
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
@@ -106,7 +107,7 @@ def inspect_remote_image_timestamp(docker_client, image: str, log=ClickLogger):
         log.warn("Could not construct remote URL, "
                  "are you using a local image?")
         log.warn("Or an image from docker hub?")
-        log.warn("We'll make an final attemt when running the image to pull"
+        log.warn("We'll make an final attempt when running the image to pull"
                  " it without any checks...")
         return
 
@@ -225,3 +226,65 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         except docker.errors.APIError as e:
             log.error(f"Failed to pull image! {image}")
             log.debug(e)
+
+
+def get_container(docker_client: DockerClient, **filters) -> Container:
+    """
+    Return container if it exists after searching using kwargs
+
+    Returns
+    -------
+    Container or None
+        Container if it exists, else None
+    **filters:
+        These are arguments that will be passed to the client.container.list()
+        function. They should yield 0 or 1 containers as result (e.g.
+        name='something')
+    """
+    running_containers = docker_client.containers.list(
+        all=True, filters=filters
+    )
+    return running_containers[0] if running_containers else None
+
+
+def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
+    """
+    Kill and remove a docker container if it exists
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        A Docker client
+    **filters:
+        These are arguments that will be passed to the client.container.list()
+        function. They should yield 0 or 1 containers as result (e.g.
+        name='something')
+    """
+    container = get_container(docker_client, **filters)
+    if container:
+        log.warn("Removing container that was already running: "
+                 f"{container.name}")
+        remove_container(container, kill=True)
+
+
+def remove_container(container: Container, kill=False) -> None:
+    """
+    Removes a docker container
+
+    Parameters
+    ----------
+    container: Container
+        The container that should be removed
+    kill: bool
+        Whether or not container should be killed before it is removed
+    """
+    if kill:
+        try:
+            container.kill()
+        except Exception as e:
+            pass  # allow failure here, maybe container had already exited
+    try:
+        container.remove()
+    except Exception as e:
+        log.error(f"Failed to remove container {container.name}")
+        log.debug(e)
