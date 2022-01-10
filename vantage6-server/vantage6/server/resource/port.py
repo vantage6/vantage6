@@ -66,10 +66,6 @@ def permissions(permissions: PermissionManager):
     add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
         assign_to_node=True, description="view ports of your organizations "
         "collaborations")
-    add(scope=S.ORGANIZATION, operation=P.CREATE, assign_to_node=True,
-        description="create algorithm port entries")
-    add(scope=S.ORGANIZATION, operation=P.DELETE, assign_to_node=True,
-        description="create algorithm port entries")
 
 
 # ------------------------------------------------------------------------------
