@@ -236,6 +236,10 @@ def get_container(docker_client: DockerClient, **filters) -> Container:
     -------
     Container or None
         Container if it exists, else None
+    **filters:
+        These are arguments that will be passed to the client.container.list()
+        function. They should yield 0 or 1 containers as result (e.g.
+        name='something')
     """
     running_containers = docker_client.containers.list(
         all=True, filters=filters
@@ -244,6 +248,18 @@ def get_container(docker_client: DockerClient, **filters) -> Container:
 
 
 def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
+    """
+    Kill and remove a docker container if it exists
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        A Docker client
+    **filters:
+        These are arguments that will be passed to the client.container.list()
+        function. They should yield 0 or 1 containers as result (e.g.
+        name='something')
+    """
     container = get_container(docker_client, **filters)
     if container:
         log.warn("Removing container that was already running: "
