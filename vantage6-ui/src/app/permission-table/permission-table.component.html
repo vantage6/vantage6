@@ -9,186 +9,27 @@
     <th>Scope</th>
     <th>Operation</th>
   </tr>
-  <!-- USER -->
-  <tr>
-    <td>User</td>
-    <td><button [className]="getScopeClass('user', 'own')">Own</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'user', 'own')">View</button>
-        <button [className]="getClass('edit', 'user', 'own')">Update</button>
-        <button [className]="getClass('delete', 'user', 'own')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getScopeClass('user', 'organization')">Organization</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'user', 'organization')">View</button>
-        <button [className]="getClass('create', 'user', 'organization')">Create</button>
-        <button [className]="getClass('edit', 'user', 'organization')">Update</button>
-        <button [className]="getClass('delete', 'user', 'organization')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getScopeClass('user', 'global')">Global</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'user', 'global')">View</button>
-        <button [className]="getClass('create', 'user', 'global')">Create</button>
-        <button [className]="getClass('edit', 'user', 'global')">Update</button>
-        <button [className]="getClass('delete', 'user', 'global')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <!-- ORGANIZATION -->
-  <tr>
-    <td>Organization</td>
-    <td><button [className]="getScopeClass('organization', 'organization')">Organization</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'organization', 'organization')">View</button>
-        <button [className]="getClass('edit', 'organization', 'organization')">Update</button>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getClass('view', 'organization', 'collaboration')">Collaboration</button></td>
-    <td>
-      <button [className]="getClass('view', 'organization', 'collaboration')">View</button>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getScopeClass('organization', 'global')">Global</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'organization', 'global')">View</button>
-        <button [className]="getClass('create', 'organization', 'global')">Create</button>
-        <button [className]="getClass('edit', 'organization', 'global')">Update</button>
-      </div>
-    </td>
-  </tr>
-  <!-- COLLABORATION -->
-  <tr>
-    <td>Collaboration</td>
-    <td><button [className]="getClass('view', 'collaboration', 'organization')">Organization</button></td>
-    <td>
-      <button [className]="getClass('view', 'collaboration', 'organization')">View</button>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getScopeClass('collaboration', 'global')">Global</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'collaboration', 'global')">View</button>
-        <button [className]="getClass('create', 'collaboration', 'global')">Create</button>
-        <button [className]="getClass('edit', 'collaboration', 'global')">Update</button>
-        <button [className]="getClass('delete', 'collaboration', 'global')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <!-- ROLE -->
-  <tr>
-    <td>Role</td>
-    <td><button [className]="getScopeClass('role', 'organization')">Organization</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'role', 'organization')">View</button>
-        <button [className]="getClass('create', 'role', 'organization')">Create</button>
-        <button [className]="getClass('edit', 'role', 'organization')">Update</button>
-        <button [className]="getClass('delete', 'role', 'organization')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getScopeClass('role', 'global')">Global</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'role', 'global')">View</button>
-        <button [className]="getClass('create', 'role', 'global')">Create</button>
-        <button [className]="getClass('edit', 'role', 'global')">Update</button>
-        <button [className]="getClass('delete', 'role', 'global')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <!-- NODE -->
-  <tr>
-    <td>Node</td>
-    <td><button [className]="getScopeClass('node', 'organization')">Organization</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'node', 'organization')">View</button>
-        <button [className]="getClass('create', 'node', 'organization')">Create</button>
-        <button [className]="getClass('edit', 'node', 'organization')">Update</button>
-        <button [className]="getClass('delete', 'node', 'organization')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getScopeClass('node', 'global')">Global</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'node', 'global')">View</button>
-        <button [className]="getClass('create', 'node', 'global')">Create</button>
-        <button [className]="getClass('edit', 'node', 'global')">Update</button>
-        <button [className]="getClass('delete', 'node', 'global')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <!-- TASK -->
-  <tr>
-    <td>Task</td>
-    <td><button [className]="getScopeClass('task', 'organization')">Organization</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'task', 'organization')">View</button>
-        <button [className]="getClass('create', 'task', 'organization')">Create</button>
-        <button [className]="getClass('edit', 'task', 'organization')">Update</button>
-        <button [className]="getClass('delete', 'task', 'organization')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getScopeClass('task', 'global')">Global</button></td>
-    <td>
-      <div class="btn-group">
-        <button [className]="getClass('view', 'task', 'global')">View</button>
-        <button [className]="getClass('create', 'task', 'global')">Create</button>
-        <button [className]="getClass('edit', 'task', 'global')">Update</button>
-        <button [className]="getClass('delete', 'task', 'global')">Delete</button>
-      </div>
-    </td>
-  </tr>
-  <!-- RESULT -->
-  <tr>
-    <td>Result</td>
-    <td><button [className]="getClass('view', 'result', 'organization')">Organization</button></td>
-    <td><button [className]="getClass('view', 'result', 'organization')">View</button></td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getClass('view', 'result', 'global')">Global</button></td>
-    <td><button [className]="getClass('view', 'result', 'global')">View</button></td>
-  </tr>
-  <!-- PORT -->
-  <tr>
-    <td>Port</td>
-    <td><button [className]="getClass('view', 'port', 'organization')">Organization</button></td>
-    <td><button [className]="getClass('view', 'port', 'organization')">View</button></td>
-  </tr>
-  <tr>
-    <td></td>
-    <td><button [className]="getClass('view', 'port', 'global')">Global</button></td>
-    <td><button [className]="getClass('view', 'port', 'global')">View</button></td>
-  </tr>
-</table>
+  <ng-container *ngFor="let resource of RESOURCES">
+    <tr *ngFor="let scope of getScopes(resource); let idx = index">
+      <td>
+        <div *ngIf="idx===0">
+          {{resource | titlecase}}
+        </div>
+      </td>
+      <td>
+        <button [className]="getScopeClass(resource, scope)">
+          {{scope | titlecase}}
+        </button>
+      </td>
+      <td>
+        <div class="btn-group">
+          <button
+              *ngFor="let operation of getOperations(resource, scope)"
+              [className]="getClass(operation, resource, scope)">
+            {{operation | titlecase}}
+          </button>
+        </div>
+      </td>
+    </tr>
+  </ng-container>
+  </table>

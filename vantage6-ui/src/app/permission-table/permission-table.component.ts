@@ -17,6 +17,17 @@ export class PermissionTableComponent implements OnInit {
   @Input() is_edit_mode: boolean = false;
   user_rules: Rule[] = [];
 
+  RESOURCES: string[] = [
+    'user',
+    'organization',
+    'collaboration',
+    'role',
+    'node',
+    'task',
+    'result',
+    'port',
+  ];
+
   constructor(public userPermission: UserPermissionService) {}
 
   ngOnInit(): void {
@@ -38,6 +49,9 @@ export class PermissionTableComponent implements OnInit {
   }
 
   getClass(type: string, resource: string, scope: string) {
+    if (type === 'update') {
+      type = 'edit';
+    }
     const user_has = this.userPermission.getPermissionSubset(
       this.user_rules,
       type,
@@ -69,6 +83,35 @@ export class PermissionTableComponent implements OnInit {
       return 'btn btn-part-permission';
     } else {
       return 'btn btn-no-permission';
+    }
+  }
+
+  getScopes(resource: string): string[] {
+    if (resource === 'user') {
+      return ['own', 'organization', 'global'];
+    } else if (resource === 'organization') {
+      return ['organization', 'collaboration', 'global'];
+    } else {
+      return ['organization', 'global'];
+    }
+  }
+
+  getOperations(resource: string, scope: string): string[] {
+    if (
+      resource === 'result' ||
+      resource === 'port' ||
+      (resource === 'organization' && scope === 'collaboration') ||
+      (resource === 'collaboration' && scope === 'organization')
+    ) {
+      return ['view'];
+    } else if (resource === 'user' && scope === 'own') {
+      return ['view', 'update', 'delete'];
+    } else if (resource === 'organization' && scope === 'organization') {
+      return ['view', 'update'];
+    } else if (resource === 'organization' && scope === 'global') {
+      return ['view', 'create', 'update'];
+    } else {
+      return ['view', 'create', 'update', 'delete'];
     }
   }
 
