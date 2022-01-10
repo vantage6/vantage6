@@ -60,6 +60,20 @@ export class UserPermissionService {
     return this.allRulesBhs.asObservable();
   }
 
+  getPermissionSubset(
+    permissions: Rule[],
+    type: string,
+    resource: string,
+    scope: string
+  ): Rule[] {
+    return permissions.filter(
+      (p: any) =>
+        (p.type === type || type === '*') &&
+        (p.resource === resource || resource === '*') &&
+        (p.scope === scope || scope === '*')
+    );
+  }
+
   hasPermission(type: string, resource: string, scope: string): boolean {
     let permissions: Rule[] = this.getPermissions();
     if (type == '*' && resource == '*' && scope == '*') {
@@ -68,13 +82,13 @@ export class UserPermissionService {
     }
     // filter user permissions. If any are left that fulfill permission
     // criteria, user has permission
-    const relevant_permissions = permissions.filter(
-      (p: any) =>
-        (p.type === type || type === '*') &&
-        (p.resource === resource || resource === '*') &&
-        (p.scope === scope || scope === '*')
+    return (
+      this.getPermissionSubset(permissions, type, resource, scope).length > 0
     );
-    return relevant_permissions.length > 0;
+  }
+
+  getAvailableRules(type: string, resource: string, scope: string): Rule[] {
+    return this.getPermissionSubset(this.allRules, type, resource, scope);
   }
 
   private _setUserId(user: any): void {

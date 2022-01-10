@@ -125,6 +125,16 @@
                     </button> -->
                   </td>
                 </tr>
+                <tr>
+                  <td>Permissions:</td>
+                  <td>
+                    <app-permission-table
+                      [given_roles]="user.roles"
+                      [given_rules]="user.rules"
+                      [is_edit_mode]="false"
+                    ></app-permission-table>
+                  </td>
+                </tr>
               </table>
               <button mat-button class="btn-edit" (click)="editUser(user)">
                 Edit
@@ -187,18 +197,20 @@
                         <span>{{rule.type}} {{rule.resource}} ({{rule.scope}})</span>
                       </button>
                     </div>
+                    <!-- TODO Menu to add rules -->
+                    <!--
                     <div ngbDropdown class="d-inline-block">
                       <button class="btn btn-dropdown" id="dropdownRules" ngbDropdownToggle>
                         <mat-icon>add_circle</mat-icon>
                         <span class="align-top">Add rule</span>
                       </button>
-                      <div ngbDropdownMenu aria-labelledby="dropdownRules">
-                        <!-- TODO change this or have rules instead of roles -->
+                        <div ngbDropdownMenu aria-labelledby="dropdownRules">
                         <div *ngFor="let rule of roles">
                           <button ngbDropdownItem (click)="addRule(user, rule)">{{rule.name}}</button>
                         </div>
                       </div>
                     </div>
+                    -->
                   </td>
                 </tr>
               </table>

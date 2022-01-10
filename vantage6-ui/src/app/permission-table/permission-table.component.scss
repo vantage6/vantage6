@@ -1,0 +1,14 @@
+@use '../globals/variables' as v;
+
+.btn-has-permission {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+}
+
+.btn-part-permission {
+  background-color: v.$vtg-blue-opaque;
+  color: v.$white;
+}
+
+.btn-no-permission {
+}

@@ -1,5 +1,4 @@
 @use '../globals/variables' as v;
-@import "~@angular/material/theming";
 
 .column {
   float: center;
@@ -12,15 +11,6 @@ mat-expansion-panel {
 
 mat-card {
   margin-bottom: 10px;
-}
-
-.btn {
-  border: {
-    color: v.$vtg-blue;
-    style: solid;
-    width: 2px;
-    radius: 4px;
-  }
 }
 
 .btn-add {

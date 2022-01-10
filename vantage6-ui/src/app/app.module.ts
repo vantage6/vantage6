@@ -23,6 +23,7 @@ import { OrganizationComponent } from './organization/organization.component';
 import { AuthInterceptor } from './helpers/auth.interceptor';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ModalNewUserComponent } from './organization/modal-new-user/modal-new-user/modal-new-user.component';
+import { PermissionTableComponent } from './permission-table/permission-table.component';
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { ModalNewUserComponent } from './organization/modal-new-user/modal-new-u
     NavbarComponent,
     OrganizationComponent,
     ModalNewUserComponent,
+    PermissionTableComponent,
   ],
   imports: [
     BrowserModule,

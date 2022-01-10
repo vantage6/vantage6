@@ -138,16 +138,16 @@ export class OrganizationComponent implements OnInit {
         this.roles = [];
         this.current_org_role_count = 0;
         for (let role of data[1]) {
-          let rule_ids: Rule[] = [];
+          let rules: Rule[] = [];
           for (let rule of role.rules) {
-            rule_ids.push({ id: rule.id });
+            rules.push(this._getDescription(rule.id, this.all_rules));
           }
           this.roles.push({
             id: role.id,
             name: role.name,
             description: role.description,
             organization_id: role.organization ? role.organization.id : null,
-            rules: rule_ids,
+            rules: rules,
           });
           if (role.organization || this.current_organization.id === 1) {
             this.current_org_role_count += 1;
