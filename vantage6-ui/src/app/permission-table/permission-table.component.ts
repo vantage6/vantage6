@@ -11,7 +11,7 @@ import { UserPermissionService } from '../services/user-permission.service';
   styleUrls: ['./permission-table.component.scss'],
 })
 // , OnChanges
-export class PermissionTableComponent implements OnInit {
+export class PermissionTableComponent implements OnInit, OnChanges {
   @Input() given_roles: Role[] = [];
   @Input() given_rules: Rule[] = [];
   @Input() is_edit_mode: boolean = false;
@@ -34,11 +34,12 @@ export class PermissionTableComponent implements OnInit {
     this.setUserRules();
   }
 
-  // ngOnChanges(): void {
-  //    setUserRules()
-  // }
+  ngOnChanges(): void {
+    this.setUserRules();
+  }
 
   setUserRules(): void {
+    this.user_rules = [];
     for (let role of this.given_roles) {
       this.user_rules.push(...role.rules);
     }
@@ -58,10 +59,12 @@ export class PermissionTableComponent implements OnInit {
       resource,
       scope
     );
+
+    const default_classes: string = 'btn btn-in-group btn-operation';
     if (user_has.length > 0) {
-      return 'btn btn-has-permission';
+      return default_classes + ' btn-has-permission';
     } else {
-      return 'btn btn-no-permission';
+      return default_classes + ' btn-no-permission';
     }
   }
 
@@ -77,12 +80,14 @@ export class PermissionTableComponent implements OnInit {
       resource,
       scope
     );
+
+    const default_classes: string = 'btn btn-scope';
     if (user_has.length === available_rules.length) {
-      return 'btn btn-has-permission';
+      return default_classes + ' btn-has-permission';
     } else if (user_has.length > 0) {
-      return 'btn btn-part-permission';
+      return default_classes + ' btn-part-permission';
     } else {
-      return 'btn btn-no-permission';
+      return default_classes + ' btn-no-permission';
     }
   }
 
@@ -115,7 +120,7 @@ export class PermissionTableComponent implements OnInit {
     }
   }
 
-  isDisabled() {
+  isDisabled(operation: string, resource: string, scope: string) {
     if (!this.is_edit_mode) {
       return true;
     }

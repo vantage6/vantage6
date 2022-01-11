@@ -1,14 +1,28 @@
 @use '../globals/variables' as v;
 
+.btn-scope {
+  width: 120px;
+}
+
+.btn-operation {
+  width: 75px;
+}
+
+.btn.disabled,
+.btn:disabled {
+  opacity: 1;
+}
+
 .btn-has-permission {
   background-color: v.$vtg-blue;
   color: v.$white;
 }
 
 .btn-part-permission {
-  background-color: v.$vtg-blue-opaque;
+  background-color: v.$vtg-blue-opac06;
   color: v.$white;
 }
 
-.btn-no-permission {
+.btn-no-permission:disabled {
+  color: v.$vtg-blue;
 }

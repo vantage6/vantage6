@@ -48,6 +48,8 @@ export class OrganizationComponent implements OnInit {
     private router: Router
   ) {}
 
+  // TODO Now it is shown that there are no users/roles until they are loaded,
+  // instead should say that they are being loaded
   ngOnInit(): void {
     this.userPermission.getUserId().subscribe((id) => {
       this.userId = id;
@@ -210,10 +212,14 @@ export class OrganizationComponent implements OnInit {
     user.rules = this.removeMatchedIdFromArray(user.rules, rule);
   }
   addRole(user: User, role: Role): void {
-    user.roles.push(role);
+    // NB: new user roles are assigned using a spread operator to activate
+    // angular change detection. This does not work with push()
+    user.roles = [...user.roles, role];
   }
   addRule(user: User, rule: Rule): void {
-    user.rules.push(rule);
+    // NB: new user roles are assigned using a spread operator to activate
+    // angular change detection. This does not work with push()
+    user.rules = [...user.rules, rule];
   }
 
   isUserBeingEdited(user_id: number) {
@@ -222,11 +228,6 @@ export class OrganizationComponent implements OnInit {
 
   createUser(): void {
     this.router.navigate(['user/create']);
-  }
-
-  changeInput(): void {
-    // console.log(this.users_edit_originals);
-    // console.log(this.organization_users);
   }
 
   private _getDescription(id: number, descriptions: any[]) {
