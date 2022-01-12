@@ -313,7 +313,7 @@ class VPNManager(DockerBaseManager):
             return default_ports
 
         # find any labels defined in the docker image
-        labels = []
+        labels = {}
         try:
             labels = n2n_image.attrs['Config']['Labels']
         except KeyError:
@@ -328,7 +328,13 @@ class VPNManager(DockerBaseManager):
                 self.log.warn("Could not parse port specified in algorithm "
                               f"docker image {image}: {port}")
             # get port label: this should be defined as 'p1234' for port 1234
-            label = labels.get('p' + port)
+            label = None
+            if labels:
+                label = labels.get('p' + port)
+            if not label:
+                self.log.warn(f"No label defined in image for port {port}. "
+                              "Algorithm will not be able to find the port "
+                              "using the label!")
             ports.append({'algo_port': port, 'label': label})
 
         if not ports:
