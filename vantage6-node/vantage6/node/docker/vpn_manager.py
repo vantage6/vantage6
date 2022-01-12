@@ -8,6 +8,9 @@ from typing import List, Union, Dict
 from docker.models.containers import Container
 
 from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
+from vantage6.common.docker_addons import (
+    remove_container_if_exists, remove_container
+)
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
@@ -15,7 +18,6 @@ from vantage6.node.globals import (
 )
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.utils import remove_container
 
 
 class VPNManager(DockerBaseManager):
@@ -40,6 +42,16 @@ class VPNManager(DockerBaseManager):
         Start VPN client container and configure network to allow
         algorithm-to-algoritm communication
         """
+        if not self.subnet:
+            self.log.warn("VPN subnet is not defined! Disabling VPN...")
+            self.log.info("Define the 'vpn_subnet' field in your configuration"
+                          " if you want to use VPN")
+            return
+        elif not self._is_ipv4_subnet(self.subnet):
+            self.log.error(f"VPN subnet {self.subnet} is not a valid subnet! "
+                           "Disabling VPN...")
+            return
+
         self.log.debug("Mounting VPN configuration file")
         # add volume containing OVPN config file
         data_path = '/mnt/vpn/'  # TODO obtain from DockerNodeContext
@@ -51,7 +63,9 @@ class VPNManager(DockerBaseManager):
         env = {'VPN_CONFIG': vpn_config}
 
         # if a VPN container is already running, kill and remove it
-        self.remove_container_if_exists(name=self.vpn_client_container_name)
+        remove_container_if_exists(
+            docker_client=self.docker, name=self.vpn_client_container_name
+        )
 
         # start vpnclient
         self.log.debug("Starting VPN client container")
@@ -156,7 +170,7 @@ class VPNManager(DockerBaseManager):
         return vpn_interface[0]['addr_info'][0]['local']
 
     def forward_vpn_traffic(self, helper_container: Container,
-                            algo_image_name: str) -> int:
+                            algo_image_name: str) -> List[Dict]:
         """
         Setup rules so that traffic is properly forwarded between the VPN
         container and the algorithm container (and its helper container)
@@ -170,13 +184,14 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        int
-            Port on the VPN client that forwards traffic to the algo container
+        List[Dict] or None
+            Description of each port on the VPN client that forwards traffic to
+            the algo container. None if VPN is not set up.
         """
-        vpn_port = self._forward_traffic_to_algorithm(
+        ports = self._forward_traffic_to_algorithm(
             helper_container, algo_image_name)
         self._forward_traffic_from_algorithm(helper_container)
-        return vpn_port
+        return ports
 
     def _forward_traffic_from_algorithm(
             self, algo_helper_container: Container) -> None:
@@ -211,7 +226,7 @@ class VPNManager(DockerBaseManager):
         )
 
     def _forward_traffic_to_algorithm(self, algo_helper_container: Container,
-                                      algo_image_name: str) -> int:
+                                      algo_image_name: str) -> List[Dict]:
         """
         Forward incoming traffic from the VPN client container to the
         algorithm container
@@ -225,11 +240,20 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        int
-            Port on the VPN client that forwards traffic to the algo container
+        List[Dict] or None
+            Description of each port on the VPN client that forwards traffic to
+            the algo container. None if VPN is not set up.
         """
         if not self.has_vpn:
             return None  # no port assigned if no VPN is available
+
+        # Get IP Address of the algorithm container
+        algo_helper_container.reload()  # update attributes
+        algo_ip = self.get_isolated_netw_ip(algo_helper_container)
+
+        # Set ports at which algorithm containers receive traffic
+        ports = self._find_exposed_ports(algo_image_name)
+
         # Find ports on VPN container that are already occupied
         cmd = (
             'sh -c '
@@ -243,26 +267,26 @@ class VPNManager(DockerBaseManager):
 
         # take first available port
         vpn_client_port_options = set(FREE_PORT_RANGE) - set(occupied_ports)
-        vpn_client_port = next(iter(vpn_client_port_options))
-
-        # Get IP Address of the algorithm container
-        algo_helper_container.reload()  # update attributes
-        algo_ip = self.get_isolated_netw_ip(algo_helper_container)
-
-        # Set port at which algorithm containers receive traffic
-        algorithm_port = self._find_exposed_port(algo_image_name)
+        for port in ports:
+            port['port'] = vpn_client_port_options.pop()
 
         # Set up forwarding VPN traffic to algorithm container
-        command = (
-            'sh -c '
-            '"iptables -t nat -A PREROUTING -i tun0 -p tcp '
-            f'--dport {vpn_client_port} -j DNAT '
-            f'--to {algo_ip}:{algorithm_port}"'
-        )
+        command = 'sh -c "'
+        for port in ports:
+            command += (
+                'iptables -t nat -A PREROUTING -i tun0 -p tcp '
+                f'--dport {port["port"]} -j DNAT '
+                f'--to {algo_ip}:{port["algo_port"]};'
+            )
+            # remove the algorithm ports from the dictionaries as these are no
+            # longer necessary
+            del port['algo_port']
+        command += '"'
         self.vpn_client_container.exec_run(command)
-        return vpn_client_port
 
-    def _find_exposed_port(self, image: str) -> str:
+        return ports
+
+    def _find_exposed_ports(self, image: str) -> List[Dict]:
         """
         Find which ports were exposed via the EXPOSE keyword in the dockerfile
         of the algorithm image. This port will be used for VPN traffic. If no
@@ -275,33 +299,50 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        str:
-            Port number to forward VPN traffic to (as str)
+        List[Dict]:
+            List of ports forward VPN traffic to. For each port, a dictionary
+            containing port number and label is given
         """
         n2n_image = self.docker.images.get(image)
-        port = DEFAULT_ALGO_VPN_PORT
+        default_ports = [{'algo_port': DEFAULT_ALGO_VPN_PORT, 'label': None}]
 
         exposed_ports = []
         try:
             exposed_ports = n2n_image.attrs['Config']['ExposedPorts']
         except KeyError:
-            return port  # No exposed ports defined, use default
+            return default_ports
 
-        if len(exposed_ports) == 1:
-            port = list(exposed_ports)[0]
+        # find any labels defined in the docker image
+        labels = {}
+        try:
+            labels = n2n_image.attrs['Config']['Labels']
+        except KeyError:
+            pass  # No labels found, ignore
+
+        ports = []
+        for port in exposed_ports:
             port = port[0:port.find('/')]
             try:
                 int(port)
             except ValueError:
                 self.log.warn("Could not parse port specified in algorithm "
-                              f"docker image {image}: {port}. Using default "
-                              f"port {DEFAULT_ALGO_VPN_PORT}")
-                return DEFAULT_ALGO_VPN_PORT
-        elif len(exposed_ports) > 1:
-            self.log.warn("More than 1 port exposed in docker image. "
-                          f"Using default port {port}.")
-        # else: no exposed port specified, return default
-        return port
+                              f"docker image {image}: {port}")
+            # get port label: this should be defined as 'p1234' for port 1234
+            label = None
+            if labels:
+                label = labels.get('p' + port)
+            if not label:
+                self.log.warn(f"No label defined in image for port {port}. "
+                              "Algorithm will not be able to find the port "
+                              "using the label!")
+            ports.append({'algo_port': port, 'label': label})
+
+        if not ports:
+            self.log.warn(
+                "None of the ports in the algorithm image could be parsed. "
+                f"Using default port {DEFAULT_ALGO_VPN_PORT} instead")
+
+        return ports if ports else default_ports
 
     def _find_isolated_bridge(self) -> str:
         """
@@ -425,3 +466,16 @@ class VPNManager(DockerBaseManager):
         if isinstance(if_json, list):
             if_json = if_json[-1]
         return int(if_json['link_index'])
+
+    def _is_ipv4_subnet(self, subnet: str) -> bool:
+        """
+        Validate if subnet has format '12.34.56.78/16'
+        """
+        parts = subnet.split('/')
+        if len(parts) != 2:
+            return False
+        if not parts[1].isdigit() or int(parts[1]) > 32:
+            return False
+        octets = parts[0].split(".")
+        return len(octets) == 4 and \
+            all(o.isdigit() and 0 <= int(o) < 256 for o in octets)

@@ -1,14 +1,6 @@
 import docker
 
-import logging
-
-from docker.models.containers import Container
-
-from vantage6.node.util import logger_name
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
-from vantage6.node.docker.utils import remove_container
-
-log = logging.getLogger(logger_name(__name__))
 
 
 class DockerBaseManager(object):
@@ -21,29 +13,6 @@ class DockerBaseManager(object):
 
         # Connect to docker daemon
         self.docker = docker.from_env()
-
-    def get_container(self, **filters) -> Container:
-        """
-        Return container if it exists after searching using kwargs
-
-        Returns
-        -------
-        Container or None
-            Container if it exists, else None
-        """
-        running_containers = self.docker.containers.list(
-            all=True, filters=filters
-        )
-        return running_containers[0] if running_containers else None
-
-    def remove_container_if_exists(self, **filters) -> None:
-        container = self.get_container(
-            **filters
-        )
-        if container:
-            log.warn("Removing container that was already running: "
-                     f"{container.name}")
-            remove_container(container, kill=True)
 
     def get_isolated_netw_ip(self, container) -> str:
         """

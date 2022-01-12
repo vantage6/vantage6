@@ -3,15 +3,18 @@ to be cleaned at some point. """
 import logging
 import os
 
-from typing import Dict
+from typing import Dict, List
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
+from vantage6.common.docker_addons import (
+    remove_container_if_exists, remove_container
+)
 from vantage6.node.util import logger_name
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.utils import running_in_docker, remove_container
+from vantage6.node.docker.utils import running_in_docker
 from vantage6.common.docker_addons import pull_if_newer
 
 
@@ -137,7 +140,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.error(e)
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: Dict) -> int:
+            algorithm_env: Dict) -> List[Dict]:
         """
         Runs the docker-image in detached mode.
 
@@ -157,8 +160,9 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        int or None:
-            Port number assigned for VPN communication. None if VPN is inactive
+        List[Dict] or None
+            Description of each port on the VPN client that forwards traffic to
+            the algo container. None if VPN is not set up.
         """
         # generate task folders
         self._make_task_folders()
@@ -174,15 +178,15 @@ class DockerTaskManager(DockerBaseManager):
             self._setup_environment_vars(algorithm_env=algorithm_env)
 
         # run the algorithm as docker container
-        vpn_port = self._run_algorithm()
-        return vpn_port
+        vpn_ports = self._run_algorithm()
+        return vpn_ports
 
     def cleanup(self) -> None:
         """Cleanup the containers generated for this task"""
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
-    def _run_algorithm(self) -> int:
+    def _run_algorithm(self) -> List[Dict]:
         """
         Run the algorithm container
 
@@ -191,16 +195,21 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        int or None:
-            Port number assigned for VPN communication. None if VPN is inactive
+        List[Dict] or None
+            Description of each port on the VPN client that forwards traffic to
+            the algo container. None if VPN is inactive
         """
-        vpn_port = None
+        vpn_ports = None
         container_name = f'{APPNAME}-{self.node_name}-result-{self.result_id}'
         helper_container_name = container_name + '-helper'
 
         # remove algorithm containers if they were already running
-        self.remove_container_if_exists(name=container_name)
-        self.remove_container_if_exists(name=helper_container_name)
+        remove_container_if_exists(
+            docker_client=self.docker, name=container_name
+        )
+        remove_container_if_exists(
+            docker_client=self.docker, name=helper_container_name
+        )
 
         if self.__vpn_manager:
             # if VPN is active, network exceptions must be configured
@@ -217,7 +226,7 @@ class DockerTaskManager(DockerBaseManager):
             )
             # setup forwarding of traffic via VPN client to and from the
             # algorithm container:
-            vpn_port = self.__vpn_manager.forward_vpn_traffic(
+            vpn_ports = self.__vpn_manager.forward_vpn_traffic(
                 helper_container=self.helper_container,
                 algo_image_name=self.image
             )
@@ -242,7 +251,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.error(e)
             return None
 
-        return vpn_port
+        return vpn_ports
 
     def _make_task_folders(self) -> None:
         """ Generate task folders """
