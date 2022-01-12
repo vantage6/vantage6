@@ -282,7 +282,7 @@ class Organization(OrganizationBase):
         fields = ["name", "address1", "address2", "zipcode", "country",
                   "public_key", "domain"]
         for field in fields:
-            if field in data:
+            if field in data and data[field] is not None:
                 setattr(organization, field, data[field])
 
         organization.save()
