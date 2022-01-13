@@ -535,7 +535,6 @@ class Node(object):
             namespaces=['/tasks']
         )
 
-        # Connect to the /tasks namespace
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
         NodeTaskNamespace.node_worker_ref = self
 
