@@ -58,7 +58,7 @@ setup(
         'vantage6 >= 1.2.3',
         'vantage6-common >= 1.2.3',
         'gunicorn==19.9.0',
-        'greenlet==0.4.13',
+        'greenlet==0.4.17',
         'python-engineio==3.10.0',
         'python-socketio==4.4.0'
     ],
