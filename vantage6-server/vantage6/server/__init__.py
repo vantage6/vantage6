@@ -72,10 +72,12 @@ class ServerApp:
 
         # Setup websocket channel
         try:
-            self.socketio = SocketIO(self.app, async_mode='gevent_uwsgi',
+            self.socketio = SocketIO(self.app, async_mode='gevent',
                                      ping_timeout=60)
-        except Exception:
+        except Exception as e:
+            log.warning(f'Socketio failed to start: {e}')
             self.socketio = SocketIO(self.app, pint_timeout=60)
+        log.debug(f'Using async-mode: {self.socketio.async_mode}')
         # FIXME: temporary fix to get socket object into the namespace class
         DefaultSocketNamespace.socket = self.socketio
         self.socketio.on_namespace(DefaultSocketNamespace("/tasks"))
@@ -100,9 +102,9 @@ class ServerApp:
 
         # Prevent logging from urllib3
         logging.getLogger("urllib3").setLevel(logging.WARNING)
-        logging.getLogger("socketIO-client").setLevel(logging.WARNING)
-        logging.getLogger("engineio.server").setLevel(logging.WARNING)
-        logging.getLogger("socketio.server").setLevel(logging.WARNING)
+        logging.getLogger("socketIO-client").setLevel(logging.DEBUG)
+        logging.getLogger("engineio.server").setLevel(logging.DEBUG)
+        logging.getLogger("socketio.server").setLevel(logging.DEBUG)
 
     def configure_flask(self):
         """All flask config settings should go here."""
