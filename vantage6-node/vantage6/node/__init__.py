@@ -160,8 +160,8 @@ class Node(object):
         self.connect_to_socket()
 
         # Check if new tasks were posted while offline.
-        self.log.debug("Fetching tasks that were posted while offline")
-        self.sync_task_queue_with_server()
+        # self.log.debug("Fetching tasks that were posted while offline")
+        # self.sync_task_queue_with_server()
 
         # If we're in a 'regular' context, we'll copy the dataset to our data
         # dir and mount it in any algorithm container that's run; bind mounts
