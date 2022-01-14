@@ -132,7 +132,7 @@
                   <td>
                     <div *ngFor="let rule of user.rules" class="inline">
                       <button mat-button class="btn-detail inline" disabled>
-                        {{rule.type}} {{rule.resource}} ({{rule.scope}})
+                        {{rule.operation}} {{rule.resource}} ({{rule.scope}})
                       </button>
                     </div>
                     <!-- <button mat-button class="btn-add inline">
@@ -206,7 +206,7 @@
                     <div *ngFor="let rule of user.rules" class="inline">
                       <button mat-button class="btn-delete inline" (click)="removeRule(user, rule)">
                         <mat-icon>remove_circle</mat-icon>
-                        <span>{{rule.type}} {{rule.resource}} ({{rule.scope}})</span>
+                        <span>{{rule.operation}} {{rule.resource}} ({{rule.scope}})</span>
                       </button>
                     </div>
                   </td>

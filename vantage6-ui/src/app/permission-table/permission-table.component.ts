@@ -1,8 +1,13 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 
 import { Role } from '../interfaces/role';
-import { Rule, RuleGroup } from '../interfaces/rule';
-import { RuleService } from '../services/api/rule.service';
+import {
+  Rule,
+  RuleGroup,
+  Resource,
+  Scope,
+  Operation,
+} from '../interfaces/rule';
 
 import { UserPermissionService } from '../services/user-permission.service';
 import {
@@ -19,25 +24,16 @@ import {
   templateUrl: './permission-table.component.html',
   styleUrls: ['./permission-table.component.scss'],
 })
-export class PermissionTableComponent implements OnInit, OnChanges {
+export class PermissionTableComponent implements OnInit {
+  // export class PermissionTableComponent implements OnInit, OnChanges {
   @Input() given_roles: Role[] = [];
   @Input() given_rules: Rule[] = [];
   @Input() loggedin_user_rules: Rule[] = [];
   @Input() is_edit_mode: boolean = false;
   user_rules: Rule[] = [];
-  user_rule_groups: RuleGroup[] = [];
+  rule_groups: RuleGroup[] = [];
   added_rules: Rule[] = [];
 
-  RESOURCES: string[] = [
-    'user',
-    'organization',
-    'collaboration',
-    'role',
-    'node',
-    'task',
-    'result',
-    'port',
-  ];
   BTN_CLS_PERM: string = 'btn-has-permission';
   BTN_CLS_PERM_FROM_RULE: string = 'btn-has-permission-rule';
   BTN_CLS_NO_PERM: string = 'btn-no-permission';
@@ -47,14 +43,20 @@ export class PermissionTableComponent implements OnInit, OnChanges {
   constructor(public userPermission: UserPermissionService) {}
 
   ngOnInit(): void {
-    this.setUserRules();
+    this.init();
   }
 
   ngOnChanges(): void {
+    this.init();
+  }
+
+  init(): void {
+    this.rule_groups = this.userPermission.getRuleGroupsCopy();
     this.setUserRules();
   }
 
   setUserRules(): void {
+    // TODO simplify the following
     this.user_rules = [];
     // add rules for roles
     for (let role of this.given_roles) {
@@ -77,20 +79,28 @@ export class PermissionTableComponent implements OnInit, OnChanges {
       }
     }
 
-    // make rule groups for permission display
+    for (let rule_group of this.rule_groups) {
+      for (let rule of rule_group.rules) {
+        rule.is_assigned_to_user = this.userPermission.isRuleAssigned(
+          rule,
+          this.user_rules
+        );
+        rule.is_part_role = this.userPermission.isRuleInRoles(
+          rule,
+          this.given_roles
+        );
+        rule.is_assigned_to_loggedin = this.userPermission.isRuleAssigned(
+          rule,
+          this.loggedin_user_rules
+        );
+      }
+    }
   }
 
-  getClass(type: string, resource: string, scope: string) {
-    const user_has = this.userPermission.getPermissionSubset(
-      this.user_rules,
-      type,
-      resource,
-      scope
-    );
-
+  getClass(rule: Rule) {
     const default_classes: string = 'btn btn-in-group btn-operation ';
-    if (user_has.length > 0) {
-      if (this.is_edit_mode && !user_has[0].is_part_role) {
+    if (rule.is_assigned_to_user) {
+      if (this.is_edit_mode && !rule.is_part_role) {
         return default_classes + this.BTN_CLS_PERM_FROM_RULE;
       } else {
         return default_classes + this.BTN_CLS_PERM;
@@ -99,7 +109,7 @@ export class PermissionTableComponent implements OnInit, OnChanges {
       if (this.is_edit_mode) {
         // if in edit mode, check if the logged in user is allowed to give
         // these permissions (only if they have the rule themselves)
-        if (this.loggedinUserCanAssign(type, resource, scope)) {
+        if (rule.is_assigned_to_loggedin) {
           return default_classes + this.BTN_CLS_NO_PERM;
         } else {
           return default_classes + this.BTN_CLS_NO_PERM_POSSIBLE;
@@ -109,186 +119,121 @@ export class PermissionTableComponent implements OnInit, OnChanges {
     }
   }
 
-  getNumRulesLoggedInUser(
-    type: string,
-    resource: string,
-    scope: string
-  ): number {
-    const loggedin_user_has = this.userPermission.getPermissionSubset(
-      this.loggedin_user_rules,
-      type,
-      resource,
-      scope
-    );
-    return loggedin_user_has.length;
-  }
-
-  loggedinUserCanAssign(
-    type: string,
-    resource: string,
-    scope: string
-  ): boolean {
-    return this.getNumRulesLoggedInUser(type, resource, scope) > 0;
-  }
-
-  userHasAssignableRules(user_rules: Rule[], loggedin_rules: Rule[]): boolean {
-    return isSubset(loggedin_rules, user_rules);
-    // TODO this result is wrong
-  }
-
-  getScopeClass(resource: string, scope: string) {
-    const user_has = this.userPermission.getPermissionSubset(
-      this.user_rules,
-      '*',
-      resource,
-      scope
-    );
-    const available_rules = this.userPermission.getAvailableRules(
-      '*',
-      resource,
-      scope
-    );
-    const rules_logged_in_user = this.userPermission.getPermissionSubset(
-      this.loggedin_user_rules,
-      '*',
-      resource,
-      scope
-    );
-
+  getScopeClass(rule_group: RuleGroup) {
     const default_classes: string = 'btn btn-scope ';
-    if (
-      this.is_edit_mode &&
-      this.userHasAssignableRules(rules_logged_in_user, user_has)
-    ) {
+    if (this.is_edit_mode && this.loggedInUserMissesRules(rule_group)) {
+      // signal that logged-in user is not able to assign (all of) these roles
       return default_classes + this.BTN_CLS_NO_PERM_POSSIBLE;
-    } else if (user_has.length === available_rules.length) {
+    } else if (this.userHasAllAssignableRules(rule_group)) {
+      // has all rules or, if in edit mode, all rules that logged-in user
+      // can assign
       return default_classes + this.BTN_CLS_PERM;
-    } else if (user_has.length > 0) {
+    } else if (this.userHasAnyRule(rule_group)) {
+      // has part of available permissions
       return default_classes + this.BTN_CLS_PART_PERM;
     } else {
+      // has no rules but they can be assigned
       return default_classes + this.BTN_CLS_NO_PERM;
     }
   }
 
-  getScopes(resource: string): string[] {
-    if (resource === 'user') {
-      return ['own', 'organization', 'global'];
-    } else if (resource === 'organization') {
-      return ['organization', 'collaboration', 'global'];
-    } else {
-      return ['organization', 'global'];
+  loggedInUserMissesRules(rule_group: RuleGroup): boolean {
+    let logged_in_has_rules = false;
+    for (let rule of rule_group.rules) {
+      if (rule.is_assigned_to_user && !rule.is_assigned_to_loggedin) {
+        return true;
+      }
+      if (rule.is_assigned_to_loggedin) {
+        logged_in_has_rules = true;
+      }
     }
+    return !logged_in_has_rules;
   }
 
-  getOperations(resource: string, scope: string): string[] {
-    if (
-      resource === 'result' ||
-      resource === 'port' ||
-      (resource === 'organization' && scope === 'collaboration') ||
-      (resource === 'collaboration' && scope === 'organization')
-    ) {
-      return ['view'];
-    } else if (resource === 'user' && scope === 'own') {
-      return ['view', 'edit', 'delete'];
-    } else if (resource === 'organization' && scope === 'organization') {
-      return ['view', 'edit'];
-    } else if (resource === 'organization' && scope === 'global') {
-      return ['view', 'create', 'edit'];
-    } else {
-      return ['view', 'create', 'edit', 'delete'];
-    }
-  }
-
-  isDisabled(operation: string, resource: string, scope: string) {
-    if (!this.is_edit_mode) {
-      return true;
-    }
-    for (let role of this.given_roles) {
-      const user_has = this.userPermission.getPermissionSubset(
-        role.rules,
-        operation,
-        resource,
-        scope
-      );
+  userHasAllAssignableRules(rule_group: RuleGroup): boolean {
+    for (let rule of rule_group.rules) {
       if (
-        user_has.length > 0 ||
-        !this.loggedinUserCanAssign(operation, resource, scope)
+        !rule.is_assigned_to_user &&
+        (!this.is_edit_mode || rule.is_assigned_to_loggedin)
       ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  userHasAnyRule(rule_group: RuleGroup): boolean {
+    for (let rule of rule_group.rules) {
+      if (rule.is_assigned_to_user) {
         return true;
       }
     }
     return false;
   }
 
-  isDisabledScope(resource: string, scope: string) {
-    // disable a scope if the user already has all the rules in their roles
-    // that the logged-in user is allowed to assign
+  isDisabled(rule: Rule) {
+    // disable rule button if:
+    // 1. not in edit mode
+    // 2. rule is part of role: can only be deleted if role is deleted
+    // 3. logged-in user does not have this role and is therefore not allowed to
+    //    assign it
+    if (
+      !this.is_edit_mode ||
+      rule.is_part_role ||
+      !rule.is_assigned_to_loggedin
+    ) {
+      return true;
+    }
+    return false;
+  }
 
-    // buttons in view mode are always disabled
+  isDisabledScope(rule_group: RuleGroup): boolean {
+    // disable a scope if
+    // - not in edit mode
+    // - the user already has all the rules in their roles that logged-in user
+    //   is allowed to assign
     if (!this.is_edit_mode) {
       return true;
     }
-
-    let user_has: Rule[] = [];
-    for (let role of this.given_roles) {
-      user_has.push(
-        ...this.userPermission.getPermissionSubset(
-          role.rules,
-          '*',
-          resource,
-          scope
-        )
-      );
+    for (let rule of rule_group.rules) {
+      if (
+        (!rule.is_assigned_to_user && rule.is_assigned_to_loggedin) ||
+        (!rule.is_part_role && rule.is_assigned_to_user)
+      ) {
+        return false;
+      }
     }
-
-    user_has = removeArrayDoubles(user_has);
-    let num_rules_logged_in_user = this.getNumRulesLoggedInUser(
-      '*',
-      resource,
-      scope
-    );
-    return user_has.length >= num_rules_logged_in_user;
+    return true;
   }
 
-  // TODO add check if logged in user can assign the rules (if scope is added at once)
-  select_or_deselect(
-    event: any,
-    operation: string,
-    resource: string,
-    scope: string
-  ) {
-    console.log('select', event);
-    let classes: string = event.target.className;
-    let available_rules = this.userPermission.getAvailableRules(
-      operation,
-      resource,
-      scope
-    );
-    if (classes.includes(this.BTN_CLS_PERM)) {
-      // Deselect: remove current permissions
-      for (let rule of available_rules) {
-        // check if it is part of a role, otherwise don't remove it
-        let rule_in_roles = false;
-        for (let role of this.given_roles) {
-          if (containsObject(rule, role.rules)) {
-            rule_in_roles = true;
-            break;
-          }
-        }
-        if (!rule_in_roles) {
-          this.user_rules = removeMatchedIdFromArray(this.user_rules, rule);
-          this.added_rules = removeMatchedIdFromArray(this.added_rules, rule);
+  selectOrDeselect(rule: Rule) {
+    if (!rule.is_assigned_to_user) {
+      this.added_rules.push(rule);
+    } else {
+      this.added_rules = removeMatchedIdFromArray(this.added_rules, rule);
+    }
+    rule.is_assigned_to_user = !rule.is_assigned_to_user;
+  }
+
+  selectOrDeselectScope(rule_group: RuleGroup) {
+    // check if the user already has all rules that may be assigned
+    let has_all = this.userHasAllAssignableRules(rule_group);
+
+    if (has_all) {
+      // deselect rules in scope that are not part of a role
+      for (let rule of rule_group.rules) {
+        if (!rule.is_part_role) {
+          this.selectOrDeselect(rule);
         }
       }
     } else {
-      // Select: add permissions
-      for (let rule of available_rules) {
-        rule.is_part_role = false;
+      // select all remaining rules that can be assigned to the user
+      for (let rule of rule_group.rules) {
+        if (!rule.is_assigned_to_user && rule.is_assigned_to_loggedin) {
+          this.selectOrDeselect(rule);
+          rule.is_part_role = false;
+        }
       }
-      this.user_rules.push(...available_rules);
-      this.user_rules = removeArrayDoubles(this.user_rules);
-      this.added_rules.push(...available_rules);
-      this.added_rules = removeArrayDoubles(this.added_rules);
     }
   }
 }

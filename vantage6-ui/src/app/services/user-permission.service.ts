@@ -1,11 +1,20 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 
+import { arrayContainsObjWithId, deepcopy } from '../utils';
+
 import { TokenStorageService } from './token-storage.service';
 import { UserService } from './api/user.service';
 import { RuleService } from './api/rule.service';
 import { RoleService } from './api/role.service';
-import { Rule } from '../interfaces/rule';
+import {
+  Rule,
+  RuleGroup,
+  Operation,
+  Scope,
+  Resource,
+} from '../interfaces/rule';
+import { Role } from '../interfaces/role';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -18,6 +27,7 @@ export class UserPermissionService {
   userIdBhs = new BehaviorSubject<number>(0);
   allRules: Rule[] = [];
   allRulesBhs = new BehaviorSubject<Rule[]>([]);
+  rule_groups: RuleGroup[] = [];
 
   constructor(
     private tokenStorage: TokenStorageService,
@@ -60,35 +70,53 @@ export class UserPermissionService {
     return this.allRulesBhs.asObservable();
   }
 
+  getRuleGroupsCopy(): RuleGroup[] {
+    return JSON.parse(JSON.stringify(this.rule_groups));
+  }
+
   getPermissionSubset(
     permissions: Rule[],
-    type: string,
+    operation: string,
     resource: string,
     scope: string
   ): Rule[] {
     return permissions.filter(
-      (p: any) =>
-        (p.type === type || type === '*') &&
+      (p: Rule) =>
+        (p.operation === operation || operation === '*') &&
         (p.resource === resource || resource === '*') &&
         (p.scope === scope || scope === '*')
     );
   }
 
-  hasPermission(type: string, resource: string, scope: string): boolean {
+  hasPermission(operation: string, resource: string, scope: string): boolean {
     let permissions: Rule[] = this.getPermissions();
-    if (type == '*' && resource == '*' && scope == '*') {
+    if (operation == '*' && resource == '*' && scope == '*') {
       // no permissions required: return true even if user has 0 permissions
       return true;
     }
     // filter user permissions. If any are left that fulfill permission
     // criteria, user has permission
     return (
-      this.getPermissionSubset(permissions, type, resource, scope).length > 0
+      this.getPermissionSubset(permissions, operation, resource, scope).length >
+      0
     );
   }
 
   getAvailableRules(type: string, resource: string, scope: string): Rule[] {
     return this.getPermissionSubset(this.allRules, type, resource, scope);
+  }
+
+  isRuleAssigned(sought_rule: Rule, available_rules: Rule[]): boolean {
+    return arrayContainsObjWithId(sought_rule.id, available_rules);
+  }
+
+  isRuleInRoles(sought_rule: Rule, available_roles: Role[]): boolean {
+    for (let role of available_roles) {
+      if (this.isRuleAssigned(sought_rule, role.rules)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private _setUserId(user: any): void {
@@ -126,12 +154,79 @@ export class UserPermissionService {
     for (let rule of all_rules) {
       this.allRules.push({
         id: rule.id,
-        type: rule.operation.toLowerCase(),
+        operation: rule.operation.toLowerCase(),
         resource: rule.name.toLowerCase(),
         scope: rule.scope.toLowerCase(),
       });
     }
     this.allRulesBhs.next(this.allRules);
+    this._setRuleGroups();
+  }
+
+  _sortRules(rules: Rule[]): Rule[] {
+    const resource_order = Object.values(Resource);
+    const scope_order = Object.values(Scope);
+    const operation_order = Object.values(Operation);
+    return rules.sort((a, b) => {
+      if (a.resource !== b.resource) {
+        return (
+          resource_order.indexOf(a.resource) -
+          resource_order.indexOf(b.resource)
+        );
+      } else if (a.scope !== b.scope) {
+        return scope_order.indexOf(a.scope) - scope_order.indexOf(b.scope);
+      } else {
+        return (
+          operation_order.indexOf(a.operation) -
+          operation_order.indexOf(b.operation)
+        );
+      }
+    });
+  }
+
+  _newRuleGroup(rule: Rule): RuleGroup {
+    return {
+      resource: rule.resource,
+      scope: rule.scope,
+      rules: [rule],
+    };
+  }
+
+  _makeRuleGroups(): RuleGroup[] {
+    let rule_groups: RuleGroup[] = [];
+    let current_rule_group: RuleGroup | undefined = undefined;
+    for (let rule of this.allRules) {
+      if (current_rule_group === undefined) {
+        // first rule: make new rule group
+        current_rule_group = this._newRuleGroup(rule);
+      } else if (
+        current_rule_group.resource === rule.resource &&
+        current_rule_group.scope === rule.scope
+      ) {
+        // the rule is in the same group as previous rule
+        current_rule_group.rules.push(rule);
+      } else {
+        // New Rule group!
+        // First, save the previous rule group
+        rule_groups.push(deepcopy(current_rule_group));
+
+        // start new rule group
+        current_rule_group = this._newRuleGroup(rule);
+      }
+    }
+    // add last rule group
+    if (current_rule_group !== undefined) {
+      rule_groups.push(deepcopy(current_rule_group));
+    }
+    return rule_groups;
+  }
+
+  _setRuleGroups(): void {
+    // sort rules by resource, then scope, then operation
+    this.allRules = this._sortRules(this.allRules);
+
+    // divide sorted rules in groups
+    this.rule_groups = this._makeRuleGroups();
   }
 
   private async _setPermissions(userRules: any, all_rules: any) {
@@ -163,7 +258,7 @@ export class UserPermissionService {
         // add new permission
         var new_rule: Rule = {
           id: rule.id,
-          type: rule_descr.operation.toLowerCase(),
+          operation: rule_descr.operation.toLowerCase(),
           resource: rule_descr.name.toLowerCase(),
           scope: rule_descr.scope.toLowerCase(),
         };

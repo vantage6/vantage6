@@ -9,32 +9,33 @@
     <th>Scope</th>
     <th>Operation</th>
   </tr>
-  <ng-container *ngFor="let resource of RESOURCES">
-    <tr *ngFor="let scope of getScopes(resource); let idx = index">
+  <ng-container *ngFor="let rule_group of rule_groups; let idx = index">
+    <tr>
       <td>
-        <div *ngIf="idx===0">
-          {{resource | titlecase}}
+        <div *ngIf="idx===0 || rule_group.resource != rule_groups[idx-1].resource">
+          {{rule_group.resource | titlecase}}
         </div>
       </td>
       <td>
         <button
-            [className]="getScopeClass(resource, scope)"
-            [disabled]="isDisabledScope(resource, scope)"
-            (click)="select_or_deselect($event, '*', resource, scope)">
-          {{scope | titlecase}}
+          [className]="getScopeClass(rule_group)"
+          [disabled]="isDisabledScope(rule_group)"
+          (click)="selectOrDeselectScope(rule_group)"
+        >
+          {{rule_group.scope | titlecase}}
         </button>
       </td>
       <td>
         <div class="btn-group">
-          <button
-              *ngFor="let operation of getOperations(resource, scope)"
-              [className]="getClass(operation, resource, scope)"
-              [disabled]="isDisabled(operation, resource, scope)"
-              (click)="select_or_deselect($event, operation, resource, scope)">
-            {{operation | titlecase}}
+          <button *ngFor="let rule of rule_group.rules"
+            [className]="getClass(rule)"
+            [disabled]="isDisabled(rule)"
+            (click)="selectOrDeselect(rule)"
+          >
+            {{rule.operation | titlecase}}
           </button>
         </div>
       </td>
     </tr>
   </ng-container>
-  </table>
+</table>

@@ -188,8 +188,6 @@ export class OrganizationComponent implements OnInit {
     );
   }
 
-  // TODO to utils?
-
   editUser(user: User): void {
     this.users_edit_originals.push(deepcopy(user));
   }
