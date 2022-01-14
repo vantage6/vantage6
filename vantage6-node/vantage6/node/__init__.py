@@ -55,6 +55,12 @@ class NodeTaskNamespace(ClientNamespace):
         super().__init__(*args, **kwargs)
         self.log = logging.getLogger(logger_name(__name__))
 
+    def on_connect(self):
+        """On connect or reconnect"""
+        self.log.info('Reconnected to the server')
+        self.node_worker_ref.sync_task_queue_with_server()
+        self.log.debug("Tasks synced again with the server...")
+
     def on_message(self, data):
         self.log.info(data)
 
@@ -93,10 +99,8 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.debug("Token refreshed")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
-
-        # FIXME: This won't work: you're trying to access a private method!?
-        # self.node_worker_ref.__sync_task_queue_with_server()
-        # self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.sync_task_queue_with_server()
+        self.log.debug("Tasks synced again with the server...")
 
 
 # ------------------------------------------------------------------------------
@@ -157,7 +161,7 @@ class Node(object):
 
         # Check if new tasks were posted while offline.
         self.log.debug("Fetching tasks that were posted while offline")
-        self.__sync_task_queue_with_server()
+        self.sync_task_queue_with_server()
 
         # If we're in a 'regular' context, we'll copy the dataset to our data
         # dir and mount it in any algorithm container that's run; bind mounts
@@ -325,7 +329,7 @@ class Node(object):
                 self.log.error('Proxyserver could not be started or crashed!')
                 self.log.error(e)
 
-    def __sync_task_queue_with_server(self):
+    def sync_task_queue_with_server(self):
         """ Get all unprocessed tasks from the server for this node."""
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
