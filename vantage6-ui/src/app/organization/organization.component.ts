@@ -34,6 +34,7 @@ export class OrganizationComponent implements OnInit {
   user_organization_id: number = -1;
   organization_users: User[] = [];
   roles: Role[] = [];
+  roles_assignable: Role[] = [];
   current_org_role_count: number = 0;
   all_rules: Rule[] = [];
   users_edit_originals: User[] = [];
@@ -135,57 +136,74 @@ export class OrganizationComponent implements OnInit {
     // join users, roles and rules requests to set organization page variables
     forkJoin([req_users, req_roles]).subscribe(
       (data: any) => {
-        let users = data[0];
-        this.roles = [];
-        this.current_org_role_count = 0;
-        for (let role of data[1]) {
-          let rules: Rule[] = [];
-          for (let rule of role.rules) {
-            rules.push(this._getDescription(rule.id, this.all_rules));
-          }
-          this.roles.push({
-            id: role.id,
-            name: role.name,
-            description: role.description,
-            organization_id: role.organization ? role.organization.id : null,
-            rules: rules,
-          });
-          if (role.organization || this.current_organization.id === 1) {
-            this.current_org_role_count += 1;
-          }
-        }
-        for (let user of users) {
-          let user_roles: Role[] = [];
-          if (user.roles) {
-            user.roles.forEach((role: any) => {
-              let r = this._getDescription(role.id, this.roles);
-              if (r !== undefined) {
-                user_roles.push(r);
-              }
-            });
-          }
-          let user_rules: Rule[] = [];
-          if (user.rules) {
-            user.rules.forEach((rule: any) => {
-              let r = this._getDescription(rule.id, this.all_rules);
-              user_rules.push(r);
-            });
-          }
-          this.organization_users.push({
-            id: user.id,
-            username: user.username,
-            first_name: user.firstname,
-            last_name: user.lastname,
-            email: user.email,
-            roles: user_roles,
-            rules: user_rules,
-          });
-        }
+        // set roles
+        this.setRoles(data[1]);
+
+        // set users
+        this.setUsers(data[0]);
       },
       (error) => {
         console.log(error);
       }
     );
+  }
+
+  setRoles(role_data: any[]): void {
+    this.roles = [];
+    this.roles_assignable = [];
+    this.current_org_role_count = 0;
+    for (let role of role_data) {
+      let rules: Rule[] = [];
+      for (let rule of role.rules) {
+        rules.push(this._getDescription(rule.id, this.all_rules));
+      }
+      this.roles.push({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        organization_id: role.organization ? role.organization.id : null,
+        rules: rules,
+      });
+      if (role.organization || this.current_organization.id === 1) {
+        this.current_org_role_count += 1;
+      }
+    }
+    // set which roles currently logged in user can assign
+    for (let role of this.roles) {
+      if (this.userPermission.canAssignRole(role)) {
+        this.roles_assignable.push(role);
+      }
+    }
+  }
+
+  setUsers(user_data: any[]): void {
+    for (let user of user_data) {
+      let user_roles: Role[] = [];
+      if (user.roles) {
+        user.roles.forEach((role: any) => {
+          let r = this._getDescription(role.id, this.roles);
+          if (r !== undefined) {
+            user_roles.push(r);
+          }
+        });
+      }
+      let user_rules: Rule[] = [];
+      if (user.rules) {
+        user.rules.forEach((rule: any) => {
+          let r = this._getDescription(rule.id, this.all_rules);
+          user_rules.push(r);
+        });
+      }
+      this.organization_users.push({
+        id: user.id,
+        username: user.username,
+        first_name: user.firstname,
+        last_name: user.lastname,
+        email: user.email,
+        roles: user_roles,
+        rules: user_rules,
+      });
+    }
   }
 
   editUser(user: User): void {

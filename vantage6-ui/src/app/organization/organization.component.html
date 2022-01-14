@@ -193,21 +193,10 @@
                         <span class="align-top">Add role</span>
                       </button>
                       <div ngbDropdownMenu aria-labelledby="dropdownRoles">
-                        <div *ngFor="let role of roles">
+                        <div *ngFor="let role of roles_assignable">
                           <button ngbDropdownItem (click)="addRole(user, role)">{{role.name}}</button>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Extra rules:</td>
-                  <td>
-                    <div *ngFor="let rule of user.rules" class="inline">
-                      <button mat-button class="btn-delete inline" (click)="removeRule(user, rule)">
-                        <mat-icon>remove_circle</mat-icon>
-                        <span>{{rule.operation}} {{rule.resource}} ({{rule.scope}})</span>
-                      </button>
                     </div>
                   </td>
                 </tr>

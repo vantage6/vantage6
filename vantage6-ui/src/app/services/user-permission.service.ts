@@ -283,4 +283,20 @@ export class UserPermissionService {
 
     await this._addRules(response.rules, all_rules);
   }
+
+  canAssignRole(role: Role): boolean {
+    // check if logged in user can assign this role
+
+    // never allow assignment of predefined node and container roles
+    if (role.name === 'container' || role.name === 'node') {
+      return false;
+    }
+    // check if user has all the rules for this role themselves
+    for (let rule of role.rules) {
+      if (!arrayContainsObjWithId(rule.id, this.userRules)) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
