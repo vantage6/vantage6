@@ -18,11 +18,27 @@
   color: v.$white;
 }
 
+.btn-has-permission-rule {
+  background-color: v.$vtg-orange;
+  color: v.$white;
+}
+
 .btn-part-permission {
-  background-color: v.$vtg-blue-opac06;
+  background: repeating-linear-gradient(
+    -55deg,
+    v.$vtg-blue,
+    v.$vtg-blue 5px,
+    v.$vtg-blue-opac06 5px,
+    v.$vtg-blue-opac06 10px
+  );
   color: v.$white;
 }
 
 .btn-no-permission:disabled {
   color: v.$vtg-blue;
+}
+
+.btn-no-permission-possible {
+  background-color: gray !important;
+  color: white;
 }

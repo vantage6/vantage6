@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { mergeMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -13,7 +12,7 @@ import { UserService } from '../services/api/user.service';
 import { OrganizationService } from '../services/api/organization.service';
 import { ModalService } from '../services/modal.service';
 import { RoleService } from '../services/api/role.service';
-import { couldStartTrivia } from 'typescript';
+import { deepcopy, removeMatchedIdFromArray } from '../utils';
 
 @Component({
   selector: 'app-organization',
@@ -190,26 +189,16 @@ export class OrganizationComponent implements OnInit {
   }
 
   // TODO to utils?
-  deepcopy(obj: any): any {
-    return Object.assign({}, obj);
-  }
-  removeMatchedIdFromArray(array: any[], obj: any): any[] {
-    // remove the elements from an array that have the same id value as an
-    // object
-    return array.filter(function (elem: any) {
-      return elem.id !== obj.id;
-    });
-  }
 
   editUser(user: User): void {
-    this.users_edit_originals.push(this.deepcopy(user));
+    this.users_edit_originals.push(deepcopy(user));
   }
 
   removeRole(user: User, role: Role): void {
-    user.roles = this.removeMatchedIdFromArray(user.roles, role);
+    user.roles = removeMatchedIdFromArray(user.roles, role);
   }
   removeRule(user: User, rule: Rule): void {
-    user.rules = this.removeMatchedIdFromArray(user.rules, rule);
+    user.rules = removeMatchedIdFromArray(user.rules, rule);
   }
   addRole(user: User, role: Role): void {
     // NB: new user roles are assigned using a spread operator to activate

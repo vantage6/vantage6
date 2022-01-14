@@ -52,9 +52,21 @@
                   {{role.name}}
                 </mat-panel-title>
               </mat-expansion-panel-header>
+              <table style="width: 100%">
+                <colgroup>
+                  <col span="1" style="width: 20%;"/>
+                  <col span="1" style="width: 80%;"/>
+                </colgroup>
+                <tr>
+                  <td>Description:</td>
+                  <td>{{role.description}}</td>
+                </tr>
+              </table>
+              This role gives the following permissions:
               <app-permission-table
                 [given_roles]="[role]"
                 [given_rules]="[]"
+                [loggedin_user_rules]="userPermission.userRules"
                 [is_edit_mode]="false"
               ></app-permission-table>
             </mat-expansion-panel>
@@ -62,6 +74,7 @@
         </div>
       </mat-card>
     </div>
+
     <div class="col-lg">
       <mat-card>
         <h4>Users</h4>
@@ -133,6 +146,7 @@
                     <app-permission-table
                       [given_roles]="user.roles"
                       [given_rules]="user.rules"
+                      [loggedin_user_rules]="userPermission.userRules"
                       [is_edit_mode]="false"
                     ></app-permission-table>
                   </td>
@@ -184,9 +198,6 @@
                         </div>
                       </div>
                     </div>
-                    <div *ngIf="user.roles.length===0">
-                      This user has no roles!
-                    </div>
                   </td>
                 </tr>
                 <tr>
@@ -194,7 +205,6 @@
                   <td>
                     <div *ngFor="let rule of user.rules" class="inline">
                       <button mat-button class="btn-delete inline" (click)="removeRule(user, rule)">
-                      <!-- <button mat-button class="btn-delete inline" disabled> -->
                         <mat-icon>remove_circle</mat-icon>
                         <span>{{rule.type}} {{rule.resource}} ({{rule.scope}})</span>
                       </button>
@@ -207,6 +217,7 @@
                     <app-permission-table
                       [given_roles]="user.roles"
                       [given_rules]="user.rules"
+                      [loggedin_user_rules]="userPermission.userRules"
                       [is_edit_mode]="true"
                     ></app-permission-table>
                   </td>

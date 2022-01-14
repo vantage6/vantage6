@@ -19,7 +19,8 @@
       <td>
         <button
             [className]="getScopeClass(resource, scope)"
-            [disabled]="isDisabled('*', resource, scope)">
+            [disabled]="isDisabledScope(resource, scope)"
+            (click)="select_or_deselect($event, '*', resource, scope)">
           {{scope | titlecase}}
         </button>
       </td>
@@ -28,7 +29,8 @@
           <button
               *ngFor="let operation of getOperations(resource, scope)"
               [className]="getClass(operation, resource, scope)"
-              [disabled]="isDisabled(operation, resource, scope)">
+              [disabled]="isDisabled(operation, resource, scope)"
+              (click)="select_or_deselect($event, operation, resource, scope)">
             {{operation | titlecase}}
           </button>
         </div>
