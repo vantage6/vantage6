@@ -157,89 +157,11 @@
               </button>
             </div>
             <ng-template #editBlock>
-              <table style="width: 100%">
-                <colgroup>
-                  <col span="1" style="width: 20%;"/>
-                  <col span="1" style="width: 80%;"/>
-                </colgroup>
-                <tr>
-                  <td>Username:</td>
-                  <td><input [(ngModel)]="user.username"/></td>
-                </tr>
-                <tr>
-                  <td>Email:</td>
-                  <td><input [(ngModel)]="user.email"/></td>
-                </tr>
-                <tr>
-                  <td>First name:</td>
-                  <td><input [(ngModel)]="user.first_name"/></td>
-                </tr>
-                <tr>
-                  <td>Last name:</td>
-                  <td><input [(ngModel)]="user.last_name"/></td>
-                </tr>
-                <tr>
-                  <td>Role(s):</td>
-                  <td>
-                    <div *ngIf="user.id===userId; else modifyRulesBlock">
-                      <div *ngFor="let role of user.roles" class="inline">
-                        <button mat-button class="btn-detail inline" disabled>
-                          {{role.name}}
-                        </button>
-                      </div>
-                      <br/>
-                      You can't modify your own permissions!
-                    </div>
-                    <ng-template #modifyRulesBlock>
-                      <div *ngFor="let role of user.roles" class="inline">
-                          <button mat-button class="btn-delete inline" (click)="removeRole(user, role)">
-                            <mat-icon>remove_circle</mat-icon>
-                            <span>{{role.name}}</span>
-                          </button>
-                      </div>
-                      <div *ngIf="roles_assignable.length > 0; else noAssignableRulesBlock">
-                        <div ngbDropdown class="d-inline-block">
-                          <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
-                            <mat-icon>add_circle</mat-icon>
-                            <span class="align-top">Add role</span>
-                          </button>
-                          <div ngbDropdownMenu aria-labelledby="dropdownRoles">
-                            <div *ngFor="let role of roles_assignable">
-                              <button ngbDropdownItem (click)="addRole(user, role)">{{role.name}}</button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <ng-template #noAssignableRulesBlock>
-                        There are no rules you can assign
-                      </ng-template>
-                    </ng-template>
-                  </td>
-                </tr>
-                <tr *ngIf="user.id!==userId">
-                  <td>Permissions:</td>
-                  <td>
-                    <app-permission-table
-                      [given_roles]="user.roles"
-                      [given_rules]="user.rules"
-                      [loggedin_user_rules]="userPermission.userRules"
-                      [is_edit_mode]="true"
-                    ></app-permission-table>
-                  </td>
-                </tr>
-              </table>
-              <button mat-button class="btn btn-save">
-                <!-- (click)="saveUser(user.id)"> -->
-                Save
-              </button>
-              <!-- TODO change name of btn-add class to 'btn-default' or so -->
-              <button mat-button class="btn btn-add">
-                <!-- (click)="saveUser(user.id)"> -->
-                Cancel
-              </button>
+              <app-user-edit
+                [user]="user"
+                [roles_assignable]="roles_assignable"
+              ></app-user-edit>
             </ng-template>
-
-
           </mat-expansion-panel>
         </div>
       </mat-card>

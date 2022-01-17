@@ -1,0 +1,88 @@
+@use '../../globals/variables' as v;
+
+.btn-add {
+  background-color: v.$transparent;
+  color: v.$vtg-blue;
+  transition-duration: 0.2s;
+  display: inline-block;
+
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+}
+
+.btn-add:hover {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+}
+
+mat-icon {
+  margin-right: 8px;
+}
+
+.inline {
+  display: inline;
+}
+
+.btn-detail {
+  background-color: v.$vtg-blue-opac06;
+  color: v.$white;
+  margin-right: 5px;
+  margin-bottom: 5px;
+
+  border: {
+    color: v.$vtg-blue-opac06;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+}
+
+.btn-save {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+  border: {
+    color: v.$vtg-blue;
+  }
+  margin-right: 5px;
+}
+
+.mat-button.mat-button-disabled.mat-button-disabled {
+  color: v.$white;
+}
+
+.btn-edit {
+  background-color: v.$vtg-orange;
+  color: v.$white;
+}
+
+.btn-dropdown {
+  color: v.$vtg-blue;
+  background-color: v.$transparent;
+  vertical-align: middle;
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+  .mat-icon {
+    vertical-align: bottom;
+  }
+}
+
+.btn-delete {
+  background-color: v.$white;
+  color: v.$red;
+  border: {
+    color: v.$red;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+  margin-right: 5px;
+  margin-bottom: 5px;
+}

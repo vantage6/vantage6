@@ -24,6 +24,7 @@ import { OrganizationComponent } from './organization/organization.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { ModalNewUserComponent } from './organization/modal-new-user/modal-new-user/modal-new-user.component';
 import { PermissionTableComponent } from './permission-table/permission-table.component';
+import { UserEditComponent } from './components/user-edit/user-edit.component';
 
 @NgModule({
   declarations: [
@@ -34,6 +35,7 @@ import { PermissionTableComponent } from './permission-table/permission-table.co
     OrganizationComponent,
     ModalNewUserComponent,
     PermissionTableComponent,
+    UserEditComponent,
   ],
   imports: [
     BrowserModule,

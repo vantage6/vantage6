@@ -13,6 +13,7 @@ import { OrganizationService } from '../services/api/organization.service';
 import { ModalService } from '../services/modal.service';
 import { RoleService } from '../services/api/role.service';
 import { deepcopy, removeMatchedIdFromArray } from '../utils';
+import { PermissionTableComponent } from '../permission-table/permission-table.component';
 
 @Component({
   selector: 'app-organization',
@@ -208,23 +209,6 @@ export class OrganizationComponent implements OnInit {
 
   editUser(user: User): void {
     this.users_edit_originals.push(deepcopy(user));
-  }
-
-  removeRole(user: User, role: Role): void {
-    user.roles = removeMatchedIdFromArray(user.roles, role);
-  }
-  removeRule(user: User, rule: Rule): void {
-    user.rules = removeMatchedIdFromArray(user.rules, rule);
-  }
-  addRole(user: User, role: Role): void {
-    // NB: new user roles are assigned using a spread operator to activate
-    // angular change detection. This does not work with push()
-    user.roles = [...user.roles, role];
-  }
-  addRule(user: User, rule: Rule): void {
-    // NB: new user roles are assigned using a spread operator to activate
-    // angular change detection. This does not work with push()
-    user.rules = [...user.rules, rule];
   }
 
   isUserBeingEdited(user_id: number) {

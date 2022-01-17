@@ -8,6 +8,7 @@ import {
   Scope,
   Operation,
 } from '../interfaces/rule';
+import { RuleService } from '../services/api/rule.service';
 
 import { UserPermissionService } from '../services/user-permission.service';
 import {
@@ -24,8 +25,7 @@ import {
   templateUrl: './permission-table.component.html',
   styleUrls: ['./permission-table.component.scss'],
 })
-export class PermissionTableComponent implements OnInit {
-  // export class PermissionTableComponent implements OnInit, OnChanges {
+export class PermissionTableComponent implements OnInit, OnChanges {
   @Input() given_roles: Role[] = [];
   @Input() given_rules: Rule[] = [];
   @Input() loggedin_user_rules: Rule[] = [];
@@ -206,7 +206,7 @@ export class PermissionTableComponent implements OnInit {
     return true;
   }
 
-  selectOrDeselect(rule: Rule) {
+  selectOrDeselect(rule: Rule): void {
     if (!rule.is_assigned_to_user) {
       this.added_rules.push(rule);
     } else {
@@ -215,7 +215,7 @@ export class PermissionTableComponent implements OnInit {
     rule.is_assigned_to_user = !rule.is_assigned_to_user;
   }
 
-  selectOrDeselectScope(rule_group: RuleGroup) {
+  selectOrDeselectScope(rule_group: RuleGroup): void {
     // check if the user already has all rules that may be assigned
     let has_all = this.userHasAllAssignableRules(rule_group);
 
@@ -235,5 +235,15 @@ export class PermissionTableComponent implements OnInit {
         }
       }
     }
+  }
+
+  getRulesNotInRoles(): Rule[] {
+    let rules_not_in_roles: Rule[] = [];
+    for (let rule of this.added_rules) {
+      if (!rule.is_part_role) {
+        rules_not_in_roles.push(rule);
+      }
+    }
+    return rules_not_in_roles;
   }
 }
