@@ -23,11 +23,13 @@ export class UserEditComponent implements OnInit {
     email: '',
     first_name: '',
     last_name: '',
+    organization_id: -1,
     roles: [],
     rules: [],
   };
   @Input() roles_assignable: Role[] = [];
   @Output() finishedEditing = new EventEmitter<ChangeExit>();
+  @Output() cancelNewUser = new EventEmitter<boolean>();
   userId: number = 0;
   added_rules: Rule[] = [];
 
@@ -71,18 +73,33 @@ export class UserEditComponent implements OnInit {
 
   saveEditedUser(user: User): void {
     user.rules = this.getRulesNotInRoles();
-    this.userService.update(user).subscribe(
+
+    let user_request;
+    if (user.is_being_created) {
+      if (user.password !== user.password_repeated) {
+        alert('Passwords do not match! Cannot create this user.');
+        return;
+      }
+      user_request = this.userService.create(user);
+    } else {
+      user_request = this.userService.update(user);
+    }
+
+    user_request.subscribe(
       (data) => {
         this.finishedEditing.emit(ChangeExit.SAVE);
+        console.log(data);
       },
       (error) => {
-        console.log(error);
         alert(error.error.msg);
       }
     );
   }
 
   cancelEdit(): void {
+    if (this.user.is_being_created) {
+      this.cancelNewUser.emit(true);
+    }
     this.finishedEditing.emit(ChangeExit.CANCEL);
   }
 

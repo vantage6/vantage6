@@ -11,6 +11,19 @@
     <td>Email:</td>
     <td><input [(ngModel)]="user.email"/></td>
   </tr>
+  <tr *ngIf="user.is_being_created || user.is_logged_in">
+    <td>Password:</td>
+    <td><input type="password" [(ngModel)]="user.password"/></td>
+  </tr>
+  <tr *ngIf="user.is_being_created || user.is_logged_in">
+    <td>Repeat password:</td>
+    <td>
+      <input type="password" [(ngModel)]="user.password_repeated"/>
+      <p class="inline text-warning" *ngIf="user.password != user.password_repeated">
+        Passwords do not match!
+      </p>
+    </td>
+  </tr>
   <tr>
     <td>First name:</td>
     <td><input [(ngModel)]="user.first_name"/></td>
@@ -70,9 +83,7 @@
   </td>
 </tr>
 </table>
-<button mat-button class="btn btn-save"
-  (click)="saveEditedUser(user)"
->
+<button mat-button class="btn btn-save" (click)="saveEditedUser(user)">
   Save
 </button>
 <!-- TODO change name of btn-add class to 'btn-default' or so -->

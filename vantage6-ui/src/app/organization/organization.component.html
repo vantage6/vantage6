@@ -86,18 +86,18 @@
           This organization has no users!
         </div>
         <div *ngFor="let user of organization_users; let idx = index">
-          <mat-expansion-panel>
+          <mat-expansion-panel [expanded]="user.is_being_created">
             <mat-expansion-panel-header>
               <mat-panel-title>
                 {{user.first_name}} {{user.last_name}}
               </mat-panel-title>
               <mat-panel-description>
-                <div *ngIf="user.id===userId">
+                <div *ngIf="user.is_logged_in">
                   It's you!
                 </div>
               </mat-panel-description>
             </mat-expansion-panel-header>
-            <div *ngIf="!isUserBeingEdited(user.id); else editBlock">
+            <div *ngIf="!isUserBeingEdited(user.id) && !user.is_being_created; else editBlock">
               <table style="width: 100%">
                 <colgroup>
                   <col span="1" style="width: 20%;"/>
@@ -161,6 +161,7 @@
                 [user]="user"
                 [roles_assignable]="roles_assignable"
                 (finishedEditing)="endUserEditing($event, user, idx)"
+                (cancelNewUser)="cancelNewUser($event)"
               ></app-user-edit>
             </ng-template>
           </mat-expansion-panel>

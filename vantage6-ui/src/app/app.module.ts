@@ -22,7 +22,6 @@ import { AccessGuard } from './access-guard.guard';
 import { NavbarComponent } from './navbar/navbar.component';
 import { OrganizationComponent } from './organization/organization.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
-import { ModalNewUserComponent } from './organization/modal-new-user/modal-new-user/modal-new-user.component';
 import { PermissionTableComponent } from './permission-table/permission-table.component';
 import { UserEditComponent } from './components/user-edit/user-edit.component';
 
@@ -33,7 +32,6 @@ import { UserEditComponent } from './components/user-edit/user-edit.component';
     HomeComponent,
     NavbarComponent,
     OrganizationComponent,
-    ModalNewUserComponent,
     PermissionTableComponent,
     UserEditComponent,
   ],

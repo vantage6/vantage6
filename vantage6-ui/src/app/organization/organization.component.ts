@@ -201,8 +201,11 @@ export class OrganizationComponent implements OnInit {
         first_name: user.firstname,
         last_name: user.lastname,
         email: user.email,
+        organization_id: this.current_organization.id,
         roles: user_roles,
         rules: user_rules,
+        is_being_created: false,
+        is_logged_in: user.id === this.userId,
       });
     }
   }
@@ -230,7 +233,37 @@ export class OrganizationComponent implements OnInit {
   }
 
   createUser(): void {
-    this.router.navigate(['user/create']);
+    if (
+      this.organization_users.length &&
+      this.organization_users[0].is_being_created
+    ) {
+      alert('You are already in the process of creating a user!');
+    }
+    // initialize user
+    let new_user: User = {
+      id: -1,
+      username: '',
+      email: '',
+      first_name: '',
+      last_name: '',
+      rules: [],
+      roles: [],
+      organization_id: this.current_organization.id,
+      is_being_created: true,
+    };
+    // add new user to organization users
+    this.organization_users = [new_user].concat(this.organization_users);
+  }
+
+  cancelNewUser($event: boolean): void {
+    // TODO this doesn't work yet!
+    if ($event) {
+      // remove the new user that was prepended to the organization users
+      // this.organization_users = this.organization_users.slice(1);
+      // this.organization_users.shift();
+      // this.organization_users.shift();
+      console.log(this.organization_users);
+    }
   }
 
   private _getDescription(id: number, descriptions: any[]) {
