@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -20,8 +21,7 @@ import { HomeComponent } from './home/home.component';
 import { AccessGuard } from './access-guard.guard';
 import { NavbarComponent } from './navbar/navbar.component';
 import { OrganizationComponent } from './organization/organization.component';
-import { AuthInterceptor } from './helpers/auth.interceptor';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { ModalNewUserComponent } from './organization/modal-new-user/modal-new-user/modal-new-user.component';
 import { PermissionTableComponent } from './permission-table/permission-table.component';
 
