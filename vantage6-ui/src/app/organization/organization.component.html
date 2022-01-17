@@ -85,7 +85,7 @@
         <div *ngIf="organization_users.length===0">
           This organization has no users!
         </div>
-        <div *ngFor="let user of organization_users">
+        <div *ngFor="let user of organization_users; let idx = index">
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
@@ -160,6 +160,7 @@
               <app-user-edit
                 [user]="user"
                 [roles_assignable]="roles_assignable"
+                (finishedEditing)="endUserEditing($event, user, idx)"
               ></app-user-edit>
             </ng-template>
           </mat-expansion-panel>

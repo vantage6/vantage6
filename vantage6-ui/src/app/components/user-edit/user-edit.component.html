@@ -60,23 +60,22 @@
 <tr *ngIf="user.id!==userId">
   <td>Permissions:</td>
   <td>
-    <!-- #editedPermissions -->
     <app-permission-table
         [given_roles]="user.roles"
         [given_rules]="user.rules"
         [loggedin_user_rules]="userPermission.userRules"
         [is_edit_mode]="true"
+        (addedRulesChangeEvent)="updateAddedRules($event)"
     ></app-permission-table>
   </td>
 </tr>
 </table>
-<!-- (click)="saveEditedUser(user, editedPermissions)" -->
 <button mat-button class="btn btn-save"
+  (click)="saveEditedUser(user)"
 >
-Save
+  Save
 </button>
 <!-- TODO change name of btn-add class to 'btn-default' or so -->
-<button mat-button class="btn btn-add">
-<!-- (click)="saveUser(user.id)"> -->
-Cancel
+<button mat-button class="btn btn-add" (click)="cancelEdit()">
+  Cancel
 </button>

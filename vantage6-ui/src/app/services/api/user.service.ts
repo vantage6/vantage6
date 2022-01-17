@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { environment } from 'src/environments/environment';
 import { User } from 'src/app/interfaces/user';
+import { getIdsFromArray } from 'src/app/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -22,9 +23,21 @@ export class UserService {
     return this.http.get<any>(environment.api_url + '/user/' + id);
   }
 
-  update(id: number, user: User) {}
+  update(user: User) {
+    let data = {
+      username: user.username,
+      email: user.email,
+      firstname: user.first_name,
+      lastname: user.last_name,
+      roles: getIdsFromArray(user.roles),
+      rules: getIdsFromArray(user.rules),
+      // TODO add organization ID
+      // organization_id: user.organization_id
+    };
+    return this.http.patch<any>(environment.api_url + '/user/' + user.id, data);
+  }
 
-  create(id: number, user: User) {}
+  create(user: User) {}
 
   delete(id: number) {}
 }

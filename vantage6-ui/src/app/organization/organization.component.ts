@@ -12,8 +12,8 @@ import { UserService } from '../services/api/user.service';
 import { OrganizationService } from '../services/api/organization.service';
 import { ModalService } from '../services/modal.service';
 import { RoleService } from '../services/api/role.service';
-import { deepcopy, removeMatchedIdFromArray } from '../utils';
-import { PermissionTableComponent } from '../permission-table/permission-table.component';
+import { deepcopy, getById, removeMatchedIdFromArray } from '../utils';
+import { ChangeExit } from '../globals/enum';
 
 @Component({
   selector: 'app-organization',
@@ -213,6 +213,20 @@ export class OrganizationComponent implements OnInit {
 
   isUserBeingEdited(user_id: number) {
     return this.users_edit_originals.some((u) => u.id === user_id);
+  }
+
+  endUserEditing($event: ChangeExit, user: User, user_idx: number) {
+    if ($event === ChangeExit.CANCEL) {
+      // copy the original user back so that any changes are canceled
+      this.organization_users[user_idx] = getById(
+        this.users_edit_originals,
+        user.id
+      );
+    }
+    this.users_edit_originals = removeMatchedIdFromArray(
+      this.users_edit_originals,
+      user
+    );
   }
 
   createUser(): void {

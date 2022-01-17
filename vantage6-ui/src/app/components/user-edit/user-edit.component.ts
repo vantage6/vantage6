@@ -1,11 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-
 import { User } from 'src/app/interfaces/user';
 
-import { UserPermissionService } from 'src/app/services/user-permission.service';
 import { removeMatchedIdFromArray } from 'src/app/utils';
+import { UserService } from 'src/app/services/api/user.service';
+import { UserPermissionService } from 'src/app/services/user-permission.service';
+import { ChangeExit } from 'src/app/globals/enum';
+
+// TODO add option to assign user to different organization
 
 @Component({
   selector: 'app-user-edit',
@@ -23,9 +27,14 @@ export class UserEditComponent implements OnInit {
     rules: [],
   };
   @Input() roles_assignable: Role[] = [];
+  @Output() finishedEditing = new EventEmitter<ChangeExit>();
   userId: number = 0;
+  added_rules: Rule[] = [];
 
-  constructor(public userPermission: UserPermissionService) {}
+  constructor(
+    public userPermission: UserPermissionService,
+    private userService: UserService
+  ) {}
 
   ngOnInit(): void {
     this.userPermission.getUserId().subscribe((id) => {
@@ -50,10 +59,35 @@ export class UserEditComponent implements OnInit {
     user.rules = [...user.rules, rule];
   }
 
-  saveEditedUser(
-    user: User
-    // editedPermissions: PermissionTableComponent
-  ): void {
-    // user.rules = editedPermissions.getRulesNotInRoles();
+  getRulesNotInRoles(): Rule[] {
+    let rules_not_in_roles: Rule[] = [];
+    for (let rule of this.added_rules) {
+      if (!rule.is_part_role) {
+        rules_not_in_roles.push(rule);
+      }
+    }
+    return rules_not_in_roles;
+  }
+
+  saveEditedUser(user: User): void {
+    user.rules = this.getRulesNotInRoles();
+    this.userService.update(user).subscribe(
+      (data) => {
+        this.finishedEditing.emit(ChangeExit.SAVE);
+      },
+      (error) => {
+        console.log(error);
+        alert(error.error.msg);
+      }
+    );
+  }
+
+  cancelEdit(): void {
+    this.finishedEditing.emit(ChangeExit.CANCEL);
+  }
+
+  updateAddedRules($event: Rule[]) {
+    this.added_rules = $event;
+    this.user.rules = $event;
   }
 }

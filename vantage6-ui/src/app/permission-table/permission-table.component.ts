@@ -1,4 +1,11 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 
 import { Role } from '../interfaces/role';
 import {
@@ -15,6 +22,7 @@ import {
   arrayContainsObjWithId,
   containsObject,
   deepcopy,
+  getIdsFromArray,
   isSubset,
   removeArrayDoubles,
   removeMatchedIdFromArray,
@@ -33,6 +41,8 @@ export class PermissionTableComponent implements OnInit, OnChanges {
   user_rules: Rule[] = [];
   rule_groups: RuleGroup[] = [];
   added_rules: Rule[] = [];
+  current_role_ids: number[] = [];
+  @Output() addedRulesChangeEvent = new EventEmitter<Rule[]>();
 
   BTN_CLS_PERM: string = 'btn-has-permission';
   BTN_CLS_PERM_FROM_RULE: string = 'btn-has-permission-rule';
@@ -43,27 +53,29 @@ export class PermissionTableComponent implements OnInit, OnChanges {
   constructor(public userPermission: UserPermissionService) {}
 
   ngOnInit(): void {
+    this.rule_groups = this.userPermission.getRuleGroupsCopy();
     this.init();
   }
 
   ngOnChanges(): void {
+    if (!this.rolesHaveChanged()) {
+      return;
+    }
     this.init();
   }
 
   init(): void {
-    this.rule_groups = this.userPermission.getRuleGroupsCopy();
     this.setUserRules();
   }
 
   setUserRules(): void {
-    // TODO simplify the following
-    this.user_rules = [];
     // add rules for roles
+    this.user_rules = [];
+    this.current_role_ids = [];
     for (let role of this.given_roles) {
       this.user_rules.push(...role.rules);
+      this.current_role_ids.push(role.id);
     }
-
-    // remove double rules
     this.user_rules = removeArrayDoubles(this.user_rules);
 
     // signal which rules have been added as part of role
@@ -72,13 +84,18 @@ export class PermissionTableComponent implements OnInit, OnChanges {
     }
 
     // add any extra rules that were not yet present
-    for (let rule of this.given_rules.concat(this.added_rules)) {
-      if (!arrayContainsObjWithId(rule.id, this.user_rules)) {
-        rule.is_part_role = false;
+    this.added_rules = this.given_rules.concat(this.added_rules);
+    this.added_rules = removeArrayDoubles(this.added_rules);
+    for (let rule of this.added_rules) {
+      rule.is_part_role = arrayContainsObjWithId(rule.id, this.user_rules);
+      if (!rule.is_part_role) {
         this.user_rules.push(deepcopy(rule));
       }
     }
+    this.addedRulesChangeEvent.emit(this.added_rules);
 
+    // set properties of rule groups whether rules are assigned, and are part
+    // of rules or not
     for (let rule_group of this.rule_groups) {
       for (let rule of rule_group.rules) {
         rule.is_assigned_to_user = this.userPermission.isRuleAssigned(
@@ -95,6 +112,17 @@ export class PermissionTableComponent implements OnInit, OnChanges {
         );
       }
     }
+  }
+
+  rolesHaveChanged(): boolean {
+    let new_role_ids = getIdsFromArray(this.given_roles);
+    // check if roles are equal
+    if (
+      new_role_ids.sort().join('') !== this.current_role_ids.sort().join('')
+    ) {
+      return true;
+    }
+    return false;
   }
 
   getClass(rule: Rule) {
@@ -213,6 +241,7 @@ export class PermissionTableComponent implements OnInit, OnChanges {
       this.added_rules = removeMatchedIdFromArray(this.added_rules, rule);
     }
     rule.is_assigned_to_user = !rule.is_assigned_to_user;
+    this.addedRulesChangeEvent.emit(this.added_rules);
   }
 
   selectOrDeselectScope(rule_group: RuleGroup): void {
@@ -235,15 +264,5 @@ export class PermissionTableComponent implements OnInit, OnChanges {
         }
       }
     }
-  }
-
-  getRulesNotInRoles(): Rule[] {
-    let rules_not_in_roles: Rule[] = [];
-    for (let rule of this.added_rules) {
-      if (!rule.is_part_role) {
-        rules_not_in_roles.push(rule);
-      }
-    }
-    return rules_not_in_roles;
   }
 }

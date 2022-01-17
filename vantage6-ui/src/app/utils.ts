@@ -14,6 +14,16 @@ export function removeMatchedIdFromArray(array: any[], obj: any): any[] {
   });
 }
 
+export function getById(array: any[], id: number): any {
+  return array.find((x) => x.id === id);
+}
+
+export function getIdsFromArray(array: any[]): number[] {
+  return array.map((a) => {
+    return a.id;
+  });
+}
+
 export function arrayContainsObjWithId(id: number, array: any[]) {
   return array.some((u) => u.id === id);
 }
