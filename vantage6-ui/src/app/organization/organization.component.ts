@@ -237,7 +237,9 @@ export class OrganizationComponent implements OnInit {
       this.organization_users.length &&
       this.organization_users[0].is_being_created
     ) {
+      // TODO instead of alert, focus on the part where user is being created
       alert('You are already in the process of creating a user!');
+      return;
     }
     // initialize user
     let new_user: User = {
@@ -253,6 +255,32 @@ export class OrganizationComponent implements OnInit {
     };
     // add new user to organization users
     this.organization_users = [new_user].concat(this.organization_users);
+  }
+
+  addNewlyCreatedUser(id: number, user: User): void {
+    // remove placeholder 'being created' user from organization's users
+    this.organization_users = removeMatchedIdFromArray(
+      this.organization_users,
+      user
+    );
+    // add newly created user
+    user.id = id;
+    user.is_being_created = false;
+    this.organization_users.push(user);
+  }
+
+  deleteUser(user: User): void {
+    this.userService.delete(user).subscribe(
+      (data) => {
+        this.organization_users = removeMatchedIdFromArray(
+          this.organization_users,
+          user
+        );
+      },
+      (error) => {
+        alert(error.error.msg);
+      }
+    );
   }
 
   cancelNewUser(is_remove_new_user: boolean): void {

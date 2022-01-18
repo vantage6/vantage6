@@ -79,6 +79,7 @@ mat-icon {
 .btn-edit {
   background-color: v.$vtg-orange;
   color: v.$white;
+  margin-right: 15px;
 }
 
 .btn-dropdown {
@@ -99,14 +100,15 @@ mat-icon {
 .btn-delete {
   background-color: v.$white;
   color: v.$red;
-  border: {
-    color: v.$red;
-    style: solid;
-    width: 2px;
-    radius: 4px;
-  }
+  border-color: v.$red;
   margin-right: 5px;
   margin-bottom: 5px;
+}
+
+.btn-delete-strong {
+  background-color: v.$red;
+  color: v.$white;
+  border-color: v.$red;
 }
 
 .align-top {

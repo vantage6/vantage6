@@ -152,8 +152,21 @@
                   </td>
                 </tr>
               </table>
-              <button mat-button class="btn-edit" (click)="editUser(user)">
+              <button *ngIf="
+                    userPermission.hasPermission('edit', 'user', 'global') ||
+                    userPermission.hasPermission('edit', 'user', 'organization') ||
+                    (user.is_logged_in && userPermission.hasPermission('edit', 'user', 'own'))"
+                  mat-button class="btn btn-edit inline"
+                  (click)="editUser(user)">
                 Edit
+              </button>
+              <button *ngIf="
+                    userPermission.hasPermission('delete', 'user', 'global') ||
+                    userPermission.hasPermission('delete', 'user', 'organization') ||
+                    (user.is_logged_in && userPermission.hasPermission('delete', 'user', 'own'))"
+                  mat-button class="btn btn-delete-strong"
+                  (click)="deleteUser(user)">
+                Delete
               </button>
             </div>
             <ng-template #editBlock>
@@ -162,6 +175,7 @@
                 [roles_assignable]="roles_assignable"
                 (finishedEditing)="endUserEditing($event, user, idx)"
                 (cancelNewUser)="cancelNewUser($event)"
+                (newlyCreatedUserId)="addNewlyCreatedUser($event, user)"
               ></app-user-edit>
             </ng-template>
           </mat-expansion-panel>

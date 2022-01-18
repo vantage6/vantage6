@@ -30,6 +30,7 @@ export class UserEditComponent implements OnInit {
   @Input() roles_assignable: Role[] = [];
   @Output() finishedEditing = new EventEmitter<ChangeExit>();
   @Output() cancelNewUser = new EventEmitter<boolean>();
+  @Output() newlyCreatedUserId = new EventEmitter<number>();
   userId: number = 0;
   added_rules: Rule[] = [];
 
@@ -88,7 +89,9 @@ export class UserEditComponent implements OnInit {
     user_request.subscribe(
       (data) => {
         this.finishedEditing.emit(ChangeExit.SAVE);
-        console.log(data);
+        if (user.is_being_created) {
+          this.newlyCreatedUserId.emit(data.id);
+        }
       },
       (error) => {
         alert(error.error.msg);

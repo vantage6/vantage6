@@ -50,5 +50,7 @@ export class UserService {
     return this.http.post<any>(environment.api_url + '/user', data);
   }
 
-  delete(user: User) {}
+  delete(user: User) {
+    return this.http.delete<any>(environment.api_url + '/user/' + user.id);
+  }
 }
