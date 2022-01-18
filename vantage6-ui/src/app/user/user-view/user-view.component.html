@@ -22,9 +22,6 @@
       <div *ngIf="user.roles.length===0">
         This user has no roles!
       </div>
-      <!-- <button mat-button class="btn-add inline">
-        <mat-icon>add_circle_outline</mat-icon>
-      </button> -->
     </td>
   </tr>
   <tr *ngIf="user.rules.length > 0">
@@ -35,9 +32,6 @@
           {{rule.operation}} {{rule.resource}} ({{rule.scope}})
         </button>
       </div>
-      <!-- <button mat-button class="btn-add inline">
-        <mat-icon>add_circle_outline</mat-icon>
-      </button> -->
     </td>
   </tr>
   <tr>

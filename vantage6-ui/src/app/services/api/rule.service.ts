@@ -12,6 +12,4 @@ export class RuleService {
   list() {
     return this.http.get<any>(environment.api_url + '/rule');
   }
-
-  get(id: number) {}
 }

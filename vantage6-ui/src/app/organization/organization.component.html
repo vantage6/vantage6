@@ -29,19 +29,26 @@
         {{current_organization.public_key}}
         <br/>
         -->
-        <button mat-button class="btn-edit">
+        <button *ngIf="can('edit', 'organization')" mat-button class="btn-edit">
           Edit
         </button>
       </mat-card>
 
       <mat-card>
         <h4>Roles</h4>
-        <button mat-button class="btn-add btn-right">
-          <mat-icon>add_circle</mat-icon>
-          <span>New role</span>
-        </button>
+        <div *ngIf="can('create', 'role')" class="inline">
+          <button mat-button class="btn-add btn-right">
+            <mat-icon>add_circle</mat-icon>
+            <span>New role</span>
+          </button>
+        </div>
         <div *ngIf="current_org_role_count===0">
-          This organization has no roles!
+          <div *ngIf="can('view', 'role'); else noRolesBlock">
+            You do not have permission to view the roles!
+          </div>
+          <ng-template #noRolesBlock>
+            This organization has no roles!
+          </ng-template>
         </div>
         <div *ngFor="let role of roles">
           <div *ngIf="(role.organization_id === current_organization.id) ||
@@ -78,12 +85,19 @@
     <div class="col-lg">
       <mat-card>
         <h4>Users</h4>
-        <button mat-button class="btn-add btn-right" (click)="createUser()">
-          <mat-icon>add_circle</mat-icon>
-          <span>New user</span>
-        </button>
+        <div *ngIf="can('create', 'user')" class="inline">
+          <button mat-button class="btn-add btn-right" (click)="createUser()">
+            <mat-icon>add_circle</mat-icon>
+            <span>New user</span>
+          </button>
+        </div>
         <div *ngIf="organization_users.length===0">
-          This organization has no users!
+          <div *ngIf="can('view', 'user'); else noUsersBlock">
+            You do not have permission to view the users!
+          </div>
+          <ng-template #noUsersBlock>
+            This organization has no users!
+          </ng-template>
         </div>
         <div *ngFor="let user of organization_users; let idx = index">
           <mat-expansion-panel [expanded]="user.is_being_created">
@@ -97,7 +111,7 @@
                 </div>
               </mat-panel-description>
             </mat-expansion-panel-header>
-            <div *ngIf="!isUserBeingEdited(user.id) && !user.is_being_created; else editBlock">
+            <div *ngIf="!user.is_being_edited && !user.is_being_created; else editBlock">
               <app-user-view
                 [user]="user"
                 (deletingUser)="deleteUser($event)"

@@ -30,7 +30,9 @@ export class UserViewComponent implements OnInit {
     public userService: UserService
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.user.is_being_edited = false;
+  }
 
   deleteUser(user: User): void {
     this.userService.delete(user).subscribe(
@@ -44,6 +46,7 @@ export class UserViewComponent implements OnInit {
   }
 
   editUser(user: User): void {
+    user.is_being_edited = true;
     this.editingUser.emit(user);
   }
 }

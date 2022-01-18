@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
-import { User } from '../interfaces/user';
+import { EMPTY_USER, User } from '../interfaces/user';
 import { Role } from '../interfaces/role';
 import { Rule } from '../interfaces/rule';
 import { Organization } from '../interfaces/organization';
@@ -13,6 +13,7 @@ import { ModalService } from '../services/modal.service';
 import { RoleService } from '../services/api/role.service';
 import { deepcopy, getById, removeMatchedIdFromArray } from '../utils';
 import { ChangeExit } from '../globals/enum';
+import { ConvertJsonService } from '../services/convert-json.service';
 
 @Component({
   selector: 'app-organization',
@@ -31,27 +32,28 @@ export class OrganizationComponent implements OnInit {
     domain: '',
     public_key: '',
   };
-  user_organization_id: number = -1;
+  loggedin_user_organization_id: number = -1;
   organization_users: User[] = [];
   roles: Role[] = [];
   roles_assignable: Role[] = [];
   current_org_role_count: number = 0;
   all_rules: Rule[] = [];
   users_edit_originals: User[] = [];
-  userId: number = 0;
+  loggedin_user: User = EMPTY_USER;
 
   constructor(
     public userPermission: UserPermissionService,
     private userService: UserService,
     private organizationService: OrganizationService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private convertJsonService: ConvertJsonService
   ) {}
 
   // TODO Now it is shown that there are no users/roles until they are loaded,
   // instead should say that they are being loaded
   ngOnInit(): void {
-    this.userPermission.getUserId().subscribe((id) => {
-      this.userId = id;
+    this.userPermission.getUser().subscribe((user) => {
+      this.loggedin_user = user;
       this.getOrganizationDetails();
     });
     this.userPermission.getRuleDescriptions().subscribe((rules) => {
@@ -60,10 +62,15 @@ export class OrganizationComponent implements OnInit {
   }
 
   getOrganizationDetails(): void {
-    if (this.userId === 0) return;
+    if (
+      this.loggedin_user.id === EMPTY_USER.id ||
+      !this.userPermission.hasPermission('view', 'organization', '*')
+    )
+      return;
 
     // get user data
-    let req_user = this.userService.get(this.userId);
+    //TODO this request is done here for the second time (first time in userPermission). Improve efficiency
+    let req_user = this.userService.get(this.loggedin_user.id);
 
     // get organization data
     let req_organizations = this.organizationService.list();
@@ -74,8 +81,9 @@ export class OrganizationComponent implements OnInit {
       (data: any) => {
         let current_user_data = data[0];
         let organization_data = data[1];
-        this.user_organization_id = current_user_data.organization.id;
+        this.loggedin_user_organization_id = current_user_data.organization.id;
         this.setOrganizations(organization_data);
+
         this.collectUserAndRoles();
       },
       (error) => {
@@ -97,7 +105,7 @@ export class OrganizationComponent implements OnInit {
   setOrganizations(organization_data: any[]) {
     for (let org of organization_data) {
       let new_org = this.getOrgObject(org);
-      if (new_org.id === this.user_organization_id) {
+      if (new_org.id === this.loggedin_user_organization_id) {
         // set organization of logged-in user as default current organization
         this.current_organization = new_org;
       }
@@ -152,17 +160,7 @@ export class OrganizationComponent implements OnInit {
     this.roles_assignable = [];
     this.current_org_role_count = 0;
     for (let role of role_data) {
-      let rules: Rule[] = [];
-      for (let rule of role.rules) {
-        rules.push(this._getDescription(rule.id, this.all_rules));
-      }
-      this.roles.push({
-        id: role.id,
-        name: role.name,
-        description: role.description,
-        organization_id: role.organization ? role.organization.id : null,
-        rules: rules,
-      });
+      this.roles.push(this.convertJsonService.getRole(role, this.all_rules));
       if (role.organization || this.current_organization.id === 1) {
         this.current_org_role_count += 1;
       }
@@ -176,44 +174,28 @@ export class OrganizationComponent implements OnInit {
   }
 
   setUsers(user_data: any[]): void {
-    for (let user of user_data) {
-      let user_roles: Role[] = [];
-      if (user.roles) {
-        user.roles.forEach((role: any) => {
-          let r = this._getDescription(role.id, this.roles);
-          if (r !== undefined) {
-            user_roles.push(r);
-          }
-        });
-      }
-      let user_rules: Rule[] = [];
-      if (user.rules) {
-        user.rules.forEach((rule: any) => {
-          let r = this._getDescription(rule.id, this.all_rules);
-          user_rules.push(r);
-        });
-      }
-      this.organization_users.push({
-        id: user.id,
-        username: user.username,
-        first_name: user.firstname,
-        last_name: user.lastname,
-        email: user.email,
-        organization_id: this.current_organization.id,
-        roles: user_roles,
-        rules: user_rules,
-        is_being_created: false,
-        is_logged_in: user.id === this.userId,
-      });
+    for (let user_json of user_data) {
+      let user = this.convertJsonService.getUser(
+        user_json,
+        this.roles,
+        this.all_rules
+      );
+      user.is_logged_in = user.id === this.loggedin_user.id;
+      this.organization_users.push(user);
     }
+  }
+
+  // TODO move elsewhere
+  can(operation: string, resource: string): boolean {
+    return (
+      this.userPermission.hasPermission(operation, resource, 'global') ||
+      (this.current_organization.id === this.loggedin_user_organization_id &&
+        this.userPermission.hasPermission(operation, resource, 'organization'))
+    );
   }
 
   editUser(user: User): void {
     this.users_edit_originals.push(deepcopy(user));
-  }
-
-  isUserBeingEdited(user_id: number) {
-    return this.users_edit_originals.some((u) => u.id === user_id);
   }
 
   endUserEditing($event: ChangeExit, user: User, user_idx: number) {
@@ -223,6 +205,7 @@ export class OrganizationComponent implements OnInit {
         this.users_edit_originals,
         user.id
       );
+      this.organization_users[user_idx].is_being_edited = false;
     }
     this.users_edit_originals = removeMatchedIdFromArray(
       this.users_edit_originals,
@@ -278,14 +261,6 @@ export class OrganizationComponent implements OnInit {
     if (is_remove_new_user) {
       // remove the new user that was prepended to the organization users
       this.organization_users.shift();
-    }
-  }
-
-  private _getDescription(id: number, descriptions: any[]) {
-    for (let d of descriptions) {
-      if (d.id === id) {
-        return d;
-      }
     }
   }
 }

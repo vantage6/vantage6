@@ -35,7 +35,7 @@
   <tr>
     <td>Role(s):</td>
       <td>
-      <div *ngIf="user.id===userId; else modifyRulesBlock">
+      <div *ngIf="user.id===loggedin_user.id; else modifyRulesBlock">
         <div *ngFor="let role of user.roles" class="inline">
           <button mat-button class="btn-detail inline" disabled>
             {{role.name}}
@@ -46,7 +46,7 @@
       </div>
       <ng-template #modifyRulesBlock>
         <div *ngFor="let role of user.roles" class="inline">
-          <button mat-button class="btn-delete inline" (click)="removeRole(user, role)">
+          <button mat-button class="btn-delete inline" (click)="removeRole(role)">
             <mat-icon>remove_circle</mat-icon>
             <span>{{role.name}}</span>
           </button>
@@ -59,7 +59,7 @@
             </button>
             <div ngbDropdownMenu aria-labelledby="dropdownRoles">
               <div *ngFor="let role of roles_assignable">
-                <button ngbDropdownItem (click)="addRole(user, role)">{{role.name}}</button>
+                <button ngbDropdownItem (click)="addRole(role)">{{role.name}}</button>
               </div>
             </div>
           </div>
@@ -70,7 +70,7 @@
     </ng-template>
   </td>
 </tr>
-<tr *ngIf="user.id!==userId">
+<tr *ngIf="user.id!==loggedin_user.id">
   <td>Permissions:</td>
   <td>
     <app-permission-table
@@ -83,7 +83,7 @@
   </td>
 </tr>
 </table>
-<button mat-button class="btn btn-save" (click)="saveEditedUser(user)">
+<button mat-button class="btn btn-save" (click)="saveEditedUser()">
   Save
 </button>
 <!-- TODO change name of btn-add class to 'btn-default' or so -->

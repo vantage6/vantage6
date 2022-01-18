@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { User } from 'src/app/interfaces/user';
+import { EMPTY_USER, User } from 'src/app/interfaces/user';
 
 import { removeMatchedIdFromArray } from 'src/app/utils';
 import { UserService } from 'src/app/services/api/user.service';
@@ -31,7 +31,7 @@ export class UserEditComponent implements OnInit {
   @Output() finishedEditing = new EventEmitter<ChangeExit>();
   @Output() cancelNewUser = new EventEmitter<boolean>();
   @Output() newlyCreatedUserId = new EventEmitter<number>();
-  userId: number = 0;
+  loggedin_user: User = EMPTY_USER;
   added_rules: Rule[] = [];
 
   constructor(
@@ -40,26 +40,26 @@ export class UserEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.userPermission.getUserId().subscribe((id) => {
-      this.userId = id;
+    this.userPermission.getUser().subscribe((user) => {
+      this.loggedin_user = user;
     });
   }
 
-  removeRole(user: User, role: Role): void {
-    user.roles = removeMatchedIdFromArray(user.roles, role);
+  removeRole(role: Role): void {
+    this.user.roles = removeMatchedIdFromArray(this.user.roles, role);
   }
-  removeRule(user: User, rule: Rule): void {
-    user.rules = removeMatchedIdFromArray(user.rules, rule);
+  removeRule(rule: Rule): void {
+    this.user.rules = removeMatchedIdFromArray(this.user.rules, rule);
   }
-  addRole(user: User, role: Role): void {
+  addRole(role: Role): void {
     // NB: new user roles are assigned using a spread operator to activate
     // angular change detection. This does not work with push()
-    user.roles = [...user.roles, role];
+    this.user.roles = [...this.user.roles, role];
   }
-  addRule(user: User, rule: Rule): void {
+  addRule(rule: Rule): void {
     // NB: new user roles are assigned using a spread operator to activate
     // angular change detection. This does not work with push()
-    user.rules = [...user.rules, rule];
+    this.user.rules = [...this.user.rules, rule];
   }
 
   getRulesNotInRoles(): Rule[] {
@@ -72,24 +72,25 @@ export class UserEditComponent implements OnInit {
     return rules_not_in_roles;
   }
 
-  saveEditedUser(user: User): void {
-    user.rules = this.getRulesNotInRoles();
+  saveEditedUser(): void {
+    this.user.rules = this.getRulesNotInRoles();
 
     let user_request;
-    if (user.is_being_created) {
-      if (user.password !== user.password_repeated) {
+    if (this.user.is_being_created) {
+      if (this.user.password !== this.user.password_repeated) {
         alert('Passwords do not match! Cannot create this user.');
         return;
       }
-      user_request = this.userService.create(user);
+      user_request = this.userService.create(this.user);
     } else {
-      user_request = this.userService.update(user);
+      user_request = this.userService.update(this.user);
     }
 
     user_request.subscribe(
       (data) => {
+        this.user.is_being_edited = false;
         this.finishedEditing.emit(ChangeExit.SAVE);
-        if (user.is_being_created) {
+        if (this.user.is_being_created) {
           this.newlyCreatedUserId.emit(data.id);
         }
       },
@@ -103,6 +104,7 @@ export class UserEditComponent implements OnInit {
     if (this.user.is_being_created) {
       this.cancelNewUser.emit(true);
     }
+    this.user.is_being_edited = false;
     this.finishedEditing.emit(ChangeExit.CANCEL);
   }
 

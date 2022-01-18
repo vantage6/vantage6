@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 
-import { arrayContainsObjWithId, deepcopy } from '../utils';
+import { arrayContainsObjWithId, deepcopy, getById } from '../utils';
 
 import { TokenStorageService } from './token-storage.service';
 import { UserService } from './api/user.service';
@@ -15,6 +15,8 @@ import {
   Resource,
 } from '../interfaces/rule';
 import { Role } from '../interfaces/role';
+import { EMPTY_USER, User } from '../interfaces/user';
+import { ConvertJsonService } from './convert-json.service';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -22,9 +24,12 @@ const PERMISSION_KEY = 'permissions-user';
   providedIn: 'root',
 })
 export class UserPermissionService {
+  user: User = EMPTY_USER;
+  userBhs = new BehaviorSubject<User>(this.user);
   userId: number = 0;
+  userRoles: Role[] = [];
   userRules: Rule[] = [];
-  userIdBhs = new BehaviorSubject<number>(0);
+  userExtraRules: Rule[] = [];
   allRules: Rule[] = [];
   allRulesBhs = new BehaviorSubject<Rule[]>([]);
   rule_groups: RuleGroup[] = [];
@@ -33,9 +38,19 @@ export class UserPermissionService {
     private tokenStorage: TokenStorageService,
     private userService: UserService,
     private ruleService: RuleService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private convertJsonService: ConvertJsonService
   ) {
     this.setup();
+  }
+
+  setup(): void {
+    let user = this.tokenStorage.getUserInfo();
+    // if user is logged in, set their properties
+    if (Object.keys(user).length !== 0) {
+      this._setUserId(user);
+      this.setUserPermissions();
+    }
   }
 
   public savePermissions(permissions: any[]): void {
@@ -53,17 +68,8 @@ export class UserPermissionService {
     }
   }
 
-  setup(): void {
-    let user = this.tokenStorage.getUserInfo();
-    // if user is logged in, set their properties
-    if (Object.keys(user).length !== 0) {
-      this._setUserId(user);
-      this.setUserPermissions();
-    }
-  }
-
-  getUserId(): Observable<number> {
-    return this.userIdBhs.asObservable();
+  getUser(): Observable<User> {
+    return this.userBhs.asObservable();
   }
 
   getRuleDescriptions(): Observable<Rule[]> {
@@ -123,11 +129,10 @@ export class UserPermissionService {
     let userId = user.user_url.split('/').pop();
     if (userId !== undefined) {
       this.userId = userId;
-      this.userIdBhs.next(parseInt(userId));
     }
   }
 
-  public setUserPermissions(): void {
+  public setUserPermissions() {
     // request the rules for the current user
     let req_userRules = this.userService.get(this.userId);
 
@@ -137,10 +142,11 @@ export class UserPermissionService {
     // join user rules and all rules to get user permissions
     forkJoin([req_userRules, req_all_rules]).subscribe(
       (data) => {
-        let userRules = data[0];
+        let user_data = data[0];
         let all_rules = data[1];
-        this._setPermissions(userRules, all_rules);
-        this._setAllRules(all_rules);
+        this.allRules = this._setAllRules(all_rules);
+        this._setPermissions(user_data, this.allRules);
+        this._setRuleGroups();
       },
       (err) => {
         // TODO raise error if user permissions cannot be determined
@@ -149,18 +155,18 @@ export class UserPermissionService {
     );
   }
 
-  private _setAllRules(all_rules: any[]) {
-    this.allRules = [];
+  private _setAllRules(all_rules: any[]): Rule[] {
+    let allRules = [];
     for (let rule of all_rules) {
-      this.allRules.push({
+      allRules.push({
         id: rule.id,
         operation: rule.operation.toLowerCase(),
         resource: rule.name.toLowerCase(),
         scope: rule.scope.toLowerCase(),
       });
     }
-    this.allRulesBhs.next(this.allRules);
-    this._setRuleGroups();
+    this.allRulesBhs.next(allRules);
+    return allRules;
   }
 
   _sortRules(rules: Rule[]): Rule[] {
@@ -229,45 +235,53 @@ export class UserPermissionService {
     this.rule_groups = this._makeRuleGroups();
   }
 
-  private async _setPermissions(userRules: any, all_rules: any) {
+  private async _setPermissions(user_data: any, all_rules: Rule[]) {
     // remove any existing rules that may be present
     this.userRules = [];
+    this.userRoles = [];
 
     // add rules from the user rules and roles
-    await this._setRules(userRules, all_rules);
+    await this._setRules(user_data, all_rules);
 
     // remove double rules
     this.userRules = [...new Set(this.userRules)];
 
     // save permissions
     this.savePermissions(this.userRules);
+
+    // set user
+    this._setUser(user_data);
   }
 
-  private async _setRules(userRules: any, all_rules: any) {
+  private _setUser(user_data: any) {
+    // set the logged in user
+    this.user = this.convertJsonService.getUser(
+      user_data,
+      this.userRoles,
+      this.allRules
+    );
+    this.userBhs.next(this.user);
+  }
+
+  private async _setRules(user_data: any, all_rules: Rule[]) {
     await Promise.all([
-      this._addRules(userRules.rules, all_rules),
-      this._addRoles(userRules.roles, all_rules),
+      this._addRules(user_data.rules, all_rules),
+      this._addRoles(user_data.roles, all_rules),
     ]);
   }
 
-  private async _addRules(rules: any, all_rules: any) {
-    if (rules !== null) {
-      rules.forEach((rule: any) => {
+  private async _addRules(rules_json: any, all_rules: Rule[]) {
+    if (rules_json !== null) {
+      rules_json.forEach((rule_json: any) => {
         // match the rule descriptions with the current user rule id
-        let rule_descr = all_rules.find((r: any) => r.id === rule.id);
+        let rule = getById(all_rules, rule_json.id);
         // add new permission
-        var new_rule: Rule = {
-          id: rule.id,
-          operation: rule_descr.operation.toLowerCase(),
-          resource: rule_descr.name.toLowerCase(),
-          scope: rule_descr.scope.toLowerCase(),
-        };
-        this.userRules.push(new_rule);
+        this.userRules.push(rule);
       });
     }
   }
 
-  private async _addRoles(roles: any, all_rules: any) {
+  private async _addRoles(roles: any, all_rules: Rule[]) {
     // Add rules from each role to the existing rules
     await Promise.all(
       roles.map(async (role: any) => {
@@ -278,8 +292,9 @@ export class UserPermissionService {
     );
   }
 
-  private async _addRulesForRole(role: any, all_rules: any) {
+  private async _addRulesForRole(role: any, all_rules: Rule[]) {
     let response = await this.roleService.get(role.id).toPromise();
+    this.userRoles.push(this.convertJsonService.getRole(response, all_rules));
 
     await this._addRules(response.rules, all_rules);
   }
