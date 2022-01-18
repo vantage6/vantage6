@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { User } from '../interfaces/user';
@@ -45,8 +44,7 @@ export class OrganizationComponent implements OnInit {
     public userPermission: UserPermissionService,
     private userService: UserService,
     private organizationService: OrganizationService,
-    private roleService: RoleService,
-    private router: Router
+    private roleService: RoleService
   ) {}
 
   // TODO Now it is shown that there are no users/roles until they are loaded,
@@ -270,16 +268,9 @@ export class OrganizationComponent implements OnInit {
   }
 
   deleteUser(user: User): void {
-    this.userService.delete(user).subscribe(
-      (data) => {
-        this.organization_users = removeMatchedIdFromArray(
-          this.organization_users,
-          user
-        );
-      },
-      (error) => {
-        alert(error.error.msg);
-      }
+    this.organization_users = removeMatchedIdFromArray(
+      this.organization_users,
+      user
     );
   }
 
