@@ -219,7 +219,7 @@ export class OrganizationComponent implements OnInit {
   }
 
   endUserEditing($event: ChangeExit, user: User, user_idx: number) {
-    if ($event === ChangeExit.CANCEL) {
+    if ($event === ChangeExit.CANCEL && !user.is_being_created) {
       // copy the original user back so that any changes are canceled
       this.organization_users[user_idx] = getById(
         this.users_edit_originals,
@@ -255,14 +255,10 @@ export class OrganizationComponent implements OnInit {
     this.organization_users = [new_user].concat(this.organization_users);
   }
 
-  cancelNewUser($event: boolean): void {
-    // TODO this doesn't work yet!
-    if ($event) {
+  cancelNewUser(is_remove_new_user: boolean): void {
+    if (is_remove_new_user) {
       // remove the new user that was prepended to the organization users
-      // this.organization_users = this.organization_users.slice(1);
-      // this.organization_users.shift();
-      // this.organization_users.shift();
-      console.log(this.organization_users);
+      this.organization_users.shift();
     }
   }
 
