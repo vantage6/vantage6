@@ -214,17 +214,9 @@ export class OrganizationComponent implements OnInit {
       return;
     }
     // initialize user
-    let new_user: User = {
-      id: -1,
-      username: '',
-      email: '',
-      first_name: '',
-      last_name: '',
-      rules: [],
-      roles: [],
-      organization_id: this.current_organization.id,
-      is_being_created: true,
-    };
+    let new_user: User = EMPTY_USER;
+    new_user.organization_id = this.current_organization.id;
+    new_user.is_being_created = true;
     // add new user to organization users
     this.organization_users = [new_user].concat(this.organization_users);
   }

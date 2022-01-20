@@ -67,22 +67,19 @@
         <ng-template #noAssignableRulesBlock>
           There are no rules you can assign
         </ng-template>
-    </ng-template>
-  </td>
-</tr>
-<tr *ngIf="user.id!==loggedin_user.id">
-  <td>Permissions:</td>
-  <td>
-    <app-permission-table
-        [given_roles]="user.roles"
-        [given_rules]="user.rules"
-        [loggedin_user_rules]="userPermission.userRules"
-        [is_edit_mode]="true"
-        (addedRulesChangeEvent)="updateAddedRules($event)"
-    ></app-permission-table>
-  </td>
-</tr>
+      </ng-template>
+    </td>
+  </tr>
 </table>
+<div *ngIf="user.id!==loggedin_user.id">
+  <app-permission-table
+      [given_roles]="user.roles"
+      [given_rules]="user.rules"
+      [loggedin_user_rules]="userPermission.userRules"
+      [is_edit_mode]="true"
+      (addedRulesChangeEvent)="updateAddedRules($event)"
+  ></app-permission-table>
+</div>
 <button mat-button class="btn btn-save" (click)="saveEditedUser()">
   Save
 </button>
