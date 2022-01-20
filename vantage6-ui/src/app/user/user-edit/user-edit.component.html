@@ -1,89 +1,96 @@
-<table style="width: 100%">
-  <colgroup>
-    <col span="1" style="width: 20%;"/>
-    <col span="1" style="width: 80%;"/>
-  </colgroup>
-  <tr>
-    <td>Username:</td>
-    <td><input [(ngModel)]="user.username"/></td>
-  </tr>
-  <tr>
-    <td>Email:</td>
-    <td><input [(ngModel)]="user.email"/></td>
-  </tr>
-  <tr *ngIf="user.is_being_created || user.is_logged_in">
-    <td>Password:</td>
-    <td><input type="password" [(ngModel)]="user.password"/></td>
-  </tr>
-  <tr *ngIf="user.is_being_created || user.is_logged_in">
-    <td>Repeat password:</td>
-    <td>
-      <input type="password" [(ngModel)]="user.password_repeated"/>
-      <p class="inline text-warning" *ngIf="user.password != user.password_repeated">
-        Passwords do not match!
-      </p>
-    </td>
-  </tr>
-  <tr>
-    <td>First name:</td>
-    <td><input [(ngModel)]="user.first_name"/></td>
-  </tr>
-  <tr>
-    <td>Last name:</td>
-    <td><input [(ngModel)]="user.last_name"/></td>
-  </tr>
-  <tr>
-    <td>Role(s):</td>
+<mat-expansion-panel [expanded]="true">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      {{user.first_name}} {{user.last_name}}
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Username:</td>
+      <td><input [(ngModel)]="user.username"/></td>
+    </tr>
+    <tr>
+      <td>Email:</td>
+      <td><input [(ngModel)]="user.email"/></td>
+    </tr>
+    <tr *ngIf="user.is_being_created || user.is_logged_in">
+      <td>Password:</td>
+      <td><input type="password" [(ngModel)]="user.password"/></td>
+    </tr>
+    <tr *ngIf="user.is_being_created || user.is_logged_in">
+      <td>Repeat password:</td>
       <td>
-      <div *ngIf="user.id===loggedin_user.id; else modifyRulesBlock">
-        <div *ngFor="let role of user.roles" class="inline">
-          <button mat-button class="btn-detail inline" disabled>
-            {{role.name}}
-          </button>
-        </div>
-        <br/>
-        You can't modify your own permissions!
-      </div>
-      <ng-template #modifyRulesBlock>
-        <div *ngFor="let role of user.roles" class="inline">
-          <button mat-button class="btn-delete inline" (click)="removeRole(role)">
-            <mat-icon>remove_circle</mat-icon>
-            <span>{{role.name}}</span>
-          </button>
-        </div>
-        <div class="inline" *ngIf="roles_assignable.length > 0; else noAssignableRulesBlock">
-         <div ngbDropdown class="d-inline-block">
-            <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
-              <mat-icon>add_circle</mat-icon>
-              <span class="align-top">Add role</span>
+        <input type="password" [(ngModel)]="user.password_repeated"/>
+        <p class="inline text-warning" *ngIf="user.password != user.password_repeated">
+          Passwords do not match!
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>First name:</td>
+      <td><input [(ngModel)]="user.first_name"/></td>
+    </tr>
+    <tr>
+      <td>Last name:</td>
+      <td><input [(ngModel)]="user.last_name"/></td>
+    </tr>
+    <tr>
+      <td>Role(s):</td>
+        <td>
+        <div *ngIf="user.id===loggedin_user.id; else modifyRulesBlock">
+          <div *ngFor="let role of user.roles" class="inline">
+            <button mat-button class="btn-detail inline" disabled>
+              {{role.name}}
             </button>
-            <div ngbDropdownMenu aria-labelledby="dropdownRoles">
-              <div *ngFor="let role of roles_assignable">
-                <button ngbDropdownItem (click)="addRole(role)">{{role.name}}</button>
+          </div>
+          <br/>
+          You can't modify your own permissions!
+        </div>
+        <ng-template #modifyRulesBlock>
+          <div *ngFor="let role of user.roles" class="inline">
+            <button mat-button class="btn-delete inline" (click)="removeRole(role)">
+              <mat-icon>remove_circle</mat-icon>
+              <span>{{role.name}}</span>
+            </button>
+          </div>
+          <div class="inline" *ngIf="roles_assignable.length > 0; else noAssignableRulesBlock">
+          <div ngbDropdown class="d-inline-block">
+              <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
+                <mat-icon>add_circle</mat-icon>
+                <span class="align-top">Add role</span>
+              </button>
+              <div ngbDropdownMenu aria-labelledby="dropdownRoles">
+                <div *ngFor="let role of roles_assignable">
+                  <button ngbDropdownItem (click)="addRole(role)">{{role.name}}</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <ng-template #noAssignableRulesBlock>
-          There are no rules you can assign
+          <ng-template #noAssignableRulesBlock>
+            There are no rules you can assign
+          </ng-template>
         </ng-template>
-      </ng-template>
-    </td>
-  </tr>
-</table>
-<div *ngIf="user.id!==loggedin_user.id">
-  <app-permission-table
-      [given_roles]="user.roles"
-      [given_rules]="user.rules"
-      [loggedin_user_rules]="userPermission.userRules"
-      [is_edit_mode]="true"
-      (addedRulesChangeEvent)="updateAddedRules($event)"
-  ></app-permission-table>
-</div>
-<button mat-button class="btn btn-save" (click)="saveEditedUser()">
-  Save
-</button>
-<!-- TODO change name of btn-add class to 'btn-default' or so -->
-<button mat-button class="btn btn-add" (click)="cancelEdit()">
-  Cancel
-</button>
+      </td>
+    </tr>
+  </table>
+  <div *ngIf="user.id!==loggedin_user.id">
+    <app-permission-table
+        [given_roles]="user.roles"
+        [given_rules]="user.rules"
+        [loggedin_user_rules]="userPermission.userRules"
+        [is_edit_mode]="true"
+        (addedRulesChangeEvent)="updateAddedRules($event)"
+    ></app-permission-table>
+  </div>
+  <button mat-button class="btn btn-save" (click)="saveEditedUser()">
+    Save
+  </button>
+  <!-- TODO change name of btn-add class to 'btn-default' or so -->
+  <button mat-button class="btn btn-add" (click)="cancelEdit()">
+    Cancel
+  </button>
+</mat-expansion-panel>

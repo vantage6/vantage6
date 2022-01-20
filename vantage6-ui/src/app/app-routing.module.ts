@@ -5,6 +5,8 @@ import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { AccessGuard } from './access-guard.guard';
 import { OrganizationComponent } from './organization/organization.component';
+import { UserEditComponent } from './user/user-edit/user-edit.component';
+import { RoleEditComponent } from './role/role-edit/role-edit.component';
 
 const routes: Routes = [
   {
@@ -25,6 +27,28 @@ const routes: Routes = [
       requiresLogin: true,
       permissionType: 'view',
       permissionResource: 'organization',
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'user/edit',
+    component: UserEditComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: 'edit',
+      alternativePermissionType: 'create',
+      permissionResource: 'user',
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'role/edit',
+    component: RoleEditComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: 'edit',
+      alternativePermissionType: 'create',
+      permissionResource: 'role',
     },
     canActivate: [AccessGuard],
   },

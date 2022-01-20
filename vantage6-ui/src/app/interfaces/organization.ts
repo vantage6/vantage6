@@ -8,3 +8,14 @@ export interface Organization {
   domain: string;
   public_key: string;
 }
+
+export const EMPTY_ORGANIZATION = {
+  id: -1,
+  name: '',
+  address1: '',
+  address2: '',
+  zipcode: '',
+  country: '',
+  domain: '',
+  public_key: '',
+};

@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
@@ -8,6 +9,7 @@ import { removeMatchedIdFromArray } from 'src/app/utils';
 import { UserService } from 'src/app/services/api/user.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
 import { ChangeExit } from 'src/app/globals/enum';
+import { UserEditService } from '../user-edit.service';
 
 // TODO add option to assign user to different organization
 
@@ -17,22 +19,27 @@ import { ChangeExit } from 'src/app/globals/enum';
   styleUrls: ['./user-edit.component.scss'],
 })
 export class UserEditComponent implements OnInit {
-  @Input() user: User = EMPTY_USER;
-  @Input() roles_assignable: Role[] = [];
-  @Output() finishedEditing = new EventEmitter<ChangeExit>();
-  @Output() cancelNewUser = new EventEmitter<boolean>();
-  @Output() newlyCreatedUserId = new EventEmitter<number>();
+  user: User = EMPTY_USER;
+  roles_assignable: Role[] = [];
   loggedin_user: User = EMPTY_USER;
   added_rules: Rule[] = [];
 
   constructor(
+    private location: Location,
     public userPermission: UserPermissionService,
-    private userService: UserService
+    private userService: UserService,
+    private userEditService: UserEditService
   ) {}
 
   ngOnInit(): void {
     this.userPermission.getUser().subscribe((user) => {
       this.loggedin_user = user;
+    });
+    this.userEditService.getUser().subscribe((user) => {
+      this.user = user;
+    });
+    this.userEditService.getAvailableRoles().subscribe((roles) => {
+      this.roles_assignable = roles;
     });
   }
 
@@ -79,11 +86,7 @@ export class UserEditComponent implements OnInit {
 
     user_request.subscribe(
       (data) => {
-        this.user.is_being_edited = false;
-        this.finishedEditing.emit(ChangeExit.SAVE);
-        if (this.user.is_being_created) {
-          this.newlyCreatedUserId.emit(data.id);
-        }
+        this.goBack();
       },
       (error) => {
         alert(error.error.msg);
@@ -92,15 +95,16 @@ export class UserEditComponent implements OnInit {
   }
 
   cancelEdit(): void {
-    if (this.user.is_being_created) {
-      this.cancelNewUser.emit(true);
-    }
-    this.user.is_being_edited = false;
-    this.finishedEditing.emit(ChangeExit.CANCEL);
+    this.goBack();
   }
 
   updateAddedRules($event: Rule[]) {
     this.added_rules = $event;
     this.user.rules = $event;
+  }
+
+  goBack(): void {
+    // go back to previous page
+    this.location.back();
   }
 }

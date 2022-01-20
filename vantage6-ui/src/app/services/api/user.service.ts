@@ -24,33 +24,32 @@ export class UserService {
   }
 
   update(user: User) {
-    let data = {
-      username: user.username,
-      email: user.email,
-      firstname: user.first_name,
-      lastname: user.last_name,
-      organization_id: user.organization_id,
-      roles: getIdsFromArray(user.roles),
-      rules: getIdsFromArray(user.rules),
-    };
+    let data = this._get_data(user);
     return this.http.patch<any>(environment.api_url + '/user/' + user.id, data);
   }
 
   create(user: User) {
-    const data = {
-      username: user.username,
-      email: user.email,
-      password: user.password,
-      firstname: user.first_name,
-      lastname: user.last_name,
-      organization_id: user.organization_id,
-      roles: getIdsFromArray(user.roles),
-      rules: getIdsFromArray(user.rules),
-    };
+    const data = this._get_data(user);
     return this.http.post<any>(environment.api_url + '/user', data);
   }
 
   delete(user: User) {
     return this.http.delete<any>(environment.api_url + '/user/' + user.id);
+  }
+
+  private _get_data(user: User): any {
+    let data: any = {
+      username: user.username,
+      email: user.email,
+      firstname: user.first_name,
+      lastname: user.last_name,
+      organization_id: user.organization_id,
+      roles: getIdsFromArray(user.roles),
+      rules: getIdsFromArray(user.rules),
+    };
+    if (user.password) {
+      data.password = user.password;
+    }
+    return data;
   }
 }

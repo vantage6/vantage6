@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { EMPTY_USER, User } from '../interfaces/user';
-import { Role } from '../interfaces/role';
+import { EMPTY_ROLE, Role } from '../interfaces/role';
 import { Rule } from '../interfaces/rule';
-import { Organization } from '../interfaces/organization';
+import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
 
 import { UserPermissionService } from '../services/user-permission.service';
 import { UserService } from '../services/api/user.service';
@@ -14,6 +14,9 @@ import { RoleService } from '../services/api/role.service';
 import { deepcopy, getById, removeMatchedIdFromArray } from '../utils';
 import { ChangeExit } from '../globals/enum';
 import { ConvertJsonService } from '../services/convert-json.service';
+import { Router } from '@angular/router';
+import { UserEditService } from '../user/user-edit.service';
+import { RoleEditService } from '../role/role-edit.service';
 
 @Component({
   selector: 'app-organization',
@@ -22,31 +25,24 @@ import { ConvertJsonService } from '../services/convert-json.service';
 })
 export class OrganizationComponent implements OnInit {
   organizations: Organization[] = [];
-  current_organization: Organization = {
-    id: -1,
-    name: '',
-    address1: '',
-    address2: '',
-    zipcode: '',
-    country: '',
-    domain: '',
-    public_key: '',
-  };
+  current_organization: Organization = EMPTY_ORGANIZATION;
   loggedin_user_organization_id: number = -1;
+  loggedin_user: User = EMPTY_USER;
   organization_users: User[] = [];
   roles: Role[] = [];
   roles_assignable: Role[] = [];
   current_org_role_count: number = 0;
   all_rules: Rule[] = [];
-  users_edit_originals: User[] = [];
-  loggedin_user: User = EMPTY_USER;
 
   constructor(
+    private router: Router,
     public userPermission: UserPermissionService,
     private userService: UserService,
     private organizationService: OrganizationService,
     private roleService: RoleService,
-    private convertJsonService: ConvertJsonService
+    private convertJsonService: ConvertJsonService,
+    private userEditService: UserEditService,
+    private roleEditService: RoleEditService
   ) {}
 
   // TODO Now it is shown that there are no users/roles until they are loaded,
@@ -132,7 +128,6 @@ export class OrganizationComponent implements OnInit {
       return;
     }
     this.organization_users = [];
-    this.users_edit_originals = [];
 
     // collect users for current organization
     let req_users = this.userService.list(this.current_organization.id);
@@ -186,64 +181,49 @@ export class OrganizationComponent implements OnInit {
   }
 
   editUser(user: User): void {
-    this.users_edit_originals.push(deepcopy(user));
+    this.userEditService.set(user, this.roles_assignable);
+    this.router.navigate(['/user/edit']);
   }
 
-  endUserEditing($event: ChangeExit, user: User, user_idx: number) {
-    if ($event === ChangeExit.CANCEL && !user.is_being_created) {
-      // copy the original user back so that any changes are canceled
-      this.organization_users[user_idx] = getById(
-        this.users_edit_originals,
-        user.id
-      );
-      this.organization_users[user_idx].is_being_edited = false;
-    }
-    this.users_edit_originals = removeMatchedIdFromArray(
-      this.users_edit_originals,
-      user
-    );
+  editRole(role: Role): void {
+    this.roleEditService.setRole(role);
+    this.router.navigate(['/role/edit']);
   }
 
   createUser(): void {
-    if (
-      this.organization_users.length &&
-      this.organization_users[0].is_being_created
-    ) {
-      // TODO instead of alert, focus on the part where user is being created
-      alert('You are already in the process of creating a user!');
-      return;
-    }
     // initialize user
     let new_user: User = EMPTY_USER;
     new_user.organization_id = this.current_organization.id;
     new_user.is_being_created = true;
-    // add new user to organization users
-    this.organization_users = [new_user].concat(this.organization_users);
+
+    // use edit mode to fill in all details of new user
+    this.editUser(new_user);
   }
 
-  addNewlyCreatedUser(id: number, user: User): void {
-    // remove placeholder 'being created' user from organization's users
-    this.organization_users = removeMatchedIdFromArray(
-      this.organization_users,
-      user
-    );
-    // add newly created user
-    user.id = id;
-    user.is_being_created = false;
-    this.organization_users.push(user);
+  createRole(): void {
+    // initialize role
+    let new_role: Role = EMPTY_ROLE;
+
+    new_role.organization_id = this.current_organization.id;
+    new_role.is_being_created = true;
+
+    // use edit mode to fill in all details of new user
+    this.editRole(new_role);
   }
 
   deleteUser(user: User): void {
+    // TODO add: are you sure?
     this.organization_users = removeMatchedIdFromArray(
       this.organization_users,
       user
     );
   }
 
-  cancelNewUser(is_remove_new_user: boolean): void {
-    if (is_remove_new_user) {
-      // remove the new user that was prepended to the organization users
-      this.organization_users.shift();
-    }
-  }
+  endRoleEditing($event: ChangeExit, role: Role, role_idx: number) {}
+
+  addNewlyCreatedRole(id: number, role: Role): void {}
+
+  deleteRole(role: Role): void {}
+
+  cancelNewRole(is_remove_new_role: boolean): void {}
 }

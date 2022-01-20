@@ -28,10 +28,16 @@ export class AccessGuard implements CanActivate {
       this.router.navigate(['login']);
     }
     const permType = route.data.permissionType || '*';
+    const altPermType = route.data.alternativePermissionType || null;
     const permResource = route.data.permissionResource || '*';
     const permScope = route.data.permissionScope || '*';
     if (!this.userPermission.hasPermission(permType, permResource, permScope)) {
-      // alert('No permission!'); // TODO add something to alert user here
+      if (
+        altPermType &&
+        this.userPermission.hasPermission(altPermType, permResource, permScope)
+      ) {
+        return true;
+      }
       return false;
     }
     return true;

@@ -7,6 +7,7 @@ export interface Role {
   organization_id: number | null;
   rules: Rule[];
   is_being_edited?: boolean;
+  is_being_created?: boolean;
 }
 
 export const EMPTY_ROLE: Role = {

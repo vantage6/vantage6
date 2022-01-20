@@ -26,6 +26,7 @@ import { PermissionTableComponent } from './permission-table/permission-table.co
 import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { UserViewComponent } from './user/user-view/user-view.component';
 import { RoleViewComponent } from './role/role-view/role-view.component';
+import { RoleEditComponent } from './role/role-edit/role-edit.component';
 
 @NgModule({
   declarations: [
@@ -38,6 +39,7 @@ import { RoleViewComponent } from './role/role-view/role-view.component';
     UserEditComponent,
     UserViewComponent,
     RoleViewComponent,
+    RoleEditComponent,
   ],
   imports: [
     BrowserModule,

@@ -37,7 +37,7 @@
       <mat-card>
         <h4>Roles</h4>
         <div *ngIf="userPermission.can('create', 'role', current_organization.id)" class="inline">
-          <button mat-button class="btn-add btn-right">
+          <button mat-button class="btn-add btn-right" (click)="createRole()">
             <mat-icon>add_circle</mat-icon>
             <span>New role</span>
           </button>
@@ -50,7 +50,7 @@
             This organization has no roles!
           </ng-template>
         </div>
-        <div *ngFor="let role of roles">
+        <div *ngFor="let role of roles; let idx = index">
           <div *ngIf="(role.organization_id === current_organization.id) ||
                       (role.organization_id === null && current_organization.id === 1)">
             <app-role-view
@@ -72,6 +72,7 @@
         </div>
         <div *ngIf="organization_users.length===0">
           <div *ngIf="userPermission.can('view', 'user', current_organization.id); else noUsersBlock">
+            <!-- TODO this message is displayed wrongly when organization has no users -->
             You do not have permission to view the users!
           </div>
           <ng-template #noUsersBlock>
@@ -79,34 +80,11 @@
           </ng-template>
         </div>
         <div *ngFor="let user of organization_users; let idx = index">
-          <mat-expansion-panel [expanded]="user.is_being_created">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{user.first_name}} {{user.last_name}}
-              </mat-panel-title>
-              <mat-panel-description>
-                <div *ngIf="user.is_logged_in">
-                  It's you!
-                </div>
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <div *ngIf="!user.is_being_edited && !user.is_being_created; else editBlock">
-              <app-user-view
-                [user]="user"
-                (deletingUser)="deleteUser($event)"
-                (editingUser)="editUser($event)"
-              ></app-user-view>
-            </div>
-            <ng-template #editBlock>
-              <app-user-edit
-                [user]="user"
-                [roles_assignable]="roles_assignable"
-                (finishedEditing)="endUserEditing($event, user, idx)"
-                (cancelNewUser)="cancelNewUser($event)"
-                (newlyCreatedUserId)="addNewlyCreatedUser($event, user)"
-              ></app-user-edit>
-            </ng-template>
-          </mat-expansion-panel>
+          <app-user-view
+            [user]="user"
+            (deletingUser)="deleteUser(user)"
+            (editingUser)="editUser(user)"
+          ></app-user-view>
         </div>
       </mat-card>
     </div>
