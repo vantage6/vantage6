@@ -1,8 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
-import { User } from 'src/app/interfaces/user';
+import { EMPTY_USER, User } from 'src/app/interfaces/user';
 
-import { deepcopy } from 'src/app/utils';
 import { UserService } from 'src/app/services/api/user.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
 
@@ -12,16 +11,7 @@ import { UserPermissionService } from 'src/app/services/user-permission.service'
   styleUrls: ['./user-view.component.scss'],
 })
 export class UserViewComponent implements OnInit {
-  @Input() user: User = {
-    id: -1,
-    username: '',
-    email: '',
-    first_name: '',
-    last_name: '',
-    organization_id: -1,
-    roles: [],
-    rules: [],
-  };
+  @Input() user: User = EMPTY_USER;
   @Output() deletingUser = new EventEmitter<User>();
   @Output() editingUser = new EventEmitter<User>();
 

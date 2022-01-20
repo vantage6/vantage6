@@ -29,21 +29,21 @@
         {{current_organization.public_key}}
         <br/>
         -->
-        <button *ngIf="can('edit', 'organization')" mat-button class="btn-edit">
+        <button *ngIf="userPermission.can('edit', 'organization', current_organization.id)" mat-button class="btn-edit">
           Edit
         </button>
       </mat-card>
 
       <mat-card>
         <h4>Roles</h4>
-        <div *ngIf="can('create', 'role')" class="inline">
+        <div *ngIf="userPermission.can('create', 'role', current_organization.id)" class="inline">
           <button mat-button class="btn-add btn-right">
             <mat-icon>add_circle</mat-icon>
             <span>New role</span>
           </button>
         </div>
         <div *ngIf="current_org_role_count===0">
-          <div *ngIf="can('view', 'role'); else noRolesBlock">
+          <div *ngIf="userPermission.can('view', 'role', current_organization.id); else noRolesBlock">
             You do not have permission to view the roles!
           </div>
           <ng-template #noRolesBlock>
@@ -53,30 +53,9 @@
         <div *ngFor="let role of roles">
           <div *ngIf="(role.organization_id === current_organization.id) ||
                       (role.organization_id === null && current_organization.id === 1)">
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  {{role.name}}
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <table style="width: 100%">
-                <colgroup>
-                  <col span="1" style="width: 20%;"/>
-                  <col span="1" style="width: 80%;"/>
-                </colgroup>
-                <tr>
-                  <td>Description:</td>
-                  <td>{{role.description}}</td>
-                </tr>
-              </table>
-              This role gives the following permissions:
-              <app-permission-table
-                [given_roles]="[role]"
-                [given_rules]="[]"
-                [loggedin_user_rules]="userPermission.userRules"
-                [is_edit_mode]="false"
-              ></app-permission-table>
-            </mat-expansion-panel>
+            <app-role-view
+              [role]="role"
+            ></app-role-view>
           </div>
         </div>
       </mat-card>
@@ -85,14 +64,14 @@
     <div class="col-lg">
       <mat-card>
         <h4>Users</h4>
-        <div *ngIf="can('create', 'user')" class="inline">
+        <div *ngIf="userPermission.can('create', 'user', current_organization.id)" class="inline">
           <button mat-button class="btn-add btn-right" (click)="createUser()">
             <mat-icon>add_circle</mat-icon>
             <span>New user</span>
           </button>
         </div>
         <div *ngIf="organization_users.length===0">
-          <div *ngIf="can('view', 'user'); else noUsersBlock">
+          <div *ngIf="userPermission.can('view', 'user', current_organization.id); else noUsersBlock">
             You do not have permission to view the users!
           </div>
           <ng-template #noUsersBlock>

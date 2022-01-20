@@ -1,0 +1,34 @@
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      {{role.name}}
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Description:</td>
+      <td>{{role.description}}</td>
+    </tr>
+  </table>
+  This role gives the following permissions:
+  <app-permission-table
+    [given_roles]="[role]"
+    [given_rules]="[]"
+    [loggedin_user_rules]="userPermission.userRules"
+    [is_edit_mode]="false"
+  ></app-permission-table>
+  <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
+      mat-button class="btn btn-edit inline"
+      (click)="editRole()">
+    Edit
+  </button>
+  <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
+      mat-button class="btn btn-delete-strong"
+      (click)="deleteRole()">
+    Delete
+  </button>
+</mat-expansion-panel>

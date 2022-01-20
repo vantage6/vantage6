@@ -185,15 +185,6 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
-  // TODO move elsewhere
-  can(operation: string, resource: string): boolean {
-    return (
-      this.userPermission.hasPermission(operation, resource, 'global') ||
-      (this.current_organization.id === this.loggedin_user_organization_id &&
-        this.userPermission.hasPermission(operation, resource, 'organization'))
-    );
-  }
-
   editUser(user: User): void {
     this.users_edit_originals.push(deepcopy(user));
   }

@@ -17,16 +17,7 @@ import { ChangeExit } from 'src/app/globals/enum';
   styleUrls: ['./user-edit.component.scss'],
 })
 export class UserEditComponent implements OnInit {
-  @Input() user: User = {
-    id: -1,
-    username: '',
-    email: '',
-    first_name: '',
-    last_name: '',
-    organization_id: -1,
-    roles: [],
-    rules: [],
-  };
+  @Input() user: User = EMPTY_USER;
   @Input() roles_assignable: Role[] = [];
   @Output() finishedEditing = new EventEmitter<ChangeExit>();
   @Output() cancelNewUser = new EventEmitter<boolean>();

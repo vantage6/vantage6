@@ -108,6 +108,14 @@ export class UserPermissionService {
     );
   }
 
+  can(operation: string, resource: string, org_id: number | null): boolean {
+    return (
+      this.hasPermission(operation, resource, 'global') ||
+      (org_id === this.user.organization_id &&
+        this.hasPermission(operation, resource, 'organization'))
+    );
+  }
+
   getAvailableRules(type: string, resource: string, scope: string): Rule[] {
     return this.getPermissionSubset(this.allRules, type, resource, scope);
   }

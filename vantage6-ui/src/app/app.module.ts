@@ -25,6 +25,7 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { PermissionTableComponent } from './permission-table/permission-table.component';
 import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { UserViewComponent } from './user/user-view/user-view.component';
+import { RoleViewComponent } from './role/role-view/role-view.component';
 
 @NgModule({
   declarations: [
@@ -36,6 +37,7 @@ import { UserViewComponent } from './user/user-view/user-view.component';
     PermissionTableComponent,
     UserEditComponent,
     UserViewComponent,
+    RoleViewComponent,
   ],
   imports: [
     BrowserModule,

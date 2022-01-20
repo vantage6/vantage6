@@ -34,29 +34,16 @@
       </div>
     </td>
   </tr>
-  <tr>
-    <td>Permissions:</td>
-    <td>
-      <app-permission-table
-        [given_roles]="user.roles"
-        [given_rules]="user.rules"
-        [loggedin_user_rules]="userPermission.userRules"
-        [is_edit_mode]="false"
-      ></app-permission-table>
-    </td>
-  </tr>
 </table>
 <button *ngIf="
-      userPermission.hasPermission('edit', 'user', 'global') ||
-      userPermission.hasPermission('edit', 'user', 'organization') ||
+      userPermission.can('edit', 'user', user.organization_id) ||
       (user.is_logged_in && userPermission.hasPermission('edit', 'user', 'own'))"
     mat-button class="btn btn-edit inline"
     (click)="editUser(user)">
   Edit
 </button>
 <button *ngIf="
-      userPermission.hasPermission('delete', 'user', 'global') ||
-      userPermission.hasPermission('delete', 'user', 'organization') ||
+      userPermission.can('delete', 'user', user.organization_id) ||
       (user.is_logged_in && userPermission.hasPermission('delete', 'user', 'own'))"
     mat-button class="btn btn-delete-strong"
     (click)="deleteUser(user)">
