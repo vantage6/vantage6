@@ -1,15 +1,34 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import { environment } from 'src/environments/environment';
+import { Rule } from 'src/app/interfaces/rule';
+import { Role } from 'src/app/interfaces/role';
 import { User } from 'src/app/interfaces/user';
+
+import { environment } from 'src/environments/environment';
 import { getIdsFromArray } from 'src/app/utils';
+import { RoleService } from './role.service';
+import { RuleService } from './rule.service';
+import { ConvertJsonService } from '../convert-json.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
-  constructor(private http: HttpClient) {}
+  all_rules: Rule[] = [];
+
+  constructor(
+    private http: HttpClient,
+    private roleService: RoleService,
+    private ruleService: RuleService,
+    private convertJsonService: ConvertJsonService
+  ) {
+    this.setup();
+  }
+
+  async setup(): Promise<void> {
+    this.all_rules = await this.ruleService.getAllRules();
+  }
 
   list(organization_id: number | null = null) {
     let params: any = {};
@@ -51,5 +70,24 @@ export class UserService {
       data.password = user.password;
     }
     return data;
+  }
+
+  async getUserJson(id: number): Promise<any> {
+    // TODO remove this func
+    return await this.get(id).toPromise();
+  }
+
+  async getUser(id: number): Promise<User> {
+    let user_json = await this.get(id).toPromise();
+
+    let role_ids = getIdsFromArray(user_json.roles);
+    let roles = await this.roleService.getRoles(role_ids);
+
+    let user = this.convertJsonService.getUser(
+      user_json,
+      roles,
+      this.all_rules
+    );
+    return user;
   }
 }

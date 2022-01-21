@@ -3,7 +3,8 @@ export function removeArrayDoubles(array: any[]): any[] {
 }
 
 export function deepcopy(obj: any): any {
-  return Object.assign({}, obj);
+  return JSON.parse(JSON.stringify(obj));
+  // return Object.assign({}, obj);
 }
 
 export function removeMatchedIdFromArray(array: any[], obj: any): any[] {

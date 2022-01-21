@@ -17,6 +17,7 @@ import { ConvertJsonService } from '../services/convert-json.service';
 import { Router } from '@angular/router';
 import { UserEditService } from '../user/user-edit.service';
 import { RoleEditService } from '../role/role-edit.service';
+import { RuleService } from '../services/api/rule.service';
 
 @Component({
   selector: 'app-organization',
@@ -32,7 +33,7 @@ export class OrganizationComponent implements OnInit {
   roles: Role[] = [];
   roles_assignable: Role[] = [];
   current_org_role_count: number = 0;
-  all_rules: Rule[] = [];
+  rules: Rule[] = [];
 
   constructor(
     private router: Router,
@@ -42,7 +43,8 @@ export class OrganizationComponent implements OnInit {
     private roleService: RoleService,
     private convertJsonService: ConvertJsonService,
     private userEditService: UserEditService,
-    private roleEditService: RoleEditService
+    private roleEditService: RoleEditService,
+    private ruleService: RuleService
   ) {}
 
   // TODO Now it is shown that there are no users/roles until they are loaded,
@@ -50,10 +52,11 @@ export class OrganizationComponent implements OnInit {
   ngOnInit(): void {
     this.userPermission.getUser().subscribe((user) => {
       this.loggedin_user = user;
+      console.log(this.loggedin_user);
       this.getOrganizationDetails();
     });
-    this.userPermission.getRuleDescriptions().subscribe((rules) => {
-      this.all_rules = rules;
+    this.ruleService.getRules().subscribe((rules) => {
+      this.rules = rules;
     });
   }
 
@@ -155,7 +158,7 @@ export class OrganizationComponent implements OnInit {
     this.roles_assignable = [];
     this.current_org_role_count = 0;
     for (let role of role_data) {
-      this.roles.push(this.convertJsonService.getRole(role, this.all_rules));
+      this.roles.push(this.convertJsonService.getRole(role, this.rules));
       if (role.organization || this.current_organization.id === 1) {
         this.current_org_role_count += 1;
       }
@@ -173,7 +176,7 @@ export class OrganizationComponent implements OnInit {
       let user = this.convertJsonService.getUser(
         user_json,
         this.roles,
-        this.all_rules
+        this.rules
       );
       user.is_logged_in = user.id === this.loggedin_user.id;
       this.organization_users.push(user);

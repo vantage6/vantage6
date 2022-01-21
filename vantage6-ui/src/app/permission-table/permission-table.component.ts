@@ -50,10 +50,16 @@ export class PermissionTableComponent implements OnInit, OnChanges {
   BTN_CLS_PART_PERM: string = 'btn-part-permission';
   BTN_CLS_NO_PERM_POSSIBLE: string = 'btn-no-permission-possible';
 
-  constructor(public userPermission: UserPermissionService) {}
+  constructor(
+    public userPermission: UserPermissionService,
+    private ruleService: RuleService
+  ) {}
 
   ngOnInit(): void {
-    this.rule_groups = this.userPermission.getRuleGroupsCopy();
+    this.rule_groups = this.ruleService.getRuleGroupsCopy();
+    // this.ruleService.getRuleGroupsCopy().subscribe((rule_groups) => {
+    // this.rule_groups = rule_groups;
+    // });
     this.init();
   }
 
