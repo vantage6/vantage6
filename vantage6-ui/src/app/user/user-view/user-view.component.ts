@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ExitMode } from 'src/app/globals/enum';
 
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { ModalDeleteComponent } from 'src/app/modal/modal-delete/modal-delete.component';
 
+import { ModalService } from 'src/app/modal/modal.service';
 import { UserService } from 'src/app/services/api/user.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
 
@@ -17,14 +20,15 @@ export class UserViewComponent implements OnInit {
 
   constructor(
     public userPermission: UserPermissionService,
-    public userService: UserService
+    public userService: UserService,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
     this.user.is_being_edited = false;
   }
 
-  deleteUser(user: User): void {
+  executeDelete(user: User): void {
     this.userService.delete(user).subscribe(
       (data) => {
         this.deletingUser.emit(user);
@@ -33,6 +37,15 @@ export class UserViewComponent implements OnInit {
         alert(error.error.msg);
       }
     );
+  }
+
+  deleteUser(user: User): void {
+    // open modal window to ask for confirmation of irreversible delete action
+    this.modalService.openDeleteModal(user).result.then((exit_mode) => {
+      if (exit_mode === ExitMode.DELETE) {
+        this.executeDelete(user);
+      }
+    });
   }
 
   editUser(user: User): void {
