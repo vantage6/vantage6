@@ -24,8 +24,10 @@ export class ConvertJsonService {
 
   getRole(role_json: any, all_rules: Rule[]): Role {
     let rules: Rule[] = [];
-    for (let rule of role_json.rules) {
-      rules.push(getById(all_rules, rule.id));
+    if (role_json.rules) {
+      for (let rule of role_json.rules) {
+        rules.push(getById(all_rules, rule.id));
+      }
     }
     return {
       id: role_json.id,

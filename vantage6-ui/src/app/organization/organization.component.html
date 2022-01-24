@@ -55,6 +55,8 @@
                       (role.organization_id === null && current_organization.id === 1)">
             <app-role-view
               [role]="role"
+              (deletingRole)="deleteRole(role)"
+              (editingRole)="editRole(role)"
             ></app-role-view>
           </div>
         </div>

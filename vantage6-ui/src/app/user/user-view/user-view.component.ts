@@ -28,10 +28,10 @@ export class UserViewComponent implements OnInit {
     this.user.is_being_edited = false;
   }
 
-  executeDelete(user: User): void {
-    this.userService.delete(user).subscribe(
+  executeDelete(): void {
+    this.userService.delete(this.user).subscribe(
       (data) => {
-        this.deletingUser.emit(user);
+        this.deletingUser.emit(this.user);
       },
       (error) => {
         alert(error.error.msg);
@@ -39,17 +39,17 @@ export class UserViewComponent implements OnInit {
     );
   }
 
-  deleteUser(user: User): void {
+  deleteUser(): void {
     // open modal window to ask for confirmation of irreversible delete action
-    this.modalService.openDeleteModal(user).result.then((exit_mode) => {
+    this.modalService.openDeleteModal(this.user).result.then((exit_mode) => {
       if (exit_mode === ExitMode.DELETE) {
-        this.executeDelete(user);
+        this.executeDelete();
       }
     });
   }
 
-  editUser(user: User): void {
-    user.is_being_edited = true;
-    this.editingUser.emit(user);
+  editUser(): void {
+    this.user.is_being_edited = true;
+    this.editingUser.emit(this.user);
   }
 }

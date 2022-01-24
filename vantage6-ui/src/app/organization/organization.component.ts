@@ -11,7 +11,6 @@ import { UserService } from '../services/api/user.service';
 import { OrganizationService } from '../services/api/organization.service';
 import { RoleService } from '../services/api/role.service';
 import { removeMatchedIdFromArray } from '../utils';
-import { ChangeExit } from '../globals/enum';
 import { ConvertJsonService } from '../services/convert-json.service';
 import { Router } from '@angular/router';
 import { UserEditService } from '../user/user-edit.service';
@@ -26,7 +25,6 @@ import { RuleService } from '../services/api/rule.service';
 export class OrganizationComponent implements OnInit {
   organizations: Organization[] = [];
   current_organization: Organization = EMPTY_ORGANIZATION;
-  loggedin_user_organization_id: number = -1;
   loggedin_user: User = EMPTY_USER;
   organization_users: User[] = [];
   roles: Role[] = [];
@@ -65,23 +63,12 @@ export class OrganizationComponent implements OnInit {
     )
       return;
 
-    // get user data
-    //TODO this request is done here for the second time (first time in userPermission). Improve efficiency
-    let req_user = this.userService.get(this.loggedin_user.id);
-
-    // get organization data
-    let req_organizations = this.organizationService.list();
-
     // first obtain user information to get organization id, then obtain
     // organization information
-    forkJoin([req_user, req_organizations]).subscribe(
-      (data: any) => {
-        let current_user_data = data[0];
-        let organization_data = data[1];
-        this.loggedin_user_organization_id = current_user_data.organization.id;
+    this.organizationService.list().subscribe(
+      (organization_data: any) => {
         this.setOrganizations(organization_data);
-
-        this.collectUserAndRoles();
+        this.collectUsersAndRoles();
       },
       (error) => {
         console.log(error);
@@ -96,13 +83,13 @@ export class OrganizationComponent implements OnInit {
         break;
       }
     }
-    this.collectUserAndRoles();
+    this.collectUsersAndRoles();
   }
 
   setOrganizations(organization_data: any[]) {
     for (let org of organization_data) {
       let new_org = this.getOrgObject(org);
-      if (new_org.id === this.loggedin_user_organization_id) {
+      if (new_org.id === this.loggedin_user.organization_id) {
         // set organization of logged-in user as default current organization
         this.current_organization = new_org;
       }
@@ -123,7 +110,7 @@ export class OrganizationComponent implements OnInit {
     };
   }
 
-  collectUserAndRoles(): void {
+  collectUsersAndRoles(): void {
     /* Renew the organization's users and roles */
     if (this.current_organization === null) {
       return;
@@ -153,18 +140,23 @@ export class OrganizationComponent implements OnInit {
 
   setRoles(role_data: any[]): void {
     this.roles = [];
-    this.roles_assignable = [];
-    this.current_org_role_count = 0;
     for (let role of role_data) {
       this.roles.push(this.convertJsonService.getRole(role, this.rules));
-      if (role.organization || this.current_organization.id === 1) {
-        this.current_org_role_count += 1;
-      }
     }
-    // set which roles currently logged in user can assign
+    this.setRoleMetadata();
+  }
+
+  setRoleMetadata(): void {
+    // set which roles currently logged in user can assign, and how many roles
+    // are specific to the current organization
+    this.roles_assignable = [];
+    this.current_org_role_count = 0;
     for (let role of this.roles) {
       if (this.userPermission.canAssignRole(role)) {
         this.roles_assignable.push(role);
+      }
+      if (role.organization_id || this.current_organization.id === 1) {
+        this.current_org_role_count += 1;
       }
     }
   }
@@ -213,18 +205,14 @@ export class OrganizationComponent implements OnInit {
   }
 
   deleteUser(user: User): void {
-    // TODO add: are you sure?
     this.organization_users = removeMatchedIdFromArray(
       this.organization_users,
       user
     );
   }
 
-  endRoleEditing($event: ChangeExit, role: Role, role_idx: number) {}
-
-  addNewlyCreatedRole(id: number, role: Role): void {}
-
-  deleteRole(role: Role): void {}
-
-  cancelNewRole(is_remove_new_role: boolean): void {}
+  deleteRole(role: Role): void {
+    this.roles = removeMatchedIdFromArray(this.roles, role);
+    this.setRoleMetadata();
+  }
 }

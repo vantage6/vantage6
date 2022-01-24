@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { ChangeExit } from 'src/app/globals/enum';
 import { Location } from '@angular/common';
 
 import { EMPTY_ROLE, Role } from 'src/app/interfaces/role';

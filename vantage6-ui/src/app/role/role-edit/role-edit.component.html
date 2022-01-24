@@ -1,28 +1,35 @@
-<table style="width: 100%">
-  <colgroup>
-    <col span="1" style="width: 20%;"/>
-    <col span="1" style="width: 80%;"/>
-  </colgroup>
-  <tr>
-    <td>Name:</td>
-    <td>{{role.name}}</td>
-  </tr>
-  <tr>
-    <td>Description:</td>
-    <td>{{role.description}}</td>
-  </tr>
-</table>
-<app-permission-table
-  [given_roles]="[]"
-  [given_rules]="role.rules"
-  [loggedin_user_rules]="userPermission.userRules"
-  [is_edit_mode]="true"
-  (addedRulesChangeEvent)="updateAddedRules($event)"
-></app-permission-table>
-<button mat-button class="btn btn-save" (click)="saveEdit()">
-  Save
-</button>
-<!-- TODO change name of btn-add class to 'btn-default' or so -->
-<button mat-button class="btn btn-add" (click)="cancelEdit()">
-  Cancel
-</button>
+<mat-expansion-panel expanded="true">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      {{role.name}}
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Name:</td>
+      <td><input [(ngModel)]="role.name"/></td>
+    </tr>
+    <tr>
+      <td>Description:</td>
+      <td><input [(ngModel)]="role.description"/></td>
+    </tr>
+  </table>
+  <app-permission-table
+    [given_roles]="[]"
+    [given_rules]="role.rules"
+    [loggedin_user_rules]="userPermission.userRules"
+    [is_edit_mode]="true"
+    (addedRulesChangeEvent)="updateAddedRules($event)"
+  ></app-permission-table>
+  <button mat-button class="btn btn-save" (click)="saveEdit()">
+    Save
+  </button>
+  <!-- TODO change name of btn-add class to 'btn-default' or so -->
+  <button mat-button class="btn btn-add" (click)="cancelEdit()">
+    Cancel
+  </button>
+</mat-expansion-panel>

@@ -8,7 +8,6 @@ import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { removeMatchedIdFromArray } from 'src/app/utils';
 import { UserService } from 'src/app/services/api/user.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
-import { ChangeExit } from 'src/app/globals/enum';
 import { UserEditService } from '../user-edit.service';
 
 // TODO add option to assign user to different organization

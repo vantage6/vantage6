@@ -50,14 +50,14 @@
         userPermission.can('edit', 'user', user.organization_id) ||
         (user.is_logged_in && userPermission.hasPermission('edit', 'user', 'own'))"
       mat-button class="btn btn-edit inline"
-      (click)="editUser(user)">
+      (click)="editUser()">
     Edit
   </button>
   <button *ngIf="
         userPermission.can('delete', 'user', user.organization_id) ||
         (user.is_logged_in && userPermission.hasPermission('delete', 'user', 'own'))"
       mat-button class="btn btn-delete-strong"
-      (click)="deleteUser(user)">
+      (click)="deleteUser()">
     Delete
   </button>
 </mat-expansion-panel>

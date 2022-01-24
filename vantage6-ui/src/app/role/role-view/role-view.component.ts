@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ExitMode } from 'src/app/globals/enum';
 
 import { Role, EMPTY_ROLE } from 'src/app/interfaces/role';
+import { ModalService } from 'src/app/modal/modal.service';
 
 import { RoleService } from 'src/app/services/api/role.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
@@ -17,26 +19,34 @@ export class RoleViewComponent implements OnInit {
 
   constructor(
     public userPermission: UserPermissionService,
-    public roleService: RoleService
+    public roleService: RoleService,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {}
 
+  executeDelete(): void {
+    this.roleService.delete(this.role).subscribe(
+      (data) => {
+        this.deletingRole.emit(this.role);
+      },
+      (error) => {
+        alert(error.error.msg);
+      }
+    );
+  }
+
   deleteRole(): void {
-    console.log('delete role');
-    // this.roleService.delete(this.role).subscribe(
-    //   (data) => {
-    //     this.deletingRole.emit(this.role);
-    //   },
-    //   (error) => {
-    //     alert(error.error.msg);
-    //   }
-    // );
+    // open modal window to ask for confirmation of irreversible delete action
+    this.modalService.openDeleteModal(this.role).result.then((exit_mode) => {
+      if (exit_mode === ExitMode.DELETE) {
+        this.executeDelete();
+      }
+    });
   }
 
   editRole(): void {
-    // this.role.is_being_edited = true;
-    // this.editingRole.emit(this.role);
-    console.log('editing');
+    this.role.is_being_edited = true;
+    this.editingRole.emit(this.role);
   }
 }
