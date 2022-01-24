@@ -12,17 +12,26 @@ import {
 import { deepcopy } from 'src/app/utils';
 
 import { environment } from 'src/environments/environment';
+import { TokenStorageService } from '../token-storage.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RuleService {
+  is_logged_in = false;
   all_rules: Rule[] = [];
   all_rules_bhs = new BehaviorSubject<Rule[]>([]);
   rule_groups: RuleGroup[] = [];
   rule_groups_bhs = new BehaviorSubject<RuleGroup[]>([]);
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private tokenStorageService: TokenStorageService
+  ) {
+    this.tokenStorageService.isLoggedIn().subscribe((is_logged_in) => {
+      this.is_logged_in = is_logged_in;
+    });
+  }
 
   list() {
     return this.http.get<any>(environment.api_url + '/rule');
@@ -50,7 +59,7 @@ export class RuleService {
   }
 
   async setAllRules(): Promise<void> {
-    if (this.all_rules.length > 0) return;
+    if (this.all_rules.length > 0 || !this.is_logged_in) return;
 
     // request description of all rules
     const rules = await this.list().toPromise();

@@ -64,8 +64,10 @@ export class RoleService {
   }
 
   async getRole(id: number): Promise<Role> {
+    if (this.all_rules.length === 0) {
+      await this.setup();
+    }
     let role_json = await this.get(id).toPromise();
-
     return this.convertJsonService.getRole(role_json, this.all_rules);
   }
 

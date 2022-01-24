@@ -38,11 +38,11 @@ export class UserPermissionService {
     // get user information
     let user_info = this.tokenStorage.getUserInfo();
     if (Object.keys(user_info).length !== 0) {
-      this.setUserPermissions(user_info);
+      await this.setUserPermissions(user_info);
     }
   }
 
-  public savePermissions(permissions: any[]): void {
+  public async savePermissions(permissions: any[]): Promise<void> {
     window.sessionStorage.removeItem(PERMISSION_KEY);
     window.sessionStorage.setItem(PERMISSION_KEY, JSON.stringify(permissions));
   }
@@ -125,7 +125,6 @@ export class UserPermissionService {
     // request the rules for the current user
     let user = await this.userService.getUser(user_id);
     this.userBhs.next(user);
-    console.log(user);
 
     await this._setPermissions(user, this.all_rules);
   }
@@ -145,7 +144,7 @@ export class UserPermissionService {
     this.userRules = [...new Set(this.userRules)];
 
     // save permissions
-    this.savePermissions(this.userRules);
+    await this.savePermissions(this.userRules);
   }
 
   canAssignRole(role: Role): boolean {

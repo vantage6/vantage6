@@ -52,7 +52,6 @@ export class OrganizationComponent implements OnInit {
   ngOnInit(): void {
     this.userPermission.getUser().subscribe((user) => {
       this.loggedin_user = user;
-      console.log(this.loggedin_user);
       this.getOrganizationDetails();
     });
     this.ruleService.getRules().subscribe((rules) => {
