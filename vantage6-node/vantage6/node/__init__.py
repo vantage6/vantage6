@@ -29,7 +29,9 @@ from socketio import ClientNamespace, Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
-from vantage6.common.docker_addons import ContainerKillListener
+from vantage6.common.docker_addons import (
+    ContainerKillListener, check_docker_running
+)
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
 from vantage6.node.server_io import NodeClient
@@ -138,6 +140,9 @@ class Node(object):
             raise
 
     def initialize(self):
+        # check if docker is running, otherwise exit with error
+        check_docker_running()
+
         self.config = self.ctx.config
         self.queue = queue.Queue()
         self._using_encryption = None
