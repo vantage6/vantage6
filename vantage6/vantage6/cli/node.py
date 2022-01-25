@@ -206,7 +206,6 @@ def cli_node_files(name, environment, system_folders):
     info(f"Log file           = {ctx.log_file}")
     info(f"data folders       = {ctx.data_dir}")
     info("Database labels and files")
-
     for label, path in ctx.databases.items():
         info(f" - {label:15} = {path}")
 
@@ -225,15 +224,15 @@ def cli_node_files(name, environment, system_folders):
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
-@click.option('--skipp-db-exist-check/--db-exist-check', default=False,
-              help="Skipp the check of the existence of the DB (always try to \
-              mount)")
+@click.option('--force-db-mount', is_flag=True,
+              help="Skip the check of the existence of the DB (always try to "
+                   "mount)")
 @click.option('--attach/--detach', default=False,
               help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
               help="mount vantage6-master package source")
 def cli_node_start(name, config, environment, system_folders, image, keep,
-                   mount_src, attach, skipp_db_exist_check):
+                   mount_src, attach, force_db_mount):
     """Start the node instance.
 
         If no name or config is specified the default.yaml configuation is
@@ -260,9 +259,10 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
-            question = f"Configuration '{name}' using environment"
-            question += f" '{environment}' does not exist.\n  Do you want to"
-            question += " create this config now?"
+            question = (f"Configuration '{name}' using environment "
+                        "'{environment}' does not exist.\n  Do you want to "
+                        "create this config now?")
+
 
             if q.confirm(question).ask():
                 configuration_wizard("node", name, environment, system_folders)
@@ -360,16 +360,26 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     }
 
     # only mount the DB if it is a file
-    info("Setting up database")
-    db_is_file = Path(ctx.databases["default"]).exists()
-    env['DATABASE_URI'] = "/mnt/database.csv" if db_is_file else \
-        ctx.databases['default']
-    info(f" - URI: {env['DATABASE_URI']}")
-    if db_is_file or skipp_db_exist_check:
-        mounts.append(("/mnt/database.csv", str(ctx.databases["default"])))
-    else:
-        warning(' - Are you using a non file-based database?')
-        warning('   Or did you make a mistake in the database path?')
+    info("Setting up databases")
+    db_labels = ctx.databases.keys()
+    for label in db_labels:
+
+        uri = ctx.databases[label]
+        info(f"  Processing database '{label}:{uri}'")
+        LABEL = label.upper()
+
+        file_based = Path(uri).exists()
+        if not file_based and not force_db_mount:
+            debug('  - non file-based database added')
+            env[f'{LABEL}_DATABASE_URI'] = uri
+        else:
+            debug('  - file-based database added')
+            env[f'{LABEL}_DATABASE_URI'] = f'/mnt/{label}.csv'
+            mounts.append((f'/mnt/{label}.csv', str(uri)))
+
+        # FIXME legacy to support < 2.1.3 can be removed from 3+
+        if label == 'default':
+            env['DATABASE_URI'] = '/mnt/default.csv'
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
@@ -555,7 +565,7 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
         error("Could not create private key!")
         warning(
             "If you're **sure** you want to create a new key, "
-            f"please run this command with the '--overwrite' flag"
+            "please run this command with the '--overwrite' flag"
         )
         warning("Continuing with existing key instead!")
         private_key = RSACryptor(file_).private_key
