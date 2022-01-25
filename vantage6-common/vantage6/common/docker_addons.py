@@ -13,8 +13,7 @@ from docker.models.containers import Container
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
 
-logger = logger_name(__name__)
-log = logging.getLogger(logger)
+log = logging.getLogger(logger_name(__name__))
 
 docker_client = docker.from_env()
 
@@ -29,6 +28,17 @@ class ContainerKillListener:
 
     def exit_gracefully(self, *args):
         self.kill_now = True
+
+
+def check_docker_running():
+    """ Return True if docker engine is running"""
+    try:
+        docker_client.ping()
+    except docker.errors.APIError as e:
+        log.error("Cannot reach the Docker engine! Please make sure Docker "
+                  "is running.")
+        log.warn("Exiting...")
+        exit(1)
 
 
 def registry_basic_auth_header(docker_client, registry):
