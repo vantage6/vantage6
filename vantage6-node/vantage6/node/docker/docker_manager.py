@@ -99,25 +99,34 @@ class DockerManager(DockerBaseManager):
         config: Dict
             Configuration of the app
         """
+
+        # Check that the `default` database label is present. If this is
+        # not the case, older algorithms will break
+        db_labels = self.config['databases'].keys()
+        if 'default' not in db_labels:
+            self.log.error("'default' database not specified in the config!")
+            self.log.debug(f'databases in config={db_labels}')
+
         # If we're running in a docker container, database_uri would point
         # to a path on the *host* (since it's been read from the config
         # file). That's no good here. Therefore, we expect the CLI to set
-        # the environment variable for us. This has the added bonus that we
+        # the environment variables for us. This has the added bonus that we
         # can override the URI from the command line as well.
-        default_uri = config['databases']['default']
-        self.database_uri = os.environ.get('DATABASE_URI', default_uri)
+        self.databases = {}
+        for label in db_labels:
+            label_upper = label.upper()
+            if self.__docker.running_in_docker():
+                uri = os.environ[f'{label_upper}_DATABASE_URI']
+            else:
+                uri = self.config['databases'][label]
 
-        self.database_is_file = False
-        if Path(self.database_uri).exists():
-            # We'll copy the file to the folder `data` in our task_dir.
-            self.log.info(f'Copying {self.database_uri} to {self.__tasks_dir}')
-            shutil.copy(self.database_uri, self.__tasks_dir)
+            db_is_file = Path(uri).exists()
+            if db_is_file:
+                # We'll copy the file to the folder `data` in our task_dir.
+                self.log.info(f'Copying {uri} to {self.__tasks_dir}')
+                shutil.copy(uri, self.__tasks_dir)
 
-            # Since we've copied the database to the folder 'data' in the root
-            # of the volume: '/data/<database.csv>'. We'll just keep the
-            # basename (i.e. filename + ext).
-            self.database_uri = os.path.basename(self.database_uri)
-            self.database_is_file = True
+            self.databases[label] = {'uri': uri, 'is_file': db_is_file}
 
     def create_volume(self, volume_name: str) -> None:
         """
@@ -210,7 +219,7 @@ class DockerManager(DockerBaseManager):
         self.isolated_network_mgr.cleanup()
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: str, token: str) -> Union[List[Dict], None]:
+            tmp_vol_name: str, token: str, database: str) -> Union[List[Dict], None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
@@ -227,6 +236,8 @@ class DockerManager(DockerBaseManager):
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
+        database: str
+            Name of the Database to use
 
         Returns
         -------
@@ -253,13 +264,12 @@ class DockerManager(DockerBaseManager):
             node_name=self.node_name,
             tasks_dir=self.__tasks_dir,
             isolated_network_mgr=self.isolated_network_mgr,
-            database_uri=self.database_uri,
-            database_is_file=self.database_is_file,
+            databases=self.databases,
             docker_volume_name=self.data_volume_name
         )
         vpn_ports = task.run(
             docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
-            algorithm_env=self.algorithm_env
+            algorithm_env=self.algorithm_env, database=database
         )
 
         # keep track of the active container
