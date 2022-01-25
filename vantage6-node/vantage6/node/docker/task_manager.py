@@ -203,6 +203,9 @@ class DockerTaskManager(DockerBaseManager):
         container_name = f'{APPNAME}-{self.node_name}-result-{self.result_id}'
         helper_container_name = container_name + '-helper'
 
+        # Try to pull the latest image
+        self.pull()
+
         # remove algorithm containers if they were already running
         remove_container_if_exists(
             docker_client=self.docker, name=container_name
@@ -230,9 +233,6 @@ class DockerTaskManager(DockerBaseManager):
                 helper_container=self.helper_container,
                 algo_image_name=self.image
             )
-
-        # Try to pull the latest image
-        self.pull()
 
         # attempt to run the image
         try:
