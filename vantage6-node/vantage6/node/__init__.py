@@ -351,7 +351,7 @@ class Node(object):
             Runs in a separate thread. Received events are dispatched
             through the appropriate action_handler for a channel.
         """
-        self.log.debug("listening for incoming messages")
+        self.log.debug("Listening for incoming messages")
 
         # FIXME: while True in combination with a wait() call that never exits
         #   makes joining the tread (to terminate) difficult?
@@ -359,7 +359,11 @@ class Node(object):
             # incoming messages are handled by the action_handler instance
             # which is attached when the socket connection was made. wait()
             # is blocks forever (if no time is specified).
-            self.socketIO.wait()
+            try:
+                self.socketIO.wait()
+            except Exception as e:
+                self.log.error('Listening thread had an exception')
+                self.log.debug(e)
 
     def __speaking_worker(self):
         """ Sending messages to central server.
@@ -373,54 +377,58 @@ class Node(object):
         self.log.debug("Waiting for results to send to the server")
 
         while True:
-            results = self.__docker.get_result()
+            try:
+                results = self.__docker.get_result()
 
-            # notify all of a crashed container
-            if results.status_code:
-                self.socketIO.emit(
-                    'container_failed',
-                    data={
-                        'node_id': self.server_io.whoami.id_,
-                        'status_code': results.status_code,
-                        'result_id': results.result_id,
-                        'collaboration_id': self.server_io.collaboration_id
-                    },
-                    namespace='/tasks'
+                # notify all of a crashed container
+                if results.status_code:
+                    self.socketIO.emit(
+                        'container_failed',
+                        data={
+                            'node_id': self.server_io.whoami.id_,
+                            'status_code': results.status_code,
+                            'result_id': results.result_id,
+                            'collaboration_id': self.server_io.collaboration_id
+                        },
+                        namespace='/tasks'
+                    )
+
+                self.log.info(
+                    f"Sending result (id={results.result_id}) to the server!")
+
+                # FIXME: why are we retrieving the result *again*? Shouldn't we
+                # just store the task_id when retrieving the task the first time?
+                response = self.server_io.request(f"result/{results.result_id}")
+                task_id = response.get("task").get("id")
+
+                if not task_id:
+                    self.log.error(
+                        f"task_id of result (id={results.result_id}) "
+                        f"could not be retrieved"
+                    )
+                    return
+
+                response = self.server_io.request(f"task/{task_id}")
+                initiator_id = response.get("initiator")
+
+                if not initiator_id:
+                    self.log.error(
+                        f"Initiator id from task (id={task_id})could not be "
+                        f"retrieved"
+                    )
+
+                self.server_io.patch_results(
+                    id=results.result_id,
+                    initiator_id=initiator_id,
+                    result={
+                        'result': results.data,
+                        'log': results.logs,
+                        'finished_at': datetime.datetime.now().isoformat(),
+                    }
                 )
-
-            self.log.info(
-                f"Sending result (id={results.result_id}) to the server!")
-
-            # FIXME: why are we retrieving the result *again*? Shouldn't we
-            # just store the task_id when retrieving the task the first time?
-            response = self.server_io.request(f"result/{results.result_id}")
-            task_id = response.get("task").get("id")
-
-            if not task_id:
-                self.log.error(
-                    f"task_id of result (id={results.result_id}) "
-                    f"could not be retrieved"
-                )
-                return
-
-            response = self.server_io.request(f"task/{task_id}")
-            initiator_id = response.get("initiator")
-
-            if not initiator_id:
-                self.log.error(
-                    f"Initiator id from task (id={task_id})could not be "
-                    f"retrieved"
-                )
-
-            self.server_io.patch_results(
-                id=results.result_id,
-                initiator_id=initiator_id,
-                result={
-                    'result': results.data,
-                    'log': results.logs,
-                    'finished_at': datetime.datetime.now().isoformat(),
-                }
-            )
+            except Exception as e:
+                self.log.error('Speaking thread had an exception')
+                self.log.debug(e)
 
     def authenticate(self):
         """ Authenticate to the central server
@@ -430,8 +438,10 @@ class Node(object):
         """
         api_key = self.config.get("api_key")
 
-        keep_trying = True
-        while keep_trying:
+        success = False
+        i = 0
+        while i < 10:
+            i = i + 1
             try:
                 self.server_io.authenticate(api_key)
 
@@ -443,10 +453,14 @@ class Node(object):
 
             else:
                 # This is only executed if try-block executed without error.
-                keep_trying = False
+                success = True
+                break
 
-        # At this point, we shoud be connnected.
-        self.log.info(f"Node name: {self.server_io.name}")
+        if success:
+            self.log.info(f"Node name: {self.server_io.name}")
+        else:
+            self.log.critical('Unable to authenticate. Exiting')
+            exit(1)
 
     def private_key_filename(self):
         """Get the path to the private key."""
