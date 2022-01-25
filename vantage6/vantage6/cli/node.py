@@ -34,7 +34,7 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE
 )
 from vantage6.common.docker_addons import (
-    pull_if_newer, remove_container_if_exists
+    pull_if_newer, remove_container_if_exists, check_docker_running
 )
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
@@ -66,7 +66,7 @@ def cli_node_list():
     """Lists all nodes in the default configuration directory."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
@@ -245,7 +245,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     info("Starting node...")
     info("Finding Docker deamon")
     docker_client = docker.from_env()
-    check_if_docker_deamon_is_running(docker_client)
+    check_docker_running()
 
     NodeContext.LOGGING_ENABLED = False
     if config:
@@ -428,7 +428,7 @@ def cli_node_stop(name, system_folders, all_nodes):
     """Stop a running container. """
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
@@ -474,7 +474,7 @@ def cli_node_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
@@ -622,7 +622,7 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
 def cli_node_clean():
     """ This command erases docker volumes"""
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     # retrieve all volumes
     volumes = client.volumes.list()
@@ -659,7 +659,7 @@ def cli_node_version(name, system_folders):
     """Returns current version of vantage6 services installed."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
@@ -689,14 +689,6 @@ def cli_node_version(name, system_folders):
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
-
-
-def check_if_docker_deamon_is_running(docker_client):
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
-        exit(1)
 
 
 def create_client_and_authenticate(ctx):

@@ -12,7 +12,7 @@ from sqlalchemy.engine.url import make_url
 
 from vantage6.common import (info, warning, error, debug as debug_msg,
                              check_config_write_permissions)
-from vantage6.common.docker_addons import pull_if_newer
+from vantage6.common.docker_addons import pull_if_newer, check_docker_running
 from vantage6.common.globals import (
     APPNAME,
     STRING_ENCODING,
@@ -122,7 +122,7 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
     # will print an error if not
-    check_if_docker_deamon_is_running(docker_client)
+    check_docker_running()
 
     # check that this server is not already running
     running_servers = docker_client.containers.list(
@@ -239,7 +239,7 @@ def cli_server_configuration_list():
     """Print the available configurations."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_server = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -378,7 +378,7 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
     # will print an error if not
-    check_if_docker_deamon_is_running(docker_client)
+    check_docker_running()
 
     # pull lastest Docker image
     if image is None:
@@ -485,7 +485,7 @@ def cli_server_shell(ctx):
 
     docker_client = docker.from_env()
     # will print an error if not
-    check_if_docker_deamon_is_running(docker_client)
+    check_docker_running()
 
     running_servers = docker_client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -515,7 +515,7 @@ def cli_server_stop(name, system_folders, all_servers):
     """Stop a or all running server. """
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -560,7 +560,7 @@ def cli_server_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -587,14 +587,6 @@ def cli_server_attach(name, system_folders):
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
 
 
-def check_if_docker_deamon_is_running(docker_client):
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
-        exit()
-
-
 #
 #   version
 #
@@ -607,7 +599,7 @@ def cli_server_version(name, system_folders):
     """Returns current version of vantage6 services installed."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})

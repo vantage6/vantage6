@@ -1,16 +1,16 @@
 import unittest
 import logging
+import contextlib
 
 from unittest.mock import MagicMock, patch
 from pathlib import Path
-from io import BytesIO
+from io import BytesIO, StringIO
 from click.testing import CliRunner
-import contextlib
-from io import StringIO
+from docker.errors import APIError
 
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
-from docker.errors import APIError
+from vantage6.common.docker_addons import check_docker_running
 from vantage6.cli.node import (
     cli_node_list,
     cli_node_new_configuration,
@@ -22,7 +22,6 @@ from vantage6.cli.node import (
     cli_node_clean,
     print_log_worker,
     create_client_and_authenticate,
-    check_if_docker_deamon_is_running
 )
 
 
@@ -208,7 +207,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.pull_if_newer")
     @patch("vantage6.cli.node.NodeContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_start(self, check_docker, client, context, pull, volumes):
 
         # client.containers = MagicMock(name="docker.DockerClient.containers")
@@ -223,7 +222,7 @@ class NodeCLITest(unittest.TestCase):
             data_dir=Path("data"),
             log_dir=Path("logs"),
             config_dir=Path("configs"),
-            databases = {"default": "data.csv"}
+            databases={"default": "data.csv"}
         )
         ctx.get_data_file.return_value = "data.csv"
         context.return_value = ctx
@@ -236,7 +235,7 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_stop(self, check_docker, containers):
 
         check_docker.return_value = True
@@ -259,7 +258,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.time")
     @patch("vantage6.cli.node.print_log_worker")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_attach(self, check_docker, containers, log_worker, time_):
         """Attach docker logs without errors."""
         check_docker.return_value = True
@@ -282,7 +281,7 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.node.q")
     @patch("docker.DockerClient.volumes")
-    @patch("vantage6.cli.node.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_clean(self, check_docker, volumes, q):
         """Clean Docker volumes without errors."""
 
@@ -370,10 +369,9 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 1)
 
-
     @patch("vantage6.cli.node.q")
     @patch("docker.DockerClient.volumes")
-    @patch("vantage6.cli.node.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_clean_docker_error(self, check_docker, volumes, q):
 
         volume1 = MagicMock()
@@ -428,10 +426,10 @@ class NodeCLITest(unittest.TestCase):
     def test_check_docker(self, error):
         docker = MagicMock()
         try:
-            check_if_docker_deamon_is_running(docker)
+            check_docker_running()
         except Exception:
             self.fail("Exception raised!")
 
         docker.ping.side_effect = Exception("Boom!")
         with self.assertRaises(SystemExit):
-            check_if_docker_deamon_is_running(docker)
+            check_docker_running()
