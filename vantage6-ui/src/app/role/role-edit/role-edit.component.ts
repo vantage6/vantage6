@@ -7,6 +7,8 @@ import { Rule } from 'src/app/interfaces/rule';
 import { RoleService } from 'src/app/services/api/role.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
 import { RoleEditService } from '../role-edit.service';
+import { ModalService } from 'src/app/modal/modal.service';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-role-edit',
@@ -20,7 +22,8 @@ export class RoleEditComponent implements OnInit {
     private location: Location,
     public userPermission: UserPermissionService,
     private roleService: RoleService,
-    private roleEditService: RoleEditService
+    private roleEditService: RoleEditService,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
@@ -30,6 +33,13 @@ export class RoleEditComponent implements OnInit {
   }
 
   saveEdit(): void {
+    if (this.role.rules.length === 0) {
+      this.modalService.openMessageModal(
+        ModalMessageComponent,
+        'You have not selected any permissions! Please select at least one permission.'
+      );
+      return;
+    }
     let request;
     if (this.role.is_being_created) {
       request = this.roleService.create(this.role);

@@ -28,6 +28,7 @@ import { UserViewComponent } from './user/user-view/user-view.component';
 import { RoleViewComponent } from './role/role-view/role-view.component';
 import { RoleEditComponent } from './role/role-edit/role-edit.component';
 import { ModalDeleteComponent } from './modal/modal-delete/modal-delete.component';
+import { ModalMessageComponent } from './modal/modal-message/modal-message.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { ModalDeleteComponent } from './modal/modal-delete/modal-delete.componen
     RoleViewComponent,
     RoleEditComponent,
     ModalDeleteComponent,
+    ModalMessageComponent,
   ],
   imports: [
     BrowserModule,
