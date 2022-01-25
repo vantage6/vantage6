@@ -337,6 +337,11 @@ class User(UserBase):
         if data["password"]:
             user.password = data["password"]
         if data["email"]:
+            if (user.email != data["email"] and
+                    db.User.exists("email", data["email"])):
+                return {
+                    "msg": "User with that email already exists."
+                }, HTTPStatus.BAD_REQUEST
             user.email = data["email"]
 
         # request parser is awefull with lists
