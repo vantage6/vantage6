@@ -62,6 +62,12 @@ class NodeTaskNamespace(ClientNamespace):
     def on_message(self, data):
         self.log.info(data)
 
+    def on_connect(self):
+        """On connect or reconnect"""
+        self.log.info('(Re)Connected to the /tasks namespace')
+        self.node_worker_ref.sync_task_queue_with_server()
+        self.log.debug("Tasks synced again with the server...")
+
     def on_disconnect(self):
         """ Server disconnects event."""
         # self.node_worker_ref.socketIO.disconnect()
@@ -97,10 +103,8 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.debug("Token refreshed")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
-
-        # FIXME: This won't work: you're trying to access a private method!?
-        # self.node_worker_ref.__sync_task_queue_with_server()
-        # self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.sync_task_queue_with_server()
+        self.log.debug("Tasks synced again with the server...")
 
 
 # ------------------------------------------------------------------------------
@@ -168,10 +172,6 @@ class Node(object):
         # Create a long-lasting websocket connection.
         self.log.debug("Creating websocket connection with the server")
         self.connect_to_socket()
-
-        # Check if new tasks were posted while offline.
-        self.log.debug("Fetching tasks that were posted while offline")
-        self.__sync_task_queue_with_server()
 
         # setup docker isolated network manager
         isolated_network_mgr = \
@@ -273,7 +273,7 @@ class Node(object):
                 self.log.error('Proxyserver could not be started or crashed!')
                 self.log.error(e)
 
-    def __sync_task_queue_with_server(self):
+    def sync_task_queue_with_server(self):
         """ Get all unprocessed tasks from the server for this node."""
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
