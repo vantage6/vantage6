@@ -212,7 +212,19 @@ export class OrganizationComponent implements OnInit {
   }
 
   deleteRole(role: Role): void {
+    // remove role
     this.roles = removeMatchedIdFromArray(this.roles, role);
+    // set data on which roles user can assign, how many roles there are for
+    // the current organization
     this.setRoleMetadata();
+    // delete this role from any user it was assigned to (this is also done
+    // separately in the backend)
+    this.deleteRoleFromUsers(role);
+  }
+
+  deleteRoleFromUsers(role: Role): void {
+    for (let user of this.organization_users) {
+      user.roles = removeMatchedIdFromArray(user.roles, role);
+    }
   }
 }
