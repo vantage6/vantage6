@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 
 import logging
 
+
 from flask import request, g
 from flask_jwt_extended import (
     jwt_refresh_token_required,
@@ -154,10 +155,11 @@ class NodeToken(ServicesResources):
 
         if not node:  # login failed
             log.error("Api key is not recognised")
-            #log remote ip
-            ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+            # log remote ip
+            ip = request.headers.getlist("X-Forwarded-For")
             log.debug(f'request from {ip}')
-            return {"msg": "Api key is not recognised!"}
+            return {"msg": "Api key is not recognised!"}, \
+                HTTPStatus.UNAUTHORIZED
 
         token = create_access_token(node)
         ret = {
