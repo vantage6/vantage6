@@ -374,7 +374,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             env[f'{LABEL}_DATABASE_URI'] = uri
         else:
             debug('  - file-based database added')
-            env[f'{LABEL}_DATABASE_URI'] = f'/mnt/{label}.csv'
+            env[f'{LABEL}_DATABASE_URI'] = f'{label}.csv'
             mounts.append((f'/mnt/{label}.csv', str(uri)))
 
         # FIXME legacy to support < 2.1.3 can be removed from 3+
