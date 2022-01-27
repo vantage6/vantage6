@@ -2,7 +2,6 @@
 to be cleaned at some point. """
 import logging
 import os
-from tkinter import N
 
 from typing import Dict, List
 from pathlib import Path
