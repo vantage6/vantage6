@@ -2,6 +2,7 @@
 to be cleaned at some point. """
 import logging
 import os
+from tkinter import N
 
 from typing import Dict, List
 from pathlib import Path
@@ -136,7 +137,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.error(e)
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: Dict) -> List[Dict]:
+            algorithm_env: Dict, database: str) -> List[Dict]:
         """
         Runs the docker-image in detached mode.
 
@@ -171,7 +172,8 @@ class DockerTaskManager(DockerBaseManager):
 
         # setup environment variables
         self.environment_variables = \
-            self._setup_environment_vars(algorithm_env=algorithm_env)
+            self._setup_environment_vars(algorithm_env=algorithm_env,
+                                         database=database)
 
         # run the algorithm as docker container
         vpn_ports = self._run_algorithm()
@@ -318,7 +320,8 @@ class DockerTaskManager(DockerBaseManager):
                 {"bind": self.data_folder, "mode": "rw"}
         return volumes
 
-    def _setup_environment_vars(self, algorithm_env: Dict = {}) -> Dict:
+    def _setup_environment_vars(self, algorithm_env: Dict = {},
+                                database: str = 'default') -> Dict:
         """"
         Set environment variables required to run the algorithm
 
@@ -366,6 +369,15 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables[var_name] = \
                 f"{self.data_folder}/{db['uri']}" if db['is_file'] \
                 else db['uri']
+
+        # Support legacy algorithms
+        try:
+            environment_variables["DATABASE_URI"] = \
+                f"{self.data_folder}/{self.databases[database]['uri']}"
+        except KeyError as e:
+            self.log.error(f"'{database}' database missing! This could crash "
+                           "legacy algorithms")
+            self.log.debug(e)
 
         self.log.debug(f"environment: {environment_variables}")
 
