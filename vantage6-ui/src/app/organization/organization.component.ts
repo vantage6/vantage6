@@ -110,35 +110,28 @@ export class OrganizationComponent implements OnInit {
     };
   }
 
-  collectUsersAndRoles(): void {
+  async collectUsersAndRoles(): Promise<void> {
     /* Renew the organization's users and roles */
     if (this.current_organization === null) {
       return;
     }
     this.organization_users = [];
 
+    // first collect roles for current organization. This is done before
+    // collecting the users so that the users can possess these roles
+    let role_json = await this.roleService
+      .list(this.current_organization.id, true)
+      .toPromise();
+    this.setRoles(role_json);
+
     // collect users for current organization
-    let req_users = this.userService.list(this.current_organization.id);
-
-    // collect roles for current organization
-    let req_roles = this.roleService.list(this.current_organization.id, true);
-
-    // join users, roles and rules requests to set organization page variables
-    forkJoin([req_users, req_roles]).subscribe(
-      (data: any) => {
-        // set roles
-        this.setRoles(data[1]);
-
-        // set users
-        this.setUsers(data[0]);
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
+    let user_json = await this.userService
+      .list(this.current_organization.id)
+      .toPromise();
+    this.setUsers(user_json);
   }
 
-  setRoles(role_data: any[]): void {
+  setRoles(role_data: any): void {
     this.roles = [];
     for (let role of role_data) {
       this.roles.push(this.convertJsonService.getRole(role, this.rules));
@@ -161,7 +154,7 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
-  setUsers(user_data: any[]): void {
+  setUsers(user_data: any): void {
     for (let user_json of user_data) {
       let user = this.convertJsonService.getUser(
         user_json,
@@ -222,7 +215,7 @@ export class OrganizationComponent implements OnInit {
     this.deleteRoleFromUsers(role);
   }
 
-  deleteRoleFromUsers(role: Role): void {
+  private deleteRoleFromUsers(role: Role): void {
     for (let user of this.organization_users) {
       user.roles = removeMatchedIdFromArray(user.roles, role);
     }
