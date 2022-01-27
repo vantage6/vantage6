@@ -1451,6 +1451,8 @@ class UserClient(ClientBase):
                 Algorithm input
             data_format : str, optional
                 IO data format used, by default LEGACY
+            database: str, optional
+                Database name to be used at the node
 
             Returns
             -------
