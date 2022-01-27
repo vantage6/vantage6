@@ -17,6 +17,7 @@ from pathlib import Path
 
 from vantage6.common.globals import APPNAME
 from vantage6.node.docker.docker_base import DockerBaseManager
+from vantage6.node.docker.utils import running_in_docker
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
 from vantage6.node.docker.network_manager import IsolatedNetworkManager
@@ -102,7 +103,7 @@ class DockerManager(DockerBaseManager):
 
         # Check that the `default` database label is present. If this is
         # not the case, older algorithms will break
-        db_labels = self.config['databases'].keys()
+        db_labels = config['databases'].keys()
         if 'default' not in db_labels:
             self.log.error("'default' database not specified in the config!")
             self.log.debug(f'databases in config={db_labels}')
@@ -115,10 +116,10 @@ class DockerManager(DockerBaseManager):
         self.databases = {}
         for label in db_labels:
             label_upper = label.upper()
-            if self.__docker.running_in_docker():
+            if running_in_docker():
                 uri = os.environ[f'{label_upper}_DATABASE_URI']
             else:
-                uri = self.config['databases'][label]
+                uri = config['databases'][label]
 
             db_is_file = Path(uri).exists()
             if db_is_file:
@@ -219,7 +220,8 @@ class DockerManager(DockerBaseManager):
         self.isolated_network_mgr.cleanup()
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: str, token: str, database: str) -> Union[List[Dict], None]:
+            tmp_vol_name: str, token: str, database: str
+            ) -> Union[List[Dict], None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
