@@ -130,9 +130,6 @@ jobs:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
     steps:
-      - id: notify
-        if: ${{  env.stage != '' }}
-        uses: andymckay/cancel-action@0.2
 
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -143,6 +140,7 @@ jobs:
           pip install click
 
       - name: Notify Discord community
+        if: ${{  env.stage == '' }}
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_RELEASE_TOKEN }}
         run: |
