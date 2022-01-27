@@ -128,6 +128,7 @@ jobs:
     needs: [version, build-n-release]
     env:
       version: ${{ needs.version.outputs.version }}
+      stage: ${{ needs.version.outputs.stage }}
     steps:
 
       - name: Checkout repository
@@ -139,6 +140,7 @@ jobs:
           pip install click
 
       - name: Notify Discord community
+        if: ${{  env.stage == '' }}
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_RELEASE_TOKEN }}
         run: |
