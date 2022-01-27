@@ -131,7 +131,7 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
     steps:
       - id: notify
-        if: ${{ $stage != '' }}
+        if: ${{ stage != '' }}
         uses: andymckay/cancel-action@0.2
 
       - name: Checkout repository
