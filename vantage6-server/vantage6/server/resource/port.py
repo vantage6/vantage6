@@ -180,38 +180,40 @@ class Ports(PortBase):
 
     @with_node
     def post(self):
-        """ Create a list of port description
+        """Create a list of port description
         ---
-
         description: >-
             Creates a description of a port that is available for VPN
             communication for a certain algorithm. Only the node on which the
             algorithm is running is allowed to create this.\n\n
 
+            Accesible for: `node`\n\n
+
         requestBody:
             content:
                 application/json:
-                schema:
-                    properties:
-                    port:
-                        type: int
-                        description: Port that receives container's VPN traffic
-                    result_id:
-                        type: int
-                        description: algorithm's result_id
-                    label:
-                        type: string
-                        description: Label for port specified in algorithm
-                            docker image
+                    schema:
+                        properties:
+                        port:
+                            type: int
+                            description: Port that receives container's VPN
+                                traffic
+                        result_id:
+                            type: int
+                            description: algorithm's result_id
+                        label:
+                            type: string
+                            description: Label for port specified in algorithm
+                                docker image
 
         responses:
-        201:
-            description: Ok
-        401:
-            description: Unauthorized or missing permission
+            201:
+                description: Ok
+            401:
+                description: Unauthorized or missing permission
 
         security:
-        - bearerAuth: []
+            - bearerAuth: []
 
         tags: ["VPN"]
         """
@@ -245,6 +247,8 @@ class Ports(PortBase):
             communication for a certain algorithm. The ports are deleted based
             on result_id. Only the node on which the algorithm is running is
             allowed to delete this.\n\n
+
+            Accesible for: `node`\n\n
 
         parameters:
           - in: path
