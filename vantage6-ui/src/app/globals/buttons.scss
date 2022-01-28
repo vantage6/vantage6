@@ -40,9 +40,6 @@
 
   border: {
     color: v.$vtg-blue-opac06;
-    style: solid;
-    width: 2px;
-    radius: 4px;
   }
 }
 
@@ -86,12 +83,6 @@
   color: v.$vtg-blue;
   background-color: v.$transparent;
   vertical-align: middle;
-  border: {
-    color: v.$vtg-blue;
-    style: solid;
-    width: 2px;
-    radius: 4px;
-  }
   .mat-icon {
     vertical-align: bottom;
   }

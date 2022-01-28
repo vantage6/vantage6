@@ -41,7 +41,7 @@
           </button>
         </div>
         <div *ngIf="current_org_role_count===0">
-          <div *ngIf="userPermission.can('view', 'role', current_organization.id); else noRolesBlock">
+          <div *ngIf="!userPermission.can('view', 'role', current_organization.id); else noRolesBlock">
             You do not have permission to view the roles!
           </div>
           <ng-template #noRolesBlock>
