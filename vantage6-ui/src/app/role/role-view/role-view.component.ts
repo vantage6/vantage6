@@ -10,7 +10,7 @@ import { UserPermissionService } from 'src/app/services/user-permission.service'
 @Component({
   selector: 'app-role-view',
   templateUrl: './role-view.component.html',
-  styleUrls: ['./role-view.component.scss'],
+  styleUrls: ['../../globals/buttons.scss', './role-view.component.scss'],
 })
 export class RoleViewComponent implements OnInit {
   @Input() role: Role = EMPTY_ROLE;

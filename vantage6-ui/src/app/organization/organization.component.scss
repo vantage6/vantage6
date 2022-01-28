@@ -5,42 +5,10 @@
   width: 50%;
 }
 
-mat-expansion-panel {
-  margin-top: 10px;
-}
-
 mat-card {
   margin-bottom: 10px;
 }
 
-.btn-add {
-  background-color: v.$transparent;
-  color: v.$vtg-blue;
-  transition-duration: 0.2s;
-  display: inline-block;
-
-  border: {
-    color: v.$vtg-blue;
-    style: solid;
-    width: 2px;
-    radius: 4px;
-  }
-}
-
-.btn-add:hover {
-  background-color: v.$vtg-blue;
-  color: v.$white;
-}
-
-.btn-right {
-  position: absolute;
-  right: 0;
-
-  margin: {
-    top: -7px;
-    right: 15px;
-  }
-}
 mat-icon {
   margin-right: 8px;
 }
@@ -49,87 +17,8 @@ mat-icon {
   display: inline;
 }
 
-.block {
-  display: block;
-  margin-bottom: 10px;
-}
-
-.btn-detail {
-  background-color: v.$vtg-blue-opac06;
-  color: v.$white;
-  margin-right: 5px;
-  margin-bottom: 5px;
-
-  border: {
-    color: v.$vtg-blue-opac06;
-    style: solid;
-    width: 2px;
-    radius: 4px;
-  }
-}
-
-.btn-save {
-  background-color: v.$vtg-blue;
-  color: v.$white;
-  border: {
-    color: v.$vtg-blue;
-  }
-  margin-right: 5px;
-}
-
 .mat-button.mat-button-disabled.mat-button-disabled {
   color: v.$white;
-}
-
-.btn-edit {
-  background-color: v.$vtg-orange;
-  color: v.$white;
-  margin-right: 15px;
-}
-
-.btn-dropdown {
-  color: v.$vtg-blue;
-  background-color: v.$transparent;
-  vertical-align: middle;
-  border: {
-    color: v.$vtg-blue;
-    style: solid;
-    width: 2px;
-    radius: 4px;
-  }
-  .mat-icon {
-    vertical-align: bottom;
-  }
-}
-
-.btn-delete {
-  background-color: v.$white;
-  color: v.$red;
-  border-color: v.$red;
-  margin-right: 5px;
-  margin-bottom: 5px;
-}
-
-.btn-delete-strong {
-  background-color: v.$red;
-  color: v.$white;
-  border-color: v.$red;
-}
-
-.align-top {
-  vertical-align: top;
-}
-
-table {
-  margin-bottom: 15px;
-}
-
-table td {
-  vertical-align: top;
-}
-
-tr {
-  margin-bottom: 3px;
 }
 
 h4 {

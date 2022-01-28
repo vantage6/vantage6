@@ -1,0 +1,103 @@
+@use 'variables' as v;
+
+.btn {
+  color: v.$vtg-blue;
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+}
+
+.btn-dflt {
+  background-color: v.$transparent;
+  color: v.$vtg-blue;
+  transition-duration: 0.2s;
+  display: inline-block;
+}
+
+.btn-dflt:hover {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+}
+
+.btn-right {
+  position: absolute;
+  right: 0;
+
+  margin: {
+    top: -7px;
+    right: 15px;
+  }
+}
+
+.btn-detail {
+  background-color: v.$vtg-blue-opac06;
+  color: v.$white;
+  margin-right: 5px;
+  margin-bottom: 5px;
+
+  border: {
+    color: v.$vtg-blue-opac06;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+}
+
+.mat-button.mat-button-disabled.mat-button-disabled {
+  color: v.$white;
+}
+
+.btn-save {
+  background-color: v.$vtg-blue;
+  color: v.$white;
+  border: {
+    color: v.$vtg-blue;
+  }
+  margin-right: 5px;
+}
+
+.btn-delete {
+  background-color: v.$white;
+  color: v.$red;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  border: {
+    color: v.$red;
+  }
+}
+
+.btn-delete-strong {
+  background-color: v.$red;
+  color: v.$white;
+  border-color: v.$red;
+}
+
+.btn-edit {
+  background-color: v.$vtg-orange;
+  color: v.$white;
+  margin-right: 15px;
+  border-color: v.$vtg-orange;
+}
+
+.btn-dropdown {
+  color: v.$vtg-blue;
+  background-color: v.$transparent;
+  vertical-align: middle;
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+  .mat-icon {
+    vertical-align: bottom;
+  }
+}
+
+.btn-in-block {
+  display: block;
+  margin-bottom: 10px;
+}

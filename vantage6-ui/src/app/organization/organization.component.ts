@@ -22,7 +22,7 @@ import { ModalMessageComponent } from '../modal/modal-message/modal-message.comp
 @Component({
   selector: 'app-organization',
   templateUrl: './organization.component.html',
-  styleUrls: ['./organization.component.scss'],
+  styleUrls: ['./organization.component.scss', '../globals/buttons.scss'],
 })
 export class OrganizationComponent implements OnInit {
   organizations: Organization[] = [];

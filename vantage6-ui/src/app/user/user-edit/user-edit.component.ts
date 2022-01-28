@@ -15,7 +15,7 @@ import { UserEditService } from '../user-edit.service';
 @Component({
   selector: 'app-user-edit',
   templateUrl: './user-edit.component.html',
-  styleUrls: ['./user-edit.component.scss'],
+  styleUrls: ['../../globals/buttons.scss', './user-edit.component.scss'],
 })
 export class UserEditComponent implements OnInit {
   user: User = EMPTY_USER;

@@ -8,7 +8,7 @@ import { User } from 'src/app/interfaces/user';
 @Component({
   selector: 'app-modal-delete',
   templateUrl: './modal-delete.component.html',
-  styleUrls: ['./modal-delete.component.scss'],
+  styleUrls: ['../../globals/buttons.scss', './modal-delete.component.scss'],
 })
 export class ModalDeleteComponent implements OnInit {
   @Input() obj_to_delete: User | Role | any;

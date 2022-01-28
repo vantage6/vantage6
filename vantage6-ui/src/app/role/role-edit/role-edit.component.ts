@@ -13,7 +13,7 @@ import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message
 @Component({
   selector: 'app-role-edit',
   templateUrl: './role-edit.component.html',
-  styleUrls: ['./role-edit.component.scss'],
+  styleUrls: ['../../globals/buttons.scss', './role-edit.component.scss'],
 })
 export class RoleEditComponent implements OnInit {
   role: Role = EMPTY_ROLE;

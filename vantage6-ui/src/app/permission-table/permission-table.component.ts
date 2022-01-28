@@ -31,7 +31,7 @@ import {
 @Component({
   selector: 'app-permission-table',
   templateUrl: './permission-table.component.html',
-  styleUrls: ['./permission-table.component.scss'],
+  styleUrls: ['../globals/buttons.scss', './permission-table.component.scss'],
 })
 export class PermissionTableComponent implements OnInit, OnChanges {
   @Input() given_roles: Role[] = [];
@@ -57,9 +57,6 @@ export class PermissionTableComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.rule_groups = this.ruleService.getRuleGroupsCopy();
-    // this.ruleService.getRuleGroupsCopy().subscribe((rule_groups) => {
-    // this.rule_groups = rule_groups;
-    // });
     this.init();
   }
 

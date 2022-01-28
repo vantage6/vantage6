@@ -48,13 +48,3 @@ body {
 
 /* Importing Bootstrap SCSS file. */
 @import "~bootstrap/scss/bootstrap";
-
-.btn {
-  color: v.$vtg-blue;
-  border: {
-    color: v.$vtg-blue;
-    style: solid;
-    width: 2px;
-    radius: 4px;
-  }
-}

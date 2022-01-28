@@ -43,7 +43,7 @@
         <td>
         <div *ngIf="user.id===loggedin_user.id; else modifyRulesBlock">
           <div *ngFor="let role of user.roles" class="inline">
-            <button mat-button class="btn-detail inline" disabled>
+            <button mat-button class="btn btn-detail btn-inline" disabled>
               {{role.name}}
             </button>
           </div>
@@ -52,7 +52,7 @@
         </div>
         <ng-template #modifyRulesBlock>
           <div *ngFor="let role of user.roles" class="inline">
-            <button mat-button class="btn-delete inline" (click)="removeRole(role)">
+            <button mat-button class="btn btn-delete btn-inline" (click)="removeRole(role)">
               <mat-icon>remove_circle</mat-icon>
               <span>{{role.name}}</span>
             </button>
@@ -89,8 +89,7 @@
   <button mat-button class="btn btn-save" (click)="saveEditedUser()">
     Save
   </button>
-  <!-- TODO change name of btn-add class to 'btn-default' or so -->
-  <button mat-button class="btn btn-add" (click)="cancelEdit()">
+  <button mat-button class="btn btn-dflt" (click)="cancelEdit()">
     Cancel
   </button>
 </mat-expansion-panel>
