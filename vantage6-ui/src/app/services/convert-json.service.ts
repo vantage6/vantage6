@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Role } from '../interfaces/role';
 import { Rule } from '../interfaces/rule';
 import { User } from '../interfaces/user';
+import { Organization } from '../interfaces/organization';
 import { getById } from '../utils';
 
 @Injectable({
@@ -67,6 +68,19 @@ export class ConvertJsonService {
       roles: user_roles,
       rules: user_rules,
       is_being_created: false,
+    };
+  }
+
+  getOrganization(org_json: any): Organization {
+    return {
+      id: org_json.id,
+      name: org_json.name,
+      address1: org_json.address1,
+      address2: org_json.address2,
+      zipcode: org_json.zipcode,
+      country: org_json.country,
+      domain: org_json.domain,
+      public_key: org_json.public_key,
     };
   }
 }

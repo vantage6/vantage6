@@ -17,7 +17,7 @@ export class ModalService {
 
   openMessageModal(
     modalComponent: any,
-    message = '',
+    messages: string[] = [],
     keepOpen = false
   ): NgbModalRef {
     let options: NgbModalOptions = {};
@@ -28,7 +28,7 @@ export class ModalService {
       };
     }
     const modalRef = this.modalService.open(modalComponent, options);
-    modalRef.componentInstance.message = message;
+    modalRef.componentInstance.messages = messages;
     return modalRef;
   }
 

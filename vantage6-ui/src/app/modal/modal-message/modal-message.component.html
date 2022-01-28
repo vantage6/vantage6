@@ -1,5 +1,9 @@
 <div class="modal-body">
-    {{ message }}
+    <div *ngFor="let message of messages">
+        <p>
+            {{ message }}
+        </p>
+    </div>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn" (click)="closeModal()">Close</button>

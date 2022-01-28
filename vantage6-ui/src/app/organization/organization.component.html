@@ -29,6 +29,9 @@
         {{current_organization.public_key}}
         <br/>
         -->
+        <button mat-button class="btn-add block" (click)="showPublicKey()">
+          View public key
+        </button>
         <button *ngIf="userPermission.can('edit', 'organization', current_organization.id)" mat-button class="btn-edit">
           Edit
         </button>

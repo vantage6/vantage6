@@ -34,10 +34,9 @@ export class RoleEditComponent implements OnInit {
 
   saveEdit(): void {
     if (this.role.rules.length === 0) {
-      this.modalService.openMessageModal(
-        ModalMessageComponent,
-        'You have not selected any permissions! Please select at least one permission.'
-      );
+      this.modalService.openMessageModal(ModalMessageComponent, [
+        'You have not selected any permissions! Please select at least one permission.',
+      ]);
       return;
     }
     let request;

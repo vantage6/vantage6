@@ -7,7 +7,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
   styleUrls: ['./modal-message.component.scss'],
 })
 export class ModalMessageComponent implements OnInit {
-  @Input() message: string = '';
+  @Input() messages: string[] = [];
 
   constructor(public activeModal: NgbActiveModal) {}
 

@@ -16,6 +16,8 @@ import { Router } from '@angular/router';
 import { UserEditService } from '../user/user-edit.service';
 import { RoleEditService } from '../role/role-edit.service';
 import { RuleService } from '../services/api/rule.service';
+import { ModalService } from '../modal/modal.service';
+import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-organization',
@@ -41,7 +43,8 @@ export class OrganizationComponent implements OnInit {
     private convertJsonService: ConvertJsonService,
     private userEditService: UserEditService,
     private roleEditService: RoleEditService,
-    private ruleService: RuleService
+    private ruleService: RuleService,
+    private modalService: ModalService
   ) {}
 
   // TODO Now it is shown that there are no users/roles until they are loaded,
@@ -88,26 +91,13 @@ export class OrganizationComponent implements OnInit {
 
   setOrganizations(organization_data: any[]) {
     for (let org of organization_data) {
-      let new_org = this.getOrgObject(org);
+      let new_org = this.convertJsonService.getOrganization(org);
       if (new_org.id === this.loggedin_user.organization_id) {
         // set organization of logged-in user as default current organization
         this.current_organization = new_org;
       }
       this.organizations.push(new_org);
     }
-  }
-
-  getOrgObject(org_object: any): Organization {
-    return {
-      id: org_object.id,
-      name: org_object.name,
-      address1: org_object.address1,
-      address2: org_object.address2,
-      zipcode: org_object.zipcode,
-      country: org_object.country,
-      domain: org_object.domain,
-      public_key: org_object.public_key,
-    };
   }
 
   async collectUsersAndRoles(): Promise<void> {
@@ -219,5 +209,13 @@ export class OrganizationComponent implements OnInit {
     for (let user of this.organization_users) {
       user.roles = removeMatchedIdFromArray(user.roles, role);
     }
+  }
+
+  showPublicKey(): void {
+    this.modalService.openMessageModal(ModalMessageComponent, [
+      'The public key is:',
+      this.current_organization.public_key,
+    ]);
+    // TODO add functionality to modify the public key
   }
 }
