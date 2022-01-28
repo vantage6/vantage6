@@ -18,9 +18,29 @@ export class OrganizationService {
     return this.http.get(environment.api_url + '/organization/' + id);
   }
 
-  update(id: number, organization: Organization) {}
+  update(org: Organization) {
+    const data = this._get_data(org);
+    return this.http.patch<any>(
+      environment.api_url + '/organization/' + org.id,
+      data
+    );
+  }
 
-  create(id: number, organization: Organization) {}
+  create(org: Organization) {
+    const data = this._get_data(org);
+    return this.http.post<any>(environment.api_url + '/organization', data);
+  }
 
-  delete(id: number) {}
+  private _get_data(org: Organization): any {
+    let data: any = {
+      name: org.name,
+      address1: org.address1,
+      address2: org.address2,
+      zipcode: org.zipcode,
+      country: org.country,
+      domain: org.domain,
+      public_key: org.public_key,
+    };
+    return data;
+  }
 }

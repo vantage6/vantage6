@@ -7,6 +7,7 @@ export interface Organization {
   country: string;
   domain: string;
   public_key: string;
+  is_being_created?: boolean;
 }
 
 export const EMPTY_ORGANIZATION = {

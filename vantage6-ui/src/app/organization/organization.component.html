@@ -10,6 +10,12 @@
           </div>
         </div>
       </div>
+      <div *ngIf="userPermission.hasPermission('create', 'organization', 'global')" class="inline">
+        <button mat-button class="btn btn-dflt btn-right" id="new_org_button" (click)="createOrganization()">
+          <mat-icon>add_circle</mat-icon>
+          <span>New organization</span>
+        </button>
+      </div>
     </div>
   </mat-card>
 </div>
@@ -27,7 +33,9 @@
         <button mat-button class="btn btn-dflt btn-in-block" (click)="showPublicKey()">
           View public key
         </button>
-        <button *ngIf="userPermission.can('edit', 'organization', current_organization.id)" mat-button class="btn-edit">
+        <button *ngIf="userPermission.can('edit', 'organization', current_organization.id)"
+                mat-button class="btn-edit"
+                (click)="editOrganization(current_organization)">
           Edit
         </button>
       </mat-card>

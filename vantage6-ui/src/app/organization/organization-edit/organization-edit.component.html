@@ -1,0 +1,35 @@
+<mat-card>
+    <table style="width: 100%">
+      <colgroup>
+        <col span="1" style="width: 20%;"/>
+        <col span="1" style="width: 80%;"/>
+      </colgroup>
+      <tr>
+        <td>Name:</td>
+        <td><input [(ngModel)]="organization.name"/></td>
+      </tr>
+      <tr>
+        <td>Address 1:</td>
+        <td><input [(ngModel)]="organization.address1"/></td>
+      </tr>
+      <tr>
+        <td>Address 2:</td>
+        <td><input [(ngModel)]="organization.address2"/></td>
+      </tr>
+      <tr>
+        <td>Country:</td>
+        <td><input [(ngModel)]="organization.country"/></td>
+      </tr>
+      <tr>
+        <td>Domain:</td>
+        <td><input [(ngModel)]="organization.domain"/></td>
+      </tr>
+      <!-- TODO set public key -->
+    </table>
+    <button mat-button class="btn btn-save" (click)="saveEdit()">
+      Save
+    </button>
+    <button mat-button class="btn btn-dflt" (click)="cancelEdit()">
+      Cancel
+    </button>
+  </mat-card>

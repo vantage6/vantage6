@@ -18,11 +18,12 @@ import { RoleEditService } from '../role/role-edit.service';
 import { RuleService } from '../services/api/rule.service';
 import { ModalService } from '../modal/modal.service';
 import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
+import { OrganizationEditService } from './organization-edit.service';
 
 @Component({
   selector: 'app-organization',
   templateUrl: './organization.component.html',
-  styleUrls: ['./organization.component.scss', '../globals/buttons.scss'],
+  styleUrls: ['../globals/buttons.scss', './organization.component.scss'],
 })
 export class OrganizationComponent implements OnInit {
   organizations: Organization[] = [];
@@ -41,6 +42,7 @@ export class OrganizationComponent implements OnInit {
     private organizationService: OrganizationService,
     private roleService: RoleService,
     private convertJsonService: ConvertJsonService,
+    private organizationEditService: OrganizationEditService,
     private userEditService: UserEditService,
     private roleEditService: RoleEditService,
     private ruleService: RuleService,
@@ -156,6 +158,11 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
+  editOrganization(org: Organization): void {
+    this.organizationEditService.setOrganization(org);
+    this.router.navigate(['/organization/edit']);
+  }
+
   editUser(user: User): void {
     this.userEditService.set(user, this.roles_assignable);
     this.router.navigate(['/user/edit']);
@@ -164,6 +171,14 @@ export class OrganizationComponent implements OnInit {
   editRole(role: Role): void {
     this.roleEditService.setRole(role);
     this.router.navigate(['/role/edit']);
+  }
+
+  createOrganization(): void {
+    // initialize organization
+    let new_org: Organization = EMPTY_ORGANIZATION;
+    new_org.is_being_created = true;
+
+    this.editOrganization(new_org);
   }
 
   createUser(): void {
