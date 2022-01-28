@@ -1,3 +1,5 @@
+import { ParamMap } from '@angular/router';
+
 export function removeArrayDoubles(array: any[]): any[] {
   return [...new Set(array)];
 }
@@ -41,4 +43,11 @@ export function containsObject(obj: any, list: any[]) {
 
 export function isSubset(small_array: any[], large_array: any[]) {
   return small_array.every((val) => large_array.includes(val));
+}
+
+export function parseId(id: string | null): number {
+  if (id === null) {
+    id = '';
+  }
+  return parseInt(id);
 }

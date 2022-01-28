@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, CanActivate } from '@angular/router';
+import { ModalMessageComponent } from './modal/modal-message/modal-message.component';
+import { ModalService } from './modal/modal.service';
 
 import { TokenStorageService } from './services/token-storage.service';
 import { UserPermissionService } from './services/user-permission.service';
+import { parseId } from './utils';
 
 @Injectable()
 export class AccessGuard implements CanActivate {
@@ -41,5 +44,50 @@ export class AccessGuard implements CanActivate {
       return false;
     }
     return true;
+  }
+}
+
+@Injectable()
+export class OrgEditAccessGuard implements CanActivate {
+  isLoggedIn: boolean;
+
+  constructor(
+    private tokenStorage: TokenStorageService,
+    private userPermission: UserPermissionService,
+    private router: Router,
+    private modalService: ModalService
+  ) {
+    this.isLoggedIn = false;
+  }
+
+  ngOnInit(): void {
+    this.tokenStorage.isLoggedIn().subscribe((loggedIn: boolean) => {
+      this.isLoggedIn = loggedIn;
+    });
+  }
+
+  canActivate(route: ActivatedRouteSnapshot): boolean {
+    if (!this.tokenStorage.loggedIn) {
+      this.router.navigate(['login']);
+    }
+    const id = parseId(route.params.id) || null;
+
+    // if id>0, we are editing an organization, otherwise creating
+    // use the organization id to check whether logged in user is allowed to
+    // edit/create organization.
+    let permission: boolean = false;
+    if (id) {
+      if (id > 0) {
+        permission = this.userPermission.can('edit', 'organization', id);
+      } else {
+        permission = this.userPermission.can('create', 'organization', id);
+      }
+    }
+    if (!permission) {
+      this.modalService.openMessageModal(ModalMessageComponent, [
+        'You are not allowed to do that!',
+      ]);
+    }
+    return permission;
   }
 }

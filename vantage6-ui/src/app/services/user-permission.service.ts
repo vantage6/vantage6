@@ -123,10 +123,10 @@ export class UserPermissionService {
     }
 
     // request the rules for the current user
-    let user = await this.userService.getUser(user_id);
-    this.userBhs.next(user);
+    this.user = await this.userService.getUser(user_id);
+    this.userBhs.next(this.user);
 
-    await this._setPermissions(user, this.all_rules);
+    await this._setPermissions(this.user, this.all_rules);
   }
 
   private async _setPermissions(user: User, all_rules: Rule[]) {

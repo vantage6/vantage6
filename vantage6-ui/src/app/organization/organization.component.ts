@@ -160,7 +160,6 @@ export class OrganizationComponent implements OnInit {
 
   editOrganization(org: Organization): void {
     this.organizationEditService.setOrganization(org);
-    this.router.navigate(['/organization/edit']);
   }
 
   editUser(user: User): void {

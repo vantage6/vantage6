@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
-import { AccessGuard } from './access-guard.guard';
+import { AccessGuard, OrgEditAccessGuard } from './access-guard.guard';
 import { OrganizationComponent } from './organization/organization.component';
 import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { RoleEditComponent } from './role/role-edit/role-edit.component';
@@ -43,15 +43,10 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   {
-    path: 'organization/edit',
+    path: 'organization/:id',
     component: OrganizationEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: 'edit',
-      alternativePermissionType: 'create',
-      permissionResource: 'organization',
-    },
-    canActivate: [AccessGuard],
+    data: {},
+    canActivate: [OrgEditAccessGuard],
   },
   {
     path: 'role/edit',

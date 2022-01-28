@@ -83,11 +83,6 @@ export class UserService {
     let role_ids = getIdsFromArray(user_json.roles);
     let roles = await this.roleService.getRoles(role_ids);
 
-    let user = this.convertJsonService.getUser(
-      user_json,
-      roles,
-      this.all_rules
-    );
-    return user;
+    return this.convertJsonService.getUser(user_json, roles, this.all_rules);
   }
 }

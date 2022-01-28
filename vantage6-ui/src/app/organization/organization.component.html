@@ -1,6 +1,6 @@
 <div *ngIf="userPermission.hasPermission('view', 'organization', 'global') || userPermission.hasPermission('view', 'organization', 'collaboration')">
   <mat-card>
-    Select organization:
+    Select organization to view:
     <div class="inline">
       <div ngbDropdown class="d-inline-block">
         <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>{{current_organization.name}}</button>
@@ -11,7 +11,9 @@
         </div>
       </div>
       <div *ngIf="userPermission.hasPermission('create', 'organization', 'global')" class="inline">
-        <button mat-button class="btn btn-dflt btn-right" id="new_org_button" (click)="createOrganization()">
+        <button mat-button class="btn btn-dflt btn-right" id="new_org_button"
+                (click)="createOrganization()"
+                [routerLink]="['/organization', '-1']">
           <mat-icon>add_circle</mat-icon>
           <span>New organization</span>
         </button>
@@ -35,7 +37,8 @@
         </button>
         <button *ngIf="userPermission.can('edit', 'organization', current_organization.id)"
                 mat-button class="btn-edit"
-                (click)="editOrganization(current_organization)">
+                (click)="editOrganization(current_organization)"
+                [routerLink]="['/organization', current_organization.id]">
           Edit
         </button>
       </mat-card>
