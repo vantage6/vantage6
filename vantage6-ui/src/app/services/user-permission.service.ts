@@ -158,11 +158,15 @@ export class UserPermissionService {
     }
     // check if user has all the rules for this role themselves
     for (let rule of role.rules) {
-      if (!arrayContainsObjWithId(rule.id, this.userRules)) {
+      if (!this.canAssignRule(rule)) {
         return false;
       }
     }
     return true;
+  }
+
+  canAssignRule(rule: Rule): boolean {
+    return arrayContainsObjWithId(rule.id, this.userRules);
   }
 
   async getAssignableRoles(
@@ -183,5 +187,19 @@ export class UserPermissionService {
       }
     }
     return roles_assignable;
+  }
+
+  canModifyRulesOtherUser(user: User): boolean {
+    for (let role of user.roles) {
+      if (!this.canAssignRole(role)) {
+        return false;
+      }
+    }
+    for (let rule of user.rules) {
+      if (!this.canAssignRule(rule)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

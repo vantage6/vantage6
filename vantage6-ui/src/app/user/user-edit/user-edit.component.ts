@@ -27,6 +27,7 @@ export class UserEditComponent implements OnInit {
   roles_assignable: Role[] = [];
   loggedin_user: User = EMPTY_USER;
   added_rules: Rule[] = [];
+  can_assign_roles_rules: boolean = false;
 
   constructor(
     private location: Location,
@@ -65,7 +66,11 @@ export class UserEditComponent implements OnInit {
       this.roles_assignable = await this.userPermission.getAssignableRoles(
         this.user.organization_id
       );
+      this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
+        this.user
+      );
     } catch (error: any) {
+      console.log(error);
       this.modalService.openMessageModal(
         ModalMessageComponent,
         [error.error.msg],

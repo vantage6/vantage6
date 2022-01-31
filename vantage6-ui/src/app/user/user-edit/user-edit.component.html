@@ -52,8 +52,8 @@
               <span>{{role.name}}</span>
             </button>
           </div>
-          <div class="inline" *ngIf="roles_assignable.length > 0; else noAssignableRolesBlock">
-          <div ngbDropdown class="d-inline-block">
+          <div class="inline" *ngIf="roles_assignable.length > 0 && can_assign_roles_rules; else noAssignableRolesBlock">
+            <div ngbDropdown class="d-inline-block">
               <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
                 <mat-icon>add_circle</mat-icon>
                 <span class="align-top">Add role</span>
@@ -66,13 +66,19 @@
             </div>
           </div>
           <ng-template #noAssignableRolesBlock>
-            There are no roles you can assign
+            <div *ngIf="!can_assign_roles_rules; else noRolesBlock">
+              You cannot change the permissions of this user because they have
+              permissions you don't have.
+            </div>
+            <ng-template #noRolesBlock>
+              There are no roles that you can assign
+            </ng-template>
           </ng-template>
         </ng-template>
       </td>
     </tr>
   </table>
-  <div *ngIf="user.id!==loggedin_user.id">
+  <div *ngIf="user.id!==loggedin_user.id && can_assign_roles_rules">
     <app-permission-table
         [given_roles]="user.roles"
         [given_rules]="user.rules"

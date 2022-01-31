@@ -80,7 +80,11 @@ export class UserService {
   async getUser(id: number): Promise<User> {
     let user_json = await this.get(id).toPromise();
 
-    let role_ids = getIdsFromArray(user_json.roles);
+    console.log(user_json);
+    let role_ids: number[] = [];
+    if (user_json.roles) {
+      role_ids = getIdsFromArray(user_json.roles);
+    }
     let roles = await this.roleService.getRoles(role_ids);
 
     return this.convertJsonService.getUser(user_json, roles, this.all_rules);
