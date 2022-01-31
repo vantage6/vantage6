@@ -78,7 +78,8 @@
       <mat-card>
         <h4>Users</h4>
         <div *ngIf="userPermission.can('create', 'user', current_organization.id)" class="inline">
-          <button mat-button class="btn btn-dflt btn-right" (click)="createUser()">
+          <button mat-button class="btn btn-dflt btn-right"
+                  [routerLink]="['/user', 'create']">
             <mat-icon>add_circle</mat-icon>
             <span>New user</span>
           </button>

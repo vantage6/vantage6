@@ -198,22 +198,11 @@ export class OrganizationComponent implements OnInit {
 
   editUser(user: User): void {
     this.userEditService.set(user, this.roles_assignable);
-    // this.router.navigate(['/user/edit']);
   }
 
   editRole(role: Role): void {
     this.roleEditService.setRole(role);
     this.router.navigate(['/role/edit']);
-  }
-
-  createUser(): void {
-    // initialize user
-    let new_user: User = EMPTY_USER;
-    new_user.organization_id = this.current_organization.id;
-    new_user.is_being_created = true;
-
-    // use edit mode to fill in all details of new user
-    this.editUser(new_user);
   }
 
   createRole(): void {

@@ -144,7 +144,6 @@ export class UserPermissionService {
     }
     // remove double rules
     this.userRules = [...new Set(this.userRules)];
-    console.log('set user rules');
 
     // save permissions
     await this.savePermissions(this.userRules);
