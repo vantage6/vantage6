@@ -123,14 +123,34 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
+  private _setCurrentOrganization(id: number): boolean {
+    let current_org_found = false;
+    for (let org of this.organizations) {
+      if (org.id === id) {
+        this.current_organization = org;
+        current_org_found = true;
+        break;
+      }
+    }
+    return current_org_found;
+  }
+
   async setCurrentOrganization(): Promise<void> {
     /* Renew the organization's users and roles */
 
     // set the current organization
-    for (let org of this.organizations) {
-      if (org.id === this.route_org_id) {
-        this.current_organization = org;
-      }
+    let current_org_found = this._setCurrentOrganization(this.route_org_id);
+    if (!current_org_found) {
+      this.modalService.openMessageModal(ModalMessageComponent, [
+        "Could not show data on organization with id '" +
+          this.route_org_id +
+          "'",
+        'Showing data on your own organization instead!',
+      ]);
+      this.router.navigate([
+        'organization',
+        this.loggedin_user.organization_id,
+      ]);
     }
 
     // first collect roles for current organization. This is done before

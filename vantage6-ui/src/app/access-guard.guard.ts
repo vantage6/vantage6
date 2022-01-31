@@ -71,17 +71,23 @@ export class OrgAccessGuard implements CanActivate {
       this.router.navigate(['login']);
     }
     const id = parseId(route.params.id) || null;
+    const permissionType = route.data.permissionType || '*';
 
     // if id>0, we are editing an organization, otherwise creating
     // use the organization id to check whether logged in user is allowed to
     // edit/create organization.
     let permission: boolean = false;
-    if (id) {
-      if (id > 0) {
-        permission = this.userPermission.can('edit', 'organization', id);
-      } else {
-        permission = this.userPermission.can('create', 'organization', id);
-      }
+    if (id && id > 0) {
+      permission = this.userPermission.can(permissionType, 'organization', id);
+    }
+    // second check if we are allowed to view organizations as part of collab
+    // TODO somehow check if the organization we attempt to view is part of the collaboration
+    if (!permission && permissionType === 'view') {
+      permission = this.userPermission.hasPermission(
+        'view',
+        'organization',
+        'collaboration'
+      );
     }
     if (!permission) {
       this.modalService.openMessageModal(ModalMessageComponent, [

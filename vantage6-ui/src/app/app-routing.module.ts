@@ -36,16 +36,16 @@ const routes: Routes = [
     path: 'organization/:id',
     component: OrganizationComponent,
     data: {
-      requiresLogin: true,
       permissionType: 'view',
-      permissionResource: 'organization',
     },
-    canActivate: [AccessGuard],
+    canActivate: [OrgAccessGuard],
   },
   {
     path: 'organization/:id/edit',
     component: OrganizationEditComponent,
-    data: {},
+    data: {
+      permissionType: 'edit',
+    },
     canActivate: [OrgAccessGuard],
   },
   {
