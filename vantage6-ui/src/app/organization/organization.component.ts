@@ -10,9 +10,9 @@ import { UserPermissionService } from '../services/user-permission.service';
 import { UserService } from '../services/api/user.service';
 import { OrganizationService } from '../services/api/organization.service';
 import { RoleService } from '../services/api/role.service';
-import { removeMatchedIdFromArray } from '../utils';
+import { parseId, removeMatchedIdFromArray } from '../utils';
 import { ConvertJsonService } from '../services/convert-json.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UserEditService } from '../user/user-edit.service';
 import { RoleEditService } from '../role/role-edit.service';
 import { RuleService } from '../services/api/rule.service';
@@ -27,6 +27,7 @@ import { OrganizationEditService } from './organization-edit.service';
 })
 export class OrganizationComponent implements OnInit {
   organizations: Organization[] = [];
+  route_org_id: number = EMPTY_ORGANIZATION.id;
   current_organization: Organization = EMPTY_ORGANIZATION;
   loggedin_user: User = EMPTY_USER;
   organization_users: User[] = [];
@@ -37,6 +38,7 @@ export class OrganizationComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private userService: UserService,
     private organizationService: OrganizationService,
@@ -52,46 +54,65 @@ export class OrganizationComponent implements OnInit {
   // TODO Now it is shown that there are no users/roles until they are loaded,
   // instead should say that they are being loaded
   ngOnInit(): void {
-    this.userPermission.getUser().subscribe((user) => {
-      this.loggedin_user = user;
-      this.getOrganizationDetails();
+    this.init();
+  }
+
+  init(): void {
+    // TODO this has a nested subscribe, fix that
+    this.activatedRoute.paramMap.subscribe((params) => {
+      let new_id = this._getId(params);
+      if (new_id === EMPTY_ORGANIZATION.id) {
+        return; // cannot get organization
+      }
+      if (new_id !== this.route_org_id) {
+        this.route_org_id = new_id;
+        this.userPermission.getUser().subscribe((user) => {
+          this.loggedin_user = user;
+          if (this.loggedin_user !== EMPTY_USER) {
+            this.setup();
+          }
+        });
+      }
     });
     this.ruleService.getRules().subscribe((rules) => {
       this.rules = rules;
     });
   }
 
-  getOrganizationDetails(): void {
-    if (
-      this.loggedin_user.id === EMPTY_USER.id ||
-      !this.userPermission.hasPermission('view', 'organization', '*')
-    )
-      return;
+  async setup() {
+    // get all organizations that the user is allowed to see
+    await this.getOrganizationDetails();
 
-    // first obtain user information to get organization id, then obtain
-    // organization information
-    this.organizationService.list().subscribe(
-      (organization_data: any) => {
-        this.setOrganizations(organization_data);
-        this.collectUsersAndRoles();
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
+    // set the currently requested organization's users/roles/etc
+    this.setCurrentOrganization();
   }
 
-  selectOrganizationDropdown(org_id: number): void {
-    for (let org of this.organizations) {
-      if (org.id === org_id) {
-        this.current_organization = org;
-        break;
-      }
+  private _getId(params: ParamMap): number {
+    // get the organization id of the organization we're viewing
+    let new_id = parseId(params.get('id'));
+    if (isNaN(new_id)) {
+      this.modalService.openMessageModal(ModalMessageComponent, [
+        "The organization id '" +
+          params.get('id') +
+          "' cannot be parsed. Please provide a valid organization id",
+      ]);
+      return EMPTY_ORGANIZATION.id;
     }
-    this.collectUsersAndRoles();
+    return new_id;
   }
 
-  setOrganizations(organization_data: any[]) {
+  async getOrganizationDetails(): Promise<void> {
+    if (this.loggedin_user.organization_id === EMPTY_ORGANIZATION.id) return;
+
+    // get data of organization that logged-in user is allowed to view
+    let org_data = await this.organizationService.list().toPromise();
+
+    // set organization data
+    await this.setOrganizations(org_data);
+  }
+
+  async setOrganizations(organization_data: any) {
+    this.organizations = [];
     for (let org of organization_data) {
       let new_org = this.convertJsonService.getOrganization(org);
       if (new_org.id === this.loggedin_user.organization_id) {
@@ -102,24 +123,25 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
-  async collectUsersAndRoles(): Promise<void> {
+  async setCurrentOrganization(): Promise<void> {
     /* Renew the organization's users and roles */
-    if (this.current_organization === null) {
-      return;
+
+    // set the current organization
+    for (let org of this.organizations) {
+      if (org.id === this.route_org_id) {
+        this.current_organization = org;
+      }
     }
-    this.organization_users = [];
 
     // first collect roles for current organization. This is done before
     // collecting the users so that the users can possess these roles
     let role_json = await this.roleService
-      .list(this.current_organization.id, true)
+      .list(this.route_org_id, true)
       .toPromise();
     this.setRoles(role_json);
 
     // collect users for current organization
-    let user_json = await this.userService
-      .list(this.current_organization.id)
-      .toPromise();
+    let user_json = await this.userService.list(this.route_org_id).toPromise();
     this.setUsers(user_json);
   }
 
@@ -147,6 +169,7 @@ export class OrganizationComponent implements OnInit {
   }
 
   setUsers(user_data: any): void {
+    this.organization_users = [];
     for (let user_json of user_data) {
       let user = this.convertJsonService.getUser(
         user_json,
@@ -170,14 +193,6 @@ export class OrganizationComponent implements OnInit {
   editRole(role: Role): void {
     this.roleEditService.setRole(role);
     this.router.navigate(['/role/edit']);
-  }
-
-  createOrganization(): void {
-    // initialize organization
-    let new_org: Organization = EMPTY_ORGANIZATION;
-    new_org.is_being_created = true;
-
-    this.editOrganization(new_org);
   }
 
   createUser(): void {

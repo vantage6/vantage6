@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
 import {
   EMPTY_ORGANIZATION,
@@ -28,6 +28,7 @@ export class OrganizationEditComponent implements OnInit {
 
   constructor(
     private location: Location,
+    private router: Router,
     private activatedRoute: ActivatedRoute,
     private organizationService: OrganizationService,
     private organizationEditService: OrganizationEditService,
@@ -62,6 +63,10 @@ export class OrganizationEditComponent implements OnInit {
   }
 
   getId(params: ParamMap): number {
+    if (this.router.url.endsWith('create')) {
+      return EMPTY_ORGANIZATION.id;
+    }
+    // we are editing an organization: get the organization id
     let new_id = parseId(params.get('id'));
     if (isNaN(new_id)) {
       this.modalService.openMessageModal(ModalMessageComponent, [

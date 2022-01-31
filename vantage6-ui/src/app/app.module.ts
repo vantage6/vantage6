@@ -18,7 +18,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
-import { AccessGuard, OrgEditAccessGuard } from './access-guard.guard';
+import { AccessGuard, OrgAccessGuard } from './access-guard.guard';
 import { NavbarComponent } from './navbar/navbar.component';
 import { OrganizationComponent } from './organization/organization.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
@@ -66,7 +66,7 @@ import { OrganizationEditComponent } from './organization/organization-edit/orga
   ],
   providers: [
     AccessGuard,
-    OrgEditAccessGuard,
+    OrgAccessGuard,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,

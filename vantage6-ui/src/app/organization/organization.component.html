@@ -6,14 +6,16 @@
         <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>{{current_organization.name}}</button>
         <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
           <div *ngFor="let org of organizations">
-            <button ngbDropdownItem (click)="selectOrganizationDropdown(org.id)">{{org.name}}</button>
+            <button ngbDropdownItem
+                    [routerLink]="['/organization', org.id]">
+              {{org.name}}
+            </button>
           </div>
         </div>
       </div>
       <div *ngIf="userPermission.hasPermission('create', 'organization', 'global')" class="inline">
         <button mat-button class="btn btn-dflt btn-right" id="new_org_button"
-                (click)="createOrganization()"
-                [routerLink]="['/organization', '-1']">
+                [routerLink]="['/organization', 'create']">
           <mat-icon>add_circle</mat-icon>
           <span>New organization</span>
         </button>
@@ -38,7 +40,7 @@
         <button *ngIf="userPermission.can('edit', 'organization', current_organization.id)"
                 mat-button class="btn-edit"
                 (click)="editOrganization(current_organization)"
-                [routerLink]="['/organization', current_organization.id]">
+                [routerLink]="['/organization', current_organization.id, 'edit']">
           Edit
         </button>
       </mat-card>
@@ -82,8 +84,7 @@
           </button>
         </div>
         <div *ngIf="organization_users.length===0">
-          <div *ngIf="userPermission.can('view', 'user', current_organization.id); else noUsersBlock">
-            <!-- TODO this message is displayed wrongly when organization has no users -->
+          <div *ngIf="!userPermission.can('view', 'user', current_organization.id); else noUsersBlock">
             You do not have permission to view the users!
           </div>
           <ng-template #noUsersBlock>

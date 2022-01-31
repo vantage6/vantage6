@@ -48,7 +48,7 @@ export class AccessGuard implements CanActivate {
 }
 
 @Injectable()
-export class OrgEditAccessGuard implements CanActivate {
+export class OrgAccessGuard implements CanActivate {
   isLoggedIn: boolean;
 
   constructor(

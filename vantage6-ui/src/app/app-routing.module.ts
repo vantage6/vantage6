@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
-import { AccessGuard, OrgEditAccessGuard } from './access-guard.guard';
+import { AccessGuard, OrgAccessGuard } from './access-guard.guard';
 import { OrganizationComponent } from './organization/organization.component';
 import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { RoleEditComponent } from './role/role-edit/role-edit.component';
@@ -22,7 +22,18 @@ const routes: Routes = [
   },
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   {
-    path: 'organization',
+    path: 'organization/create',
+    component: OrganizationEditComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: 'create',
+      permissionResource: 'organization',
+      permissionScope: 'global',
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'organization/:id',
     component: OrganizationComponent,
     data: {
       requiresLogin: true,
@@ -30,6 +41,12 @@ const routes: Routes = [
       permissionResource: 'organization',
     },
     canActivate: [AccessGuard],
+  },
+  {
+    path: 'organization/:id/edit',
+    component: OrganizationEditComponent,
+    data: {},
+    canActivate: [OrgAccessGuard],
   },
   {
     path: 'user/edit',
@@ -41,12 +58,6 @@ const routes: Routes = [
       permissionResource: 'user',
     },
     canActivate: [AccessGuard],
-  },
-  {
-    path: 'organization/:id',
-    component: OrganizationEditComponent,
-    data: {},
-    canActivate: [OrgEditAccessGuard],
   },
   {
     path: 'role/edit',
