@@ -27,7 +27,10 @@ export class RoleService {
     this.all_rules = await this.ruleService.getAllRules();
   }
 
-  list(organization_id: number | null = null, include_root: boolean = false) {
+  list(
+    organization_id: number | null = null,
+    include_root: boolean = false
+  ): any {
     let params: any = {};
     if (organization_id !== null) {
       params['organization_id'] = organization_id;
@@ -75,6 +78,18 @@ export class RoleService {
     let roles: Role[] = [];
     for (let id of ids) {
       roles.push(await this.getRole(id));
+    }
+    return roles;
+  }
+
+  async getOrganizationRoles(
+    org_id: number,
+    include_root: boolean = false
+  ): Promise<Role[]> {
+    let role_json = await this.list(org_id, include_root).toPromise();
+    let roles: Role[] = [];
+    for (let role of role_json) {
+      roles.push(this.convertJsonService.getRole(role, this.all_rules));
     }
     return roles;
   }

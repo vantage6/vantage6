@@ -9,6 +9,10 @@ import { removeMatchedIdFromArray } from 'src/app/utils';
 import { UserService } from 'src/app/services/api/user.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
 import { UserEditService } from '../user-edit.service';
+import { ActivatedRoute } from '@angular/router';
+import { UtilsService } from 'src/app/services/utils.service';
+import { ModalService } from 'src/app/modal/modal.service';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 
 // TODO add option to assign user to different organization
 
@@ -19,15 +23,19 @@ import { UserEditService } from '../user-edit.service';
 })
 export class UserEditComponent implements OnInit {
   user: User = EMPTY_USER;
+  id: number = EMPTY_USER.id;
   roles_assignable: Role[] = [];
   loggedin_user: User = EMPTY_USER;
   added_rules: Rule[] = [];
 
   constructor(
     private location: Location,
+    private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private userService: UserService,
-    private userEditService: UserEditService
+    private userEditService: UserEditService,
+    private utilsService: UtilsService,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
@@ -40,6 +48,30 @@ export class UserEditComponent implements OnInit {
     this.userEditService.getAvailableRoles().subscribe((roles) => {
       this.roles_assignable = roles;
     });
+    // subscribe to id parameter in route to change edited organization if
+    // required
+    this.activatedRoute.paramMap.subscribe((params) => {
+      let new_id = this.utilsService.getId(params, 'user');
+      if (new_id !== this.id) {
+        this.id = new_id;
+        this.setUserFromAPI(new_id);
+      }
+    });
+  }
+
+  async setUserFromAPI(id: number): Promise<void> {
+    try {
+      this.user = await this.userService.getUser(id);
+      this.roles_assignable = await this.userPermission.getAssignableRoles(
+        this.user.organization_id
+      );
+    } catch (error: any) {
+      this.modalService.openMessageModal(
+        ModalMessageComponent,
+        [error.error.msg],
+        true
+      );
+    }
   }
 
   removeRole(role: Role): void {

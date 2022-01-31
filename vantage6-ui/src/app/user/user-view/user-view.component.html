@@ -50,7 +50,9 @@
         userPermission.can('edit', 'user', user.organization_id) ||
         (user.is_logged_in && userPermission.hasPermission('edit', 'user', 'own'))"
       mat-button class="btn btn-edit inline"
-      (click)="editUser()">
+      (click)="editUser()"
+      [routerLink]="['/user', user.id, 'edit']"
+      >
     Edit
   </button>
   <button *ngIf="

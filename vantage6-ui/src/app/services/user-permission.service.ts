@@ -9,6 +9,7 @@ import { RuleService } from './api/rule.service';
 import { Rule } from '../interfaces/rule';
 import { Role } from '../interfaces/role';
 import { EMPTY_USER, User } from '../interfaces/user';
+import { RoleService } from './api/role.service';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -26,7 +27,8 @@ export class UserPermissionService {
   constructor(
     private tokenStorage: TokenStorageService,
     private userService: UserService,
-    private ruleService: RuleService
+    private ruleService: RuleService,
+    private roleService: RoleService
   ) {
     this.setup();
   }
@@ -142,6 +144,7 @@ export class UserPermissionService {
     }
     // remove double rules
     this.userRules = [...new Set(this.userRules)];
+    console.log('set user rules');
 
     // save permissions
     await this.savePermissions(this.userRules);
@@ -161,5 +164,25 @@ export class UserPermissionService {
       }
     }
     return true;
+  }
+
+  async getAssignableRoles(
+    organization_id: number,
+    available_roles: Role[] | null = null
+  ): Promise<Role[]> {
+    // set which roles currently logged in user can assign
+    let roles_assignable: Role[] = [];
+    if (available_roles === null) {
+      available_roles = await this.roleService.getOrganizationRoles(
+        organization_id,
+        true
+      );
+    }
+    for (let role of available_roles) {
+      if (this.canAssignRole(role)) {
+        roles_assignable.push(role);
+      }
+    }
+    return roles_assignable;
   }
 }

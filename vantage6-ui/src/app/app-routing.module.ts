@@ -49,12 +49,21 @@ const routes: Routes = [
     canActivate: [OrgAccessGuard],
   },
   {
-    path: 'user/edit',
+    path: 'user/create',
+    component: UserEditComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: 'create',
+      permissionResource: 'user',
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'user/:id/edit',
     component: UserEditComponent,
     data: {
       requiresLogin: true,
       permissionType: 'edit',
-      alternativePermissionType: 'create',
       permissionResource: 'user',
     },
     canActivate: [AccessGuard],

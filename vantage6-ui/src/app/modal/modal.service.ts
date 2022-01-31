@@ -18,6 +18,7 @@ export class ModalService {
   openMessageModal(
     modalComponent: any,
     messages: string[] = [],
+    go_back_after_close: boolean = false,
     keepOpen = false
   ): NgbModalRef {
     let options: NgbModalOptions = {};
@@ -29,6 +30,7 @@ export class ModalService {
     }
     const modalRef = this.modalService.open(modalComponent, options);
     modalRef.componentInstance.messages = messages;
+    modalRef.componentInstance.go_back_after_close = go_back_after_close;
     return modalRef;
   }
 

@@ -20,6 +20,7 @@ import { RuleService } from '../services/api/rule.service';
 import { UserPermissionService } from '../services/user-permission.service';
 import {
   arrayContainsObjWithId,
+  arrayIdsEqual,
   containsObject,
   deepcopy,
   getIdsFromArray,
@@ -61,9 +62,6 @@ export class PermissionTableComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(): void {
-    if (!this.rolesHaveChanged()) {
-      return;
-    }
     this.init();
   }
 
@@ -86,6 +84,8 @@ export class PermissionTableComponent implements OnInit, OnChanges {
       rule.is_part_role = true;
     }
 
+    // copy original given rules
+    let orig_given_rules = deepcopy(this.given_rules);
     // add any extra rules that were not yet present
     this.added_rules = this.given_rules.concat(this.added_rules);
     this.added_rules = removeArrayDoubles(this.added_rules);
@@ -95,7 +95,9 @@ export class PermissionTableComponent implements OnInit, OnChanges {
         this.user_rules.push(deepcopy(rule));
       }
     }
-    this.addedRulesChangeEvent.emit(this.added_rules);
+    if (arrayIdsEqual(orig_given_rules, this.added_rules)) {
+      this.addedRulesChangeEvent.emit(this.added_rules);
+    }
 
     // set properties of rule groups whether rules are assigned, and are part
     // of rules or not
@@ -115,17 +117,6 @@ export class PermissionTableComponent implements OnInit, OnChanges {
         );
       }
     }
-  }
-
-  rolesHaveChanged(): boolean {
-    let new_role_ids = getIdsFromArray(this.given_roles);
-    // check if roles are equal
-    if (
-      new_role_ids.sort().join('') !== this.current_role_ids.sort().join('')
-    ) {
-      return true;
-    }
-    return false;
   }
 
   getClass(rule: Rule) {

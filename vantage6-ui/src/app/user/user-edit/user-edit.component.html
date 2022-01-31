@@ -52,7 +52,7 @@
               <span>{{role.name}}</span>
             </button>
           </div>
-          <div class="inline" *ngIf="roles_assignable.length > 0; else noAssignableRulesBlock">
+          <div class="inline" *ngIf="roles_assignable.length > 0; else noAssignableRolesBlock">
           <div ngbDropdown class="d-inline-block">
               <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
                 <mat-icon>add_circle</mat-icon>
@@ -65,8 +65,8 @@
               </div>
             </div>
           </div>
-          <ng-template #noAssignableRulesBlock>
-            There are no rules you can assign
+          <ng-template #noAssignableRolesBlock>
+            There are no roles you can assign
           </ng-template>
         </ng-template>
       </td>

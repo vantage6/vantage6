@@ -155,33 +155,24 @@ export class OrganizationComponent implements OnInit {
 
     // first collect roles for current organization. This is done before
     // collecting the users so that the users can possess these roles
-    let role_json = await this.roleService
-      .list(this.route_org_id, true)
-      .toPromise();
-    this.setRoles(role_json);
+    this.roles = await this.roleService.getOrganizationRoles(
+      this.current_organization.id
+    );
+    this.roles_assignable = await this.userPermission.getAssignableRoles(
+      this.current_organization.id,
+      this.roles
+    );
+    this.setRoleMetadata();
 
     // collect users for current organization
     let user_json = await this.userService.list(this.route_org_id).toPromise();
     this.setUsers(user_json);
   }
 
-  setRoles(role_data: any): void {
-    this.roles = [];
-    for (let role of role_data) {
-      this.roles.push(this.convertJsonService.getRole(role, this.rules));
-    }
-    this.setRoleMetadata();
-  }
-
   setRoleMetadata(): void {
-    // set which roles currently logged in user can assign, and how many roles
-    // are specific to the current organization
-    this.roles_assignable = [];
+    // set how many roles are specific to the current organization
     this.current_org_role_count = 0;
     for (let role of this.roles) {
-      if (this.userPermission.canAssignRole(role)) {
-        this.roles_assignable.push(role);
-      }
       if (role.organization_id || this.current_organization.id === 1) {
         this.current_org_role_count += 1;
       }
@@ -207,7 +198,7 @@ export class OrganizationComponent implements OnInit {
 
   editUser(user: User): void {
     this.userEditService.set(user, this.roles_assignable);
-    this.router.navigate(['/user/edit']);
+    // this.router.navigate(['/user/edit']);
   }
 
   editRole(role: Role): void {
@@ -243,11 +234,15 @@ export class OrganizationComponent implements OnInit {
     );
   }
 
-  deleteRole(role: Role): void {
+  async deleteRole(role: Role): Promise<void> {
     // remove role
     this.roles = removeMatchedIdFromArray(this.roles, role);
     // set data on which roles user can assign, how many roles there are for
     // the current organization
+    this.roles_assignable = await this.userPermission.getAssignableRoles(
+      this.current_organization.id,
+      this.roles
+    );
     this.setRoleMetadata();
     // delete this role from any user it was assigned to (this is also done
     // separately in the backend)

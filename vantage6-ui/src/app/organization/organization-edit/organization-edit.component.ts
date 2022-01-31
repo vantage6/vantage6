@@ -57,6 +57,7 @@ export class OrganizationEditComponent implements OnInit {
         return; // cannot get organization
       }
       if (new_id !== this.id) {
+        this.id = new_id;
         this.setOrgFromAPI(new_id);
       }
     });
