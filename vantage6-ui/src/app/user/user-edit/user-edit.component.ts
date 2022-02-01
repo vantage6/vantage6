@@ -28,6 +28,7 @@ import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message
 export class UserEditComponent implements OnInit {
   user: User = EMPTY_USER;
   id: number = EMPTY_USER.id;
+  roles_assignable_all: Role[] = [];
   roles_assignable: Role[] = [];
   loggedin_user: User = EMPTY_USER;
   added_rules: Rule[] = [];
@@ -51,7 +52,7 @@ export class UserEditComponent implements OnInit {
       this.user = user;
     });
     this.userEditService.getAvailableRoles().subscribe((roles) => {
-      this.roles_assignable = roles;
+      this.roles_assignable_all = roles;
       this.filterAssignableRoles();
     });
     // subscribe to id parameter in route to change edited organization if
@@ -69,7 +70,7 @@ export class UserEditComponent implements OnInit {
     /* remove all roles as 'assignable' that a user already has */
     let role_ids_user = getIdsFromArray(this.user.roles);
     this.roles_assignable = removeMatchedIdsFromArray(
-      this.roles_assignable,
+      this.roles_assignable_all,
       role_ids_user
     );
   }
@@ -77,7 +78,7 @@ export class UserEditComponent implements OnInit {
   async setUserFromAPI(id: number): Promise<void> {
     try {
       this.user = await this.userService.getUser(id);
-      this.roles_assignable = await this.userPermission.getAssignableRoles(
+      this.roles_assignable_all = await this.userPermission.getAssignableRoles(
         this.user.organization_id
       );
       this.filterAssignableRoles();
@@ -95,6 +96,7 @@ export class UserEditComponent implements OnInit {
 
   removeRole(role: Role): void {
     this.user.roles = removeMatchedIdFromArray(this.user.roles, role.id);
+    this.filterAssignableRoles();
   }
   removeRule(rule: Rule): void {
     this.user.rules = removeMatchedIdFromArray(this.user.rules, rule.id);
@@ -103,6 +105,7 @@ export class UserEditComponent implements OnInit {
     // NB: new user roles are assigned using a spread operator to activate
     // angular change detection. This does not work with push()
     this.user.roles = [...this.user.roles, role];
+    this.filterAssignableRoles();
   }
   addRule(rule: Rule): void {
     // NB: new user roles are assigned using a spread operator to activate
