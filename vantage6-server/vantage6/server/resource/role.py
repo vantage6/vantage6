@@ -200,21 +200,24 @@ class Roles(RoleBase):
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
-        # if trying to create a role for another organization
-        if data["organization_id"] and not self.r.c_glo.can():
-            return {'msg': 'You cannot create roles for other organizations'},\
-                HTTPStatus.UNAUTHORIZED
-        elif data["organization_id"] and self.r.c_glo.can():
-            organization_id = data["organization_id"]
+        # set the organization id
+        organization_id = (
+            data['organization_id']
+            if data['organization_id'] else g.user.organization_id
+        )
+        # verify that the organization for which we creat a role exists
+        if (organization_id != g.user.organization_id and
+                not db.Organization.get(organization_id)):
+            return {'msg': f'organization "{organization_id}" does not '
+                    'exist!'}, HTTPStatus.NOT_FOUND
 
-            # verify that the organization exists
-            if not db.Organization.get(organization_id):
-                return {'msg': f'organization "{organization_id}" does not '
-                        'exist!'}, HTTPStatus.NOT_FOUND
-        elif (not data['organization_id'] and self.r.c_glo.can()) or \
-                self.r.c_org.can():
-            organization_id = g.user.organization_id
-        else:
+        # check if user is allowed to create this role
+        if (not self.r.c_glo.can() and
+                organization_id != g.user.organization_id):
+            return {
+                'msg': 'You cannot create roles for other organizations!'
+            }, HTTPStatus.UNAUTHORIZED
+        elif not self.r.c_glo.can() and not self.r.c_org.can():
             return {'msg': 'You lack the permission to create roles!'}, \
                 HTTPStatus.UNAUTHORIZED
 
