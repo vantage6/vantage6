@@ -9,12 +9,19 @@ export function deepcopy(obj: any): any {
   // return Object.assign({}, obj);
 }
 
-export function removeMatchedIdFromArray(array: any[], obj: any): any[] {
-  // remove the elements from an array that have the same id value as an
-  // object
+export function removeMatchedIdFromArray(array: any[], id: number): any[] {
+  // remove the elements from an array that have a certain id
   return array.filter(function (elem: any) {
-    return elem.id !== obj.id;
+    return elem.id !== id;
   });
+}
+
+export function removeMatchedIdsFromArray(array: any[], ids: number[]): any[] {
+  // remove the elements from an array that have some id values
+  for (let id of ids) {
+    array = removeMatchedIdFromArray(array, id);
+  }
+  return array;
 }
 
 export function getById(array: any[], id: number): any {

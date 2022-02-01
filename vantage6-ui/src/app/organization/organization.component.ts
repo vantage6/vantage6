@@ -219,13 +219,13 @@ export class OrganizationComponent implements OnInit {
   deleteUser(user: User): void {
     this.organization_users = removeMatchedIdFromArray(
       this.organization_users,
-      user
+      user.id
     );
   }
 
   async deleteRole(role: Role): Promise<void> {
     // remove role
-    this.roles = removeMatchedIdFromArray(this.roles, role);
+    this.roles = removeMatchedIdFromArray(this.roles, role.id);
     // set data on which roles user can assign, how many roles there are for
     // the current organization
     this.roles_assignable = await this.userPermission.getAssignableRoles(
@@ -240,7 +240,7 @@ export class OrganizationComponent implements OnInit {
 
   private deleteRoleFromUsers(role: Role): void {
     for (let user of this.organization_users) {
-      user.roles = removeMatchedIdFromArray(user.roles, role);
+      user.roles = removeMatchedIdFromArray(user.roles, role.id);
     }
   }
 

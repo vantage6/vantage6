@@ -5,7 +5,11 @@ import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
 
-import { removeMatchedIdFromArray } from 'src/app/utils';
+import {
+  getIdsFromArray,
+  removeMatchedIdFromArray,
+  removeMatchedIdsFromArray,
+} from 'src/app/utils';
 import { UserService } from 'src/app/services/api/user.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
 import { UserEditService } from '../user-edit.service';
@@ -48,6 +52,7 @@ export class UserEditComponent implements OnInit {
     });
     this.userEditService.getAvailableRoles().subscribe((roles) => {
       this.roles_assignable = roles;
+      this.filterAssignableRoles();
     });
     // subscribe to id parameter in route to change edited organization if
     // required
@@ -60,17 +65,26 @@ export class UserEditComponent implements OnInit {
     });
   }
 
+  filterAssignableRoles(): void {
+    /* remove all roles as 'assignable' that a user already has */
+    let role_ids_user = getIdsFromArray(this.user.roles);
+    this.roles_assignable = removeMatchedIdsFromArray(
+      this.roles_assignable,
+      role_ids_user
+    );
+  }
+
   async setUserFromAPI(id: number): Promise<void> {
     try {
       this.user = await this.userService.getUser(id);
       this.roles_assignable = await this.userPermission.getAssignableRoles(
         this.user.organization_id
       );
+      this.filterAssignableRoles();
       this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
         this.user
       );
     } catch (error: any) {
-      console.log(error);
       this.modalService.openMessageModal(
         ModalMessageComponent,
         [error.error.msg],
@@ -80,10 +94,10 @@ export class UserEditComponent implements OnInit {
   }
 
   removeRole(role: Role): void {
-    this.user.roles = removeMatchedIdFromArray(this.user.roles, role);
+    this.user.roles = removeMatchedIdFromArray(this.user.roles, role.id);
   }
   removeRule(rule: Rule): void {
-    this.user.rules = removeMatchedIdFromArray(this.user.rules, rule);
+    this.user.rules = removeMatchedIdFromArray(this.user.rules, rule.id);
   }
   addRole(role: Role): void {
     // NB: new user roles are assigned using a spread operator to activate

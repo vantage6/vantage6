@@ -232,7 +232,7 @@ export class PermissionTableComponent implements OnInit, OnChanges {
     if (!rule.is_assigned_to_user) {
       this.added_rules.push(rule);
     } else {
-      this.added_rules = removeMatchedIdFromArray(this.added_rules, rule);
+      this.added_rules = removeMatchedIdFromArray(this.added_rules, rule.id);
     }
     rule.is_assigned_to_user = !rule.is_assigned_to_user;
     this.addedRulesChangeEvent.emit(this.added_rules);
