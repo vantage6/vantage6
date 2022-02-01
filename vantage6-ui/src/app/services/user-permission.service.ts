@@ -23,6 +23,7 @@ export class UserPermissionService {
   userRules: Rule[] = [];
   userExtraRules: Rule[] = [];
   all_rules: Rule[] = [];
+  ready = new BehaviorSubject<boolean>(false);
 
   constructor(
     private tokenStorage: TokenStorageService,
@@ -42,6 +43,7 @@ export class UserPermissionService {
     if (Object.keys(user_info).length !== 0) {
       await this.setUserPermissions(user_info);
     }
+    this.ready.next(true);
   }
 
   public async savePermissions(permissions: any[]): Promise<void> {
@@ -57,6 +59,10 @@ export class UserPermissionService {
       let permissions: Rule[] = JSON.parse(perm_text);
       return permissions;
     }
+  }
+
+  isInitialized(): Observable<boolean> {
+    return this.ready.asObservable();
   }
 
   // TODO remove function (use similar function from userService!)
@@ -126,9 +132,10 @@ export class UserPermissionService {
 
     // request the rules for the current user
     this.user = await this.userService.getUser(user_id);
-    this.userBhs.next(this.user);
 
     await this._setPermissions(this.user, this.all_rules);
+
+    this.userBhs.next(this.user);
   }
 
   private async _setPermissions(user: User, all_rules: Rule[]) {
@@ -174,13 +181,13 @@ export class UserPermissionService {
     available_roles: Role[] | null = null
   ): Promise<Role[]> {
     // set which roles currently logged in user can assign
-    let roles_assignable: Role[] = [];
     if (available_roles === null) {
       available_roles = await this.roleService.getOrganizationRoles(
         organization_id,
         true
       );
     }
+    let roles_assignable: Role[] = [];
     for (let role of available_roles) {
       if (this.canAssignRole(role)) {
         roles_assignable.push(role);

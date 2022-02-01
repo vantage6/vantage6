@@ -17,6 +17,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from 'src/app/services/utils.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
 
 // TODO add option to assign user to different organization
 
@@ -34,6 +35,7 @@ export class UserEditComponent implements OnInit {
   added_rules: Rule[] = [];
   can_assign_roles_rules: boolean = false;
   mode = Operation.EDIT;
+  organization_id: number = EMPTY_ORGANIZATION.id;
 
   constructor(
     private location: Location,
@@ -47,45 +49,67 @@ export class UserEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.router.url.endsWith('create')) {
+    if (this.router.url.includes('create')) {
       this.mode = Operation.CREATE;
     }
-    this.userPermission.getUser().subscribe((user) => {
-      this.loggedin_user = user;
+    this.userPermission.isInitialized().subscribe((ready) => {
+      if (ready) {
+        this.loggedin_user = this.userPermission.user;
+        this.init();
+      }
     });
-    this.userEditService.getUser().subscribe((user) => {
-      this.user = user;
-      this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
-        this.user
-      );
-    });
-    this.userEditService.getAvailableRoles().subscribe((roles) => {
-      this.setAssignableRoles(roles);
-    });
+  }
+
+  async init() {
+    this.user = this.userEditService.getUser();
+    this.id = this.user.id;
+    this.organization_id = this.user.organization_id;
+    this.roles_assignable_all = this.userEditService.getAvailableRoles();
+    await this.setAssignableRoles();
+
     // subscribe to id parameter in route to change edited user if required
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, 'user');
       if (new_id !== this.id) {
         this.id = new_id;
         this.setUserFromAPI(new_id);
+      } else if (this.mode === Operation.CREATE) {
+        this.organization_id = this.utilsService.getId(
+          params,
+          'organization',
+          'org_id'
+        );
+        this.setAssignableRoles();
       }
     });
   }
 
-  async setAssignableRoles(roles: Role[]): Promise<void> {
-    this.roles_assignable_all = roles;
-    if (
-      this.mode === Operation.CREATE &&
-      this.roles_assignable_all.length === 0
-    ) {
+  async setUserFromAPI(id: number): Promise<void> {
+    try {
+      this.user = await this.userService.getUser(id);
+      this.organization_id = this.user.organization_id;
+      this.setAssignableRoles();
+    } catch (error: any) {
+      this.modalService.openMessageModal(
+        ModalMessageComponent,
+        [error.error.msg],
+        true
+      );
+    }
+  }
+
+  async setAssignableRoles(): Promise<void> {
+    if (this.roles_assignable_all.length === 0) {
       // if we are creating a new user, and there are no roles to assign, recheck
       // whether there are any roles to assign (they may be lost by page refresh)
-      // TODO determine current organization ID!
       this.roles_assignable_all = await this.userPermission.getAssignableRoles(
-        this.user.organization_id //TODO this is -1 when page refreshes!
+        this.organization_id //TODO this is -1 when page refreshes!
       );
     }
     this.filterAssignableRoles();
+    this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
+      this.user
+    );
   }
 
   filterAssignableRoles(): void {
@@ -95,27 +119,6 @@ export class UserEditComponent implements OnInit {
       this.roles_assignable_all,
       role_ids_user
     );
-  }
-
-  async setUserFromAPI(id: number): Promise<void> {
-    try {
-      this.user = await this.userService.getUser(id);
-      this.roles_assignable_all = await this.userPermission.getAssignableRoles(
-        this.user.organization_id
-      );
-      console.log(this.roles_assignable_all);
-      this.filterAssignableRoles();
-      console.log(this.roles_assignable);
-      this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
-        this.user
-      );
-    } catch (error: any) {
-      this.modalService.openMessageModal(
-        ModalMessageComponent,
-        [error.error.msg],
-        true
-      );
-    }
   }
 
   removeRole(role: Role): void {
@@ -150,8 +153,11 @@ export class UserEditComponent implements OnInit {
   saveEditedUser(): void {
     this.user.rules = this.getRulesNotInRoles();
 
+    if (this.organization_id !== -1)
+      this.user.organization_id = this.organization_id;
+
     let user_request;
-    if (this.user.is_being_created) {
+    if (this.mode === Operation.CREATE) {
       if (this.user.password !== this.user.password_repeated) {
         alert('Passwords do not match! Cannot create this user.');
         return;

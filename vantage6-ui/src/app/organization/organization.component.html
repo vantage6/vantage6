@@ -50,7 +50,7 @@
         <div *ngIf="userPermission.can('create', 'role', current_organization.id)" class="inline">
           <button mat-button class="btn btn-dflt btn-right"
                   (click)="createRole()"
-                  [routerLink]="['/role', 'create']">
+                  [routerLink]="['/role', 'create', current_organization.id]">
             <mat-icon>add_circle</mat-icon>
             <span>New role</span>
           </button>
@@ -81,7 +81,7 @@
         <div *ngIf="userPermission.can('create', 'user', current_organization.id)" class="inline">
           <button mat-button class="btn btn-dflt btn-right"
                   (click)="createUser()"
-                  [routerLink]="['/user', 'create']">
+                  [routerLink]="['/user', 'create', current_organization.id]">
             <mat-icon>add_circle</mat-icon>
             <span>New user</span>
           </button>

@@ -21,6 +21,7 @@ export class RoleEditComponent implements OnInit {
   role: Role = getEmptyRole();
   id: number = this.role.id;
   mode: Operation = Operation.EDIT;
+  organization_id: number | null = null;
 
   constructor(
     private location: Location,
@@ -37,15 +38,23 @@ export class RoleEditComponent implements OnInit {
     this.roleEditService.getRole().subscribe((role) => {
       this.role = role;
     });
-    if (this.router.url.endsWith('create')) {
+    if (this.router.url.includes('create')) {
       this.mode = Operation.CREATE;
     }
     // subscribe to id parameter in route to change edited role if required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.utilsService.getId(params, 'role');
-      if (new_id !== this.id) {
-        this.id = new_id;
-        this.setRoleFromAPI(new_id);
+      if (this.mode !== Operation.CREATE) {
+        let new_id = this.utilsService.getId(params, 'role');
+        if (new_id !== this.id) {
+          this.id = new_id;
+          this.setRoleFromAPI(new_id);
+        }
+      } else {
+        this.organization_id = this.utilsService.getId(
+          params,
+          'organization',
+          'org_id'
+        );
       }
     });
   }
@@ -69,6 +78,9 @@ export class RoleEditComponent implements OnInit {
       ]);
       return;
     }
+
+    if (this.organization_id) this.role.organization_id = this.organization_id;
+
     let request;
     if (this.mode === Operation.CREATE) {
       request = this.roleService.create(this.role);

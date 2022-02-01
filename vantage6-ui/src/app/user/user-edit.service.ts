@@ -8,29 +8,33 @@ import { getEmptyUser, User } from '../interfaces/user';
   providedIn: 'root',
 })
 export class UserEditService {
-  user = new BehaviorSubject<User>(getEmptyUser());
-  available_roles = new BehaviorSubject<Role[]>([]);
+  user = getEmptyUser();
+  user_bhs = new BehaviorSubject<User>(this.user);
+  available_roles: Role[] = [];
+  available_roles_bhs = new BehaviorSubject<Role[]>(this.available_roles);
 
   constructor() {}
 
   set(user: User, roles: Role[]) {
-    this.user.next(user);
-    this.available_roles.next(roles);
+    this.user = user;
+    this.user_bhs.next(user);
+    this.available_roles = roles;
+    this.available_roles_bhs.next(roles);
   }
 
   setUser(user: User) {
-    this.user.next(user);
+    this.user_bhs.next(user);
   }
 
   setAvailableRoles(roles: Role[]) {
-    this.available_roles.next(roles);
+    this.available_roles_bhs.next(roles);
   }
 
   getUser() {
-    return this.user.asObservable();
+    return this.user;
   }
 
   getAvailableRoles() {
-    return this.available_roles.asObservable();
+    return this.available_roles;
   }
 }
