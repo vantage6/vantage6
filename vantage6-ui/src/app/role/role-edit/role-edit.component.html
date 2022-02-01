@@ -21,9 +21,22 @@
     (addedRulesChangeEvent)="updateAddedRules($event)"
   ></app-permission-table>
   <button mat-button class="btn btn-save" (click)="saveEdit()">
-    Save
+    <div *ngIf="isCreate(); else isEditRoleBlock">
+      Create
+    </div>
+    <ng-template #isEditRoleBlock>
+      Save
+    </ng-template>
   </button>
   <button mat-button class="btn btn-dflt" (click)="cancelEdit()">
     Cancel
   </button>
+
+
+  <!-- <div *ngIf="!userPermission.can('view', 'user', current_organization.id); else noUsersBlock">
+    You do not have permission to view the users!
+  </div>
+  <ng-template #noUsersBlock>
+    This organization has no users!
+  </ng-template> -->
 </mat-card>

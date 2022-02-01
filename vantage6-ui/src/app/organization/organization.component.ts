@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
 
-import { EMPTY_USER, User } from '../interfaces/user';
-import { EMPTY_ROLE, Role } from '../interfaces/role';
+import { EMPTY_USER, getEmptyUser, User } from '../interfaces/user';
+import { getEmptyRole, Role } from '../interfaces/role';
 import { Rule } from '../interfaces/rule';
 import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
 
@@ -200,20 +199,8 @@ export class OrganizationComponent implements OnInit {
     this.userEditService.set(user, this.roles_assignable);
   }
 
-  editRole(role: Role): void {
-    this.roleEditService.setRole(role);
-    this.router.navigate(['/role/edit']);
-  }
-
-  createRole(): void {
-    // initialize role
-    let new_role: Role = EMPTY_ROLE;
-
-    new_role.organization_id = this.current_organization.id;
-    new_role.is_being_created = true;
-
-    // use edit mode to fill in all details of new user
-    this.editRole(new_role);
+  createUser(): void {
+    this.userEditService.set(getEmptyUser(), this.roles_assignable);
   }
 
   deleteUser(user: User): void {
@@ -221,6 +208,15 @@ export class OrganizationComponent implements OnInit {
       this.organization_users,
       user.id
     );
+  }
+
+  createRole(): void {
+    // initialize role
+    let new_role: Role = getEmptyRole();
+    new_role.organization_id = this.current_organization.id;
+
+    // use edit mode to fill in all details of new user
+    this.roleEditService.setRole(new_role);
   }
 
   async deleteRole(role: Role): Promise<void> {

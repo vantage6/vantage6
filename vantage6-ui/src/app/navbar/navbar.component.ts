@@ -6,7 +6,7 @@ import { delay } from 'rxjs/operators';
 
 import { TokenStorageService } from '../services/token-storage.service';
 import { UserPermissionService } from '../services/user-permission.service';
-import { EMPTY_USER, User } from '../interfaces/user';
+import { getEmptyUser, User } from '../interfaces/user';
 
 @Component({
   selector: 'app-navbar',
@@ -15,7 +15,7 @@ import { EMPTY_USER, User } from '../interfaces/user';
 })
 export class NavbarComponent implements OnInit {
   isLoggedIn = true; // TODO remove
-  loggedin_user: User = EMPTY_USER;
+  loggedin_user: User = getEmptyUser();
 
   @ViewChild(MatSidenav)
   sidenav!: MatSidenav;

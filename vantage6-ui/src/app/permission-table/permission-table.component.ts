@@ -21,10 +21,7 @@ import { UserPermissionService } from '../services/user-permission.service';
 import {
   arrayContainsObjWithId,
   arrayIdsEqual,
-  containsObject,
   deepcopy,
-  getIdsFromArray,
-  isSubset,
   removeArrayDoubles,
   removeMatchedIdFromArray,
 } from '../utils';
@@ -57,15 +54,17 @@ export class PermissionTableComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    this.rule_groups = this.ruleService.getRuleGroupsCopy();
-    this.init();
-  }
-
-  ngOnChanges(): void {
-    this.init();
+    this.ruleService.getRuleGroups().subscribe((rule_groups) => {
+      this.rule_groups = JSON.parse(JSON.stringify(rule_groups));
+    });
+    this.setUserRules();
   }
 
   init(): void {
+    this.setUserRules();
+  }
+
+  ngOnChanges(): void {
     this.setUserRules();
   }
 

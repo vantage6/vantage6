@@ -12,11 +12,11 @@
       <td>Email:</td>
       <td><input [(ngModel)]="user.email"/></td>
     </tr>
-    <tr *ngIf="user.is_being_created || user.is_logged_in">
+    <tr *ngIf="isCreate()|| user.is_logged_in">
       <td>Password:</td>
       <td><input type="password" [(ngModel)]="user.password"/></td>
     </tr>
-    <tr *ngIf="user.is_being_created || user.is_logged_in">
+    <tr *ngIf="isCreate() || user.is_logged_in">
       <td>Repeat password:</td>
       <td>
         <input type="password" [(ngModel)]="user.password_repeated"/>

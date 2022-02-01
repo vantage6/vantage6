@@ -63,6 +63,7 @@ export class OrganizationEditComponent implements OnInit {
     });
   }
 
+  // TODO use similar function from utilsService
   getId(params: ParamMap): number {
     if (this.router.url.endsWith('create')) {
       return EMPTY_ORGANIZATION.id;

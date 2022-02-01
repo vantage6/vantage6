@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ExitMode } from 'src/app/globals/enum';
 
-import { Role, EMPTY_ROLE } from 'src/app/interfaces/role';
+import { Role, getEmptyRole } from 'src/app/interfaces/role';
 import { ModalService } from 'src/app/modal/modal.service';
 
 import { RoleService } from 'src/app/services/api/role.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
+import { RoleEditService } from '../role-edit.service';
 
 @Component({
   selector: 'app-role-view',
@@ -13,13 +14,13 @@ import { UserPermissionService } from 'src/app/services/user-permission.service'
   styleUrls: ['../../globals/buttons.scss', './role-view.component.scss'],
 })
 export class RoleViewComponent implements OnInit {
-  @Input() role: Role = EMPTY_ROLE;
+  @Input() role: Role = getEmptyRole();
   @Output() deletingRole = new EventEmitter<Role>();
-  @Output() editingRole = new EventEmitter<Role>();
 
   constructor(
     public userPermission: UserPermissionService,
     public roleService: RoleService,
+    private roleEditService: RoleEditService,
     private modalService: ModalService
   ) {}
 
@@ -47,6 +48,6 @@ export class RoleViewComponent implements OnInit {
 
   editRole(): void {
     this.role.is_being_edited = true;
-    this.editingRole.emit(this.role);
+    this.roleEditService.setRole(this.role);
   }
 }

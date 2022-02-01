@@ -23,7 +23,7 @@
   ></app-permission-table>
   <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
       mat-button class="btn btn-edit inline"
-      (click)="editRole()">
+      (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
     Edit
   </button>
   <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"

@@ -69,12 +69,21 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   {
-    path: 'role/edit',
+    path: 'role/:id/edit',
     component: RoleEditComponent,
     data: {
       requiresLogin: true,
       permissionType: 'edit',
-      alternativePermissionType: 'create',
+      permissionResource: 'role',
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'role/create',
+    component: RoleEditComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: 'create',
       permissionResource: 'role',
     },
     canActivate: [AccessGuard],

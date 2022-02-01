@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ExitMode } from 'src/app/globals/enum';
 
-import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { EMPTY_USER, getEmptyUser, User } from 'src/app/interfaces/user';
 import { ModalDeleteComponent } from 'src/app/modal/modal-delete/modal-delete.component';
 
 import { ModalService } from 'src/app/modal/modal.service';
@@ -14,7 +14,7 @@ import { UserPermissionService } from 'src/app/services/user-permission.service'
   styleUrls: ['../../globals/buttons.scss', './user-view.component.scss'],
 })
 export class UserViewComponent implements OnInit {
-  @Input() user: User = EMPTY_USER;
+  @Input() user: User = getEmptyUser();
   @Output() deletingUser = new EventEmitter<User>();
   @Output() editingUser = new EventEmitter<User>();
 

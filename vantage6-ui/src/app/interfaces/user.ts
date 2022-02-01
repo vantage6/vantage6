@@ -1,3 +1,4 @@
+import { deepcopy } from '../utils';
 import { Role } from './role';
 import { Rule } from './rule';
 
@@ -27,3 +28,7 @@ export const EMPTY_USER: User = {
   roles: [],
   rules: [],
 };
+
+export function getEmptyUser(): User {
+  return deepcopy(EMPTY_USER);
+}

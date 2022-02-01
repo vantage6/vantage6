@@ -1,3 +1,4 @@
+import { deepcopy } from '../utils';
 import { Rule } from './rule';
 
 export interface Role {
@@ -17,3 +18,7 @@ export const EMPTY_ROLE: Role = {
   organization_id: null,
   rules: [],
 };
+
+export function getEmptyRole() {
+  return deepcopy(EMPTY_ROLE);
+}

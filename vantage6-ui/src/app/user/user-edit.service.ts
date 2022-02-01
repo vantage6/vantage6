@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Role } from '../interfaces/role';
 
-import { EMPTY_USER, User } from '../interfaces/user';
+import { getEmptyUser, User } from '../interfaces/user';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserEditService {
-  user = new BehaviorSubject<User>(EMPTY_USER);
+  user = new BehaviorSubject<User>(getEmptyUser());
   available_roles = new BehaviorSubject<Role[]>([]);
 
   constructor() {}

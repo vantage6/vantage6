@@ -48,7 +48,9 @@
       <mat-card>
         <h4>Roles</h4>
         <div *ngIf="userPermission.can('create', 'role', current_organization.id)" class="inline">
-          <button mat-button class="btn btn-dflt btn-right" (click)="createRole()">
+          <button mat-button class="btn btn-dflt btn-right"
+                  (click)="createRole()"
+                  [routerLink]="['/role', 'create']">
             <mat-icon>add_circle</mat-icon>
             <span>New role</span>
           </button>
@@ -67,7 +69,6 @@
             <app-role-view
               [role]="role"
               (deletingRole)="deleteRole(role)"
-              (editingRole)="editRole(role)"
             ></app-role-view>
           </div>
         </div>
@@ -79,6 +80,7 @@
         <h4>Users</h4>
         <div *ngIf="userPermission.can('create', 'user', current_organization.id)" class="inline">
           <button mat-button class="btn btn-dflt btn-right"
+                  (click)="createUser()"
                   [routerLink]="['/user', 'create']">
             <mat-icon>add_circle</mat-icon>
             <span>New user</span>

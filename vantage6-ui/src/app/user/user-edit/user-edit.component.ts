@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 
 import { Role } from 'src/app/interfaces/role';
-import { Rule } from 'src/app/interfaces/rule';
-import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { Operation, Rule } from 'src/app/interfaces/rule';
+import { EMPTY_USER, getEmptyUser, User } from 'src/app/interfaces/user';
 
 import {
   getIdsFromArray,
@@ -13,7 +13,7 @@ import {
 import { UserService } from 'src/app/services/api/user.service';
 import { UserPermissionService } from 'src/app/services/user-permission.service';
 import { UserEditService } from '../user-edit.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from 'src/app/services/utils.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
@@ -26,16 +26,18 @@ import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message
   styleUrls: ['../../globals/buttons.scss', './user-edit.component.scss'],
 })
 export class UserEditComponent implements OnInit {
-  user: User = EMPTY_USER;
-  id: number = EMPTY_USER.id;
+  user: User = getEmptyUser();
+  id: number = this.user.id;
   roles_assignable_all: Role[] = [];
   roles_assignable: Role[] = [];
-  loggedin_user: User = EMPTY_USER;
+  loggedin_user: User = getEmptyUser();
   added_rules: Rule[] = [];
   can_assign_roles_rules: boolean = false;
+  mode = Operation.EDIT;
 
   constructor(
     private location: Location,
+    private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private userService: UserService,
@@ -45,18 +47,22 @@ export class UserEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.router.url.endsWith('create')) {
+      this.mode = Operation.CREATE;
+    }
     this.userPermission.getUser().subscribe((user) => {
       this.loggedin_user = user;
     });
     this.userEditService.getUser().subscribe((user) => {
       this.user = user;
+      this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
+        this.user
+      );
     });
     this.userEditService.getAvailableRoles().subscribe((roles) => {
-      this.roles_assignable_all = roles;
-      this.filterAssignableRoles();
+      this.setAssignableRoles(roles);
     });
-    // subscribe to id parameter in route to change edited organization if
-    // required
+    // subscribe to id parameter in route to change edited user if required
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, 'user');
       if (new_id !== this.id) {
@@ -64,6 +70,22 @@ export class UserEditComponent implements OnInit {
         this.setUserFromAPI(new_id);
       }
     });
+  }
+
+  async setAssignableRoles(roles: Role[]): Promise<void> {
+    this.roles_assignable_all = roles;
+    if (
+      this.mode === Operation.CREATE &&
+      this.roles_assignable_all.length === 0
+    ) {
+      // if we are creating a new user, and there are no roles to assign, recheck
+      // whether there are any roles to assign (they may be lost by page refresh)
+      // TODO determine current organization ID!
+      this.roles_assignable_all = await this.userPermission.getAssignableRoles(
+        this.user.organization_id //TODO this is -1 when page refreshes!
+      );
+    }
+    this.filterAssignableRoles();
   }
 
   filterAssignableRoles(): void {
@@ -81,7 +103,9 @@ export class UserEditComponent implements OnInit {
       this.roles_assignable_all = await this.userPermission.getAssignableRoles(
         this.user.organization_id
       );
+      console.log(this.roles_assignable_all);
       this.filterAssignableRoles();
+      console.log(this.roles_assignable);
       this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
         this.user
       );
@@ -159,5 +183,9 @@ export class UserEditComponent implements OnInit {
   goBack(): void {
     // go back to previous page
     this.location.back();
+  }
+
+  isCreate(): boolean {
+    return this.mode === Operation.CREATE;
   }
 }

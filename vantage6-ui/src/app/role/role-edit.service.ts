@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { EMPTY_ROLE, Role } from '../interfaces/role';
+import { getEmptyRole, Role } from '../interfaces/role';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RoleEditService {
-  role = new BehaviorSubject<Role>(EMPTY_ROLE);
+  role = new BehaviorSubject<Role>(getEmptyRole());
 
   constructor() {}
 
