@@ -2,13 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import {
-  Operation,
-  Resource,
-  Rule,
-  RuleGroup,
-  Scope,
-} from 'src/app/rule/interfaces/rule';
+import { Operation, Resource, Scope } from 'src/app/shared/enum';
+import { Rule, RuleGroup } from 'src/app/rule/interfaces/rule';
 import { deepcopy } from 'src/app/shared/utils';
 
 import { environment } from 'src/environments/environment';

@@ -1,25 +1,4 @@
-export enum Resource {
-  USER = 'user',
-  ORGANIZATION = 'organization',
-  COLLABORATION = 'collaboration',
-  ROLE = 'role',
-  NODE = 'node',
-  TASK = 'task',
-  RESULT = 'result',
-  PORT = 'port',
-}
-export enum Scope {
-  OWN = 'own',
-  ORGANIZATION = 'organization',
-  COLLABORATION = 'collaboration',
-  GLOBAL = 'global',
-}
-export enum Operation {
-  VIEW = 'view',
-  CREATE = 'create',
-  EDIT = 'edit',
-  DELETE = 'delete',
-}
+import { Operation, Resource, Scope } from 'src/app/shared/enum';
 
 export interface Rule {
   id: number;

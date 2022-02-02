@@ -8,13 +8,7 @@ import {
 } from '@angular/core';
 
 import { Role } from 'src/app/role/interfaces/role';
-import {
-  Rule,
-  RuleGroup,
-  Resource,
-  Scope,
-  Operation,
-} from 'src/app/rule/interfaces/rule';
+import { Rule, RuleGroup } from 'src/app/rule/interfaces/rule';
 import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';

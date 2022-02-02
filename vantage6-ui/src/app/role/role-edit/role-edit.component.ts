@@ -3,7 +3,8 @@ import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
-import { Operation, Rule } from 'src/app/rule/interfaces/rule';
+import { Rule } from 'src/app/rule/interfaces/rule';
+import { Operation } from 'src/app/shared/enum';
 
 import { ApiRoleService } from 'src/app/role/services/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
@@ -38,7 +39,7 @@ export class RoleEditComponent implements OnInit {
     this.roleEditService.getRole().subscribe((role) => {
       this.role = role;
     });
-    if (this.router.url.includes('create')) {
+    if (this.router.url.includes(Operation.CREATE)) {
       this.mode = Operation.CREATE;
     }
     // subscribe to id parameter in route to change edited role if required

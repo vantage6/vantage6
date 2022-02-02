@@ -7,6 +7,7 @@ import { ModalService } from 'src/app/modal/modal.service';
 import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { parseId } from 'src/app/shared/utils';
+import { Operation, Resource, Scope } from '../shared/enum';
 
 @Injectable()
 export class AccessGuard implements CanActivate {
@@ -79,15 +80,19 @@ export class OrgAccessGuard implements CanActivate {
     // edit/create organization.
     let permission: boolean = false;
     if (id && id > 0) {
-      permission = this.userPermission.can(permissionType, 'organization', id);
+      permission = this.userPermission.can(
+        permissionType,
+        Resource.ORGANIZATION,
+        id
+      );
     }
     // second check if we are allowed to view organizations as part of collab
     // TODO somehow check if the organization we attempt to view is part of the collaboration
-    if (!permission && permissionType === 'view') {
+    if (!permission && permissionType === Operation.VIEW) {
       permission = this.userPermission.hasPermission(
-        'view',
-        'organization',
-        'collaboration'
+        Operation.VIEW,
+        Resource.ORGANIZATION,
+        Scope.COLLABORATION
       );
     }
     if (!permission) {

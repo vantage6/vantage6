@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 
 import { Role } from 'src/app/role/interfaces/role';
-import { Operation, Rule } from 'src/app/rule/interfaces/rule';
-import { EMPTY_USER, getEmptyUser, User } from 'src/app/user/interfaces/user';
+import { Operation } from 'src/app/shared/enum';
+import { Rule } from 'src/app/rule/interfaces/rule';
+import { getEmptyUser, User } from 'src/app/user/interfaces/user';
 
 import {
   getIdsFromArray,
@@ -49,7 +50,7 @@ export class UserEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.router.url.includes('create')) {
+    if (this.router.url.includes(Operation.CREATE)) {
       this.mode = Operation.CREATE;
     }
     this.userPermission.isInitialized().subscribe((ready) => {

@@ -13,6 +13,7 @@ import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
 import { parseId } from 'src/app/shared/utils';
+import { Operation } from 'src/app/shared/enum';
 
 @Component({
   selector: 'app-organization-edit',
@@ -65,7 +66,7 @@ export class OrganizationEditComponent implements OnInit {
 
   // TODO use similar function from utilsService
   getId(params: ParamMap): number {
-    if (this.router.url.endsWith('create')) {
+    if (this.router.url.endsWith(Operation.CREATE)) {
       return EMPTY_ORGANIZATION.id;
     }
     // we are editing an organization: get the organization id

@@ -8,6 +8,7 @@ import { OrganizationComponent } from './organization/organization.component';
 import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { RoleEditComponent } from './role/role-edit/role-edit.component';
 import { OrganizationEditComponent } from './organization/organization-edit/organization-edit.component';
+import { Operation, Resource, Scope } from './shared/enum';
 
 const routes: Routes = [
   {
@@ -26,9 +27,9 @@ const routes: Routes = [
     component: OrganizationEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: 'create',
-      permissionResource: 'organization',
-      permissionScope: 'global',
+      permissionType: Operation.CREATE,
+      permissionResource: Resource.ORGANIZATION,
+      permissionScope: Scope.GLOBAL,
     },
     canActivate: [AccessGuard],
   },
@@ -36,7 +37,7 @@ const routes: Routes = [
     path: 'organization/:id',
     component: OrganizationComponent,
     data: {
-      permissionType: 'view',
+      permissionType: Operation.VIEW,
     },
     canActivate: [OrgAccessGuard],
   },
@@ -44,7 +45,7 @@ const routes: Routes = [
     path: 'organization/:id/edit',
     component: OrganizationEditComponent,
     data: {
-      permissionType: 'edit',
+      permissionType: Operation.EDIT,
     },
     canActivate: [OrgAccessGuard],
   },
@@ -53,8 +54,8 @@ const routes: Routes = [
     component: UserEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: 'create',
-      permissionResource: 'user',
+      permissionType: Operation.CREATE,
+      permissionResource: Resource.USER,
     },
     canActivate: [AccessGuard],
   },
@@ -63,8 +64,8 @@ const routes: Routes = [
     component: UserEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: 'edit',
-      permissionResource: 'user',
+      permissionType: Operation.EDIT,
+      permissionResource: Resource.USER,
     },
     canActivate: [AccessGuard],
   },
@@ -73,8 +74,8 @@ const routes: Routes = [
     component: RoleEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: 'create',
-      permissionResource: 'role',
+      permissionType: Operation.CREATE,
+      permissionResource: Resource.ROLE,
     },
     canActivate: [AccessGuard],
   },
@@ -83,8 +84,8 @@ const routes: Routes = [
     component: RoleEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: 'edit',
-      permissionResource: 'role',
+      permissionType: Operation.EDIT,
+      permissionResource: Resource.ROLE,
     },
     canActivate: [AccessGuard],
   },
