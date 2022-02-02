@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ExitMode } from 'src/app/globals/enum';
 
 import { Role, getEmptyRole } from 'src/app/interfaces/role';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { ModalService } from 'src/app/modal/modal.service';
 
 import { RoleService } from 'src/app/services/api/role.service';
@@ -32,7 +33,9 @@ export class RoleViewComponent implements OnInit {
         this.deletingRole.emit(this.role);
       },
       (error) => {
-        alert(error.error.msg);
+        this.modalService.openMessageModal(ModalMessageComponent, [
+          error.error.msg,
+        ]);
       }
     );
   }

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ExitMode } from 'src/app/globals/enum';
 
-import { EMPTY_USER, getEmptyUser, User } from 'src/app/interfaces/user';
-import { ModalDeleteComponent } from 'src/app/modal/modal-delete/modal-delete.component';
+import { getEmptyUser, User } from 'src/app/interfaces/user';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 
 import { ModalService } from 'src/app/modal/modal.service';
 import { UserService } from 'src/app/services/api/user.service';
@@ -34,7 +34,9 @@ export class UserViewComponent implements OnInit {
         this.deletingUser.emit(this.user);
       },
       (error) => {
-        alert(error.error.msg);
+        this.modalService.openMessageModal(ModalMessageComponent, [
+          error.error.msg,
+        ]);
       }
     );
   }

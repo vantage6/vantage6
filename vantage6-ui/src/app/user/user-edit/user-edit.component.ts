@@ -159,7 +159,9 @@ export class UserEditComponent implements OnInit {
     let user_request;
     if (this.mode === Operation.CREATE) {
       if (this.user.password !== this.user.password_repeated) {
-        alert('Passwords do not match! Cannot create this user.');
+        this.modalService.openMessageModal(ModalMessageComponent, [
+          'Passwords do not match! Cannot create this user.',
+        ]);
         return;
       }
       user_request = this.userService.create(this.user);
@@ -172,7 +174,9 @@ export class UserEditComponent implements OnInit {
         this.goBack();
       },
       (error) => {
-        alert(error.error.msg);
+        this.modalService.openMessageModal(ModalMessageComponent, [
+          error.error.msg,
+        ]);
       }
     );
   }

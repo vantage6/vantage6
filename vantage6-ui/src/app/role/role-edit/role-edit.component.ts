@@ -93,7 +93,9 @@ export class RoleEditComponent implements OnInit {
         this.goBack();
       },
       (error) => {
-        alert(error.error.msg);
+        this.modalService.openMessageModal(ModalMessageComponent, [
+          error.error.msg,
+        ]);
       }
     );
   }
