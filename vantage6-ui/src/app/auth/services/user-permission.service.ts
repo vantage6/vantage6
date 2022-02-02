@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { arrayContainsObjWithId, deepcopy } from '../utils';
+import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
 
-import { TokenStorageService } from './token-storage.service';
-import { UserService } from './api/user.service';
-import { RuleService } from './api/rule.service';
-import { Rule } from '../interfaces/rule';
-import { Role } from '../interfaces/role';
-import { EMPTY_USER, User } from '../interfaces/user';
-import { RoleService } from './api/role.service';
+import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { ApiUserService } from 'src/app/user/services/api-user.service';
+import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
+import { Rule } from 'src/app/rule/interfaces/rule';
+import { Role } from 'src/app/role/interfaces/role';
+import { EMPTY_USER, User } from 'src/app/user/interfaces/user';
+import { ApiRoleService } from 'src/app/role/services/api-role.service';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -27,9 +27,9 @@ export class UserPermissionService {
 
   constructor(
     private tokenStorage: TokenStorageService,
-    private userService: UserService,
-    private ruleService: RuleService,
-    private roleService: RoleService
+    private userService: ApiUserService,
+    private ruleService: ApiRuleService,
+    private roleService: ApiRoleService
   ) {
     this.setup();
   }

@@ -1,19 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import {
-  EMPTY_ORGANIZATION,
-  Organization,
-} from 'src/app/interfaces/organization';
+import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { ModalService } from 'src/app/modal/modal.service';
 import { environment } from 'src/environments/environment';
-import { ConvertJsonService } from '../convert-json.service';
+import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class OrganizationService {
+export class ApiOrganizationService {
   constructor(
     private http: HttpClient,
     private convertJsonService: ConvertJsonService,

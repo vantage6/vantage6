@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
-import { AccessGuard, OrgAccessGuard } from './access-guard.guard';
+import { AccessGuard, OrgAccessGuard } from 'src/app/auth/access-guard.guard';
 import { OrganizationComponent } from './organization/organization.component';
 import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { RoleEditComponent } from './role/role-edit/role-edit.component';

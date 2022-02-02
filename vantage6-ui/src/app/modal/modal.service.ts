@@ -5,8 +5,8 @@ import {
   NgbModalOptions,
   NgbModalRef,
 } from '@ng-bootstrap/ng-bootstrap';
-import { Role } from '../interfaces/role';
-import { User } from '../interfaces/user';
+import { Role } from 'src/app/role/interfaces/role';
+import { User } from 'src/app/user/interfaces/user';
 import { ModalDeleteComponent } from './modal-delete/modal-delete.component';
 
 @Injectable({

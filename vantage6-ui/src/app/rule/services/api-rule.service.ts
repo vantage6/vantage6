@@ -8,16 +8,16 @@ import {
   Rule,
   RuleGroup,
   Scope,
-} from 'src/app/interfaces/rule';
-import { deepcopy } from 'src/app/utils';
+} from 'src/app/rule/interfaces/rule';
+import { deepcopy } from 'src/app/shared/utils';
 
 import { environment } from 'src/environments/environment';
-import { TokenStorageService } from '../token-storage.service';
+import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class RuleService {
+export class ApiRuleService {
   is_logged_in = false;
   all_rules: Rule[] = [];
   all_rules_bhs = new BehaviorSubject<Rule[]>([]);

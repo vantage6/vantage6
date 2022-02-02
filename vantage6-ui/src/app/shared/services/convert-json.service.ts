@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 
-import { Role } from '../interfaces/role';
-import { Rule } from '../interfaces/rule';
-import { User } from '../interfaces/user';
-import { Organization } from '../interfaces/organization';
-import { getById } from '../utils';
+import { Role } from 'src/app/role/interfaces/role';
+import { Rule } from 'src/app/rule/interfaces/rule';
+import { User } from 'src/app/user/interfaces/user';
+import { Organization } from 'src/app/organization/interfaces/organization';
+import { getById } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',

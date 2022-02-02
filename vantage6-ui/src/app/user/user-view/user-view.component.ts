@@ -1,17 +1,17 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ExitMode } from 'src/app/globals/enum';
+import { ExitMode } from 'src/app/shared/enum';
 
-import { getEmptyUser, User } from 'src/app/interfaces/user';
+import { getEmptyUser, User } from 'src/app/user/interfaces/user';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 
 import { ModalService } from 'src/app/modal/modal.service';
-import { UserService } from 'src/app/services/api/user.service';
-import { UserPermissionService } from 'src/app/services/user-permission.service';
+import { ApiUserService } from 'src/app/user/services/api-user.service';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 
 @Component({
   selector: 'app-user-view',
   templateUrl: './user-view.component.html',
-  styleUrls: ['../../globals/buttons.scss', './user-view.component.scss'],
+  styleUrls: ['../../shared/scss/buttons.scss', './user-view.component.scss'],
 })
 export class UserViewComponent implements OnInit {
   @Input() user: User = getEmptyUser();
@@ -20,7 +20,7 @@ export class UserViewComponent implements OnInit {
 
   constructor(
     public userPermission: UserPermissionService,
-    public userService: UserService,
+    public userService: ApiUserService,
     private modalService: ModalService
   ) {}
 

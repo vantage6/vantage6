@@ -7,29 +7,32 @@ import {
   EventEmitter,
 } from '@angular/core';
 
-import { Role } from '../interfaces/role';
+import { Role } from 'src/app/role/interfaces/role';
 import {
   Rule,
   RuleGroup,
   Resource,
   Scope,
   Operation,
-} from '../interfaces/rule';
-import { RuleService } from '../services/api/rule.service';
+} from 'src/app/rule/interfaces/rule';
+import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 
-import { UserPermissionService } from '../services/user-permission.service';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import {
   arrayContainsObjWithId,
   arrayIdsEqual,
   deepcopy,
   removeArrayDoubles,
   removeMatchedIdFromArray,
-} from '../utils';
+} from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-permission-table',
   templateUrl: './permission-table.component.html',
-  styleUrls: ['../globals/buttons.scss', './permission-table.component.scss'],
+  styleUrls: [
+    '../../shared/scss/buttons.scss',
+    './permission-table.component.scss',
+  ],
 })
 export class PermissionTableComponent implements OnInit, OnChanges {
   @Input() given_roles: Role[] = [];
@@ -50,7 +53,7 @@ export class PermissionTableComponent implements OnInit, OnChanges {
 
   constructor(
     public userPermission: UserPermissionService,
-    private ruleService: RuleService
+    private ruleService: ApiRuleService
   ) {}
 
   ngOnInit(): void {

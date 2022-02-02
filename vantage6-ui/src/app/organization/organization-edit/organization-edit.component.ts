@@ -5,20 +5,20 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
   EMPTY_ORGANIZATION,
   Organization,
-} from 'src/app/interfaces/organization';
+} from 'src/app/organization/interfaces/organization';
 
-import { OrganizationService } from 'src/app/services/api/organization.service';
-import { OrganizationEditService } from '../organization-edit.service';
+import { ApiOrganizationService } from 'src/app/organization/services/api-organization.service';
+import { OrganizationEditService } from 'src/app/organization/services/organization-edit.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
-import { parseId } from 'src/app/utils';
+import { parseId } from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-organization-edit',
   templateUrl: './organization-edit.component.html',
   styleUrls: [
-    '../../globals/buttons.scss',
+    '../../shared/scss/buttons.scss',
     './organization-edit.component.scss',
   ],
 })
@@ -30,7 +30,7 @@ export class OrganizationEditComponent implements OnInit {
     private location: Location,
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private organizationService: OrganizationService,
+    private organizationService: ApiOrganizationService,
     private organizationEditService: OrganizationEditService,
     private modalService: ModalService
   ) {}

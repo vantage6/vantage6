@@ -1,28 +1,28 @@
 import { Component, OnInit } from '@angular/core';
 
-import { EMPTY_USER, getEmptyUser, User } from '../interfaces/user';
-import { getEmptyRole, Role } from '../interfaces/role';
-import { Rule } from '../interfaces/rule';
-import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
+import { EMPTY_USER, getEmptyUser, User } from 'src/app/user/interfaces/user';
+import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
+import { Rule } from 'src/app/rule/interfaces/rule';
+import { EMPTY_ORGANIZATION, Organization } from './interfaces/organization';
 
-import { UserPermissionService } from '../services/user-permission.service';
-import { UserService } from '../services/api/user.service';
-import { OrganizationService } from '../services/api/organization.service';
-import { RoleService } from '../services/api/role.service';
-import { parseId, removeMatchedIdFromArray } from '../utils';
-import { ConvertJsonService } from '../services/convert-json.service';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { ApiUserService } from 'src/app/user/services/api-user.service';
+import { ApiOrganizationService } from './services/api-organization.service';
+import { ApiRoleService } from 'src/app/role/services/api-role.service';
+import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
+import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { UserEditService } from '../user/user-edit.service';
-import { RoleEditService } from '../role/role-edit.service';
-import { RuleService } from '../services/api/rule.service';
+import { UserEditService } from 'src/app/user/services/user-edit.service';
+import { RoleEditService } from 'src/app/role/services/role-edit.service';
+import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 import { ModalService } from '../modal/modal.service';
 import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
-import { OrganizationEditService } from './organization-edit.service';
+import { OrganizationEditService } from './services/organization-edit.service';
 
 @Component({
   selector: 'app-organization',
   templateUrl: './organization.component.html',
-  styleUrls: ['../globals/buttons.scss', './organization.component.scss'],
+  styleUrls: ['../shared/scss/buttons.scss', './organization.component.scss'],
 })
 export class OrganizationComponent implements OnInit {
   organizations: Organization[] = [];
@@ -39,14 +39,14 @@ export class OrganizationComponent implements OnInit {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private userService: UserService,
-    private organizationService: OrganizationService,
-    private roleService: RoleService,
+    private userService: ApiUserService,
+    private organizationService: ApiOrganizationService,
+    private roleService: ApiRoleService,
     private convertJsonService: ConvertJsonService,
     private organizationEditService: OrganizationEditService,
     private userEditService: UserEditService,
     private roleEditService: RoleEditService,
-    private ruleService: RuleService,
+    private ruleService: ApiRuleService,
     private modalService: ModalService
   ) {}
 

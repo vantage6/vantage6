@@ -1,30 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 
-import { Role } from 'src/app/interfaces/role';
-import { Operation, Rule } from 'src/app/interfaces/rule';
-import { EMPTY_USER, getEmptyUser, User } from 'src/app/interfaces/user';
+import { Role } from 'src/app/role/interfaces/role';
+import { Operation, Rule } from 'src/app/rule/interfaces/rule';
+import { EMPTY_USER, getEmptyUser, User } from 'src/app/user/interfaces/user';
 
 import {
   getIdsFromArray,
   removeMatchedIdFromArray,
   removeMatchedIdsFromArray,
-} from 'src/app/utils';
-import { UserService } from 'src/app/services/api/user.service';
-import { UserPermissionService } from 'src/app/services/user-permission.service';
-import { UserEditService } from '../user-edit.service';
+} from 'src/app/shared/utils';
+import { ApiUserService } from 'src/app/user/services/api-user.service';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { UserEditService } from 'src/app/user/services/user-edit.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UtilsService } from 'src/app/services/utils.service';
+import { UtilsService } from 'src/app/shared/services/utils.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
+import { EMPTY_ORGANIZATION } from 'src/app/organization/interfaces/organization';
 
-// TODO add option to assign user to different organization
+// TODO add option to assign user to different organization?
 
 @Component({
   selector: 'app-user-edit',
   templateUrl: './user-edit.component.html',
-  styleUrls: ['../../globals/buttons.scss', './user-edit.component.scss'],
+  styleUrls: ['../../shared/scss/buttons.scss', './user-edit.component.scss'],
 })
 export class UserEditComponent implements OnInit {
   user: User = getEmptyUser();
@@ -42,7 +42,7 @@ export class UserEditComponent implements OnInit {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private userService: UserService,
+    private userService: ApiUserService,
     private userEditService: UserEditService,
     private utilsService: UtilsService,
     private modalService: ModalService

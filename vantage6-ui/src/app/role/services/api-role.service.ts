@@ -1,23 +1,23 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { Role } from 'src/app/interfaces/role';
-import { Rule } from 'src/app/interfaces/rule';
+import { Role } from 'src/app/role/interfaces/role';
+import { Rule } from 'src/app/rule/interfaces/rule';
 
-import { getIdsFromArray } from 'src/app/utils';
+import { getIdsFromArray } from 'src/app/shared/utils';
 import { environment } from 'src/environments/environment';
-import { ConvertJsonService } from '../convert-json.service';
-import { RuleService } from './rule.service';
+import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
+import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class RoleService {
+export class ApiRoleService {
   all_rules: Rule[] = [];
 
   constructor(
     private http: HttpClient,
-    private ruleService: RuleService,
+    private ruleService: ApiRuleService,
     private convertJsonService: ConvertJsonService
   ) {
     this.setup();

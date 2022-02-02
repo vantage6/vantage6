@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Role } from '../interfaces/role';
+import { Role } from 'src/app/role/interfaces/role';
 
-import { getEmptyUser, User } from '../interfaces/user';
+import { getEmptyUser, User } from 'src/app/user/interfaces/user';
 
 @Injectable({
   providedIn: 'root',

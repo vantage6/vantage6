@@ -1,5 +1,5 @@
-import { deepcopy } from '../utils';
-import { Rule } from './rule';
+import { deepcopy } from 'src/app/shared/utils';
+import { Rule } from 'src/app/rule/interfaces/rule';
 
 export interface Role {
   id: number;

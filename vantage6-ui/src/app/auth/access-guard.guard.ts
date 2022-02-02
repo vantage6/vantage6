@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, CanActivate } from '@angular/router';
-import { ModalMessageComponent } from './modal/modal-message/modal-message.component';
-import { ModalService } from './modal/modal.service';
 
-import { TokenStorageService } from './services/token-storage.service';
-import { UserPermissionService } from './services/user-permission.service';
-import { parseId } from './utils';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+
+import { ModalService } from 'src/app/modal/modal.service';
+import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { parseId } from 'src/app/shared/utils';
 
 @Injectable()
 export class AccessGuard implements CanActivate {

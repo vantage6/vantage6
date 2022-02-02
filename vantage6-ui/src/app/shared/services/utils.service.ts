@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Router, ParamMap } from '@angular/router';
 
-import { ModalService } from '../modal/modal.service';
+import { ModalService } from 'src/app/modal/modal.service';
 
-import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
-import { parseId } from '../utils';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { parseId } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',

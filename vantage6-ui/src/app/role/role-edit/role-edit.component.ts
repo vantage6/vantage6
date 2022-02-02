@@ -2,20 +2,20 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { getEmptyRole, Role } from 'src/app/interfaces/role';
-import { Operation, Rule } from 'src/app/interfaces/rule';
+import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
+import { Operation, Rule } from 'src/app/rule/interfaces/rule';
 
-import { RoleService } from 'src/app/services/api/role.service';
-import { UserPermissionService } from 'src/app/services/user-permission.service';
-import { RoleEditService } from '../role-edit.service';
+import { ApiRoleService } from 'src/app/role/services/api-role.service';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { RoleEditService } from 'src/app/role/services/role-edit.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { UtilsService } from 'src/app/services/utils.service';
+import { UtilsService } from 'src/app/shared/services/utils.service';
 
 @Component({
   selector: 'app-role-edit',
   templateUrl: './role-edit.component.html',
-  styleUrls: ['../../globals/buttons.scss', './role-edit.component.scss'],
+  styleUrls: ['../../shared/scss/buttons.scss', './role-edit.component.scss'],
 })
 export class RoleEditComponent implements OnInit {
   role: Role = getEmptyRole();
@@ -28,7 +28,7 @@ export class RoleEditComponent implements OnInit {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private roleService: RoleService,
+    private roleService: ApiRoleService,
     private roleEditService: RoleEditService,
     private modalService: ModalService,
     private utilsService: UtilsService
