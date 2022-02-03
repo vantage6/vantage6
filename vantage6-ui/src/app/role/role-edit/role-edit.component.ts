@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
 import { Rule } from 'src/app/rule/interfaces/rule';
-import { Operation } from 'src/app/shared/enum';
+import { Operation, Resource } from 'src/app/shared/enum';
 
 import { ApiRoleService } from 'src/app/role/services/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
@@ -45,7 +45,7 @@ export class RoleEditComponent implements OnInit {
     // subscribe to id parameter in route to change edited role if required
     this.activatedRoute.paramMap.subscribe((params) => {
       if (this.mode !== Operation.CREATE) {
-        let new_id = this.utilsService.getId(params, 'role');
+        let new_id = this.utilsService.getId(params, Resource.ROLE);
         if (new_id !== this.id) {
           this.id = new_id;
           this.setRoleFromAPI(new_id);
@@ -53,7 +53,7 @@ export class RoleEditComponent implements OnInit {
       } else {
         this.organization_id = this.utilsService.getId(
           params,
-          'organization',
+          Resource.ORGANIZATION,
           'org_id'
         );
       }

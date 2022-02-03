@@ -13,7 +13,8 @@ import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
 import { parseId } from 'src/app/shared/utils';
-import { Operation } from 'src/app/shared/enum';
+import { Operation, Resource } from 'src/app/shared/enum';
+import { UtilsService } from 'src/app/shared/services/utils.service';
 
 @Component({
   selector: 'app-organization-edit',
@@ -33,7 +34,8 @@ export class OrganizationEditComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private organizationService: ApiOrganizationService,
     private organizationEditService: OrganizationEditService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private utilsService: UtilsService
   ) {}
 
   ngOnInit(): void {
@@ -53,7 +55,7 @@ export class OrganizationEditComponent implements OnInit {
     // subscribe to id parameter in route to change edited organization if
     // required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.getId(params);
+      let new_id = this.utilsService.getId(params, Resource.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
         return; // cannot get organization
       }
@@ -62,24 +64,6 @@ export class OrganizationEditComponent implements OnInit {
         this.setOrgFromAPI(new_id);
       }
     });
-  }
-
-  // TODO use similar function from utilsService
-  getId(params: ParamMap): number {
-    if (this.router.url.endsWith(Operation.CREATE)) {
-      return EMPTY_ORGANIZATION.id;
-    }
-    // we are editing an organization: get the organization id
-    let new_id = parseId(params.get('id'));
-    if (isNaN(new_id)) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        "The organization id '" +
-          params.get('id') +
-          "' cannot be parsed. Please provide a valid organization id",
-      ]);
-      return EMPTY_ORGANIZATION.id;
-    }
-    return new_id;
   }
 
   async setOrgFromAPI(id: number): Promise<void> {

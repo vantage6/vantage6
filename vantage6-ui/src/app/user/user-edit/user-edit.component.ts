@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 
 import { Role } from 'src/app/role/interfaces/role';
-import { Operation } from 'src/app/shared/enum';
+import { Operation, Resource } from 'src/app/shared/enum';
 import { Rule } from 'src/app/rule/interfaces/rule';
 import { getEmptyUser, User } from 'src/app/user/interfaces/user';
 
@@ -70,14 +70,14 @@ export class UserEditComponent implements OnInit {
 
     // subscribe to id parameter in route to change edited user if required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.utilsService.getId(params, 'user');
+      let new_id = this.utilsService.getId(params, Resource.USER);
       if (new_id !== this.id) {
         this.id = new_id;
         this.setUserFromAPI(new_id);
       } else if (this.mode === Operation.CREATE) {
         this.organization_id = this.utilsService.getId(
           params,
-          'organization',
+          Resource.ORGANIZATION,
           'org_id'
         );
         this.setAssignableRoles();

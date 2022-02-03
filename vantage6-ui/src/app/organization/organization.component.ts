@@ -4,20 +4,22 @@ import { EMPTY_USER, getEmptyUser, User } from 'src/app/user/interfaces/user';
 import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
 import { Rule } from 'src/app/rule/interfaces/rule';
 import { EMPTY_ORGANIZATION, Organization } from './interfaces/organization';
+import { Resource } from '../shared/enum';
+import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ApiUserService } from 'src/app/user/services/api-user.service';
 import { ApiOrganizationService } from './services/api-organization.service';
 import { ApiRoleService } from 'src/app/role/services/api-role.service';
-import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UserEditService } from 'src/app/user/services/user-edit.service';
 import { RoleEditService } from 'src/app/role/services/role-edit.service';
 import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 import { ModalService } from '../modal/modal.service';
 import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
 import { OrganizationEditService } from './services/organization-edit.service';
+import { UtilsService } from '../shared/services/utils.service';
 
 @Component({
   selector: 'app-organization',
@@ -47,7 +49,8 @@ export class OrganizationComponent implements OnInit {
     private userEditService: UserEditService,
     private roleEditService: RoleEditService,
     private ruleService: ApiRuleService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private utilsService: UtilsService
   ) {}
 
   // TODO Now it is shown that there are no users/roles until they are loaded,
@@ -59,7 +62,7 @@ export class OrganizationComponent implements OnInit {
   init(): void {
     // TODO this has a nested subscribe, fix that
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this._getId(params);
+      let new_id = this.utilsService.getId(params, Resource.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
         return; // cannot get organization
       }
@@ -84,20 +87,6 @@ export class OrganizationComponent implements OnInit {
 
     // set the currently requested organization's users/roles/etc
     this.setCurrentOrganization();
-  }
-
-  private _getId(params: ParamMap): number {
-    // get the organization id of the organization we're viewing
-    let new_id = parseId(params.get('id'));
-    if (isNaN(new_id)) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        "The organization id '" +
-          params.get('id') +
-          "' cannot be parsed. Please provide a valid organization id",
-      ]);
-      return EMPTY_ORGANIZATION.id;
-    }
-    return new_id;
   }
 
   async getOrganizationDetails(): Promise<void> {

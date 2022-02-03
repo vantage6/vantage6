@@ -5,7 +5,7 @@ import { ModalService } from 'src/app/modal/modal.service';
 
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { parseId } from 'src/app/shared/utils';
-import { Operation } from '../enum';
+import { Operation, Resource } from '../enum';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +13,11 @@ import { Operation } from '../enum';
 export class UtilsService {
   constructor(private router: Router, private modalService: ModalService) {}
 
-  getId(params: ParamMap, resource: string, param_name: string = 'id'): number {
+  getId(
+    params: ParamMap,
+    resource: Resource,
+    param_name: string = 'id'
+  ): number {
     if (this.router.url.includes(Operation.CREATE) && param_name === 'id') {
       return -1;
     }
