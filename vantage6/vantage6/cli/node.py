@@ -127,7 +127,7 @@ def cli_node_list():
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 def cli_node_new_configuration(name, environment, system_folders):
-    """Create a new configation file.
+    """Create a new configuration file.
 
     Checks if the configuration already exists. If this is not the case
     a questionaire is invoked to create a new configuration file.
@@ -262,7 +262,6 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             question = (f"Configuration '{name}' using environment "
                         "'{environment}' does not exist.\n  Do you want to "
                         "create this config now?")
-
 
             if q.confirm(question).ask():
                 configuration_wizard("node", name, environment, system_folders)
