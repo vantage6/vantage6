@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import {
   EMPTY_ORGANIZATION,
@@ -28,8 +27,6 @@ export class OrganizationEditComponent implements OnInit {
   id: number = -1;
 
   constructor(
-    private location: Location,
-    private router: Router,
     private activatedRoute: ActivatedRoute,
     private organizationService: ApiOrganizationService,
     private organizationEditService: OrganizationEditService,

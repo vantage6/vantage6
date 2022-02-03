@@ -20,7 +20,6 @@ const PERMISSION_KEY = 'permissions-user';
 export class UserPermissionService {
   user: User = EMPTY_USER;
   userBhs = new BehaviorSubject<User>(this.user);
-  userRoles: Role[] = [];
   userRules: Rule[] = [];
   userExtraRules: Rule[] = [];
   all_rules: Rule[] = [];
@@ -66,7 +65,6 @@ export class UserPermissionService {
     return this.ready.asObservable();
   }
 
-  // TODO remove function (use similar function from userService!)
   getUser(): Observable<User> {
     return this.userBhs.asObservable();
   }
@@ -154,10 +152,8 @@ export class UserPermissionService {
   private async _setPermissions(user: User, all_rules: Rule[]) {
     // remove any existing rules that may be present
     this.userRules = [];
-    this.userRoles = [];
 
     // add rules from the user rules and roles
-    this.userRules = [];
     this.userRules.push(...deepcopy(user.rules));
     for (let role of user.roles) {
       this.userRules.push(...role.rules);
