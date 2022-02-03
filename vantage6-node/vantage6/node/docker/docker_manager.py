@@ -269,6 +269,7 @@ class DockerManager(DockerBaseManager):
             databases=self.databases,
             docker_volume_name=self.data_volume_name
         )
+        database = database if len(database) else 'default'
         vpn_ports = task.run(
             docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
             algorithm_env=self.algorithm_env, database=database

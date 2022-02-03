@@ -366,13 +366,15 @@ class DockerTaskManager(DockerBaseManager):
             db = self.databases[label]
             var_name = f'{label.upper()}_DATABASE_URI'
             environment_variables[var_name] = \
-                f"{self.data_folder}/{db['uri']}" if db['is_file'] \
-                else db['uri']
+                f"{self.data_folder}/{os.path.basename(db['uri'])}" \
+                if db['is_file'] else db['uri']
 
         # Support legacy algorithms
         try:
-            environment_variables["DATABASE_URI"] = \
-                f"{self.data_folder}/{self.databases[database]['uri']}"
+            environment_variables["DATABASE_URI"] = (
+                f"{self.data_folder}/"
+                f"{os.path.basename(self.databases[database]['uri'])}"
+            )
         except KeyError as e:
             self.log.error(f"'{database}' database missing! This could crash "
                            "legacy algorithms")
