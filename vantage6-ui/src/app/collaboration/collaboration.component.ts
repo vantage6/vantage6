@@ -59,9 +59,8 @@ export class CollaborationComponent implements OnInit {
         this.other_collaborations.push(c);
       }
     }
-    console.log(this.loggedin_user);
-    console.log(this.organizations);
-    console.log(this.collaborations);
-    console.log(this.other_collaborations);
   }
+
+  deleteCollaboration(col: Collaboration) {}
+  editCollaboration(col: Collaboration) {}
 }

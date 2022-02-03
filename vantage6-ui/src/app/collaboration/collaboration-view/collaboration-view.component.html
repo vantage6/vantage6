@@ -1,0 +1,48 @@
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      {{collaboration.name}}
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Name:</td>
+      <td>{{collaboration.name}}</td>
+    </tr>
+    <tr>
+      <td>Encrypted:</td>
+      <td>{{encrypted()}}</td>
+    </tr>
+    <tr>
+      <td>Organization(s):</td>
+      <td>
+        <div *ngFor="let org of collaboration.organizations" class="inline">
+            <button mat-button class="btn-detail inline" disabled>
+              {{org.name}}
+            </button>
+        </div>
+        <div *ngIf="collaboration.organizations.length===0">
+          No organizations are taking part in this collaboration!
+        </div>
+      </td>
+    </tr>
+
+  </table>
+  <button *ngIf="userPermission.hasPermission('edit', 'collaboration', 'global')"
+      mat-button class="btn btn-edit inline"
+      >
+      <!-- (click)="editUser()"
+      [routerLink]="['/user', user.id, 'edit']" -->
+    Edit
+  </button>
+  <button *ngIf="userPermission.hasPermission('delete', 'collaboration', 'global')"
+      mat-button class="btn btn-delete-strong"
+      >
+      <!-- (click)="deleteUser()" -->
+    Delete
+  </button>
+</mat-expansion-panel>

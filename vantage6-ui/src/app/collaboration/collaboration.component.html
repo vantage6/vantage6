@@ -1,9 +1,18 @@
-<mat-card>
-  <h4>
-    Your collaborations
-  </h4>
-</mat-card>
-<div *ngIf="userPermission.hasPermission('view', 'collaboration', 'global')">
+<div *ngIf="userPermission.hasPermission('view', 'collaboration', 'organization') && collaborations.length>0">
+  <mat-card>
+    <h4>
+      Your collaborations
+    </h4>
+    <div *ngFor="let col of collaborations">
+      <app-collaboration-view
+        [collaboration]="col"
+        (deletingCollab)="deleteCollaboration(col)"
+        (editingCollab)="editCollaboration(col)"
+      ></app-collaboration-view>
+    </div>
+  </mat-card>
+</div>
+<div *ngIf="userPermission.hasPermission('view', 'collaboration', 'global') && other_collaborations.length>0">
   <mat-card>
     <h4>
       Other collaborations
@@ -12,6 +21,13 @@
       These are collaborations which your organization is not involved in.
       You can only see these because you have root permissions!
     </p>
+    <div *ngFor="let col of other_collaborations">
+      <app-collaboration-view
+        [collaboration]="col"
+        (deletingCollab)="deleteCollaboration(col)"
+        (editingCollab)="editCollaboration(col)"
+      ></app-collaboration-view>
+    </div>
   </mat-card>
 
 </div>
