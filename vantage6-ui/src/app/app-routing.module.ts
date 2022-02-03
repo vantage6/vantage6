@@ -1,14 +1,16 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { Operation, Resource, Scope } from './shared/enum';
+import { AccessGuard, OrgAccessGuard } from 'src/app/auth/access-guard.guard';
+
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
-import { AccessGuard, OrgAccessGuard } from 'src/app/auth/access-guard.guard';
 import { OrganizationComponent } from './organization/organization.component';
 import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { RoleEditComponent } from './role/role-edit/role-edit.component';
 import { OrganizationEditComponent } from './organization/organization-edit/organization-edit.component';
-import { Operation, Resource, Scope } from './shared/enum';
+import { CollaborationComponent } from './collaboration/collaboration.component';
 
 const routes: Routes = [
   {
@@ -22,6 +24,17 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   { path: '', redirectTo: '/home', pathMatch: 'full' },
+  {
+    path: 'collaboration',
+    component: CollaborationComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: Operation.CREATE,
+      permissionResource: Resource.ORGANIZATION,
+      permissionScope: Scope.GLOBAL,
+    },
+    canActivate: [AccessGuard],
+  },
   {
     path: 'organization/create',
     component: OrganizationEditComponent,

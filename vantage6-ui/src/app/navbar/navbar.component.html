@@ -23,6 +23,14 @@
     <mat-icon>home</mat-icon>
     <span>Home</span>
   </button>
+  <div *ngIf="userPermission.hasPermission('view', 'collaboration', '*')">
+    <button mat-button class="menu-button"
+            [routerLink]="['/collaboration']"
+            routerLinkActive="menu-is-active">
+      <mat-icon>school</mat-icon>
+      <span>Studies</span>
+    </button>
+  </div>
   <div *ngIf="userPermission.hasPermission('view', 'organization', '*')">
     <button mat-button class="menu-button"
             [routerLink]="['/organization', loggedin_user.organization_id]"

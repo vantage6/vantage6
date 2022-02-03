@@ -30,6 +30,7 @@ import { RoleEditComponent } from './role/role-edit/role-edit.component';
 import { ModalDeleteComponent } from './modal/modal-delete/modal-delete.component';
 import { ModalMessageComponent } from './modal/modal-message/modal-message.component';
 import { OrganizationEditComponent } from './organization/organization-edit/organization-edit.component';
+import { CollaborationComponent } from './collaboration/collaboration.component';
 
 @NgModule({
   declarations: [
@@ -46,6 +47,7 @@ import { OrganizationEditComponent } from './organization/organization-edit/orga
     ModalDeleteComponent,
     ModalMessageComponent,
     OrganizationEditComponent,
+    CollaborationComponent,
   ],
   imports: [
     BrowserModule,

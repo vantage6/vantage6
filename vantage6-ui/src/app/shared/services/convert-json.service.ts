@@ -5,6 +5,7 @@ import { Rule } from 'src/app/rule/interfaces/rule';
 import { User } from 'src/app/user/interfaces/user';
 import { Organization } from 'src/app/organization/interfaces/organization';
 import { getById } from 'src/app/shared/utils';
+import { Collaboration } from 'src/app/collaboration/interfaces/collaboration';
 
 @Injectable({
   providedIn: 'root',
@@ -80,6 +81,27 @@ export class ConvertJsonService {
       country: org_json.country,
       domain: org_json.domain,
       public_key: org_json.public_key,
+    };
+  }
+
+  getCollaboration(
+    coll_json: any,
+    organizations: Organization[]
+  ): Collaboration {
+    let orgs: Organization[] = [];
+    if (coll_json.organizations) {
+      coll_json.organizations.forEach((org: any) => {
+        let o = getById(organizations, org.id);
+        if (o !== undefined) {
+          orgs.push(o);
+        }
+      });
+    }
+    return {
+      id: coll_json.id,
+      name: coll_json.name,
+      encrypted: coll_json.encrypted,
+      organizations: orgs,
     };
   }
 }
