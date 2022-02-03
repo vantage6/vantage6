@@ -42,11 +42,16 @@ export class RoleViewComponent implements OnInit {
 
   deleteRole(): void {
     // open modal window to ask for confirmation of irreversible delete action
-    this.modalService.openDeleteModal(this.role).result.then((exit_mode) => {
-      if (exit_mode === ExitMode.DELETE) {
-        this.executeDelete();
-      }
-    });
+    this.modalService
+      .openDeleteModal(
+        this.role,
+        'This role will also be deleted from any users that possess this role.'
+      )
+      .result.then((exit_mode) => {
+        if (exit_mode === ExitMode.DELETE) {
+          this.executeDelete();
+        }
+      });
   }
 
   editRole(): void {

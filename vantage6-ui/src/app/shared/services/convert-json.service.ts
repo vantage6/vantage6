@@ -67,7 +67,6 @@ export class ConvertJsonService {
       organization_id: user_json.organization.id,
       roles: user_roles,
       rules: user_rules,
-      is_being_created: false,
     };
   }
 

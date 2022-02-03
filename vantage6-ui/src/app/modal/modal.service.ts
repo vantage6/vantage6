@@ -34,9 +34,13 @@ export class ModalService {
     return modalRef;
   }
 
-  openDeleteModal(obj_to_delete: User | Role): NgbModalRef {
+  openDeleteModal(
+    obj_to_delete: User | Role,
+    extra_message: string | null = null
+  ): NgbModalRef {
     const modalRef = this.modalService.open(ModalDeleteComponent, {});
     modalRef.componentInstance.obj_to_delete = obj_to_delete;
+    modalRef.componentInstance.extra_message = extra_message;
     return modalRef;
   }
 }

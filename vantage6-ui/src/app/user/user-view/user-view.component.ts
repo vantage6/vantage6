@@ -24,9 +24,7 @@ export class UserViewComponent implements OnInit {
     private modalService: ModalService
   ) {}
 
-  ngOnInit(): void {
-    this.user.is_being_edited = false;
-  }
+  ngOnInit(): void {}
 
   executeDelete(): void {
     this.userService.delete(this.user).subscribe(
@@ -51,7 +49,6 @@ export class UserViewComponent implements OnInit {
   }
 
   editUser(): void {
-    this.user.is_being_edited = true;
     this.editingUser.emit(this.user);
   }
 }

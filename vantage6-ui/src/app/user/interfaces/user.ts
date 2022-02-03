@@ -13,8 +13,6 @@ export interface User {
   rules: Rule[];
   password?: string;
   password_repeated?: string;
-  is_being_created?: boolean;
-  is_being_edited?: boolean;
   is_logged_in?: boolean;
 }
 

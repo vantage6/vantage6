@@ -15,6 +15,7 @@ import { User } from 'src/app/user/interfaces/user';
 })
 export class ModalDeleteComponent implements OnInit {
   @Input() obj_to_delete: User | Role | any;
+  @Input() extra_message: string | null = null;
 
   constructor(public activeModal: NgbActiveModal) {}
 
