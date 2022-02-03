@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
@@ -25,7 +24,6 @@ export class RoleEditComponent implements OnInit {
   organization_id: number | null = null;
 
   constructor(
-    private location: Location,
     private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
@@ -91,7 +89,7 @@ export class RoleEditComponent implements OnInit {
 
     request.subscribe(
       (data) => {
-        this.goBack();
+        this.utilsService.goToPreviousPage();
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
@@ -102,16 +100,11 @@ export class RoleEditComponent implements OnInit {
   }
 
   cancelEdit(): void {
-    this.goBack();
+    this.utilsService.goToPreviousPage();
   }
 
   updateAddedRules($event: Rule[]) {
     this.role.rules = $event;
-  }
-
-  goBack(): void {
-    // go back to previous page
-    this.location.back();
   }
 
   isCreate(): boolean {

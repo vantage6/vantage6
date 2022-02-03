@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import {
   EMPTY_ORGANIZATION,
@@ -12,8 +12,7 @@ import { OrganizationEditService } from 'src/app/organization/services/organizat
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
-import { parseId } from 'src/app/shared/utils';
-import { Operation, Resource } from 'src/app/shared/enum';
+import { Resource } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/shared/services/utils.service';
 
 @Component({
@@ -80,7 +79,7 @@ export class OrganizationEditComponent implements OnInit {
 
     request.subscribe(
       (data) => {
-        this.goBack();
+        this.utilsService.goToPreviousPage();
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
@@ -92,11 +91,6 @@ export class OrganizationEditComponent implements OnInit {
   }
 
   cancelEdit(): void {
-    this.goBack();
-  }
-
-  goBack(): void {
-    // go back to previous page
-    this.location.back();
+    this.utilsService.goToPreviousPage();
   }
 }

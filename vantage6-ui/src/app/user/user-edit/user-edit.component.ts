@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 
 import { Role } from 'src/app/role/interfaces/role';
 import { Operation, Resource } from 'src/app/shared/enum';
@@ -39,7 +38,6 @@ export class UserEditComponent implements OnInit {
   organization_id: number = EMPTY_ORGANIZATION.id;
 
   constructor(
-    private location: Location,
     private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
@@ -172,7 +170,7 @@ export class UserEditComponent implements OnInit {
 
     user_request.subscribe(
       (data) => {
-        this.goBack();
+        this.utilsService.goToPreviousPage();
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
@@ -183,17 +181,12 @@ export class UserEditComponent implements OnInit {
   }
 
   cancelEdit(): void {
-    this.goBack();
+    this.utilsService.goToPreviousPage();
   }
 
   updateAddedRules($event: Rule[]) {
     this.added_rules = $event;
     this.user.rules = $event;
-  }
-
-  goBack(): void {
-    // go back to previous page
-    this.location.back();
   }
 
   isCreate(): boolean {

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router, ParamMap } from '@angular/router';
+import { Location } from '@angular/common';
 
 import { ModalService } from 'src/app/modal/modal.service';
 
@@ -11,7 +12,11 @@ import { Operation, Resource } from '../enum';
   providedIn: 'root',
 })
 export class UtilsService {
-  constructor(private router: Router, private modalService: ModalService) {}
+  constructor(
+    private router: Router,
+    private location: Location,
+    private modalService: ModalService
+  ) {}
 
   getId(
     params: ParamMap,
@@ -36,5 +41,10 @@ export class UtilsService {
       return -1;
     }
     return new_id;
+  }
+
+  goToPreviousPage(): void {
+    // go back to previous page
+    this.location.back();
   }
 }
