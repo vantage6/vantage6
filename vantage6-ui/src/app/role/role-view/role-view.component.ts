@@ -50,7 +50,6 @@ export class RoleViewComponent implements OnInit {
   }
 
   editRole(): void {
-    this.role.is_being_edited = true;
     this.roleEditService.setRole(this.role);
   }
 }

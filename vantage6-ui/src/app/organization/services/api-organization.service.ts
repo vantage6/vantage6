@@ -11,13 +11,15 @@ import { ConvertJsonService } from 'src/app/shared/services/convert-json.service
   providedIn: 'root',
 })
 export class ApiOrganizationService {
+  organization_list: Organization[] = [];
+
   constructor(
     private http: HttpClient,
     private convertJsonService: ConvertJsonService,
     private modalService: ModalService
   ) {}
 
-  list() {
+  list(): any {
     return this.http.get(environment.api_url + '/organization');
   }
 
@@ -62,5 +64,22 @@ export class ApiOrganizationService {
       ]);
       return EMPTY_ORGANIZATION;
     }
+  }
+
+  async getOrganizations(
+    force_refresh: boolean = false
+  ): Promise<Organization[]> {
+    if (!force_refresh && this.organization_list.length > 0) {
+      return this.organization_list;
+    }
+    // get data of organization that logged-in user is allowed to view
+    let org_data = await this.list().toPromise();
+
+    // set organization data
+    this.organization_list = [];
+    for (let org of org_data) {
+      this.organization_list.push(this.convertJsonService.getOrganization(org));
+    }
+    return this.organization_list;
   }
 }

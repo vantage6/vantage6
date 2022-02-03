@@ -1,5 +1,3 @@
-import { ParamMap } from '@angular/router';
-
 export function removeArrayDoubles(array: any[]): any[] {
   return [...new Set(array)];
 }

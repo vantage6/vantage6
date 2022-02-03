@@ -5,7 +5,11 @@ import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
 import { Rule } from 'src/app/rule/interfaces/rule';
 import { EMPTY_ORGANIZATION, Organization } from './interfaces/organization';
 import { Resource } from '../shared/enum';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
+import {
+  arrayContainsObjWithId,
+  getById,
+  removeMatchedIdFromArray,
+} from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ApiUserService } from 'src/app/user/services/api-user.service';
@@ -68,6 +72,7 @@ export class OrganizationComponent implements OnInit {
       }
       if (new_id !== this.route_org_id) {
         this.route_org_id = new_id;
+        // TODO use the isInitialized() functionality on userPermission
         this.userPermission.getUser().subscribe((user) => {
           this.loggedin_user = user;
           if (this.loggedin_user !== EMPTY_USER) {
@@ -93,41 +98,26 @@ export class OrganizationComponent implements OnInit {
     if (this.loggedin_user.organization_id === EMPTY_ORGANIZATION.id) return;
 
     // get data of organization that logged-in user is allowed to view
-    let org_data = await this.organizationService.list().toPromise();
+    this.organizations = await this.organizationService.getOrganizations();
 
-    // set organization data
-    await this.setOrganizations(org_data);
+    // set organization of logged-in user as default current organization
+    this.current_organization = getById(
+      this.organizations,
+      this.loggedin_user.organization_id
+    );
   }
 
-  async setOrganizations(organization_data: any) {
-    this.organizations = [];
-    for (let org of organization_data) {
-      let new_org = this.convertJsonService.getOrganization(org);
-      if (new_org.id === this.loggedin_user.organization_id) {
-        // set organization of logged-in user as default current organization
-        this.current_organization = new_org;
-      }
-      this.organizations.push(new_org);
-    }
-  }
-
-  private _setCurrentOrganization(id: number): boolean {
-    let current_org_found = false;
-    for (let org of this.organizations) {
-      if (org.id === id) {
-        this.current_organization = org;
-        current_org_found = true;
-        break;
-      }
-    }
-    return current_org_found;
+  private _allowedToSeeOrg(id: number): boolean {
+    /* returns true if organizaiton with certain id exists and the logged-in
+       user is allowed to see it */
+    return arrayContainsObjWithId(id, this.organizations);
   }
 
   async setCurrentOrganization(): Promise<void> {
     /* Renew the organization's users and roles */
 
     // set the current organization
-    let current_org_found = this._setCurrentOrganization(this.route_org_id);
+    let current_org_found = this._allowedToSeeOrg(this.route_org_id);
     if (!current_org_found) {
       this.modalService.openMessageModal(ModalMessageComponent, [
         "Could not show data on organization with id '" +
