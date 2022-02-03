@@ -1,11 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 
-import { UserPermissionService } from '../auth/services/user-permission.service';
-import { Organization } from '../organization/interfaces/organization';
-import { ApiOrganizationService } from '../organization/services/api-organization.service';
-import { arrayContainsObjWithId } from '../shared/utils';
+import { Node } from 'src/app/node/interfaces/node';
 import { EMPTY_USER, User } from '../user/interfaces/user';
 import { Collaboration } from './interfaces/collaboration';
+import {
+  Organization,
+  OrganizationInCollaboration,
+} from '../organization/interfaces/organization';
+import { arrayContainsObjWithId } from '../shared/utils';
+
+import { UserPermissionService } from '../auth/services/user-permission.service';
+import { ApiNodeService } from '../node/services/api-node.service';
+import { ApiOrganizationService } from '../organization/services/api-organization.service';
 import { ApiCollaborationService } from './services/api-collaboration.service';
 
 @Component({
@@ -14,7 +20,8 @@ import { ApiCollaborationService } from './services/api-collaboration.service';
   styleUrls: ['./collaboration.component.scss'],
 })
 export class CollaborationComponent implements OnInit {
-  organizations: Organization[] = [];
+  organizations: OrganizationInCollaboration[] = [];
+  nodes: Node[] = [];
   collaborations: Collaboration[] = [];
   other_collaborations: Collaboration[] = [];
   loggedin_user: User = EMPTY_USER;
@@ -22,7 +29,8 @@ export class CollaborationComponent implements OnInit {
   constructor(
     public userPermission: UserPermissionService,
     private organizationService: ApiOrganizationService,
-    private collaborationService: ApiCollaborationService
+    private collaborationService: ApiCollaborationService,
+    private nodeService: ApiNodeService
   ) {}
 
   ngOnInit(): void {
@@ -36,13 +44,21 @@ export class CollaborationComponent implements OnInit {
   async init() {
     this.loggedin_user = this.userPermission.user;
 
-    // initialize organizations
+    // get the nodes
+    this.nodes = await this.nodeService.getNodes();
+    console.log(this.nodes);
+
+    // get the organizations
     this.organizations = await this.organizationService.getOrganizations();
 
     // get all collaborations
     let all_collaborations = await this.collaborationService.getCollaborations(
       this.organizations
     );
+
+    // add the nodes to the collaborations
+    this.addNodesToCollaborations(all_collaborations);
+
     // Divide collaborations in 2 categories: the ones the logged-in user's
     // organization is involved in and others
     this.collaborations = [];
@@ -57,6 +73,19 @@ export class CollaborationComponent implements OnInit {
         this.collaborations.push(c);
       } else {
         this.other_collaborations.push(c);
+      }
+    }
+  }
+
+  addNodesToCollaborations(collaborations: Collaboration[]): void {
+    for (let c of collaborations) {
+      for (let o of c.organizations) {
+        for (let n of this.nodes) {
+          if (o.id === n.organization_id && c.id === n.collaboration_id) {
+            console.log('yaya');
+            o.node = n;
+          }
+        }
       }
     }
   }

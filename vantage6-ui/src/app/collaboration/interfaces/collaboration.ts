@@ -1,10 +1,10 @@
-import { Organization } from 'src/app/organization/interfaces/organization';
+import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
 
 export interface Collaboration {
   id: number;
   name: string;
   encrypted: boolean;
-  organizations: Organization[];
+  organizations: OrganizationInCollaboration[];
 }
 
 export const EMPTY_COLLABORATION = {

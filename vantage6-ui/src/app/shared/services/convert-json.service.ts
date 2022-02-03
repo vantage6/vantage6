@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Role } from 'src/app/role/interfaces/role';
 import { Rule } from 'src/app/rule/interfaces/rule';
 import { User } from 'src/app/user/interfaces/user';
+import { Node } from 'src/app/node/interfaces/node';
 import { Organization } from 'src/app/organization/interfaces/organization';
 import { getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/collaboration/interfaces/collaboration';
@@ -102,6 +103,17 @@ export class ConvertJsonService {
       name: coll_json.name,
       encrypted: coll_json.encrypted,
       organizations: orgs,
+    };
+  }
+
+  getNode(node_json: any): Node {
+    return {
+      id: node_json.id,
+      name: node_json.name,
+      collaboration_id: node_json.collaboration.id,
+      organization_id: node_json.organization.id,
+      ip: node_json.ip,
+      is_online: node_json.status === 'online' ? true : false,
     };
   }
 }

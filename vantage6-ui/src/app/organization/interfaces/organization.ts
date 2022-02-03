@@ -1,3 +1,5 @@
+import { Node } from 'src/app/node/interfaces/node';
+
 export interface Organization {
   id: number;
   name: string;
@@ -8,6 +10,10 @@ export interface Organization {
   domain: string;
   public_key: string;
   is_being_created?: boolean;
+}
+
+export interface OrganizationInCollaboration extends Organization {
+  node?: Node;
 }
 
 export const EMPTY_ORGANIZATION = {
