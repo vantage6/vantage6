@@ -8,6 +8,7 @@ import { deepcopy } from 'src/app/shared/utils';
 
 import { environment } from 'src/environments/environment';
 import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +22,8 @@ export class ApiRuleService {
 
   constructor(
     private http: HttpClient,
-    private tokenStorageService: TokenStorageService
+    private tokenStorageService: TokenStorageService,
+    private convertJsonService: ConvertJsonService
   ) {
     this.tokenStorageService.isLoggedIn().subscribe((is_logged_in) => {
       this.is_logged_in = is_logged_in;
@@ -66,12 +68,7 @@ export class ApiRuleService {
   private async _setAllRules(all_rules: any[]): Promise<void> {
     this.all_rules = [];
     for (let rule of all_rules) {
-      this.all_rules.push({
-        id: rule.id,
-        operation: rule.operation.toLowerCase(),
-        resource: rule.name.toLowerCase(),
-        scope: rule.scope.toLowerCase(),
-      });
+      this.all_rules.push(this.convertJsonService.getRule(rule));
     }
   }
 

@@ -1,9 +1,11 @@
 import { deepcopy } from 'src/app/shared/utils';
 import { Role } from 'src/app/role/interfaces/role';
 import { Rule } from 'src/app/rule/interfaces/rule';
+import { Resource } from 'src/app/shared/enum';
 
 export interface User {
   id: number;
+  type: string;
   username: string;
   first_name: string;
   last_name: string;
@@ -18,6 +20,7 @@ export interface User {
 
 export const EMPTY_USER: User = {
   id: -1,
+  type: Resource.USER,
   username: '',
   email: '',
   first_name: '',

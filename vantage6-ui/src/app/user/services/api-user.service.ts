@@ -9,19 +9,27 @@ import { getIdsFromArray } from 'src/app/shared/utils';
 import { ApiRoleService } from 'src/app/role/services/api-role.service';
 import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
+import { ApiService } from 'src/app/shared/services/api.service';
+import { Resource } from 'src/app/shared/enum';
+import { ModalService } from 'src/app/modal/modal.service';
 
+// TODO this service is quite different from the other API services
+// See to it that this is standardized somewhat, e.g. by obtaining the Rules
+// from elsewhere
 @Injectable({
   providedIn: 'root',
 })
-export class ApiUserService {
+export class ApiUserService extends ApiService {
   all_rules: Rule[] = [];
 
   constructor(
-    private http: HttpClient,
+    protected http: HttpClient,
     private roleService: ApiRoleService,
     private ruleService: ApiRuleService,
-    private convertJsonService: ConvertJsonService
+    private convertJsonService: ConvertJsonService,
+    protected modalService: ModalService
   ) {
+    super(Resource.USER, http, modalService);
     this.setup();
   }
 
@@ -37,25 +45,7 @@ export class ApiUserService {
     return this.http.get(environment.api_url + '/user', { params: params });
   }
 
-  get(id: number) {
-    return this.http.get<any>(environment.api_url + '/user/' + id);
-  }
-
-  update(user: User) {
-    let data = this._get_data(user);
-    return this.http.patch<any>(environment.api_url + '/user/' + user.id, data);
-  }
-
-  create(user: User) {
-    const data = this._get_data(user);
-    return this.http.post<any>(environment.api_url + '/user', data);
-  }
-
-  delete(user: User) {
-    return this.http.delete<any>(environment.api_url + '/user/' + user.id);
-  }
-
-  private _get_data(user: User): any {
+  get_data(user: User): any {
     let data: any = {
       username: user.username,
       email: user.email,

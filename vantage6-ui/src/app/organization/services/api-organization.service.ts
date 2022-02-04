@@ -2,45 +2,26 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { ModalService } from 'src/app/modal/modal.service';
-import { environment } from 'src/environments/environment';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
+import { ApiService } from 'src/app/shared/services/api.service';
+import { Resource } from 'src/app/shared/enum';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ApiOrganizationService {
+export class ApiOrganizationService extends ApiService {
   organization_list: Organization[] = [];
 
   constructor(
-    private http: HttpClient,
+    protected http: HttpClient,
     private convertJsonService: ConvertJsonService,
-    private modalService: ModalService
-  ) {}
-
-  list(): any {
-    return this.http.get(environment.api_url + '/organization');
+    protected modalService: ModalService
+  ) {
+    super(Resource.ORGANIZATION, http, modalService);
   }
 
-  get(id: number) {
-    return this.http.get(environment.api_url + '/organization/' + id);
-  }
-
-  update(org: Organization) {
-    const data = this._get_data(org);
-    return this.http.patch<any>(
-      environment.api_url + '/organization/' + org.id,
-      data
-    );
-  }
-
-  create(org: Organization) {
-    const data = this._get_data(org);
-    return this.http.post<any>(environment.api_url + '/organization', data);
-  }
-
-  private _get_data(org: Organization): any {
+  get_data(org: Organization): any {
     let data: any = {
       name: org.name,
       address1: org.address1,
@@ -54,32 +35,19 @@ export class ApiOrganizationService {
   }
 
   async getOrganization(id: number): Promise<Organization> {
-    let org_json: any;
-    try {
-      org_json = await this.get(id).toPromise();
-      return this.convertJsonService.getOrganization(org_json);
-    } catch (error: any) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        'Error: ' + error.error.msg,
-      ]);
-      return EMPTY_ORGANIZATION;
-    }
+    let org = await super.getResource(
+      id,
+      this.convertJsonService.getOrganization
+    );
+    return org === null ? EMPTY_ORGANIZATION : org;
   }
 
   async getOrganizations(
     force_refresh: boolean = false
   ): Promise<Organization[]> {
-    if (!force_refresh && this.organization_list.length > 0) {
-      return this.organization_list;
-    }
-    // get data of organization that logged-in user is allowed to view
-    let org_data = await this.list().toPromise();
-
-    // set organization data
-    this.organization_list = [];
-    for (let org of org_data) {
-      this.organization_list.push(this.convertJsonService.getOrganization(org));
-    }
-    return this.organization_list;
+    return await super.getResources(
+      force_refresh,
+      this.convertJsonService.getOrganization
+    );
   }
 }

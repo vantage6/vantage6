@@ -12,6 +12,7 @@ export enum Resource {
   TASK = 'task',
   RESULT = 'result',
   PORT = 'port',
+  RULE = 'rule',
   ANY = '*',
 }
 

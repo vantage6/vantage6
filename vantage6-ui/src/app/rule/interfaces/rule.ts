@@ -2,6 +2,7 @@ import { Operation, Resource, Scope } from 'src/app/shared/enum';
 
 export interface Rule {
   id: number;
+  type: string;
   operation: Operation;
   resource: Resource;
   scope: Scope;

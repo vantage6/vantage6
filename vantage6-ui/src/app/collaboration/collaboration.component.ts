@@ -82,7 +82,6 @@ export class CollaborationComponent implements OnInit {
       for (let o of c.organizations) {
         for (let n of this.nodes) {
           if (o.id === n.organization_id && c.id === n.collaboration_id) {
-            console.log('yaya');
             o.node = n;
           }
         }
