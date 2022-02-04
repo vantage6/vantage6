@@ -50,4 +50,18 @@
       <!-- (click)="deleteUser()" -->
     Delete
   </button>
+  <button *ngIf="userPermission.hasPermission('view', 'node', 'global'); else ownNode"
+      mat-button class="btn btn-save"
+      >
+      <!-- (click)="deleteUser()" -->
+    View nodes
+  </button>
+  <ng-template #ownNode>
+    <button *ngIf="userPermission.hasPermission('view', 'node', 'organization')"
+      mat-button class="btn btn-save"
+      >
+      <!-- (click)="deleteUser()" -->
+      View your node
+    </button>
+  </ng-template>
 </mat-expansion-panel>
