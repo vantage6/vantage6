@@ -60,7 +60,9 @@ export class OrganizationComponent implements OnInit {
   // TODO Now it is shown that there are no users/roles until they are loaded,
   // instead should say that they are being loaded
   ngOnInit(): void {
-    this.init();
+    this.userPermission.isInitialized().subscribe((ready: boolean) => {
+      if (ready) this.init();
+    });
   }
 
   init(): void {
@@ -72,13 +74,10 @@ export class OrganizationComponent implements OnInit {
       }
       if (new_id !== this.route_org_id) {
         this.route_org_id = new_id;
-        // TODO use the isInitialized() functionality on userPermission
-        this.userPermission.getUser().subscribe((user) => {
-          this.loggedin_user = user;
-          if (this.loggedin_user !== EMPTY_USER) {
-            this.setup();
-          }
-        });
+        this.loggedin_user = this.userPermission.user;
+        if (this.loggedin_user !== EMPTY_USER) {
+          this.setup();
+        }
       }
     });
     this.ruleService.getRules().subscribe((rules) => {
@@ -100,11 +99,8 @@ export class OrganizationComponent implements OnInit {
     // get data of organization that logged-in user is allowed to view
     this.organizations = await this.organizationService.getOrganizations();
 
-    // set organization of logged-in user as default current organization
-    this.current_organization = getById(
-      this.organizations,
-      this.loggedin_user.organization_id
-    );
+    // set current organization
+    this.current_organization = getById(this.organizations, this.route_org_id);
   }
 
   private _allowedToSeeOrg(id: number): boolean {
@@ -157,6 +153,7 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
+  // TODO via API user service?!
   setUsers(user_data: any): void {
     this.organization_users = [];
     for (let user_json of user_data) {
