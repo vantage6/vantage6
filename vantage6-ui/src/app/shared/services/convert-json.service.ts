@@ -5,7 +5,7 @@ import { Rule } from 'src/app/rule/interfaces/rule';
 import { User } from 'src/app/user/interfaces/user';
 import { Node } from 'src/app/node/interfaces/node';
 import { Organization } from 'src/app/organization/interfaces/organization';
-import { getById } from 'src/app/shared/utils';
+import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/collaboration/interfaces/collaboration';
 import { Resource } from '../enum';
 
@@ -97,7 +97,7 @@ export class ConvertJsonService {
     let orgs: Organization[] = [];
     if (coll_json.organizations) {
       coll_json.organizations.forEach((org: any) => {
-        let o = getById(organizations, org.id);
+        let o = deepcopy(getById(organizations, org.id));
         if (o !== undefined) {
           orgs.push(o);
         }

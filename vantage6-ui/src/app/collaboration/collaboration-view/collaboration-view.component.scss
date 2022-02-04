@@ -1,7 +1,22 @@
+@use 'src/app/shared/scss/variables' as v;
+
 .mat-expansion-panel {
   margin-bottom: 10px;
 }
 
 .inline {
   display: inline;
+}
+
+.btn-offline {
+  background-color: v.$red !important;
+}
+
+.btn-online {
+  background-color: v.$green !important;
+}
+
+.text-warning {
+  color: v.$vtg-orange;
+  font-weight: bold;
 }

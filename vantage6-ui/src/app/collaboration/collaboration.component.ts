@@ -46,7 +46,6 @@ export class CollaborationComponent implements OnInit {
 
     // get the nodes
     this.nodes = await this.nodeService.getNodes();
-    console.log(this.nodes);
 
     // get the organizations
     this.organizations = await this.organizationService.getOrganizations();

@@ -21,13 +21,18 @@
       <td>Organization(s):</td>
       <td>
         <div *ngFor="let org of collaboration.organizations" class="inline">
-            <button mat-button class="btn-detail inline" disabled>
+            <!-- <button mat-button class="btn-detail inline" disabled> -->
+            <button mat-button [className]="getButtonClasses(org)" disabled>
               {{org.name}}
             </button>
         </div>
         <div *ngIf="collaboration.organizations.length===0">
           No organizations are taking part in this collaboration!
         </div>
+        <p *ngFor="let msg of missing_node_msgs" class="text-warning" >
+          <mat-icon>warning</mat-icon>
+          {{msg}}
+        </p>
       </td>
     </tr>
 
