@@ -42,7 +42,6 @@ setup(
         'colorama==0.4.3',
         'questionary==1.5.2',
         'iPython==7.16.3',
-        'prompt-toolkit==3.0.24',
         'SQLAlchemy==1.3.15',
         f'vantage6-common == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
