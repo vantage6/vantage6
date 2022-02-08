@@ -12,6 +12,7 @@ from vantage6.cli.configuration_wizard import (
 
 module_path = "vantage6.cli.configuration_wizard"
 
+
 class WizardTest(unittest.TestCase):
 
     @staticmethod
@@ -33,12 +34,12 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [True, False]
+            q.confirm.return_value.ask.side_effect = [True, False, True]
             dirs = MagicMock(data="/")
             config = node_configuration_questionaire(dirs, "iknl")
 
         keys = ["api_key", "server_url", "port", "api_path", "task_dir",
-                "databases", "logging", "encryption"]
+                "databases", "logging", "encryption", "vpn_subnet"]
         for key in keys:
             self.assertIn(key, config)
 
@@ -46,12 +47,13 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [True]
+            q.confirm.return_value.ask.side_effect = [True, True]
 
             config = server_configuration_questionaire("", "vantage6")
 
             keys = ["description", "ip", "port", "api_path", "uri",
-                    "allow_drop_all", "jwt_secret_key", "logging"]
+                    "allow_drop_all", "jwt_secret_key", "logging",
+                    "vpn_server"]
 
             for key in keys:
                 self.assertIn(key, config)

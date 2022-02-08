@@ -23,7 +23,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.pull_if_newer")
     @patch("vantage6.cli.server.ServerContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_start(self, docker_check, containers, context,
                    pull, os_makedirs, mount):
         """Start server without errors"""
@@ -35,9 +35,7 @@ class ServerCLITest(unittest.TestCase):
         containers.list.return_value = [container1]
         containers.run.return_value = True
 
-        context.config_exists.return_value = True
-        context.return_value = MagicMock(
-            name="not-running",
+        ctx = MagicMock(
             config={
                 'uri': 'sqlite:///file.db',
                 'port': 9999
@@ -45,6 +43,9 @@ class ServerCLITest(unittest.TestCase):
             config_file="/config.yaml",
             data_dir=Path(".")
         )
+        ctx.config_exists.return_value = True
+        ctx.name = 'not-running'
+        context.return_value = ctx
 
         runner = CliRunner()
         result = runner.invoke(cli_server_start, ["--name", "not-running"])
@@ -53,7 +54,7 @@ class ServerCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.server.ServerContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_configuration_list(self, docker_check, containers, context):
         """Configuration list without errors."""
         docker_check.return_value = True
@@ -91,11 +92,15 @@ class ServerCLITest(unittest.TestCase):
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.server.print_log_worker")
     @patch("vantage6.cli.server.click.Path")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     @patch("vantage6.cli.server.ServerContext")
     def test_import(self, context, docker_check, click_path, log, containers):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
+
+        ctx = MagicMock()
+        ctx.name = 'some-name'
+        context.return_value = ctx
 
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -125,7 +130,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_stop(self, docker_check, containers):
         """Stop server without errors."""
 
@@ -141,7 +146,7 @@ class ServerCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.server.time.sleep")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_attach(self, docker_check, containers, sleep):
         """Attach log to the console without errors."""
         container1 = MagicMock()
