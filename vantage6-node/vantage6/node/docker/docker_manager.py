@@ -127,7 +127,7 @@ class DockerManager(DockerBaseManager):
                 # We'll copy the file to the folder `data` in our task_dir.
                 self.log.info(f'Copying {uri} to {self.__tasks_dir}')
                 shutil.copy(uri, self.__tasks_dir)
-                uri = os.path.join(self.__tasks_dir, os.path.basename(uri))
+                uri = self.__tasks_dir / os.path.basename(uri)
 
             self.databases[label] = {'uri': uri, 'is_file': db_is_file}
         self.log.debug(f"Databases: {self.databases}")
