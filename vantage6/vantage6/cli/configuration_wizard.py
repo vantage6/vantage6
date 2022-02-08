@@ -75,6 +75,14 @@ def node_configuration_questionaire(dirs, instance_name):
                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
                             "NOTSET"]).ask()
 
+    is_add_vpn = q.confirm(
+        "Do you want to connect to a VPN server?", default=False).ask()
+    if is_add_vpn:
+        config['vpn_subnet'] = q.text(
+            message="Subnet of the VPN server you want to connect to:",
+            default='10.76.0.0/16'
+        ).ask()
+
     config["logging"] = {
         "level": res,
         "file": f"{instance_name}.log",
@@ -147,6 +155,44 @@ def server_configuration_questionaire(dirs, instance_name):
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR",
                             "CRITICAL", "NOTSET"]).ask()
+
+    is_add_vpn = q.confirm(
+        "Do you want to add a VPN server?", default=False).ask()
+    if is_add_vpn:
+        vpn_config = q.prompt([
+            {
+                "type": "text",
+                "name": "url",
+                "message": "VPN server URL:",
+            },
+            {
+                "type": "text",
+                "name": "portal_username",
+                "message": "VPN portal username:",
+            },
+            {
+                "type": "password",
+                "name": "portal_userpass",
+                "message": "VPN portal password:",
+            },
+            {
+                "type": "text",
+                "name": "client_id",
+                "message": "VPN client username:",
+            },
+            {
+                "type": "password",
+                "name": "client_secret",
+                "message": "VPN client password:",
+            },
+            {
+                "type": "text",
+                "name": "redirect_url",
+                "message": "Redirect url (should be local address of server)",
+                "default": "http://localhost"
+            }
+        ])
+        config['vpn_server'] = vpn_config
 
     config["logging"] = {
         "level": res,

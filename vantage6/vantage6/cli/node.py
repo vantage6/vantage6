@@ -35,7 +35,11 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
-from vantage6.common.docker_addons import pull_if_newer
+from vantage6.common.docker_addons import (
+  pull_if_newer,
+  remove_container_if_exists,
+  check_docker_running
+)
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
 
@@ -66,7 +70,7 @@ def cli_node_list():
     """Lists all nodes in the default configuration directory."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_node_names = find_running_node_names(client)
 
@@ -122,7 +126,7 @@ def cli_node_list():
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 def cli_node_new_configuration(name, environment, system_folders):
-    """Create a new configation file.
+    """Create a new configuration file.
 
     Checks if the configuration already exists. If this is not the case
     a questionaire is invoked to create a new configuration file.
@@ -189,8 +193,7 @@ def cli_node_files(name, environment, system_folders):
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
     info(f"data folders       = {ctx.data_dir}")
-    info(f"Database labels and files")
-
+    info("Database labels and files")
     for label, path in ctx.databases.items():
         info(f" - {label:15} = {path}")
 
@@ -209,15 +212,15 @@ def cli_node_files(name, environment, system_folders):
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
-@click.option('--skipp-db-exist-check/--db-exist-check', default=False,
-              help="Skipp the check of the existence of the DB (always try to \
-              mount)")
+@click.option('--force-db-mount', is_flag=True,
+              help="Skip the check of the existence of the DB (always try to "
+                   "mount)")
 @click.option('--attach/--detach', default=False,
               help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
               help="mount vantage6-master package source")
 def cli_node_start(name, config, environment, system_folders, image, keep,
-                   mount_src, attach, skipp_db_exist_check):
+                   mount_src, attach, force_db_mount):
     """Start the node instance.
 
         If no name or config is specified the default.yaml configuation is
@@ -229,7 +232,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     info("Starting node...")
     info("Finding Docker deamon")
     docker_client = docker.from_env()
-    check_if_docker_deamon_is_running(docker_client)
+    check_docker_running()
 
     NodeContext.LOGGING_ENABLED = False
     if config:
@@ -244,9 +247,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
-            question = f"Configuration '{name}' using environment"
-            question += f" '{environment}' does not exist.\n  Do you want to"
-            question += f" create this config now?"
+            question = (f"Configuration '{name}' using environment "
+                        "'{environment}' does not exist.\n  Do you want to "
+                        "create this config now?")
 
             if q.confirm(question).ask():
                 configuration_wizard("node", name, environment, system_folders)
@@ -254,6 +257,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             else:
                 error("Config file couldn't be loaded")
                 sys.exit(0)
+
         ctx = NodeContext(name, environment, system_folders)
 
     # check that this node is not already running
@@ -343,29 +347,42 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     }
 
     # only mount the DB if it is a file
-    info("Setting up database")
-    db_is_file = Path(ctx.databases["default"]).exists()
-    env['DATABASE_URI'] = "/mnt/database.csv" if db_is_file else \
-        ctx.databases['default']
-    info(f" - URI: {env['DATABASE_URI']}")
-    if db_is_file or skipp_db_exist_check:
-        mounts.append(("/mnt/database.csv", str(ctx.databases["default"])))
-    else:
-        warning(' - Are you using a non file-based database?')
-        warning('   Or did you make a mistake in the database path?')
+    info("Setting up databases")
+    db_labels = ctx.databases.keys()
+    for label in db_labels:
+
+        uri = ctx.databases[label]
+        info(f"  Processing database '{label}:{uri}'")
+        LABEL = label.upper()
+
+        file_based = Path(uri).exists()
+        if not file_based and not force_db_mount:
+            debug('  - non file-based database added')
+            env[f'{LABEL}_DATABASE_URI'] = uri
+        else:
+            debug('  - file-based database added')
+            env[f'{LABEL}_DATABASE_URI'] = f'{label}.csv'
+            mounts.append((f'/mnt/{label}.csv', str(uri)))
+
+        # FIXME legacy to support < 2.1.3 can be removed from 3+
+        if label == 'default':
+            env['DATABASE_URI'] = '/mnt/default.csv'
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} -e '\
           f'{environment} --dockerized {system_folders_option}'
 
     info("Running Docker container")
-    volumes = {}
+    volumes = []
     for mount in mounts:
-        volumes[mount[1]] = {'bind': mount[0], 'mode': 'rw'}
+        volumes.append(f'{mount[1]}:{mount[0]}')
 
     # debug(f"  with command: '{cmd}'")
     # debug(f"  with mounts: {volumes}")
     # debug(f"  with environment: {env}")
+    remove_container_if_exists(
+        docker_client=docker_client, name=ctx.docker_container_name
+    )
 
     container = docker_client.containers.run(
         image,
@@ -408,7 +425,7 @@ def cli_node_stop(name, system_folders, all_nodes):
     """Stop a running container. """
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_node_names = find_running_node_names(client)
 
@@ -451,7 +468,7 @@ def cli_node_attach(name, system_folders):
     """Attach the logs from the docker container to the terminal."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_node_names = find_running_node_names(client)
 
@@ -519,8 +536,8 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
     if file_.exists() and not overwrite:
         error("Could not create private key!")
         warning(
-            f"If you're **sure** you want to create a new key, "
-            f"please run this command with the '--overwrite' flag"
+            "If you're **sure** you want to create a new key, "
+            "please run this command with the '--overwrite' flag"
         )
         warning("Continuing with existing key instead!")
         private_key = RSACryptor(file_).private_key
@@ -587,7 +604,7 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
 def cli_node_clean():
     """ This command erases docker volumes"""
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     # retrieve all volumes
     volumes = client.volumes.list()
@@ -599,7 +616,7 @@ def cli_node_clean():
             msg += volume.name + ","
     info(msg)
 
-    confirm = q.confirm(f"Are you sure?")
+    confirm = q.confirm("Are you sure?")
     if confirm.ask():
         for volume in canditates:
             try:
@@ -695,11 +712,15 @@ def cli_node_version(name, system_folders):
     """Returns current version of vantage6 services installed."""
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_docker_running()
 
     running_node_names = find_running_node_names(client)
 
     if not name:
+        if not running_node_names:
+            error("No nodes are running! You can only check the version for "
+                  "nodes that are running")
+            exit(1)
         name = q.select("Select the node you wish to inspect:",
                         choices=running_node_names).ask()
     else:
@@ -711,19 +732,13 @@ def cli_node_version(name, system_folders):
         version = container.exec_run(cmd='vnode-local version', stdout=True)
         click.echo(
             {"node": version.output.decode('utf-8'), "cli": __version__})
+    else:
+        error(f"Node {name} is not running! Cannot provide version...")
 
 
 def print_log_worker(logs_stream):
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
-
-
-def check_if_docker_deamon_is_running(docker_client):
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
-        exit(1)
 
 
 def create_client_and_authenticate(ctx):
