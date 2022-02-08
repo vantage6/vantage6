@@ -23,7 +23,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.pull_if_newer")
     @patch("vantage6.cli.server.ServerContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_start(self, docker_check, containers, context,
                    pull, os_makedirs, mount):
         """Start server without errors"""
@@ -54,7 +54,7 @@ class ServerCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.server.ServerContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_configuration_list(self, docker_check, containers, context):
         """Configuration list without errors."""
         docker_check.return_value = True
@@ -92,7 +92,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.server.print_log_worker")
     @patch("vantage6.cli.server.click.Path")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     @patch("vantage6.cli.server.ServerContext")
     def test_import(self, context, docker_check, click_path, log, containers):
         """Import entities without errors."""
@@ -130,7 +130,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_stop(self, docker_check, containers):
         """Stop server without errors."""
 
@@ -146,7 +146,7 @@ class ServerCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.server.time.sleep")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_if_docker_deamon_is_running")
+    @patch("vantage6.common.docker_addons.check_docker_running")
     def test_attach(self, docker_check, containers, sleep):
         """Attach log to the console without errors."""
         container1 = MagicMock()
