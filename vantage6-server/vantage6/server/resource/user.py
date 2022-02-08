@@ -367,14 +367,14 @@ class User(UserBase):
                 if denied:
                     return denied, HTTPStatus.UNAUTHORIZED
 
-            # validate that the assigned role is either a general role or a
-            # role pertaining to that organization
-            if (role.organization and
-                    role.organization.id != user.organization_id):
-                return {'msg': (
-                    "You can't assign that role to that user as the role "
-                    "belongs to a different organization than the user "
-                )}, HTTPStatus.UNAUTHORIZED
+                # validate that the assigned role is either a general role or a
+                # role pertaining to that organization
+                if (role.organization and
+                        role.organization.id != user.organization_id):
+                    return {'msg': (
+                        "You can't assign that role to that user as the role "
+                        "belongs to a different organization than the user "
+                    )}, HTTPStatus.UNAUTHORIZED
 
             user.roles = roles
 
