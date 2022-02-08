@@ -205,9 +205,8 @@ class Roles(RoleBase):
             data['organization_id']
             if data['organization_id'] else g.user.organization_id
         )
-        # verify that the organization for which we creat a role exists
-        if (organization_id != g.user.organization_id and
-                not db.Organization.get(organization_id)):
+        # verify that the organization for which we create a role exists
+        if not db.Organization.get(organization_id):
             return {'msg': f'organization "{organization_id}" does not '
                     'exist!'}, HTTPStatus.NOT_FOUND
 
