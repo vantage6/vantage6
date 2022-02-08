@@ -117,7 +117,8 @@ class DockerManager(DockerBaseManager):
         for label in db_labels:
             label_upper = label.upper()
             if running_in_docker():
-                uri = os.environ[f'{label_upper}_DATABASE_URI']
+                uri_env = os.environ[f'{label_upper}_DATABASE_URI']
+                uri = f'/mnt/{uri_env}'
             else:
                 uri = config['databases'][label]
 
@@ -126,8 +127,10 @@ class DockerManager(DockerBaseManager):
                 # We'll copy the file to the folder `data` in our task_dir.
                 self.log.info(f'Copying {uri} to {self.__tasks_dir}')
                 shutil.copy(uri, self.__tasks_dir)
+                uri = self.__tasks_dir / os.path.basename(uri)
 
             self.databases[label] = {'uri': uri, 'is_file': db_is_file}
+        self.log.debug(f"Databases: {self.databases}")
 
     def create_volume(self, volume_name: str) -> None:
         """
@@ -269,6 +272,7 @@ class DockerManager(DockerBaseManager):
             databases=self.databases,
             docker_volume_name=self.data_volume_name
         )
+        database = database if len(database) else 'default'
         vpn_ports = task.run(
             docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
             algorithm_env=self.algorithm_env, database=database
