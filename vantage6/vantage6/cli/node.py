@@ -711,7 +711,7 @@ def cli_node_remove(name, environment, system_folders):
             vol.remove()
 
     # remove the VPN configuration file
-    vpn_config_file = os.path.join(ctx.data_dir, VPN_CONFIG_FILE)
+    vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
     remove_file(vpn_config_file, 'VPN configuration')
 
     # remove the config file
