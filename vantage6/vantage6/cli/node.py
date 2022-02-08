@@ -53,6 +53,9 @@ from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
 )
+from vantage6.cli.utils import (
+    check_config_name_allowed, check_if_docker_deamon_is_running
+)
 from vantage6.cli import __version__
 
 
@@ -140,6 +143,9 @@ def cli_node_new_configuration(name, environment, system_folders):
     if name != name_new:
         info(f"Replaced spaces from configuration name: {name_new}")
         name = name_new
+
+    # check if config name is allowed docker name
+    check_config_name_allowed(name)
 
     if not environment:
         environment = q.select(
@@ -259,6 +265,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
                 sys.exit(0)
 
         ctx = NodeContext(name, environment, system_folders)
+
+    # check if config name is allowed docker name, else exit
+    check_config_name_allowed(ctx.name)
 
     # check that this node is not already running
     running_nodes = docker_client.containers.list(

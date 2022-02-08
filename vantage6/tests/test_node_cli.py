@@ -225,6 +225,7 @@ class NodeCLITest(unittest.TestCase):
             databases={"default": "data.csv"}
         )
         ctx.get_data_file.return_value = "data.csv"
+        ctx.name = 'some-name'
         context.return_value = ctx
 
         runner = CliRunner()

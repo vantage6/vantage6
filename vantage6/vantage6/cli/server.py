@@ -28,6 +28,9 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
+from vantage6.cli.utils import (
+    check_config_name_allowed, check_if_docker_deamon_is_running
+)
 from vantage6.cli import __version__
 
 
@@ -35,7 +38,7 @@ def click_insert_context(func):
 
     # add option decorators
     @click.option('-n', '--name', default=None,
-                  help="name of the configutation you want to use.")
+                  help="name of the configuration you want to use.")
     @click.option('-c', '--config', default=None,
                   help='absolute path to configuration-file; overrides NAME')
     @click.option('-e', '--environment',
@@ -123,6 +126,9 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
     docker_client = docker.from_env()
     # will print an error if not
     check_docker_running()
+
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(ctx.name)
 
     # check that this server is not already running
     running_servers = docker_client.containers.list(
@@ -321,6 +327,9 @@ def cli_server_new(name, environment, system_folders):
             info(f"Replaced spaces from configuration name: {name}")
             name = name_new
 
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(name)
+
     # check that this config does not exist
     try:
         if ServerContext.config_exists(name, environment, system_folders):
@@ -372,7 +381,7 @@ def cli_server_new(name, environment, system_folders):
 def cli_server_import(ctx, file_, drop_all, image, keep):
     """ Import organizations/collaborations/users and tasks.
 
-        Especially usefull for testing purposes.
+        Especially useful for testing purposes.
     """
     info("Starting server...")
     info("Finding Docker daemon.")
@@ -380,7 +389,10 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     # will print an error if not
     check_docker_running()
 
-    # pull lastest Docker image
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(ctx.name)
+
+    # pull latest Docker image
     if image is None:
         image = ctx.config.get(
             "image",
@@ -618,10 +630,10 @@ def cli_server_version(name, system_folders):
 
     if name in running_server_names:
         container = client.containers.get(name)
-        version = container.exec_run(cmd='vserver-local version', stdout=True)
-        click.echo({
-            "server": version.output.decode('utf-8'), "cli": __version__
-        })
+        version = container.exec_run(cmd='vserver-local version',
+                                     stdout=True)
+        click.echo({"server": version.output.decode('utf-8'),
+                    "cli": __version__})
     else:
         error(f"Server {name} is not running! Cannot provide version...")
 

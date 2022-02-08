@@ -35,9 +35,7 @@ class ServerCLITest(unittest.TestCase):
         containers.list.return_value = [container1]
         containers.run.return_value = True
 
-        context.config_exists.return_value = True
-        context.return_value = MagicMock(
-            name="not-running",
+        ctx = MagicMock(
             config={
                 'uri': 'sqlite:///file.db',
                 'port': 9999
@@ -45,6 +43,9 @@ class ServerCLITest(unittest.TestCase):
             config_file="/config.yaml",
             data_dir=Path(".")
         )
+        ctx.config_exists.return_value = True
+        ctx.name = 'not-running'
+        context.return_value = ctx
 
         runner = CliRunner()
         result = runner.invoke(cli_server_start, ["--name", "not-running"])
@@ -96,6 +97,10 @@ class ServerCLITest(unittest.TestCase):
     def test_import(self, context, docker_check, click_path, log, containers):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
+
+        ctx = MagicMock()
+        ctx.name = 'some-name'
+        context.return_value = ctx
 
         runner = CliRunner()
         with runner.isolated_filesystem():
