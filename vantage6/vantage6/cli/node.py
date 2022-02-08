@@ -18,6 +18,7 @@ import questionary as q
 import docker
 import time
 import os.path
+import itertools
 
 from pathlib import Path
 from threading import Thread
@@ -33,8 +34,11 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE
 )
+from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.docker_addons import (
-    pull_if_newer, remove_container_if_exists, check_docker_running
+  pull_if_newer,
+  remove_container_if_exists,
+  check_docker_running
 )
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
@@ -68,12 +72,7 @@ def cli_node_list():
     client = docker.from_env()
     check_docker_running()
 
-    running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"})
-
-    running_node_names = []
-    for node in running_nodes:
-        running_node_names.append(node.name)
+    running_node_names = find_running_node_names(client)
 
     header = \
         "\nName"+(21*" ") + \
@@ -184,18 +183,7 @@ def cli_node_files(name, environment, system_folders):
         If the specified configuration cannot be found, it exits. Otherwise
         it returns the absolute path to the output.
     """
-    # select configuration name if none supplied
-    name, environment = (name, environment) if name else \
-        select_configuration_questionaire("node", system_folders)
-
-    # raise error if config could not be found
-    if not NodeContext.config_exists(name, environment, system_folders):
-        error(
-            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
-            f"not be found."
-        )
-        exit(1)
+    name, environment = select_node(name, environment, system_folders)
 
     # create node context
     ctx = NodeContext(name, environment=environment,
@@ -439,14 +427,11 @@ def cli_node_stop(name, system_folders, all_nodes):
     client = docker.from_env()
     check_docker_running()
 
-    running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"})
+    running_node_names = find_running_node_names(client)
 
-    if not running_nodes:
+    if not running_node_names:
         warning("No nodes are currently running.")
         return
-
-    running_node_names = [node.name for node in running_nodes]
 
     if all_nodes:
         for name in running_node_names:
@@ -485,9 +470,7 @@ def cli_node_attach(name, system_folders):
     client = docker.from_env()
     check_docker_running()
 
-    running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"})
-    running_node_names = [node.name for node in running_nodes]
+    running_node_names = find_running_node_names(client)
 
     if not name:
         name = q.select("Select the node you wish to inspect:",
@@ -528,18 +511,8 @@ def cli_node_create_private_key(name, environment, system_folders, upload,
     """Create and upload a new private key (use with caughtion)"""
 
     # retrieve context
-    name, environment = (name, environment) if name else \
-        select_configuration_questionaire("node", system_folders)
-
-    # raise error if config could not be found
+    name, environment = select_node(name, environment, system_folders)
     NodeContext.LOGGING_ENABLED = False
-    if not NodeContext.config_exists(name, environment, system_folders):
-        error(
-            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
-            f"not be found."
-        )
-        exit(1)
 
     # Create node context
     ctx = NodeContext(name, environment, system_folders)
@@ -658,6 +631,77 @@ def cli_node_clean():
 
 
 #
+#   remove
+#
+@cli_node.command(name="remove")
+@click.option("-n", "--name", default=None)
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_remove(name, environment, system_folders):
+    """Delete a node permanently
+
+    - if the node is still running, exit and tell user to run vnode stop first
+    - remove configuration file
+    - remove log file
+    - remove docker volumes attached to the node
+    """
+    # select configuration name if none supplied
+    name, environment = select_node(name, environment, system_folders)
+
+    client = docker.from_env()
+    check_if_docker_deamon_is_running(client)
+
+    # check if node is still running, otherwise don't allow deleting it
+    running_node_names = find_running_node_names(client)
+
+    post_fix = "system" if system_folders else "user"
+    node_container_name = f"{APPNAME}-{name}-{post_fix}"
+    if node_container_name in running_node_names:
+        error(f"Node {name} is still running! Please stop the node before "
+              "deleting it.")
+        exit(1)
+
+    if not q.confirm(
+        "This node will be deleted permanently including its configuration. "
+        "Are you sure?", default=False
+    ).ask():
+        info("Node will not be deleted")
+        exit(0)
+
+    # create node context
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+
+    # remove the docker volume and any temporary volumes
+    debug(f"Deleting docker volumes")
+    volumes = client.volumes.list()
+    for vol in volumes:
+        if vol.name.startswith(ctx.docker_volume_name):  # includes tmp volumes
+            info(f"Deleting docker volume {vol.name}")
+            vol.remove()
+        # remove docker vpn volume
+        if vol.name == ctx.docker_vpn_volume_name:
+            info(f"Deleting VPN docker volume {vol.name}")
+            vol.remove()
+
+    # remove the VPN configuration file
+    vpn_config_file = os.path.join(ctx.data_dir, VPN_CONFIG_FILE)
+    remove_file(vpn_config_file, 'VPN configuration')
+
+    # remove the config file
+    remove_file(ctx.config_file, 'configuration')
+
+    # remove the log file. As this process opens the log file above, the log
+    # handlers need to be closed before deleting
+    info(f"Removing log file {ctx.log_file}")
+    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+        handler.close()
+    remove_file(ctx.log_file, 'log')
+
+
+#
 #   version
 #
 @cli_node.command(name='version')
@@ -670,9 +714,7 @@ def cli_node_version(name, system_folders):
     client = docker.from_env()
     check_docker_running()
 
-    running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"})
-    running_node_names = [node.name for node in running_nodes]
+    running_node_names = find_running_node_names(client)
 
     if not name:
         if not running_node_names:
@@ -688,9 +730,8 @@ def cli_node_version(name, system_folders):
     if name in running_node_names:
         container = client.containers.get(name)
         version = container.exec_run(cmd='vnode-local version', stdout=True)
-        click.echo({
-            "node": version.output.decode('utf-8'), "cli": __version__
-        })
+        click.echo(
+            {"node": version.output.decode('utf-8'), "cli": __version__})
     else:
         error(f"Node {name} is not running! Cannot provide version...")
 
@@ -721,3 +762,37 @@ def create_client_and_authenticate(ctx):
         exit(1)
 
     return client
+
+
+def select_node(name, environment, system_folders):
+    """ Let user select node through questionnaire if name is yet unknown """
+    name, environment = (name, environment) if name else \
+        select_configuration_questionaire("node", system_folders)
+
+    # raise error if config could not be found
+    if not NodeContext.config_exists(name, environment, system_folders):
+        error(
+            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
+            f"not be found."
+        )
+        exit(1)
+    return name, environment
+
+
+def find_running_node_names(client):
+    running_nodes = client.containers.list(
+        filters={"label": f"{APPNAME}-type=node"})
+    return [node.name for node in running_nodes]
+
+
+def remove_file(file: str, file_type: str):
+    if os.path.isfile(file):
+        info(f"Removing {file_type} file: {file}")
+        try:
+            os.remove(file)
+        except Exception as e:
+            error(f"Could not delete file: {file}")
+            error(e)
+    else:
+        warning(f"Could not remove {file_type} file: {file} does not exist")
