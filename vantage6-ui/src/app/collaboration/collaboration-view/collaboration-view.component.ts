@@ -6,7 +6,12 @@ import {
 } from '../interfaces/collaboration';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
+import {
+  Organization,
+  OrganizationInCollaboration,
+} from 'src/app/organization/interfaces/organization';
+import { OrganizationComponent } from 'src/app/organization/organization.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -22,7 +27,10 @@ export class CollaborationViewComponent implements OnInit {
   @Output() editingCollab = new EventEmitter<Collaboration>();
   missing_node_msgs: string[] = [];
 
-  constructor(public userPermission: UserPermissionService) {}
+  constructor(
+    private router: Router,
+    public userPermission: UserPermissionService
+  ) {}
 
   ngOnInit(): void {
     this.setMissingNodeMsg();
@@ -49,6 +57,16 @@ export class CollaborationViewComponent implements OnInit {
             "' in this collaboration!"
         );
       }
+    }
+  }
+
+  isDisabled(org: OrganizationInCollaboration): boolean {
+    return org.node === undefined;
+  }
+
+  goToNode(org: OrganizationInCollaboration): void {
+    if (org.node) {
+      this.router.navigate([`/node/${org.node.id}/view/${org.id}`]);
     }
   }
 }

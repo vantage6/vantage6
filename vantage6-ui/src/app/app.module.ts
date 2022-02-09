@@ -32,6 +32,7 @@ import { ModalMessageComponent } from './modal/modal-message/modal-message.compo
 import { OrganizationEditComponent } from './organization/organization-edit/organization-edit.component';
 import { CollaborationComponent } from './collaboration/collaboration.component';
 import { CollaborationViewComponent } from './collaboration/collaboration-view/collaboration-view.component';
+import { NodeViewComponent } from './node/node-view/node-view.component';
 
 @NgModule({
   declarations: [
@@ -50,6 +51,7 @@ import { CollaborationViewComponent } from './collaboration/collaboration-view/c
     OrganizationEditComponent,
     CollaborationComponent,
     CollaborationViewComponent,
+    NodeViewComponent,
   ],
   imports: [
     BrowserModule,

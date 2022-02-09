@@ -11,6 +11,7 @@ import { UserEditComponent } from './user/user-edit/user-edit.component';
 import { RoleEditComponent } from './role/role-edit/role-edit.component';
 import { OrganizationEditComponent } from './organization/organization-edit/organization-edit.component';
 import { CollaborationComponent } from './collaboration/collaboration.component';
+import { NodeViewComponent } from './node/node-view/node-view.component';
 
 const routes: Routes = [
   {
@@ -99,6 +100,17 @@ const routes: Routes = [
       requiresLogin: true,
       permissionType: Operation.EDIT,
       permissionResource: Resource.ROLE,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    // TODO implement new access guard for this!
+    path: 'node/:id/view/:org_id',
+    component: NodeViewComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: Operation.VIEW,
+      permissionResource: Resource.NODE,
     },
     canActivate: [AccessGuard],
   },
