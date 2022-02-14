@@ -9,6 +9,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
 import { Router } from '@angular/router';
 import { NodeEditService } from 'src/app/node/services/node-edit.service';
+import { Operation, Resource, Scope } from 'src/app/shared/enum';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -48,7 +49,14 @@ export class CollaborationViewComponent implements OnInit {
   setMissingNodeMsg(): void {
     this.missing_node_msgs = [];
     for (let org of this.collaboration.organizations) {
-      if (!org.node) {
+      if (
+        !org.node &&
+        this.userPermission.hasPermission(
+          Operation.VIEW,
+          Resource.NODE,
+          Scope.GLOBAL
+        )
+      ) {
         this.missing_node_msgs.push(
           "No node has been created for organization '" +
             org.name +
@@ -59,7 +67,10 @@ export class CollaborationViewComponent implements OnInit {
   }
 
   isDisabled(org: OrganizationInCollaboration): boolean {
-    return org.node === undefined;
+    return (
+      org.node === undefined ||
+      !this.userPermission.can(Operation.VIEW, Resource.NODE, org.id)
+    );
   }
 
   goToNode(org: OrganizationInCollaboration): void {

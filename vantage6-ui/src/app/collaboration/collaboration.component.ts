@@ -17,7 +17,7 @@ import { ApiCollaborationService } from './services/api-collaboration.service';
 @Component({
   selector: 'app-collaboration',
   templateUrl: './collaboration.component.html',
-  styleUrls: ['./collaboration.component.scss'],
+  styleUrls: ['../shared/scss/buttons.scss', './collaboration.component.scss'],
 })
 export class CollaborationComponent implements OnInit {
   organizations: OrganizationInCollaboration[] = [];

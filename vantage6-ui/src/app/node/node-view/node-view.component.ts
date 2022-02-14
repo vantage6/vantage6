@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs/operators';
-import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { ModalService } from 'src/app/modal/modal.service';
-import { Resource } from 'src/app/shared/enum';
-import { UtilsService } from 'src/app/shared/services/utils.service';
+
 import { EMPTY_NODE, Node } from '../interfaces/node';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { Resource } from 'src/app/shared/enum';
+
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { ModalService } from 'src/app/modal/modal.service';
+import { UtilsService } from 'src/app/shared/services/utils.service';
 import { ApiNodeService } from '../services/api-node.service';
 import { NodeEditService } from '../services/node-edit.service';
 

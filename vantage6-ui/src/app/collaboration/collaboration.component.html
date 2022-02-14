@@ -1,8 +1,16 @@
 <div *ngIf="userPermission.hasPermission('view', 'collaboration', 'organization') && collaborations.length>0">
   <mat-card>
-    <h4>
+    <h4 class="inline">
       Your collaborations
     </h4>
+    <div *ngIf="userPermission.hasPermission('create', 'collaboration', 'global')" class="inline">
+      <button mat-button class="btn btn-dflt btn-right"
+              [routerLink]="['/collaboration', 'create']">
+        <mat-icon>add_circle</mat-icon>
+        <span>New collaboration</span>
+      </button>
+    </div>
+    <div class="vertical-spacer"></div>
     <div *ngFor="let col of collaborations">
       <app-collaboration-view
         [collaboration]="col"

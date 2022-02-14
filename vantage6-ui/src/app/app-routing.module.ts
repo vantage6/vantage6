@@ -30,9 +30,8 @@ const routes: Routes = [
     component: CollaborationComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.CREATE,
-      permissionResource: Resource.ORGANIZATION,
-      permissionScope: Scope.GLOBAL,
+      permissionType: Operation.VIEW,
+      permissionResource: Resource.COLLABORATION,
     },
     canActivate: [AccessGuard],
   },
