@@ -121,6 +121,7 @@ export class ConvertJsonService {
       organization_id: node_json.organization.id,
       ip: node_json.ip,
       is_online: node_json.status === 'online' ? true : false,
+      last_seen: node_json.last_seen ? new Date(node_json.last_seen) : null,
     };
   }
 }

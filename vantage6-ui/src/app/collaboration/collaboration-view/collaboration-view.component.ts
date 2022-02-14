@@ -6,12 +6,9 @@ import {
 } from '../interfaces/collaboration';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import {
-  Organization,
-  OrganizationInCollaboration,
-} from 'src/app/organization/interfaces/organization';
-import { OrganizationComponent } from 'src/app/organization/organization.component';
+import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
 import { Router } from '@angular/router';
+import { NodeEditService } from 'src/app/node/services/node-edit.service';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -29,7 +26,8 @@ export class CollaborationViewComponent implements OnInit {
 
   constructor(
     private router: Router,
-    public userPermission: UserPermissionService
+    public userPermission: UserPermissionService,
+    private nodeEditService: NodeEditService
   ) {}
 
   ngOnInit(): void {
@@ -66,6 +64,7 @@ export class CollaborationViewComponent implements OnInit {
 
   goToNode(org: OrganizationInCollaboration): void {
     if (org.node) {
+      this.nodeEditService.setNode(org.node);
       this.router.navigate([`/node/${org.node.id}/view/${org.id}`]);
     }
   }

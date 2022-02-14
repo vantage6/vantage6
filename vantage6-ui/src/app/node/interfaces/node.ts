@@ -9,6 +9,7 @@ export interface Node {
   organization_id: number;
   ip: string;
   is_online: boolean;
+  last_seen: Date | null;
   api_key?: string;
 }
 
@@ -19,6 +20,7 @@ export const EMPTY_NODE: Node = {
   collaboration_id: -1,
   organization_id: -1,
   ip: '',
+  last_seen: null,
   is_online: false,
 };
 

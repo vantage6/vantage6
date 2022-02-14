@@ -1,1 +1,47 @@
-<p>node-view works!</p>
+<mat-card>
+  <h4>Node details</h4>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Name:</td>
+      <td>{{node.name}}</td>
+    </tr>
+    <tr>
+      <td>Status:</td>
+      <td>{{getStatus()}}</td>
+    </tr>
+    <tr>
+      <td>Last seen:</td>
+      <td *ngIf="node.last_seen !== null">{{node.last_seen.toString()}}</td>
+      <td *ngIf="node.last_seen === null">This node has not yet been online!</td>
+    </tr>
+    <tr *ngIf="node.ip !== null">
+      <td>VPN IP address:</td>
+      <td>{{node.ip}}</td>
+    </tr>
+  </table>
+  <br/>
+  <!-- <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
+      mat-button class="btn btn-edit inline"
+      (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
+    Edit
+  </button>
+  <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
+      mat-button class="btn btn-delete-strong"
+      (click)="deleteRole()">
+    Delete
+  </button> -->
+  <div *ngIf="userPermission.can('edit', 'node', node.organization_id)">
+    <h4>API key</h4>
+    <p>
+      Have you lost your API key? Please generate a new API key and paste it into
+      your node configuration file.
+    </p>
+    <button mat-button class="btn btn-edit" (click)="generateApiKey()">
+      Generate new API key
+    </button>
+  </div>
+</mat-card>
