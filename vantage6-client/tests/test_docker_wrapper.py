@@ -20,6 +20,7 @@ PICKLE_FORMAT = 'pickle'
 
 MOCK_SPARQL_ENDPOINT = 'sparql://some_triplestore'
 
+
 def test_old_pickle_input_wrapper(tmp_path):
     """
     Testing if wrapper still parses legacy input.
@@ -35,8 +36,9 @@ def test_old_pickle_input_wrapper(tmp_path):
 
 def test_json_input_without_format_raises_deserializationexception(tmp_path):
     """
-    It should only be possible to provide json input if it is preceded by the string "json." in unicode. Otherwise a
-    `DeserializationException` should be thrown.
+    It should only be possible to provide json input if it is preceded by the
+    string "json." in unicode. Otherwise a `DeserializationException` should
+    be thrown.
     """
     input_file = tmp_path / 'input.json'
 
@@ -65,13 +67,17 @@ def test_pickle_input_with_format_succeeds(tmp_path):
 
 
 def test_wrapper_serializes_pickle_output(tmp_path):
-    input_parameters = {'method': 'hello_world', 'output_format': PICKLE_FORMAT}
+    input_parameters = {
+        'method': 'hello_world',
+        'output_format': PICKLE_FORMAT
+    }
     input_file = create_pickle_input(tmp_path, input_parameters)
 
     output_file = run_docker_wrapper_with_echo_db(input_file, tmp_path)
 
     with output_file.open('rb') as f:
-        # Check whether the output starts with `pickle.` to indicate the pickle data format
+        # Check whether the output starts with `pickle.` to indicate the pickle
+        # data format
         assert f.read(len(PICKLE_FORMAT) + 1).decode() == f'{PICKLE_FORMAT}.'
 
         result = pickle.loads(f.read())
@@ -88,7 +94,8 @@ def test_wrapper_serializes_json_output(tmp_path):
         # Check whether the data is preceded by json format string
         assert f.read(len(JSON_FORMAT) + 1).decode() == f'{JSON_FORMAT}.'
 
-        # Since the echo_db algorithm was triggered, output will be table that can be read by pandas.
+        # Since the echo_db algorithm was triggered, output will be table that
+        # can be read by pandas.
         result = pd.read_json(f.read())
         pd.testing.assert_frame_equal(SAMPLE_DB, result)
 
@@ -114,9 +121,11 @@ def file_echoes_db(output_file):
 
 def run_docker_wrapper_with_echo_db(input_file, tmp_path):
     """
-    Run the `echo_db` testing algorithm through the wrapper code. The wrapper communicates through files whose locations
-    are stored in the `INPUT_FILE`, `TOKEN_FILE` and `DATABASE_URI` environment variables. The output of the
-    algorithm is stored in the location specified in environment variable `OUTPUT_FILE`.
+    Run the `echo_db` testing algorithm through the wrapper code. The wrapper
+    communicates through files whose locations are stored in the `INPUT_FILE`,
+    `TOKEN_FILE` and `DATABASE_URI` environment variables. The output of the
+    algorithm is stored in the location specified in environment variable
+    `OUTPUT_FILE`.
 
     :param input_file: input arguments to the wrapper and algorithm
     :param tmp_path: temporary path to store additional files.
@@ -139,11 +148,13 @@ def run_docker_wrapper_with_echo_db(input_file, tmp_path):
     return output_file
 
 
-@patch('vantage6.tools.docker_wrapper.dispact_rpc')
+@patch('vantage6.tools.docker_wrapper.dispatch_rpc')
 @patch('vantage6.tools.docker_wrapper.os')
 @patch('vantage6.tools.docker_wrapper.SPARQLWrapper')
-def test_sparql_docker_wrapper_passes_dataframe(SPARQLWrapper: MagicMock, os: MagicMock, dispact_rpc: MagicMock,
-                                        tmp_path: Path):
+def test_sparql_docker_wrapper_passes_dataframe(
+    SPARQLWrapper: MagicMock, os: MagicMock, dispatch_rpc: MagicMock,
+    tmp_path: Path
+):
     input_file = tmp_path / 'input_file.pkl'
     token_file = tmp_path / 'token.txt'
     output_file = tmp_path / 'output.pkl'
@@ -163,12 +174,13 @@ def test_sparql_docker_wrapper_passes_dataframe(SPARQLWrapper: MagicMock, os: Ma
     with token_file.open('w') as f:
         f.write(TOKEN)
 
-    dispact_rpc.return_value = pd.DataFrame()
-    SPARQLWrapper.return_value.query.return_value.convert.return_value = DATA.encode()
+    dispatch_rpc.return_value = pd.DataFrame()
+    SPARQLWrapper.return_value.query.return_value.convert.return_value = \
+        DATA.encode()
 
     docker_wrapper.sparql_wrapper(MODULE_NAME)
 
-    dispact_rpc.assert_called_once()
+    dispatch_rpc.assert_called_once()
 
     target_df = pd.DataFrame([[1, 2]], columns=['column1', 'column2'])
-    pd.testing.assert_frame_equal(target_df, dispact_rpc.call_args[0][0])
+    pd.testing.assert_frame_equal(target_df, dispatch_rpc.call_args[0][0])

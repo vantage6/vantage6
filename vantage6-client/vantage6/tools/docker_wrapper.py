@@ -11,7 +11,7 @@ import io
 from abc import ABC, abstractmethod
 import pandas
 
-from vantage6.tools.dispatch_rpc import dispact_rpc
+from vantage6.tools.dispatch_rpc import dispatch_rpc
 from vantage6.tools.util import info
 from vantage6.tools import deserialization, serialization
 from vantage6.tools.data_format import DataFormat
@@ -98,7 +98,7 @@ class WrapperBase(ABC):
 
         # make the actual call to the method/function
         info("Dispatching ...")
-        output = dispact_rpc(data, input_data, module, token)
+        output = dispatch_rpc(data, input_data, module, token)
 
         # write output from the method to mounted output file. Which will be
         # transfered back to the server by the node-instance.

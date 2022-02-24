@@ -6,7 +6,7 @@ from vantage6.client import ContainerClient
 from vantage6.tools.util import info, warn
 
 
-def dispact_rpc(data, input_data, module, token):
+def dispatch_rpc(data, input_data, module, token):
 
     # import algorithm module
     try:
