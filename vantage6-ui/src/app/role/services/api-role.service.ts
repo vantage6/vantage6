@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { Role } from 'src/app/role/interfaces/role';
-import { Rule } from 'src/app/rule/interfaces/rule';
+import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
 
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { environment } from 'src/environments/environment';

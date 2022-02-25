@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
-import { Role } from 'src/app/role/interfaces/role';
+import { Role } from 'src/app/interfaces/role';
 import { OpsType, ResType } from 'src/app/shared/enum';
-import { Rule } from 'src/app/rule/interfaces/rule';
-import { getEmptyUser, User } from 'src/app/user/interfaces/user';
+import { Rule } from 'src/app/interfaces/rule';
+import { getEmptyUser, User } from 'src/app/interfaces/user';
 
 import {
   getIdsFromArray,
@@ -17,7 +17,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from 'src/app/shared/services/utils.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { EMPTY_ORGANIZATION } from 'src/app/organization/interfaces/organization';
+import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
 
 // TODO add option to assign user to different organization?
 

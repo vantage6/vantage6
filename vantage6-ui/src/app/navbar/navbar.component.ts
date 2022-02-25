@@ -6,7 +6,7 @@ import { delay } from 'rxjs/operators';
 
 import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { getEmptyUser, User } from 'src/app/user/interfaces/user';
+import { getEmptyUser, User } from 'src/app/interfaces/user';
 
 @Component({
   selector: 'app-navbar',

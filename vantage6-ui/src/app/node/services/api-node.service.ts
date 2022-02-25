@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { EMPTY_NODE, Node } from 'src/app/node/interfaces/node';
+import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ModalService } from 'src/app/modal/modal.service';

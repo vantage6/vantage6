@@ -1,12 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
-import { Node } from 'src/app/node/interfaces/node';
-import { EMPTY_USER, User } from '../user/interfaces/user';
-import { Collaboration } from './interfaces/collaboration';
-import {
-  Organization,
-  OrganizationInCollaboration,
-} from '../organization/interfaces/organization';
+import { Node } from 'src/app/interfaces/node';
+import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { Collaboration } from 'src/app/interfaces/collaboration';
+import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { arrayContainsObjWithId } from '../shared/utils';
 
 import { UserPermissionService } from '../auth/services/user-permission.service';

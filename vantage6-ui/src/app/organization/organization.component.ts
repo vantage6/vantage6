@@ -1,9 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 
-import { EMPTY_USER, getEmptyUser, User } from 'src/app/user/interfaces/user';
-import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
-import { Rule } from 'src/app/rule/interfaces/rule';
-import { EMPTY_ORGANIZATION, Organization } from './interfaces/organization';
+import { EMPTY_USER, getEmptyUser, User } from 'src/app/interfaces/user';
+import { getEmptyRole, Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
+import {
+  EMPTY_ORGANIZATION,
+  Organization,
+} from 'src/app/interfaces/organization';
 import { ResType } from '../shared/enum';
 import {
   arrayContainsObjWithId,

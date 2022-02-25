@@ -3,11 +3,11 @@ import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { ResType } from '../enum';
 
-import { Collaboration } from 'src/app/collaboration/interfaces/collaboration';
-import { User } from 'src/app/user/interfaces/user';
-import { Role } from 'src/app/role/interfaces/role';
-import { Rule } from 'src/app/rule/interfaces/rule';
-import { Organization } from 'src/app/organization/interfaces/organization';
+import { Collaboration } from 'src/app/interfaces/collaboration';
+import { User } from 'src/app/interfaces/user';
+import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
+import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 

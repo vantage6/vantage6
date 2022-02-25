@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
+import {
+  EMPTY_ORGANIZATION,
+  Organization,
+} from 'src/app/interfaces/organization';
 
 @Injectable({
   providedIn: 'root',

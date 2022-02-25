@@ -6,9 +6,9 @@ import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
 import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
 import { ApiUserService } from 'src/app/user/services/api-user.service';
 import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
-import { Rule } from 'src/app/rule/interfaces/rule';
-import { Role } from 'src/app/role/interfaces/role';
-import { EMPTY_USER, User } from 'src/app/user/interfaces/user';
+import { Rule } from 'src/app/interfaces/rule';
+import { Role } from 'src/app/interfaces/role';
+import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { ApiRoleService } from 'src/app/role/services/api-role.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 

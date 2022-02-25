@@ -1,7 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
+import {
+  EMPTY_ORGANIZATION,
+  Organization,
+} from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ApiService } from 'src/app/shared/services/api.service';

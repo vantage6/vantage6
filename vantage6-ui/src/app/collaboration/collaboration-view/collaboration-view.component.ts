@@ -3,10 +3,10 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
   Collaboration,
   EMPTY_COLLABORATION,
-} from '../interfaces/collaboration';
+} from 'src/app/interfaces/collaboration';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
+import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { Router } from '@angular/router';
 import { NodeEditService } from 'src/app/node/services/node-edit.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';

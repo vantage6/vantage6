@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ExitMode } from 'src/app/shared/enum';
 
-import { Role, getEmptyRole } from 'src/app/role/interfaces/role';
+import { Role, getEmptyRole } from 'src/app/interfaces/role';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { ModalService } from 'src/app/modal/modal.service';
 

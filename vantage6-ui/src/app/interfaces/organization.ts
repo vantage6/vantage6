@@ -1,4 +1,4 @@
-import { Node } from 'src/app/node/interfaces/node';
+import { Node } from 'src/app/interfaces/node';
 import { ResType } from 'src/app/shared/enum';
 
 export interface Organization {

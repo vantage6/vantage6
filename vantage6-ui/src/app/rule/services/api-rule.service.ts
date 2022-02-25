@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
-import { Rule, RuleGroup } from 'src/app/rule/interfaces/rule';
+import { Rule, RuleGroup } from 'src/app/interfaces/rule';
 import { deepcopy } from 'src/app/shared/utils';
 
 import { environment } from 'src/environments/environment';

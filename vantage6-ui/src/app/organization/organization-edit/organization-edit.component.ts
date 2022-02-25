@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   EMPTY_ORGANIZATION,
   Organization,
-} from 'src/app/organization/interfaces/organization';
+} from 'src/app/interfaces/organization';
 
 import { ApiOrganizationService } from 'src/app/organization/services/api-organization.service';
 import { OrganizationEditService } from 'src/app/organization/services/organization-edit.service';

@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 
-import { Role } from 'src/app/role/interfaces/role';
-import { Rule } from 'src/app/rule/interfaces/rule';
-import { User } from 'src/app/user/interfaces/user';
-import { Node } from 'src/app/node/interfaces/node';
-import { Organization } from 'src/app/organization/interfaces/organization';
+import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
+import { User } from 'src/app/interfaces/user';
+import { Node } from 'src/app/interfaces/node';
+import { Organization } from 'src/app/interfaces/organization';
 import { deepcopy, getById } from 'src/app/shared/utils';
-import { Collaboration } from 'src/app/collaboration/interfaces/collaboration';
+import { Collaboration } from 'src/app/interfaces/collaboration';
 import { ResType } from '../enum';
 
 @Injectable({

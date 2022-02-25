@@ -1,4 +1,4 @@
-import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
+import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { ResType } from 'src/app/shared/enum';
 
 export interface Collaboration {

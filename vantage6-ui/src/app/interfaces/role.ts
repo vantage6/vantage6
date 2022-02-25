@@ -1,5 +1,5 @@
 import { deepcopy } from 'src/app/shared/utils';
-import { Rule } from 'src/app/rule/interfaces/rule';
+import { Rule } from 'src/app/interfaces/rule';
 import { ResType } from 'src/app/shared/enum';
 
 export interface Role {

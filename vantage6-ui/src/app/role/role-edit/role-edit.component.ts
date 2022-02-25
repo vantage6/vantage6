@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
-import { Rule } from 'src/app/rule/interfaces/rule';
+import { getEmptyRole, Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
 import { OpsType, ResType } from 'src/app/shared/enum';
 
 import { ApiRoleService } from 'src/app/role/services/api-role.service';

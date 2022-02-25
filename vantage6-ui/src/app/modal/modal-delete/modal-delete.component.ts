@@ -2,8 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExitMode } from 'src/app/shared/enum';
 
-import { Role } from 'src/app/role/interfaces/role';
-import { User } from 'src/app/user/interfaces/user';
+import { Role } from 'src/app/interfaces/role';
+import { User } from 'src/app/interfaces/user';
 
 @Component({
   selector: 'app-modal-delete',

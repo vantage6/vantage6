@@ -7,8 +7,8 @@ import {
   EventEmitter,
 } from '@angular/core';
 
-import { Role } from 'src/app/role/interfaces/role';
-import { Rule, RuleGroup } from 'src/app/rule/interfaces/rule';
+import { Role } from 'src/app/interfaces/role';
+import { Rule, RuleGroup } from 'src/app/interfaces/rule';
 import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs/operators';
 
-import { EMPTY_NODE, Node } from '../interfaces/node';
+import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { ResType } from 'src/app/shared/enum';
 
