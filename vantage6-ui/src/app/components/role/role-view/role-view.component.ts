@@ -4,6 +4,7 @@ import { ExitMode } from 'src/app/shared/enum';
 import { Role, getEmptyRole } from 'src/app/interfaces/role';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { ModalService } from 'src/app/modal/modal.service';
+import { PermissionTableComponent } from '../../permission-table/permission-table.component';
 
 import { ApiRoleService } from 'src/app/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';

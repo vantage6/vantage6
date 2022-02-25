@@ -11,6 +11,7 @@ import { RoleEditService } from 'src/app/role/services/role-edit.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/shared/services/utils.service';
+import { PermissionTableComponent } from '../../permission-table/permission-table.component';
 
 @Component({
   selector: 'app-role-edit',

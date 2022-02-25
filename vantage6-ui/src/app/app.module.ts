@@ -22,7 +22,7 @@ import { AccessGuard, OrgAccessGuard } from './auth/access-guard.guard';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
-import { PermissionTableComponent } from './shared/permission-table/permission-table.component';
+import { PermissionTableComponent } from './components/permission-table/permission-table.component';
 import { UserEditComponent } from './components/user/user-edit/user-edit.component';
 import { UserViewComponent } from './components/user/user-view/user-view.component';
 import { RoleViewComponent } from './components/role/role-view/role-view.component';

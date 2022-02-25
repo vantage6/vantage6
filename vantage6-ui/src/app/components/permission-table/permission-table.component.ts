@@ -24,7 +24,7 @@ import {
   selector: 'app-permission-table',
   templateUrl: './permission-table.component.html',
   styleUrls: [
-    '../../../shared/scss/buttons.scss',
+    '../../shared/scss/buttons.scss',
     './permission-table.component.scss',
   ],
 })
