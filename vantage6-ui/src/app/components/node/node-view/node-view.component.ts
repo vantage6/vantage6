@@ -9,7 +9,7 @@ import { ResType } from 'src/app/shared/enum';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { UtilsService } from 'src/app/shared/services/utils.service';
-import { ApiNodeService } from 'src/app/api/api-node.service';
+import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { NodeStoreService } from 'src/app/services/store/node-store.service';
 
 @Component({

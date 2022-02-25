@@ -6,7 +6,7 @@ import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message
 import { ModalService } from 'src/app/modal/modal.service';
 import { PermissionTableComponent } from '../../permission-table/permission-table.component';
 
-import { ApiRoleService } from 'src/app/api/api-role.service';
+import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { RoleStoreService } from 'src/app/services/store/role-store.service';
 

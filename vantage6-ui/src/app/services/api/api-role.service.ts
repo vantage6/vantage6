@@ -7,8 +7,8 @@ import { Rule } from 'src/app/interfaces/rule';
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { environment } from 'src/environments/environment';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
-import { ApiRuleService } from 'src/app/api/api-rule.service';
-import { ApiService } from 'src/app/api/api.service';
+import { ApiRuleService } from 'src/app/services/api/api-rule.service';
+import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/modal/modal.service';
 

@@ -15,14 +15,14 @@ import {
 } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ApiUserService } from 'src/app/api/api-user.service';
-import { ApiOrganizationService } from 'src/app/api/api-organization.service';
-import { ApiRoleService } from 'src/app/api/api-role.service';
+import { ApiUserService } from 'src/app/services/api/api-user.service';
+import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
+import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserStoreService } from 'src/app/services/store/user-store.service';
 import { RoleStoreService } from 'src/app/services/store/role-store.service';
-import { ApiRuleService } from 'src/app/api/api-rule.service';
+import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { OrganizationStoreService } from 'src/app/services/store/organization-store.service';

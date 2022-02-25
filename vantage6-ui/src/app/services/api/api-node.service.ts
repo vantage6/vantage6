@@ -6,7 +6,7 @@ import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ResType } from 'src/app/shared/enum';
-import { ApiService } from 'src/app/api/api.service';
+import { ApiService } from 'src/app/services/api/api.service';
 import { environment } from 'src/environments/environment';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 

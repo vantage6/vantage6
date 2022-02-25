@@ -7,9 +7,9 @@ import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { arrayContainsObjWithId } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ApiNodeService } from 'src/app/api/api-node.service';
-import { ApiOrganizationService } from 'src/app/api/api-organization.service';
-import { ApiCollaborationService } from 'src/app/api/api-collaboration.service';
+import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
+import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
 
 @Component({
   selector: 'app-collaboration',

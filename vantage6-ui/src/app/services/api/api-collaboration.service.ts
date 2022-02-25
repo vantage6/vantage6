@@ -11,7 +11,7 @@ import { ConvertJsonService } from 'src/app/shared/services/convert-json.service
 import { ResType } from 'src/app/shared/enum';
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { Organization } from 'src/app/interfaces/organization';
-import { ApiService } from 'src/app/api/api.service';
+import { ApiService } from 'src/app/services/api/api.service';
 
 @Injectable({
   providedIn: 'root',

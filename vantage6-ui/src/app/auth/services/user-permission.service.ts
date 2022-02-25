@@ -4,12 +4,12 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
 
 import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
-import { ApiUserService } from 'src/app/api/api-user.service';
-import { ApiRuleService } from 'src/app/api/api-rule.service';
+import { ApiUserService } from 'src/app/services/api/api-user.service';
+import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { Rule } from 'src/app/interfaces/rule';
 import { Role } from 'src/app/interfaces/role';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
-import { ApiRoleService } from 'src/app/api/api-role.service';
+import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 
 const PERMISSION_KEY = 'permissions-user';

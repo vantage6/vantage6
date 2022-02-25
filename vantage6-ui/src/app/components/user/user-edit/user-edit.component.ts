@@ -10,7 +10,7 @@ import {
   removeMatchedIdFromArray,
   removeMatchedIdsFromArray,
 } from 'src/app/shared/utils';
-import { ApiUserService } from 'src/app/api/api-user.service';
+import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { UserStoreService } from 'src/app/services/store/user-store.service';
 import { ActivatedRoute, Router } from '@angular/router';
