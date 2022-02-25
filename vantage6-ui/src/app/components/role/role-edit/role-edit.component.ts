@@ -7,7 +7,7 @@ import { OpsType, ResType } from 'src/app/shared/enum';
 
 import { ApiRoleService } from 'src/app/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { RoleEditService } from 'src/app/role/services/role-edit.service';
+import { RoleStoreService } from 'src/app/services/store/role-store.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/shared/services/utils.service';
@@ -32,13 +32,13 @@ export class RoleEditComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private roleService: ApiRoleService,
-    private roleEditService: RoleEditService,
+    private roleStoreService: RoleStoreService,
     private modalService: ModalService,
     private utilsService: UtilsService
   ) {}
 
   ngOnInit(): void {
-    this.roleEditService.getRole().subscribe((role) => {
+    this.roleStoreService.getRole().subscribe((role) => {
       this.role = role;
     });
     if (this.router.url.includes(OpsType.CREATE)) {

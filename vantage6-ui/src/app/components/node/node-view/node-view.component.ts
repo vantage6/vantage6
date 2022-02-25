@@ -10,7 +10,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { ModalService } from 'src/app/modal/modal.service';
 import { UtilsService } from 'src/app/shared/services/utils.service';
 import { ApiNodeService } from 'src/app/api/api-node.service';
-import { NodeEditService } from 'src/app/node/services/node-edit.service';
+import { NodeStoreService } from 'src/app/services/store/node-store.service';
 
 @Component({
   selector: 'app-node-view',
@@ -27,7 +27,7 @@ export class NodeViewComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private apiNodeService: ApiNodeService,
-    private nodeEditService: NodeEditService,
+    private nodeStoreService: NodeStoreService,
     private utilsService: UtilsService,
     public userPermission: UserPermissionService,
     private modalService: ModalService
@@ -38,8 +38,8 @@ export class NodeViewComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    // try to see if organization is already passed from organizationEditService
-    this.nodeEditService
+    // try to see if organization is already passed from organizationStoreService
+    this.nodeStoreService
       .getNode()
       .pipe(take(1))
       .subscribe((node) => {

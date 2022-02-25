@@ -8,7 +8,7 @@ import { PermissionTableComponent } from '../../permission-table/permission-tabl
 
 import { ApiRoleService } from 'src/app/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { RoleEditService } from 'src/app/role/services/role-edit.service';
+import { RoleStoreService } from 'src/app/services/store/role-store.service';
 
 @Component({
   selector: 'app-role-view',
@@ -25,7 +25,7 @@ export class RoleViewComponent implements OnInit {
   constructor(
     public userPermission: UserPermissionService,
     public roleService: ApiRoleService,
-    private roleEditService: RoleEditService,
+    private roleStoreService: RoleStoreService,
     private modalService: ModalService
   ) {}
 
@@ -59,6 +59,6 @@ export class RoleViewComponent implements OnInit {
   }
 
   editRole(): void {
-    this.roleEditService.setRole(this.role);
+    this.roleStoreService.setRole(this.role);
   }
 }

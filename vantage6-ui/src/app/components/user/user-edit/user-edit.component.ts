@@ -12,7 +12,7 @@ import {
 } from 'src/app/shared/utils';
 import { ApiUserService } from 'src/app/api/api-user.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { UserEditService } from 'src/app/user/services/user-edit.service';
+import { UserStoreService } from 'src/app/services/store/user-store.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from 'src/app/shared/services/utils.service';
 import { ModalService } from 'src/app/modal/modal.service';
@@ -45,7 +45,7 @@ export class UserEditComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private userService: ApiUserService,
-    private userEditService: UserEditService,
+    private userStoreService: UserStoreService,
     private utilsService: UtilsService,
     private modalService: ModalService
   ) {}
@@ -63,10 +63,10 @@ export class UserEditComponent implements OnInit {
   }
 
   async init() {
-    this.user = this.userEditService.getUser();
+    this.user = this.userStoreService.getUser();
     this.id = this.user.id;
     this.organization_id = this.user.organization_id;
-    this.roles_assignable_all = this.userEditService.getAvailableRoles();
+    this.roles_assignable_all = this.userStoreService.getAvailableRoles();
     await this.setAssignableRoles();
 
     // subscribe to id parameter in route to change edited user if required

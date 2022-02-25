@@ -20,12 +20,12 @@ import { ApiOrganizationService } from 'src/app/api/api-organization.service';
 import { ApiRoleService } from 'src/app/api/api-role.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserEditService } from 'src/app/user/services/user-edit.service';
-import { RoleEditService } from 'src/app/role/services/role-edit.service';
+import { UserStoreService } from 'src/app/services/store/user-store.service';
+import { RoleStoreService } from 'src/app/services/store/role-store.service';
 import { ApiRuleService } from 'src/app/api/api-rule.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { OrganizationEditService } from 'src/app/organization/services/organization-edit.service';
+import { OrganizationStoreService } from 'src/app/services/store/organization-store.service';
 import { UtilsService } from 'src/app/shared/services/utils.service';
 
 @Component({
@@ -55,9 +55,9 @@ export class OrganizationComponent implements OnInit {
     private organizationService: ApiOrganizationService,
     private roleService: ApiRoleService,
     private convertJsonService: ConvertJsonService,
-    private organizationEditService: OrganizationEditService,
-    private userEditService: UserEditService,
-    private roleEditService: RoleEditService,
+    private organizationStoreService: OrganizationStoreService,
+    private userStoreService: UserStoreService,
+    private roleStoreService: RoleStoreService,
     private ruleService: ApiRuleService,
     private modalService: ModalService,
     private utilsService: UtilsService
@@ -174,15 +174,15 @@ export class OrganizationComponent implements OnInit {
   }
 
   editOrganization(org: Organization): void {
-    this.organizationEditService.setOrganization(org);
+    this.organizationStoreService.setOrganization(org);
   }
 
   editUser(user: User): void {
-    this.userEditService.set(user, this.roles_assignable);
+    this.userStoreService.set(user, this.roles_assignable);
   }
 
   createUser(): void {
-    this.userEditService.set(getEmptyUser(), this.roles_assignable);
+    this.userStoreService.set(getEmptyUser(), this.roles_assignable);
   }
 
   deleteUser(user: User): void {
@@ -198,7 +198,7 @@ export class OrganizationComponent implements OnInit {
     new_role.organization_id = this.current_organization.id;
 
     // use edit mode to fill in all details of new user
-    this.roleEditService.setRole(new_role);
+    this.roleStoreService.setRole(new_role);
   }
 
   async deleteRole(role: Role): Promise<void> {

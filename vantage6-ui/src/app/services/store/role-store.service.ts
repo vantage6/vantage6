@@ -5,7 +5,7 @@ import { getEmptyRole, Role } from 'src/app/interfaces/role';
 @Injectable({
   providedIn: 'root',
 })
-export class RoleEditService {
+export class RoleStoreService {
   role = new BehaviorSubject<Role>(getEmptyRole());
 
   constructor() {}

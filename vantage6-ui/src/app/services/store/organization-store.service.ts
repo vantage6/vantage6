@@ -9,7 +9,7 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class OrganizationEditService {
+export class OrganizationStoreService {
   org = new BehaviorSubject<Organization>(EMPTY_ORGANIZATION);
 
   constructor() {}

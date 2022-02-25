@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NodeEditService } from './node-edit.service';
+import { NodeStoreService } from './node-store.service';
 
-describe('NodeEditService', () => {
-  let service: NodeEditService;
+describe('NodeStoreService', () => {
+  let service: NodeStoreService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(NodeEditService);
+    service = TestBed.inject(NodeStoreService);
   });
 
   it('should be created', () => {

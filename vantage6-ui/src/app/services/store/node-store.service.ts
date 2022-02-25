@@ -5,7 +5,7 @@ import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 @Injectable({
   providedIn: 'root',
 })
-export class NodeEditService {
+export class NodeStoreService {
   node = new BehaviorSubject<Node>(EMPTY_NODE);
 
   constructor() {}

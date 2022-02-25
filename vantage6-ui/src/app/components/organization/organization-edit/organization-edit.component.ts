@@ -7,7 +7,7 @@ import {
 } from 'src/app/interfaces/organization';
 
 import { ApiOrganizationService } from 'src/app/api/api-organization.service';
-import { OrganizationEditService } from 'src/app/organization/services/organization-edit.service';
+import { OrganizationStoreService } from 'src/app/services/store/organization-store.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
@@ -29,7 +29,7 @@ export class OrganizationEditComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private organizationService: ApiOrganizationService,
-    private organizationEditService: OrganizationEditService,
+    private organizationStoreService: OrganizationStoreService,
     private modalService: ModalService,
     private utilsService: UtilsService
   ) {}
@@ -39,8 +39,8 @@ export class OrganizationEditComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    // try to see if organization is already passed from organizationEditService
-    this.organizationEditService
+    // try to see if organization is already passed from organizationStoreService
+    this.organizationStoreService
       .getOrganization()
       .pipe(take(1))
       .subscribe((org) => {

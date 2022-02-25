@@ -7,7 +7,7 @@ import { getEmptyUser, User } from 'src/app/interfaces/user';
 @Injectable({
   providedIn: 'root',
 })
-export class UserEditService {
+export class UserStoreService {
   user = getEmptyUser();
   user_bhs = new BehaviorSubject<User>(this.user);
   available_roles: Role[] = [];
