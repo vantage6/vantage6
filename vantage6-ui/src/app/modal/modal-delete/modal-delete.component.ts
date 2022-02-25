@@ -9,7 +9,7 @@ import { User } from 'src/app/interfaces/user';
   selector: 'app-modal-delete',
   templateUrl: './modal-delete.component.html',
   styleUrls: [
-    '../../shared/scss/buttons.scss',
+    '../../../shared/scss/buttons.scss',
     './modal-delete.component.scss',
   ],
 })

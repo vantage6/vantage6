@@ -15,7 +15,10 @@ import { NodeEditService } from 'src/app/node/services/node-edit.service';
 @Component({
   selector: 'app-node-view',
   templateUrl: './node-view.component.html',
-  styleUrls: ['../../shared/scss/buttons.scss', './node-view.component.scss'],
+  styleUrls: [
+    '../../../shared/scss/buttons.scss',
+    './node-view.component.scss',
+  ],
 })
 export class NodeViewComponent implements OnInit {
   node: Node = EMPTY_NODE;

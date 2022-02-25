@@ -15,7 +15,10 @@ import { UtilsService } from 'src/app/shared/services/utils.service';
 @Component({
   selector: 'app-role-edit',
   templateUrl: './role-edit.component.html',
-  styleUrls: ['../../shared/scss/buttons.scss', './role-edit.component.scss'],
+  styleUrls: [
+    '../../../shared/scss/buttons.scss',
+    './role-edit.component.scss',
+  ],
 })
 export class RoleEditComponent implements OnInit {
   role: Role = getEmptyRole();

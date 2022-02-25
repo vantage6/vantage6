@@ -12,7 +12,10 @@ import { RoleEditService } from 'src/app/role/services/role-edit.service';
 @Component({
   selector: 'app-role-view',
   templateUrl: './role-view.component.html',
-  styleUrls: ['../../shared/scss/buttons.scss', './role-view.component.scss'],
+  styleUrls: [
+    '../../../shared/scss/buttons.scss',
+    './role-view.component.scss',
+  ],
 })
 export class RoleViewComponent implements OnInit {
   @Input() role: Role = getEmptyRole();

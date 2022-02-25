@@ -24,7 +24,10 @@ import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
 @Component({
   selector: 'app-user-edit',
   templateUrl: './user-edit.component.html',
-  styleUrls: ['../../shared/scss/buttons.scss', './user-edit.component.scss'],
+  styleUrls: [
+    '../../../shared/scss/buttons.scss',
+    './user-edit.component.scss',
+  ],
 })
 export class UserEditComponent implements OnInit {
   user: User = getEmptyUser();

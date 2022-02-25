@@ -25,13 +25,16 @@ import { RoleEditService } from 'src/app/role/services/role-edit.service';
 import { ApiRuleService } from 'src/app/api/api-rule.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { OrganizationEditService } from './services/organization-edit.service';
+import { OrganizationEditService } from 'src/app/organization/services/organization-edit.service';
 import { UtilsService } from 'src/app/shared/services/utils.service';
 
 @Component({
   selector: 'app-organization',
   templateUrl: './organization.component.html',
-  styleUrls: ['../shared/scss/buttons.scss', './organization.component.scss'],
+  styleUrls: [
+    '../../shared/scss/buttons.scss',
+    './organization.component.scss',
+  ],
 })
 export class OrganizationComponent implements OnInit {
   organizations: Organization[] = [];

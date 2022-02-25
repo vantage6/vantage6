@@ -16,23 +16,23 @@ import { CommonModule } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './login/login.component';
-import { HomeComponent } from './home/home.component';
+import { LoginComponent } from './components/login/login.component';
+import { HomeComponent } from './components/home/home.component';
 import { AccessGuard, OrgAccessGuard } from './auth/access-guard.guard';
-import { NavbarComponent } from './navbar/navbar.component';
-import { OrganizationComponent } from './organization/organization.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
+import { OrganizationComponent } from './components/organization/organization.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { PermissionTableComponent } from './shared/permission-table/permission-table.component';
-import { UserEditComponent } from './user/user-edit/user-edit.component';
-import { UserViewComponent } from './user/user-view/user-view.component';
-import { RoleViewComponent } from './role/role-view/role-view.component';
-import { RoleEditComponent } from './role/role-edit/role-edit.component';
+import { UserEditComponent } from './components/user/user-edit/user-edit.component';
+import { UserViewComponent } from './components/user/user-view/user-view.component';
+import { RoleViewComponent } from './components/role/role-view/role-view.component';
+import { RoleEditComponent } from './components/role/role-edit/role-edit.component';
 import { ModalDeleteComponent } from './modal/modal-delete/modal-delete.component';
 import { ModalMessageComponent } from './modal/modal-message/modal-message.component';
-import { OrganizationEditComponent } from './organization/organization-edit/organization-edit.component';
-import { CollaborationComponent } from './collaboration/collaboration.component';
-import { CollaborationViewComponent } from './collaboration/collaboration-view/collaboration-view.component';
-import { NodeViewComponent } from './node/node-view/node-view.component';
+import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
+import { CollaborationComponent } from './components/collaboration/collaboration.component';
+import { CollaborationViewComponent } from './components/collaboration/collaboration-view/collaboration-view.component';
+import { NodeViewComponent } from './components/node/node-view/node-view.component';
 
 @NgModule({
   declarations: [

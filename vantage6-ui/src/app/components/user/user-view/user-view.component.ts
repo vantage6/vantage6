@@ -11,7 +11,10 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 @Component({
   selector: 'app-user-view',
   templateUrl: './user-view.component.html',
-  styleUrls: ['../../shared/scss/buttons.scss', './user-view.component.scss'],
+  styleUrls: [
+    '../../../shared/scss/buttons.scss',
+    './user-view.component.scss',
+  ],
 })
 export class UserViewComponent implements OnInit {
   @Input() user: User = getEmptyUser();

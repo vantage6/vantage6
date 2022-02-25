@@ -4,14 +4,14 @@ import { RouterModule, Routes } from '@angular/router';
 import { OpsType, ResType, ScopeType } from './shared/enum';
 import { AccessGuard, OrgAccessGuard } from 'src/app/auth/access-guard.guard';
 
-import { LoginComponent } from './login/login.component';
-import { HomeComponent } from './home/home.component';
-import { OrganizationComponent } from './organization/organization.component';
-import { UserEditComponent } from './user/user-edit/user-edit.component';
-import { RoleEditComponent } from './role/role-edit/role-edit.component';
-import { OrganizationEditComponent } from './organization/organization-edit/organization-edit.component';
-import { CollaborationComponent } from './collaboration/collaboration.component';
-import { NodeViewComponent } from './node/node-view/node-view.component';
+import { LoginComponent } from './components/login/login.component';
+import { HomeComponent } from './components/home/home.component';
+import { OrganizationComponent } from './components/organization/organization.component';
+import { UserEditComponent } from './components/user/user-edit/user-edit.component';
+import { RoleEditComponent } from './components/role/role-edit/role-edit.component';
+import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
+import { CollaborationComponent } from './components/collaboration/collaboration.component';
+import { NodeViewComponent } from './components/node/node-view/node-view.component';
 
 const routes: Routes = [
   {

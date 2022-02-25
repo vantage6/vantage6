@@ -18,7 +18,7 @@ import { UtilsService } from 'src/app/shared/services/utils.service';
   selector: 'app-organization-edit',
   templateUrl: './organization-edit.component.html',
   styleUrls: [
-    '../../shared/scss/buttons.scss',
+    '../../../shared/scss/buttons.scss',
     './organization-edit.component.scss',
   ],
 })

@@ -15,7 +15,7 @@ import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
   selector: 'app-collaboration-view',
   templateUrl: './collaboration-view.component.html',
   styleUrls: [
-    '../../shared/scss/buttons.scss',
+    '../../../shared/scss/buttons.scss',
     './collaboration-view.component.scss',
   ],
 })
