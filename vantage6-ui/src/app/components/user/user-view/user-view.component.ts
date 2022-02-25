@@ -2,9 +2,9 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ExitMode } from 'src/app/shared/enum';
 
 import { getEmptyUser, User } from 'src/app/interfaces/user';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 
-import { ModalService } from 'src/app/modal/modal.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 

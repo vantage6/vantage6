@@ -1,5 +1,4 @@
-import { ComponentType } from '@angular/cdk/portal';
-import { Component, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
   NgbModal,
   NgbModalOptions,
@@ -7,7 +6,7 @@ import {
 } from '@ng-bootstrap/ng-bootstrap';
 import { Role } from 'src/app/interfaces/role';
 import { User } from 'src/app/interfaces/user';
-import { ModalDeleteComponent } from './modal-delete/modal-delete.component';
+import { ModalDeleteComponent } from 'src/app/components/modal/modal-delete/modal-delete.component';
 
 @Injectable({
   providedIn: 'root',

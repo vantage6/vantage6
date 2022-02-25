@@ -8,8 +8,8 @@ import { OpsType, ResType } from 'src/app/shared/enum';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { RoleStoreService } from 'src/app/services/store/role-store.service';
-import { ModalService } from 'src/app/modal/modal.service';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { PermissionTableComponent } from '../../permission-table/permission-table.component';
 

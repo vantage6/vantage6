@@ -3,11 +3,11 @@ import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs/operators';
 
 import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { ResType } from 'src/app/shared/enum';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ModalService } from 'src/app/modal/modal.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { NodeStoreService } from 'src/app/services/store/node-store.service';

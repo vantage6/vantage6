@@ -6,7 +6,7 @@ import {
   EMPTY_COLLABORATION,
 } from 'src/app/interfaces/collaboration';
 
-import { ModalService } from 'src/app/modal/modal.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ResType } from 'src/app/shared/enum';
 import { getIdsFromArray } from 'src/app/shared/utils';

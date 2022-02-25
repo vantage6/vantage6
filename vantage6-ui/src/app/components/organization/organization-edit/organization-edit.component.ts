@@ -8,8 +8,8 @@ import {
 
 import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
 import { OrganizationStoreService } from 'src/app/services/store/organization-store.service';
-import { ModalService } from 'src/app/modal/modal.service';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
 import { ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';

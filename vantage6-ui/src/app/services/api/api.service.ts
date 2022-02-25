@@ -8,8 +8,8 @@ import { User } from 'src/app/interfaces/user';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { Organization } from 'src/app/interfaces/organization';
-import { ModalService } from 'src/app/modal/modal.service';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 
 // TODO define elsewhere
 export type ResourceType = User | Role | Rule | Organization | Collaboration;

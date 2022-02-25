@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { Router, ParamMap } from '@angular/router';
 import { Location } from '@angular/common';
 
-import { ModalService } from 'src/app/modal/modal.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { parseId } from 'src/app/shared/utils';
 import { OpsType, ResType } from 'src/app/shared/enum';
 

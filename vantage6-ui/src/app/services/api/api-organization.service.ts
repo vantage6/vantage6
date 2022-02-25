@@ -5,7 +5,7 @@ import {
   EMPTY_ORGANIZATION,
   Organization,
 } from 'src/app/interfaces/organization';
-import { ModalService } from 'src/app/modal/modal.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';

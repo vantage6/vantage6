@@ -23,8 +23,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UserStoreService } from 'src/app/services/store/user-store.service';
 import { RoleStoreService } from 'src/app/services/store/role-store.service';
 import { ApiRuleService } from 'src/app/services/api/api-rule.service';
-import { ModalService } from 'src/app/modal/modal.service';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { OrganizationStoreService } from 'src/app/services/store/organization-store.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 

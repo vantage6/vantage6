@@ -4,11 +4,11 @@ import { Injectable } from '@angular/core';
 import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
-import { ModalService } from 'src/app/modal/modal.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { ResType } from 'src/app/shared/enum';
 import { ApiService } from 'src/app/services/api/api.service';
 import { environment } from 'src/environments/environment';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 
 @Injectable({
   providedIn: 'root',

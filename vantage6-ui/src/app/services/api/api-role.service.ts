@@ -10,7 +10,7 @@ import { ConvertJsonService } from 'src/app/services/common/convert-json.service
 import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
-import { ModalService } from 'src/app/modal/modal.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 
 // TODO this service is quite different from the other API services
 // See to it that this is standardized somewhat, e.g. by obtaining the Rules

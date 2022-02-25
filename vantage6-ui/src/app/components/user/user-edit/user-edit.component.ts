@@ -15,8 +15,8 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { UserStoreService } from 'src/app/services/store/user-store.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from 'src/app/services/common/utils.service';
-import { ModalService } from 'src/app/modal/modal.service';
-import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
 
 // TODO add option to assign user to different organization?

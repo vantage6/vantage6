@@ -27,8 +27,8 @@ import { UserEditComponent } from './components/user/user-edit/user-edit.compone
 import { UserViewComponent } from './components/user/user-view/user-view.component';
 import { RoleViewComponent } from './components/role/role-view/role-view.component';
 import { RoleEditComponent } from './components/role/role-edit/role-edit.component';
-import { ModalDeleteComponent } from './modal/modal-delete/modal-delete.component';
-import { ModalMessageComponent } from './modal/modal-message/modal-message.component';
+import { ModalDeleteComponent } from './components/modal/modal-delete/modal-delete.component';
+import { ModalMessageComponent } from './components/modal/modal-message/modal-message.component';
 import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
 import { CollaborationComponent } from './components/collaboration/collaboration.component';
 import { CollaborationViewComponent } from './components/collaboration/collaboration-view/collaboration-view.component';
