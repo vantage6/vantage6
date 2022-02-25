@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { Operation, Resource, Scope } from 'src/app/shared/enum';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Rule, RuleGroup } from 'src/app/rule/interfaces/rule';
 import { deepcopy } from 'src/app/shared/utils';
 
@@ -82,9 +82,9 @@ export class ApiRuleService {
   }
 
   _sortRules(rules: Rule[]): Rule[] {
-    const resource_order = Object.values(Resource);
-    const scope_order = Object.values(Scope);
-    const operation_order = Object.values(Operation);
+    const resource_order = Object.values(ResType);
+    const scope_order = Object.values(ScopeType);
+    const operation_order = Object.values(OpsType);
     return rules.sort((a, b) => {
       if (a.resource !== b.resource) {
         return (

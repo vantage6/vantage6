@@ -7,7 +7,7 @@ import { Node } from 'src/app/node/interfaces/node';
 import { Organization } from 'src/app/organization/interfaces/organization';
 import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/collaboration/interfaces/collaboration';
-import { Resource } from '../enum';
+import { ResType } from '../enum';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +20,7 @@ export class ConvertJsonService {
   getRule(rule_json: any): Rule {
     return {
       id: rule_json.id,
-      type: Resource.RULE,
+      type: ResType.RULE,
       operation: rule_json.operation.toLowerCase(),
       resource: rule_json.name.toLowerCase(),
       scope: rule_json.scope.toLowerCase(),
@@ -36,7 +36,7 @@ export class ConvertJsonService {
     }
     return {
       id: role_json.id,
-      type: Resource.ROLE,
+      type: ResType.ROLE,
       name: role_json.name,
       description: role_json.description,
       organization_id: role_json.organization
@@ -65,7 +65,7 @@ export class ConvertJsonService {
     }
     return {
       id: user_json.id,
-      type: Resource.USER,
+      type: ResType.USER,
       username: user_json.username,
       first_name: user_json.firstname,
       last_name: user_json.lastname,
@@ -79,7 +79,7 @@ export class ConvertJsonService {
   getOrganization(org_json: any): Organization {
     return {
       id: org_json.id,
-      type: Resource.ORGANIZATION,
+      type: ResType.ORGANIZATION,
       name: org_json.name,
       address1: org_json.address1,
       address2: org_json.address2,
@@ -108,14 +108,14 @@ export class ConvertJsonService {
       name: coll_json.name,
       encrypted: coll_json.encrypted,
       organizations: orgs,
-      type: Resource.COLLABORATION,
+      type: ResType.COLLABORATION,
     };
   }
 
   getNode(node_json: any): Node {
     return {
       id: node_json.id,
-      type: Resource.NODE,
+      type: ResType.NODE,
       name: node_json.name,
       collaboration_id: node_json.collaboration.id,
       organization_id: node_json.organization.id,

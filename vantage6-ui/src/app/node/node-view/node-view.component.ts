@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 
 import { EMPTY_NODE, Node } from '../interfaces/node';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalService } from 'src/app/modal/modal.service';
@@ -47,7 +47,7 @@ export class NodeViewComponent implements OnInit {
     // subscribe to id parameter in route to change edited organization if
     // required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.utilsService.getId(params, Resource.NODE);
+      let new_id = this.utilsService.getId(params, ResType.NODE);
       if (new_id === EMPTY_NODE.id) {
         return; // cannot get organization
       }

@@ -11,7 +11,7 @@ import { OrganizationEditService } from 'src/app/organization/services/organizat
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/shared/services/utils.service';
 
 @Component({
@@ -51,7 +51,7 @@ export class OrganizationEditComponent implements OnInit {
     // subscribe to id parameter in route to change edited organization if
     // required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.utilsService.getId(params, Resource.ORGANIZATION);
+      let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
         return; // cannot get organization
       }

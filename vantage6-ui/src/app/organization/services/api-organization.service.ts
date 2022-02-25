@@ -5,7 +5,7 @@ import { EMPTY_ORGANIZATION, Organization } from '../interfaces/organization';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ApiService } from 'src/app/shared/services/api.service';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 
 @Injectable({
   providedIn: 'root',
@@ -18,7 +18,7 @@ export class ApiOrganizationService extends ApiService {
     private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
-    super(Resource.ORGANIZATION, http, modalService);
+    super(ResType.ORGANIZATION, http, modalService);
   }
 
   get_data(org: Organization): any {

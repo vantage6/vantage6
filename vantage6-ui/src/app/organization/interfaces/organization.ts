@@ -1,5 +1,5 @@
 import { Node } from 'src/app/node/interfaces/node';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 
 export interface Organization {
   id: number;
@@ -20,7 +20,7 @@ export interface OrganizationInCollaboration extends Organization {
 
 export const EMPTY_ORGANIZATION = {
   id: -1,
-  type: Resource.ORGANIZATION,
+  type: ResType.ORGANIZATION,
   name: '',
   address1: '',
   address2: '',

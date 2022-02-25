@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
 import { Rule } from 'src/app/rule/interfaces/rule';
-import { Operation, Resource } from 'src/app/shared/enum';
+import { OpsType, ResType } from 'src/app/shared/enum';
 
 import { ApiRoleService } from 'src/app/role/services/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
@@ -20,7 +20,7 @@ import { UtilsService } from 'src/app/shared/services/utils.service';
 export class RoleEditComponent implements OnInit {
   role: Role = getEmptyRole();
   id: number = this.role.id;
-  mode: Operation = Operation.EDIT;
+  mode: OpsType = OpsType.EDIT;
   organization_id: number | null = null;
 
   constructor(
@@ -37,13 +37,13 @@ export class RoleEditComponent implements OnInit {
     this.roleEditService.getRole().subscribe((role) => {
       this.role = role;
     });
-    if (this.router.url.includes(Operation.CREATE)) {
-      this.mode = Operation.CREATE;
+    if (this.router.url.includes(OpsType.CREATE)) {
+      this.mode = OpsType.CREATE;
     }
     // subscribe to id parameter in route to change edited role if required
     this.activatedRoute.paramMap.subscribe((params) => {
-      if (this.mode !== Operation.CREATE) {
-        let new_id = this.utilsService.getId(params, Resource.ROLE);
+      if (this.mode !== OpsType.CREATE) {
+        let new_id = this.utilsService.getId(params, ResType.ROLE);
         if (new_id !== this.id) {
           this.id = new_id;
           this.setRoleFromAPI(new_id);
@@ -51,7 +51,7 @@ export class RoleEditComponent implements OnInit {
       } else {
         this.organization_id = this.utilsService.getId(
           params,
-          Resource.ORGANIZATION,
+          ResType.ORGANIZATION,
           'org_id'
         );
       }
@@ -81,7 +81,7 @@ export class RoleEditComponent implements OnInit {
     if (this.organization_id) this.role.organization_id = this.organization_id;
 
     let request;
-    if (this.mode === Operation.CREATE) {
+    if (this.mode === OpsType.CREATE) {
       request = this.roleService.create(this.role);
     } else {
       request = this.roleService.update(this.role);
@@ -108,6 +108,6 @@ export class RoleEditComponent implements OnInit {
   }
 
   isCreate(): boolean {
-    return this.mode === Operation.CREATE;
+    return this.mode === OpsType.CREATE;
   }
 }

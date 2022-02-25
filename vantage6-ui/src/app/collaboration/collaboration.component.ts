@@ -89,5 +89,6 @@ export class CollaborationComponent implements OnInit {
   }
 
   deleteCollaboration(col: Collaboration) {}
+
   editCollaboration(col: Collaboration) {}
 }

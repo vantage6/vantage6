@@ -1,9 +1,9 @@
 import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 
 export interface Collaboration {
   id: number;
-  type: Resource;
+  type: ResType;
   name: string;
   encrypted: boolean;
   organizations: OrganizationInCollaboration[];
@@ -12,7 +12,7 @@ export interface Collaboration {
 export const EMPTY_COLLABORATION = {
   id: -1,
   name: '',
-  type: Resource.COLLABORATION,
+  type: ResType.COLLABORATION,
   encrypted: true,
   organizations: [],
 };

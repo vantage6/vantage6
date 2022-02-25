@@ -3,7 +3,7 @@ export enum ExitMode {
   DELETE = 'DELETE',
 }
 
-export enum Resource {
+export enum ResType {
   USER = 'user',
   ORGANIZATION = 'organization',
   COLLABORATION = 'collaboration',
@@ -16,7 +16,7 @@ export enum Resource {
   ANY = '*',
 }
 
-export enum Scope {
+export enum ScopeType {
   OWN = 'own',
   ORGANIZATION = 'organization',
   COLLABORATION = 'collaboration',
@@ -24,7 +24,7 @@ export enum Scope {
   ANY = '*',
 }
 
-export enum Operation {
+export enum OpsType {
   VIEW = 'view',
   CREATE = 'create',
   EDIT = 'edit',

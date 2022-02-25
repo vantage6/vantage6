@@ -8,7 +8,7 @@ import {
 
 import { ModalService } from 'src/app/modal/modal.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { Organization } from 'src/app/organization/interfaces/organization';
 import { ApiService } from 'src/app/shared/services/api.service';
@@ -24,7 +24,7 @@ export class ApiCollaborationService extends ApiService {
     private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
-    super(Resource.COLLABORATION, http, modalService);
+    super(ResType.COLLABORATION, http, modalService);
   }
 
   get_data(resource: Collaboration): any {

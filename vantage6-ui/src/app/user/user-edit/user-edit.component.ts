@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import { Role } from 'src/app/role/interfaces/role';
-import { Operation, Resource } from 'src/app/shared/enum';
+import { OpsType, ResType } from 'src/app/shared/enum';
 import { Rule } from 'src/app/rule/interfaces/rule';
 import { getEmptyUser, User } from 'src/app/user/interfaces/user';
 
@@ -34,7 +34,7 @@ export class UserEditComponent implements OnInit {
   loggedin_user: User = getEmptyUser();
   added_rules: Rule[] = [];
   can_assign_roles_rules: boolean = false;
-  mode = Operation.EDIT;
+  mode = OpsType.EDIT;
   organization_id: number = EMPTY_ORGANIZATION.id;
 
   constructor(
@@ -48,8 +48,8 @@ export class UserEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.router.url.includes(Operation.CREATE)) {
-      this.mode = Operation.CREATE;
+    if (this.router.url.includes(OpsType.CREATE)) {
+      this.mode = OpsType.CREATE;
     }
     this.userPermission.isInitialized().subscribe((ready) => {
       if (ready) {
@@ -68,14 +68,14 @@ export class UserEditComponent implements OnInit {
 
     // subscribe to id parameter in route to change edited user if required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.utilsService.getId(params, Resource.USER);
+      let new_id = this.utilsService.getId(params, ResType.USER);
       if (new_id !== this.id) {
         this.id = new_id;
         this.setUserFromAPI(new_id);
-      } else if (this.mode === Operation.CREATE) {
+      } else if (this.mode === OpsType.CREATE) {
         this.organization_id = this.utilsService.getId(
           params,
-          Resource.ORGANIZATION,
+          ResType.ORGANIZATION,
           'org_id'
         );
         this.setAssignableRoles();
@@ -156,7 +156,7 @@ export class UserEditComponent implements OnInit {
       this.user.organization_id = this.organization_id;
 
     let user_request;
-    if (this.mode === Operation.CREATE) {
+    if (this.mode === OpsType.CREATE) {
       if (this.user.password !== this.user.password_repeated) {
         this.modalService.openMessageModal(ModalMessageComponent, [
           'Passwords do not match! Cannot create this user.',
@@ -190,6 +190,6 @@ export class UserEditComponent implements OnInit {
   }
 
   isCreate(): boolean {
-    return this.mode === Operation.CREATE;
+    return this.mode === OpsType.CREATE;
   }
 }

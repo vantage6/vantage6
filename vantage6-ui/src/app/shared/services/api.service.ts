@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Resource } from '../enum';
+import { ResType } from '../enum';
 
 import { Collaboration } from 'src/app/collaboration/interfaces/collaboration';
 import { User } from 'src/app/user/interfaces/user';
@@ -11,17 +11,18 @@ import { Organization } from 'src/app/organization/interfaces/organization';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 
-type ResourceType = User | Role | Rule | Organization | Collaboration;
+// TODO define elsewhere
+export type ResourceType = User | Role | Rule | Organization | Collaboration;
 
 @Injectable({
   providedIn: 'root',
 })
 export abstract class ApiService {
-  resource: Resource;
+  resource: ResType;
   protected resource_list: ResourceType[] = [];
 
   constructor(
-    resource: Resource,
+    resource: ResType,
     protected http: HttpClient,
     protected modalService: ModalService
   ) {

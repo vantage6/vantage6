@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { Operation, Resource, Scope } from './shared/enum';
+import { OpsType, ResType, ScopeType } from './shared/enum';
 import { AccessGuard, OrgAccessGuard } from 'src/app/auth/access-guard.guard';
 
 import { LoginComponent } from './login/login.component';
@@ -30,8 +30,8 @@ const routes: Routes = [
     component: CollaborationComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.VIEW,
-      permissionResource: Resource.COLLABORATION,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.COLLABORATION,
     },
     canActivate: [AccessGuard],
   },
@@ -40,9 +40,9 @@ const routes: Routes = [
     component: OrganizationEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.CREATE,
-      permissionResource: Resource.ORGANIZATION,
-      permissionScope: Scope.GLOBAL,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.ORGANIZATION,
+      permissionScope: ScopeType.GLOBAL,
     },
     canActivate: [AccessGuard],
   },
@@ -50,7 +50,7 @@ const routes: Routes = [
     path: 'organization/:id',
     component: OrganizationComponent,
     data: {
-      permissionType: Operation.VIEW,
+      permissionType: OpsType.VIEW,
     },
     canActivate: [OrgAccessGuard],
   },
@@ -58,7 +58,7 @@ const routes: Routes = [
     path: 'organization/:id/edit',
     component: OrganizationEditComponent,
     data: {
-      permissionType: Operation.EDIT,
+      permissionType: OpsType.EDIT,
     },
     canActivate: [OrgAccessGuard],
   },
@@ -67,8 +67,8 @@ const routes: Routes = [
     component: UserEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.CREATE,
-      permissionResource: Resource.USER,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.USER,
     },
     canActivate: [AccessGuard],
   },
@@ -77,8 +77,8 @@ const routes: Routes = [
     component: UserEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.EDIT,
-      permissionResource: Resource.USER,
+      permissionType: OpsType.EDIT,
+      permissionResource: ResType.USER,
     },
     canActivate: [AccessGuard],
   },
@@ -87,8 +87,8 @@ const routes: Routes = [
     component: RoleEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.CREATE,
-      permissionResource: Resource.ROLE,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.ROLE,
     },
     canActivate: [AccessGuard],
   },
@@ -97,8 +97,8 @@ const routes: Routes = [
     component: RoleEditComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.EDIT,
-      permissionResource: Resource.ROLE,
+      permissionType: OpsType.EDIT,
+      permissionResource: ResType.ROLE,
     },
     canActivate: [AccessGuard],
   },
@@ -108,8 +108,8 @@ const routes: Routes = [
     component: NodeViewComponent,
     data: {
       requiresLogin: true,
-      permissionType: Operation.VIEW,
-      permissionResource: Resource.NODE,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.NODE,
     },
     canActivate: [AccessGuard],
   },

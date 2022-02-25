@@ -6,7 +6,7 @@ import { ModalService } from 'src/app/modal/modal.service';
 
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { parseId } from 'src/app/shared/utils';
-import { Operation, Resource } from '../enum';
+import { OpsType, ResType } from '../enum';
 
 @Injectable({
   providedIn: 'root',
@@ -20,10 +20,10 @@ export class UtilsService {
 
   getId(
     params: ParamMap,
-    resource: Resource,
+    resource: ResType,
     param_name: string = 'id'
   ): number {
-    if (this.router.url.includes(Operation.CREATE) && param_name === 'id') {
+    if (this.router.url.includes(OpsType.CREATE) && param_name === 'id') {
       return -1;
     }
     // we are editing an organization: get the organization id

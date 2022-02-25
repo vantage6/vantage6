@@ -1,6 +1,6 @@
 import { deepcopy } from 'src/app/shared/utils';
 import { Rule } from 'src/app/rule/interfaces/rule';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 
 export interface Role {
   id: number;
@@ -13,7 +13,7 @@ export interface Role {
 
 export const EMPTY_ROLE: Role = {
   id: -1,
-  type: Resource.ROLE,
+  type: ResType.ROLE,
   name: '',
   description: '',
   organization_id: null,

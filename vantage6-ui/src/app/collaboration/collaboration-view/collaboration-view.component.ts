@@ -9,7 +9,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { OrganizationInCollaboration } from 'src/app/organization/interfaces/organization';
 import { Router } from '@angular/router';
 import { NodeEditService } from 'src/app/node/services/node-edit.service';
-import { Operation, Resource, Scope } from 'src/app/shared/enum';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -52,9 +52,9 @@ export class CollaborationViewComponent implements OnInit {
       if (
         !org.node &&
         this.userPermission.hasPermission(
-          Operation.VIEW,
-          Resource.NODE,
-          Scope.GLOBAL
+          OpsType.VIEW,
+          ResType.NODE,
+          ScopeType.GLOBAL
         )
       ) {
         this.missing_node_msgs.push(
@@ -69,7 +69,7 @@ export class CollaborationViewComponent implements OnInit {
   isDisabled(org: OrganizationInCollaboration): boolean {
     return (
       org.node === undefined ||
-      !this.userPermission.can(Operation.VIEW, Resource.NODE, org.id)
+      !this.userPermission.can(OpsType.VIEW, ResType.NODE, org.id)
     );
   }
 

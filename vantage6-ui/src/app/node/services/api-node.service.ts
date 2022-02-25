@@ -5,7 +5,7 @@ import { EMPTY_NODE, Node } from 'src/app/node/interfaces/node';
 
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ModalService } from 'src/app/modal/modal.service';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 import { ApiService } from 'src/app/shared/services/api.service';
 import { environment } from 'src/environments/environment';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
@@ -19,7 +19,7 @@ export class ApiNodeService extends ApiService {
     private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
-    super(Resource.NODE, http, modalService);
+    super(ResType.NODE, http, modalService);
   }
 
   async reset_api_key(node: Node): Promise<string | null> {

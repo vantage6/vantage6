@@ -10,7 +10,7 @@ import { Rule } from 'src/app/rule/interfaces/rule';
 import { Role } from 'src/app/role/interfaces/role';
 import { EMPTY_USER, User } from 'src/app/user/interfaces/user';
 import { ApiRoleService } from 'src/app/role/services/api-role.service';
-import { Operation, Resource, Scope } from 'src/app/shared/enum';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -84,15 +84,15 @@ export class UserPermissionService {
   }
 
   hasPermission(
-    operation: Operation | string,
-    resource: Resource | string,
-    scope: Scope | string
+    operation: OpsType | string,
+    resource: ResType | string,
+    scope: ScopeType | string
   ): boolean {
     let permissions: Rule[] = this.getPermissions();
     if (
-      operation == Operation.ANY &&
-      resource == Resource.ANY &&
-      scope == Scope.ANY
+      operation == OpsType.ANY &&
+      resource == ResType.ANY &&
+      scope == ScopeType.ANY
     ) {
       // no permissions required: return true even if user has 0 permissions
       return true;
@@ -106,14 +106,14 @@ export class UserPermissionService {
   }
 
   can(
-    operation: Operation | string,
-    resource: Resource | string,
+    operation: OpsType | string,
+    resource: ResType | string,
     org_id: number | null
   ): boolean {
     return (
-      this.hasPermission(operation, resource, Scope.GLOBAL) ||
+      this.hasPermission(operation, resource, ScopeType.GLOBAL) ||
       (org_id === this.user.organization_id &&
-        this.hasPermission(operation, resource, Scope.ORGANIZATION))
+        this.hasPermission(operation, resource, ScopeType.ORGANIZATION))
     );
   }
 

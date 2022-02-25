@@ -4,7 +4,7 @@ import { EMPTY_USER, getEmptyUser, User } from 'src/app/user/interfaces/user';
 import { getEmptyRole, Role } from 'src/app/role/interfaces/role';
 import { Rule } from 'src/app/rule/interfaces/rule';
 import { EMPTY_ORGANIZATION, Organization } from './interfaces/organization';
-import { Resource } from '../shared/enum';
+import { ResType } from '../shared/enum';
 import {
   arrayContainsObjWithId,
   getById,
@@ -68,7 +68,7 @@ export class OrganizationComponent implements OnInit {
   init(): void {
     // TODO this has a nested subscribe, fix that
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.utilsService.getId(params, Resource.ORGANIZATION);
+      let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
         return; // cannot get organization
       }

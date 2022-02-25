@@ -10,7 +10,7 @@ import { ApiRoleService } from 'src/app/role/services/api-role.service';
 import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ApiService } from 'src/app/shared/services/api.service';
-import { Resource } from 'src/app/shared/enum';
+import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/modal/modal.service';
 
 // TODO this service is quite different from the other API services
@@ -29,7 +29,7 @@ export class ApiUserService extends ApiService {
     private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
-    super(Resource.USER, http, modalService);
+    super(ResType.USER, http, modalService);
     this.setup();
   }
 
