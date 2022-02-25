@@ -5,7 +5,7 @@ import { getEmptyRole, Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { OpsType, ResType } from 'src/app/shared/enum';
 
-import { ApiRoleService } from 'src/app/role/services/api-role.service';
+import { ApiRoleService } from 'src/app/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { RoleEditService } from 'src/app/role/services/role-edit.service';
 import { ModalService } from 'src/app/modal/modal.service';

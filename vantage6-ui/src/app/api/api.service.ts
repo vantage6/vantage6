@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { ResType } from '../enum';
+import { ResType } from 'src/app/shared/enum';
 
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { User } from 'src/app/interfaces/user';

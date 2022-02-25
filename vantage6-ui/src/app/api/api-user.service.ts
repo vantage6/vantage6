@@ -6,10 +6,10 @@ import { User } from 'src/app/interfaces/user';
 
 import { environment } from 'src/environments/environment';
 import { getIdsFromArray } from 'src/app/shared/utils';
-import { ApiRoleService } from 'src/app/role/services/api-role.service';
-import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
+import { ApiRoleService } from 'src/app/api/api-role.service';
+import { ApiRuleService } from 'src/app/api/api-rule.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
-import { ApiService } from 'src/app/shared/services/api.service';
+import { ApiService } from 'src/app/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/modal/modal.service';
 

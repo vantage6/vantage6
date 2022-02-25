@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ResType } from '../enum';
+import { ResType } from 'src/app/shared/enum';
 // import { ResTypeType } from './api.service';
 
 @Injectable({

@@ -7,7 +7,7 @@ import {
   EMPTY_ORGANIZATION,
   Organization,
 } from 'src/app/interfaces/organization';
-import { ResType } from '../shared/enum';
+import { ResType } from 'src/app/shared/enum';
 import {
   arrayContainsObjWithId,
   getById,
@@ -15,18 +15,18 @@ import {
 } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ApiUserService } from 'src/app/user/services/api-user.service';
-import { ApiOrganizationService } from './services/api-organization.service';
-import { ApiRoleService } from 'src/app/role/services/api-role.service';
+import { ApiUserService } from 'src/app/api/api-user.service';
+import { ApiOrganizationService } from 'src/app/api/api-organization.service';
+import { ApiRoleService } from 'src/app/api/api-role.service';
 import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserEditService } from 'src/app/user/services/user-edit.service';
 import { RoleEditService } from 'src/app/role/services/role-edit.service';
-import { ApiRuleService } from 'src/app/rule/services/api-rule.service';
-import { ModalService } from '../modal/modal.service';
-import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
+import { ApiRuleService } from 'src/app/api/api-rule.service';
+import { ModalService } from 'src/app/modal/modal.service';
+import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { OrganizationEditService } from './services/organization-edit.service';
-import { UtilsService } from '../shared/services/utils.service';
+import { UtilsService } from 'src/app/shared/services/utils.service';
 
 @Component({
   selector: 'app-organization',

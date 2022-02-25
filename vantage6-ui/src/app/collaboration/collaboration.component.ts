@@ -4,12 +4,12 @@ import { Node } from 'src/app/interfaces/node';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { arrayContainsObjWithId } from '../shared/utils';
+import { arrayContainsObjWithId } from 'src/app/shared/utils';
 
-import { UserPermissionService } from '../auth/services/user-permission.service';
-import { ApiNodeService } from '../node/services/api-node.service';
-import { ApiOrganizationService } from '../organization/services/api-organization.service';
-import { ApiCollaborationService } from './services/api-collaboration.service';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { ApiNodeService } from 'src/app/api/api-node.service';
+import { ApiOrganizationService } from 'src/app/api/api-organization.service';
+import { ApiCollaborationService } from 'src/app/api/api-collaboration.service';
 
 @Component({
   selector: 'app-collaboration',

@@ -7,7 +7,7 @@ import { Node } from 'src/app/interfaces/node';
 import { Organization } from 'src/app/interfaces/organization';
 import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/interfaces/collaboration';
-import { ResType } from '../enum';
+import { ResType } from 'src/app/shared/enum';
 
 @Injectable({
   providedIn: 'root',

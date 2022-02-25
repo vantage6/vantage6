@@ -6,7 +6,7 @@ import {
   Organization,
 } from 'src/app/interfaces/organization';
 
-import { ApiOrganizationService } from 'src/app/organization/services/api-organization.service';
+import { ApiOrganizationService } from 'src/app/api/api-organization.service';
 import { OrganizationEditService } from 'src/app/organization/services/organization-edit.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';

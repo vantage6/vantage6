@@ -7,7 +7,7 @@ import { ModalService } from 'src/app/modal/modal.service';
 import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { parseId } from 'src/app/shared/utils';
-import { OpsType, ResType, ScopeType } from '../shared/enum';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 
 @Injectable()
 export class AccessGuard implements CanActivate {

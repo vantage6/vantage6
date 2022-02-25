@@ -6,7 +6,7 @@ import { ModalService } from 'src/app/modal/modal.service';
 
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { parseId } from 'src/app/shared/utils';
-import { OpsType, ResType } from '../enum';
+import { OpsType, ResType } from 'src/app/shared/enum';
 
 @Injectable({
   providedIn: 'root',
