@@ -12,7 +12,7 @@ import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { take } from 'rxjs/operators';
 import { ResType } from 'src/app/shared/enum';
-import { UtilsService } from 'src/app/shared/services/utils.service';
+import { UtilsService } from 'src/app/services/common/utils.service';
 
 @Component({
   selector: 'app-organization-edit',

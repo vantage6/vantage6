@@ -7,7 +7,7 @@ import {
 } from 'src/app/interfaces/collaboration';
 
 import { ModalService } from 'src/app/modal/modal.service';
-import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ResType } from 'src/app/shared/enum';
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { Organization } from 'src/app/interfaces/organization';

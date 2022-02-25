@@ -14,7 +14,7 @@ import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { UserStoreService } from 'src/app/services/store/user-store.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UtilsService } from 'src/app/shared/services/utils.service';
+import { UtilsService } from 'src/app/services/common/utils.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';

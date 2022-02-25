@@ -4,7 +4,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
 import { delay } from 'rxjs/operators';
 
-import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { getEmptyUser, User } from 'src/app/interfaces/user';
 

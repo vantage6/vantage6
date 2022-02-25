@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from 'src/app/auth/services/auth.service';
-import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 
 let BACKGROUND_IMAGES = ['cuppolone.jpg', 'taipei101.png', 'trolltunga.jpg'];

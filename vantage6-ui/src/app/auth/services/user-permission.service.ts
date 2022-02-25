@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 
 import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
 
-import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { Rule } from 'src/app/interfaces/rule';

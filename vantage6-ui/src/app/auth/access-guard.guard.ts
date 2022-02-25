@@ -4,7 +4,7 @@ import { Router, ActivatedRouteSnapshot, CanActivate } from '@angular/router';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
 
 import { ModalService } from 'src/app/modal/modal.service';
-import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { parseId } from 'src/app/shared/utils';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';

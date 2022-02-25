@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 
 import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 
-import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ResType } from 'src/app/shared/enum';
 import { ApiService } from 'src/app/services/api/api.service';

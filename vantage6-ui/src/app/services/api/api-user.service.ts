@@ -8,7 +8,7 @@ import { environment } from 'src/environments/environment';
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { ApiRuleService } from 'src/app/services/api/api-rule.service';
-import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/modal/modal.service';

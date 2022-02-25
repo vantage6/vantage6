@@ -7,8 +7,8 @@ import { Rule, RuleGroup } from 'src/app/interfaces/rule';
 import { deepcopy } from 'src/app/shared/utils';
 
 import { environment } from 'src/environments/environment';
-import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
-import { ConvertJsonService } from 'src/app/shared/services/convert-json.service';
+import { TokenStorageService } from 'src/app/services/common/token-storage.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 
 @Injectable({
   providedIn: 'root',

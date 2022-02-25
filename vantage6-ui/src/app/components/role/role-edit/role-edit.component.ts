@@ -10,7 +10,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { RoleStoreService } from 'src/app/services/store/role-store.service';
 import { ModalService } from 'src/app/modal/modal.service';
 import { ModalMessageComponent } from 'src/app/modal/modal-message/modal-message.component';
-import { UtilsService } from 'src/app/shared/services/utils.service';
+import { UtilsService } from 'src/app/services/common/utils.service';
 import { PermissionTableComponent } from '../../permission-table/permission-table.component';
 
 @Component({

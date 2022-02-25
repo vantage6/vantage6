@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
-import { TokenStorageService } from 'src/app/shared/services/token-storage.service';
+import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 
 @Component({
   selector: 'app-root',

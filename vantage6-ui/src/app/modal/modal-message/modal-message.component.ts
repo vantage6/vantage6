@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Location } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { UtilsService } from 'src/app/shared/services/utils.service';
+import { UtilsService } from 'src/app/services/common/utils.service';
 
 @Component({
   selector: 'app-modal-message',
