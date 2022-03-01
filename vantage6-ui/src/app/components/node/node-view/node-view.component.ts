@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 
 import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import { ResType } from 'src/app/shared/enum';
+import { ExitMode, ResType } from 'src/app/shared/enum';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalService } from 'src/app/services/common/modal.service';
@@ -77,5 +77,33 @@ export class NodeViewComponent implements OnInit {
         api_key,
       ]);
     }
+  }
+
+  editNodeName() {
+    // open modal window to ask for confirmation of irreversible delete action
+    this.modalService
+      .openEditModal('name', this.node.name)
+      .result.then((data) => {
+        if (data.exitMode === ExitMode.EDIT) {
+          this.executeEdit(data.new_value);
+        }
+      });
+  }
+
+  executeEdit(edited_value: string) {
+    this.node.name = edited_value;
+    this.apiNodeService.update(this.node).subscribe(
+      (data) => {},
+      (error) => {
+        this.modalService.openMessageModal(ModalMessageComponent, [
+          'Error:',
+          error.error.msg,
+        ]);
+      }
+    );
+  }
+
+  deleteNode() {
+    console.log('deleting node');
   }
 }

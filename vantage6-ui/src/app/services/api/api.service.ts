@@ -7,12 +7,19 @@ import { Collaboration } from 'src/app/interfaces/collaboration';
 import { User } from 'src/app/interfaces/user';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
+import { Node } from 'src/app/interfaces/node';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 
 // TODO define elsewhere
-export type ResourceType = User | Role | Rule | Organization | Collaboration;
+export type ResourceType =
+  | User
+  | Role
+  | Rule
+  | Organization
+  | Collaboration
+  | Node;
 
 @Injectable({
   providedIn: 'root',

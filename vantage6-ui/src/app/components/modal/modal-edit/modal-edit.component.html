@@ -1,0 +1,13 @@
+<div class="modal-body">
+    <p>
+        The current {{ param_name }} is <strong>{{ current_value }}</strong>. Please enter a new value below.
+    </p>
+    <p>
+        {{param_name | titlecase }}:
+        <input [(ngModel)]="new_value" style="margin-left: 10px"/>
+    </p>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-edit" (click)="edit()">Edit</button>
+    <button type="button" class="btn btn-dflt" (click)="cancel()">Cancel</button>
+</div>

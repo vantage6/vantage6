@@ -23,18 +23,19 @@
       <td>{{node.ip}}</td>
     </tr>
   </table>
-  <br/>
-  <!-- <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
+  <button *ngIf="userPermission.can('edit', 'node', node.organization_id)"
       mat-button class="btn btn-edit inline"
-      (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
-    Edit
+      (click)="editNodeName()">
+    Change node name
   </button>
-  <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
+  <button *ngIf="userPermission.can('delete', 'node', node.organization_id)"
       mat-button class="btn btn-delete-strong"
-      (click)="deleteRole()">
-    Delete
-  </button> -->
-  <div *ngIf="userPermission.can('edit', 'node', node.organization_id)">
+      (click)="deleteNode()">
+    Delete node
+  </button>
+  <br/>
+  <div *ngIf="userPermission.can('edit', 'node', node.organization_id)"
+        style="margin-top: 15px;">
     <h4>API key</h4>
     <p>
       Have you lost your API key? Please generate a new API key and paste it into

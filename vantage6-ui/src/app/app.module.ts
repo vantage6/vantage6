@@ -33,6 +33,7 @@ import { OrganizationEditComponent } from './components/organization/organizatio
 import { CollaborationComponent } from './components/collaboration/collaboration.component';
 import { CollaborationViewComponent } from './components/collaboration/collaboration-view/collaboration-view.component';
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
+import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
 
 @NgModule({
   declarations: [
@@ -52,6 +53,7 @@ import { NodeViewComponent } from './components/node/node-view/node-view.compone
     CollaborationComponent,
     CollaborationViewComponent,
     NodeViewComponent,
+    ModalEditComponent,
   ],
   imports: [
     BrowserModule,
