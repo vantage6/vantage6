@@ -33,16 +33,9 @@ export class AccessGuard implements CanActivate {
       this.router.navigate(['login']);
     }
     const permType = route.data.permissionType || '*';
-    const altPermType = route.data.alternativePermissionType || null;
     const permResource = route.data.permissionResource || '*';
     const permScope = route.data.permissionScope || '*';
     if (!this.userPermission.hasPermission(permType, permResource, permScope)) {
-      if (
-        altPermType &&
-        this.userPermission.hasPermission(altPermType, permResource, permScope)
-      ) {
-        return true;
-      }
       return false;
     }
     return true;
@@ -99,6 +92,47 @@ export class OrgAccessGuard implements CanActivate {
       this.modalService.openMessageModal(ModalMessageComponent, [
         'You are not allowed to do that!',
       ]);
+    }
+    return permission;
+  }
+}
+
+@Injectable()
+export class AccessGuardByOrgId implements CanActivate {
+  isLoggedIn: boolean;
+
+  constructor(
+    private tokenStorage: TokenStorageService,
+    private userPermission: UserPermissionService,
+    private router: Router
+  ) {
+    this.isLoggedIn = false;
+  }
+
+  ngOnInit(): void {
+    this.tokenStorage.isLoggedIn().subscribe((loggedIn: boolean) => {
+      this.isLoggedIn = loggedIn;
+    });
+  }
+
+  canActivate(route: ActivatedRouteSnapshot): boolean {
+    if (!this.tokenStorage.loggedIn) {
+      this.router.navigate(['login']);
+    }
+    const org_id = parseId(route.params.org_id) || null;
+    const permissionType = route.data.permissionType || '*';
+    const permissionResource = route.data.permissionResource || '*';
+
+    // if id>0, we are editing an organization, otherwise creating
+    // use the organization id to check whether logged in user is allowed to
+    // edit/create organization.
+    let permission: boolean = false;
+    if (org_id && org_id > 0) {
+      permission = this.userPermission.can(
+        permissionType,
+        permissionResource,
+        org_id
+      );
     }
     return permission;
   }

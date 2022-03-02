@@ -18,7 +18,11 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login/login.component';
 import { HomeComponent } from './components/home/home.component';
-import { AccessGuard, OrgAccessGuard } from './auth/access-guard.guard';
+import {
+  AccessGuard,
+  AccessGuardByOrgId,
+  OrgAccessGuard,
+} from './auth/access-guard.guard';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
@@ -75,6 +79,7 @@ import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.com
   providers: [
     AccessGuard,
     OrgAccessGuard,
+    AccessGuardByOrgId,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,

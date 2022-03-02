@@ -109,6 +109,25 @@ export class NodeViewComponent implements OnInit {
   }
 
   deleteNode() {
+    // open modal window to ask for confirmation of irreversible delete action
+    this.modalService.openDeleteModal(this.node).result.then((exit_mode) => {
+      if (exit_mode === ExitMode.DELETE) {
+        this.executeDelete();
+      }
+    });
+  }
+
+  executeDelete() {
     console.log('deleting node');
+    this.apiNodeService.delete(this.node).subscribe(
+      (data) => {
+        this.utilsService.goToPreviousPage();
+      },
+      (error) => {
+        this.modalService.openMessageModal(ModalMessageComponent, [
+          `Error: ${error.error.msg}`,
+        ]);
+      }
+    );
   }
 }

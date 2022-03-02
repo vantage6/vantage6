@@ -8,6 +8,7 @@ import { Role } from 'src/app/interfaces/role';
 import { User } from 'src/app/interfaces/user';
 import { ModalDeleteComponent } from 'src/app/components/modal/modal-delete/modal-delete.component';
 import { ModalEditComponent } from 'src/app/components/modal/modal-edit/modal-edit.component';
+import { ResourceType } from '../api/api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -42,7 +43,7 @@ export class ModalService {
   }
 
   openDeleteModal(
-    obj_to_delete: User | Role,
+    obj_to_delete: ResourceType,
     extra_message: string | null = null
   ): NgbModalRef {
     const modalRef = this.modalService.open(ModalDeleteComponent, {});

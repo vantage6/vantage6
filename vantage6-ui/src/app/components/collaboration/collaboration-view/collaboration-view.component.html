@@ -33,14 +33,25 @@
         <div *ngIf="collaboration.organizations.length===0">
           No organizations are taking part in this collaboration!
         </div>
-        <p *ngFor="let msg of missing_node_msgs" class="text-warning" >
-          <mat-icon>warning</mat-icon>
-          {{msg}}
-        </p>
       </td>
     </tr>
 
   </table>
+  <div *ngIf="orgs_without_nodes.length > 0">
+    <p class="text-warning">
+      <mat-icon>warning</mat-icon>
+      There are {{ orgs_without_nodes.length }} organizations in this
+      collaboration without a node!
+    </p>
+  </div>
+  <div *ngIf="userPermission.hasPermission('create', 'node', 'global')">
+    <button *ngFor="let org of orgs_without_nodes"
+            (click)="createNode(org)"
+            mat-button class="btn btn-save inline">
+      Create node for '{{ org.name }}'
+    </button>
+  </div>
+  <br/>
   <button *ngIf="userPermission.hasPermission('edit', 'collaboration', 'global')"
       mat-button class="btn btn-edit inline"
       >

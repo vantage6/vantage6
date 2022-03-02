@@ -40,6 +40,8 @@ export class ApiNodeService extends ApiService {
   get_data(node: Node): any {
     let data: any = {
       name: node.name,
+      collaboration_id: node.collaboration_id,
+      organization_id: node.organization_id,
     };
     return data;
   }

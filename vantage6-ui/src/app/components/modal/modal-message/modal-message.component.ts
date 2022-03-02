@@ -6,7 +6,10 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 @Component({
   selector: 'app-modal-message',
   templateUrl: './modal-message.component.html',
-  styleUrls: ['./modal-message.component.scss'],
+  styleUrls: [
+    '../../../shared/scss/buttons.scss',
+    './modal-message.component.scss',
+  ],
 })
 export class ModalMessageComponent implements OnInit {
   @Input() messages: string[] = [];

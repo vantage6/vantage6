@@ -17,6 +17,7 @@ import { ApiService } from 'src/app/services/api/api.service';
   providedIn: 'root',
 })
 export class ApiCollaborationService extends ApiService {
+  // TODO don't keep list of collaborations here, move to StoreCollaborationService!
   collaboration_list: Collaboration[] = [];
 
   constructor(

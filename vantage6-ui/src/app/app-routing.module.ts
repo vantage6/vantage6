@@ -2,7 +2,11 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { OpsType, ResType, ScopeType } from './shared/enum';
-import { AccessGuard, OrgAccessGuard } from 'src/app/auth/access-guard.guard';
+import {
+  AccessGuard,
+  AccessGuardByOrgId,
+  OrgAccessGuard,
+} from 'src/app/auth/access-guard.guard';
 
 import { LoginComponent } from './components/login/login.component';
 import { HomeComponent } from './components/home/home.component';
@@ -73,6 +77,9 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   {
+    // TODO think what happens if a user tries to go to edit a user that they're
+    // not allowed to edit, by directly going to the path? Does it work? Otherwise,
+    // change the accessguard
     path: 'user/:id/edit',
     component: UserEditComponent,
     data: {
@@ -103,7 +110,6 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   {
-    // TODO implement new access guard for this!
     path: 'node/:id/view/:org_id',
     component: NodeViewComponent,
     data: {
@@ -111,7 +117,7 @@ const routes: Routes = [
       permissionType: OpsType.VIEW,
       permissionResource: ResType.NODE,
     },
-    canActivate: [AccessGuard],
+    canActivate: [AccessGuardByOrgId],
   },
 ];
 //TODO add * path with 404 not found page

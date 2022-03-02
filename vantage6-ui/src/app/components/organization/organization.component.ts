@@ -46,7 +46,6 @@ export class OrganizationComponent implements OnInit {
   roles_assignable: Role[] = [];
   current_org_role_count: number = 0;
   rules: Rule[] = [];
-  refresh_org_list: boolean = false;
 
   constructor(
     private router: Router,
