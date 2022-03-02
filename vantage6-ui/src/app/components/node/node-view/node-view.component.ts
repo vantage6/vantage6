@@ -72,9 +72,14 @@ export class NodeViewComponent implements OnInit {
   async generateApiKey() {
     let api_key = await this.apiNodeService.reset_api_key(this.node);
     if (api_key) {
+      // TODO properly format the command and api key to make them stand out!
       this.modalService.openMessageModal(ModalMessageComponent, [
         'Your new API key is:',
         api_key,
+        `Please paste your new API key into your node configuration file. You
+ can find your node configuration file by executing the command:`,
+        'vnode files --name ' + this.node.name,
+        'on the machine where your node is running',
       ]);
     }
   }
