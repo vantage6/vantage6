@@ -87,6 +87,8 @@ export abstract class ApiService {
     convertJsonFunc: Function,
     additionalConvertArgs: ResourceType[][] = []
   ): Promise<any> {
+    // TODO remove this force_refresh argument: this is what the Store services
+    // should be used for!
     if (!force_refresh && this.resource_list.length > 0) {
       return this.resource_list;
     }

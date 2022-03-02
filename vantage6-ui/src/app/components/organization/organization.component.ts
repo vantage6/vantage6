@@ -46,6 +46,7 @@ export class OrganizationComponent implements OnInit {
   roles_assignable: Role[] = [];
   current_org_role_count: number = 0;
   rules: Rule[] = [];
+  refresh_org_list: boolean = false;
 
   constructor(
     private router: Router,
@@ -72,6 +73,9 @@ export class OrganizationComponent implements OnInit {
   }
 
   init(): void {
+    this.organizationStoreService.getOrganizationList().subscribe((orgs) => {
+      this.organizations = orgs;
+    });
     // TODO this has a nested subscribe, fix that
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
@@ -103,7 +107,10 @@ export class OrganizationComponent implements OnInit {
     if (this.loggedin_user.organization_id === EMPTY_ORGANIZATION.id) return;
 
     // get data of organization that logged-in user is allowed to view
-    this.organizations = await this.organizationService.getOrganizations();
+    if (this.organizations.length === 0) {
+      this.organizations = await this.organizationService.getOrganizations();
+      this.organizationStoreService.setOrganizationList(this.organizations);
+    }
 
     // set current organization
     this.current_organization = getById(this.organizations, this.route_org_id);

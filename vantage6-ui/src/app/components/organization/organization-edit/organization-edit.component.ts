@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import {
   EMPTY_ORGANIZATION,
@@ -27,6 +27,7 @@ export class OrganizationEditComponent implements OnInit {
   id: number = -1;
 
   constructor(
+    private router: Router,
     private activatedRoute: ActivatedRoute,
     private organizationService: ApiOrganizationService,
     private organizationStoreService: OrganizationStoreService,
@@ -68,15 +69,16 @@ export class OrganizationEditComponent implements OnInit {
 
   saveEdit(): void {
     let request;
-    if (this.organization.is_being_created) {
+    if (this.organization.id == EMPTY_ORGANIZATION.id) {
       request = this.organizationService.create(this.organization);
     } else {
       request = this.organizationService.update(this.organization);
     }
 
     request.subscribe(
-      (data) => {
-        this.utilsService.goToPreviousPage();
+      (new_org) => {
+        this.organizationStoreService.addOrganization(new_org);
+        this.router.navigate([`/organization/${new_org.id}`]);
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [

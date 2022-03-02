@@ -11,6 +11,7 @@ import {
 })
 export class OrganizationStoreService {
   org = new BehaviorSubject<Organization>(EMPTY_ORGANIZATION);
+  org_list = new BehaviorSubject<Organization[]>([]);
 
   constructor() {}
 
@@ -20,5 +21,18 @@ export class OrganizationStoreService {
 
   getOrganization() {
     return this.org.asObservable();
+  }
+
+  setOrganizationList(orgs: Organization[]) {
+    this.org_list.next(orgs);
+  }
+
+  getOrganizationList() {
+    return this.org_list.asObservable();
+  }
+
+  addOrganization(org: Organization) {
+    const updated_list = [...this.org_list.value, org];
+    this.org_list.next(updated_list);
   }
 }
