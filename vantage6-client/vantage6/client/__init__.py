@@ -296,7 +296,7 @@ class ClientBase(object):
         Exception
             Failed to authenticate
         """
-        self.log.debug(f"Authenticating using {credentials}")
+        self.log.debug(f"Authenticating for user: {credentials['username']}")
 
         # authenticate to the central server
         url = self.generate_path_to(path)
