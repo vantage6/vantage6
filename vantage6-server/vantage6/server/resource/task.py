@@ -253,12 +253,18 @@ class Tasks(TaskBase):
         else:  # g.container:
             initiator = db.Node.get(g.container["node_id"]).organization
 
+        # check if the initiator is part of the collaboration
+        if initiator not in collaboration.organizations:
+            return {
+                "msg": "You can only create tasks for collaborations "
+                       "you are participating in!"
+            }, HTTPStatus.UNAUTHORIZED
+
         # Create the new task in the database
         image = data.get('image', '')
 
         # verify permissions
         if g.user:
-
             if not self.r.c_glo.can():
                 c_orgs = collaboration.organizations
                 if not (self.r.c_org.can() and g.user.organization in c_orgs):
