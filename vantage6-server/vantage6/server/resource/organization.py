@@ -15,8 +15,7 @@ from vantage6.server.permission import (
     PermissionManager
 )
 from vantage6.server.resource import (
-    with_user_or_node, only_for,
-    ServicesResources
+    with_user_or_node, only_for, with_user, ServicesResources
 )
 from vantage6.server.resource._schema import (
     OrganizationSchema,
@@ -195,7 +194,7 @@ class Organizations(OrganizationBase):
         # serialization of DB model
         return self.response(page, org_schema)
 
-    @only_for(["user"])
+    @with_user
     @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
                endpoint='organization_without_id')
     def post(self):

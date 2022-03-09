@@ -18,7 +18,6 @@ from vantage6.server.permission import (
 )
 from vantage6.server.resource import (
     with_user,
-    only_for,
     ServicesResources
 )
 from vantage6.server.resource.pagination import Pagination
@@ -93,7 +92,7 @@ class UserBase(ServicesResources):
 
 class Users(UserBase):
 
-    @only_for(['user'])
+    @with_user
     def get(self):
         """List users
         ---
@@ -246,7 +245,7 @@ class Users(UserBase):
 
 class User(UserBase):
 
-    @only_for(['user'])
+    @with_user
     def get(self, id):
         """Get user
         ---

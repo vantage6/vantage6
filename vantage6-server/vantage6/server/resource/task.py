@@ -16,7 +16,7 @@ from vantage6.server.permission import (
     PermissionManager,
     Operation as P
 )
-from vantage6.server.resource import only_for, ServicesResources
+from vantage6.server.resource import only_for, ServicesResources, with_user
 from vantage6.server.resource._schema import (
     TaskSchema,
     TaskIncludedSchema,
@@ -421,7 +421,7 @@ class Task(TaskBase):
 
         return schema.dump(task, many=False).data, HTTPStatus.OK
 
-    @only_for(['user'])
+    @with_user
     @swag_from(str(Path(r"swagger/delete_task_with_id.yaml")),
                endpoint='task_with_id')
     def delete(self, id):
