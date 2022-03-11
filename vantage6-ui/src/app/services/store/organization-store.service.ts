@@ -5,34 +5,45 @@ import {
   EMPTY_ORGANIZATION,
   Organization,
 } from 'src/app/interfaces/organization';
+import { StoreBaseService } from './store-base.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class OrganizationStoreService {
+export class OrganizationStoreService extends StoreBaseService {
   org = new BehaviorSubject<Organization>(EMPTY_ORGANIZATION);
   org_list = new BehaviorSubject<Organization[]>([]);
 
-  constructor() {}
+  constructor() {
+    super();
+  }
 
-  setOrganization(org: Organization) {
+  setSingle(org: Organization) {
     this.org.next(org);
   }
 
-  getOrganization() {
+  getSingle() {
     return this.org.asObservable();
   }
 
-  setOrganizationList(orgs: Organization[]) {
+  setList(orgs: Organization[]) {
     this.org_list.next(orgs);
   }
 
-  getOrganizationList() {
+  getList() {
     return this.org_list.asObservable();
   }
 
-  addOrganization(org: Organization) {
+  add(org: Organization) {
     const updated_list = [...this.org_list.value, org];
     this.org_list.next(updated_list);
+  }
+
+  remove(org: Organization) {
+    alert('Organizations cannot be removed?!');
+  }
+
+  hasListStored(): boolean {
+    return this.org_list.value.length > 0;
   }
 }

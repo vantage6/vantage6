@@ -42,7 +42,7 @@ export class OrganizationEditComponent implements OnInit {
   async init(): Promise<void> {
     // try to see if organization is already passed from organizationStoreService
     this.organizationStoreService
-      .getOrganization()
+      .getSingle()
       .pipe(take(1))
       .subscribe((org) => {
         this.organization = org;
@@ -77,7 +77,7 @@ export class OrganizationEditComponent implements OnInit {
 
     request.subscribe(
       (new_org) => {
-        this.organizationStoreService.addOrganization(new_org);
+        this.organizationStoreService.add(new_org);
         this.router.navigate([`/organization/${new_org.id}`]);
       },
       (error) => {

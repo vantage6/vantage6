@@ -1,40 +1,47 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Role } from 'src/app/interfaces/role';
 
 import { getEmptyUser, User } from 'src/app/interfaces/user';
+import { removeMatchedIdFromArray } from 'src/app/shared/utils';
+import { StoreBaseService } from './store-base.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class UserStoreService {
-  user = getEmptyUser();
-  user_bhs = new BehaviorSubject<User>(this.user);
-  available_roles: Role[] = [];
-  available_roles_bhs = new BehaviorSubject<Role[]>(this.available_roles);
+export class UserStoreService extends StoreBaseService {
+  user = new BehaviorSubject<User>(getEmptyUser());
+  users = new BehaviorSubject<User[]>([]);
 
-  constructor() {}
-
-  set(user: User, roles: Role[]) {
-    this.user = user;
-    this.user_bhs.next(user);
-    this.available_roles = roles;
-    this.available_roles_bhs.next(roles);
+  constructor() {
+    super();
   }
 
-  setUser(user: User) {
-    this.user_bhs.next(user);
+  setSingle(user: User) {
+    this.user.next(user);
   }
 
-  setAvailableRoles(roles: Role[]) {
-    this.available_roles_bhs.next(roles);
+  getSingle() {
+    return this.user.asObservable();
   }
 
-  getUser() {
-    return this.user;
+  setList(users: User[]) {
+    this.users.next(users);
   }
 
-  getAvailableRoles() {
-    return this.available_roles;
+  getList() {
+    return this.users.asObservable();
+  }
+
+  add(user: User) {
+    const updated_list = [...this.users.value, user];
+    this.users.next(updated_list);
+  }
+
+  remove(user: User) {
+    this.users.next(removeMatchedIdFromArray(this.users.value, user.id));
+  }
+
+  hasListStored(): boolean {
+    return this.users.value.length > 0;
   }
 }

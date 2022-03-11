@@ -38,7 +38,7 @@ export class RoleEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.roleStoreService.getRole().subscribe((role) => {
+    this.roleStoreService.getSingle().subscribe((role) => {
       this.role = role;
     });
     if (this.router.url.includes(OpsType.CREATE)) {

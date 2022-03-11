@@ -18,6 +18,8 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
+import { take } from 'rxjs/operators';
+import { RoleStoreService } from 'src/app/services/store/role-store.service';
 
 // TODO add option to assign user to different organization?
 
@@ -47,7 +49,8 @@ export class UserEditComponent implements OnInit {
     private userService: ApiUserService,
     private userStoreService: UserStoreService,
     private utilsService: UtilsService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private roleStoreService: RoleStoreService
   ) {}
 
   ngOnInit(): void {
@@ -63,10 +66,20 @@ export class UserEditComponent implements OnInit {
   }
 
   async init() {
-    this.user = this.userStoreService.getUser();
-    this.id = this.user.id;
-    this.organization_id = this.user.organization_id;
-    this.roles_assignable_all = this.userStoreService.getAvailableRoles();
+    this.userStoreService
+      .getSingle()
+      .pipe(take(1))
+      .subscribe((user) => {
+        this.user = user;
+        this.id = this.user.id;
+        this.organization_id = this.user.organization_id;
+      });
+    this.roleStoreService
+      .getListAssignable()
+      .pipe(take(1))
+      .subscribe((roles) => {
+        this.roles_assignable_all = roles;
+      });
     await this.setAssignableRoles();
 
     // subscribe to id parameter in route to change edited user if required

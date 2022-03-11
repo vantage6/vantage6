@@ -72,7 +72,7 @@ export class OrganizationComponent implements OnInit {
   }
 
   init(): void {
-    this.organizationStoreService.getOrganizationList().subscribe((orgs) => {
+    this.organizationStoreService.getList().subscribe((orgs) => {
       this.organizations = orgs;
     });
     // TODO this has a nested subscribe, fix that
@@ -108,7 +108,7 @@ export class OrganizationComponent implements OnInit {
     // get data of organization that logged-in user is allowed to view
     if (this.organizations.length === 0) {
       this.organizations = await this.organizationService.getOrganizations();
-      this.organizationStoreService.setOrganizationList(this.organizations);
+      this.organizationStoreService.setList(this.organizations);
     }
 
     // set current organization
@@ -180,15 +180,17 @@ export class OrganizationComponent implements OnInit {
   }
 
   editOrganization(org: Organization): void {
-    this.organizationStoreService.setOrganization(org);
+    this.organizationStoreService.setSingle(org);
   }
 
   editUser(user: User): void {
-    this.userStoreService.set(user, this.roles_assignable);
+    this.userStoreService.setSingle(user);
+    this.roleStoreService.setListAssignable(this.roles_assignable);
   }
 
   createUser(): void {
-    this.userStoreService.set(getEmptyUser(), this.roles_assignable);
+    this.userStoreService.setSingle(getEmptyUser());
+    this.roleStoreService.setListAssignable(this.roles_assignable);
   }
 
   deleteUser(user: User): void {
@@ -204,7 +206,7 @@ export class OrganizationComponent implements OnInit {
     new_role.organization_id = this.current_organization.id;
 
     // use edit mode to fill in all details of new user
-    this.roleStoreService.setRole(new_role);
+    this.roleStoreService.setSingle(new_role);
   }
 
   async deleteRole(role: Role): Promise<void> {

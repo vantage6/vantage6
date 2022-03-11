@@ -4,7 +4,6 @@ import { ExitMode } from 'src/app/shared/enum';
 import { Role, getEmptyRole } from 'src/app/interfaces/role';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { PermissionTableComponent } from '../../permission-table/permission-table.component';
 
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
@@ -59,6 +58,6 @@ export class RoleViewComponent implements OnInit {
   }
 
   editRole(): void {
-    this.roleStoreService.setRole(this.role);
+    this.roleStoreService.setSingle(this.role);
   }
 }
