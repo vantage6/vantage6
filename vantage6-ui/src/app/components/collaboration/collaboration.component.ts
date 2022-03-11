@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { take } from 'rxjs/operators';
 
 import { Node } from 'src/app/interfaces/node';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
@@ -10,6 +11,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
 import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
+import { NodeStoreService } from 'src/app/services/store/node-store.service';
 
 @Component({
   selector: 'app-collaboration',
@@ -30,7 +32,8 @@ export class CollaborationComponent implements OnInit {
     public userPermission: UserPermissionService,
     private organizationService: ApiOrganizationService,
     private collaborationService: ApiCollaborationService,
-    private nodeService: ApiNodeService
+    private nodeService: ApiNodeService,
+    private nodeStoreService: NodeStoreService
   ) {}
 
   ngOnInit(): void {
@@ -45,7 +48,7 @@ export class CollaborationComponent implements OnInit {
     this.loggedin_user = this.userPermission.user;
 
     // get the nodes
-    this.nodes = await this.nodeService.getNodes();
+    this.setNodes();
 
     // get the organizations
     this.organizations = await this.organizationService.getOrganizations();
@@ -73,6 +76,22 @@ export class CollaborationComponent implements OnInit {
       } else {
         this.other_collaborations.push(c);
       }
+    }
+  }
+
+  async setNodes(): Promise<void> {
+    if (this.nodeStoreService.hasNodesStored()) {
+      console.log('getting nodes from storage');
+      this.nodeStoreService
+        .getNodes()
+        .pipe(take(1))
+        .subscribe((nodes) => {
+          this.nodes = nodes;
+        });
+    } else {
+      console.log('getting nodes from API');
+      this.nodes = await this.nodeService.getNodes();
+      this.nodeStoreService.setNodes(this.nodes);
     }
   }
 

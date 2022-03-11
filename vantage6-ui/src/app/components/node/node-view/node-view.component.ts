@@ -121,6 +121,7 @@ export class NodeViewComponent implements OnInit {
     console.log('deleting node');
     this.apiNodeService.delete(this.node).subscribe(
       (data) => {
+        this.nodeStoreService.remove(this.node);
         this.utilsService.goToPreviousPage();
       },
       (error) => {
