@@ -40,7 +40,7 @@ export class NodeViewComponent implements OnInit {
   async init(): Promise<void> {
     // try to see if organization is already passed from organizationStoreService
     this.nodeStoreService
-      .getNode()
+      .getSingle()
       .pipe(take(1))
       .subscribe((node) => {
         this.node = node;

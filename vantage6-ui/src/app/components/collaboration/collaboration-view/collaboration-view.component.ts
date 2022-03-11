@@ -73,7 +73,7 @@ export class CollaborationViewComponent implements OnInit {
 
   goToNode(org: OrganizationInCollaboration): void {
     if (org.node) {
-      this.nodeStoreService.setNode(org.node);
+      this.nodeStoreService.setSingle(org.node);
       this.router.navigate([`/node/${org.node.id}/view/${org.id}`]);
     }
   }

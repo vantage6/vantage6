@@ -2,29 +2,32 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 import { removeMatchedIdFromArray } from 'src/app/shared/utils';
+import { StoreBaseService } from './store-base.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class NodeStoreService {
+export class NodeStoreService extends StoreBaseService {
   node = new BehaviorSubject<Node>(EMPTY_NODE);
   nodes = new BehaviorSubject<Node[]>([]);
 
-  constructor() {}
+  constructor() {
+    super();
+  }
 
-  setNode(node: Node) {
+  setSingle(node: Node) {
     this.node.next(node);
   }
 
-  setNodes(nodes: Node[]) {
+  setList(nodes: Node[]) {
     this.nodes.next(nodes);
   }
 
-  getNode() {
+  getSingle() {
     return this.node.asObservable();
   }
 
-  getNodes() {
+  getList() {
     return this.nodes.asObservable();
   }
 
@@ -37,8 +40,7 @@ export class NodeStoreService {
     this.nodes.next(removeMatchedIdFromArray(this.nodes.value, node.id));
   }
 
-  hasNodesStored(): boolean {
-    console.log(this.nodes.value);
+  hasListStored(): boolean {
     return this.nodes.value.length > 0;
   }
 }

@@ -80,18 +80,16 @@ export class CollaborationComponent implements OnInit {
   }
 
   async setNodes(): Promise<void> {
-    if (this.nodeStoreService.hasNodesStored()) {
-      console.log('getting nodes from storage');
+    if (this.nodeStoreService.hasListStored()) {
       this.nodeStoreService
-        .getNodes()
+        .getList()
         .pipe(take(1))
         .subscribe((nodes) => {
           this.nodes = nodes;
         });
     } else {
-      console.log('getting nodes from API');
       this.nodes = await this.nodeService.getNodes();
-      this.nodeStoreService.setNodes(this.nodes);
+      this.nodeStoreService.setList(this.nodes);
     }
   }
 
