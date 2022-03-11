@@ -34,10 +34,8 @@ export class CollaborationComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('initing');
     this.userPermission.isInitialized().subscribe((ready: boolean) => {
       if (ready) {
-        console.log('initing');
         this.init();
       }
     });

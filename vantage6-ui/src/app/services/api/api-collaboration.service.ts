@@ -49,10 +49,8 @@ export class ApiCollaborationService extends ApiService {
   async getCollaborations(
     organizations: Organization[]
   ): Promise<Collaboration[]> {
-    return await super.getResources(
-      true,
-      this.convertJsonService.getCollaboration,
-      [organizations]
-    );
+    return await super.getResources(this.convertJsonService.getCollaboration, [
+      organizations,
+    ]);
   }
 }

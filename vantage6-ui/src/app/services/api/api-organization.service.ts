@@ -45,12 +45,7 @@ export class ApiOrganizationService extends ApiService {
     return org === null ? EMPTY_ORGANIZATION : org;
   }
 
-  async getOrganizations(
-    force_refresh: boolean = false
-  ): Promise<Organization[]> {
-    return await super.getResources(
-      force_refresh,
-      this.convertJsonService.getOrganization
-    );
+  async getOrganizations(): Promise<Organization[]> {
+    return await super.getResources(this.convertJsonService.getOrganization);
   }
 }

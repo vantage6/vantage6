@@ -26,7 +26,6 @@ export type ResourceType =
 })
 export abstract class ApiService {
   resource: ResType;
-  protected resource_list: ResourceType[] = [];
 
   constructor(
     resource: ResType,
@@ -83,23 +82,16 @@ export abstract class ApiService {
   }
 
   async getResources(
-    force_refresh: boolean,
     convertJsonFunc: Function,
     additionalConvertArgs: ResourceType[][] = []
   ): Promise<any> {
-    // TODO remove this force_refresh argument: this is what the Store services
-    // should be used for!
-    if (!force_refresh && this.resource_list.length > 0) {
-      return this.resource_list;
-    }
     // get data of nodes that logged-in user is allowed to view
     let json_data = await this.list().toPromise();
 
-    // set nodes
-    this.resource_list = [];
+    let resources = [];
     for (let dic of json_data) {
-      this.resource_list.push(convertJsonFunc(dic, ...additionalConvertArgs));
+      resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
     }
-    return this.resource_list;
+    return resources;
   }
 }

@@ -51,10 +51,7 @@ export class ApiNodeService extends ApiService {
     return node === null ? EMPTY_NODE : node;
   }
 
-  async getNodes(force_refresh: boolean = false) {
-    return await super.getResources(
-      force_refresh,
-      this.convertJsonService.getNode
-    );
+  async getNodes() {
+    return await super.getResources(this.convertJsonService.getNode);
   }
 }
