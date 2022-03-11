@@ -34,8 +34,10 @@ export class CollaborationComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    console.log('initing');
     this.userPermission.isInitialized().subscribe((ready: boolean) => {
       if (ready) {
+        console.log('initing');
         this.init();
       }
     });
@@ -78,11 +80,15 @@ export class CollaborationComponent implements OnInit {
 
   addNodesToCollaborations(collaborations: Collaboration[]): void {
     for (let c of collaborations) {
-      for (let o of c.organizations) {
-        for (let n of this.nodes) {
-          if (o.id === n.organization_id && c.id === n.collaboration_id) {
-            o.node = n;
-          }
+      this.addNodeToCollaboration(c);
+    }
+  }
+
+  addNodeToCollaboration(c: Collaboration): void {
+    for (let o of c.organizations) {
+      for (let n of this.nodes) {
+        if (o.id === n.organization_id && c.id === n.collaboration_id) {
+          o.node = n;
         }
       }
     }

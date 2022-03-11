@@ -17,9 +17,6 @@ import { ApiService } from 'src/app/services/api/api.service';
   providedIn: 'root',
 })
 export class ApiCollaborationService extends ApiService {
-  // TODO don't keep list of collaborations here, move to StoreCollaborationService!
-  collaboration_list: Collaboration[] = [];
-
   constructor(
     protected http: HttpClient,
     private convertJsonService: ConvertJsonService,
@@ -50,11 +47,10 @@ export class ApiCollaborationService extends ApiService {
   }
 
   async getCollaborations(
-    organizations: Organization[],
-    force_refresh: boolean = false
+    organizations: Organization[]
   ): Promise<Collaboration[]> {
     return await super.getResources(
-      force_refresh,
+      true,
       this.convertJsonService.getCollaboration,
       [organizations]
     );

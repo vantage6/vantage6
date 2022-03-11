@@ -14,10 +14,7 @@ import { OpsType, ResType } from 'src/app/shared/enum';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
-import {
-  removeMatchedIdFromArray,
-  removeMatchedIdsFromArray,
-} from 'src/app/shared/utils';
+import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 
 @Component({
@@ -29,8 +26,6 @@ import { ConvertJsonService } from 'src/app/services/common/convert-json.service
   ],
 })
 export class CollaborationViewComponent implements OnInit {
-  // TODO update the collaboration if e.g. a node is deleted, now the view is
-  // not  updated then
   @Input() collaboration: Collaboration = EMPTY_COLLABORATION;
   @Output() deletingCollab = new EventEmitter<Collaboration>();
   @Output() editingCollab = new EventEmitter<Collaboration>();
