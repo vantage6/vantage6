@@ -74,20 +74,21 @@ export class UserEditComponent implements OnInit {
         this.id = this.user.id;
         this.organization_id = this.user.organization_id;
       });
+    if (this.organization_id !== EMPTY_ORGANIZATION.id) {
+      await this.setAssignableRoles();
+    }
     this.roleStoreService
       .getListAssignable()
       .pipe(take(1))
       .subscribe((roles) => {
         this.roles_assignable_all = roles;
       });
-    await this.setAssignableRoles();
 
     // subscribe to id parameter in route to change edited user if required
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, ResType.USER);
       if (new_id !== this.id) {
-        this.id = new_id;
-        this.setUserFromAPI(new_id);
+        this.setEditedUser(new_id);
       } else if (this.mode === OpsType.CREATE) {
         this.organization_id = this.utilsService.getId(
           params,
@@ -97,6 +98,13 @@ export class UserEditComponent implements OnInit {
         this.setAssignableRoles();
       }
     });
+  }
+
+  async setEditedUser(id: number) {
+    this.id = id;
+    await this.setUserFromAPI(id);
+    this.organization_id = this.user.organization_id;
+    this.setAssignableRoles();
   }
 
   async setUserFromAPI(id: number): Promise<void> {

@@ -141,6 +141,9 @@ export class OrganizationComponent implements OnInit {
 
     // first collect roles for current organization. This is done before
     // collecting the users so that the users can possess these roles
+    // TODO if a user is assigned a role from another organization that is not
+    // the root organization, it will not be shown... consider if that is
+    // desirable
     this.roles = await this.roleService.getOrganizationRoles(
       this.current_organization.id
     );
@@ -151,8 +154,7 @@ export class OrganizationComponent implements OnInit {
     this.setRoleMetadata();
 
     // collect users for current organization
-    let user_json = await this.userService.list(this.route_org_id).toPromise();
-    this.setUsers(user_json);
+    this.setUsers();
   }
 
   setRoleMetadata(): void {
@@ -165,17 +167,14 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
-  // TODO via API user service?!
-  setUsers(user_data: any): void {
-    this.organization_users = [];
-    for (let user_json of user_data) {
-      let user = this.convertJsonService.getUser(
-        user_json,
-        this.roles,
-        this.rules
-      );
+  async setUsers(): Promise<void> {
+    this.organization_users = await this.userService.getOrganizationUsers(
+      this.route_org_id,
+      this.roles,
+      this.rules
+    );
+    for (let user of this.organization_users) {
       user.is_logged_in = user.id === this.loggedin_user.id;
-      this.organization_users.push(user);
     }
   }
 

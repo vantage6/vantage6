@@ -12,6 +12,7 @@ import { ConvertJsonService } from 'src/app/services/common/convert-json.service
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
+import { Role } from 'src/app/interfaces/role';
 
 // TODO this service is quite different from the other API services
 // See to it that this is standardized somewhat, e.g. by obtaining the Rules
@@ -76,5 +77,21 @@ export class ApiUserService extends ApiService {
     let roles = await this.roleService.getRoles(role_ids);
 
     return this.convertJsonService.getUser(user_json, roles, this.all_rules);
+  }
+
+  async getOrganizationUsers(
+    org_id: number,
+    roles: Role[],
+    rules: Rule[]
+  ): Promise<User[]> {
+    // get data of nodes that logged-in user is allowed to view
+    let json_data: any = await this.list(org_id).toPromise();
+
+    let resources = [];
+    for (let dic of json_data) {
+      resources.push(this.convertJsonService.getUser(dic, roles, rules));
+    }
+
+    return resources;
   }
 }
