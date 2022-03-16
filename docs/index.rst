@@ -7,8 +7,13 @@ Welcome to vantage6's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
+
+   node
+   intro
+   server/server
+   devops
 
 
 

@@ -13,6 +13,10 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../vantage6'))
+sys.path.insert(0, os.path.abspath('../vantage6-node'))
+sys.path.insert(0, os.path.abspath('../vantage6-server'))
+sys.path.insert(0, os.path.abspath('../vantage6-client'))
+sys.path.insert(0, os.path.abspath('../vantage6-common'))
 
 
 # -- Project information -----------------------------------------------------
