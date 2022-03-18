@@ -194,6 +194,22 @@ def server_configuration_questionaire(dirs, instance_name):
         ])
         config['vpn_server'] = vpn_config
 
+    is_add_rabbitmq = q.confirm(
+        "Do you want to add a RabbitMQ message queue?").ask()
+    if is_add_rabbitmq:
+        r_user = q.text(
+            message='Enter a RabbitMQ username:', default='guest'
+        ).ask()
+        r_pass = q.text(
+            message='Enter a RabbitMQ password:', default='guest'
+        ).ask()
+        uri = f'amqp://{r_user}:{r_pass}@host.docker.internal:5672//test'
+        config['rabbitmq'] = {
+            'user': r_user,
+            'password': r_pass,
+            'uri': uri
+        }
+
     config["logging"] = {
         "level": res,
         "file": f"{instance_name}.log",
