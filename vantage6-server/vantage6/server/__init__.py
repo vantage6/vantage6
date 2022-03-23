@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from gevent import monkey
+
 # flake8: noqa: E402 (ignore import error)
 monkey.patch_all()
 
@@ -24,6 +25,7 @@ from vantage6.server import db
 from vantage6.cli.context import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource._schema import HATEOASModelSchema
+from vantage6.server.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
@@ -98,12 +100,15 @@ class ServerApp:
 
         # load the configuration settings
         settings = self.ctx.config.get('rabbitmq')
-        if not settings or not 'uri' in settings:
+        if not settings or 'uri' not in settings:
             log.warning('Message queue disabled! This means that the '
                         'server application cannot scale horizontally!')
             log.debug(f'rabbitmq settings={settings}')
         else:
             msg_queue = settings.get('uri')
+            # setup RabbitMQ container
+            self.rabbitmq = RabbitMQManager(self.ctx, msg_queue)
+
         try:
             socketio = SocketIO(
                 self.app,
@@ -124,11 +129,12 @@ class ServerApp:
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
+        # TODO shouldn't this be .socketio? The DefaultSocketNamespace class
+        # doesnt have a 'socket' variable
         DefaultSocketNamespace.socket = socketio
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
-
 
     @staticmethod
     def configure_logging():
