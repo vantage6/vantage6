@@ -23,9 +23,9 @@ from flask_socketio import SocketIO
 
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
+from vantage6.cli.rabbitmq.queue_manager import get_rabbitmq_uri
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource._schema import HATEOASModelSchema
-from vantage6.server.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
@@ -96,19 +96,8 @@ class ServerApp:
 
     def setup_socket_connection(self):
 
-        msg_queue = None
-
-        # load the configuration settings
-        settings = self.ctx.config.get('rabbitmq')
-        if not settings or 'uri' not in settings:
-            log.warning('Message queue disabled! This means that the '
-                        'server application cannot scale horizontally!')
-            log.debug(f'rabbitmq settings={settings}')
-        else:
-            msg_queue = settings.get('uri')
-            # setup RabbitMQ container
-            self.rabbitmq = RabbitMQManager(self.ctx, msg_queue)
-
+        rabbit_config = self.ctx.config.get('rabbitmq')
+        msg_queue = get_rabbitmq_uri(rabbit_config) if rabbit_config else None
         try:
             socketio = SocketIO(
                 self.app,
@@ -422,8 +411,7 @@ class ServerApp:
             node.save()
         # session.commit()
 
-        # self.socketio.run(self.app, *args, **kwargs)
-        return self.app
+        return self
 
 
 def create_app(config: str, environment: str = 'prod',
@@ -439,10 +427,9 @@ def create_app(config: str, environment: str = 'prod',
     return ServerApp(ctx).start()
 
 
-def run(app, *args, **kwargs):
-    app = create_app()
+def run(server_app: ServerApp, *args, **kwargs):
     log.warn('*'*80)
-    log.warn('DEVELOPMENT SERVER'.center(80, '*'))
+    log.warn(' DEVELOPMENT SERVER '.center(80, '*'))
     log.warn('*'*80)
     kwargs.setdefault('log_output', False)
-    app.socketio.run(app, *args, **kwargs)
+    server_app.socketio.run(server_app.app, *args, **kwargs)
