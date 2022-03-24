@@ -8,3 +8,5 @@ tools/__pycache__/
 .coverage
 
 .env
+
+docs/_build
