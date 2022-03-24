@@ -20,7 +20,7 @@ from pathlib import Path
 from vantage6 import server
 from vantage6.server import db
 from vantage6.server.resource import (
-    only_for,
+    with_node,
     ServicesResources
 )
 
@@ -171,7 +171,7 @@ class NodeToken(ServicesResources):
 
 class ContainerToken(ServicesResources):
 
-    @only_for(['node'])
+    @with_node
     @swag_from(str(Path(r"swagger/post_token_container.yaml")),
                endpoint='container_token')
     def post(self):

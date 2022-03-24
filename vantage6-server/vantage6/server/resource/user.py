@@ -18,7 +18,6 @@ from vantage6.server.permission import (
 )
 from vantage6.server.resource import (
     with_user,
-    only_for,
     ServicesResources
 )
 from vantage6.server.resource.pagination import Pagination
@@ -93,7 +92,7 @@ class UserBase(ServicesResources):
 
 class Users(UserBase):
 
-    @only_for(['user'])
+    @with_user
     def get(self):
         """List users
         ---
@@ -246,7 +245,7 @@ class Users(UserBase):
 
 class User(UserBase):
 
-    @only_for(['user'])
+    @with_user
     def get(self, id):
         """Get user
         ---
@@ -337,6 +336,11 @@ class User(UserBase):
         if data["password"]:
             user.password = data["password"]
         if data["email"]:
+            if (user.email != data["email"] and
+                    db.User.exists("email", data["email"])):
+                return {
+                    "msg": "User with that email already exists."
+                }, HTTPStatus.BAD_REQUEST
             user.email = data["email"]
 
         # request parser is awefull with lists
@@ -362,14 +366,14 @@ class User(UserBase):
                 if denied:
                     return denied, HTTPStatus.UNAUTHORIZED
 
-            # validate that the assigned role is either a general role or a
-            # role pertaining to that organization
-            if (role.organization and
-                    role.organization.id != user.organization_id):
-                return {'msg': (
-                    "You can't assign that role to that user as the role "
-                    "belongs to a different organization than the user "
-                )}, HTTPStatus.UNAUTHORIZED
+                # validate that the assigned role is either a general role or a
+                # role pertaining to that organization
+                if (role.organization and
+                        role.organization.id != user.organization_id):
+                    return {'msg': (
+                        "You can't assign that role to that user as the role "
+                        "belongs to a different organization than the user "
+                    )}, HTTPStatus.UNAUTHORIZED
 
             user.roles = roles
 

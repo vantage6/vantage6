@@ -1,3 +1,6 @@
+# FIXME BvB 2021-12-21
+# I think this is deprecated by vantage.cli.configuration_manager. Remove?!
+
 from schema import And, Use
 
 from vantage6.common.configuration_manager import (
