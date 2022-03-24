@@ -9,10 +9,14 @@ from threading import Thread
 from functools import wraps
 from colorama import (Fore, Style)
 from sqlalchemy.engine.url import make_url
+from docker.client import DockerClient
 
 from vantage6.common import (info, warning, error, debug as debug_msg,
                              check_config_write_permissions)
-from vantage6.common.docker_addons import pull_if_newer, check_docker_running
+from vantage6.common.docker_addons import (
+    pull_if_newer, check_docker_running, remove_container,
+    get_server_config_name
+)
 from vantage6.common.globals import (
     APPNAME,
     STRING_ENCODING,
@@ -20,7 +24,6 @@ from vantage6.common.globals import (
     DEFAULT_SERVER_IMAGE
 )
 
-# from vantage6.cli import fixture
 from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
                                   DEFAULT_SERVER_SYSTEM_FOLDERS)
 from vantage6.cli.context import ServerContext
@@ -28,9 +31,8 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
-from vantage6.cli.utils import (
-    check_config_name_allowed, check_if_docker_deamon_is_running
-)
+from vantage6.cli.utils import check_config_name_allowed
+from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__
 
 
@@ -156,6 +158,9 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
     else:
         info(" ... success!")
 
+    info('Starting RabbitMQ container')
+    _start_rabbitmq(ctx)
+
     info("Creating mounts")
     mounts = [
         docker.types.Mount(
@@ -202,8 +207,13 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
     # The `ip` and `port` refer here to the ip and port within the container.
     # So we do not really care that is it listening on all interfaces.
     internal_port = 5000
-    cmd = f'vserver-local start -c /mnt/config.yaml -e {ctx.environment} ' \
-          f'--ip 0.0.0.0 --port {internal_port}'
+    cmd = (
+        f'uwsgi --http :{internal_port} --gevent 1000 --http-websockets '
+        '--master --callable app '
+        '--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py'
+    )
+    # cmd = f'vserver-local start -c /mnt/config.yaml -e {ctx.environment} ' \
+    #       f'--ip 0.0.0.0 --port {internal_port}'
     info(cmd)
 
     info("Run Docker container")
@@ -235,6 +245,16 @@ def cli_server_start(ctx, ip, port, debug, image, keep, mount_src, attach):
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 exit(0)
+
+
+def _start_rabbitmq(ctx) -> None:
+    """ Starts a RabbitMQ container """
+    if not ctx.config.get('rabbitmq'):
+        warning('Message queue disabled! This means that the server '
+                'application cannot scale horizontally!')
+    else:
+        rabbit_mgr = RabbitMQManager(ctx)
+        rabbit_mgr.start()
 
 
 #
@@ -518,13 +538,13 @@ def cli_server_shell(ctx):
 #   stop
 #
 @cli_server.command(name='stop')
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-@click.option('--all', 'all_servers', flag_value=True)
+@click.option('--all', 'all_servers', flag_value=True, help="Stop all servers")
 def cli_server_stop(name, system_folders, all_servers):
-    """Stop a or all running server. """
+    """ Stop a running server """
 
     client = docker.from_env()
     check_docker_running()
@@ -539,25 +559,45 @@ def cli_server_stop(name, system_folders, all_servers):
     running_server_names = [server.name for server in running_servers]
 
     if all_servers:
-        for name in running_server_names:
-            container = client.containers.get(name)
-            container.kill()
-            info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} server.")
+        for container_name in running_server_names:
+            _stop_server_containers(client, container_name, system_folders)
     else:
         if not name:
-            name = q.select("Select the server you wish to stop:",
-                            choices=running_server_names).ask()
+            container_name = q.select("Select the server you wish to stop:",
+                                      choices=running_server_names).ask()
         else:
-
             post_fix = "system" if system_folders else "user"
-            name = f"{APPNAME}-{name}-{post_fix}-server"
+            container_name = f"{APPNAME}-{name}-{post_fix}-server"
 
-        if name in running_server_names:
-            container = client.containers.get(name)
-            container.kill()
-            info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} server.")
+        if container_name in running_server_names:
+            _stop_server_containers(client, container_name, system_folders)
         else:
-            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
+            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
+
+
+def _stop_server_containers(client: DockerClient, container_name: str,
+                            system_folders: bool) -> None:
+    """
+    Given a server's name, kill its docker container and related (RabbitMQ)
+    containers.
+    """
+
+    # kill the server
+    container = client.containers.get(container_name)
+    container.kill()
+    info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
+
+    # find the configuration name from the docker container name
+    # server name is formatted as f"{APPNAME}-{self.name}-{self.scope}-server"
+    scope = "system" if system_folders else "user"
+    config_name = get_server_config_name(container_name, scope)
+
+    # kill the RabbitMQ container (if it exists)
+    rabbit_container_name = f'{APPNAME}-{config_name}-rabbitmq'
+    rabbit_container = client.containers.get(rabbit_container_name)
+    remove_container(rabbit_container, kill=True)
+    info(f"Stopped the {Fore.GREEN}{rabbit_container_name}{Style.RESET_ALL} "
+         "container.")
 
 
 #

@@ -203,11 +203,9 @@ def server_configuration_questionaire(dirs, instance_name):
         r_pass = q.text(
             message='Enter a RabbitMQ password:', default='guest'
         ).ask()
-        uri = f'amqp://{r_user}:{r_pass}@host.docker.internal:5672//test'
         config['rabbitmq'] = {
             'user': r_user,
             'password': r_pass,
-            'uri': uri
         }
 
     config["logging"] = {
