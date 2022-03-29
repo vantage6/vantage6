@@ -118,9 +118,7 @@ class ServerApp:
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
-        # TODO shouldn't this be .socketio? The DefaultSocketNamespace class
-        # doesnt have a 'socket' variable
-        DefaultSocketNamespace.socket = socketio
+        DefaultSocketNamespace.socketio = socketio
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
