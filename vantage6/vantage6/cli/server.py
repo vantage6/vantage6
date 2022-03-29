@@ -253,6 +253,7 @@ def _start_rabbitmq(ctx) -> None:
         warning('Message queue disabled! This means that the server '
                 'application cannot scale horizontally!')
     else:
+        # kick off RabbitMQ container
         rabbit_mgr = RabbitMQManager(ctx)
         rabbit_mgr.start()
 

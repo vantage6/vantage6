@@ -10,13 +10,13 @@ RABBITMQ_DEFINITIONS = {
   ],
   "vhosts": [
    {
-    "name": "/test"  # TODO rename (in queue_manager.py)
+    "name": "/"
    }
   ],
   "permissions": [
    {
     "user": "{{username}}",
-    "vhost": "/test",
+    "vhost": "/",
     "configure": ".*",
     "write": ".*",
     "read": ".*"

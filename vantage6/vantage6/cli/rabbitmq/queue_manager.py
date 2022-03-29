@@ -4,11 +4,13 @@ import os
 import shutil
 import base64
 import hashlib
+import time
 
 from pathlib import Path
 from typing import Dict
 
 from vantage6.common.globals import APPNAME
+from vantage6.common import debug, info, error
 from vantage6.common.docker_addons import remove_container_if_exists
 from vantage6.cli.context import ServerContext
 from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
@@ -34,7 +36,7 @@ def get_rabbitmq_uri(rabbit_config: Dict) -> str:
     str
         The URI at which the RabbitMQ queue can be reached
     """
-    VHOST = '/test'
+    VHOST = '/'
     return (
         f"amqp://{rabbit_config['user']}:{rabbit_config['password']}@"
         f"host.docker.internal:{QUEUE_PORT}/{VHOST}"
@@ -98,6 +100,39 @@ class RabbitMQManager:
                 f"{APPNAME}-type": "rabbitmq",
             }
         )
+
+        # Take 5 minutes (30*10s) to test if RabbitMQ container is up
+        self._wait_for_startup()
+
+    def _wait_for_startup(self):
+        """ Wait until RabbitMQ has been initialized """
+        # TODO make the time / # attempts settable?
+        ATTEMPTS = 31
+        is_running = False
+        for _ in range(ATTEMPTS):
+            if self.is_running():
+                is_running = True
+                break
+            debug("RabbitMQ is not yet running, trying again in 10s...")
+            time.sleep(10)
+        if is_running:
+            info("RabbitMQ was started successfully!")
+        else:
+            # TODO exit or disable?
+            error("Could not start RabbitMQ! Exiting...")
+            exit(0)
+
+    def is_running(self) -> bool:
+        """
+        Returns
+        -------
+        bool
+            Whether the container has fully initialized RabbitMQ or not
+        """
+        response = self.rabbit_container.exec_run(
+            cmd="rabbitmqctl status --formatter json"
+        )
+        return response.exit_code == 0
 
     def _get_volumes(self) -> Dict:
         """
