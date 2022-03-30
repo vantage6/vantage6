@@ -134,7 +134,7 @@ class Users(UserBase):
         """
         q = DatabaseSessionManager.get_session().query(db.User)
 
-        # check permissions and apply filter if neccassary
+        # check permissions and apply filter if necessary
         if not self.r.v_glo.can():
             if self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
