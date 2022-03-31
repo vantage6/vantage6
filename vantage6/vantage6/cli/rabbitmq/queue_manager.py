@@ -69,12 +69,13 @@ class RabbitMQManager:
         """
         Start a docker container which runs a RabbitMQ queue
         """
-        # get volumes which contain
+        # get volumes which contain rabbitMQ configuration and a location to
+        # save rabbitMQ files so that they persist after container is stopped
         volumes = self._get_volumes()
 
         # expose port 5672 inside the container as port 5672 on the host, and
         # same for 15672 in container to 8080 on host
-        # TODO check if these ports are available on the host (?)
+        # TODO check if these ports are not already used on the host
         ports = {
             f'{QUEUE_PORT}/tcp': QUEUE_PORT,
             # TODO this is for the management tool, do we keep this? Not used
@@ -101,7 +102,7 @@ class RabbitMQManager:
             }
         )
 
-        # Take 5 minutes (30*10s) to test if RabbitMQ container is up
+        # Wait until RabbitMQ is up before continuing with other stuff
         self._wait_for_startup()
 
     def _wait_for_startup(self) -> None:

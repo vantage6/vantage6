@@ -217,8 +217,6 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
         '--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py '
         f'--pyargv {config_file}'
     )
-    # cmd = f'vserver-local start -c /mnt/config.yaml -e {ctx.environment} ' \
-    #       f'--ip 0.0.0.0 --port {internal_port}'
     info(cmd)
 
     info("Run Docker container")
