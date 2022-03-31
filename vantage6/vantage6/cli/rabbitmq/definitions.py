@@ -5,7 +5,7 @@ RABBITMQ_DEFINITIONS = {
     "name": "{{username}}",
     "password_hash": "{{password}}",
     "hashing_algorithm": "rabbit_password_hashing_sha256",
-    "tags": "administrator"  # TODO remove this tag?!
+    "tags": "administrator"
    }
   ],
   "vhosts": [

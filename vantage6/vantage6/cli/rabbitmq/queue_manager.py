@@ -15,8 +15,7 @@ from vantage6.common.docker_addons import remove_container_if_exists
 from vantage6.cli.context import ServerContext
 from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
 
-# TODO which image to use for final? Consider also frequency of renewal
-RABBIT_IMAGE = 'rabbitmq:3-management'
+DEFAULT_RABBIT_IMAGE = 'harbor2.vantage6.ai/infrastructure/rabbitmq'
 RABBIT_CONFIG = 'rabbitmq.config'
 RABBIT_DIR = 'rabbitmq'
 QUEUE_PORT = 5672
@@ -47,7 +46,7 @@ class RabbitMQManager:
     """
     Manages the RabbitMQ docker container
     """
-    def __init__(self, ctx: ServerContext) -> None:
+    def __init__(self, ctx: ServerContext, image: str = None) -> None:
         """
         Parameters
         ----------
@@ -60,13 +59,13 @@ class RabbitMQManager:
         rabbit_settings = self.ctx.config.get('rabbitmq')
         self.rabbit_user = rabbit_settings['user']
         self.rabbit_pass = rabbit_settings['password']
+
         self.queue_uri = get_rabbitmq_uri(rabbit_settings)
         self.docker = docker.from_env()
-
-        # TODO is this always unique?
+        self.image = image if image else DEFAULT_RABBIT_IMAGE
         self.rabbit_container_name = f'{APPNAME}-{ctx.name}-rabbitmq'
 
-    def start(self):
+    def start(self) -> None:
         """
         Start a docker container which runs a RabbitMQ queue
         """
@@ -78,7 +77,8 @@ class RabbitMQManager:
         # TODO check if these ports are available on the host (?)
         ports = {
             f'{QUEUE_PORT}/tcp': QUEUE_PORT,
-            # TODO this is for the management tool, do we keep this?
+            # TODO this is for the management tool, do we keep this? Not used
+            # at the moment..
             '15672/tcp': 8080
         }
 
@@ -90,7 +90,7 @@ class RabbitMQManager:
         # run rabbitMQ container
         self.rabbit_container = self.docker.containers.run(
             name=self.rabbit_container_name,
-            image=RABBIT_IMAGE,
+            image=self.image,
             volumes=volumes,
             ports=ports,
             detach=True,
@@ -104,9 +104,9 @@ class RabbitMQManager:
         # Take 5 minutes (30*10s) to test if RabbitMQ container is up
         self._wait_for_startup()
 
-    def _wait_for_startup(self):
+    def _wait_for_startup(self) -> None:
         """ Wait until RabbitMQ has been initialized """
-        # TODO make the time / # attempts settable?
+        # TODO make the time / # attempts settable? Is this enough time (5m)?
         ATTEMPTS = 31
         is_running = False
         for _ in range(ATTEMPTS):
@@ -189,8 +189,20 @@ class RabbitMQManager:
             self._get_hashed_pw(self.rabbit_pass)
         return rabbit_definitions
 
-    def _get_hashed_pw(self, pw):
-        """ Hash a user-defined password for RabbitMQ """
+    def _get_hashed_pw(self, pw: str) -> str:
+        """
+        Hash a user-defined password for RabbitMQ
+
+        Parameters
+        ----------
+        pw: str
+            The password for RabbitMQ
+
+        Returns
+        -------
+        str
+            Hashed password for RabbitMQ
+        """
 
         # Generate a random 32 bit salt:
         salt = os.urandom(4)
