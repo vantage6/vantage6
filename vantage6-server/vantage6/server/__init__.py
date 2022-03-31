@@ -412,7 +412,7 @@ class ServerApp:
         return self
 
 
-def create_app(config: str, environment: str = 'prod',
+def run_server(config: str, environment: str = 'prod',
                system_folders: bool = True):
     ctx = ServerContext.from_external_config_file(
         config,
@@ -425,7 +425,7 @@ def create_app(config: str, environment: str = 'prod',
     return ServerApp(ctx).start()
 
 
-def run(server_app: ServerApp, *args, **kwargs):
+def run_dev_server(server_app: ServerApp, *args, **kwargs):
     log.warn('*'*80)
     log.warn(' DEVELOPMENT SERVER '.center(80, '*'))
     log.warn('*'*80)
