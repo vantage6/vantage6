@@ -20,7 +20,6 @@ RUN pip install psycopg2-binary
 # Install uWSGI from source (for RabbitMQ)
 RUN apt-get install --no-install-recommends --no-install-suggests -y \
   libssl-dev python3-setuptools
-RUN pip install wheel
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
