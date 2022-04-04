@@ -57,6 +57,7 @@ setup(
         'requests-oauthlib==1.3.0',
         'gevent-websocket==0.10.1',
         'eventlet==0.33.0',
+        'kombu==5.2.2',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}'
     ],

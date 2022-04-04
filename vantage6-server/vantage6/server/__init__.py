@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+from gevent import monkey
+
+# flake8: noqa: E402 (ignore import error)
+monkey.patch_all()
+
 import importlib
 import logging
 import os
 import uuid
 import json
-
 
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
@@ -18,7 +22,9 @@ from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.cli.context import ServerContext
+from vantage6.cli.rabbitmq.queue_manager import get_rabbitmq_uri
+from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource._schema import HATEOASModelSchema
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
@@ -72,14 +78,7 @@ class ServerApp:
         self.mail = MailService(self.app, Mail(self.app))
 
         # Setup websocket channel
-        try:
-            self.socketio = SocketIO(self.app, async_mode='gevent_uwsgi',
-                                     ping_timeout=60)
-        except Exception:
-            self.socketio = SocketIO(self.app, ping_timeout=60)
-        # FIXME: temporary fix to get socket object into the namespace class
-        DefaultSocketNamespace.socket = self.socketio
-        self.socketio.on_namespace(DefaultSocketNamespace("/tasks"))
+        self.socketio = self.setup_socket_connection()
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager()
@@ -94,6 +93,35 @@ class ServerApp:
 
         # set the serv
         self.__version__ = __version__
+
+    def setup_socket_connection(self):
+
+        rabbit_config = self.ctx.config.get('rabbitmq')
+        msg_queue = get_rabbitmq_uri(rabbit_config) if rabbit_config else None
+        try:
+            socketio = SocketIO(
+                self.app,
+                async_mode='gevent_uwsgi',
+                message_queue=msg_queue,
+                ping_timeout=60
+            )
+        except Exception as e:
+            log.warning('Default socketio settings failed, attempt to run '
+                        'without gevent_uwsgi packages! This leads to '
+                        'performance issues and possible issues concerning '
+                        'the websocket channels!')
+            log.debug(e)
+            socketio = SocketIO(
+                self.app,
+                message_queue=msg_queue,
+                ping_timeout=60
+            )
+
+        # FIXME: temporary fix to get socket object into the namespace class
+        DefaultSocketNamespace.socketio = socketio
+        socketio.on_namespace(DefaultSocketNamespace("/tasks"))
+
+        return socketio
 
     @staticmethod
     def configure_logging():
@@ -344,8 +372,8 @@ class ServerApp:
             module = importlib.import_module('vantage6.server.resource.' + res)
             module.setup(self.api, self.ctx.config['api_path'], services)
 
-    def run(self, *args, **kwargs):
-        """Run the server.
+    def start(self):
+        """Start the server.
         """
 
         # create root user if it is not in the DB yet
@@ -381,5 +409,25 @@ class ServerApp:
             node.save()
         # session.commit()
 
-        kwargs.setdefault('log_output', False)
-        self.socketio.run(self.app, *args, **kwargs)
+        return self
+
+
+def run_server(config: str, environment: str = 'prod',
+               system_folders: bool = True):
+    ctx = ServerContext.from_external_config_file(
+        config,
+        environment,
+        system_folders
+    )
+    allow_drop_all = ctx.config["allow_drop_all"]
+    Database().connect(uri=ctx.get_database_uri(),
+                       allow_drop_all=allow_drop_all)
+    return ServerApp(ctx).start()
+
+
+def run_dev_server(server_app: ServerApp, *args, **kwargs):
+    log.warn('*'*80)
+    log.warn(' DEVELOPMENT SERVER '.center(80, '*'))
+    log.warn('*'*80)
+    kwargs.setdefault('log_output', False)
+    server_app.socketio.run(server_app.app, *args, **kwargs)
