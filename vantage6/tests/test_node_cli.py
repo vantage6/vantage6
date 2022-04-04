@@ -43,10 +43,6 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 1)
 
-        # check that an error message is given
-        self.assertEqual(result.stdout[:7], "[error]")
-        # pass
-
     @patch("vantage6.cli.context.NodeContext.available_configurations")
     @patch("docker.DockerClient.ping")
     @patch("docker.DockerClient.containers")
@@ -423,14 +419,16 @@ class NodeCLITest(unittest.TestCase):
         with self.assertRaises(Exception):
             create_client_and_authenticate(ctx)
 
-    @patch("vantage6.cli.node.error")
-    def test_check_docker(self, error):
-        docker = MagicMock()
-        try:
-            check_docker_running()
-        except Exception:
-            self.fail("Exception raised!")
+    # TODO this function has been moved to the common package. A test should
+    # be added there instead of here
+    # @patch("vantage6.cli.node.error")
+    # def test_check_docker(self, error):
+    #     docker = MagicMock()
+    #     try:
+    #         check_docker_running()
+    #     except Exception:
+    #         self.fail("Exception raised!")
 
-        docker.ping.side_effect = Exception("Boom!")
-        with self.assertRaises(SystemExit):
-            check_docker_running()
+    #     docker.ping.side_effect = Exception("Boom!")
+    #     with self.assertRaises(SystemExit):
+    #         check_docker_running()
