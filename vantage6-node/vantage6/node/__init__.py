@@ -654,26 +654,22 @@ class Node(object):
         """
 
         self.socketIO = SocketIO(request_timeout=60)
-        self.socketIO.connect(
-            url=f'{self.server_io.host}:{self.server_io.port}',
-            headers=self.server_io.headers,
-            namespaces=['/tasks']
-        )
 
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
         NodeTaskNamespace.node_worker_ref = self
 
+        self.socketIO.connect(
+            url=f'{self.server_io.host}:{self.server_io.port}',
+            headers=self.server_io.headers,
+        )
+
         # Log the outcome
         while not self.socketIO.connected:
-            self.log.debug('waiting for socket connection...')
+            self.log.debug('Waiting for socket connection...')
             time.sleep(1)
 
-        msg = 'connected to host={host} on port={port}'
-        msg = msg.format(
-            host=self.server_io.host,
-            port=self.server_io.port
-        )
-        self.log.info(msg)
+        self.log.info(f'Connected to host={self.server_io.host} on port='
+                      f'{self.server_io.port}')
 
     def get_task_and_add_to_queue(self, task_id):
         """Fetches (open) task with task_id from the server.
