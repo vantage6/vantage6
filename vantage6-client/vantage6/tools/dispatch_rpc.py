@@ -3,7 +3,7 @@ import importlib
 import jwt
 
 from vantage6.client import ContainerClient
-from vantage6.tools.util import info, warn
+from vantage6.tools.util import info, warn, error
 
 
 def dispact_rpc(data, input_data, module, token):
@@ -13,7 +13,8 @@ def dispact_rpc(data, input_data, module, token):
         lib = importlib.import_module(module)
         info(f"Module '{module}' imported!")
     except ModuleNotFoundError:
-        warn(f"Module '{module}' can not be imported!")
+        error(f"Module '{module}' can not be imported! Exiting...")
+        exit(1)
 
     # in case of a master container, we have to do a little extra
     master = input_data.get("master")
@@ -30,7 +31,6 @@ def dispact_rpc(data, input_data, module, token):
 
         # read JWT token, to log te collaboration id. The
         # ContainerClient automatically sets the collaboration_id
-
         claims = jwt.decode(token, verify=False)
         id_ = claims["identity"]["collaboration_id"]
         info(f"Working with collaboration_id <{id_}>")
@@ -41,7 +41,7 @@ def dispact_rpc(data, input_data, module, token):
         info("Running a regular container")
         method_name = f"RPC_{input_data['method']}"
 
-    # attemt to load the method
+    # attempt to load the method
     try:
         method = getattr(lib, method_name)
     except AttributeError:
