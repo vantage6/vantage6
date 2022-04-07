@@ -196,7 +196,8 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
         ))
 
         environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}"
+            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}",
+            "VANTAGE6_CONFIG_NAME": ctx.config_file_name
         }
 
     else:

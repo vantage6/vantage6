@@ -40,7 +40,6 @@ def get_rabbitmq_uri(rabbit_config: Dict, server_name: str) -> str:
         The URI at which the RabbitMQ queue can be reached
     """
     VHOST = '/'
-    server_name = 'config' # TODO change
     return (
         f"amqp://{rabbit_config['user']}:{rabbit_config['password']}@"
         # f"host.docker.internal:{QUEUE_PORT}/{VHOST}"
@@ -74,9 +73,7 @@ class RabbitMQManager:
         self.queue_uri = get_rabbitmq_uri(rabbit_settings, ctx.name)
         self.docker = docker.from_env()
         self.image = image if image else DEFAULT_RABBIT_IMAGE
-        # TODO change
-        self.rabbit_container_name = f'{APPNAME}-config-rabbitmq'
-        # self.rabbit_container_name = f'{APPNAME}-{ctx.name}-rabbitmq'
+        self.rabbit_container_name = f'{APPNAME}-{ctx.name}-rabbitmq'
 
     def start(self) -> None:
         """
@@ -121,7 +118,6 @@ class RabbitMQManager:
 
     def _wait_for_startup(self) -> None:
         """ Wait until RabbitMQ has been initialized """
-        # TODO make the time / # attempts settable? Is this enough time (5m)?
         INTERVAL = 10
         ATTEMPTS = int((RABBIT_TIMEOUT + INTERVAL) / INTERVAL)
         is_running = False
