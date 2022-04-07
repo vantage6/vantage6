@@ -35,7 +35,7 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
-from vantage6.common.docker_addons import (
+from vantage6.common.docker.addons import (
   pull_if_newer,
   remove_container_if_exists,
   check_docker_running
