@@ -728,8 +728,11 @@ class UserClient(ClientBase):
         """Collection of collaboration requests"""
 
         @post_filtering()
-        def list(self, scope: str = 'organization', page: int = 1,
-                 per_page: int = 20, include_metadata: bool = True) -> dict:
+        def list(self, scope: str = 'organization',
+                 name: str = None, encrypted: bool = None,
+                 organization: int = None, page: int = 1,
+                 per_page: int = 20, include_metadata: bool = True,
+                 ) -> dict:
             """View your collaborations
 
             Parameters
@@ -739,6 +742,12 @@ class UserClient(ClientBase):
                 `global`. In case of `organization` you get the collaborations
                 in which your organization participates. If you specify global
                 you get the collaborations which you are allowed to see.
+            name: str, optional (with LIKE operator)
+                Filter collaborations by name
+            organization: int, optional
+                Filter collaborations by organization id
+            encrypted: bool, optional
+                Filter collaborations by whether or not they are encrypted
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -760,7 +769,11 @@ class UserClient(ClientBase):
               /organization/<id>/collaboration
             """
             includes = ['metadata'] if include_metadata else []
-            params = {'page': page, 'per_page': per_page, 'include': includes}
+            params = {
+                'page': page, 'per_page': per_page, 'include': includes,
+                'name': name, 'encrypted': encrypted,
+                'organization_id': organization,
+            }
             if scope == 'organization':
                 self.parent.log.info('pagination for scope `organization` '
                                      'not available')
@@ -837,12 +850,30 @@ class UserClient(ClientBase):
             return self.parent.request(f'node/{id_}')
 
         @post_filtering()
-        def list(self, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> list:
+        def list(self, name: str = None, organization: int = None,
+                 collaboration: int = None, is_online: bool = None,
+                 ip: str = None, last_seen_from: str = None,
+                 last_seen_till: str = None, page: int = 1, per_page: int = 20,
+                 include_metadata: bool = True,
+                 ) -> list:
             """List nodes
 
             Parameters
             ----------
+            name: str, optional
+                Filter by name (with LIKE operator)
+            organization: int, optional
+                Filter by organization id
+            collaboration: int, optional
+                Filter by collaboration id
+            is_online: bool, optional
+                Filter on whether nodes are online or not
+            ip: str, optional
+                Filter by node VPN IP address
+            last_seen_from: str, optional
+                Filter if node has been online since date (format: yyyy-mm-dd)
+            last_seen_till: str, optional
+                Filter if node has been online until date (format: yyyy-mm-dd)
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -859,11 +890,18 @@ class UserClient(ClientBase):
                 Containing meta-data of the nodes
             """
             includes = ['metadata'] if include_metadata else []
-            params = {'page': page, 'per_page': per_page, 'include': includes}
+            params = {
+                'page': page, 'per_page': per_page, 'include': includes,
+                'name': name, 'organization_id': organization,
+                'collaboration_id': collaboration, 'ip': ip,
+                'status': 'online' if is_online else 'offline',
+                'last_seen_from': last_seen_from,
+                'last_seen_till': last_seen_till
+            }
             return self.parent.request('node', params=params)
 
         @post_filtering(iterable=False)
-        def create(self, collaboration: int, organization: int=None) -> dict:
+        def create(self, collaboration: int, organization: int = None) -> dict:
             """Register new node
 
             Parameters
@@ -935,12 +973,19 @@ class UserClient(ClientBase):
         """Collection of organization requests"""
 
         @post_filtering()
-        def list(self, page: int = None, per_page: int = None,
-                 include_metadata: bool = False) -> list:
+        def list(self, name: str = None, country: int = None,
+                 collaboration: int = None, page: int = None,
+                 per_page: int = None, include_metadata: bool = False) -> list:
             """List organizations
 
             Parameters
             ----------
+            name: str, optional
+                Filter by name (with LIKE operator)
+            country: str, optional
+                Filter by country
+            collaboration: int, optional
+                Filter by collaboration id
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -956,8 +1001,11 @@ class UserClient(ClientBase):
                 Containing meta-data information of the organizations
             """
             includes = ['metadata'] if include_metadata else []
-            params = {'page': page, 'per_page': per_page,
-                      'include': includes}
+            params = {
+                'page': page, 'per_page': per_page, 'include': includes,
+                'name': name, 'country': country,
+                'collaboration_id': collaboration
+            }
             return self.parent.request('organization', params=params)
 
         @post_filtering(iterable=False)
@@ -1076,12 +1124,34 @@ class UserClient(ClientBase):
     class User(ClientBase.SubClient):
 
         @post_filtering()
-        def list(self, page: int = 1, per_page: int = 20,
+        def list(self, username: str = None, organization: int = None,
+                 firstname: str = None, lastname: str = None,
+                 email: str = None, role: int = None, rule: int = None,
+                 last_seen_from: str = None, last_seen_till : str = None,
+                 page: int = 1, per_page: int = 20,
                  include_metadata: bool = True) -> list:
             """List users
 
             Parameters
             ----------
+            username: str, optional
+                Filter by username (with LIKE operator)
+            organization: int, optional
+                Filter by organization id
+            firstname: str, optional
+                Filter by firstname (with LIKE operator)
+            lastname: str, optional
+                Filter by lastname (with LIKE operator)
+            email: str, optional
+                Filter by email (with LIKE operator)
+            role: int, optional
+                Show only users that have this role id
+            rule: int, optional
+                Show only users that have this rule id
+            last_seen_from: str, optional
+                Filter users that have logged on since (format yyyy-mm-dd)
+            last_seen_till: str, optional
+                Filter users that have logged on until (format yyyy-mm-dd)
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1097,7 +1167,14 @@ class UserClient(ClientBase):
                 Containing the meta-data of the users
             """
             includes = ['metadata'] if include_metadata else []
-            params = {'page': page, 'per_page': per_page, 'include': includes}
+            params = {
+                'page': page, 'per_page': per_page, 'include': includes,
+                'username': username, 'organization_id': organization,
+                'firstname': firstname, 'lastname': lastname, 'email': email,
+                'role_id': role, 'rule_id': rule,
+                'last_seen_from': last_seen_from,
+                'last_seen_till': last_seen_till,
+            }
             return self.parent.request('user', params=params)
 
         @post_filtering(iterable=False)
@@ -1223,12 +1300,25 @@ class UserClient(ClientBase):
     class Role(ClientBase.SubClient):
 
         @post_filtering()
-        def list(self, page: int = 1, per_page: int = 20,
+        def list(self, name: str = None, description: str = None,
+                 organization: int = None, rule: int = None,
+                 include_root: bool = None, page: int = 1, per_page: int = 20,
                  include_metadata: bool = True) -> list:
             """List of roles
 
             Parameters
             ----------
+            name: str, optional
+                Filter by name (with LIKE operator)
+            description: str, optional
+                Filter by description (with LIKE operator)
+            organization: int, optional
+                Filter by organization id
+            rule: int, optional
+                Only show roles that contain this rule id
+            include_root: bool, optional
+                Include roles that are not assigned to any particular
+                organization
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1244,7 +1334,12 @@ class UserClient(ClientBase):
                 Containing roles meta-data
             """
             includes = ['metadata'] if include_metadata else []
-            params = {'page': page, 'per_page': per_page, 'include': includes}
+            params = {
+                'page': page, 'per_page': per_page, 'include': includes,
+                'name': name, 'description': description,
+                'organization_id': organization, 'rule_id': rule,
+                'include_root': include_root,
+            }
             return self.parent.request('role', params=params)
 
         @post_filtering(iterable=True)
@@ -1265,7 +1360,7 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=True)
         def create(self, name: str, description: str, rules: list,
-                   organization: int=None) -> dict:
+                   organization: int = None) -> dict:
             """Register new role
 
             Parameters
@@ -1367,7 +1462,8 @@ class UserClient(ClientBase):
         def list(self, initiator: int = None, collaboration: int = None,
                  image: str = None, parent: int = None, run: int = None,
                  name: str = None, include_results: bool = False,
-                 page: int = 1, per_page: int = 20,
+                 description: str = None, database: str = None,
+                 result: int = None, page: int = 1, per_page: int = 20,
                  include_metadata: bool = True) -> dict:
             """List tasks
 
@@ -1382,7 +1478,7 @@ class UserClient(ClientBase):
             collaboration: int, optional
                 Filter by collaboration
             image: str, optional
-                Filter by Docker image name
+                Filter by Docker image name (with LIKE operator)
             parent: int, optional
                 Filter by parent task
             run: int, optional
@@ -1390,6 +1486,12 @@ class UserClient(ClientBase):
             include_results : bool, optional
                 Whenever to include the results in the tasks, by default
                 False
+            description: str, optional
+                Filter by description (with LIKE operator)
+            database: str, optional
+                Filter by database (with LIKE operator)
+            result: int, optional
+                Only show task that contains this result id
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1415,10 +1517,13 @@ class UserClient(ClientBase):
             """
             # if the param is None, it will not be passed on to the
             # request
-            params = {'initiator_id': initiator,
-                      'collaboration_id': collaboration, 'image': image,
-                      'parent_id': parent, 'run_id': run, 'name': name,
-                      'page': page, 'per_page': per_page}
+            params = {
+                'initiator_id': initiator, 'collaboration_id': collaboration,
+                'image': image, 'parent_id': parent, 'run_id': run,
+                'name': name, 'page': page, 'per_page': per_page,
+                'description': description, 'database': database,
+                'result_id': result
+            }
             includes = []
             if include_results:
                 includes.append('results')
@@ -1518,8 +1623,9 @@ class UserClient(ClientBase):
                  state: str = None, node: int = None,
                  include_task: bool = False, started: Tuple[str, str] = None,
                  assigned: Tuple[str, str] = None,
-                 finished: Tuple[str, str] = None, page: int = None,
-                 per_page: int = None, include_metadata: bool = True) -> list:
+                 finished: Tuple[str, str] = None, port: int = None,
+                 page: int = None, per_page: int = None,
+                 include_metadata: bool = True) -> list:
             """List results
 
             Parameters
@@ -1540,6 +1646,8 @@ class UserClient(ClientBase):
                 Filter on a range of assign times (format: yyyy-mm-dd)
             finished: Tuple[str, str], optional
                 Filter on a range of finished times (format: yyyy-mm-dd)
+            port: int, optional
+                Port on which result was computed
             page: int, optional
                 Pagination page number, defaults to 1
             per_page: int, optional
@@ -1571,12 +1679,15 @@ class UserClient(ClientBase):
             a_from, a_till = assigned if assigned else (None, None)
             f_from, f_till = finished if finished else (None, None)
 
-            params = {'task_id': task, 'organization_id': organization,
-                      'state': state, 'node_id': node, 'page': page,
-                      'per_page': per_page, 'include': includes,
-                      'started_from': s_from, 'started_till': s_till,
-                      'assigned_from': a_from, 'assigned_till': a_till,
-                      'finished_from': f_from, 'finished_till': f_till}
+            params = {
+                'task_id': task, 'organization_id': organization,
+                'state': state, 'node_id': node, 'page': page,
+                'per_page': per_page, 'include': includes,
+                'started_from': s_from, 'started_till': s_till,
+                'assigned_from': a_from, 'assigned_till': a_till,
+                'finished_from': f_from, 'finished_till': f_till,
+                'port': port
+            }
 
             results = self.parent.get_results(params=params)
 
@@ -1640,12 +1751,21 @@ class UserClient(ClientBase):
             return self.parent.request(f'rule/{id_}')
 
         @post_filtering()
-        def list(self, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> list:
+        def list(self, name: str = None, operation: str = None,
+                 scope: str = None, role: int = None, page: int = 1,
+                 per_page: int = 20, include_metadata: bool = True) -> list:
             """List of all available rules
 
             Parameters
             ----------
+            name: str, optional
+                Filter by rule name
+            operation: str, optional
+                Filter by operation
+            scope: str, optional
+                Filter by scope
+            role: int, optional
+                Only show rules that belong to this role id
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1661,8 +1781,13 @@ class UserClient(ClientBase):
                 Containing all the rules from the vantage6 server
             """
             includes = ['metadata'] if include_metadata else []
-            params = {'page': page, 'per_page': per_page, 'include': includes}
+            params = {
+                'page': page, 'per_page': per_page, 'include': includes,
+                'name': name, 'operation': operation, 'scope': scope,
+                'role_id': role
+            }
             return self.parent.request('rule', params=params)
+
 
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
