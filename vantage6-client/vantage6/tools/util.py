@@ -7,3 +7,7 @@ def info(msg):
 
 def warn(msg):
     sys.stdout.write("warn > "+msg+"\n")
+
+
+def error(msg):
+    sys.stdout.write("error > "+msg+"\n")
