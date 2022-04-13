@@ -57,8 +57,6 @@ def permissions(permissions: PermissionManager):
         description='View any user')
     add(S.ORGANIZATION, P.VIEW,
         description='View users from your organization')
-    add(S.OWN, P.VIEW,
-        description='View your own data')
     add(S.GLOBAL, P.CREATE,
         description='Create a new user for any organization')
     add(S.ORGANIZATION, P.CREATE,
@@ -291,11 +289,11 @@ class User(UserBase):
         # allow user to be returned if:
         # 1. auth can see all users
         # 2. auth can see organization users and user is within organization
-        # 3. auth is requesting own user details and is allowed to do so
+        # 3. auth is requesting own user details
         if (
             self.r.v_glo.can() or
             (self.r.v_org.can() and same_org) or
-            (self.r.v_own.can() and same_user)
+            same_user
         ):
             return user_schema.dump(user, many=False).data, HTTPStatus.OK
         else:
