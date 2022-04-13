@@ -468,7 +468,7 @@ class ClientBase(object):
 
         # hack: in the case that the pagination metadata is included we
         # need to strip that for decrypting
-        if isinstance(results, dict):
+        if isinstance(results, dict) and 'data' in results:
             wrapper = results
             results = results['data']
 
