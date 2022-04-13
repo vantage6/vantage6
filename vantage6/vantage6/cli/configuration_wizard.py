@@ -3,6 +3,7 @@ import uuid
 
 from pathlib import Path
 
+from vantage6.common import create_random_string
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
@@ -157,6 +158,21 @@ def server_configuration_questionaire(dirs, instance_name):
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
+
+    is_add_rabbitmq = q.confirm(
+        "Do you want to add a RabbitMQ message queue?").ask()
+    if is_add_rabbitmq:
+        r_user = q.text(
+            message='Enter a new RabbitMQ username:', default='guest'
+        ).ask()
+        r_pass = q.text(
+            message='Enter a new RabbitMQ password:',
+            default=create_random_string()
+        ).ask()
+        config['rabbitmq'] = {
+            'user': r_user,
+            'password': r_pass,
+        }
 
     return config
 

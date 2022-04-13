@@ -30,3 +30,6 @@ DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
 
 # with open(Path(PACAKAGE_FOLDER) / APPNAME / "cli" / "VERSION") as f:
 #     VERSION = f.read()
+
+# Maximum time to start up RabbitMQ in seconds
+RABBIT_TIMEOUT = 300

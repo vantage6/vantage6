@@ -48,9 +48,14 @@ class ServerContext(AppContext):
     @classmethod
     def from_external_config_file(cls, path, environment=S_ENV,
                                   system_folders=S_FOL):
-        return super().from_external_config_file(
+        cls = super().from_external_config_file(
             path, "server", environment, system_folders
         )
+        # if we are running a server in a docker container, the name is taken
+        # from the name of the config file (which is usually a default). Get
+        # the config name from environment if it is given.
+        cls.name = os.environ.get("VANTAGE6_CONFIG_NAME") or cls.name
+        return cls
 
     @classmethod
     def config_exists(cls, instance_name, environment=S_ENV,
