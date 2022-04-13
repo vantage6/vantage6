@@ -69,6 +69,7 @@ class DockerManager(DockerBaseManager):
         self.algorithm_env = config.get('algorithm_env', {})
         self.vpn_manager = vpn_manager
         self.__tasks_dir = tasks_dir
+        self.alpine_image = config.get('alpine')
 
         # keep track of the running containers
         self.active_tasks: List[DockerTaskManager] = []
@@ -270,7 +271,8 @@ class DockerManager(DockerBaseManager):
             tasks_dir=self.__tasks_dir,
             isolated_network_mgr=self.isolated_network_mgr,
             databases=self.databases,
-            docker_volume_name=self.data_volume_name
+            docker_volume_name=self.data_volume_name,
+            alpine_image=self.alpine_image
         )
         database = database if (database and len(database)) else 'default'
         vpn_ports = task.run(

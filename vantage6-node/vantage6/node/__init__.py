@@ -584,7 +584,8 @@ class Node(object):
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name,
             vpn_volume_name=vpn_volume_name,
-            vpn_subnet=self.config.get('vpn_subnet')
+            vpn_subnet=self.config.get('vpn_subnet'),
+            alpine_image=self.config.get('alpine')
         )
         # if vpn config doesn't exist, get it and write to disk
         if not os.path.isfile(ovpn_file):

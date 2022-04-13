@@ -14,7 +14,7 @@ from vantage6.common.docker.addons import (
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
-    FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT
+    FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT, ALPINE_IMAGE
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -27,13 +27,32 @@ class VPNManager(DockerBaseManager):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, isolated_network_mgr: NetworkManager,
-                 node_name: str, vpn_volume_name: str, vpn_subnet: str):
+    def __init__(self, isolated_network_mgr: IsolatedNetworkManager,
+                 node_name: str, vpn_volume_name: str, vpn_subnet: str,
+                 alpine_image: Union[str, None] = None) -> None:
+        """
+        Initializes a VPN manager instance
+
+        Parameters
+        ----------
+        isolated_network_mgr: IsolatedNetworkManager
+            An object that manages the node's isolated network
+        node_name: str
+            The name of the node (from config)
+        vpn_volume_name: str
+            The name of the volume in which the VPN data resides
+        vpn_subnet: str
+            The IP mask of the VPN subnet
+        alpine_image: str or None
+            Name of alternative Alpine image to be used
+        """
         super().__init__(isolated_network_mgr)
 
         self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
         self.vpn_volume_name = vpn_volume_name
         self.subnet = vpn_subnet
+        self.alpine_image = ALPINE_IMAGE if alpine_image is None \
+            else alpine_image
 
         self.has_vpn = False
 
@@ -224,7 +243,7 @@ class VPNManager(DockerBaseManager):
         # add IP route line to the algorithm container network
         cmd = f"ip route replace default via {vpn_local_ip}"
         self.docker.containers.run(
-            image='alpine',
+            image=self.alpine_image,
             network=network,
             cap_add='NET_ADMIN',
             command=cmd,
@@ -269,7 +288,7 @@ class VPNManager(DockerBaseManager):
         occupied_ports = occupied_ports.output.decode('utf-8')
         occupied_ports = occupied_ports.split('\n')
         occupied_ports = \
-            [int(port) for port in occupied_ports if port is not '']
+            [int(port) for port in occupied_ports if port != '']
 
         # take first available port
         vpn_client_port_options = set(FREE_PORT_RANGE) - set(occupied_ports)

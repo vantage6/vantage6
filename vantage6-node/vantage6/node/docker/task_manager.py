@@ -3,7 +3,7 @@ to be cleaned at some point. """
 import logging
 import os
 
-from typing import Dict, List
+from typing import Dict, List, Union
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
@@ -11,6 +11,7 @@ from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container
 )
 from vantage6.node.util import logger_name
+from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -30,8 +31,9 @@ class DockerTaskManager(DockerBaseManager):
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
                  result_id: int, tasks_dir: Path,
-                 isolated_network_mgr: NetworkManager,
-                 databases: dict, docker_volume_name: str):
+                 isolated_network_mgr: IsolatedNetworkManager,
+                 databases: dict, docker_volume_name: str,
+                 alpine_image: Union[str, None] = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -51,8 +53,11 @@ class DockerTaskManager(DockerBaseManager):
             Manager of isolated network to which algorithm needs to connect
         databases: Dict
             List of databases
-        docker_volume_name: str
+        
+        : str
             Name of the docker volume
+        alpine_image: str or None
+            Name of alternative Alpine image to be used
         """
         super().__init__(isolated_network_mgr)
         self.image = image
@@ -62,6 +67,8 @@ class DockerTaskManager(DockerBaseManager):
         self.databases = databases
         self.data_volume_name = docker_volume_name
         self.node_name = node_name
+        self.alpine_image = ALPINE_IMAGE if alpine_image is None \
+            else alpine_image
 
         self.container = None
         self.status_code = None
@@ -217,7 +224,7 @@ class DockerTaskManager(DockerBaseManager):
             # will therefore also affect the algorithm.
             self.helper_container = self.docker.containers.run(
                 command='sleep infinity',
-                image='alpine',
+                image=self.alpine_image,
                 labels=self.helper_labels,
                 network=self.isolated_network_mgr.network_name,
                 name=helper_container_name,
