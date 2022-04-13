@@ -2,6 +2,8 @@ import os
 import base64
 import click
 import appdirs
+import string
+import random
 
 from colorama import init, Fore, Style
 
@@ -115,3 +117,18 @@ def check_write_permissions(folder):
         w_ok = False
 
     return w_ok
+
+
+def create_random_string(length: int = 15) -> str:
+    """
+    Create a random string of a-zA-Z0-9
+
+    Returns
+    -------
+    str
+        Random string
+    """
+    return ''.join(
+        random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+        for _ in range(length)
+    )

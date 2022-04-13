@@ -5,6 +5,7 @@ import requests
 import base64
 import json
 import signal
+import pathlib
 
 from dateutil.parser import parse
 from docker.client import DockerClient
@@ -35,11 +36,17 @@ def check_docker_running():
     """ Return True if docker engine is running"""
     try:
         docker_client.ping()
-    except Exception:
+    except Exception as e:
         log.error("Cannot reach the Docker engine! Please make sure Docker "
                   "is running.")
         log.warn("Exiting...")
+        log.debug(e)
         exit(1)
+
+
+def running_in_docker() -> bool:
+    """Return True if this code is executed within a Docker container."""
+    return pathlib.Path('/.dockerenv').exists()
 
 
 def registry_basic_auth_header(docker_client, registry):
@@ -290,6 +297,8 @@ def remove_container(container: Container, kill=False) -> None:
         Whether or not container should be killed before it is removed
     """
     if kill:
+        # TODO it would be nice to observe container status before attempting
+        # to kill it, so that we do not have to pass Exceptions
         try:
             container.kill()
         except Exception:
@@ -307,6 +316,13 @@ def get_server_config_name(container_name: str, scope: str):
 
     Docker container name of the server is formatted as
     f"{APPNAME}-{self.name}-{self.scope}-server". This will return {self.name}
+
+    Parameters
+    ----------
+    container_name: str
+        Name of the docker container in which the server is running
+    scope: str
+        Scope of the server (e.g. 'system' or 'user')
 
     Returns
     -------
