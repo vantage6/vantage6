@@ -5,12 +5,16 @@ import requests
 import base64
 import json
 import signal
+import pathlib
 
 from dateutil.parser import parse
 from requests.api import request
+from docker.client import DockerClient
+from docker.models.containers import Container
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
+from vantage6.common.globals import APPNAME
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
@@ -231,3 +235,88 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         except docker.errors.APIError as e:
             log.error(f"Failed to pull image! {image}")
             log.debug(e)
+
+
+def running_in_docker() -> bool:
+    """Return True if this code is executed within a Docker container."""
+    return pathlib.Path('/.dockerenv').exists()
+
+
+def get_container(docker_client: DockerClient, **filters) -> Container:
+    """
+    Return container if it exists after searching using kwargs
+    Returns
+    -------
+    Container or None
+        Container if it exists, else None
+    **filters:
+        These are arguments that will be passed to the client.container.list()
+        function. They should yield 0 or 1 containers as result (e.g.
+        name='something')
+    """
+    running_containers = docker_client.containers.list(
+        all=True, filters=filters
+    )
+    return running_containers[0] if running_containers else None
+
+
+def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
+    """
+    Kill and remove a docker container if it exists
+    Parameters
+    ----------
+    docker_client: DockerClient
+        A Docker client
+    **filters:
+        These are arguments that will be passed to the client.container.list()
+        function. They should yield 0 or 1 containers as result (e.g.
+        name='something')
+    """
+    container = get_container(docker_client, **filters)
+    if container:
+        log.warn("Removing container that was already running: "
+                 f"{container.name}")
+        remove_container(container, kill=True)
+
+
+def remove_container(container: Container, kill=False) -> None:
+    """
+    Removes a docker container
+    Parameters
+    ----------
+    container: Container
+        The container that should be removed
+    kill: bool
+        Whether or not container should be killed before it is removed
+    """
+    if kill:
+        try:
+            container.kill()
+        except Exception:
+            pass  # allow failure here, maybe container had already exited
+    try:
+        container.remove()
+    except Exception as e:
+        log.error(f"Failed to remove container {container.name}")
+        log.debug(e)
+
+
+def get_server_config_name(container_name: str, scope: str):
+    """
+    Get the configuration name of a server from its docker container name
+    Docker container name of the server is formatted as
+    f"{APPNAME}-{self.name}-{self.scope}-server". This will return {self.name}
+    Parameters
+    ----------
+    container_name: str
+        Name of the docker container in which the server is running
+    scope: str
+        Scope of the server (e.g. 'system' or 'user')
+    Returns
+    -------
+    str
+        A server's configuration name
+    """
+    idx_scope = container_name.rfind(scope)
+    length_app_name = len(APPNAME)
+    return container_name[length_app_name+1:idx_scope-1]
