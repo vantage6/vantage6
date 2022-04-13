@@ -62,6 +62,26 @@ class Rules(ServicesResources):
 
         parameters:
             - in: query
+              name: name
+              schema:
+                type: string
+              description: name of the rule
+            - in: query
+              name: operation
+              schema:
+                type: string
+              description: rule operation
+            - in: query
+              name: scope
+              schema:
+                type: string
+              description: rule scope
+            - in: query
+              name: role_id
+              schema:
+                type: integer
+              description: rules that are included in this role
+            - in: query
               name: include
               schema:
                 type: string (can be multiple)
@@ -89,6 +109,18 @@ class Rules(ServicesResources):
         tags: ["Rule"]
         """
         q = DatabaseSessionManager.get_session().query(db.Rule)
+
+        args = request.args
+
+        # filter by any field of this endpoint
+        for param in ['name', 'operation', 'scope']:
+            if param in args:
+                q = q.filter(getattr(db.Rule, param) == args[param])
+
+        # find roles containing a specific rule
+        if 'role_id' in args:
+            q = q.join(db.role_rule_association).join(db.Role)\
+                 .filter(db.Role.id == args['role_id'])
 
         # paginate results
         page = Pagination.from_query(q, request)

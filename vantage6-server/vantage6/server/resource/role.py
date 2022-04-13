@@ -126,10 +126,38 @@ class Roles(RoleBase):
 
         parameters:
             - in: query
-              name: include
+              name: name
               schema:
-                type: string (can be multiple)
-              description: what to include ('metadata')
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: description
+              schema:
+                type: string
+              description: >-
+                Description to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: organization_id
+              schema:
+                type: integer
+              description: organization id
+            - in: query
+              name: rule_id
+              schema:
+                type: integer
+              description: rule that is part of a role
+            - in: query
+              name: include_root
+              schema:
+                 type: boolean
+              description: whether or not to include root role
             - in: query
               name: page
               schema:
@@ -155,6 +183,31 @@ class Roles(RoleBase):
         q = DatabaseSessionManager.get_session().query(db.Role)
 
         auth_org_id = self.obtain_organization_id()
+        args = request.args
+
+        # filter by organization ids (include root role if desired)
+        org_filters = args.getlist('organization_id')
+        if org_filters:
+            if 'include_root' in args and args['include_root']:
+                q = q.filter(or_(
+                    db.Role.organization_id.in_(org_filters),
+                    db.Role.organization_id == None
+                ))
+            else:
+                q = q.filter(db.Role.organization_id).in_(org_filters)
+
+        # filter by one or more names or descriptions
+        for param in ['name', 'description']:
+            filters = args.getlist(param)
+            if filters:
+                q = q.filter(or_(*[
+                    getattr(db.Role, param).like(f) for f in filters
+                ]))
+
+        # find roles containing a specific rule
+        if 'rule_id' in args:
+            q = q.join(db.role_rule_association).join(db.Rule)\
+                 .filter(db.Rule.id == args['rule_id'])
 
         if not self.r.v_glo.can():
             own_role_ids = [role.id for role in g.user.roles]
@@ -347,11 +400,6 @@ class RoleRules(RoleBase):
               minimum: 1
               description: Role id
               required: true
-            - in: query
-              name: include
-              schema:
-                 type: string (can be multiple)
-              description: what to include ('task', 'metadata')
             - in: query
               name: page
               schema:

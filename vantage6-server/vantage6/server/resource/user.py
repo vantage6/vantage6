@@ -109,6 +109,67 @@ class Users(UserBase):
 
         parameters:
             - in: query
+              name: username
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: organization_id
+              schema:
+                type: integer
+              description: organization id
+            - in: query
+              name: firstname
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: lastname
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: email
+              schema:
+                type: string
+              description: >-
+                Email to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: role_id
+              schema:
+                type: integer
+              description: role that is assigned to user
+            - in: query
+              name: rule_id
+              schema:
+                type: integer
+              description: rule that is assigned to user
+            - in: query
+              name: last_seen_from
+              schema:
+                type: date (yyyy-mm-dd)
+              description: show only users seen since this date
+            - in: query
+              name: last_seen_till
+              schema:
+                type: date (yyyy-mm-dd)
+              description: show only users last seen before this date
+            - in: query
               name: page
               schema:
                 type: integer
@@ -130,9 +191,30 @@ class Users(UserBase):
 
         tags: ["User"]
         """
+        args = request.args
         q = DatabaseSessionManager.get_session().query(db.User)
 
-        # check permissions and apply filter if necessary
+
+        # filter by any field of this endpoint
+        for param in ['username', 'firstname', 'lastname', 'email']:
+            if param in args:
+                q = q.filter(getattr(db.User, param).like(args[param]))
+        if 'organization_id' in args:
+            q = q.filter(db.User.organization_id == args['organization_id'])
+        if f'last_seen_till' in args:
+            q = q.filter(db.User.last_seen <= args['last_seen_till'])
+        if f'last_seen_from' in args:
+            q = q.filter(db.User.last_seen >= args['last_seen_from'])
+
+        # find users with a particulare role or rule assigned
+        if 'role_id' in args:
+            q = q.join(db.Permission).join(db.Role)\
+                 .filter(db.Role.id == args['role_id'])
+        if 'rule_id' in args:
+            q = q.join(db.UserPermission).join(db.Rule)\
+                 .filter(db.Rule.id == args['rule_id'])
+
+        # check permissions and apply filter if neccassary
         if not self.r.v_glo.can():
             if self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
