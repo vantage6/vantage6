@@ -25,20 +25,23 @@ import json
 
 from pathlib import Path
 from threading import Thread
+from typing import Union
 from socketio import ClientNamespace, Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
-from vantage6.common.docker_addons import (
-    ContainerKillListener, check_docker_running
+from vantage6.common.docker.addons import (
+    ContainerKillListener, check_docker_running, running_in_docker
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.cli.context import NodeContext
+from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
 from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
 from vantage6.node.docker.docker_manager import DockerManager
-from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
 
 
@@ -179,8 +182,14 @@ class Node(object):
         self.connect_to_socket()
 
         # setup docker isolated network manager
-        isolated_network_mgr = \
-            IsolatedNetworkManager(self.ctx.docker_network_name)
+        internal_ = running_in_docker()
+        if not internal_:
+            self.log.warn(
+                "Algorithms have internet connection! "
+                "This happens because you use 'vnode-local'!"
+            )
+        isolated_network_mgr = NetworkManager(self.ctx.docker_network_name)
+        isolated_network_mgr.create_network(is_internal=internal_)
 
         # Setup tasks dir
         self._set_task_dir(self.ctx)
@@ -547,10 +556,19 @@ class Node(object):
             self.__vpn_dir = ctx.vpn_dir
 
     def setup_vpn_connection(
-            self, isolated_network_mgr: IsolatedNetworkManager, ctx
+        self,
+        isolated_network_mgr: NetworkManager,
+        ctx: Union[DockerNodeContext, NodeContext]
     ) -> VPNManager:
         """
         Setup container which has a VPN connection
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Manager for the isolated network
+        ctx: NodeContext
+            Context object for the node
 
         Returns
         -------

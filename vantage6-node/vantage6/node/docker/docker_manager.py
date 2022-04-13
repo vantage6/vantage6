@@ -16,11 +16,11 @@ from typing import Dict, List, NamedTuple, Union
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
+from vantage6.common.docker.addons import running_in_docker
 from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.utils import running_in_docker
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
-from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.task_manager import DockerTaskManager
 
 log = logging.getLogger(logger_name(__name__))
@@ -45,7 +45,7 @@ class DockerManager(DockerBaseManager):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, ctx, isolated_network_mgr: IsolatedNetworkManager,
+    def __init__(self, ctx, isolated_network_mgr: NetworkManager,
                  vpn_manager: VPNManager, tasks_dir: Path) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
@@ -54,7 +54,7 @@ class DockerManager(DockerBaseManager):
             ----------
             ctx: DockerNodeContext or NodeContext
                 Context object from which some settings are obtained
-            isolated_network_mgr: IsolatedNetworkManager
+            isolated_network_mgr: NetworkManager
                 Manager for the isolated network
             vpn_manager: VPNManager
                 VPN Manager object
@@ -220,7 +220,7 @@ class DockerManager(DockerBaseManager):
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup()
-        self.isolated_network_mgr.cleanup()
+        self.isolated_network_mgr.delete()
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
             tmp_vol_name: str, token: str, database: str

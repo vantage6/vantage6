@@ -1,6 +1,6 @@
 import docker
 
-from vantage6.node.docker.network_manager import IsolatedNetworkManager
+from vantage6.common.docker.network_manager import NetworkManager
 
 
 class DockerBaseManager(object):
@@ -8,7 +8,7 @@ class DockerBaseManager(object):
     Base class for docker-using classes. Contains simple methods that are used
     by multiple derived classes
     """
-    def __init__(self, isolated_network_mgr: IsolatedNetworkManager) -> None:
+    def __init__(self, isolated_network_mgr: NetworkManager) -> None:
         self.isolated_network_mgr = isolated_network_mgr
 
         # Connect to docker daemon
