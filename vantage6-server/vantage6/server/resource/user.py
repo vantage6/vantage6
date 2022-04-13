@@ -409,6 +409,13 @@ class User(UserBase):
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
 
+        if data["username"]:
+            if (user.username != data["username"] and
+                    db.User.exists("username", data["username"])):
+                return {
+                    "msg": "User with that username already exists"
+                }, HTTPStatus.BAD_REQUEST
+            user.username = data["username"]
         if data["firstname"]:
             user.firstname = data["firstname"]
         if data["lastname"]:
@@ -502,6 +509,9 @@ class User(UserBase):
         except sqlalchemy.exc.IntegrityError as e:
             log.error(e)
             user.session.rollback()
+            return {
+                "msg": "User could not be updated with those parameters."
+            }, HTTPStatus.BAD_REQUEST
             # TODO BvB 2021-08-27 return msg that user was not updated?
 
         return user_schema.dump(user).data, HTTPStatus.OK
