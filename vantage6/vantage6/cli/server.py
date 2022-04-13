@@ -13,10 +13,11 @@ from docker.client import DockerClient
 
 from vantage6.common import (info, warning, error, debug as debug_msg,
                              check_config_write_permissions)
-from vantage6.common.docker_addons import (
+from vantage6.common.docker.addons import (
     pull_if_newer, check_docker_running, remove_container_if_exists,
     get_server_config_name
 )
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
     APPNAME,
     STRING_ENCODING,
@@ -195,7 +196,8 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
         ))
 
         environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}"
+            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}",
+            "VANTAGE6_CONFIG_NAME": ctx.config_file_name
         }
 
     else:
@@ -203,10 +205,17 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
                 "is reachable from the Docker container")
         info("Consider using the docker-compose method to start a server")
 
+    # Create a docker network for the server and other services like RabbitMQ
+    # to reside in
+    server_network_mgr = NetworkManager(
+        network_name=f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
+    )
+    server_network_mgr.create_network(is_internal=False)
+
     # Note that ctx.data_dir has been created at this point, which is required
     # for putting some RabbitMQ configuration files inside
     info('Starting RabbitMQ container')
-    _start_rabbitmq(ctx, rabbitmq_image)
+    _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
 
     # The `ip` and `port` refer here to the ip and port within the container.
     # So we do not really care that is it listening on all interfaces.
@@ -234,7 +243,8 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
         ports={f"{internal_port}/tcp": (ip, port_)},
         name=ctx.docker_container_name,
         auto_remove=not keep,
-        tty=True
+        tty=True,
+        network=server_network_mgr.network_name
     )
 
     info(f"Success! container id = {container}")
@@ -250,14 +260,16 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
                 exit(0)
 
 
-def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str) -> None:
+def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
+                    network_mgr: NetworkManager) -> None:
     """ Starts a RabbitMQ container """
     if not ctx.config.get('rabbitmq'):
         warning('Message queue disabled! This means that the server '
                 'application cannot scale horizontally!')
     else:
         # kick off RabbitMQ container
-        rabbit_mgr = RabbitMQManager(ctx, rabbitmq_image)
+        rabbit_mgr = RabbitMQManager(
+            ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
         rabbit_mgr.start()
 
 

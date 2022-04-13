@@ -11,9 +11,11 @@ from typing import Dict
 
 from vantage6.common.globals import APPNAME
 from vantage6.common import debug, info, error
-from vantage6.common.docker_addons import remove_container_if_exists
+from vantage6.common.docker.addons import remove_container_if_exists
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.cli.context import ServerContext
 from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
+from vantage6.cli.globals import RABBIT_TIMEOUT
 
 DEFAULT_RABBIT_IMAGE = 'harbor2.vantage6.ai/infrastructure/rabbitmq'
 RABBIT_CONFIG = 'rabbitmq.config'
@@ -21,7 +23,7 @@ RABBIT_DIR = 'rabbitmq'
 QUEUE_PORT = 5672
 
 
-def get_rabbitmq_uri(rabbit_config: Dict) -> str:
+def get_rabbitmq_uri(rabbit_config: Dict, server_name: str) -> str:
     """
     Get the URI to reach the RabbitMQ queue
 
@@ -29,6 +31,8 @@ def get_rabbitmq_uri(rabbit_config: Dict) -> str:
     ----------
     rabbit_config: Dict
         A dictionary with username and password for RabbitMQ queue
+    server_name: str
+        Configuration name of the running server
 
     Returns
     -------
@@ -38,7 +42,8 @@ def get_rabbitmq_uri(rabbit_config: Dict) -> str:
     VHOST = '/'
     return (
         f"amqp://{rabbit_config['user']}:{rabbit_config['password']}@"
-        f"host.docker.internal:{QUEUE_PORT}/{VHOST}"
+        # f"host.docker.internal:{QUEUE_PORT}/{VHOST}"
+        f"{APPNAME}-{server_name}-rabbitmq:{QUEUE_PORT}/{VHOST}"
     )
 
 
@@ -46,7 +51,8 @@ class RabbitMQManager:
     """
     Manages the RabbitMQ docker container
     """
-    def __init__(self, ctx: ServerContext, image: str = None) -> None:
+    def __init__(self, ctx: ServerContext, network_mgr: NetworkManager,
+                 image: str = None) -> None:
         """
         Parameters
         ----------
@@ -54,13 +60,17 @@ class RabbitMQManager:
             Configuration object
         queue_uri: str
             URI where the RabbitMQ instance should be running
+        network_mgr: NetworkManager
+            Network manager for network in which server container resides
         """
         self.ctx = ctx
         rabbit_settings = self.ctx.config.get('rabbitmq')
         self.rabbit_user = rabbit_settings['user']
         self.rabbit_pass = rabbit_settings['password']
+        self.definitions_file = Path(self.ctx.data_dir / 'definitions.json')
+        self.network_mgr = network_mgr
 
-        self.queue_uri = get_rabbitmq_uri(rabbit_settings)
+        self.queue_uri = get_rabbitmq_uri(rabbit_settings, ctx.name)
         self.docker = docker.from_env()
         self.image = image if image else DEFAULT_RABBIT_IMAGE
         self.rabbit_container_name = f'{APPNAME}-{ctx.name}-rabbitmq'
@@ -96,10 +106,11 @@ class RabbitMQManager:
             ports=ports,
             detach=True,
             restart_policy={"Name": "always"},
-            hostname=f'{APPNAME}-{self.ctx.name}-rabbit',
+            hostname=f'{APPNAME}-{self.ctx.name}-rabbitmq',
             labels={
                 f"{APPNAME}-type": "rabbitmq",
-            }
+            },
+            network=self.network_mgr.network_name
         )
 
         # Wait until RabbitMQ is up before continuing with other stuff
@@ -107,21 +118,20 @@ class RabbitMQManager:
 
     def _wait_for_startup(self) -> None:
         """ Wait until RabbitMQ has been initialized """
-        # TODO make the time / # attempts settable? Is this enough time (5m)?
-        ATTEMPTS = 31
+        INTERVAL = 10
+        ATTEMPTS = int((RABBIT_TIMEOUT + INTERVAL) / INTERVAL)
         is_running = False
         for _ in range(ATTEMPTS):
             if self.is_running():
                 is_running = True
                 break
-            debug("RabbitMQ is not yet running, trying again in 10s...")
-            time.sleep(10)
+            debug(f"RabbitMQ is not yet running. Retrying in {INTERVAL}s...")
+            time.sleep(INTERVAL)
         if is_running:
             info("RabbitMQ was started successfully!")
         else:
-            # TODO exit or disable?
             error("Could not start RabbitMQ! Exiting...")
-            exit(0)
+            exit(1)
 
     def is_running(self) -> bool:
         """
@@ -146,23 +156,22 @@ class RabbitMQManager:
         rabbit_definitions = self._get_rabbitmq_definitions()
 
         # write the RabbitMQ definition to file(s)
-        definitions_filepath = Path(self.ctx.data_dir / 'definitions.json')
-        with open(definitions_filepath, 'w') as f:
+        with open(self.definitions_file, 'w') as f:
             json.dump(rabbit_definitions, f, indent=2)
 
         # write RabbitMQ config to file
         rabbit_conf = \
-            Path(os.path.dirname(os.path.realpath(__file__))) / RABBIT_CONFIG
+            Path(__file__).parent.resolve() / RABBIT_CONFIG
         shutil.copyfile(rabbit_conf, self.ctx.data_dir / RABBIT_CONFIG)
 
         # check if a directory for persistent RabbitMQ storage exists,
         # otherwise create it
         rabbit_data_dir = self.ctx.data_dir / RABBIT_DIR
-        if not os.path.exists(rabbit_data_dir):
-            os.makedirs(rabbit_data_dir)
+        if not rabbit_data_dir.exists():
+            rabbit_data_dir.mkdir(parents=True, exist_ok=True)
 
         return {
-            definitions_filepath: {
+            self.definitions_file: {
                 'bind': '/etc/rabbitmq/definitions.json', 'mode': 'ro'
             },
             self.ctx.data_dir / RABBIT_CONFIG: {
