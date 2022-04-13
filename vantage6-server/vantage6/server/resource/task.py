@@ -247,6 +247,19 @@ class Tasks(TaskBase):
                 "the collaboration."
             )}, HTTPStatus.BAD_REQUEST
 
+        # check if all the organizations have a registered node
+        nodes = DatabaseSessionManager.get_session().query(db.Node)\
+            .filter(db.Node.organization_id.in_(org_ids))\
+            .filter(db.Node.collaboration_id == collaboration_id)\
+            .all()
+        if len(nodes) < len(org_ids):
+            present_nodes = [node.organization_id for node in nodes]
+            missing = [str(id) for id in org_ids if id not in present_nodes]
+            return {"msg": (
+                "Cannot create this task because there are no nodes registered"
+                f" for the following organization(s): {', '.join(missing)}."
+            )}, HTTPStatus.BAD_REQUEST
+
         # figure out the initiator organization of the task
         if g.user:
             initiator = g.user.organization
