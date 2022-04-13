@@ -100,6 +100,12 @@ class VPNManager(DockerBaseManager):
             devices=['/dev/net/tun'],
         )
 
+        # check successful initiation of VPN connection
+        if self.has_connection():
+            self.log.info("VPN client container was successfully started!")
+        else:
+            raise ConnectionError("VPN connection not established!")
+
         # attach vpnclient to isolated network
         self.log.debug("Connecting VPN client container to isolated network")
         self.isolated_network_mgr.connect(
@@ -116,28 +122,25 @@ class VPNManager(DockerBaseManager):
             return
         self._configure_host_network()
 
-        # set successful initiation of VPN connection
-        self.has_vpn = True
-        self.log.debug("VPN client container was started")
-
     def has_connection(self) -> bool:
         """ Return True if VPN connection is active """
-        if not self.has_vpn:
-            return False
-        # check if the VPN container has an IP address in the VPN namespace
-        try:
-            # if there is a VPN connection, the following command will return
-            # a json vpn interface. If not, it will return "Device "tun0" does
-            # not exist."
-            _, vpn_interface = self.vpn_client_container.exec_run(
-                'ip --json addr show dev tun0'
-            )
-            vpn_interface = json.loads(vpn_interface)
-        except JSONDecodeError:
-            self.has_vpn = False
-            return False
-        self.has_vpn = True  # TODO rid boolean and only use this function?
-        return True
+        self.log.debug("Waiting for VPN connection. This may take a minute...")
+        n_attempt = 0
+        self.has_vpn = False
+        while n_attempt < MAX_CHECK_VPN_ATTEMPTS:
+            n_attempt += 1
+            try:
+                _, vpn_interface = self.vpn_client_container.exec_run(
+                    'ip --json addr show dev tun0'
+                )
+                vpn_interface = json.loads(vpn_interface)
+                self.has_vpn = True
+                break
+            except (JSONDecodeError, docker.errors.APIError):
+                # JSONDecodeError if VPN is not setup yet, APIError if VPN
+                # container is restarting (e.g. due to connection errors)
+                time.sleep(1)
+        return self.has_vpn
 
     def exit_vpn(self) -> None:
         """
@@ -177,21 +180,16 @@ class VPNManager(DockerBaseManager):
         str
             IP address assigned to VPN client container by VPN server
         """
-        # VPN might not be fully set up at this point. Therefore, poll to
-        # check. When it is ready, extract the IP address.
-        n_attempt = 0
-        while n_attempt < MAX_CHECK_VPN_ATTEMPTS:
-            n_attempt += 1
-            try:
-                _, vpn_interface = self.vpn_client_container.exec_run(
-                    'ip --json addr show dev tun0'
-                )
-                vpn_interface = json.loads(vpn_interface)
-                break
-            except (JSONDecodeError, docker.errors.APIError):
-                # JSONDecodeError if VPN is not setup yet, APIError if VPN
-                # container is restarting (e.g. due to connection errors)
-                time.sleep(1)
+        try:
+            _, vpn_interface = self.vpn_client_container.exec_run(
+                'ip --json addr show dev tun0'
+            )
+            vpn_interface = json.loads(vpn_interface)
+        except (JSONDecodeError, docker.errors.APIError):
+            # JSONDecodeError if VPN is not setup yet, APIError if VPN
+            # container is restarting (e.g. due to connection errors)
+            raise ConnectionError(
+                "Could not get VPN IP: VPN is not connected!")
         return vpn_interface[0]['addr_info'][0]['local']
 
     def forward_vpn_traffic(self, helper_container: Container,

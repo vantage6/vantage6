@@ -577,7 +577,7 @@ class Node(object):
         """
         ovpn_file = os.path.join(self.__vpn_dir, VPN_CONFIG_FILE)
 
-        self.log.debug("Setting up VPN client container")
+        self.log.info("Setting up VPN client container")
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
         vpn_manager = VPNManager(
