@@ -18,3 +18,4 @@ psutil==5.7.0
 gevent==20.9.0
 flask-mail==0.9.1
 Flask-Principal==0.4.0
+kombu==5.2.2
