@@ -547,6 +547,9 @@ def cli_node_create_private_key(name, config, environment, system_folders,
         client = create_client_and_authenticate(ctx)
         organization_name = client.whoami.organization_name
 
+    # create directory where private key goes if it doesn't exist yet
+    ctx.type_data_folder(system_folders).mkdir(parents=True, exist_ok=True)
+
     # generate new key, and save it
     filename = f"privkey_{organization_name}.pem"
     file_ = ctx.type_data_folder(system_folders) / filename
@@ -699,7 +702,7 @@ def cli_node_remove(name, environment, system_folders):
                       system_folders=system_folders)
 
     # remove the docker volume and any temporary volumes
-    debug(f"Deleting docker volumes")
+    debug("Deleting docker volumes")
     volumes = client.volumes.list()
     for vol in volumes:
         if vol.name.startswith(ctx.docker_volume_name):  # includes tmp volumes
