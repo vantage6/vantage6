@@ -297,7 +297,11 @@ class ClientBase(object):
         Exception
             Failed to authenticate
         """
-        self.log.debug(f"Authenticating using {credentials}")
+        if 'username' in credentials:
+            self.log.debug(
+                f"Authenticating user {credentials['username']}...")
+        elif 'api_key' in credentials:
+            self.log.debug('Authenticating node...')
 
         # authenticate to the central server
         url = self.generate_path_to(path)
