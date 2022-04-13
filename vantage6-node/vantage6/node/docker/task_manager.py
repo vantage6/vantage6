@@ -31,7 +31,7 @@ class DockerTaskManager(DockerBaseManager):
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
                  result_id: int, tasks_dir: Path,
-                 isolated_network_mgr: IsolatedNetworkManager,
+                 isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: Union[str, None] = None):
         """
@@ -53,8 +53,7 @@ class DockerTaskManager(DockerBaseManager):
             Manager of isolated network to which algorithm needs to connect
         databases: Dict
             List of databases
-        
-        : str
+        docker_volume_name: str
             Name of the docker volume
         alpine_image: str or None
             Name of alternative Alpine image to be used

@@ -27,7 +27,7 @@ class VPNManager(DockerBaseManager):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, isolated_network_mgr: IsolatedNetworkManager,
+    def __init__(self, isolated_network_mgr: NetworkManager,
                  node_name: str, vpn_volume_name: str, vpn_subnet: str,
                  alpine_image: Union[str, None] = None) -> None:
         """
@@ -35,7 +35,7 @@ class VPNManager(DockerBaseManager):
 
         Parameters
         ----------
-        isolated_network_mgr: IsolatedNetworkManager
+        isolated_network_mgr: NetworkManager
             An object that manages the node's isolated network
         node_name: str
             The name of the node (from config)
@@ -100,18 +100,19 @@ class VPNManager(DockerBaseManager):
             devices=['/dev/net/tun'],
         )
 
-        # check successful initiation of VPN connection
-        if self.has_connection():
-            self.log.info("VPN client container was successfully started!")
-        else:
-            raise ConnectionError("VPN connection not established!")
-
         # attach vpnclient to isolated network
         self.log.debug("Connecting VPN client container to isolated network")
         self.isolated_network_mgr.connect(
             container_name=self.vpn_client_container_name,
             aliases=[self.vpn_client_container_name]
         )
+
+        # check successful initiation of VPN connection
+        if self.has_connection():
+            self.log.info("VPN client container was successfully started!")
+        else:
+            raise ConnectionError("VPN connection not established!")
+
 
         # create network exception so that packet transfer between VPN network
         # and the vpn client container is allowed
