@@ -198,7 +198,7 @@ class ClientBase(object):
         # TODO: should check for a non 2xx response
         if response.status_code > 210:
             self.log.error(
-                    f'Server responded with error code: {response.status_code}')
+                f'Server responded with error code: {response.status_code}')
             try:
                 self.log.error("msg:"+response.json().get("msg", ""))
             except json_lib.JSONDecodeError:
@@ -276,7 +276,8 @@ class ClientBase(object):
 
         self.cryptor = cryptor
 
-    def authenticate(self, credentials: dict, path: str="token/user") -> None:
+    def authenticate(self, credentials: dict,
+                     path: str = "token/user") -> None:
         """Authenticate to the vantage6-server
 
         It allows users, nodes and containers to sign in. Credentials can
@@ -349,7 +350,7 @@ class ClientBase(object):
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_='', description='',
                   organization_ids: list = None,
-                  data_format=LEGACY, database: str='default') -> dict:
+                  data_format=LEGACY, database: str = 'default') -> dict:
         """Post a new task at the server
 
         It will also encrypt `input_` for each receiving organization.
@@ -615,11 +616,12 @@ class UserClient(ClientBase):
                 organization_name=organization_name
             )
 
-            self.log.info(f" --> Succesfully authenticated")
+            self.log.info(" --> Succesfully authenticated")
             self.log.info(f" --> Name: {name} (id={id_})")
-            self.log.info(f" --> Organization: {organization_name} (id={organization_id})")
+            self.log.info(f" --> Organization: {organization_name} "
+                          f"(id={organization_id})")
         except Exception as e:
-            self.log.info(f'--> Retrieving additional user info failed!')
+            self.log.info('--> Retrieving additional user info failed!')
             self.log.debug(e)
 
     class Util(ClientBase.SubClient):
@@ -645,7 +647,8 @@ class UserClient(ClientBase):
             """
             return self.parent.request('health')
 
-        def reset_my_password(self, email: str=None, username: str=None) -> dict:
+        def reset_my_password(self, email: str = None,
+                              username: str = None) -> dict:
             """Start reset password procedure
 
             Either a username of email needs to be provided.
@@ -696,7 +699,7 @@ class UserClient(ClientBase):
             self.parent.log.info(f'--> {msg}')
             return result
 
-        def generate_private_key(self, file_: str=None) -> None:
+        def generate_private_key(self, file_: str = None) -> None:
             """Generate new private key
 
             ....
@@ -805,7 +808,7 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(self, name: str, organizations: list,
-                   encrypted: bool=False) -> dict:
+                   encrypted: bool = False) -> dict:
             """Create new collaboration
 
             Parameters
@@ -926,8 +929,8 @@ class UserClient(ClientBase):
             })
 
         @post_filtering(iterable=False)
-        def update(self, id_: int, name: str=None, organization: int=None,
-                   collaboration: int=None) -> dict:
+        def update(self, id_: int, name: str = None, organization: int = None,
+                   collaboration: int = None) -> dict:
             """Update node information
 
             Parameters
@@ -1009,7 +1012,7 @@ class UserClient(ClientBase):
             return self.parent.request('organization', params=params)
 
         @post_filtering(iterable=False)
-        def get(self, id_: int=None) -> dict:
+        def get(self, id_: int = None) -> dict:
             """View specific organization
 
             Parameters
@@ -1030,9 +1033,10 @@ class UserClient(ClientBase):
             return self.parent.request(f'organization/{id_}')
 
         @post_filtering(iterable=False)
-        def update(self, id_:int=None, name: str=None, address1: str=None,
-                   address2: str=None, zipcode: str=None, country: str=None,
-                   domain: str=None, public_key: str=None) -> dict:
+        def update(self, id_: int = None, name: str = None,
+                   address1: str = None, address2: str = None,
+                   zipcode: str = None, country: str = None,
+                   domain: str = None, public_key: str = None) -> dict:
             """Update organization information
 
             Parameters
@@ -1077,7 +1081,7 @@ class UserClient(ClientBase):
             )
 
         def create(self, name: str, address1: str, address2: str, zipcode: str,
-                   country: str, domain: str, public_key: str=None) -> dict:
+                   country: str, domain: str, public_key: str = None) -> dict:
             """Create new organization
 
             Parameters
@@ -1127,7 +1131,7 @@ class UserClient(ClientBase):
         def list(self, username: str = None, organization: int = None,
                  firstname: str = None, lastname: str = None,
                  email: str = None, role: int = None, rule: int = None,
-                 last_seen_from: str = None, last_seen_till : str = None,
+                 last_seen_from: str = None, last_seen_till: str = None,
                  page: int = 1, per_page: int = 20,
                  include_metadata: bool = True) -> list:
             """List users
@@ -1178,7 +1182,7 @@ class UserClient(ClientBase):
             return self.parent.request('user', params=params)
 
         @post_filtering(iterable=False)
-        def get(self, id_: int=None) -> dict:
+        def get(self, id_: int = None) -> dict:
             """View user information
 
             Parameters
@@ -1197,10 +1201,10 @@ class UserClient(ClientBase):
             return self.parent.request(f'user/{id_}')
 
         @post_filtering(iterable=False)
-        def update(self, id_: int=None, firstname: str=None,
-                   lastname: str=None, password: str=None,
-                   organization: int=None, rules: list=None,
-                   roles: list=None, email: str=None) -> dict:
+        def update(self, id_: int = None, firstname: str = None,
+                   lastname: str = None, password: str = None,
+                   organization: int = None, rules: list = None,
+                   roles: list = None, email: str = None) -> dict:
             """Update user details
 
             In case you do not supply a user_id, your user is being
@@ -1255,8 +1259,8 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(self, username: str, firstname: str, lastname: str,
-                   password: str, email: str, organization: int=None,
-                   roles: list=[], rules: list=[]) -> dict:
+                   password: str, email: str, organization: int = None,
+                   roles: list = [], rules: list = []) -> dict:
             """Create new user
 
             Parameters
@@ -1391,8 +1395,8 @@ class UserClient(ClientBase):
             })
 
         @post_filtering(iterable=True)
-        def update(self, role: int, name: str=None, description: str=None,
-                   rules: list=None) -> dict:
+        def update(self, role: int, name: str = None, description: str = None,
+                   rules: list = None) -> dict:
             """Update role
 
             Parameters
@@ -1536,7 +1540,8 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
-                   data_format: str=LEGACY, database: str='default') -> dict:
+                   data_format: str = LEGACY,
+                   database: str = 'default') -> dict:
             """Create a new task
 
             Parameters
@@ -1589,7 +1594,7 @@ class UserClient(ClientBase):
     class Result(ClientBase.SubClient):
 
         @post_filtering(iterable=False)
-        def get(self, id_: int, include_task: bool=False) -> dict:
+        def get(self, id_: int, include_task: bool = False) -> dict:
             """View a specific result
 
             Parameters
@@ -1717,12 +1722,12 @@ class UserClient(ClientBase):
 
             return cleaned_results
 
-        def from_task(self, task_id: int, include_task: bool=False):
+        def from_task(self, task_id: int, include_task: bool = False):
             self.parent.log.info('--> Attempting to decrypt results!')
 
             # get_results also handles decryption
             results = self.parent.get_results(task_id=task_id,
-                                             include_task=include_task)
+                                              include_task=include_task)
             cleaned_results = []
             for result in results:
                 if result.get('result'):
