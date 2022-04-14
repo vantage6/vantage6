@@ -15,6 +15,7 @@ import shutil
 from typing import Dict, List, NamedTuple, Union
 from pathlib import Path
 
+from vantage6.common.docker_addons import get_container
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import running_in_docker
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -349,3 +350,29 @@ class DockerManager(DockerBaseManager):
             except docker.errors.APIError as e:
                 self.log.warn(f"Could not login to {registry.get('registry')}")
                 self.log.debug(e)
+
+    def link_container_to_network(self, container_name: str,
+                                  config_alias: str) -> None:
+        """
+        Link a docker container to the isolated docker network
+
+        Parameters
+        ----------
+        container_name: str
+            Name of the docker container to be linked to the network
+        config_alias: str
+            Alias of the docker container defined in the config file
+        """
+        container = get_container(
+            docker_client=self.docker, name=container_name
+        )
+        if not container:
+            self.log.error(f"Could not link docker container {container_name} "
+                           "that was specified in the configuration file to "
+                           "the isolated docker network.")
+            self.log.error("Container not found!")
+            return
+        self.isolated_network_mgr.connect(
+            container_name=container_name,
+            aliases=[config_alias]
+        )
