@@ -1999,6 +1999,4 @@ class ContainerClient(ClientBase):
 
 
 # For backwards compatibility
-ClientContainerProtocol = ContainerClient
 Client = UserClient
-ClientBaseProtocol = ClientBase
