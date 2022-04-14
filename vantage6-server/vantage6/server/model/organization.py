@@ -8,7 +8,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from vantage6.common.globals import STRING_ENCODING
 
 from .base import Base, DatabaseSessionManager
-
+from vantage6.server.model.result import Result
 
 class Organization(Base):
     """A legal entity.
@@ -35,6 +35,11 @@ class Organization(Base):
     users = relationship("User", back_populates="organization")
     created_tasks = relationship("Task", back_populates="initiator")
     roles = relationship("Role", back_populates="organization")
+
+    def get_result_ids(self):
+        session = DatabaseSessionManager.get_session()
+        return session.query(Result.id)\
+                      .filter(Result.organization_id == self.id).all()
 
     @classmethod
     def get_by_name(cls, name):
