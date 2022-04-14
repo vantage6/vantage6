@@ -13,7 +13,6 @@ algorithm.
 import requests
 import os
 import logging
-import json
 
 from flask import Flask, request, jsonify
 
@@ -22,8 +21,6 @@ from vantage6.node.util import (
     base64s_to_bytes,
     bytes_to_base64s
 )
-from vantage6.node.server_io import ClientNodeProtocol
-from vantage6.client.encryption import CryptorBase, DummyCryptor, RSACryptor
 
 # Setup FLASK
 app = Flask(__name__)
@@ -196,7 +193,6 @@ def proxy_results(id):
             f"{url}/result/{id}",
             headers={'Authorization': auth}
         )
-        encrypted_input = response["result"]
         response["result"] = bytes_to_base64s(
             server_io.cryptor.decrypt_str_to_bytes(
                 response["result"]
@@ -233,13 +229,9 @@ def proxy(central_server_path):
     # if "Authorization" in request.headers:
     try:
         auth = request.headers['Authorization']
-        auth_found = True
-    except Exception as e:
+    except Exception:
         log.info("No authorization header found, this could lead to errors")
         auth = None
-        auth_found = False
-
-    # log.debug(f"method = {method_name}, auth = {auth_found}")
 
     api_url = f"{url}/{central_server_path}"
     # print("*************")
