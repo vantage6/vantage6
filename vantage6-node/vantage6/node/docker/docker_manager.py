@@ -15,7 +15,7 @@ import shutil
 from typing import Dict, List, NamedTuple, Union
 from pathlib import Path
 
-from vantage6.common.docker_addons import get_container
+from vantage6.common.docker.addons import get_container
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import running_in_docker
 from vantage6.node.docker.docker_base import DockerBaseManager
