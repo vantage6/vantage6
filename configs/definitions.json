@@ -1,0 +1,30 @@
+{
+    "rabbit_version": "3.6.6",
+    "users": [
+     {
+      "name": "guest",
+      "password_hash": "iqKLWk6RyXYeiymcuQfeMJFSO1dTZjIIBvy6iAM6qnAXILTa",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+     }
+    ],
+    "vhosts": [
+     {
+      "name": "/"
+     }
+    ],
+    "permissions": [
+     {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+     }
+    ],
+    "parameters": [],
+    "policies": [],
+    "queues": [],
+    "exchanges": [],
+    "bindings": []
+  }
