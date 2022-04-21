@@ -90,6 +90,7 @@ class ServerApp:
 
         # make specific log settings (muting etc)
         self.configure_logging()
+        log.info("Initialization done")
 
         # set the serv
         self.__version__ = __version__
@@ -99,6 +100,8 @@ class ServerApp:
         rabbit_config = self.ctx.config.get('rabbitmq')
         msg_queue = get_rabbitmq_uri(rabbit_config, self.ctx.name) \
             if rabbit_config else None
+
+        log.debug(f'Connecting to msg queue: {msg_queue}')
         try:
             socketio = SocketIO(
                 self.app,
