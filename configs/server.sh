@@ -1,5 +1,7 @@
 echo "[server.sh start]"
 
+/wait
+
 uwsgi \
     --http :5000 \
     --gevent 1000 \
