@@ -98,8 +98,11 @@ class ServerApp:
     def setup_socket_connection(self):
 
         rabbit_config = self.ctx.config.get('rabbitmq')
-        msg_queue = get_rabbitmq_uri(rabbit_config, self.ctx.name) \
-            if rabbit_config else None
+        if 'uri' in rabbit_config:
+            msg_queue = rabbit_config['uri']
+        else:
+            msg_queue = get_rabbitmq_uri(rabbit_config, self.ctx.name) \
+                if rabbit_config else None
 
         log.debug(f'Connecting to msg queue: {msg_queue}')
         try:
