@@ -1,9 +1,7 @@
 echo "[server.sh start]"
 
-/wait
-
 uwsgi \
-    --http :5000 \
+    --http :80 \
     --gevent 1000 \
     --http-websockets \
     --master --callable app --disable-logging \
