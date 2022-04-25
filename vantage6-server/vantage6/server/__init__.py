@@ -110,7 +110,8 @@ class ServerApp:
                 self.app,
                 async_mode='gevent_uwsgi',
                 message_queue=msg_queue,
-                ping_timeout=60
+                ping_timeout=60,
+                cors_allowed_origins='*'
             )
         except Exception as e:
             log.warning('Default socketio settings failed, attempt to run '
