@@ -66,8 +66,7 @@ class RabbitMQManager:
             Network manager for network in which server container resides
         """
         self.ctx = ctx
-        rabbit_settings = self.ctx.config.get('rabbitmq')
-        self.queue_uri = rabbit_settings['uri']
+        self.queue_uri = self.ctx.config.get('rabbitmq_uri')
         rabbit_splitted = split_rabbitmq_uri(self.queue_uri)
         self.rabbit_user = rabbit_splitted['user']
         self.rabbit_pass = rabbit_splitted['password']
