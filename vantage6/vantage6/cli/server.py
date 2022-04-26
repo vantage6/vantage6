@@ -263,7 +263,7 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
 def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
                     network_mgr: NetworkManager) -> None:
     """ Starts a RabbitMQ container """
-    if not ctx.config.get('rabbitmq'):
+    if not ctx.config.get('rabbitmq_uri'):
         warning('Message queue disabled! This means that the server '
                 'application cannot scale horizontally!')
     else:

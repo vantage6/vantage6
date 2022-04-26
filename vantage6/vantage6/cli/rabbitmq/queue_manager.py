@@ -22,7 +22,7 @@ RABBIT_CONFIG = 'rabbitmq.config'
 RABBIT_DIR = 'rabbitmq'
 
 
-def split_rabbitmq_uri(rabbit_uri: str) -> Dict[str]:
+def split_rabbitmq_uri(rabbit_uri: str) -> Dict:
     """
     Get details (user, pass, host, vhost, port) from a RabbitMQ uri
 
@@ -36,9 +36,9 @@ def split_rabbitmq_uri(rabbit_uri: str) -> Dict[str]:
     Dict[str]
         The vhost defined in the RabbitMQ URI
     """
-    user_details, location_details = rabbit_uri.split('@')
-    user, password = user_details.split(':')
-    host, remainder = location_details.split(':')
+    (user_details, location_details) = rabbit_uri.split('@', 1)
+    (user, password) = user_details.split('/')[-1].split(':', 1)
+    (host, remainder) = location_details.split(':', 1)
     port, vhost = remainder.split('/', 1)
     return {
         'user': user,
