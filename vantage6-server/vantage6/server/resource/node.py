@@ -107,6 +107,45 @@ class Nodes(NodeBase):
 
         parameters:
             - in: query
+              name: name
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: organization_id
+              schema:
+                type: integer
+              description: organization id
+            - in: query
+              name: collaboration_id
+              schema:
+                type: integer
+              description: collaboration id
+            - in: query
+              name: status
+              schema:
+                type: string
+              description: node status ('online', 'offline')
+            - in: query
+              name: ip
+              schema:
+                type: string
+              description: node ip address
+            - in: query
+              name: last_seen_from
+              schema:
+                type: date (yyyy-mm-dd)
+              description: show only nodes seen since this date
+            - in: query
+              name: last_seen_till
+              schema:
+                type: date (yyyy-mm-dd)
+              description: show only nodes last seen before this date
+            - in: query
               name: include
               schema:
                 type: string
@@ -135,6 +174,19 @@ class Nodes(NodeBase):
         """
         q = DatabaseSessionManager.get_session().query(db.Node)
         auth_org_id = self.obtain_organization_id()
+        args = request.args
+
+        for param in ['organization_id', 'collaboration_id', 'status', 'ip']:
+            if param in args:
+                q = q.filter(getattr(db.Node, param) == args[param])
+        if 'name' in args:
+            q = q.filter(db.Node.name.like(args['name']))
+
+        if f'last_seen_till' in args:
+            q = q.filter(db.Node.last_seen <= args['last_seen_till'])
+        if f'last_seen_from' in args:
+            q = q.filter(db.Node.last_seen >= args['last_seen_from'])
+
         if not self.r.v_glo.can():
             if self.r.v_org.can():
                 # only the results of the user's organization are returned

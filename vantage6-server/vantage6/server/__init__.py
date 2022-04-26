@@ -129,6 +129,38 @@ class ServerApp:
 
         return socketio
 
+    def setup_socket_connection(self):
+
+        rabbit_config = self.ctx.config.get('rabbitmq')
+
+        msg_queue = get_rabbitmq_uri(rabbit_config, self.ctx.name) \
+            if rabbit_config else None
+
+        try:
+            socketio = SocketIO(
+                self.app,
+                async_mode='gevent_uwsgi',
+                message_queue=msg_queue,
+                ping_timeout=60
+            )
+        except Exception as e:
+            log.warning('Default socketio settings failed, attempt to run '
+                        'without gevent_uwsgi packages! This leads to '
+                        'performance issues and possible issues concerning '
+                        'the websocket channels!')
+            log.debug(e)
+            socketio = SocketIO(
+                self.app,
+                message_queue=msg_queue,
+                ping_timeout=60
+            )
+
+        # FIXME: temporary fix to get socket object into the namespace class
+        DefaultSocketNamespace.socketio = socketio
+        socketio.on_namespace(DefaultSocketNamespace("/tasks"))
+
+        return socketio
+
     @staticmethod
     def configure_logging():
         """Turn 3rd party loggers off."""

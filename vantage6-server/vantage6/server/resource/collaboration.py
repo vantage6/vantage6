@@ -9,6 +9,7 @@ from pathlib import Path
 
 from vantage6.server import db
 from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.server.model.organization import Organization
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
@@ -142,6 +143,25 @@ class Collaborations(CollaborationBase):
 
         parameters:
             - in: query
+              name: name
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: encrypted
+              schema:
+                type: boolean
+              description: whether or not collaboration is encrypted
+            - in: query
+              name: organization_id
+              schema:
+                type: integer
+              description: organization id
+            - in: query
               name: include
               schema:
                 type: string
@@ -172,6 +192,18 @@ class Collaborations(CollaborationBase):
         # obtain organization from authenticated
         auth_org_id = self.obtain_organization_id()
         q = DatabaseSessionManager.get_session().query(db.Collaboration)
+        args = request.args
+
+        # filter by a field of this endpoint
+        if 'encrypted' in args:
+            q = q.filter(db.Collaboration.encrypted == args['encrypted'])
+        if 'name' in args:
+            q = q.filter(db.Collaboration.name.like(args['name']))
+
+        # find collaborations containing a specific organization
+        if 'organization_id' in args:
+            q = q.join(db.Member).join(db.Organization)\
+                 .filter(db.Organization.id == args['organization_id'])
 
         # filter based on permissions
         if not self.r.v_glo.can():

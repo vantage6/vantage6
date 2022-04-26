@@ -164,6 +164,11 @@ class Results(ResultBase):
                 type: integer
               description: node id
             - in: query
+              name: port
+              schema:
+                type: integer
+              description: port number
+            - in: query
               name: include
               schema:
                 type: string (can be multiple)
@@ -196,7 +201,7 @@ class Results(ResultBase):
         q = DatabaseSessionManager.get_session().query(db_Result)
 
         # relation filters
-        for param in ['task_id', 'organization_id']:
+        for param in ['task_id', 'organization_id', 'port']:
             if param in args:
                 q = q.filter(getattr(db_Result, param) == args[param])
 

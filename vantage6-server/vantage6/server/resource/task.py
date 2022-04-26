@@ -140,7 +140,12 @@ class Tasks(TaskBase):
               name: image
               schema:
                 type: str
-              description: (Docker) image name which is used in the task
+              description: >-
+                (Docker) image name which is used in the task. Name to match
+                with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
             - in: query
               name: parent_id
               schema:
@@ -160,6 +165,29 @@ class Tasks(TaskBase):
                 * The percent sign (%) represents zero, one, or multiple
                 characters\n
                 * underscore sign (_) represents one, single character
+            - in: query
+              name: description
+              schema:
+                type: string
+              description: >-
+                Description to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: database
+              schema:
+                type: string
+              description: >-
+                Database description to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: result_id
+              schema:
+                type: int
+              description: A result id that belongs to the task
             - in: query
               name: include
               schema:
@@ -190,6 +218,7 @@ class Tasks(TaskBase):
         tags: ["Task"]
         """
         q = DatabaseSessionManager.get_session().query(db.Task)
+        args = request.args
 
         # obtain organization id
         auth_org_id = self.obtain_organization_id()
@@ -204,13 +233,15 @@ class Tasks(TaskBase):
                     HTTPStatus.UNAUTHORIZED
 
         # filter based on arguments
-        for param in ['initiator_id', 'collaboration_id', 'image',
-                      'parent_id', 'run_id']:
-            if param in request.args:
-                q = q.filter(getattr(db.Task, param) == request.args[param])
-
-        if 'name' in request.args:
-            q = q.filter(db.Task.name.like(request.args['name']))
+        for param in ['initiator_id', 'collaboration_id', 'parent_id',
+                      'run_id']:
+            if param in args:
+                q = q.filter(getattr(db.Task, param) == args[param])
+        for param in ['name', 'image', 'description', 'database']:
+            if param in args:
+                q = q.filter(getattr(db.Task, param).like(args[param]))
+        if 'result_id' in args:
+            q = q.join(db.Result).filter(db.Result.id == args['result_id'])
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
@@ -245,6 +276,19 @@ class Tasks(TaskBase):
             return {"msg": (
                 "At least one of the supplied organizations in not within "
                 "the collaboration."
+            )}, HTTPStatus.BAD_REQUEST
+
+        # check if all the organizations have a registered node
+        nodes = DatabaseSessionManager.get_session().query(db.Node)\
+            .filter(db.Node.organization_id.in_(org_ids))\
+            .filter(db.Node.collaboration_id == collaboration_id)\
+            .all()
+        if len(nodes) < len(org_ids):
+            present_nodes = [node.organization_id for node in nodes]
+            missing = [str(id) for id in org_ids if id not in present_nodes]
+            return {"msg": (
+                "Cannot create this task because there are no nodes registered"
+                f" for the following organization(s): {', '.join(missing)}."
             )}, HTTPStatus.BAD_REQUEST
 
         # figure out the initiator organization of the task

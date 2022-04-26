@@ -57,8 +57,6 @@ def permissions(permissions: PermissionManager):
         description='View any user')
     add(S.ORGANIZATION, P.VIEW,
         description='View users from your organization')
-    add(S.OWN, P.VIEW,
-        description='View your own data')
     add(S.GLOBAL, P.CREATE,
         description='Create a new user for any organization')
     add(S.ORGANIZATION, P.CREATE,
@@ -111,6 +109,67 @@ class Users(UserBase):
 
         parameters:
             - in: query
+              name: username
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: organization_id
+              schema:
+                type: integer
+              description: organization id
+            - in: query
+              name: firstname
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: lastname
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: email
+              schema:
+                type: string
+              description: >-
+                Email to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: role_id
+              schema:
+                type: integer
+              description: role that is assigned to user
+            - in: query
+              name: rule_id
+              schema:
+                type: integer
+              description: rule that is assigned to user
+            - in: query
+              name: last_seen_from
+              schema:
+                type: date (yyyy-mm-dd)
+              description: show only users seen since this date
+            - in: query
+              name: last_seen_till
+              schema:
+                type: date (yyyy-mm-dd)
+              description: show only users last seen before this date
+            - in: query
               name: page
               schema:
                 type: integer
@@ -132,9 +191,29 @@ class Users(UserBase):
 
         tags: ["User"]
         """
+        args = request.args
         q = DatabaseSessionManager.get_session().query(db.User)
 
-        # check permissions and apply filter if necessary
+        # filter by any field of this endpoint
+        for param in ['username', 'firstname', 'lastname', 'email']:
+            if param in args:
+                q = q.filter(getattr(db.User, param).like(args[param]))
+        if 'organization_id' in args:
+            q = q.filter(db.User.organization_id == args['organization_id'])
+        if 'last_seen_till' in args:
+            q = q.filter(db.User.last_seen <= args['last_seen_till'])
+        if 'last_seen_from' in args:
+            q = q.filter(db.User.last_seen >= args['last_seen_from'])
+
+        # find users with a particulare role or rule assigned
+        if 'role_id' in args:
+            q = q.join(db.Permission).join(db.Role)\
+                 .filter(db.Role.id == args['role_id'])
+        if 'rule_id' in args:
+            q = q.join(db.UserPermission).join(db.Rule)\
+                 .filter(db.Rule.id == args['rule_id'])
+
+        # check permissions and apply filter if neccessary
         if not self.r.v_glo.can():
             if self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
@@ -291,11 +370,11 @@ class User(UserBase):
         # allow user to be returned if:
         # 1. auth can see all users
         # 2. auth can see organization users and user is within organization
-        # 3. auth is requesting own user details and is allowed to do so
+        # 3. auth is requesting own user details
         if (
             self.r.v_glo.can() or
             (self.r.v_org.can() and same_org) or
-            (self.r.v_own.can() and same_user)
+            same_user
         ):
             return user_schema.dump(user, many=False).data, HTTPStatus.OK
         else:
@@ -329,6 +408,13 @@ class User(UserBase):
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
 
+        if data["username"]:
+            if (user.username != data["username"] and
+                    db.User.exists("username", data["username"])):
+                return {
+                    "msg": "User with that username already exists"
+                }, HTTPStatus.BAD_REQUEST
+            user.username = data["username"]
         if data["firstname"]:
             user.firstname = data["firstname"]
         if data["lastname"]:
@@ -422,6 +508,9 @@ class User(UserBase):
         except sqlalchemy.exc.IntegrityError as e:
             log.error(e)
             user.session.rollback()
+            return {
+                "msg": "User could not be updated with those parameters."
+            }, HTTPStatus.BAD_REQUEST
             # TODO BvB 2021-08-27 return msg that user was not updated?
 
         return user_schema.dump(user).data, HTTPStatus.OK

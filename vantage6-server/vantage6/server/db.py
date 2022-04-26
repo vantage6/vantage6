@@ -20,6 +20,8 @@ from vantage6.server.model import (
     Permission,
     Role,
     Rule,
+    UserPermission,
+    role_rule_association,
     AlgorithmPort
 )
 from vantage6.common import logger_name

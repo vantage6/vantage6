@@ -7,9 +7,10 @@ from flask import g
 from flasgger import swag_from
 from pathlib import Path
 from flask_restful import reqparse
+from sqlalchemy import or_
+
 from vantage6.server import db
 from vantage6.server.model.base import DatabaseSessionManager
-
 from vantage6.server.resource import (
     with_user,
     ServicesResources
@@ -125,10 +126,38 @@ class Roles(RoleBase):
 
         parameters:
             - in: query
-              name: include
+              name: name
               schema:
-                type: string (can be multiple)
-              description: what to include ('metadata')
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: description
+              schema:
+                type: string
+              description: >-
+                Description to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: organization_id
+              schema:
+                type: integer
+              description: organization id
+            - in: query
+              name: rule_id
+              schema:
+                type: integer
+              description: rule that is part of a role
+            - in: query
+              name: include_root
+              schema:
+                 type: boolean
+              description: whether or not to include root role
             - in: query
               name: page
               schema:
@@ -154,14 +183,45 @@ class Roles(RoleBase):
         q = DatabaseSessionManager.get_session().query(db.Role)
 
         auth_org_id = self.obtain_organization_id()
+        args = request.args
+
+        # filter by organization ids (include root role if desired)
+        org_filters = args.getlist('organization_id')
+        if org_filters:
+            if 'include_root' in args and args['include_root']:
+                q = q.filter(or_(
+                    db.Role.organization_id.in_(org_filters),
+                    db.Role.organization_id == None
+                ))
+            else:
+                q = q.filter(db.Role.organization_id).in_(org_filters)
+
+        # filter by one or more names or descriptions
+        for param in ['name', 'description']:
+            filters = args.getlist(param)
+            if filters:
+                q = q.filter(or_(*[
+                    getattr(db.Role, param).like(f) for f in filters
+                ]))
+
+        # find roles containing a specific rule
+        if 'rule_id' in args:
+            q = q.join(db.role_rule_association).join(db.Rule)\
+                 .filter(db.Rule.id == args['rule_id'])
 
         if not self.r.v_glo.can():
+            own_role_ids = [role.id for role in g.user.roles]
             if self.r.v_org.can():
+                # allow user to view all roles of their organization and any
+                # other roles they may have themselves
                 q = q.join(db.Organization)\
-                    .filter(db.Role.organization_id == auth_org_id)
+                    .filter(or_(
+                        db.Role.organization_id == auth_org_id,
+                        db.Role.id.in_(own_role_ids)
+                    ))
             else:
-                return {"msg": "You do not have permission to view this."}, \
-                    HTTPStatus.UNAUTHORIZED
+                # allow users without permission to view only their own roles
+                q = q.filter(db.Role.id.in_(own_role_ids))
 
         page = Pagination.from_query(query=q, request=request)
 
@@ -236,8 +296,8 @@ class Role(RoleBase):
     def get(self, id):
         role = db.Role.get(id)
 
-        # check permissions
-        if not self.r.v_glo.can():
+        # check permissions. A user can always view their own roles
+        if not (self.r.v_glo.can() or role in g.user.roles):
             if not (self.r.v_org.can()
                     and role.organization == g.user.organization):
                 return {"msg": "You do not have permission to view this."},\
@@ -340,11 +400,6 @@ class RoleRules(RoleBase):
               minimum: 1
               description: Role id
               required: true
-            - in: query
-              name: include
-              schema:
-                 type: string (can be multiple)
-              description: what to include ('task', 'metadata')
             - in: query
               name: page
               schema:
