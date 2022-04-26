@@ -23,7 +23,7 @@ from flask_socketio import SocketIO
 
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
-from vantage6.cli.rabbitmq.queue_manager import get_rabbitmq_uri
+from vantage6.cli.rabbitmq.queue_manager import split_rabbitmq_uri
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource._schema import HATEOASModelSchema
 from vantage6.common import logger_name
@@ -93,18 +93,23 @@ class ServerApp:
 
         # set the serv
         self.__version__ = __version__
+        log.info("Initialization done")
 
     def setup_socket_connection(self):
 
-        rabbit_config = self.ctx.config.get('rabbitmq')
-        msg_queue = get_rabbitmq_uri(rabbit_config, self.ctx.name) \
-            if rabbit_config else None
+        msg_queue = self.ctx.config.get('rabbitmq_uri')
+        rabbit_host = None
+        if msg_queue:
+            rabbit_host = split_rabbitmq_uri(msg_queue)['host']
+            log.debug(f'Connecting to msg queue: {msg_queue}')
+
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode='gevent_uwsgi',
                 message_queue=msg_queue,
-                ping_timeout=60
+                ping_timeout=60,
+                cors_allowed_origins=rabbit_host
             )
         except Exception as e:
             log.warning('Default socketio settings failed, attempt to run '
