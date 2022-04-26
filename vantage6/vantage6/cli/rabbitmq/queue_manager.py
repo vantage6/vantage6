@@ -20,31 +20,33 @@ from vantage6.cli.globals import RABBIT_TIMEOUT
 DEFAULT_RABBIT_IMAGE = 'harbor2.vantage6.ai/infrastructure/rabbitmq'
 RABBIT_CONFIG = 'rabbitmq.config'
 RABBIT_DIR = 'rabbitmq'
-QUEUE_PORT = 5672
 
 
-def get_rabbitmq_uri(rabbit_config: Dict, server_name: str) -> str:
+def split_rabbitmq_uri(rabbit_uri: str) -> Dict[str]:
     """
-    Get the URI to reach the RabbitMQ queue
+    Get details (user, pass, host, vhost, port) from a RabbitMQ uri
 
     Parameters
     ----------
-    rabbit_config: Dict
-        A dictionary with username and password for RabbitMQ queue
-    server_name: str
-        Configuration name of the running server
+    rabbit_uri: str
+        URI of RabbitMQ service ('amqp://$user:$pass@$host:$port/$vhost')
 
     Returns
     -------
-    str
-        The URI at which the RabbitMQ queue can be reached
+    Dict[str]
+        The vhost defined in the RabbitMQ URI
     """
-    VHOST = '/'
-    return (
-        f"amqp://{rabbit_config['user']}:{rabbit_config['password']}@"
-        # f"host.docker.internal:{QUEUE_PORT}/{VHOST}"
-        f"{APPNAME}-{server_name}-rabbitmq:{QUEUE_PORT}/{VHOST}"
-    )
+    user_details, location_details = rabbit_uri.split('@')
+    user, password = user_details.split(':')
+    host, remainder = location_details.split(':')
+    port, vhost = remainder.split('/', 1)
+    return {
+        'user': user,
+        'password': password,
+        'host': host,
+        'port': port,
+        'vhost': vhost,
+    }
 
 
 class RabbitMQManager:
@@ -65,12 +67,16 @@ class RabbitMQManager:
         """
         self.ctx = ctx
         rabbit_settings = self.ctx.config.get('rabbitmq')
-        self.rabbit_user = rabbit_settings['user']
-        self.rabbit_pass = rabbit_settings['password']
+        self.queue_uri = rabbit_settings['uri']
+        rabbit_splitted = split_rabbitmq_uri(self.queue_uri)
+        self.rabbit_user = rabbit_splitted['user']
+        self.rabbit_pass = rabbit_splitted['password']
+        self.vhost = rabbit_splitted['vhost']
+        self.port = rabbit_splitted['port']
+        self.host = rabbit_splitted['host']
         self.definitions_file = Path(self.ctx.data_dir / 'definitions.json')
         self.network_mgr = network_mgr
 
-        self.queue_uri = get_rabbitmq_uri(rabbit_settings, ctx.name)
         self.docker = docker.from_env()
         self.image = image if image else DEFAULT_RABBIT_IMAGE
         self.rabbit_container_name = f'{APPNAME}-{ctx.name}-rabbitmq'
@@ -87,7 +93,7 @@ class RabbitMQManager:
         # same for 15672 in container to 8080 on host
         # TODO check if these ports are not already used on the host
         ports = {
-            f'{QUEUE_PORT}/tcp': QUEUE_PORT,
+            f'{self.port}/tcp': self.port,
             # TODO this is for the management tool, do we keep this? Not used
             # at the moment..
             '15672/tcp': 8080
@@ -197,6 +203,8 @@ class RabbitMQManager:
         rabbit_definitions['permissions'][0]['user'] = self.rabbit_user
         rabbit_definitions['users'][0]['password_hash'] = \
             self._get_hashed_pw(self.rabbit_pass)
+        rabbit_definitions['vhosts'][0]['name'] = self.vhost
+        rabbit_definitions['permissions'][0]['vhost'] = self.vhost
         return rabbit_definitions
 
     def _get_hashed_pw(self, pw: str) -> str:
