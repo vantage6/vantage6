@@ -3,7 +3,6 @@ import uuid
 
 from pathlib import Path
 
-from vantage6.common import create_random_string
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
