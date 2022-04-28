@@ -41,8 +41,8 @@ setup(
         'click==7.1.1',
         'termcolor==1.1.0',
         'bcrypt==3.1.7',
-        'vantage6 >= 1.2.3',
-        'vantage6-client >= 1.2.3',
+        f'vantage6=={version_ns["__version__"]}',
+        f'vantage6-client=={version_ns["__version__"]}',
         'python-engineio==3.10.0',
         'python-socketio[client]==4.4.0'
     ],
