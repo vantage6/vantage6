@@ -13,7 +13,6 @@ algorithm.
 import requests
 import os
 import logging
-import json
 
 from flask import Flask, request, jsonify
 
@@ -22,14 +21,12 @@ from vantage6.node.util import (
     base64s_to_bytes,
     bytes_to_base64s
 )
-from vantage6.node.globals import STRING_ENCODING
-from vantage6.node.server_io import ClientNodeProtocol
-from vantage6.client.encryption import CryptorBase, DummyCryptor, RSACryptor
 
 # Setup FLASK
 app = Flask(__name__)
 log = logging.getLogger(logger_name(__name__))
 app.config["SERVER_IO"] = None
+
 
 def server_info():
     """ Retrieve proxy server details environment variables set by the
@@ -141,6 +138,7 @@ def proxy_task():
 
     return jsonify(response.json())
 
+
 @app.route('/task/<int:id>/result', methods=["GET"])
 def proxy_task_result(id):
     url = server_info()
@@ -174,6 +172,7 @@ def proxy_task_result(id):
 
     return jsonify(unencrypted)
 
+
 @app.route('/result/<int:id>', methods=["GET"])
 def proxy_results(id):
     """ Obtain result `id` from the server.
@@ -193,7 +192,7 @@ def proxy_results(id):
             f"{url}/result/{id}",
             headers={'Authorization': auth}
         )
-        encrypted_input = response["result"]
+        # encrypted_input = response["result"]
         response["result"] = bytes_to_base64s(
             server_io.cryptor.decrypt_str_to_bytes(
                 response["result"]
@@ -206,7 +205,9 @@ def proxy_results(id):
 
     return jsonify(response.json())
 
-@app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+
+@app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH",
+                                                   "PUT", "DELETE"])
 def proxy(central_server_path):
     """ Generic endpoint that will forward everything to the central server.
 
@@ -228,11 +229,12 @@ def proxy(central_server_path):
     # if "Authorization" in request.headers:
     try:
         auth = request.headers['Authorization']
-        auth_found = True
+        # auth_found = True
     except Exception as e:
         log.info("No authorization header found, this could lead to errors")
+        log.debug(e)
         auth = None
-        auth_found = False
+        # auth_found = False
 
     # log.debug(f"method = {method_name}, auth = {auth_found}")
 
@@ -249,12 +251,12 @@ def proxy(central_server_path):
         )
     except Exception as e:
         log.error("Proxyserver was unable to retreive endpoint...")
-        print(e)
+        # print(e)
         log.debug(e)
-        return
+        return jsonify({"msg": "endpoint is unreachable"})
 
     if response.status_code > 200:
         log.error(f"server response code {response.status_code}")
-        log.debug(response.json().get("msg","no description..."))
+        log.debug(response.json().get("msg", "no description..."))
 
     return jsonify(response.json())
