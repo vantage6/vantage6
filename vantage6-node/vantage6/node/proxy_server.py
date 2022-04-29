@@ -253,7 +253,7 @@ def proxy(central_server_path):
         log.error("Proxyserver was unable to retreive endpoint...")
         # print(e)
         log.debug(e)
-        return jsonify({"msg": "endpoint is unreachable"})
+        return jsonify({"msg": "endpoint is unreachable"}), 500
 
     if response.status_code > 200:
         log.error(f"server response code {response.status_code}")
