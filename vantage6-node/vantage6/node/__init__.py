@@ -38,7 +38,7 @@ from . import globals as cs
 from vantage6.common.docker_addons import ContainerKillListener
 from vantage6.node.docker_manager import DockerManager
 from vantage6.node.server_io import NodeClient
-from vantage6.node.proxy_server import app
+from vantage6.node import proxy_server
 from vantage6.node.util import logger_name
 
 
@@ -279,9 +279,9 @@ class Node(object):
         """
         # supply the proxy server with a destination (the central server)
         # we might want to not use enviroment vars
-        os.environ["SERVER_URL"] = self.server_io.host
-        os.environ["SERVER_PORT"] = self.server_io.port
-        os.environ["SERVER_PATH"] = self.server_io.path
+        # os.environ["SERVER_URL"] = self.server_io.host
+        # os.environ["SERVER_PORT"] = self.server_io.port
+        # os.environ["SERVER_PATH"] = self.server_io.path
 
         if self.ctx.running_in_docker:
             # cs.NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
@@ -302,12 +302,13 @@ class Node(object):
 
         # 'app' is defined in vantage6.node.proxy_server
         # app.debug = True
-        app.config["SERVER_IO"] = self.server_io
+        proxy_server.app.config["SERVER_IO"] = self.server_io
+        proxy_server.server_url = self.server_io.base_path
 
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
-            http_server = WSGIServer(('0.0.0.0', proxy_port), app)
+            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app)
 
             try:
                 http_server.serve_forever()

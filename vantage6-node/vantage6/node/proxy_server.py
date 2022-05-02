@@ -1,6 +1,5 @@
 import concurrent.futures
 import requests
-import os
 import logging
 
 from http import HTTPStatus
@@ -22,14 +21,10 @@ log = logging.getLogger(logger_name(__name__))
 
 # Need to be set when the proxy server is initialized
 app.config["SERVER_IO"] = None
+server_url = None
 
 # Number of times the request is retried before the proxy server gives up
 RETRY = 3
-
-
-# Retrieve proxy server details environment variables set by the node
-server_url = f'{os.environ["SERVER_URL"]}:{os.environ["SERVER_PORT"]}'\
-             '{os.environ["SERVER_PATH"]}'
 
 
 def get_method(method: str) -> Callable:
@@ -73,8 +68,12 @@ def make_proxied_request(endpoint: str) -> Response:
     flask.Response
         Response from the vantage6-server
     """
+    present = 'Authorization' in request.headers
+    headers = {'Authorization': request.headers['Authorization']} if present \
+        else None
+
     return make_request(request.method, endpoint, request.get_json(),
-                        request.args, request.headers)
+                        request.args, headers)
 
 
 def make_request(method: str, endpoint: str, json: dict = None,
@@ -116,19 +115,21 @@ def make_request(method: str, endpoint: str, json: dict = None,
             # verify that the server gave us a valid response, else we
             # would want to try again
             if response.status_code > 210:
-                msg = response.json().get("msg", "no description...")
-                log.debug('vantage6-server responded with error code: '
-                          f'{response.status}, and msg: {msg}. Let\'s retry..')
+                log.warn('Proxy server received status code:'
+                         f'{response.status_code}')
+                log.debug(f'url: {url}, json: {json}, params: {params}, '
+                          f'headers: {headers}')
+                if 'application/json' in response.headers.get('Content-Type'):
+                    log.debug(response.json().get("msg", "no description..."))
 
             else:
                 # Exit the retry loop because we have collected a valid
                 # response
                 return response
 
-        except Exception as e:
-            log.warning(f'On attempt {i}, the proxy request raised an '
-                        f'exception: {url}')
-            log.debug(e)
+        except Exception:
+            log.exception(f'On attempt {i}, the proxy request raised an '
+                          f'exception: <{url}>')
 
         # if all attemps fail, raise an exception to be handled by its parent
     raise Exception("Proxy request failed")
@@ -155,8 +156,7 @@ def encrypt_input(organization) -> dict:
 
     # retrieve public key of the organization
     log.debug(f"Retrieving public key of org: {organization_id}")
-    response = make_request('get', f'{server_url}/organization/'
-                            f'{organization_id}')
+    response = make_request('get', f'organization/{organization_id}')
     public_key = response.json().get("public_key")
 
     # Encrypt the input field
@@ -207,10 +207,10 @@ def proxy_task():
 
     # Attemt to send the task to the central server
     try:
-        response = make_request('post', f"{server_url}/task", data,
-                                headers=request.headers)
-    except Exception as e:
-        log.debug(e)
+        headers = {'Authorization': request.headers['Authorization']}
+        response = make_request('post', 'task', data, headers=headers)
+    except Exception:
+        log.exception('post task failed')
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -239,7 +239,7 @@ def proxy_task_result(id: int) -> Response:
 
     # Forward the request
     try:
-        response = make_proxied_request(f"{server_url}/task/{id}/result")
+        response = make_proxied_request(f"task/{id}/result")
     except Exception as e:
         log.debug(e)
         return {'msg': 'Request failed, see node logs'},\
@@ -250,18 +250,22 @@ def proxy_task_result(id: int) -> Response:
     try:
         unencrypted = []
         for result in response.json():
-            unencrypted.append(
-                server_io.cryptor.decrypt_str_to_bytes(
-                    bytes_to_base64s(result["result"])
+            if result['result']:
+                unencrypted.append(
+                    bytes_to_base64s(
+                        server_io.cryptor.decrypt_str_to_bytes(result["result"])
+                    )
                 )
-            )
+            else:
+                unencrypted.append(result)
 
-    except Exception as e:
-        log.warning("Unable to decrypt and/or decode results, sending them to "
-                    "the algorithm...")
-        log.debug(e)
+    except Exception:
+        log.exception("Unable to decrypt and/or decode results, sending them "
+                      "to the algorithm...")
+        log.debug(response.status_code)
+        log.debug(response.json())
 
-    return unencrypted, 200
+    return jsonify(unencrypted), 200
 
 
 @app.route('/result/<int:id>', methods=["GET"])
@@ -287,25 +291,27 @@ def proxy_results(id: int) -> Response:
 
     # Make the proxied request
     try:
-        response: Response = make_proxied_request(f"{server_url}/result/{id}")
+        response: Response = make_proxied_request(f"result/{id}")
     except Exception as e:
         log.debug(e)
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Try to decrypt the results
+    #TODO we are not sure its JSON here...
+    result = response.json()
     try:
-        unencrypted = bytes_to_base64s(
+        result["result"] = bytes_to_base64s(
             server_io.cryptor.decrypt_str_to_bytes(
-                response.json["result"]
+                result["result"]
             )
         )
-    except Exception as e:
-        log.warning("Unable to decrypt and/or decode results, sending them to "
-                    "the algorithm...")
-        log.debug(e)
 
-    return unencrypted, 200
+    except Exception:
+        log.exception("Unable to decrypt and/or decode results, sending them "
+                      "to the algorithm...")
+
+    return result, 200
 
 
 @app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH",
@@ -326,8 +332,8 @@ def proxy(central_server_path: str) -> Response:
     """
     try:
         response = make_proxied_request(central_server_path)
-    except Exception as e:
-        log.debug(e)
+    except Exception:
+        log.exception('Generic proxy endpoint')
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
