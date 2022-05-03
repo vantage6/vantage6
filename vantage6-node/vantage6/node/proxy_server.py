@@ -29,7 +29,7 @@ RETRY = 3
 
 def get_method(method: str) -> Callable:
     """
-    Obtain http method based on string identifyer
+    Obtain http method based on string identifier
 
     Parameters
     ----------
@@ -135,7 +135,7 @@ def make_request(method: str, endpoint: str, json: dict = None,
     raise Exception("Proxy request failed")
 
 
-def encrypt_input(organization) -> dict:
+def encrypt_input(organization: dict) -> dict:
     """
     Encrypt the input for a specific organization by using its private key.
     This method is run as background
@@ -171,6 +171,57 @@ def encrypt_input(organization) -> dict:
     return organization
 
 
+def decrypt_result(result: dict) -> dict:
+    """
+    Decrypt the `result` from a result dictonary
+
+    Parameters
+    ----------
+    result : dict
+        Result dict
+
+    Returns
+    -------
+    dict
+        Result dict with the `result` decrypted
+    """
+    server_io: NodeClient = app.config.get('SERVER_IO')
+
+    # if the result is a None, there is no need to decrypt that..
+    try:
+        if result['result']:
+            result["result"] = bytes_to_base64s(
+                server_io.cryptor.decrypt_str_to_bytes(
+                    result["result"]
+                )
+            )
+    except Exception:
+        log.exception("Unable to decrypt and/or decode results, sending them "
+                      "to the algorithm...")
+
+    return result
+
+
+def get_response_json_and_handle_exceptions(response: Response):
+    """
+    Obtain json content from request response
+
+    Parameters
+    ----------
+    response : Response
+        Requests response object
+
+    Returns
+    -------
+    dict or None
+        Dict containing the json body
+    """
+    try:
+        return response.json()
+    except (requests.exceptions.JSONDecodeError, Exception):
+        log.exception('Failed to extract JSON')
+    return None
+
 @app.route("/task", methods=["POST"])
 def proxy_task():
     """
@@ -198,16 +249,16 @@ def proxy_task():
     log.debug(f"{len(organizations)} organizations, attemping to encrypt")
 
     # For every organization we need to encrypt the input field. This is done
-    # in parallel as the client (algorithm) is waiting for a timely response
-    # and for every organization in this look the public key is retreived an
-    # the input is encrypted specifically for them.
+    # in parallel as the client (algorithm) is waiting for a timely response.
+    # For every organizationn the public key is retrieved an the input is
+    # encrypted specifically for them.
     if server_io.is_encrypted_collaboration():
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(encrypt_input, o)
                        for o in organizations]
         data["organizations"] = [future.result() for future in futures]
 
-    # Attemt to send the task to the central server
+    # Attempt to send the task to the central server
     try:
         headers = {'Authorization': request.headers['Authorization']}
         response = make_request('post', 'task', data, headers=headers)
@@ -237,34 +288,24 @@ def proxy_task_result(id: int) -> Response:
     # We need the server io for the decryption of the results
     server_io = app.config.get("SERVER_IO")
     if not server_io:
-        return jsonify({'msg': 'Proxy server not initialized properly'}), 500
+        return jsonify({'msg': 'Proxy server not initialized properly'}),\
+            HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Forward the request
     try:
-        response = make_proxied_request(f"task/{id}/result")
-    except Exception as e:
-        log.debug(e)
+        response: Response = make_proxied_request(f"task/{id}/result")
+    except Exception:
+        log.exception('Error on /result/<int:id>')
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Attempt to decrypt the results. The enpoint should have returned
     # a list of results
-    try:
-        unencrypted = []
-        for result in response.json():
-            if result['result']:
-                result["result"] = bytes_to_base64s(
-                    server_io.cryptor.decrypt_str_to_bytes(
-                        result["result"]
-                    )
-                )
-
-            # if the result is a None, there is no need to decrypt that..
-            unencrypted.append(result)
-
-    except Exception:
-        log.exception("Unable to decrypt and/or decode results, sending them "
-                      "to the algorithm...")
+    unencrypted = []
+    results = get_response_json_and_handle_exceptions(response)
+    for result in results:
+        result = decrypt_result(result)
+        unencrypted.append(result)
 
     return jsonify(unencrypted), HTTPStatus.OK
 
@@ -286,29 +327,22 @@ def proxy_results(id: int) -> Response:
         Response of the vantage6-server
     """
     # We need the server io for the decryption of the results
-    server_io = app.config.get("SERVER_IO")
+    server_io: NodeClient = app.config.get("SERVER_IO")
     if not server_io:
-        return jsonify({'msg': 'Proxy server not initialized properly'}), 500
+        return {'msg': 'Proxy server not initialized properly'},\
+            HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Make the proxied request
     try:
         response: Response = make_proxied_request(f"result/{id}")
-    except Exception as e:
-        log.debug(e)
-        return {'msg': 'Request failed, see node logs'},\
+    except Exception:
+        log.exception('Error on /result/<int:id>')
+        return {'msg': 'Request failed, see node logs...'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Try to decrypt the results
-    try:
-        result = response.json()
-        result["result"] = bytes_to_base64s(
-            server_io.cryptor.decrypt_str_to_bytes(
-                result["result"]
-            )
-        )
-    except Exception:
-        log.exception("Unable to decrypt and/or decode results, sending them "
-                      "to the algorithm...")
+    result = get_response_json_and_handle_exceptions(response)
+    result = decrypt_result(result)
 
     return result, HTTPStatus.OK
 
