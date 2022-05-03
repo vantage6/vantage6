@@ -198,12 +198,14 @@ def proxy_task():
     log.debug(f"{len(organizations)} organizations, attemping to encrypt")
 
     # For every organization we need to encrypt the input field. This is done
-    # in parralel as the client (algorithm) is waiting for a timely response
+    # in parallel as the client (algorithm) is waiting for a timely response
     # and for every organization in this look the public key is retreived an
     # the input is encrypted specifically for them.
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(encrypt_input, o) for o in organizations]
-    data["organizations"] = [future.result() for future in futures]
+    if server_io.is_encrypted_collaboration():
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(encrypt_input, o)
+                       for o in organizations]
+        data["organizations"] = [future.result() for future in futures]
 
     # Attemt to send the task to the central server
     try:
@@ -214,7 +216,7 @@ def proxy_task():
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
-    return response.json(), 200
+    return response.json(), HTTPStatus.OK
 
 
 @app.route('/task/<int:id>/result', methods=["GET"])
@@ -251,21 +253,20 @@ def proxy_task_result(id: int) -> Response:
         unencrypted = []
         for result in response.json():
             if result['result']:
-                unencrypted.append(
-                    bytes_to_base64s(
-                        server_io.cryptor.decrypt_str_to_bytes(result["result"])
+                result["result"] = bytes_to_base64s(
+                    server_io.cryptor.decrypt_str_to_bytes(
+                        result["result"]
                     )
                 )
-            else:
-                unencrypted.append(result)
+
+            # if the result is a None, there is no need to decrypt that..
+            unencrypted.append(result)
 
     except Exception:
         log.exception("Unable to decrypt and/or decode results, sending them "
                       "to the algorithm...")
-        log.debug(response.status_code)
-        log.debug(response.json())
 
-    return jsonify(unencrypted), 200
+    return jsonify(unencrypted), HTTPStatus.OK
 
 
 @app.route('/result/<int:id>', methods=["GET"])
@@ -298,20 +299,18 @@ def proxy_results(id: int) -> Response:
             HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Try to decrypt the results
-    #TODO we are not sure its JSON here...
-    result = response.json()
     try:
+        result = response.json()
         result["result"] = bytes_to_base64s(
             server_io.cryptor.decrypt_str_to_bytes(
                 result["result"]
             )
         )
-
     except Exception:
         log.exception("Unable to decrypt and/or decode results, sending them "
                       "to the algorithm...")
 
-    return result, 200
+    return result, HTTPStatus.OK
 
 
 @app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH",
@@ -337,4 +336,4 @@ def proxy(central_server_path: str) -> Response:
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
-    return response.json(), 200
+    return response.json(), HTTPStatus.OK
