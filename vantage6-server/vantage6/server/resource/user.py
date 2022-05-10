@@ -194,16 +194,15 @@ class Users(UserBase):
         args = request.args
         q = DatabaseSessionManager.get_session().query(db.User)
 
-
         # filter by any field of this endpoint
         for param in ['username', 'firstname', 'lastname', 'email']:
             if param in args:
                 q = q.filter(getattr(db.User, param).like(args[param]))
         if 'organization_id' in args:
             q = q.filter(db.User.organization_id == args['organization_id'])
-        if f'last_seen_till' in args:
+        if 'last_seen_till' in args:
             q = q.filter(db.User.last_seen <= args['last_seen_till'])
-        if f'last_seen_from' in args:
+        if 'last_seen_from' in args:
             q = q.filter(db.User.last_seen >= args['last_seen_from'])
 
         # find users with a particulare role or rule assigned
@@ -214,7 +213,7 @@ class Users(UserBase):
             q = q.join(db.UserPermission).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
 
-        # check permissions and apply filter if neccassary
+        # check permissions and apply filter if neccessary
         if not self.r.v_glo.can():
             if self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
