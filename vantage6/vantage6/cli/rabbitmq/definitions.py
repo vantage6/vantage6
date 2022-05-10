@@ -10,13 +10,13 @@ RABBITMQ_DEFINITIONS = {
   ],
   "vhosts": [
    {
-    "name": "/"
+    "name": "{{vhost_name}}"
    }
   ],
   "permissions": [
    {
     "user": "{{username}}",
-    "vhost": "/",
+    "vhost": "{{vhost_name}}",
     "configure": ".*",
     "write": ".*",
     "read": ".*"
