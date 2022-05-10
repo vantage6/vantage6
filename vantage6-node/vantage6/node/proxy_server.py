@@ -13,6 +13,7 @@ algorithm.
 import requests
 import os
 import logging
+import traceback
 
 from flask import Flask, request, jsonify
 
@@ -198,7 +199,6 @@ def proxy_results(id):
                 response["result"]
             )
         )
-        # log.error(response)
     except Exception as e:
         log.error("Proxyserver was unable to retrieve results! (2)")
         log.debug(e)
@@ -225,8 +225,6 @@ def proxy(central_server_path):
         "delete": requests.delete
     }.get(method_name, requests.get)
 
-    # auth = None
-    # if "Authorization" in request.headers:
     try:
         auth = request.headers['Authorization']
     except Exception:
@@ -234,9 +232,6 @@ def proxy(central_server_path):
         auth = None
 
     api_url = f"{url}/{central_server_path}"
-    # print("*************")
-    # print(api_url)
-    # log.info(f"{method_name} | {api_url}")
     try:
         response = method(
             api_url,
@@ -244,11 +239,10 @@ def proxy(central_server_path):
             params=request.args,
             headers={'Authorization': auth}
         )
-    except Exception as e:
+    except Exception:
         log.error("Proxyserver was unable to retreive endpoint...")
-        print(e)
-        log.debug(e)
-        return
+        log.debug(traceback.format_exc())
+        return jsonify({"msg": "endpoint is unreachable"}), 500
 
     if response.status_code > 200:
         log.error(f"server response code {response.status_code}")
