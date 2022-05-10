@@ -113,7 +113,6 @@ class VPNManager(DockerBaseManager):
         else:
             raise ConnectionError("VPN connection not established!")
 
-
         # create network exception so that packet transfer between VPN network
         # and the vpn client container is allowed
         self.isolated_bridge = self._find_isolated_bridge()

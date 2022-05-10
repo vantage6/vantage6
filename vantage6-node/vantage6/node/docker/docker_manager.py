@@ -15,9 +15,8 @@ import shutil
 from typing import Dict, List, NamedTuple, Union
 from pathlib import Path
 
-from vantage6.common.docker.addons import get_container
+from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
-from vantage6.common.docker.addons import running_in_docker
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
@@ -92,6 +91,9 @@ class DockerManager(DockerBaseManager):
 
         # set database uri and whether or not it is a file
         self._set_database(config)
+
+        # keep track of linked docker services
+        self.linked_services: List[str] = []
 
     def _set_database(self, config: Dict) -> None:
         """"
@@ -222,6 +224,8 @@ class DockerManager(DockerBaseManager):
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup()
+        for service in self.linked_services:
+            self.isolated_network_mgr.disconnect(service)
         self.isolated_network_mgr.delete()
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
@@ -376,3 +380,4 @@ class DockerManager(DockerBaseManager):
             container_name=container_name,
             aliases=[config_alias]
         )
+        self.linked_services.append(container_name)
