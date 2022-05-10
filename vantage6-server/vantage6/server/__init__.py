@@ -9,6 +9,7 @@ import logging
 import os
 import uuid
 import json
+import traceback
 
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
@@ -100,7 +101,7 @@ class ServerApp:
 
         msg_queue = get_rabbitmq_uri(rabbit_config, self.ctx.name) \
             if rabbit_config else None
-  
+
         try:
             socketio = SocketIO(
                 self.app,
@@ -223,7 +224,7 @@ class ServerApp:
             sessions.
             """
             log.warn('Error occured during request')
-            log.debug(error)
+            log.debug(traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
 
@@ -235,9 +236,9 @@ class ServerApp:
             sessions.
             """
             log.warn('Error occured during request')
-            log.debug(error)
+            log.debug(traceback.format_exc())
             DatabaseSessionManager.clear_session()
-            return {'msg': f'Error: {error}'}, 500
+            return {'msg': f'An unexpected error occurred on the server!'}, 500
 
     def configure_api(self):
         """"Define global API output."""
