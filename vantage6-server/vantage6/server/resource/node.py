@@ -201,6 +201,8 @@ class Nodes(NodeBase):
         # model serialization
         return self.response(page, node_schema)
 
+    # TODO the example is swagger docs for this doesn't include
+    # organization_id. Find out why
     @with_user
     @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")),
                endpoint='node_without_id')
