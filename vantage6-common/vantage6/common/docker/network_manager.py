@@ -2,7 +2,7 @@ from typing import List, Union
 import docker
 import logging
 
-from vantage6.common.docker.addons import remove_container, running_in_docker
+from vantage6.common.docker.addons import remove_container
 from vantage6.common import logger_name
 
 
@@ -114,6 +114,21 @@ class NetworkManager(object):
         self.network.connect(
             container_name, aliases=aliases, ipv4_address=ipv4
         )
+
+    def disconnect(self, container_name: str):
+        """
+        Disconnect a container from the network.
+
+        Parameters
+        ----------
+        container:
+            Name of the container to disconnect
+        """
+        self.log.debug(
+            f"Disconnecting {container_name} from network"
+            f"'{self.network_name}'"
+        )
+        self.network.disconnect(container=container_name, force=True)
 
     def get_container_ip(self, container_name: str) -> str:
         """
