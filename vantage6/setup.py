@@ -54,6 +54,7 @@ setup(
     package_data={
         'vantage6.cli': [
             '__build__',
+            'rabbitmq/rabbitmq.config',
         ],
     },
     entry_points={
