@@ -591,8 +591,12 @@ class Node(object):
             vpn_subnet=self.config.get('vpn_subnet'),
             alpine_image=self.config.get('alpine')
         )
-        # if vpn config doesn't exist, get it and write to disk
-        if not os.path.isfile(ovpn_file):
+
+        if not self.config.get('vpn_subnet'):
+            self.log.warn("VPN subnet is not defined!")
+            self.log.info("Not trying to establish VPN connection.")
+        elif not os.path.isfile(ovpn_file):
+            # if vpn config doesn't exist, get it and write to disk
             self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE,
                               ovpn_file)
         else:
