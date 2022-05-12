@@ -61,9 +61,10 @@ class Result(Base):
                       f"{self.organization_id} in the current collaboration!")
             return None
         except MultipleResultsFound:
-            log_.warn("Multiple nodes are registered for organization_id "
-                      f"{self.organization_id} in the current collaboration. "
-                      "Please delete all nodes but one.")
+            log_.error("Multiple nodes are registered for organization_id "
+                       f"{self.organization_id} in the current collaboration. "
+                       "Please delete all nodes but one.")
+            raise
         return node
 
     @hybrid_property
