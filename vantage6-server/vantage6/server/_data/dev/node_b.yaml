@@ -1,0 +1,17 @@
+application:
+  api_key: demo-key-node3
+  server_url: http://localhost
+  port: 5000
+  api_path: '/api'
+  task_dir: tasks
+  databases:
+    default: 
+
+  logging:
+      level:        DEBUG # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+      file:         node.log               # Filename of logfile
+      use_console:  True                   # Log output to the console?
+      backup_count: 5                      # Number of logs to keep
+      max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
+      format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+      datefmt:      "%H:%M:%S"

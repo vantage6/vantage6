@@ -1,0 +1,20 @@
+summary: Container login
+
+description:
+  Allows for token-generation for a specific task, image and collaboration.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ContainerToken'
+
+responses:
+  200:
+    description: Container token generated
+  400:
+    description: Task does not exist or is already completed
+  401:
+    description: Key request for invalid image or task
+
+tags: ["Authentication"]

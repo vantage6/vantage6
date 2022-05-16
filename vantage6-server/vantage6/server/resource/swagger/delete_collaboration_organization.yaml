@@ -1,0 +1,26 @@
+summary: Remove organization from collaboration
+
+description: |
+  Removes a single organization from an existing collaboration.
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | Edit      | ❌                | ❌ | Remove an organization from an existing collaboration |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: specified collaboration or organization does not exists
+  401:
+    description: Unauthorized or missing permissions
+
+tags: ["Collaboration"]

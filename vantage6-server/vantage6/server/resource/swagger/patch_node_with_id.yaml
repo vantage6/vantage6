@@ -1,0 +1,40 @@
+summary: Update node
+
+description: |
+  Update the node specified by the id. Only a user or node that belongs to the organization of the node are allowed to update it.
+  If the node does not exists it is created as a new node.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Node   | Global        | Edit      | ❌                | ❌ | Update a node specified by id |
+  | Node   | Organization        | Edit      | ❌                | ❌ | Update a node specified by id which is part of your organization |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: "unique node identifier"
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Collaboration'
+
+responses:
+  200:
+    description: Ok, node is updated
+  403:
+    description: you do not have permission to alter this node
+  401:
+    description: Unauthorized
+  404:
+    description: Not found
+
+security:
+  - bearerAuth: []
+
+tags: ["Node"]

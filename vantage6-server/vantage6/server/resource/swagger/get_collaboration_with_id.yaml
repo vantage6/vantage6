@@ -1,0 +1,23 @@
+summary: Get collaboration
+
+description:
+  Returns the collaboration with the specified id.
+  Only returns the collaboration if the user or node has the required permissions.
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "unique node identifier"
+    required: true
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration with specified id is not found
+  401:
+    description: Unauthorized
+security:
+  - bearerAuth: []
+tags: ["Collaboration"]

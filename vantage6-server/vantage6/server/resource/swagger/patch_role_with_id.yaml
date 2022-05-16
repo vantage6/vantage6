@@ -1,0 +1,36 @@
+summary: Update role
+
+description: |
+  Updates roles within an organization if the user has permission to do so.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Role  | Global | Edit | ❌ | ❌ | Update any role |
+  | Role  | Organization | Edit | ❌ | ❌ | Update a role from your organization |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: Role id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Task'
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Role"]

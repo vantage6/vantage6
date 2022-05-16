@@ -1,0 +1,44 @@
+summary: Creates a new role.
+
+description: |
+  You can only assign rules that you own. You need permission to create roles, and you can only assign roles to other organizations if you
+  have gobal permission.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Role  | Global | Create | ❌ | ❌ | Create a role for any organization |
+  | Role  | Organization | Create | ❌ | ❌ | Create a role for your organization |
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          name:
+            type: string
+            description: human readable name for collaboration
+          description:
+            type: string
+            description:
+          rules:
+            type: integer
+            description:
+          organization_id:
+            type: integer
+            items:
+              type: integer
+            description: list of organization ids which form the collaboration
+
+responses:
+  201:
+    description: Created
+  404:
+    description: Organization or rule was not found
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+
+tags: ["Role"]

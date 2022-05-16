@@ -1,0 +1,21 @@
+summary: Login node
+
+description:
+  Allows for node sign-in using a unique api-key. If the login is successful this returns a
+  dictionairy with access and refresh tokens for the node as well as a node_url and a refresh_url.
+  It also returns a jwt-token so that the user can login again.
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Node'
+
+
+responses:
+  200:
+    description: Ok, authenticated
+  400:
+    description: No or wrong JSON-body, or invalid api-key provided
+
+tags: ["Authentication"]

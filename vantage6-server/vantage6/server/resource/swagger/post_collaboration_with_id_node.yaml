@@ -1,0 +1,41 @@
+summary: Add node to collaboration
+
+description: |
+  Add node to an existing collaboration.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Collaboration  | Global | Create | ❌ | ❌ | Add node to collaboration |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          id:
+            type: integer
+            description: if of node to be added
+
+responses:
+  201:
+    description: Added node to collaboration
+  404:
+    description: Collaboration or node not found
+  400:
+    description: Node is already in collaboration
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]
