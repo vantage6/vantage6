@@ -1,0 +1,35 @@
+summary: Adds new computation task
+
+description: |
+  Creates a new task within a collaboration. If no `organization_ids` are given the task is send to all organizations within the collaboration. The endpoint can be accessed by both a `User` and `Container`.
+  ## Accessed as `User`
+  When this endpoint is accessed by a `User` a new `run_id` is created. The user needs to be within a organization that is part of the collaboration to which the task is posted.
+  ## Accessed as `Container`
+  When this endpoint is accessed by a `Container` it is considered to be a child-task of the `Container`, and will get the `run_id` from the initial task. This does not have to be the same as the parent task, as it is possible that sub-tasks have sub-tasks themselfs. The container has limited permissions to create tasks, it is only allowed to create tasks in the same collaboration using the same image.
+  ## Accessed as `Node`
+  Nodes do not have permission to create tasks. This will return `401`.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Task  | Global | Create | ❌ | ❌ | Create a new task |
+  | Task  | Organization | Create | ❌ | ❌ | Create a new task for the collaborations in which your organization participates with |
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Task'
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: Collaboration having `colaboration_id` is not found
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+
+tags: ["Task"]

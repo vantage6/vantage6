@@ -1,0 +1,29 @@
+summary: Remove node from collaboration
+
+description: |
+  Removes a single node from an existing collaboration.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | Edit      | ❌                | ❌ | Remove node from collaboration |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: Collaboration id from which the node is to be deleted from.
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration or node not found
+  400:
+    description: node is not part of the collaboration
+  401:
+    description: Unauthorized or missing permissions
+
+tags: ["Collaboration"]

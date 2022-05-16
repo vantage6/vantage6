@@ -1,0 +1,33 @@
+summary: Update results
+
+description:
+  Update results if the task_id belongs to the specific organization and comes from the correct node.
+  The user cannot access or tamper with any results, rather, the node that accesses this endpoint needs to be authenticated.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "unique task identifier"
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Collaboration'
+
+responses:
+  200:
+    description: Ok
+  400:
+    description: not owner of this task or results already posted
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+
+tags: ["Result"]

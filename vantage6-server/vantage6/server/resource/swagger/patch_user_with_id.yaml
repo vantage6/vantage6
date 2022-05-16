@@ -1,0 +1,57 @@
+summary: Update user
+
+description: |
+  Update user information.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | User  | Global | Edit | ❌ | ❌ | Edit any user |
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          username:
+            type: string
+          firstname:
+            type: string
+          lastname:
+            type: string
+          password:
+            type: string
+          roles:
+            type: array
+            items:
+              type: string
+            description: user roles
+          rules:
+            type: integer
+            description: rules assigned to the user role
+          organization_id:
+            type: integer
+
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: user id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  403:
+    description: No permission to update this user
+  404:
+    description: User not found
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+
+tags: ["User"]

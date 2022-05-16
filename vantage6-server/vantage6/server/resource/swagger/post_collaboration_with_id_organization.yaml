@@ -1,0 +1,38 @@
+summary: Add organization to collaboration
+
+description: |
+  Adds a single organization to an existing collaboration.
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | Edit      | ❌                | ❌ | Add organization to a collaboration |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          id:
+            type: integer
+            description: organization id which needs to be added
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: specified collaboration or organization does not exists
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

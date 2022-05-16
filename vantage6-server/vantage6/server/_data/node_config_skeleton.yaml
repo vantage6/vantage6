@@ -1,0 +1,24 @@
+application:
+  api_key: key-to-hide
+  server_url: https://api.distributedlearning.ai
+  port: 5000
+  api_path: '/api'
+  task_dir: tasks
+  encryption:
+    enabled: true
+    private_key:
+  databases:
+    default:
+  allowed_images:
+  docker_registries:
+    - registry: harbor.vantage6.ai
+      username: tester
+      password: 46KdE!ei
+  logging:
+      level:        CRITICAL               # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+      file:         node.log               # Filename of logfile
+      use_console:  True                   # Log output to the console?
+      backup_count: 5                      # Number of logs to keep
+      max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
+      format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+      datefmt:      "%H:%M:%S"

@@ -1,0 +1,13 @@
+summary: Refresh token
+
+description:
+  Refresh access token if the previous one is expired.
+
+responses:
+  200:
+    description: Token refreshed
+
+security:
+  - bearerAuth: []
+
+tags: ["Authentication"]
