@@ -1,12 +1,19 @@
 
-tools/.env
+# documentation
+docs/_build
 
-tools/__pycache__/
+# Python
+.ipynb_checkpoints
+**/__pycache__
+**/.coverage
 
+# IDE's
+.idea/
+*.sublime-project
+*.sublime-workspace
 .vscode/
 
-.coverage
-
-.env
-
-docs/_build
+# Python build
+**/build/
+**/dist/
+*.egg-info
