@@ -1,0 +1,19 @@
+**/virt*
+**/*.sqlite
+*.vpp
+
+# Python
+.ipynb_checkpoints
+**/__pycache__
+**/.coverage
+
+# IDE's
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/
+
+# Python build
+build/
+dist/
+*.egg-info
