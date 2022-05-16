@@ -99,9 +99,7 @@ class ServerApp:
     def setup_socket_connection(self):
 
         msg_queue = self.ctx.config.get('rabbitmq_uri')
-        rabbit_host = None
         if msg_queue:
-            rabbit_host = split_rabbitmq_uri(msg_queue)['host']
             log.debug(f'Connecting to msg queue: {msg_queue}')
 
         try:
@@ -110,7 +108,7 @@ class ServerApp:
                 async_mode='gevent_uwsgi',
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins=rabbit_host
+                cors_allowed_origins='*'
             )
         except Exception as e:
             log.warning('Default socketio settings failed, attempt to run '
@@ -122,7 +120,7 @@ class ServerApp:
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins=rabbit_host
+                cors_allowed_origins='*'
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
