@@ -1,0 +1,33 @@
+summary: Create node
+
+description: |
+  Creates a new node-account belonging to a specific collaboration which is specified in the POST body.
+  The organization of the user needs to be within the collaboration.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Node   | Global        | Create      | ❌                | ❌ | Create a new node account belonging to a specific collaboration |
+  | Node   | Organization        | Create      | ❌                | ❌ | Create a new node account belonging to a specific organization which is also part of the collaboration |
+
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Collaboration'
+
+responses:
+  201:
+    description: new node-account created
+  404:
+    description: collaboration specified by id does not exists
+  403:
+    description: organization is not part of the collaboration
+  401:
+    description: Unauthorized or missing permissions
+
+security:
+  - bearerAuth: []
+
+tags: ["Node"]

@@ -1,0 +1,31 @@
+summary: Get user
+
+description: |
+  Returns the user specified by the id as well as be able to view the info on the users within the same scope.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | User  | Global | View | ❌ | ❌ | View any user details |
+  | User  | Organization | View | ❌ | ❌ | View users from your organization |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: user id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: User not found
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+
+tags: ["User"]

@@ -1,0 +1,23 @@
+summary: List of collaborations
+
+description: |
+  Returns a list of collaborations. Depending on your permission, all
+  collaborations are shown or only collaborations in which your organization
+  participates. See the table bellow.
+
+  ### Permission Table
+  | Rule name | Scope | Operation | Assigned to Node | Assigned to Container | Description |
+  | -- | -- | -- | -- | -- | -- |
+  | Collaboration  | Global | View | ❌ | ❌ | All collaborations |
+  | Collaboration  | Organization | View | ✅ | ✅ | Collaborations in which your organization participates |
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

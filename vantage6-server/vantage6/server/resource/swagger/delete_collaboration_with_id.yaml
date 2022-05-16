@@ -1,0 +1,30 @@
+summary: Delete collaboration
+
+description: |
+  Removes the collaboration from the database entirely.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | Delete      | ❌                | ❌ | Remove node from database |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration with specified id is not found
+  401:
+    description: Unauthorized
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

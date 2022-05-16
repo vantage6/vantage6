@@ -1,0 +1,31 @@
+summary: Delete node
+
+description: |
+  Delete node from organization. Only users that belong to the organization of the node can delete it.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Node   | Global        | Delete      | ❌                | ❌ | Delete any node |
+  | Node   | Organization        | Delete      | ❌                | ❌ | Delete any node that belongs to your organization |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: "unique node identifier"
+    required: true
+
+responses:
+  200:
+    description: Ok, node is deleted
+  404:
+    description: Node with specified id is not found
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+tags: ["Node"]

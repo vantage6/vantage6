@@ -1,0 +1,23 @@
+summary: Get rule
+
+description:
+  Retrieve a list of rules from the server. If rule id is provided then
+  that rule is returned.
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+      minimum: 1
+    description: rule_id
+    required: false
+
+responses:
+  200:
+    description: Ok
+
+security:
+  - bearerAuth: []
+
+tags: ["Rule"]

@@ -1,0 +1,24 @@
+summary: Remove node from collaboration
+
+description:
+  Removes a single node from an existing collaboration
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration or node not found
+  400:
+    description: node is alrady in collaboration
+  401:
+    description: Unauthorized
+
+tags: ["Collaboration"]

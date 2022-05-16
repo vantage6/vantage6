@@ -1,0 +1,44 @@
+summary: Update collaboration
+
+description: |
+  Updates the collaboration with the specified id.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | Edit      | ❌                | ❌ | Update a collaboration |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+requestBody:
+  content:
+    application/json:
+      schema:
+        properties:
+          name:
+            type: string
+            description: Human readable label
+          organization_ids:
+            type: array
+            items:
+              type: integer
+            description: list of organization ids
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration with specified id is not found
+  401:
+    description: Unauthorized or missing permissions
+
+security:
+  - bearerAuth: []
+
+tags: ["Collaboration"]

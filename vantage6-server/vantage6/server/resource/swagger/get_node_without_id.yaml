@@ -1,0 +1,23 @@
+summary: List of nodes
+
+description: |
+  Returns a list of nodes which are part of the organization to which the user or node belongs. In case an administrator
+  account makes this request, all nodes from all organizations are returned.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Node   | Global        | View      | ❌                | ❌ | View any node information |
+  | Node   | Organization        | View      | ✅                | ✅ | View node information for nodes that belong to your organization |
+
+responses:
+  200:
+    description: Ok
+  401:
+    description: Unauthorized or missing permissions
+
+security:
+  - bearerAuth: []
+tags: ["Node"]
+
+

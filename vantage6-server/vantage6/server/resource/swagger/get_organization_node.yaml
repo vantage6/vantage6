@@ -1,0 +1,30 @@
+summary: Return a list of nodes.
+
+description: |
+  Returns a list of nodes which are from the organization.
+
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Node   | Global        | View      | ❌                | ❌ | View any node|
+  | Node   | Organization        | View      | ✅                | ✅ | View a list of nodes that belong to your organization |
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: organization id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: Organization not found
+  401:
+    description: Unauthorized or missing permission
+
+security:
+  - bearerAuth: []
+
+tags: ["Organization"]

@@ -1,0 +1,17 @@
+environments:
+  prod:
+    description: Dev
+    type: dev
+    ip: '127.0.0.1' 
+    port: 5000
+    api_path: /api
+    uri: sqlite:///develop.sqlite
+    allow_drop_all: True
+    logging:
+      level:        DEBUG                  # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+      file:         develop-sever.log            # Filename of logfile
+      use_console:  True                   # Log output to the console?
+      backup_count: 5                      # Number of logs to keep
+      max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
+      format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+      datefmt:      "%Y-%m-%d %H:%M:%S"

@@ -1,0 +1,27 @@
+summary: List nodes in collaboration.
+
+description: |
+  Returns a list of node(s) which belong to the specified collaboration.
+  ### Permission Table
+  | Rule name       | Scope         | Operation | Assigned to Node  | Assigned to Container | Description |
+  | --              | --            | --        | --                | -- | -- |
+  | Collaboration   | Global        | View      | ❌                | ❌ | List nodes in a specified collaboration |
+  | Collaboration   | Organization        | View      | ✅                | ✅ | List nodes in a specified collaboration |
+
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: integer
+    description: collaboration id
+    required: true
+
+responses:
+  200:
+    description: Ok
+  404:
+    description: collaboration not found
+  401:
+    description: Unauthorized
+
+tags: ["Collaboration"]
