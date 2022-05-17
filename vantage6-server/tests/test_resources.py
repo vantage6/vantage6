@@ -2150,6 +2150,18 @@ class TestResources(unittest.TestCase):
         org.save()
         col = Collaboration(organizations=[org])
         col.save()
+
+        # task without any node created
+        results = self.app.post('/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            "collaboration_id": col.id
+        })
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # node is used implicitly as in further checks, can only create task
+        # if node has been created
+        node = Node(organization=org, collaboration=col)
+
         org2 = Organization()
         org2.save()
 
@@ -2205,6 +2217,9 @@ class TestResources(unittest.TestCase):
     def test_create_task_permissions_as_container(self):
         org = Organization()
         col = Collaboration(organizations=[org])
+        # node is used implicitly as in further checks, can only create task
+        # if node has been created
+        node = Node(organization=org, collaboration=col)
         parent_task = Task(collaboration=col, image="some-image")
         parent_task.save()
         parent_res = Result(organization=org, task=parent_task)
@@ -2224,6 +2239,8 @@ class TestResources(unittest.TestCase):
         # test other collaboration_id
         col2 = Collaboration(organizations=[org])
         col2.save()
+        node = Node(organization=org, collaboration=col2)
+        node.save()
         results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
             'collaboration_id': col2.id,
