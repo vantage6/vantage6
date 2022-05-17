@@ -17,28 +17,36 @@
 </p>
 
 -----------------------------------------------------------------------------------------------------
-This repository is part of **vantage6**, our **priVAcy preserviNg federaTed leArninG infrastructurE for Secure Insight eXchange**. Other repositories include:
-
-* [vantage6](https://github.com/iknl/vantage6)
-* [vantage6-common](https://github.com/iknl/vantage6-common)
-* [vantage6-server](https://github.com/iknl/vantage6-server)
-* [vantage6-node](https://github.com/iknl/vantage6-node)
-* [vantage6-client](https://github.com/iknl/vantage6-client)
-* [vantage6-UI](https://github.com/IKNL/Vantage6-UI)
-* vantage6-master (you are here)
+This repository is part of **vantage6**, our **privacy preserving federated learning infrastructure for secure insight exchange**, and contains all the **vantage6** infrastructure source/ code. Please visit our [website (vantage6.ai)](https://vantage6.ai) to learn more!
 
 ## :books: Documentation
-This repository contains all the **vantage6** packages as submodules. It is mainly used to store overarching files, like the `Dockerfile` and `Makefile`. For more information on how to use submodules, [see this helpful cheat sheet](https://github.github.com/training-kit/downloads/submodule-vs-subtree-cheat-sheet/).
+This repository is home to 4 PyPi packages:
 
-:warning: **Unless you're actively developing the vantage6 infrastructure, you should probably stay away from this repository.** :warning:
+* [vantage6](https://pypi.org/project/vantage6) -> _CLI for managing node and server instances_
+* [vantage6-client](https://pypi.org/project/vantage6-client) -> _Python client for interacting with the vantage6-server_
+* [vantage6-node](https://pypi.org/project/vantage6-node) -> _Node application package_
+* [vantage6-server](https://pypi.org/project/vantage6-server) -> _Server application package_
 
-For a more detailed, comprehensive guide of other **vantage6** componentes, please refer to our [website (`https://vantage6.ai`)](https://vantage6.ai) and the official [documentation (`https://docs.vantage6.ai/`)](https://docs.vantage6.ai/).
+**Note that when using vantage6 you do not install the _server_ and _node_ packages. These are delivered by you in Docker images.**
+
+Two docker images are published which contain the Node and Server applications:
+
+* `harbor2.vantage6.ai/infrastructure/node:VERSION`
+* `harbor2.vantage6.ai/infrastructure/server:VERSION`
+
+These docker images are used by the _vantage6 CLI_ package, to install this package:
+
+`pip install vantage6`
+
+This will install the CLI which enables you to use the commands:
+
+* `vnode CMD [OPTIONS]`
+* `vserver CMD [OPTIONS]`
+
+You can find more (user) documentation at [Gitbook (docs.vantage6.ai)](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Dircord (https://discord.gg/yAyFf6Y)](https://discord.gg/yAyFf6Y) channel.
 
 ## :gift_heart: Contributing
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/how-to-contribute/how-to-contribute)
-
-## :lock_with_ink_pen: Data Protection Impact Assessment
-Deploying Federated Learning solutions in real life often requires careful analysis and approval of a variety of legal entities. As part of these processes, we at IKNL have written a [Data Protection Impact Assessment (DPIA), which you can find here](https://vantage6.ai/data-protection-impact-assessment-dpia/). Please note that this DPIA was executed by IKNL and is specific for our situation. It can be used as an example by other organizations, but it cannot be used verbatim.
 
 ## :black_nib: References
 If you are using **vantage6**, please cite this repository as well as the accompanying paper as follows:
@@ -48,11 +56,8 @@ If you are using **vantage6**, please cite this repository as well as the accomp
 
 -----------------------------------------------------------------------------------------------------
 <p align="center">
-  <a href="https://github.com/IKNL/vantage6">vantage6</a> •
-  <a href="https://github.com/IKNL/vantage6-common">Common</a> •
-  <a href="https://github.com/IKNL/vantage6-server">Server</a> •
-  <a href="https://github.com/IKNL/vantage6-node">Node</a> •
-  <a href="https://github.com/IKNL/vantage6-client">Client</a> •
-  <a href="https://github.com/IKNL/Vantage6-UI">UI</a> •
-  <a>Master</a>
+  <a href="https://vantage6.ai">vantage6.ai</a> •
+  <a href="https://discord.gg/yAyFf6Y">Discord</a> •
+  <a href="https://vantage6.discourse.group/">Discourse</a> •
+  <a href="https://docs.vantage6.ai">User documentation</a> •
 </p>
