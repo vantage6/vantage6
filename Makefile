@@ -18,83 +18,8 @@ help:
 	@echo "  publish-test : publish built python packages to test.pypi.org"
 	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  clean        : clean all built packages"
-	@echo "  git-checkout : git checkout a BRANCH"
-	@echo "  git-push     : push the active branch to the registry (optional: FLAGS)"
-	@echo "  git-push     : pull the active"
-	@echo "  git-merge    : merge BRANCH into active branch"
-	@echo "  git-tag      : tag the current commit as a release TAG"
-	@echo "  git-commit   : Commit all repos and all changes using MSG"
-	@echo "  git-branch   : Create a new BRANCH"
-	@echo "  git-reset    : Resets current working tree DISCARDING all uncommited changes!"
 	@echo "  community    : Notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "Using tag: ${TAG}"
-
-git-checkout:
-	@echo "------------------------------------"
-	@echo "   Checking out branch ${BRANCH}    "
-	@echo "------------------------------------"
-	cd vantage6-common && git checkout ${BRANCH}
-	cd vantage6-client && git checkout ${BRANCH}
-	cd vantage6 && git checkout ${BRANCH}
-	cd vantage6-node && git checkout ${BRANCH}
-	cd vantage6-server && git checkout ${BRANCH}
-	@echo "------------------------------------"
-
-git-branch:
-	@echo "------------------------------------"
-	@echo "       Create branch ${BRANCH}      "
-	@echo "------------------------------------"
-	cd vantage6-common && git branch ${BRANCH}
-	cd vantage6-client && git branch ${BRANCH}
-	cd vantage6 && git branch ${BRANCH}
-	cd vantage6-node && git branch ${BRANCH}
-	cd vantage6-server && git branch ${BRANCH}
-	@echo "------------------------------------"
-
-git-commit:
-	cd vantage6-common && git commit -a -m "${MSG}"
-	cd vantage6-client && git commit -a -m "${MSG}"
-	cd vantage6 && git commit -a -m "${MSG}"
-	cd vantage6-node && git commit -a -m "${MSG}"
-	cd vantage6-server && git commit -a -m "${MSG}"
-
-git-push:
-	cd vantage6-common && git push ${FLAGS}
-	cd vantage6-client && git push ${FLAGS}
-	cd vantage6 && git push ${FLAGS}
-	cd vantage6-node && git push ${FLAGS}
-	cd vantage6-server && git push ${FLAGS}
-
-git-pull:
-	cd vantage6-common && git pull
-	cd vantage6-client && git pull
-	cd vantage6 && git pull
-	cd vantage6-node && git pull
-	cd vantage6-server && git pull
-
-git-merge:
-	cd vantage6-common && git merge ${BRANCH}
-	cd vantage6-client && git merge ${BRANCH}
-	cd vantage6 && git merge ${BRANCH}
-	cd vantage6-node && git merge ${BRANCH}
-	cd vantage6-server && git merge ${BRANCH}
-
-git-tag:
-	cd vantage6-common && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
-	cd vantage6-client && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
-	cd vantage6 && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
-	cd vantage6-node && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
-	cd vantage6-server && git tag -a "${TAG}" -m "Release ${TAG}" && git push origin ${TAG}
-
-git-reset:
-	@echo "------------------------------------"
-	@echo "             GIT RESET              "
-	@echo "------------------------------------"
-	cd vantage6-common && git reset --hard
-	cd vantage6-client && git reset --hard
-	cd vantage6 && git reset --hard
-	cd vantage6-node && git reset --hard
-	cd vantage6-server && git reset --hard
 
 set-version:
 	# --version --build --spec --post
@@ -136,11 +61,6 @@ image:
 docker-push:
 	docker push harbor2.vantage6.ai/infrastructure/node:${TAG}
 	docker push harbor2.vantage6.ai/infrastructure/server:${TAG}
-
-update-harukas:
-	docker tag harbor2.vantage6.ai/infrastructure/server:${TAG} harbor2.vantage6.ai/infrastructure/server:live
-	docker trust sign harbor2.vantage6.ai/infrastructure/server:live
-	docker push harbor2.vantage6.ai/infrastructure/server:live
 
 rebuild:
 	@echo "------------------------------------"
