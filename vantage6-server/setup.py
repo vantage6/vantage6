@@ -58,6 +58,8 @@ setup(
         'gevent-websocket==0.10.1',
         'eventlet==0.33.0',
         'kombu==5.2.2',
+        'Werkzeug==2.0.1',
+        'jinja2==3.0.3',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}'
     ],
