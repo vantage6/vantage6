@@ -17,7 +17,7 @@ def run():
     )
     success_server = run_tests(server_test_suites)
 
-    sys.exit(success_server and success_cli)
+    sys.exit(not (success_server and success_cli))
 
 
 if __name__ == "__main__":
