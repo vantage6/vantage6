@@ -27,7 +27,7 @@ This repository is home to 4 PyPi packages:
 * [vantage6-node](https://pypi.org/project/vantage6-node) -> _Node application package_
 * [vantage6-server](https://pypi.org/project/vantage6-server) -> _Server application package_
 
-**Note that when using vantage6 you do not install the _server_ and _node_ packages. These are delivered by you in Docker images.**
+**Note that when using vantage6 you do not install the _server_ and _node_ packages. These are delivered to you in Docker images.**
 
 Two docker images are published which contain the Node and Server applications:
 
