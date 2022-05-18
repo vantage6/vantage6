@@ -127,7 +127,7 @@ def find_tests(path=None):
     return suites
 
 
-def run_tests(suites):
+def run_tests(suites) -> bool:
     log = logging.getLogger('utest')
     print('-' * 90)
     print('Started: ' + datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
@@ -136,7 +136,7 @@ def run_tests(suites):
     # Setting verbosity=1 will display dots instead.
     result = TestRunner(log, verbosity=2).run(suites)
     log.info(result)
-    sys.exit(not result.wasSuccessful())
+    return result.wasSuccessful()
 
 
 # ------------------------------------------------------------------------------

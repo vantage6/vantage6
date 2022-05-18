@@ -31,7 +31,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with coveralls
       run: |
-        coverage run --source=vantage6 --omit="vantage6-server/utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" vantage6-server/utest.py
+        coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
     - name: Coveralls
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
