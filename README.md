@@ -7,7 +7,12 @@
 <h3 align="center">
 
 <!-- Badges go here-->
-
+[![Release](https://github.com/vantage6/vantage6/actions/workflows/release.yml/badge.svg)](https://github.com/vantage6/vantage6/actions/workflows/release.yml)
+[![PyPI vantage6](https://badge.fury.io/py/vantage6.svg)](https://badge.fury.io/py/vantage6)
+[![Unittests](https://github.com/vantage6/vantage6/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/vantage6/vantage6/actions/workflows/unit_tests.yml)
+[![Coverage Status](https://coveralls.io/repos/github/vantage6/vantage6/badge.svg?branch=main)](https://coveralls.io/github/vantage6/vantage6?branch=main)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/2e60ac3b3f284620805f7399cba317be)](https://www.codacy.com/gh/vantage6/vantage6/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=vantage6/vantage6&amp;utm_campaign=Badge_Grade)
+[![DOI](https://zenodo.org/badge/120275991.svg)](https://zenodo.org/badge/latestdoi/120275991)
 </h3>
 
 <p align="center">
@@ -15,6 +20,8 @@
   <a href="#gift_heart-contributing">Contributing</a> •
   <a href="#black_nib-references">References</a>
 </p>
+
+
 
 -----------------------------------------------------------------------------------------------------
 This repository is part of **vantage6**, our **privacy preserving federated learning infrastructure for secure insight exchange**, and contains all the **vantage6** infrastructure source/ code. Please visit our [website (vantage6.ai)](https://vantage6.ai) to learn more!
@@ -34,7 +41,7 @@ Two docker images are published which contain the Node and Server applications:
 * `harbor2.vantage6.ai/infrastructure/node:VERSION`
 * `harbor2.vantage6.ai/infrastructure/server:VERSION`
 
-These docker images are used by the _vantage6 CLI_ package, to install this package:
+These docker images are used by the _vantage6 CLI_ package, which can be installed by running:
 
 `pip install vantage6`
 
