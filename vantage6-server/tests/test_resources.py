@@ -374,19 +374,19 @@ class TestResources(unittest.TestCase):
 
     def test_result_without_id(self):
         headers = self.login("root")
-        result = self.app.get("/api/result", headers=headers)
-        self.assertEqual(result.status_code, 200)
+        result1 = self.app.get("/api/result", headers=headers)
+        self.assertEqual(result1.status_code, 200)
 
-        result = self.app.get("/api/result?state=open&&node_id=1",
+        result2 = self.app.get("/api/result?state=open&&node_id=1",
                               headers=headers)
-        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result2.status_code, 200)
 
-        result = self.app.get("/api/result?task_id=1", headers=headers)
-        self.assertEqual(result.status_code, 200)
+        result3 = self.app.get("/api/result?task_id=1", headers=headers)
+        self.assertEqual(result3.status_code, 200)
 
-        result = self.app.get("/api/result?task_id=1&&node_id=1",
+        result4 = self.app.get("/api/result?task_id=1&&node_id=1",
                               headers=headers)
-        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result4.status_code, 200)
 
     def test_stats(self):
         headers = self.login("root")
