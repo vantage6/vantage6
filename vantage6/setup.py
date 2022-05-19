@@ -10,8 +10,8 @@ here = path.abspath(path.dirname(__file__))
 # with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 #     long_description = f.read()
 long_description = (
-    "GitHub: [https://github.com/iknl/vantage6]"
-    "(https://github.com/iknl/vantage6)"
+    "GitHub: [https://github.com/vantage6/vantage6]"
+    "(https://github.com/vantage6/vantage6)"
 )
 
 # Read the API version from disk. This file should be located in the package
@@ -31,7 +31,7 @@ setup(
     description='vantage6 command line interface',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://github.com/IKNL/vantage6',
+    url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
