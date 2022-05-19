@@ -53,7 +53,7 @@ class WizardTest(unittest.TestCase):
 
             keys = ["description", "ip", "port", "api_path", "uri",
                     "allow_drop_all", "jwt_secret_key", "logging",
-                    "vpn_server", "rabbitmq"]
+                    "vpn_server", "rabbitmq_uri"]
 
             for key in keys:
                 self.assertIn(key, config)
