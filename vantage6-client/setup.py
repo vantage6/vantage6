@@ -30,7 +30,7 @@ setup(
     description='Vantage6 client',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/IKNL/vantage6-client',
+    url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[

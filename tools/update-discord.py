@@ -41,7 +41,7 @@ class PostUpdates(commands.Cog):
         description = (
             ':triangular_flag_on_post: A new **vantage6** release! :triangular_flag_on_post:\n\n'
             f'{summary}'
-            '\nSee the complete release notes [here](https://docs.vantage6.ai/v/petronas/release-notes-1/3-petronas)\n\n'
+            '\nSee the complete release notes [here](https://docs.vantage6.ai/about-background/release-notes)\n\n'
             'To upgrade:'
             '```'
             f'pip install vantage6=={version}'
@@ -51,30 +51,25 @@ class PostUpdates(commands.Cog):
         )
 
         repositories = (
-            "[vantage6-master](http://github.com/iknl/vantage6-master)\n"
-            "[vantage6](http://github.com/iknl/vantage6)\n"
-            "[vantage6-client](http://github.com/iknl/vantage6-client)\n"
-            "[vantage6-common](http://github.com/iknl/vantage6-common)\n"
-            "[vantage6-node](http://github.com/iknl/vantage6-node)\n"
-            "[vantage6-server](http://github.com/iknl/vantage6-server)"
+            "[vantage6](http://github.com/vantage6)"
         )
 
         documentation = (
-            '[latest release notes](https://docs.vantage6.ai/v/petronas/release-notes-1/3-petronas)\n'
-            '[installation instructions](https://docs.vantage6.ai/v/petronas/installation/what-to-install)\n'
+            '[Latest release notes](https://docs.vantage6.ai/about-background/release-notes)\n'
+            '[Installation instructions](https://docs.vantage6.ai/installation/what-to-install)\n'
             '[How to contribute](https://docs.vantage6.ai/v/petronas/how-to-contribute/how-to-contribute)'
+            '[Discourse](https://vantage6.discourse.group/)\n'
         )
 
         links = (
-            '[harbor](https://harbor.vantage6.ai)\n'
             '[harbor2](https://harbor2.vantage6.ai)\n'
             '[Project website](https://vantage6.ai)\n'
-            '[Build status](https://github.com/IKNL/vantage6-master/actions)'
+            '[Build status](https://github.com/vantage6/vantage6/actions)'
         )
 
         embed=Embed(title=f"Release {version}", url="https://pypi.org", description=description, color=0x0593ff)
-        embed.set_author(name="Frank Martin", icon_url="https://secure.gravatar.com/avatar/70ec8a99cb53dda559c7b191e24f3559?size=35")
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/789852327623786508/790610154491478076/train.png")
+        embed.set_author(name="vantage6 Team", icon_url="https://nl.gravatar.com/userimage/193840621/ae1b7b037ec1f7f16e15a75d0ae10b0f.png?size=35")
+        embed.set_thumbnail(url="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true")
         embed.add_field(name="Docker Images", value=f"harbor2.vantage6.ai/infrastructure/node:{version} \n harbor2.vantage6.ai/infrastructure/server:{version}", inline=False)
         embed.add_field(name="Documentation", value=documentation, inline=True)
         embed.add_field(name="Github", value=repositories, inline=True)
