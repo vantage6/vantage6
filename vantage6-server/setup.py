@@ -10,17 +10,8 @@ here = Path(path.abspath(path.dirname(__file__)))
 parent_dir = here.parent.absolute()
 
 # get the long description from the README file
-<<<<<<< feature/remove-iknl-repo-references
-# with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-#     long_description = f.read()
-long_description = (
-    "GitHub: [https://github.com/vantage6/vantage6]"
-    "(https://github.com/vantage6/vantage6)"
-)
-=======
 with codecs.open(path.join(parent_dir, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
->>>>>>> main
 
 # Read the API version from disk. This file should be located in the package
 # folder, since it's also used to set the pkg.__version__ variable.
