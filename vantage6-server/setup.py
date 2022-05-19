@@ -1,18 +1,17 @@
+import codecs
 import os
+
 from os import path
-from codecs import open
 from setuptools import setup, find_namespace_packages
+from pathlib import Path
 
 # get current directory
-here = path.abspath(path.dirname(__file__))
+here = Path(path.abspath(path.dirname(__file__)))
+parent_dir = here.parent.absolute()
 
 # get the long description from the README file
-# with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-#     long_description = f.read()
-long_description = (
-    "GitHub: [https://github.com/iknl/vantage6]"
-    "(https://github.com/iknl/vantage6)"
-)
+with codecs.open(path.join(parent_dir, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 # Read the API version from disk. This file should be located in the package
 # folder, since it's also used to set the pkg.__version__ variable.
@@ -20,7 +19,7 @@ version_path = os.path.join(here, 'vantage6', 'server', '_version.py')
 version_ns = {
     '__file__': version_path
 }
-with open(version_path) as f:
+with codecs.open(version_path) as f:
     exec(f.read(), {}, version_ns)
 
 # setup the package
