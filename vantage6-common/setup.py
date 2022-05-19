@@ -3,12 +3,14 @@ import os
 
 from os import path
 from setuptools import find_namespace_packages, setup
+from pathlib import Path
 
 # get current directory
-here = path.abspath(path.dirname(__file__))
+here = Path(path.abspath(path.dirname(__file__)))
+parent_dir = here.parent.absolute()
 
 # get the long description from the README file
-with codecs.open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with codecs.open(path.join(parent_dir, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 # Read the API version from disk. This file should be located in the package

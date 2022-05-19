@@ -374,19 +374,19 @@ class TestResources(unittest.TestCase):
 
     def test_result_without_id(self):
         headers = self.login("root")
-        result = self.app.get("/api/result", headers=headers)
-        self.assertEqual(result.status_code, 200)
+        result1 = self.app.get("/api/result", headers=headers)
+        self.assertEqual(result1.status_code, 200)
 
-        result = self.app.get("/api/result?state=open&&node_id=1",
-                              headers=headers)
-        self.assertEqual(result.status_code, 200)
+        result2 = self.app.get("/api/result?state=open&&node_id=1",
+                               headers=headers)
+        self.assertEqual(result2.status_code, 200)
 
-        result = self.app.get("/api/result?task_id=1", headers=headers)
-        self.assertEqual(result.status_code, 200)
+        result3 = self.app.get("/api/result?task_id=1", headers=headers)
+        self.assertEqual(result3.status_code, 200)
 
-        result = self.app.get("/api/result?task_id=1&&node_id=1",
-                              headers=headers)
-        self.assertEqual(result.status_code, 200)
+        result4 = self.app.get("/api/result?task_id=1&&node_id=1",
+                               headers=headers)
+        self.assertEqual(result4.status_code, 200)
 
     def test_stats(self):
         headers = self.login("root")
@@ -936,9 +936,8 @@ class TestResources(unittest.TestCase):
         result = self.app.get(f'/api/user/{user_id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
-        # user can view their own data
-        rule = Rule.get_by_("user", Scope.OWN, Operation.VIEW)
-        user = self.create_user(rules=[rule])
+        # user can view their own data. This should always be possible
+        user = self.create_user(rules=[])
         headers = self.login(user.username)
         result = self.app.get(f'/api/user/{user.id}', headers=headers)
 
@@ -1261,6 +1260,7 @@ class TestResources(unittest.TestCase):
         )
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(result.json['id'], node.organization.id)
+        node.delete()
 
     def test_view_organization_as_container_permission(self):
         node, api_key = self.create_node()
@@ -1281,6 +1281,9 @@ class TestResources(unittest.TestCase):
         )
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertIsInstance(result.json, list)
+
+        # cleanup
+        node.delete()
 
     def test_create_organization_permissions(self):
 
@@ -1394,6 +1397,9 @@ class TestResources(unittest.TestCase):
         results = self.app.get(f"/api/organization/{org.id}/node",
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        node.delete()
 
     def test_organization_view_collaboration_permissions(self):
 
@@ -1704,6 +1710,9 @@ class TestResources(unittest.TestCase):
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
+        # cleanup
+        node.delete()
+
     def test_add_collaboration_node_permissions(self):
 
         org = Organization()
@@ -1744,6 +1753,9 @@ class TestResources(unittest.TestCase):
                                 headers=headers, json={'id': node.id})
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
+        # cleanup
+        node.delete()
+
     def test_delete_collaboration_node_permissions(self):
 
         org = Organization()
@@ -1780,6 +1792,10 @@ class TestResources(unittest.TestCase):
         results = self.app.delete(f'/api/collaboration/{col.id}/node',
                                   headers=headers, json={'id': node.id})
         self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # cleanup
+        node.delete()
+        node2.delete()
 
     def test_view_collaboration_task_permissions_as_user(self):
 
@@ -1835,6 +1851,9 @@ class TestResources(unittest.TestCase):
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
+        # cleanup
+        node.delete()
+
     def test_view_node_permissions_as_user(self):
 
         org = Organization()
@@ -1880,6 +1899,9 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(len(results.json), len(Node.get()))
 
+        # cleanup
+        node.delete()
+
     def test_view_node_permissions_as_node(self):
 
         org = Organization()
@@ -1896,6 +1918,9 @@ class TestResources(unittest.TestCase):
         results = self.app.get('/api/node', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(len(results.json), len(org.nodes))
+
+        # cleanup
+        node.delete()
 
     def test_create_node_permissions(self):
 
@@ -1992,11 +2017,11 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # global permission
-        node = Node(organization=org, collaboration=col)
-        node.save()
+        node2 = Node(organization=org, collaboration=col)
+        node2.save()
         rule = Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.delete(f'/api/node/{node.id}', headers=headers)
+        results = self.app.delete(f'/api/node/{node2.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
     def test_patch_node_permissions_as_user(self):
@@ -2065,6 +2090,9 @@ class TestResources(unittest.TestCase):
         results = self.app.patch(f'/api/node/{node.id}', headers=headers,
                                  json={'organization_id': -1})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        # cleanup
+        node.delete()
 
     def test_view_task_permissions_as_user(self):
         # non existing task
@@ -2150,6 +2178,18 @@ class TestResources(unittest.TestCase):
         org.save()
         col = Collaboration(organizations=[org])
         col.save()
+
+        # task without any node created
+        results = self.app.post('/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            "collaboration_id": col.id
+        })
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # node is used implicitly as in further checks, can only create task
+        # if node has been created
+        node = Node(organization=org, collaboration=col)
+
         org2 = Organization()
         org2.save()
 
@@ -2202,6 +2242,9 @@ class TestResources(unittest.TestCase):
         })
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
+        # cleanup
+        node.delete()
+
     def test_create_task_permissions_as_container(self):
         org = Organization()
         col = Collaboration(organizations=[org])
@@ -2224,6 +2267,8 @@ class TestResources(unittest.TestCase):
         # test other collaboration_id
         col2 = Collaboration(organizations=[org])
         col2.save()
+        node2 = Node(organization=org, collaboration=col2)
+        node2.save()
         results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
             'collaboration_id': col2.id,
@@ -2248,6 +2293,9 @@ class TestResources(unittest.TestCase):
             'image': 'some-image'
         })
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        node2.delete()
 
     def test_delete_task_permissions(self):
 
@@ -2319,6 +2367,9 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f'/api/task/{task.id}/result', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # cleanup
+        node.delete()
 
     def test_view_task_result_permissions_as_container(self):
         # test if container can

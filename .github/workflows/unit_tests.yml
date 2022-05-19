@@ -1,20 +1,9 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: CI
+name: Unit tests
 
-on:
-  push:
-    branches:
-      - master
-      - DEV
-      - 'feature/**'
-      - 'bugfix/**'
-      - 'release/**'
-  pull_request:
-    branches:
-      - master
-      - DEV
+on: [pull_request]
 
 jobs:
   build:
@@ -32,8 +21,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install coverage
-        pip install -e .[dev]
+        pip install coverage==4.5.4
+        make install-dev
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -42,7 +31,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with coveralls
       run: |
-        coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" ./utest.py
+        coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
     - name: Coveralls
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}

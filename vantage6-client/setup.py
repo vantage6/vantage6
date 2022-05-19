@@ -1,13 +1,16 @@
+import codecs
 import os
+
 from os import path
-from codecs import open as s_open
 from setuptools import setup, find_namespace_packages
+from pathlib import Path
 
 # get current directory
-here = path.abspath(path.dirname(__file__))
+here = Path(path.abspath(path.dirname(__file__)))
+parent_dir = here.parent.absolute()
 
 # get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with codecs.open(path.join(parent_dir, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 # Read the API version from disk. This file should be located in the package
@@ -16,7 +19,7 @@ version_path = os.path.join(here, 'vantage6', 'client', '_version.py')
 version_ns = {
     '__file__': version_path
 }
-with s_open(version_path) as f:
+with codecs.open(version_path) as f:
     exec(f.read(), {}, version_ns)
 
 
