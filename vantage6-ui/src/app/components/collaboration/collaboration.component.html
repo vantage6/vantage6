@@ -1,4 +1,4 @@
-<div *ngIf="userPermission.hasPermission('view', 'collaboration', 'organization') && collaborations.length>0">
+<div *ngIf="userPermission.hasPermission('view', 'collaboration', 'organization') && my_collaborations.length>0">
   <mat-card>
     <h4 class="inline">
       Your collaborations
@@ -11,7 +11,7 @@
       </button>
     </div>
     <div class="vertical-spacer"></div>
-    <div *ngFor="let col of collaborations">
+    <div *ngFor="let col of my_collaborations">
       <app-collaboration-view
         [collaboration]="col"
         (deletingCollab)="deleteCollaboration(col)"

@@ -7,11 +7,12 @@ import { OpsType, ResType } from 'src/app/shared/enum';
 
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { RoleStoreService } from 'src/app/services/store/role-store.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/services/common/utils.service';
-import { PermissionTableComponent } from '../../permission-table/permission-table.component';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
 @Component({
   selector: 'app-role-edit',
@@ -23,7 +24,7 @@ import { PermissionTableComponent } from '../../permission-table/permission-tabl
 })
 export class RoleEditComponent implements OnInit {
   role: Role = getEmptyRole();
-  id: number = this.role.id;
+  rules: Rule[] = [];
   mode: OpsType = OpsType.EDIT;
   organization_id: number | null = null;
 
@@ -32,26 +33,29 @@ export class RoleEditComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private roleService: ApiRoleService,
-    private roleStoreService: RoleStoreService,
+    private roleDataService: RoleDataService,
     private modalService: ModalService,
-    private utilsService: UtilsService
+    private utilsService: UtilsService,
+    private convertJsonService: ConvertJsonService,
+    private ruleDataService: RuleDataService
   ) {}
 
   ngOnInit(): void {
-    this.roleStoreService.getSingle().subscribe((role) => {
-      this.role = role;
-    });
     if (this.router.url.includes(OpsType.CREATE)) {
       this.mode = OpsType.CREATE;
     }
+    this.init();
+  }
+
+  async init(): Promise<void> {
+    // subscribe to rule data service to have all rules available
+    await this.setRules();
+
     // subscribe to id parameter in route to change edited role if required
     this.activatedRoute.paramMap.subscribe((params) => {
       if (this.mode !== OpsType.CREATE) {
         let new_id = this.utilsService.getId(params, ResType.ROLE);
-        if (new_id !== this.id) {
-          this.id = new_id;
-          this.setRoleFromAPI(new_id);
-        }
+        this.setRole(new_id);
       } else {
         this.organization_id = this.utilsService.getId(
           params,
@@ -62,16 +66,33 @@ export class RoleEditComponent implements OnInit {
     });
   }
 
-  async setRoleFromAPI(id: number): Promise<void> {
-    try {
-      this.role = await this.roleService.getRole(id);
-    } catch (error: any) {
-      this.modalService.openMessageModal(
-        ModalMessageComponent,
-        [error.error.msg],
-        true
-      );
-    }
+  async setRole(id: number): Promise<void> {
+    (
+      await this.roleDataService.get(id, this.convertJsonService.getRole, [
+        this.rules,
+      ])
+    ).subscribe(
+      (role: Role) => {
+        this.role = role;
+      },
+      // TODO this error is never triggered but should be triggered if no role
+      // is returned
+      (error) => {
+        this.modalService.openMessageModal(
+          ModalMessageComponent,
+          [error.error.msg],
+          true
+        );
+      }
+    );
+  }
+
+  async setRules(): Promise<void> {
+    (
+      await this.ruleDataService.list(this.convertJsonService.getRule)
+    ).subscribe((rules: Rule[]) => {
+      this.rules = rules;
+    });
   }
 
   saveEdit(): void {

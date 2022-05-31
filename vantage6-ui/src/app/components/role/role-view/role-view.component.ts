@@ -7,7 +7,7 @@ import { ModalService } from 'src/app/services/common/modal.service';
 
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { RoleStoreService } from 'src/app/services/store/role-store.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
 
 @Component({
   selector: 'app-role-view',
@@ -24,7 +24,7 @@ export class RoleViewComponent implements OnInit {
   constructor(
     public userPermission: UserPermissionService,
     public roleService: ApiRoleService,
-    private roleStoreService: RoleStoreService,
+    private roleDataService: RoleDataService,
     private modalService: ModalService
   ) {}
 
@@ -58,6 +58,6 @@ export class RoleViewComponent implements OnInit {
   }
 
   editRole(): void {
-    this.roleStoreService.setSingle(this.role);
+    this.roleDataService.set(this.role);
   }
 }

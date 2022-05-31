@@ -62,11 +62,6 @@ export class ApiUserService extends ApiService {
     return data;
   }
 
-  async getUserJson(id: number): Promise<any> {
-    // TODO remove this func
-    return await this.get(id).toPromise();
-  }
-
   async getUser(id: number): Promise<User> {
     let user_json = await this.get(id).toPromise();
 

@@ -34,6 +34,8 @@ export class ApiCollaborationService extends ApiService {
     return data;
   }
 
+  // async getResourceSingle(id: number)
+
   async getCollaboration(
     id: number,
     organizations: Organization[]
@@ -43,14 +45,14 @@ export class ApiCollaborationService extends ApiService {
       this.convertJsonService.getCollaboration,
       [organizations]
     );
-    return col === null ? EMPTY_COLLABORATION : col;
+    return col === null ? EMPTY_COLLABORATION : (col as Collaboration);
   }
 
   async getCollaborations(
     organizations: Organization[]
   ): Promise<Collaboration[]> {
-    return await super.getResources(this.convertJsonService.getCollaboration, [
+    return (await super.getResources(this.convertJsonService.getCollaboration, [
       organizations,
-    ]);
+    ])) as Collaboration[];
   }
 }

@@ -48,7 +48,7 @@ export class ApiNodeService extends ApiService {
 
   async getNode(id: number): Promise<Node> {
     let node = await super.getResource(id, this.convertJsonService.getNode);
-    return node === null ? EMPTY_NODE : node;
+    return node === null ? EMPTY_NODE : (node as Node);
   }
 
   async getNodes() {

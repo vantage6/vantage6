@@ -9,11 +9,13 @@ import { deepcopy } from 'src/app/shared/utils';
 import { environment } from 'src/environments/environment';
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
+import { ApiService } from 'src/app/services/api/api.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ApiRuleService {
+export class ApiRuleService extends ApiService {
   is_logged_in = false;
   all_rules: Rule[] = [];
   all_rules_bhs = new BehaviorSubject<Rule[]>([]);
@@ -21,17 +23,24 @@ export class ApiRuleService {
   rule_groups_bhs = new BehaviorSubject<RuleGroup[]>([]);
 
   constructor(
-    private http: HttpClient,
+    protected http: HttpClient,
+    protected modalService: ModalService,
     private tokenStorageService: TokenStorageService,
     private convertJsonService: ConvertJsonService
   ) {
+    super(ResType.RULE, http, modalService);
     this.tokenStorageService.isLoggedIn().subscribe((is_logged_in) => {
       this.is_logged_in = is_logged_in;
     });
   }
 
-  list() {
-    return this.http.get<any>(environment.api_url + '/rule');
+  get_data(rule: Rule) {
+    return {
+      type: rule.type,
+      operation: rule.operation,
+      resource: rule.resource,
+      scope: rule.scope,
+    };
   }
 
   getRules(): Observable<Rule[]> {
