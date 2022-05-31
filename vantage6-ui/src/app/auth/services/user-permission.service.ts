@@ -5,12 +5,12 @@ import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
 
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { ApiUserService } from 'src/app/services/api/api-user.service';
-import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { Rule } from 'src/app/interfaces/rule';
 import { Role } from 'src/app/interfaces/role';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -28,7 +28,7 @@ export class UserPermissionService {
   constructor(
     private tokenStorage: TokenStorageService,
     private userService: ApiUserService,
-    private ruleService: ApiRuleService,
+    private ruleDataService: RuleDataService,
     private roleService: ApiRoleService
   ) {
     this.setup();
@@ -36,7 +36,7 @@ export class UserPermissionService {
 
   async setup(): Promise<void> {
     // request all existing rules
-    this.all_rules = await this.ruleService.getAllRules();
+    this.all_rules = await this.ruleDataService.getAllRules();
 
     // get user information
     let user_info = this.tokenStorage.getUserInfo();

@@ -7,26 +7,23 @@ import { User } from 'src/app/interfaces/user';
 import { environment } from 'src/environments/environment';
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
-import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { Role } from 'src/app/interfaces/role';
+import { RuleDataService } from '../data/rule-data.service';
 
-// TODO this service is quite different from the other API services
-// See to it that this is standardized somewhat, e.g. by obtaining the Rules
-// from elsewhere
 @Injectable({
   providedIn: 'root',
 })
 export class ApiUserService extends ApiService {
-  all_rules: Rule[] = [];
+  rules: Rule[] = [];
 
   constructor(
     protected http: HttpClient,
     private roleService: ApiRoleService,
-    private ruleService: ApiRuleService,
+    private ruleDataService: RuleDataService,
     private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
@@ -35,7 +32,11 @@ export class ApiUserService extends ApiService {
   }
 
   async setup(): Promise<void> {
-    this.all_rules = await this.ruleService.getAllRules();
+    (
+      await this.ruleDataService.list(this.convertJsonService.getRule)
+    ).subscribe((rules: Rule[]) => {
+      this.rules = rules;
+    });
   }
 
   list(organization_id: number | null = null) {
@@ -71,7 +72,7 @@ export class ApiUserService extends ApiService {
     }
     let roles = await this.roleService.getRoles(role_ids);
 
-    return this.convertJsonService.getUser(user_json, roles, this.all_rules);
+    return this.convertJsonService.getUser(user_json, roles, this.rules);
   }
 
   async getOrganizationUsers(

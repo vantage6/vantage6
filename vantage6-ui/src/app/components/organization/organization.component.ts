@@ -26,6 +26,7 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
 @Component({
   selector: 'app-organization',
@@ -56,7 +57,7 @@ export class OrganizationComponent implements OnInit {
     private orgDataService: OrgDataService,
     private userDataService: UserDataService,
     private roleDataService: RoleDataService,
-    private ruleService: ApiRuleService,
+    private ruleDataService: RuleDataService,
     private modalService: ModalService,
     private utilsService: UtilsService
   ) {}
@@ -84,7 +85,9 @@ export class OrganizationComponent implements OnInit {
         }
       }
     });
-    this.ruleService.getRules().subscribe((rules) => {
+    // TODO should we get it like this or just by a 'normal' call to get rules
+    // from a data service
+    this.ruleDataService.getRules().subscribe((rules) => {
       this.rules = rules;
     });
   }

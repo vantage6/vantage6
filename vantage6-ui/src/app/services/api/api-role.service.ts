@@ -11,6 +11,7 @@ import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
+import { RuleDataService } from '../data/rule-data.service';
 
 // TODO this service is quite different from the other API services
 // See to it that this is standardized somewhat, e.g. by obtaining the Rules
@@ -19,11 +20,11 @@ import { ModalService } from 'src/app/services/common/modal.service';
   providedIn: 'root',
 })
 export class ApiRoleService extends ApiService {
-  all_rules: Rule[] = [];
+  rules: Rule[] = [];
 
   constructor(
     protected http: HttpClient,
-    private ruleService: ApiRuleService,
+    private ruleDataService: RuleDataService,
     private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
@@ -32,7 +33,11 @@ export class ApiRoleService extends ApiService {
   }
 
   async setup(): Promise<void> {
-    this.all_rules = await this.ruleService.getAllRules();
+    (
+      await this.ruleDataService.list(this.convertJsonService.getRule)
+    ).subscribe((rules: Rule[]) => {
+      this.rules = rules;
+    });
   }
 
   list(
@@ -57,11 +62,11 @@ export class ApiRoleService extends ApiService {
   }
 
   async getRole(id: number): Promise<Role> {
-    if (this.all_rules.length === 0) {
+    if (this.rules.length === 0) {
       await this.setup();
     }
     let role_json = await this.get(id).toPromise();
-    return this.convertJsonService.getRole(role_json, this.all_rules);
+    return this.convertJsonService.getRole(role_json, this.rules);
   }
 
   async getRoles(ids: number[]): Promise<Role[]> {
@@ -79,7 +84,7 @@ export class ApiRoleService extends ApiService {
     let role_json = await this.list(org_id, include_root).toPromise();
     let roles: Role[] = [];
     for (let role of role_json) {
-      roles.push(this.convertJsonService.getRole(role, this.all_rules));
+      roles.push(this.convertJsonService.getRole(role, this.rules));
     }
     return roles;
   }
