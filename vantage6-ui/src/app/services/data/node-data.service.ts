@@ -19,26 +19,20 @@ export class NodeDataService extends BaseDataService {
 
   async get(
     id: number,
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Node>> {
-    return (await super.get(
+    return (await super.get_base(
       id,
-      convertJsonFunc,
-      additionalConvertArgs,
+      this.convertJsonService.getNode,
+      [],
       force_refresh
     )) as Observable<Node>;
   }
 
-  async list(
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
-    force_refresh: boolean = false
-  ): Promise<Observable<Node[]>> {
-    return (await super.list(
-      convertJsonFunc,
-      additionalConvertArgs,
+  async list(force_refresh: boolean = false): Promise<Observable<Node[]>> {
+    return (await super.list_base(
+      this.convertJsonService.getNode,
+      [],
       force_refresh
     )) as Observable<Node[]>;
   }

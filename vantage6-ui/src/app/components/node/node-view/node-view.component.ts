@@ -11,7 +11,6 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 
 @Component({
   selector: 'app-node-view',
@@ -30,8 +29,7 @@ export class NodeViewComponent implements OnInit {
     private nodeDataService: NodeDataService,
     private utilsService: UtilsService,
     public userPermission: UserPermissionService,
-    private modalService: ModalService,
-    private convertJsonService: ConvertJsonService
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
@@ -51,9 +49,7 @@ export class NodeViewComponent implements OnInit {
   }
 
   async setNode(id: number): Promise<void> {
-    (
-      await this.nodeDataService.get(id, this.convertJsonService.getNode)
-    ).subscribe((node: Node) => {
+    (await this.nodeDataService.get(id)).subscribe((node: Node) => {
       this.node = node;
     });
   }

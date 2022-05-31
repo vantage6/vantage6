@@ -19,26 +19,22 @@ export class OrgDataService extends BaseDataService {
 
   async get(
     id: number,
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Organization>> {
-    return (await super.get(
+    return (await super.get_base(
       id,
-      convertJsonFunc,
-      additionalConvertArgs,
+      this.convertJsonService.getOrganization,
+      [],
       force_refresh
     )) as Observable<Organization>;
   }
 
   async list(
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Organization[]>> {
-    return (await super.list(
-      convertJsonFunc,
-      additionalConvertArgs,
+    return (await super.list_base(
+      this.convertJsonService.getOrganization,
+      [],
       force_refresh
     )) as Observable<Organization[]>;
   }

@@ -17,9 +17,7 @@ import {
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/services/common/utils.service';
@@ -53,7 +51,6 @@ export class OrganizationComponent implements OnInit {
     public userPermission: UserPermissionService,
     private userService: ApiUserService,
     private roleService: ApiRoleService,
-    private convertJsonService: ConvertJsonService,
     private orgDataService: OrgDataService,
     private userDataService: UserDataService,
     private roleDataService: RoleDataService,
@@ -93,9 +90,7 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setup() {
-    (
-      await this.orgDataService.list(this.convertJsonService.getOrganization)
-    ).subscribe((orgs: Organization[]) => {
+    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
       this.organizations = orgs;
     });
 

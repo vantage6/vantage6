@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 import { Resource } from 'src/app/shared/types';
 import { ApiUserService } from '../api/api-user.service';
@@ -19,26 +21,26 @@ export class UserDataService extends BaseDataService {
 
   async get(
     id: number,
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
+    roles: Role[],
+    rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Observable<User>> {
-    return (await super.get(
+    return (await super.get_base(
       id,
-      convertJsonFunc,
-      additionalConvertArgs,
+      this.convertJsonService.getUser,
+      [roles, rules],
       force_refresh
     )) as Observable<User>;
   }
 
   async list(
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
+    roles: Role[],
+    rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Observable<User[]>> {
-    return (await super.list(
-      convertJsonFunc,
-      additionalConvertArgs,
+    return (await super.list_base(
+      this.convertJsonService.getUser,
+      [roles, rules],
       force_refresh
     )) as Observable<User[]>;
   }

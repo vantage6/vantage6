@@ -36,7 +36,9 @@ export class UserPermissionService {
 
   async setup(): Promise<void> {
     // request all existing rules
-    this.all_rules = await this.ruleDataService.getAllRules();
+    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
+      this.all_rules = rules;
+    });
 
     // get user information
     let user_info = this.tokenStorage.getUserInfo();

@@ -17,9 +17,7 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
-import { take } from 'rxjs/operators';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
@@ -54,8 +52,7 @@ export class UserEditComponent implements OnInit {
     private utilsService: UtilsService,
     private modalService: ModalService,
     private roleDataService: RoleDataService,
-    private ruleDataService: RuleDataService,
-    private convertJsonService: ConvertJsonService
+    private ruleDataService: RuleDataService
   ) {}
 
   ngOnInit(): void {
@@ -92,30 +89,23 @@ export class UserEditComponent implements OnInit {
   }
 
   async setRules(): Promise<void> {
-    (
-      await this.ruleDataService.list(this.convertJsonService.getRole)
-    ).subscribe((rules: Rule[]) => {
+    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
       this.rules_all = rules;
     });
   }
 
   async setRoles(): Promise<void> {
-    (
-      await this.roleDataService.list(this.convertJsonService.getRole, [
-        this.rules_all,
-      ])
-    ).subscribe((roles: Role[]) => {
-      this.roles_all = roles;
-      this.setAssignableRoles();
-    });
+    (await this.roleDataService.list(this.rules_all)).subscribe(
+      (roles: Role[]) => {
+        this.roles_all = roles;
+        this.setAssignableRoles();
+      }
+    );
   }
 
   async setUser(id: number) {
     (
-      await this.userDataService.get(id, this.convertJsonService.getUser, [
-        this.roles_all,
-        this.rules_all,
-      ])
+      await this.userDataService.get(id, this.roles_all, this.rules_all)
     ).subscribe((user: User) => {
       this.user = user;
       this.organization_id = this.user.organization_id;

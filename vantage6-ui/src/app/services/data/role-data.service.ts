@@ -5,6 +5,7 @@ import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { Resource } from 'src/app/shared/types';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
+import { Rule } from 'src/app/interfaces/rule';
 
 @Injectable({
   providedIn: 'root',
@@ -21,26 +22,24 @@ export class RoleDataService extends BaseDataService {
 
   async get(
     id: number,
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
+    rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Observable<Role>> {
-    return (await super.get(
+    return (await super.get_base(
       id,
-      convertJsonFunc,
-      additionalConvertArgs,
+      this.convertJsonService.getRole,
+      [rules],
       force_refresh
     )) as Observable<Role>;
   }
 
   async list(
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
+    rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Observable<Role[]>> {
-    return (await super.list(
-      convertJsonFunc,
-      additionalConvertArgs,
+    return (await super.list_base(
+      this.convertJsonService.getRole,
+      [rules],
       force_refresh
     )) as Observable<Role[]>;
   }

@@ -13,7 +13,6 @@ import { take } from 'rxjs/operators';
 import { ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 
 @Component({
   selector: 'app-organization-edit',
@@ -32,8 +31,7 @@ export class OrganizationEditComponent implements OnInit {
     private orgApiService: ApiOrganizationService,
     private orgDataService: OrgDataService,
     private modalService: ModalService,
-    private utilsService: UtilsService,
-    private convertJsonService: ConvertJsonService
+    private utilsService: UtilsService
   ) {}
 
   ngOnInit(): void {
@@ -53,9 +51,7 @@ export class OrganizationEditComponent implements OnInit {
   }
 
   async setOrganization(id: number) {
-    return (
-      await this.orgDataService.get(id, this.convertJsonService.getOrganization)
-    )
+    return (await this.orgDataService.get(id))
       .pipe(take(1))
       .subscribe((org: Organization) => {
         this.organization = org;

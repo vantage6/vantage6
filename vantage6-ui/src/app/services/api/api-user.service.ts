@@ -32,9 +32,7 @@ export class ApiUserService extends ApiService {
   }
 
   async setup(): Promise<void> {
-    (
-      await this.ruleDataService.list(this.convertJsonService.getRule)
-    ).subscribe((rules: Rule[]) => {
+    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
       this.rules = rules;
     });
   }

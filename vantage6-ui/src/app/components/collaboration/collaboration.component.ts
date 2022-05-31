@@ -12,7 +12,6 @@ import { arrayContainsObjWithId } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 
@@ -36,8 +35,7 @@ export class CollaborationComponent implements OnInit {
     public userPermission: UserPermissionService,
     private nodeDataService: NodeDataService,
     private collabDataService: CollabDataService,
-    private orgDataService: OrgDataService,
-    private convertJsonService: ConvertJsonService
+    private orgDataService: OrgDataService
   ) {}
 
   ngOnInit(): void {
@@ -64,32 +62,23 @@ export class CollaborationComponent implements OnInit {
   }
 
   async setCollaborations(): Promise<void> {
-    (
-      await this.collabDataService.list(
-        this.convertJsonService.getCollaboration,
-        [this.organizations]
-      )
-    ).subscribe((collabs: Collaboration[]) => {
-      this.all_collaborations = collabs;
-      this.updateCollaborations();
-    });
+    (await this.collabDataService.list(this.organizations)).subscribe(
+      (collabs: Collaboration[]) => {
+        this.all_collaborations = collabs;
+        this.updateCollaborations();
+      }
+    );
   }
 
   async setOrganizations(): Promise<void> {
-    (
-      await this.orgDataService.list(this.convertJsonService.getCollaboration, [
-        this.organizations,
-      ])
-    ).subscribe((orgs: Organization[]) => {
+    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
       this.organizations = orgs;
       this.updateCollaborations();
     });
   }
 
   async setNodes(): Promise<void> {
-    (
-      await this.nodeDataService.list(this.convertJsonService.getNode)
-    ).subscribe((nodes: Node[]) => {
+    (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
       this.nodes = nodes;
       this.updateCollaborations();
     });

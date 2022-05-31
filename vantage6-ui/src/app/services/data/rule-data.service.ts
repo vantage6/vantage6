@@ -30,14 +30,10 @@ export class RuleDataService extends BaseDataService {
     });
   }
 
-  async list(
-    convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
-    force_refresh: boolean = false
-  ): Promise<Observable<Rule[]>> {
-    return (await super.list(
-      convertJsonFunc,
-      additionalConvertArgs,
+  async list(force_refresh: boolean = false): Promise<Observable<Rule[]>> {
+    return (await super.list_base(
+      this.convertJsonService.getRule,
+      [],
       force_refresh
     )) as Observable<Rule[]>;
   }
@@ -54,20 +50,20 @@ export class RuleDataService extends BaseDataService {
     return JSON.parse(JSON.stringify(this.rule_groups));
   }
 
-  async getAllRules(): Promise<Rule[]> {
-    // if rules are not set, set them (and wait). If already set, return them.
-    if (this.all_rules.length === 0) {
-      await this.setAllRules();
-      this.all_rules_bhs.next(this.all_rules);
-    }
-    return this.all_rules;
-  }
+  // async getAllRules(): Promise<Rule[]> {
+  //   // if rules are not set, set them (and wait). If already set, return them.
+  //   if (this.all_rules.length === 0) {
+  //     await this.setAllRules();
+  //     this.all_rules_bhs.next(this.all_rules);
+  //   }
+  //   return this.all_rules;
+  // }
 
   async setAllRules(): Promise<void> {
     if (this.all_rules.length > 0 || !this.is_logged_in) return;
 
     // set list of all rules
-    await this.list(this.convertJsonService.getRule);
+    await this.list();
 
     await this._setAllRules();
     this._setRuleGroups();

@@ -11,7 +11,6 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
 @Component({
@@ -36,7 +35,6 @@ export class RoleEditComponent implements OnInit {
     private roleDataService: RoleDataService,
     private modalService: ModalService,
     private utilsService: UtilsService,
-    private convertJsonService: ConvertJsonService,
     private ruleDataService: RuleDataService
   ) {}
 
@@ -67,11 +65,7 @@ export class RoleEditComponent implements OnInit {
   }
 
   async setRole(id: number): Promise<void> {
-    (
-      await this.roleDataService.get(id, this.convertJsonService.getRole, [
-        this.rules,
-      ])
-    ).subscribe(
+    (await this.roleDataService.get(id, this.rules)).subscribe(
       (role: Role) => {
         this.role = role;
       },
@@ -88,9 +82,7 @@ export class RoleEditComponent implements OnInit {
   }
 
   async setRules(): Promise<void> {
-    (
-      await this.ruleDataService.list(this.convertJsonService.getRule)
-    ).subscribe((rules: Rule[]) => {
+    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
       this.rules = rules;
     });
   }

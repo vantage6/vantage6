@@ -19,13 +19,12 @@ export class CollabDataService extends BaseDataService {
   }
 
   async list(
-    convertJsonFunc: Function,
-    organizations_arg: Organization[][] = [],
+    organizations: Organization[] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration[]>> {
-    return (await super.list(
-      convertJsonFunc,
-      organizations_arg,
+    return (await super.list_base(
+      this.convertJsonService.getCollaboration,
+      [organizations],
       force_refresh
     )) as Observable<Collaboration[]>;
   }
