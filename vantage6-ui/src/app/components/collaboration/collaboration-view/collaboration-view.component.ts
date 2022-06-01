@@ -71,11 +71,20 @@ export class CollaborationViewComponent implements OnInit {
     );
   }
 
+  getNodeButtonText(org: OrganizationInCollaboration): string {
+    const online_text = org.node?.is_online ? ' (online)' : ' (offline)';
+    return org.name + online_text;
+  }
+
   goToNode(org: OrganizationInCollaboration): void {
     if (org.node) {
       this.nodeDataService.save(org.node);
       this.router.navigate([`/node/${org.node.id}/view/${org.id}`]);
     }
+  }
+
+  goToOrg(org: OrganizationInCollaboration): void {
+    this.router.navigate([`organization/${org.id}`]);
   }
 
   createNode(org: OrganizationInCollaboration): void {

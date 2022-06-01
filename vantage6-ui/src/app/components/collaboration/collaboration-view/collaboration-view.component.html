@@ -21,13 +21,26 @@
       <td>Organization(s):</td>
       <td>
         <div *ngFor="let org of collaboration.organizations" class="inline">
+            <button mat-button class="btn-detail" (click)="goToOrg(org)">
+              {{org.name}}
+            </button>
+        </div>
+        <div *ngIf="collaboration.organizations.length===0">
+          No organizations are taking part in this collaboration!
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Node(s):</td>
+      <td>
+        <div *ngFor="let org of collaboration.organizations" class="inline">
             <!-- <button mat-button class="btn-detail inline" disabled> -->
             <button mat-button
                     [className]="getButtonClasses(org)"
                     [disabled]="isDisabled(org)"
                     (click)="goToNode(org)"
                     >
-              {{org.name}}
+              {{getNodeButtonText(org)}}
             </button>
         </div>
         <div *ngIf="collaboration.organizations.length===0">
@@ -55,14 +68,11 @@
   <button *ngIf="userPermission.hasPermission('edit', 'collaboration', 'global')"
       mat-button class="btn btn-edit inline"
       >
-      <!-- (click)="editUser()"
-      [routerLink]="['/user', user.id, 'edit']" -->
     Edit
   </button>
   <button *ngIf="userPermission.hasPermission('delete', 'collaboration', 'global')"
       mat-button class="btn btn-delete-strong"
       >
-      <!-- (click)="deleteUser()" -->
     Delete
   </button>
 </mat-expansion-panel>
