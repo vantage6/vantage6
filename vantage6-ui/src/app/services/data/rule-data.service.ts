@@ -14,10 +14,7 @@ import { TokenStorageService } from '../common/token-storage.service';
 })
 export class RuleDataService extends BaseDataService {
   is_logged_in = false;
-  all_rules: Rule[] = [];
-  all_rules_bhs = new BehaviorSubject<Rule[]>([]);
-  rule_groups: RuleGroup[] = [];
-  rule_groups_bhs = new BehaviorSubject<RuleGroup[]>([]);
+  rule_groups = new BehaviorSubject<RuleGroup[]>([]);
 
   constructor(
     protected apiService: ApiRuleService,
@@ -38,51 +35,27 @@ export class RuleDataService extends BaseDataService {
     )) as Observable<Rule[]>;
   }
 
-  getRules(): Observable<Rule[]> {
-    return this.all_rules_bhs.asObservable();
-  }
-
-  getRuleGroups(): Observable<RuleGroup[]> {
-    return this.rule_groups_bhs.asObservable();
-  }
-
-  getRuleGroupsCopy(): RuleGroup[] {
-    return JSON.parse(JSON.stringify(this.rule_groups));
-  }
-
-  // async getAllRules(): Promise<Rule[]> {
-  //   // if rules are not set, set them (and wait). If already set, return them.
-  //   if (this.all_rules.length === 0) {
-  //     await this.setAllRules();
-  //     this.all_rules_bhs.next(this.all_rules);
-  //   }
-  //   return this.all_rules;
-  // }
-
-  async setAllRules(): Promise<void> {
-    if (this.all_rules.length > 0 || !this.is_logged_in) return;
+  async ruleGroups(): Promise<Observable<RuleGroup[]>> {
+    if (this.rule_groups.value.length > 0 || !this.is_logged_in)
+      return this.rule_groups.asObservable();
 
     // set list of all rules
     await this.list();
 
-    await this._setAllRules();
     this._setRuleGroups();
-  }
 
-  private async _setAllRules(): Promise<void> {
-    this.all_rules = [];
-    for (let rule of this.resource_list.value) {
-      this.all_rules.push(rule as Rule);
-    }
+    return this.rule_groups.asObservable();
   }
 
   _setRuleGroups(): void {
     // sort rules by resource, then scope, then operation
-    this.all_rules = this._sortRules(this.all_rules);
+    this.resource_list.next(
+      this._sortRules(this.resource_list.value as Rule[]) as Rule[]
+    );
 
     // divide sorted rules in groups
-    this.rule_groups = this._makeRuleGroups();
-    this.rule_groups_bhs.next(this.rule_groups);
+    let rule_groups = this._makeRuleGroups();
+    this.rule_groups.next(rule_groups);
   }
 
   _sortRules(rules: Rule[]): Rule[] {
@@ -109,7 +82,7 @@ export class RuleDataService extends BaseDataService {
   _makeRuleGroups(): RuleGroup[] {
     let rule_groups: RuleGroup[] = [];
     let current_rule_group: RuleGroup | undefined = undefined;
-    for (let rule of this.all_rules) {
+    for (let rule of this.resource_list.value as Rule[]) {
       if (current_rule_group === undefined) {
         // first rule: make new rule group
         current_rule_group = this._newRuleGroup(rule);

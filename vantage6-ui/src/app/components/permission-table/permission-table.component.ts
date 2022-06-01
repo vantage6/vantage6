@@ -52,13 +52,13 @@ export class PermissionTableComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    this.ruleDataService.getRuleGroups().subscribe((rule_groups) => {
-      this.rule_groups = JSON.parse(JSON.stringify(rule_groups));
-    });
-    this.setUserRules();
+    this.init();
   }
 
-  init(): void {
+  async init(): Promise<void> {
+    (await this.ruleDataService.ruleGroups()).subscribe((rule_groups) => {
+      this.rule_groups = rule_groups;
+    });
     this.setUserRules();
   }
 
