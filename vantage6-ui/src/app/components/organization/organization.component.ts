@@ -16,7 +16,6 @@ import {
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ApiUserService } from 'src/app/services/api/api-user.service';
-import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
@@ -50,7 +49,6 @@ export class OrganizationComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private userService: ApiUserService,
-    private roleService: ApiRoleService,
     private orgDataService: OrgDataService,
     private userDataService: UserDataService,
     private roleDataService: RoleDataService,
@@ -68,6 +66,10 @@ export class OrganizationComponent implements OnInit {
   }
 
   async init(): Promise<void> {
+    // get rules
+    (await this.ruleDataService.list()).subscribe((rules) => {
+      this.rules = rules;
+    });
     // TODO this has a nested subscribe, fix that
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
@@ -81,11 +83,6 @@ export class OrganizationComponent implements OnInit {
           this.setup();
         }
       }
-    });
-    // TODO should we get it like this or just by a 'normal' call to get rules
-    // from a data service
-    this.ruleDataService.getRules().subscribe((rules) => {
-      this.rules = rules;
     });
   }
 
@@ -130,11 +127,10 @@ export class OrganizationComponent implements OnInit {
     // TODO if a user is assigned a role from another organization that is not
     // the root organization, it will not be shown... consider if that is
     // desirable
-    this.roles = await this.roleService.getOrganizationRoles(
+    this.roles = await this.roleDataService.org_list(
       this.current_organization.id
     );
     this.roles_assignable = await this.userPermission.getAssignableRoles(
-      this.current_organization.id,
       this.roles
     );
     this.setRoleMetadata();
@@ -170,12 +166,10 @@ export class OrganizationComponent implements OnInit {
 
   editUser(user: User): void {
     this.userDataService.set(user);
-    this.roleDataService.setListAssignable(this.roles_assignable);
   }
 
   createUser(): void {
     this.userDataService.set(getEmptyUser());
-    this.roleDataService.setListAssignable(this.roles_assignable);
   }
 
   deleteUser(user: User): void {
@@ -200,7 +194,6 @@ export class OrganizationComponent implements OnInit {
     // set data on which roles user can assign, how many roles there are for
     // the current organization
     this.roles_assignable = await this.userPermission.getAssignableRoles(
-      this.current_organization.id,
       this.roles
     );
     this.setRoleMetadata();

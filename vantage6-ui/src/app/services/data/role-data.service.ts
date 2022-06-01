@@ -6,12 +6,13 @@ import { ConvertJsonService } from 'src/app/services/common/convert-json.service
 import { Resource } from 'src/app/shared/types';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Rule } from 'src/app/interfaces/rule';
+import { deepcopy } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RoleDataService extends BaseDataService {
-  assignable_roles: Role[] = [];
+  org_roles_dict: { [org_id: number]: Role[] } = {};
 
   constructor(
     protected apiService: ApiRoleService,
@@ -44,13 +45,22 @@ export class RoleDataService extends BaseDataService {
     )) as Observable<Role[]>;
   }
 
-  // TODO why not determine which roles are assignable when needed? Shouldnt come
-  // from a service as it is user-dependent
-  listAssignable(): Role[] {
-    return this.assignable_roles;
-  }
-
-  setListAssignable(roles: Role[]): void {
-    this.assignable_roles = roles;
+  async org_list(
+    organization_id: number,
+    include_root = true,
+    force_refresh: boolean = false
+  ): Promise<Role[]> {
+    if (
+      force_refresh ||
+      !(organization_id in this.org_roles_dict) ||
+      this.org_roles_dict[organization_id].length === 0
+    ) {
+      this.org_roles_dict[organization_id] =
+        await this.apiService.getOrganizationRoles(
+          organization_id,
+          include_root
+        );
+    }
+    return this.org_roles_dict[organization_id];
   }
 }

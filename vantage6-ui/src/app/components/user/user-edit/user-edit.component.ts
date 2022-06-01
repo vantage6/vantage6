@@ -114,11 +114,18 @@ export class UserEditComponent implements OnInit {
   }
 
   async setAssignableRoles(): Promise<void> {
-    if (this.roles_assignable_all.length === 0) {
+    if (
+      this.roles_assignable_all.length === 0 &&
+      this.organization_id !== EMPTY_ORGANIZATION.id
+    ) {
+      // first get all roles assignable for the organization this user is in
+      this.roles_assignable_all = await this.roleDataService.org_list(
+        this.organization_id
+      );
       // if we are creating a new user, and there are no roles to assign, recheck
       // whether there are any roles to assign (they may be lost by page refresh)
       this.roles_assignable_all = await this.userPermission.getAssignableRoles(
-        this.organization_id //TODO this is -1 when page refreshes!
+        this.roles_assignable_all
       );
     }
     this.filterAssignableRoles();

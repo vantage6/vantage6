@@ -24,8 +24,10 @@ export abstract class ApiService {
     this.resource_type = resource_type;
   }
 
-  protected list(): any {
-    return this.http.get(environment.api_url + '/' + this.resource_type);
+  protected list(params: any = {}): any {
+    return this.http.get(environment.api_url + '/' + this.resource_type, {
+      params: params,
+    });
   }
 
   protected get(id: number): any {
@@ -79,7 +81,7 @@ export abstract class ApiService {
     convertJsonFunc: Function,
     additionalConvertArgs: Resource[][] = []
   ): Promise<Resource[]> {
-    // get data of nodes that logged-in user is allowed to view
+    // get data of resources that logged-in user is allowed to view
     let json_data = await this.list().toPromise();
 
     let resources = [];

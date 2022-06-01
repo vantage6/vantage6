@@ -33,6 +33,7 @@ export class ApiRoleService extends ApiService {
   }
 
   async setup(): Promise<void> {
+    // ensure rules are available
     (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
       this.rules = rules;
     });
@@ -47,7 +48,7 @@ export class ApiRoleService extends ApiService {
       params['organization_id'] = organization_id;
     }
     params['include_root'] = include_root;
-    return this.http.get(environment.api_url + '/role', { params: params });
+    return super.list(params);
   }
 
   get_data(role: Role): any {

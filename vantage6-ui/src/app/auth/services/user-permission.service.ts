@@ -187,17 +187,8 @@ export class UserPermissionService {
     return arrayContainsObjWithId(rule.id, this.userRules);
   }
 
-  async getAssignableRoles(
-    organization_id: number,
-    available_roles: Role[] | null = null
-  ): Promise<Role[]> {
+  async getAssignableRoles(available_roles: Role[]): Promise<Role[]> {
     // set which roles currently logged in user can assign
-    if (available_roles === null) {
-      available_roles = await this.roleService.getOrganizationRoles(
-        organization_id,
-        true
-      );
-    }
     let roles_assignable: Role[] = [];
     for (let role of available_roles) {
       if (this.canAssignRole(role)) {
