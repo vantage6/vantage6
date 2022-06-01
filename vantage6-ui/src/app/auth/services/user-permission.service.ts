@@ -4,13 +4,13 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
 
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
-import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { Rule } from 'src/app/interfaces/rule';
 import { Role } from 'src/app/interfaces/role';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
-import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { UserDataService } from 'src/app/services/data/user-data.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -23,22 +23,28 @@ export class UserPermissionService {
   userRules: Rule[] = [];
   userExtraRules: Rule[] = [];
   all_rules: Rule[] = [];
+  roles: Role[] = [];
   ready = new BehaviorSubject<boolean>(false);
 
   constructor(
     private tokenStorage: TokenStorageService,
-    private userService: ApiUserService,
     private ruleDataService: RuleDataService,
-    private roleService: ApiRoleService
+    private roleDataService: RoleDataService,
+    private userDataService: UserDataService
   ) {
     this.setup();
   }
 
   async setup(): Promise<void> {
-    // request all existing rules
+    // request rules and roles
     (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
       this.all_rules = rules;
     });
+    (await this.roleDataService.list(this.all_rules)).subscribe(
+      (roles: Role[]) => {
+        this.roles = roles;
+      }
+    );
 
     // get user information
     let user_info = this.tokenStorage.getUserInfo();
@@ -144,7 +150,11 @@ export class UserPermissionService {
     }
 
     // request the rules for the current user
-    this.user = await this.userService.getUser(user_id);
+    (
+      await this.userDataService.get(user_id, this.roles, this.all_rules)
+    ).subscribe((user: User) => {
+      this.user = user;
+    });
 
     await this._setPermissions(this.user, this.all_rules);
 

@@ -126,7 +126,8 @@ export class OrganizationComponent implements OnInit {
     // the root organization, it will not be shown... consider if that is
     // desirable
     this.roles = await this.roleDataService.org_list(
-      this.current_organization.id
+      this.current_organization.id,
+      this.rules
     );
     this.roles_assignable = await this.userPermission.getAssignableRoles(
       this.roles
@@ -176,7 +177,6 @@ export class OrganizationComponent implements OnInit {
       user.id
     );
     this.userDataService.remove(user);
-    this.userDataService.remove_from_org(user);
   }
 
   createRole(): void {

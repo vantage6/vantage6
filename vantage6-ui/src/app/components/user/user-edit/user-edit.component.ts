@@ -120,7 +120,8 @@ export class UserEditComponent implements OnInit {
     ) {
       // first get all roles assignable for the organization this user is in
       this.roles_assignable_all = await this.roleDataService.org_list(
-        this.organization_id
+        this.organization_id,
+        this.rules_all
       );
       // if we are creating a new user, and there are no roles to assign, recheck
       // whether there are any roles to assign (they may be lost by page refresh)
@@ -198,7 +199,6 @@ export class UserEditComponent implements OnInit {
           // save user is to data service (so it is displayed everywhere)
           this.user.id = data.id;
           this.userDataService.add(this.user);
-          this.userDataService.add_to_org(this.user);
         }
       },
       (error) => {

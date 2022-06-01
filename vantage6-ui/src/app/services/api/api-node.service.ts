@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
+import { Node } from 'src/app/interfaces/node';
 
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResType } from 'src/app/shared/enum';
 import { ApiService } from 'src/app/services/api/api.service';
@@ -16,7 +15,6 @@ import { ModalMessageComponent } from 'src/app/components/modal/modal-message/mo
 export class ApiNodeService extends ApiService {
   constructor(
     protected http: HttpClient,
-    private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
     super(ResType.NODE, http, modalService);
@@ -44,14 +42,5 @@ export class ApiNodeService extends ApiService {
       organization_id: node.organization_id,
     };
     return data;
-  }
-
-  async getNode(id: number): Promise<Node> {
-    let node = await super.getResource(id, this.convertJsonService.getNode);
-    return node === null ? EMPTY_NODE : (node as Node);
-  }
-
-  async getNodes() {
-    return await super.getResources(this.convertJsonService.getNode);
   }
 }

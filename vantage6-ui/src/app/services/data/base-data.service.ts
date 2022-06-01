@@ -22,7 +22,7 @@ export abstract class BaseDataService {
     this.resource_single.next(resource);
   }
 
-  async get_base(
+  protected async get_base(
     id: number,
     convertJsonFunc: Function,
     additionalConvertArgs: Resource[][] = [],
@@ -60,7 +60,7 @@ export abstract class BaseDataService {
     }
   }
 
-  async list_base(
+  protected async list_base(
     convertJsonFunc: Function,
     additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false

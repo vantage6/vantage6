@@ -7,11 +7,13 @@ import { Resource } from 'src/app/shared/types';
 import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ApiUserService } from '../api/api-user.service';
 import { ConvertJsonService } from '../common/convert-json.service';
+// import { BaseByOrgDataService } from './base-by-org-data.service';
 import { BaseDataService } from './base-data.service';
 
 @Injectable({
   providedIn: 'root',
 })
+// export class UserDataService extends BaseByOrgDataService {
 export class UserDataService extends BaseDataService {
   org_users_dict: { [org_id: number]: User[] } = {};
 
@@ -61,13 +63,18 @@ export class UserDataService extends BaseDataService {
       this.org_users_dict[organization_id].length === 0
     ) {
       this.org_users_dict[organization_id] =
-        await this.apiService.getOrganizationUsers(
-          organization_id,
-          roles,
-          rules
-        );
+        (await this.apiService.getResources(
+          this.convertJsonService.getUser,
+          [roles, rules],
+          { organization_id: organization_id }
+        )) as User[];
     }
     return this.org_users_dict[organization_id];
+  }
+
+  add(user: User) {
+    super.add(user);
+    this.add_to_org(user);
   }
 
   add_to_org(user: User) {
@@ -75,6 +82,11 @@ export class UserDataService extends BaseDataService {
     const updated_list = [...this.org_users_dict[user.organization_id], user];
     console.log(updated_list);
     this.org_users_dict[user.organization_id] = updated_list;
+  }
+
+  remove(user: User) {
+    super.remove(user);
+    this.remove_from_org(user);
   }
 
   remove_from_org(user: User) {

@@ -5,13 +5,9 @@ import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 
 import { getIdsFromArray } from 'src/app/shared/utils';
-import { ApiRoleService } from 'src/app/services/api/api-role.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { Role } from 'src/app/interfaces/role';
-import { RuleDataService } from '../data/rule-data.service';
 
 @Injectable({
   providedIn: 'root',
@@ -21,27 +17,9 @@ export class ApiUserService extends ApiService {
 
   constructor(
     protected http: HttpClient,
-    private roleService: ApiRoleService,
-    private ruleDataService: RuleDataService,
-    private convertJsonService: ConvertJsonService,
     protected modalService: ModalService
   ) {
     super(ResType.USER, http, modalService);
-    this.setup();
-  }
-
-  async setup(): Promise<void> {
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
-      this.rules = rules;
-    });
-  }
-
-  list(organization_id: number | null = null) {
-    let params: any = {};
-    if (organization_id !== null) {
-      params['organization_id'] = organization_id;
-    }
-    return super.list(params);
   }
 
   get_data(user: User): any {
@@ -58,33 +36,5 @@ export class ApiUserService extends ApiService {
       data.password = user.password;
     }
     return data;
-  }
-
-  async getUser(id: number): Promise<User> {
-    let user_json = await this.get(id).toPromise();
-
-    let role_ids: number[] = [];
-    if (user_json.roles) {
-      role_ids = getIdsFromArray(user_json.roles);
-    }
-    let roles = await this.roleService.getRoles(role_ids);
-
-    return this.convertJsonService.getUser(user_json, roles, this.rules);
-  }
-
-  async getOrganizationUsers(
-    org_id: number,
-    roles: Role[],
-    rules: Rule[]
-  ): Promise<User[]> {
-    // get data of nodes that logged-in user is allowed to view
-    let json_data: any = await this.list(org_id).toPromise();
-
-    let resources = [];
-    for (let dic of json_data) {
-      resources.push(this.convertJsonService.getUser(dic, roles, rules));
-    }
-
-    return resources;
   }
 }

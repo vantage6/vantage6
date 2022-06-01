@@ -47,7 +47,7 @@ export class RoleDataService extends BaseDataService {
 
   async org_list(
     organization_id: number,
-    include_root = true,
+    rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Role[]> {
     if (
@@ -56,10 +56,11 @@ export class RoleDataService extends BaseDataService {
       this.org_roles_dict[organization_id].length === 0
     ) {
       this.org_roles_dict[organization_id] =
-        await this.apiService.getOrganizationRoles(
-          organization_id,
-          include_root
-        );
+        (await this.apiService.getResources(
+          this.convertJsonService.getRole,
+          [rules],
+          { organization_id: organization_id, include_root: true }
+        )) as Role[];
     }
     return this.org_roles_dict[organization_id];
   }

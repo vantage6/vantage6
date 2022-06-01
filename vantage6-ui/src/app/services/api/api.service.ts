@@ -79,10 +79,11 @@ export abstract class ApiService {
 
   async getResources(
     convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = []
+    additionalConvertArgs: Resource[][] = [],
+    request_params: any = {}
   ): Promise<Resource[]> {
     // get data of resources that logged-in user is allowed to view
-    let json_data = await this.list().toPromise();
+    let json_data = await this.list(request_params).toPromise();
 
     let resources = [];
     for (let dic of json_data) {
