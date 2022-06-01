@@ -64,9 +64,9 @@ export class NodeViewComponent implements OnInit {
         'Your new API key is:',
         api_key,
         `Please paste your new API key into your node configuration file. You
- can find your node configuration file by executing the command:`,
-        'vnode files --name ' + this.node.name,
-        'on the machine where your node is running',
+ can find your node configuration file by executing the following command on
+ your node machine:`,
+        'vnode files',
       ]);
     }
   }

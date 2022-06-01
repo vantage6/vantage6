@@ -100,6 +100,10 @@ export class RoleEditComponent implements OnInit {
     request.subscribe(
       (data) => {
         this.utilsService.goToPreviousPage();
+        if (this.mode === OpsType.CREATE) {
+          this.role.id = data.id;
+          this.roleDataService.add(this.role);
+        }
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [

@@ -172,15 +172,6 @@ export class OrganizationComponent implements OnInit {
     this.userDataService.remove(user);
   }
 
-  createRole(): void {
-    // initialize role
-    let new_role: Role = getEmptyRole();
-    new_role.organization_id = this.current_organization.id;
-
-    // use edit mode to fill in all details of new user
-    this.roleDataService.save(new_role);
-  }
-
   async deleteRole(role: Role): Promise<void> {
     // remove role
     this.roles = removeMatchedIdFromArray(this.roles, role.id);
@@ -193,6 +184,8 @@ export class OrganizationComponent implements OnInit {
     // delete this role from any user it was assigned to (this is also done
     // separately in the backend)
     this.deleteRoleFromUsers(role);
+    // delete role from data service
+    this.roleDataService.remove(role);
   }
 
   private deleteRoleFromUsers(role: Role): void {
