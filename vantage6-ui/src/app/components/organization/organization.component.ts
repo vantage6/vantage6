@@ -175,6 +175,8 @@ export class OrganizationComponent implements OnInit {
       this.organization_users,
       user.id
     );
+    this.userDataService.remove(user);
+    this.userDataService.remove_from_org(user);
   }
 
   createRole(): void {

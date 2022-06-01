@@ -5,26 +5,19 @@ import { ApiRuleService } from 'src/app/services//api/api-rule.service';
 import { ConvertJsonService } from 'src/app/services//common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
-import { Resource } from 'src/app/shared/types';
 import { deepcopy } from 'src/app/shared/utils';
-import { TokenStorageService } from '../common/token-storage.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RuleDataService extends BaseDataService {
-  is_logged_in = false;
   rule_groups = new BehaviorSubject<RuleGroup[]>([]);
 
   constructor(
     protected apiService: ApiRuleService,
-    protected convertJsonService: ConvertJsonService,
-    private tokenStorageService: TokenStorageService
+    protected convertJsonService: ConvertJsonService
   ) {
     super(apiService, convertJsonService);
-    this.tokenStorageService.isLoggedIn().subscribe((is_logged_in) => {
-      this.is_logged_in = is_logged_in;
-    });
   }
 
   async list(force_refresh: boolean = false): Promise<Observable<Rule[]>> {
@@ -36,8 +29,9 @@ export class RuleDataService extends BaseDataService {
   }
 
   async ruleGroups(): Promise<Observable<RuleGroup[]>> {
-    if (this.rule_groups.value.length > 0 || !this.is_logged_in)
+    if (this.rule_groups.value.length > 0) {
       return this.rule_groups.asObservable();
+    }
 
     // set list of all rules
     await this.list();

@@ -4,6 +4,7 @@ import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 import { Resource } from 'src/app/shared/types';
+import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ApiUserService } from '../api/api-user.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
@@ -47,6 +48,7 @@ export class UserDataService extends BaseDataService {
     )) as Observable<User[]>;
   }
 
+  // TODO we may want to generalize this function in the base data service
   async org_list(
     organization_id: number,
     roles: Role[],
@@ -66,5 +68,20 @@ export class UserDataService extends BaseDataService {
         );
     }
     return this.org_users_dict[organization_id];
+  }
+
+  add_to_org(user: User) {
+    console.log(this.org_users_dict[user.organization_id]);
+    const updated_list = [...this.org_users_dict[user.organization_id], user];
+    console.log(updated_list);
+    this.org_users_dict[user.organization_id] = updated_list;
+  }
+
+  remove_from_org(user: User) {
+    this.org_users_dict[user.organization_id] = removeMatchedIdFromArray(
+      this.org_users_dict[user.organization_id],
+      user.id
+    );
+    console.log(this.resource_list.value);
   }
 }

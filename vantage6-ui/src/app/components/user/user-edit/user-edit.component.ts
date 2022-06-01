@@ -194,6 +194,12 @@ export class UserEditComponent implements OnInit {
     user_request.subscribe(
       (data) => {
         this.utilsService.goToPreviousPage();
+        if (this.mode === OpsType.CREATE) {
+          // save user is to data service (so it is displayed everywhere)
+          this.user.id = data.id;
+          this.userDataService.add(this.user);
+          this.userDataService.add_to_org(this.user);
+        }
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
