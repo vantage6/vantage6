@@ -104,13 +104,13 @@ export class UserEditComponent implements OnInit {
   }
 
   async setUser(id: number) {
-    (
-      await this.userDataService.get(id, this.roles_all, this.rules_all)
-    ).subscribe((user: User) => {
-      this.user = user;
-      this.organization_id = this.user.organization_id;
-      this.setAssignableRoles();
-    });
+    this.user = await this.userDataService.get(
+      id,
+      this.roles_all,
+      this.rules_all
+    );
+    this.organization_id = this.user.organization_id;
+    this.setAssignableRoles();
   }
 
   async setAssignableRoles(): Promise<void> {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 import { Resource } from 'src/app/shared/types';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
+import { getById, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ApiService } from '../api/api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 
@@ -10,8 +10,7 @@ import { ConvertJsonService } from '../common/convert-json.service';
   providedIn: 'root',
 })
 export abstract class BaseDataService {
-  // saved_single_resources: { [id: number]: Resource[] } = {};
-  resource_single = new BehaviorSubject<Resource | null>(null);
+  saved_single_resources: { [id: number]: Resource } = {};
   resource_list = new BehaviorSubject<Resource[]>([]);
 
   constructor(
@@ -19,8 +18,8 @@ export abstract class BaseDataService {
     protected convertJsonService: ConvertJsonService
   ) {}
 
-  set(resource: Resource) {
-    this.resource_single.next(resource);
+  save(resource: Resource) {
+    this.saved_single_resources[resource.id] = resource;
   }
 
   protected async get_base(
@@ -28,36 +27,24 @@ export abstract class BaseDataService {
     convertJsonFunc: Function,
     additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
-  ): Promise<Observable<Resource | null>> {
+  ): Promise<Resource | null> {
     if (force_refresh) {
-      this.resource_single.next(
-        await this.apiService.getResource(
-          id,
-          convertJsonFunc,
-          additionalConvertArgs
-        )
+      return await this.apiService.getResource(
+        id,
+        convertJsonFunc,
+        additionalConvertArgs
       );
-      return this.resource_single.asObservable();
-    } else if (
-      this.resource_single.value !== null &&
-      this.resource_single.value.id === id
-    ) {
-      return this.resource_single.asObservable();
+    } else if (id in this.saved_single_resources) {
+      return this.saved_single_resources[id];
     } else {
-      for (let r of this.resource_list.value) {
-        if (r.id === id) {
-          this.resource_single.next(r);
-          return this.resource_single.asObservable();
-        }
-      }
-      this.resource_single.next(
-        await this.apiService.getResource(
+      const r = getById(this.resource_list.value, id);
+      if (r !== undefined) return r;
+      else
+        return await this.apiService.getResource(
           id,
           convertJsonFunc,
           additionalConvertArgs
-        )
-      );
-      return this.resource_single.asObservable();
+        );
     }
   }
 

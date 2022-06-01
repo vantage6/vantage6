@@ -65,20 +65,13 @@ export class RoleEditComponent implements OnInit {
   }
 
   async setRole(id: number): Promise<void> {
-    (await this.roleDataService.get(id, this.rules)).subscribe(
-      (role: Role) => {
-        this.role = role;
-      },
-      // TODO this error is never triggered but should be triggered if no role
-      // is returned
-      (error) => {
-        this.modalService.openMessageModal(
-          ModalMessageComponent,
-          [error.error.msg],
-          true
-        );
-      }
-    );
+    this.role = await this.roleDataService.get(id, this.rules);
+    // // TODO opern modal if role is empty:
+    //   this.modalService.openMessageModal(
+    //     ModalMessageComponent,
+    //     [error.error.msg],
+    //     true
+    //   );
   }
 
   async setRules(): Promise<void> {

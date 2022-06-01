@@ -150,11 +150,11 @@ export class UserPermissionService {
     }
 
     // request the rules for the current user
-    (
-      await this.userDataService.get(user_id, this.roles, this.all_rules)
-    ).subscribe((user: User) => {
-      this.user = user;
-    });
+    this.user = await this.userDataService.get(
+      user_id,
+      this.roles,
+      this.all_rules
+    );
 
     await this._setPermissions(this.user, this.all_rules);
 

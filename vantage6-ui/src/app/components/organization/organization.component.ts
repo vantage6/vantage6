@@ -122,9 +122,6 @@ export class OrganizationComponent implements OnInit {
 
     // first collect roles for current organization. This is done before
     // collecting the users so that the users can possess these roles
-    // TODO if a user is assigned a role from another organization that is not
-    // the root organization, it will not be shown... consider if that is
-    // desirable
     this.roles = await this.roleDataService.org_list(
       this.current_organization.id,
       this.rules
@@ -160,15 +157,11 @@ export class OrganizationComponent implements OnInit {
   }
 
   editOrganization(org: Organization): void {
-    this.orgDataService.set(org);
+    this.orgDataService.save(org);
   }
 
   editUser(user: User): void {
-    this.userDataService.set(user);
-  }
-
-  createUser(): void {
-    this.userDataService.set(getEmptyUser());
+    this.userDataService.save(user);
   }
 
   deleteUser(user: User): void {
@@ -185,7 +178,7 @@ export class OrganizationComponent implements OnInit {
     new_role.organization_id = this.current_organization.id;
 
     // use edit mode to fill in all details of new user
-    this.roleDataService.set(new_role);
+    this.roleDataService.save(new_role);
   }
 
   async deleteRole(role: Role): Promise<void> {

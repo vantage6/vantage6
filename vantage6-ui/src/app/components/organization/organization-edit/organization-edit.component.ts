@@ -51,11 +51,7 @@ export class OrganizationEditComponent implements OnInit {
   }
 
   async setOrganization(id: number) {
-    return (await this.orgDataService.get(id))
-      .pipe(take(1))
-      .subscribe((org: Organization) => {
-        this.organization = org;
-      });
+    this.organization = await this.orgDataService.get(id);
   }
 
   saveEdit(): void {

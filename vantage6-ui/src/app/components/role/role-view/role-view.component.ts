@@ -58,6 +58,6 @@ export class RoleViewComponent implements OnInit {
   }
 
   editRole(): void {
-    this.roleDataService.set(this.role);
+    this.roleDataService.save(this.role);
   }
 }

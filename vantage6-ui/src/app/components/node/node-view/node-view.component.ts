@@ -49,9 +49,7 @@ export class NodeViewComponent implements OnInit {
   }
 
   async setNode(id: number): Promise<void> {
-    (await this.nodeDataService.get(id)).subscribe((node: Node) => {
-      this.node = node;
-    });
+    this.node = await this.nodeDataService.get(id);
   }
 
   getStatus(): string {

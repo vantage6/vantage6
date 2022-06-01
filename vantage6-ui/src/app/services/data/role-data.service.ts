@@ -25,13 +25,13 @@ export class RoleDataService extends BaseDataService {
     id: number,
     rules: Rule[],
     force_refresh: boolean = false
-  ): Promise<Observable<Role>> {
+  ): Promise<Role> {
     return (await super.get_base(
       id,
       this.convertJsonService.getRole,
       [rules],
       force_refresh
-    )) as Observable<Role>;
+    )) as Role;
   }
 
   async list(
