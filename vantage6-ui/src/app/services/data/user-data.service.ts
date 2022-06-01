@@ -12,6 +12,8 @@ import { BaseDataService } from './base-data.service';
   providedIn: 'root',
 })
 export class UserDataService extends BaseDataService {
+  org_users_dict: { [org_id: number]: User[] } = {};
+
   constructor(
     protected apiService: ApiUserService,
     protected convertJsonService: ConvertJsonService
@@ -43,5 +45,26 @@ export class UserDataService extends BaseDataService {
       [roles, rules],
       force_refresh
     )) as Observable<User[]>;
+  }
+
+  async org_list(
+    organization_id: number,
+    roles: Role[],
+    rules: Rule[],
+    force_refresh: boolean = false
+  ): Promise<User[]> {
+    if (
+      force_refresh ||
+      !(organization_id in this.org_users_dict) ||
+      this.org_users_dict[organization_id].length === 0
+    ) {
+      this.org_users_dict[organization_id] =
+        await this.apiService.getOrganizationUsers(
+          organization_id,
+          roles,
+          rules
+        );
+    }
+    return this.org_users_dict[organization_id];
   }
 }

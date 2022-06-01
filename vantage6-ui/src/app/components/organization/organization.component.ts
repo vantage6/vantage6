@@ -15,7 +15,6 @@ import {
 } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
@@ -48,7 +47,6 @@ export class OrganizationComponent implements OnInit {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private userService: ApiUserService,
     private orgDataService: OrgDataService,
     private userDataService: UserDataService,
     private roleDataService: RoleDataService,
@@ -150,7 +148,7 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setUsers(): Promise<void> {
-    this.organization_users = await this.userService.getOrganizationUsers(
+    this.organization_users = await this.userDataService.org_list(
       this.route_org_id,
       this.roles,
       this.rules

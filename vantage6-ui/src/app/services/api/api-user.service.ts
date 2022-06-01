@@ -4,7 +4,6 @@ import { HttpClient } from '@angular/common/http';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 
-import { environment } from 'src/environments/environment';
 import { getIdsFromArray } from 'src/app/shared/utils';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
@@ -42,7 +41,7 @@ export class ApiUserService extends ApiService {
     if (organization_id !== null) {
       params['organization_id'] = organization_id;
     }
-    return this.http.get(environment.api_url + '/user', { params: params });
+    return super.list(params);
   }
 
   get_data(user: User): any {
