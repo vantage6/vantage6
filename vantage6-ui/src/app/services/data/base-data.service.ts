@@ -10,6 +10,7 @@ import { ConvertJsonService } from '../common/convert-json.service';
   providedIn: 'root',
 })
 export abstract class BaseDataService {
+  // saved_single_resources: { [id: number]: Resource[] } = {};
   resource_single = new BehaviorSubject<Resource | null>(null);
   resource_list = new BehaviorSubject<Resource[]>([]);
 

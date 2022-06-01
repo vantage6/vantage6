@@ -3,17 +3,14 @@ import { Observable } from 'rxjs';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
-import { Resource } from 'src/app/shared/types';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ApiUserService } from '../api/api-user.service';
 import { ConvertJsonService } from '../common/convert-json.service';
-// import { BaseByOrgDataService } from './base-by-org-data.service';
 import { BaseDataService } from './base-data.service';
+import { add_to_org, remove_from_org } from './utils';
 
 @Injectable({
   providedIn: 'root',
 })
-// export class UserDataService extends BaseByOrgDataService {
 export class UserDataService extends BaseDataService {
   org_users_dict: { [org_id: number]: User[] } = {};
 
@@ -50,7 +47,6 @@ export class UserDataService extends BaseDataService {
     )) as Observable<User[]>;
   }
 
-  // TODO we may want to generalize this function in the base data service
   async org_list(
     organization_id: number,
     roles: Role[],
@@ -74,26 +70,11 @@ export class UserDataService extends BaseDataService {
 
   add(user: User) {
     super.add(user);
-    this.add_to_org(user);
-  }
-
-  add_to_org(user: User) {
-    console.log(this.org_users_dict[user.organization_id]);
-    const updated_list = [...this.org_users_dict[user.organization_id], user];
-    console.log(updated_list);
-    this.org_users_dict[user.organization_id] = updated_list;
+    add_to_org(user, this.org_users_dict);
   }
 
   remove(user: User) {
     super.remove(user);
-    this.remove_from_org(user);
-  }
-
-  remove_from_org(user: User) {
-    this.org_users_dict[user.organization_id] = removeMatchedIdFromArray(
-      this.org_users_dict[user.organization_id],
-      user.id
-    );
-    console.log(this.resource_list.value);
+    remove_from_org(user, this.org_users_dict);
   }
 }

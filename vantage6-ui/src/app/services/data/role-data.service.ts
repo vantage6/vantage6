@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+
 import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
-import { Resource } from 'src/app/shared/types';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
-import { Rule } from 'src/app/interfaces/rule';
-import { deepcopy } from 'src/app/shared/utils';
+import { add_to_org, remove_from_org } from './utils';
 
 @Injectable({
   providedIn: 'root',
@@ -63,5 +63,15 @@ export class RoleDataService extends BaseDataService {
         )) as Role[];
     }
     return this.org_roles_dict[organization_id];
+  }
+
+  add(role: Role) {
+    super.add(role);
+    add_to_org(role, this.org_roles_dict);
+  }
+
+  remove(role: Role) {
+    super.remove(role);
+    remove_from_org(role, this.org_roles_dict);
   }
 }
