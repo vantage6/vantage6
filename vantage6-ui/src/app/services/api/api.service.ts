@@ -6,12 +6,15 @@ import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { Resource } from 'src/app/shared/types';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export abstract class ApiService {
   resource_type: ResType;
+  resource_single = new BehaviorSubject<Resource | null>(null);
+  resource_list = new BehaviorSubject<Resource[]>([]);
 
   constructor(
     resource_type: ResType,
@@ -21,8 +24,10 @@ export abstract class ApiService {
     this.resource_type = resource_type;
   }
 
-  protected list(): any {
-    return this.http.get(environment.api_url + '/' + this.resource_type);
+  protected list(params: any = {}): any {
+    return this.http.get(environment.api_url + '/' + this.resource_type, {
+      params: params,
+    });
   }
 
   protected get(id: number): any {
@@ -56,11 +61,14 @@ export abstract class ApiService {
     id: number,
     convertJsonFunc: Function,
     additionalConvertArgs: Resource[][] = []
-  ): Promise<any> {
+  ): Promise<Resource | null> {
     let json: any;
     try {
       json = await this.get(id).toPromise();
-      return convertJsonFunc(json, ...additionalConvertArgs);
+      this.resource_single.next(
+        convertJsonFunc(json, ...additionalConvertArgs)
+      );
+      return this.resource_single.value;
     } catch (error: any) {
       this.modalService.openMessageModal(ModalMessageComponent, [
         'Error: ' + error.error.msg,
@@ -71,15 +79,17 @@ export abstract class ApiService {
 
   async getResources(
     convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = []
-  ): Promise<any> {
-    // get data of nodes that logged-in user is allowed to view
-    let json_data = await this.list().toPromise();
+    additionalConvertArgs: Resource[][] = [],
+    request_params: any = {}
+  ): Promise<Resource[]> {
+    // get data of resources that logged-in user is allowed to view
+    let json_data = await this.list(request_params).toPromise();
 
     let resources = [];
     for (let dic of json_data) {
       resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
     }
-    return resources;
+    this.resource_list.next(resources);
+    return this.resource_list.value;
   }
 }

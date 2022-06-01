@@ -22,7 +22,7 @@ export function removeMatchedIdsFromArray(array: any[], ids: number[]): any[] {
   return array;
 }
 
-export function getById(array: any[], id: number): any {
+export function getById(array: any[], id: number): any | undefined {
   return array.find((x) => x.id === id);
 }
 

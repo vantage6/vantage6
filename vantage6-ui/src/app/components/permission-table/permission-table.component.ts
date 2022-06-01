@@ -19,6 +19,7 @@ import {
   removeArrayDoubles,
   removeMatchedIdFromArray,
 } from 'src/app/shared/utils';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
 @Component({
   selector: 'app-permission-table',
@@ -47,17 +48,17 @@ export class PermissionTableComponent implements OnInit, OnChanges {
 
   constructor(
     public userPermission: UserPermissionService,
-    private ruleService: ApiRuleService
+    private ruleDataService: RuleDataService
   ) {}
 
   ngOnInit(): void {
-    this.ruleService.getRuleGroups().subscribe((rule_groups) => {
-      this.rule_groups = JSON.parse(JSON.stringify(rule_groups));
-    });
-    this.setUserRules();
+    this.init();
   }
 
-  init(): void {
+  async init(): Promise<void> {
+    (await this.ruleDataService.ruleGroups()).subscribe((rule_groups) => {
+      this.rule_groups = rule_groups;
+    });
     this.setUserRules();
   }
 

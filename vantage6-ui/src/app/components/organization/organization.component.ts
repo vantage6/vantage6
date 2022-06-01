@@ -15,18 +15,14 @@ import {
 } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ApiUserService } from 'src/app/services/api/api-user.service';
-import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
-import { ApiRoleService } from 'src/app/services/api/api-role.service';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserStoreService } from 'src/app/services/store/user-store.service';
-import { RoleStoreService } from 'src/app/services/store/role-store.service';
-import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import { OrganizationStoreService } from 'src/app/services/store/organization-store.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { UserDataService } from 'src/app/services/data/user-data.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
 @Component({
   selector: 'app-organization',
@@ -51,14 +47,10 @@ export class OrganizationComponent implements OnInit {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private userService: ApiUserService,
-    private organizationService: ApiOrganizationService,
-    private roleService: ApiRoleService,
-    private convertJsonService: ConvertJsonService,
-    private organizationStoreService: OrganizationStoreService,
-    private userStoreService: UserStoreService,
-    private roleStoreService: RoleStoreService,
-    private ruleService: ApiRuleService,
+    private orgDataService: OrgDataService,
+    private userDataService: UserDataService,
+    private roleDataService: RoleDataService,
+    private ruleDataService: RuleDataService,
     private modalService: ModalService,
     private utilsService: UtilsService
   ) {}
@@ -71,9 +63,10 @@ export class OrganizationComponent implements OnInit {
     });
   }
 
-  init(): void {
-    this.organizationStoreService.getList().subscribe((orgs) => {
-      this.organizations = orgs;
+  async init(): Promise<void> {
+    // get rules
+    (await this.ruleDataService.list()).subscribe((rules) => {
+      this.rules = rules;
     });
     // TODO this has a nested subscribe, fix that
     this.activatedRoute.paramMap.subscribe((params) => {
@@ -89,30 +82,18 @@ export class OrganizationComponent implements OnInit {
         }
       }
     });
-    this.ruleService.getRules().subscribe((rules) => {
-      this.rules = rules;
-    });
   }
 
   async setup() {
+    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
+      this.organizations = orgs;
+    });
+
     // get all organizations that the user is allowed to see
-    await this.getOrganizationDetails();
+    this.current_organization = getById(this.organizations, this.route_org_id);
 
     // set the currently requested organization's users/roles/etc
-    this.setCurrentOrganization();
-  }
-
-  async getOrganizationDetails(): Promise<void> {
-    if (this.loggedin_user.organization_id === EMPTY_ORGANIZATION.id) return;
-
-    // get data of organization that logged-in user is allowed to view
-    if (this.organizations.length === 0) {
-      this.organizations = await this.organizationService.getOrganizations();
-      this.organizationStoreService.setList(this.organizations);
-    }
-
-    // set current organization
-    this.current_organization = getById(this.organizations, this.route_org_id);
+    this.setCurrOrganizationDetails();
   }
 
   private _allowedToSeeOrg(id: number): boolean {
@@ -121,7 +102,7 @@ export class OrganizationComponent implements OnInit {
     return arrayContainsObjWithId(id, this.organizations);
   }
 
-  async setCurrentOrganization(): Promise<void> {
+  async setCurrOrganizationDetails(): Promise<void> {
     /* Renew the organization's users and roles */
 
     // set the current organization
@@ -141,14 +122,11 @@ export class OrganizationComponent implements OnInit {
 
     // first collect roles for current organization. This is done before
     // collecting the users so that the users can possess these roles
-    // TODO if a user is assigned a role from another organization that is not
-    // the root organization, it will not be shown... consider if that is
-    // desirable
-    this.roles = await this.roleService.getOrganizationRoles(
-      this.current_organization.id
+    this.roles = await this.roleDataService.org_list(
+      this.current_organization.id,
+      this.rules
     );
     this.roles_assignable = await this.userPermission.getAssignableRoles(
-      this.current_organization.id,
       this.roles
     );
     this.setRoleMetadata();
@@ -168,7 +146,7 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setUsers(): Promise<void> {
-    this.organization_users = await this.userService.getOrganizationUsers(
+    this.organization_users = await this.userDataService.org_list(
       this.route_org_id,
       this.roles,
       this.rules
@@ -179,17 +157,11 @@ export class OrganizationComponent implements OnInit {
   }
 
   editOrganization(org: Organization): void {
-    this.organizationStoreService.setSingle(org);
+    this.orgDataService.save(org);
   }
 
   editUser(user: User): void {
-    this.userStoreService.setSingle(user);
-    this.roleStoreService.setListAssignable(this.roles_assignable);
-  }
-
-  createUser(): void {
-    this.userStoreService.setSingle(getEmptyUser());
-    this.roleStoreService.setListAssignable(this.roles_assignable);
+    this.userDataService.save(user);
   }
 
   deleteUser(user: User): void {
@@ -197,15 +169,7 @@ export class OrganizationComponent implements OnInit {
       this.organization_users,
       user.id
     );
-  }
-
-  createRole(): void {
-    // initialize role
-    let new_role: Role = getEmptyRole();
-    new_role.organization_id = this.current_organization.id;
-
-    // use edit mode to fill in all details of new user
-    this.roleStoreService.setSingle(new_role);
+    this.userDataService.remove(user);
   }
 
   async deleteRole(role: Role): Promise<void> {
@@ -214,13 +178,14 @@ export class OrganizationComponent implements OnInit {
     // set data on which roles user can assign, how many roles there are for
     // the current organization
     this.roles_assignable = await this.userPermission.getAssignableRoles(
-      this.current_organization.id,
       this.roles
     );
     this.setRoleMetadata();
     // delete this role from any user it was assigned to (this is also done
     // separately in the backend)
     this.deleteRoleFromUsers(role);
+    // delete role from data service
+    this.roleDataService.remove(role);
   }
 
   private deleteRoleFromUsers(role: Role): void {

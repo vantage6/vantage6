@@ -1,21 +1,21 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Router } from '@angular/router';
 
 import {
   Collaboration,
   EMPTY_COLLABORATION,
 } from 'src/app/interfaces/collaboration';
 import { getEmptyNode } from 'src/app/interfaces/node';
+import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { Router } from '@angular/router';
-import { NodeStoreService } from 'src/app/services/store/node-store.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
+import { NodeDataService } from 'src/app/services/data/node-data.service';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -34,7 +34,7 @@ export class CollaborationViewComponent implements OnInit {
   constructor(
     private router: Router,
     public userPermission: UserPermissionService,
-    private nodeStoreService: NodeStoreService,
+    private nodeDataService: NodeDataService,
     private apiNodeService: ApiNodeService,
     private modalService: ModalService,
     private convertJsonService: ConvertJsonService
@@ -73,7 +73,7 @@ export class CollaborationViewComponent implements OnInit {
 
   goToNode(org: OrganizationInCollaboration): void {
     if (org.node) {
-      this.nodeStoreService.setSingle(org.node);
+      this.nodeDataService.save(org.node);
       this.router.navigate([`/node/${org.node.id}/view/${org.id}`]);
     }
   }
@@ -100,7 +100,7 @@ configuration file for the node using 'vnode new'.`,
         // set the new node as part of the organization
         org.node = this.convertJsonService.getNode(node_json);
         // store the node
-        this.nodeStoreService.add(org.node);
+        this.nodeDataService.add(org.node);
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [

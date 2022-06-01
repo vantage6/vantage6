@@ -7,7 +7,7 @@ export interface Role {
   type: string;
   name: string;
   description: string;
-  organization_id: number | null;
+  organization_id: number;
   rules: Rule[];
 }
 
@@ -16,7 +16,7 @@ export const EMPTY_ROLE: Role = {
   type: ResType.ROLE,
   name: '',
   description: '',
-  organization_id: null,
+  organization_id: -1,
   rules: [],
 };
 

@@ -12,14 +12,14 @@ import {
 } from 'src/app/shared/utils';
 import { ApiUserService } from 'src/app/services/api/api-user.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { UserStoreService } from 'src/app/services/store/user-store.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
-import { take } from 'rxjs/operators';
-import { RoleStoreService } from 'src/app/services/store/role-store.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { UserDataService } from 'src/app/services/data/user-data.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 
 // TODO add option to assign user to different organization?
 
@@ -33,7 +33,8 @@ import { RoleStoreService } from 'src/app/services/store/role-store.service';
 })
 export class UserEditComponent implements OnInit {
   user: User = getEmptyUser();
-  id: number = this.user.id;
+  rules_all: Rule[] = [];
+  roles_all: Role[] = [];
   roles_assignable_all: Role[] = [];
   roles_assignable: Role[] = [];
   loggedin_user: User = getEmptyUser();
@@ -47,10 +48,11 @@ export class UserEditComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private userService: ApiUserService,
-    private userStoreService: UserStoreService,
+    private userDataService: UserDataService,
     private utilsService: UtilsService,
     private modalService: ModalService,
-    private roleStoreService: RoleStoreService
+    private roleDataService: RoleDataService,
+    private ruleDataService: RuleDataService
   ) {}
 
   ngOnInit(): void {
@@ -66,67 +68,65 @@ export class UserEditComponent implements OnInit {
   }
 
   async init() {
-    this.userStoreService
-      .getSingle()
-      .pipe(take(1))
-      .subscribe((user) => {
-        this.user = user;
-        this.id = this.user.id;
-        this.organization_id = this.user.organization_id;
-      });
-    if (this.organization_id !== EMPTY_ORGANIZATION.id) {
-      await this.setAssignableRoles();
-    }
-    this.roleStoreService
-      .getListAssignable()
-      .pipe(take(1))
-      .subscribe((roles) => {
-        this.roles_assignable_all = roles;
-      });
+    // collect roles and rules (which is required to collect users)
+    await this.setRules();
+    await this.setRoles();
 
     // subscribe to id parameter in route to change edited user if required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let new_id = this.utilsService.getId(params, ResType.USER);
-      if (new_id !== this.id) {
-        this.setEditedUser(new_id);
-      } else if (this.mode === OpsType.CREATE) {
+      let id = this.utilsService.getId(params, ResType.USER);
+      if (this.mode === OpsType.CREATE) {
         this.organization_id = this.utilsService.getId(
           params,
           ResType.ORGANIZATION,
           'org_id'
         );
         this.setAssignableRoles();
+      } else {
+        this.setUser(id);
       }
     });
   }
 
-  async setEditedUser(id: number) {
-    this.id = id;
-    await this.setUserFromAPI(id);
+  async setRules(): Promise<void> {
+    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
+      this.rules_all = rules;
+    });
+  }
+
+  async setRoles(): Promise<void> {
+    (await this.roleDataService.list(this.rules_all)).subscribe(
+      (roles: Role[]) => {
+        this.roles_all = roles;
+        this.setAssignableRoles();
+      }
+    );
+  }
+
+  async setUser(id: number) {
+    this.user = await this.userDataService.get(
+      id,
+      this.roles_all,
+      this.rules_all
+    );
     this.organization_id = this.user.organization_id;
     this.setAssignableRoles();
   }
 
-  async setUserFromAPI(id: number): Promise<void> {
-    try {
-      this.user = await this.userService.getUser(id);
-      this.organization_id = this.user.organization_id;
-      this.setAssignableRoles();
-    } catch (error: any) {
-      this.modalService.openMessageModal(
-        ModalMessageComponent,
-        [error.error.msg],
-        true
-      );
-    }
-  }
-
   async setAssignableRoles(): Promise<void> {
-    if (this.roles_assignable_all.length === 0) {
+    if (
+      this.roles_assignable_all.length === 0 &&
+      this.organization_id !== EMPTY_ORGANIZATION.id
+    ) {
+      // first get all roles assignable for the organization this user is in
+      this.roles_assignable_all = await this.roleDataService.org_list(
+        this.organization_id,
+        this.rules_all
+      );
       // if we are creating a new user, and there are no roles to assign, recheck
       // whether there are any roles to assign (they may be lost by page refresh)
       this.roles_assignable_all = await this.userPermission.getAssignableRoles(
-        this.organization_id //TODO this is -1 when page refreshes!
+        this.roles_assignable_all
       );
     }
     this.filterAssignableRoles();
@@ -195,6 +195,11 @@ export class UserEditComponent implements OnInit {
     user_request.subscribe(
       (data) => {
         this.utilsService.goToPreviousPage();
+        if (this.mode === OpsType.CREATE) {
+          // save user is to data service (so it is displayed everywhere)
+          this.user.id = data.id;
+          this.userDataService.add(this.user);
+        }
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
