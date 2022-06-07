@@ -9,7 +9,6 @@ import {
 
 import { Role } from 'src/app/interfaces/role';
 import { Rule, RuleGroup } from 'src/app/interfaces/rule';
-import { ApiRuleService } from 'src/app/services/api/api-rule.service';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import {
@@ -57,7 +56,9 @@ export class PermissionTableComponent implements OnInit, OnChanges {
 
   async init(): Promise<void> {
     (await this.ruleDataService.ruleGroups()).subscribe((rule_groups) => {
-      this.rule_groups = rule_groups;
+      // always copy the rule groups to prevent that references inside them point
+      // to the same rules in memory which causes view to be incorrect
+      this.rule_groups = deepcopy(rule_groups);
     });
     this.setUserRules();
   }

@@ -10,7 +10,7 @@ import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { OpsType, ResType } from 'src/app/shared/enum';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
@@ -72,7 +72,20 @@ export class CollaborationViewComponent implements OnInit {
   }
 
   getNodeButtonText(org: OrganizationInCollaboration): string {
-    const online_text = org.node?.is_online ? ' (online)' : ' (offline)';
+    let online_text: string = ' ';
+    if (
+      org.node ||
+      this.userPermission.hasPermission(
+        OpsType.VIEW,
+        ResType.NODE,
+        ScopeType.GLOBAL
+      )
+    ) {
+      online_text += org.node?.is_online ? '(online)' : '(offline)';
+    } else {
+      online_text += '(unknown status)';
+    }
+
     return org.name + online_text;
   }
 

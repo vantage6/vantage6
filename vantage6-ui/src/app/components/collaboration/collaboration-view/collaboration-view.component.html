@@ -21,7 +21,8 @@
       <td>Organization(s):</td>
       <td>
         <div *ngFor="let org of collaboration.organizations" class="inline">
-            <button mat-button class="btn-detail" (click)="goToOrg(org)">
+            <button mat-button class="btn-detail" (click)="goToOrg(org)"
+              [disabled]="!userPermission.can('view', 'organization', org.id)"> <!-- TODO add mouseover if someone is not allowed to view details -->
               {{org.name}}
             </button>
         </div>
@@ -50,7 +51,7 @@
     </tr>
 
   </table>
-  <div *ngIf="orgs_without_nodes.length > 0">
+  <div *ngIf="userPermission.hasPermission('view', 'node', 'global') && orgs_without_nodes.length > 0">
     <p class="text-warning">
       <mat-icon>warning</mat-icon>
       There are {{ orgs_without_nodes.length }} organizations in this
