@@ -1,0 +1,65 @@
+<mat-card>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Name:</td>
+      <td><input [(ngModel)]="collaboration.name"/></td>
+    </tr>
+    <tr>
+      <td>Encrypted:</td>
+      <td>
+        <mat-radio-group class="encrypted-radio-group" [(ngModel)]="collaboration.encrypted">
+          <mat-radio-button class="encrypted-radio-button1" [value]="true">Yes</mat-radio-button>
+          <mat-radio-button class="encrypted-radio-button2" [value]="false">No</mat-radio-button>
+        </mat-radio-group>
+      </td>
+    </tr>
+    <tr>
+      <td>Organizations:</td>
+      <td>
+        <div *ngFor="let org of collaboration.organizations" class="inline">
+          <button mat-button class="btn btn-delete btn-inline"
+              (click)="removeOrg(org)">
+            <mat-icon>remove_circle</mat-icon>
+            <span>{{org.name}}</span>
+          </button>
+        </div>
+        <div class="inline" *ngIf="organizations_not_in_collab.length > 0; else noAssignableOrgsBlock">
+          <div ngbDropdown class="d-inline-block">
+            <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>
+              <mat-icon>add_circle</mat-icon>
+              <span class="align-top">Add organization</span>
+            </button>
+            <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
+                <div *ngFor="let org of organizations_not_in_collab">
+                <button ngbDropdownItem (click)="addOrg(org)">
+                  {{org.name}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noAssignableOrgsBlock>
+          There are no organizations left to assign to this collaboration.
+        </ng-template>
+      </td>
+    </tr>
+    <tr *ngIf="is_being_created">
+      <td></td>
+      <td>
+        <mat-checkbox class="example-margin" [(ngModel)]="is_register_nodes">
+          Register nodes
+        </mat-checkbox>
+      </td>
+    </tr>
+  </table>
+  <button mat-button class="btn btn-save" (click)="saveEdit()">
+    Save
+  </button>
+  <button mat-button class="btn btn-dflt" (click)="cancelEdit()">
+    Cancel
+  </button>
+</mat-card>

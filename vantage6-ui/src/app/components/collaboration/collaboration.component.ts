@@ -8,7 +8,10 @@ import {
   Organization,
   OrganizationInCollaboration,
 } from 'src/app/interfaces/organization';
-import { arrayContainsObjWithId } from 'src/app/shared/utils';
+import {
+  arrayContainsObjWithId,
+  removeMatchedIdFromArray,
+} from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
@@ -50,46 +53,42 @@ export class CollaborationComponent implements OnInit {
     this.loggedin_user = this.userPermission.user;
 
     // set the nodes
-    await this.setNodes();
+    await this.setNodes(false);
 
     // set the organizations
-    await this.setOrganizations();
+    await this.setOrganizations(false);
 
     // set all collaborations
     this.setCollaborations();
-
-    this.updateCollaborations();
   }
 
   async setCollaborations(): Promise<void> {
-    (await this.collabDataService.list(this.organizations)).subscribe(
-      (collabs: Collaboration[]) => {
-        this.all_collaborations = collabs;
-        this.updateCollaborations();
-      }
-    );
-  }
-
-  async setOrganizations(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-      this.organizations = orgs;
+    (
+      await this.collabDataService.list(this.organizations, this.nodes)
+    ).subscribe((collabs: Collaboration[]) => {
+      this.all_collaborations = collabs;
+      console.log(this.nodes);
+      console.log(this.all_collaborations);
       this.updateCollaborations();
     });
   }
 
-  async setNodes(): Promise<void> {
+  async setOrganizations(update_collabs: boolean = true): Promise<void> {
+    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
+      this.organizations = orgs;
+      if (update_collabs) this.setCollaborations();
+    });
+  }
+
+  async setNodes(update_collabs: boolean = true): Promise<void> {
     (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
       this.nodes = nodes;
-      this.updateCollaborations();
+      if (update_collabs) this.setCollaborations();
     });
   }
 
   updateCollaborations(): void {
     if (this.all_collaborations.length === 0) return;
-    // Delete previous nodes from collabs, then add them back (this updates
-    // nodes that were just deleted)
-    this.deleteNodesFromCollaborations();
-    this.addNodesToCollaborations();
 
     // Divide collaborations in 2 categories: the ones the logged-in user's
     // organization is involved in and others
@@ -109,35 +108,24 @@ export class CollaborationComponent implements OnInit {
     }
   }
 
-  addNodesToCollaborations(): void {
-    for (let c of this.all_collaborations) {
-      this.addNodeToCollaboration(c);
-    }
-  }
-
-  addNodeToCollaboration(c: Collaboration): void {
-    for (let o of c.organizations) {
-      for (let n of this.nodes) {
-        if (o.id === n.organization_id && c.id === n.collaboration_id) {
-          o.node = n;
-        }
+  deleteCollaboration(col: Collaboration) {
+    // delete nodes of collaboration
+    for (let org of col.organizations) {
+      if (org.node) {
+        this.nodeDataService.remove(org.node);
+        removeMatchedIdFromArray(this.nodes, org.node.id);
       }
     }
+    // delete collaboration
+    this.all_collaborations = removeMatchedIdFromArray(
+      this.all_collaborations,
+      col.id
+    );
+    this.updateCollaborations();
+    this.collabDataService.remove(col);
   }
 
-  deleteNodesFromCollaborations(): void {
-    for (let c of this.all_collaborations) {
-      this.deleteNodesFromCollaboration(c);
-    }
+  editCollaboration(col: Collaboration) {
+    this.collabDataService.save(col);
   }
-
-  deleteNodesFromCollaboration(c: Collaboration): void {
-    for (let o of c.organizations) {
-      o.node = undefined;
-    }
-  }
-
-  deleteCollaboration(col: Collaboration) {}
-
-  editCollaboration(col: Collaboration) {}
 }

@@ -62,17 +62,18 @@
     <button *ngFor="let org of orgs_without_nodes"
             (click)="createNode(org)"
             mat-button class="btn btn-save inline">
-      Create node for '{{ org.name }}'
+      Register node for '{{ org.name }}'
     </button>
   </div>
   <br/>
   <button *ngIf="userPermission.hasPermission('edit', 'collaboration', 'global')"
       mat-button class="btn btn-edit inline"
+      (click)="editCollab()" [routerLink]="['/collaboration', collaboration.id, 'edit']"
       >
     Edit
   </button>
   <button *ngIf="userPermission.hasPermission('delete', 'collaboration', 'global')"
-      mat-button class="btn btn-delete-strong"
+      mat-button class="btn btn-delete-strong" (click)="delete()"
       >
     Delete
   </button>

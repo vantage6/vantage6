@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ExitMode } from 'src/app/shared/enum';
+import { ExitMode, ResType } from 'src/app/shared/enum';
 
 import { Role, getEmptyRole } from 'src/app/interfaces/role';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
@@ -48,6 +48,7 @@ export class RoleViewComponent implements OnInit {
     this.modalService
       .openDeleteModal(
         this.role,
+        ResType.ROLE,
         'This role will also be deleted from any users that possess this role.'
       )
       .result.then((exit_mode) => {

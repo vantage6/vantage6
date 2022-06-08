@@ -8,6 +8,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -38,6 +40,7 @@ import { CollaborationComponent } from './components/collaboration/collaboration
 import { CollaborationViewComponent } from './components/collaboration/collaboration-view/collaboration-view.component';
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
+import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +61,7 @@ import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.com
     CollaborationViewComponent,
     NodeViewComponent,
     ModalEditComponent,
+    CollaborationEditComponent,
   ],
   imports: [
     BrowserModule,
@@ -73,6 +77,8 @@ import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.com
     MatDividerModule,
     MatCardModule,
     MatExpansionModule,
+    MatRadioModule,
+    MatCheckboxModule,
     CommonModule,
     NgbModule,
   ],

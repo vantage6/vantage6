@@ -7,6 +7,7 @@ import {
 
 import { ModalDeleteComponent } from 'src/app/components/modal/modal-delete/modal-delete.component';
 import { ModalEditComponent } from 'src/app/components/modal/modal-edit/modal-edit.component';
+import { ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
 
 @Injectable({
@@ -43,10 +44,12 @@ export class ModalService {
 
   openDeleteModal(
     obj_to_delete: Resource,
+    obj_type: ResType,
     extra_message: string | null = null
   ): NgbModalRef {
     const modalRef = this.modalService.open(ModalDeleteComponent, {});
     modalRef.componentInstance.obj_to_delete = obj_to_delete;
+    modalRef.componentInstance.obj_type = obj_type;
     modalRef.componentInstance.extra_message = extra_message;
     return modalRef;
   }

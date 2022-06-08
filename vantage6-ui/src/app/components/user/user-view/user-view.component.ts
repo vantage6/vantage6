@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ExitMode } from 'src/app/shared/enum';
+import { ExitMode, ResType } from 'src/app/shared/enum';
 
 import { getEmptyUser, User } from 'src/app/interfaces/user';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
@@ -44,11 +44,13 @@ export class UserViewComponent implements OnInit {
 
   deleteUser(): void {
     // open modal window to ask for confirmation of irreversible delete action
-    this.modalService.openDeleteModal(this.user).result.then((exit_mode) => {
-      if (exit_mode === ExitMode.DELETE) {
-        this.executeDelete();
-      }
-    });
+    this.modalService
+      .openDeleteModal(this.user, ResType.USER)
+      .result.then((exit_mode) => {
+        if (exit_mode === ExitMode.DELETE) {
+          this.executeDelete();
+        }
+      });
   }
 
   editUser(): void {

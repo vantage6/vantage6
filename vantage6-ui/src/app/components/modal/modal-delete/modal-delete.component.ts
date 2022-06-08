@@ -1,9 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExitMode } from 'src/app/shared/enum';
+
+import { ExitMode, ResType } from 'src/app/shared/enum';
 
 import { Role } from 'src/app/interfaces/role';
 import { User } from 'src/app/interfaces/user';
+import { Resource } from 'src/app/shared/types';
 
 @Component({
   selector: 'app-modal-delete',
@@ -14,7 +16,8 @@ import { User } from 'src/app/interfaces/user';
   ],
 })
 export class ModalDeleteComponent implements OnInit {
-  @Input() obj_to_delete: User | Role | any;
+  @Input() obj_to_delete: Resource | undefined;
+  @Input() obj_type: ResType | undefined;
   @Input() extra_message: string | null = null;
 
   constructor(public activeModal: NgbActiveModal) {}
@@ -23,11 +26,10 @@ export class ModalDeleteComponent implements OnInit {
 
   getDeleteText(): string {
     if ((this.obj_to_delete as User).username) {
-      return "the user '" + this.obj_to_delete.username + "'";
-    } else if ((this.obj_to_delete as Role).name) {
-      return "the role '" + this.obj_to_delete.name + "'";
+      return `the ${this.obj_type} '${(this.obj_to_delete as User).username}'`;
+    } else {
+      return `the ${this.obj_type} '${(this.obj_to_delete as Role).name}'`;
     }
-    return 'this entity';
   }
 
   cancel(): void {

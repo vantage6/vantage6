@@ -9,7 +9,6 @@ import {
 import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import { take } from 'rxjs/operators';
 import { ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
@@ -55,8 +54,9 @@ export class OrganizationEditComponent implements OnInit {
   }
 
   saveEdit(): void {
+    const is_created: boolean = this.organization.id === EMPTY_ORGANIZATION.id;
     let request;
-    if (this.organization.id == EMPTY_ORGANIZATION.id) {
+    if (is_created) {
       request = this.orgApiService.create(this.organization);
     } else {
       request = this.orgApiService.update(this.organization);
@@ -64,7 +64,7 @@ export class OrganizationEditComponent implements OnInit {
 
     request.subscribe(
       (new_org) => {
-        this.orgDataService.add(new_org);
+        if (is_created) this.orgDataService.add(new_org);
         this.router.navigate([`/organization/${new_org.id}`]);
       },
       (error) => {
