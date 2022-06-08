@@ -61,4 +61,8 @@ export class RoleViewComponent implements OnInit {
   editRole(): void {
     this.roleDataService.save(this.role);
   }
+
+  isDefaultRole(role: Role): boolean {
+    return role.organization_id === null;
+  }
 }

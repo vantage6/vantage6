@@ -54,17 +54,11 @@
             <span>New role</span>
           </button>
         </div>
-        <div *ngIf="current_org_role_count===0">
-          <div *ngIf="!userPermission.can('view', 'role', current_organization.id); else noRolesBlock">
-            You do not have permission to view the roles!
-          </div>
-          <ng-template #noRolesBlock>
-            This organization has no roles!
-          </ng-template>
+        <div *ngIf="!userPermission.can('view', 'role', current_organization.id)">
+          You do not have permission to view the roles!
         </div>
         <div *ngFor="let role of roles; let idx = index">
-          <div *ngIf="(role.organization_id === current_organization.id) ||
-                      (role.organization_id === null && current_organization.id === 1)">
+          <div *ngIf="role.name !== 'container' && role.name !== 'node'">
             <app-role-view
               [role]="role"
               (deletingRole)="deleteRole(role)"

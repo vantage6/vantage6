@@ -40,7 +40,6 @@ export class OrganizationComponent implements OnInit {
   organization_users: User[] = [];
   roles: Role[] = [];
   roles_assignable: Role[] = [];
-  current_org_role_count: number = 0;
   rules: Rule[] = [];
 
   constructor(
@@ -126,23 +125,19 @@ export class OrganizationComponent implements OnInit {
       this.current_organization.id,
       this.rules
     );
+    this.roles = await this.sortRoles(this.roles);
     this.roles_assignable = await this.userPermission.getAssignableRoles(
       this.roles
     );
-    this.setRoleMetadata();
 
     // collect users for current organization
     this.setUsers();
   }
 
-  setRoleMetadata(): void {
-    // set how many roles are specific to the current organization
-    this.current_org_role_count = 0;
-    for (let role of this.roles) {
-      if (role.organization_id || this.current_organization.id === 1) {
-        this.current_org_role_count += 1;
-      }
-    }
+  async sortRoles(roles: Role[]): Promise<Role[]> {
+    //sort roles: put roles of current organization first, then generic roles
+    roles.sort((a, b) => b.organization_id - a.organization_id);
+    return roles;
   }
 
   async setUsers(): Promise<void> {
@@ -175,12 +170,10 @@ export class OrganizationComponent implements OnInit {
   async deleteRole(role: Role): Promise<void> {
     // remove role
     this.roles = removeMatchedIdFromArray(this.roles, role.id);
-    // set data on which roles user can assign, how many roles there are for
-    // the current organization
+    // set data on which roles user can assign
     this.roles_assignable = await this.userPermission.getAssignableRoles(
       this.roles
     );
-    this.setRoleMetadata();
     // delete this role from any user it was assigned to (this is also done
     // separately in the backend)
     this.deleteRoleFromUsers(role);

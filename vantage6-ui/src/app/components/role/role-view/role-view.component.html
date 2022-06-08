@@ -3,6 +3,11 @@
     <mat-panel-title>
       {{role.name}}
     </mat-panel-title>
+    <mat-panel-description class="right-aligned-header">
+      <div *ngIf="isDefaultRole(role)">
+        This is a default role
+      </div>
+    </mat-panel-description>
   </mat-expansion-panel-header>
   <table style="width: 100%">
     <colgroup>
@@ -21,14 +26,20 @@
     [loggedin_user_rules]="userPermission.userRules"
     [is_edit_mode]="false"
   ></app-permission-table>
-  <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
+  <div *ngIf="!isDefaultRole(role); else defaultRoleMsg">
+    <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
       mat-button class="btn btn-edit inline"
       (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
-    Edit
-  </button>
-  <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
+        Edit
+    </button>
+    <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
       mat-button class="btn btn-delete-strong"
       (click)="deleteRole()">
-    Delete
-  </button>
+        Delete
+    </button>
+  </div>
+  <ng-template #defaultRoleMsg>
+    This default role is predefined and is available to all organizaitons.
+    It cannot be changed or deleted.
+  </ng-template>
 </mat-expansion-panel>
