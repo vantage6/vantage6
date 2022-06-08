@@ -67,8 +67,6 @@ export class CollaborationComponent implements OnInit {
       await this.collabDataService.list(this.organizations, this.nodes)
     ).subscribe((collabs: Collaboration[]) => {
       this.all_collaborations = collabs;
-      console.log(this.nodes);
-      console.log(this.all_collaborations);
       this.updateCollaborations();
     });
   }

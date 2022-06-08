@@ -72,7 +72,6 @@ export class CollaborationEditComponent implements OnInit {
       }
       this.setCollaboration(id);
     });
-    console.log(this.collaboration);
   }
 
   async setCollaboration(id: number) {
