@@ -84,4 +84,8 @@ export class RoleDataService extends BaseDataService {
     }
     return roles;
   }
+
+  isDefaultRole(role: Role): boolean {
+    return role.organization_id === null;
+  }
 }

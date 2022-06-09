@@ -64,7 +64,7 @@
                 {{role.name}}
               </mat-panel-title>
               <mat-panel-description class="right-aligned-header">
-                <div *ngIf="isDefaultRole(role)">
+                <div *ngIf="roleDataService.isDefaultRole(role)">
                   This is a default role
                 </div>
               </mat-panel-description>
@@ -75,7 +75,7 @@
             ></app-role-view>
           </mat-expansion-panel>
         </div>
-        <button mat-button class="btn btn-dflt"
+        <button mat-button class="btn btn-dflt btn-top-margin"
           *ngIf="roles.length > MAX_ITEMS_DISPLAY"
           [routerLink]="['/roles', current_organization.id]"
           >

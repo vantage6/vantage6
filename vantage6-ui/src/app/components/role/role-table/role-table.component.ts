@@ -3,10 +3,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import {
-  EMPTY_ORGANIZATION,
-  Organization,
-} from 'src/app/interfaces/organization';
+import { Organization } from 'src/app/interfaces/organization';
 import { Role, RoleWithOrg } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
@@ -14,8 +11,7 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
-import { ResType } from 'src/app/shared/enum';
-import { parseId } from 'src/app/shared/utils';
+import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import {
   animate,
   state,
@@ -38,7 +34,7 @@ import {
         style({ height: '0px', minHeight: '0', visibility: 'hidden' })
       ),
       state('*', style({ height: '*', visibility: 'visible' })),
-      transition('void <=> *', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+      transition('void <=> *', animate('125ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
     ]),
   ],
 })
@@ -108,7 +104,6 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
     await this.setRoles();
 
     await this.addOrganizationsToRoles();
-    console.log(this.roles);
 
     this.data.data = this.roles;
   }
@@ -126,7 +121,6 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
         }
       );
     }
-    console.log(this.roles);
   }
 
   private async addOrganizationsToRoles() {
@@ -134,7 +128,6 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
       for (let org of this.organizations) {
         if (org.id === role.organization_id) {
           role.organization = org;
-          console.log(role);
           break;
         }
       }
@@ -142,10 +135,10 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
   }
 
   getRoleOrgName(role: RoleWithOrg): string {
-    return role.organization ? role.organization.name : 'any';
+    return role.organization ? role.organization.name : 'Any';
   }
 
-  // TODO make sure this is implemented -- but not here: a similar function
-  // is already present in the RoleViewComponent
-  deleteRole(role: Role) {}
+  deleteRole(role: Role) {
+    this.roles = removeMatchedIdFromArray(this.roles, role.id);
+  }
 }

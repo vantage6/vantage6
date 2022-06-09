@@ -24,7 +24,7 @@ export class RoleViewComponent implements OnInit {
   constructor(
     public userPermission: UserPermissionService,
     public roleService: ApiRoleService,
-    private roleDataService: RoleDataService,
+    public roleDataService: RoleDataService,
     private modalService: ModalService
   ) {}
 
@@ -35,6 +35,7 @@ export class RoleViewComponent implements OnInit {
     this.roleService.delete(this.role).subscribe(
       (data) => {
         this.deletingRole.emit(this.role);
+        this.roleDataService.remove(this.role);
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
@@ -61,9 +62,5 @@ export class RoleViewComponent implements OnInit {
 
   editRole(): void {
     this.roleDataService.save(this.role);
-  }
-
-  isDefaultRole(role: Role): boolean {
-    return role.organization_id === null;
   }
 }

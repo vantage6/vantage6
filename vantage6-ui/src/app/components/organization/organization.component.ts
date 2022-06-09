@@ -49,7 +49,7 @@ export class OrganizationComponent implements OnInit {
     public userPermission: UserPermissionService,
     private orgDataService: OrgDataService,
     private userDataService: UserDataService,
-    private roleDataService: RoleDataService,
+    public roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
     private modalService: ModalService,
     private utilsService: UtilsService
@@ -178,8 +178,6 @@ export class OrganizationComponent implements OnInit {
     // delete this role from any user it was assigned to (this is also done
     // separately in the backend)
     this.deleteRoleFromUsers(role);
-    // delete role from data service
-    this.roleDataService.remove(role);
   }
 
   private deleteRoleFromUsers(role: Role): void {
@@ -194,10 +192,5 @@ export class OrganizationComponent implements OnInit {
       this.current_organization.public_key,
     ]);
     // TODO add functionality to modify the public key
-  }
-
-  // TODO this is copied from the RoleViewComponent. Ensure it is only defined once
-  isDefaultRole(role: Role): boolean {
-    return role.organization_id === null;
   }
 }

@@ -15,7 +15,7 @@ This role gives the following permissions:
   [loggedin_user_rules]="userPermission.userRules"
   [is_edit_mode]="false"
 ></app-permission-table>
-<div *ngIf="!isDefaultRole(role); else defaultRoleMsg">
+<div *ngIf="!roleDataService.isDefaultRole(role); else defaultRoleMsg">
   <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
     mat-button class="btn btn-edit inline"
     (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
