@@ -41,6 +41,7 @@ export class OrganizationComponent implements OnInit {
   roles: Role[] = [];
   roles_assignable: Role[] = [];
   rules: Rule[] = [];
+  MAX_ITEMS_DISPLAY: number = 5;
 
   constructor(
     private router: Router,
@@ -193,5 +194,10 @@ export class OrganizationComponent implements OnInit {
       this.current_organization.public_key,
     ]);
     // TODO add functionality to modify the public key
+  }
+
+  // TODO this is copied from the RoleViewComponent. Ensure it is only defined once
+  isDefaultRole(role: Role): boolean {
+    return role.organization_id === null;
   }
 }

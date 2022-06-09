@@ -30,6 +30,7 @@ export class RoleViewComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  // TODO these functions executeDelete() and deleteRole() are very similar in several places. Clean that up.
   executeDelete(): void {
     this.roleService.delete(this.role).subscribe(
       (data) => {

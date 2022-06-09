@@ -17,6 +17,7 @@ import { OrganizationEditComponent } from './components/organization/organizatio
 import { CollaborationComponent } from './components/collaboration/collaboration.component';
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
+import { RoleTableComponent } from './components/role/role-table/role-table.component';
 
 const routes: Routes = [
   {
@@ -141,6 +142,26 @@ const routes: Routes = [
       permissionScope: ScopeType.GLOBAL,
     },
     canActivate: [AccessGuard],
+  },
+  {
+    path: 'roles',
+    component: RoleTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.ROLE,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'roles/:org_id',
+    component: RoleTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.ROLE,
+    },
+    canActivate: [AccessGuardByOrgId],
   },
 ];
 //TODO add * path with 404 not found page

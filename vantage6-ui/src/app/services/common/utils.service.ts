@@ -36,7 +36,7 @@ export class UtilsService {
           params.get('id') +
           "' cannot be parsed. Please provide a valid " +
           resource +
-          ' id',
+          ' id.',
       ]);
       return -1;
     }

@@ -9,6 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
@@ -41,6 +43,8 @@ import { CollaborationViewComponent } from './components/collaboration/collabora
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
+import { RoleTableComponent } from './components/role/role-table/role-table.component';
+import { CdkDetailRowDirective } from './components/role/role-table/cdk-detail-row-directive';
 
 @NgModule({
   declarations: [
@@ -62,6 +66,8 @@ import { CollaborationEditComponent } from './components/collaboration/collabora
     NodeViewComponent,
     ModalEditComponent,
     CollaborationEditComponent,
+    RoleTableComponent,
+    CdkDetailRowDirective,
   ],
   imports: [
     BrowserModule,
@@ -79,6 +85,8 @@ import { CollaborationEditComponent } from './components/collaboration/collabora
     MatExpansionModule,
     MatRadioModule,
     MatCheckboxModule,
+    MatTableModule,
+    MatPaginatorModule,
     CommonModule,
     NgbModule,
   ],

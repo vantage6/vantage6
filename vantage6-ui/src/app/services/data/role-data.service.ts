@@ -55,12 +55,12 @@ export class RoleDataService extends BaseDataService {
       !(organization_id in this.org_roles_dict) ||
       this.org_roles_dict[organization_id].length === 0
     ) {
-      this.org_roles_dict[organization_id] =
-        (await this.apiService.getResources(
-          this.convertJsonService.getRole,
-          [rules],
-          { organization_id: organization_id, include_root: true }
-        )) as Role[];
+      let roles = (await this.apiService.getResources(
+        this.convertJsonService.getRole,
+        [rules],
+        { organization_id: organization_id, include_root: true }
+      )) as Role[];
+      this.org_roles_dict[organization_id] = this.remove_non_user_roles(roles);
     }
     return this.org_roles_dict[organization_id];
   }
@@ -73,5 +73,15 @@ export class RoleDataService extends BaseDataService {
   remove(role: Role) {
     super.remove(role);
     remove_from_org(role, this.org_roles_dict);
+  }
+
+  private remove_non_user_roles(roles: Role[]) {
+    // remove container and node roles as these are not relevant to the users
+    for (let role_name of ['container', 'node']) {
+      roles = roles.filter(function (role: any) {
+        return role.name !== role_name;
+      });
+    }
+    return roles;
   }
 }
