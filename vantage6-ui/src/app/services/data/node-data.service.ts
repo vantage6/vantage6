@@ -9,6 +9,8 @@ import { Node } from 'src/app/interfaces/node';
   providedIn: 'root',
 })
 export class NodeDataService extends BaseDataService {
+  org_dict: { [org_id: number]: Node[] } = {};
+
   constructor(
     protected apiService: ApiNodeService,
     protected convertJsonService: ConvertJsonService
@@ -31,5 +33,23 @@ export class NodeDataService extends BaseDataService {
       [],
       force_refresh
     )) as Observable<Node[]>;
+  }
+
+  async org_list(
+    organization_id: number,
+    force_refresh: boolean = false
+  ): Promise<Node[]> {
+    if (
+      force_refresh ||
+      !(organization_id in this.org_dict) ||
+      this.org_dict[organization_id].length === 0
+    ) {
+      this.org_dict[organization_id] = (await this.apiService.getResources(
+        this.convertJsonService.getRole,
+        [],
+        { organization_id: organization_id, include_root: true }
+      )) as Node[];
+    }
+    return this.org_dict[organization_id];
   }
 }

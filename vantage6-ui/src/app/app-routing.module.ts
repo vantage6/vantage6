@@ -19,6 +19,7 @@ import { NodeViewComponent } from './components/node/node-view/node-view.compone
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
 import { UserTableComponent } from './components/user/user-table/user-table.component';
+import { NodeTableComponent } from './components/node/node-table/node-table.component';
 
 const routes: Routes = [
   {
@@ -181,6 +182,26 @@ const routes: Routes = [
       requiresLogin: true,
       permissionType: OpsType.VIEW,
       permissionResource: ResType.USER,
+    },
+    canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'nodes',
+    component: NodeTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.NODE,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'nodes/:org_id',
+    component: NodeTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.NODE,
     },
     canActivate: [AccessGuardByOrgId],
   },

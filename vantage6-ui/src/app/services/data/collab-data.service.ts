@@ -33,7 +33,7 @@ export class CollabDataService extends BaseDataService {
 
   async list(
     organizations: Organization[],
-    nodes: Node[],
+    nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration[]>> {
     let collaborations = (await super.list_base(
@@ -41,10 +41,12 @@ export class CollabDataService extends BaseDataService {
       [organizations],
       force_refresh
     )) as Observable<Collaboration[]>;
-    // Delete nodes from collabs, then add them back (this updates
-    // nodes that were just deleted)
-    this.deleteNodesFromCollaborations();
-    this.addNodesToCollaborations(nodes);
+    if (nodes.length > 0) {
+      // Delete nodes from collabs, then add them back (this updates
+      // nodes that were just deleted)
+      this.deleteNodesFromCollaborations();
+      this.addNodesToCollaborations(nodes);
+    }
     return collaborations;
   }
 

@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';

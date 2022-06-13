@@ -97,10 +97,10 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   protected async addOrganizationsToResources() {
-    for (let role of this.resources) {
+    for (let r of this.resources) {
       for (let org of this.organizations) {
-        if (org.id === role.organization_id) {
-          role.organization = org;
+        if (org.id === r.organization_id) {
+          r.organization = org;
           break;
         }
       }

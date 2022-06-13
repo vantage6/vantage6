@@ -1,5 +1,7 @@
 import { ResType } from 'src/app/shared/enum';
 import { deepcopy } from 'src/app/shared/utils';
+import { Collaboration } from './collaboration';
+import { Organization } from './organization';
 
 export interface Node {
   id: number;
@@ -11,6 +13,11 @@ export interface Node {
   is_online: boolean;
   last_seen: Date | null;
   api_key?: string;
+}
+
+export interface NodeWithOrg extends Node {
+  collaboration?: Collaboration;
+  organization?: Organization;
 }
 
 export const EMPTY_NODE: Node = {

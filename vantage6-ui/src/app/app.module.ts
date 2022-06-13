@@ -46,6 +46,7 @@ import { CollaborationEditComponent } from './components/collaboration/collabora
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
 import { CdkDetailRowDirective } from './components/table/cdk-detail-row-directive';
 import { UserTableComponent } from './components/user/user-table/user-table.component';
+import { NodeTableComponent } from './components/node/node-table/node-table.component';
 
 @NgModule({
   declarations: [
@@ -70,6 +71,7 @@ import { UserTableComponent } from './components/user/user-table/user-table.comp
     RoleTableComponent,
     CdkDetailRowDirective,
     UserTableComponent,
+    NodeTableComponent,
   ],
   imports: [
     BrowserModule,
