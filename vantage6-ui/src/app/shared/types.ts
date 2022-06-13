@@ -5,13 +5,8 @@ import { Rule } from 'src/app/interfaces/rule';
 import { Node } from 'src/app/interfaces/node';
 import { Organization } from 'src/app/interfaces/organization';
 
-export type Resource =
-  | User
-  | Role
-  | Rule
-  | Organization
-  | Collaboration
-  | Node
-  | RoleWithOrg;
+export type Resource = User | Role | Rule | Organization | Collaboration | Node;
+
+export type ResourceWithOrg = RoleWithOrg;
 
 export type ResourceInOrg = User | Role | Node;

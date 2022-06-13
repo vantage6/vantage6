@@ -4,7 +4,7 @@
     <div class="inline">
       <div ngbDropdown class="d-inline-block">
         <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>
-          {{getOrgName()}}
+          {{getOrgNameDropdown()}}
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
           <button ngbDropdownItem
@@ -37,7 +37,7 @@
 
     <ng-container matColumnDef="organization">
       <th mat-header-cell *matHeaderCellDef>Organization</th>
-      <td mat-cell *matCellDef="let elem">{{getRoleOrgName(elem)}}</td>
+      <td mat-cell *matCellDef="let elem">{{getOrgNameTable(elem)}}</td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -56,7 +56,7 @@
 	<div class="mat-row detail-row" [@detailExpand] style="overflow: hidden; margin: 15px;">
     <app-role-view
             [role]="element"
-            (deletingRole)="deleteRole(element)"
+            (deletingRole)="deleteResource(element)"
     ></app-role-view>
 	</div>
 </ng-template>

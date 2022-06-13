@@ -45,7 +45,7 @@ import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.com
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
 import { CdkDetailRowDirective } from './components/table/cdk-detail-row-directive';
-import { TableComponent } from './components/table/table.component';
+import { UserTableComponent } from './components/user/user-table/user-table.component';
 
 @NgModule({
   declarations: [
@@ -69,7 +69,7 @@ import { TableComponent } from './components/table/table.component';
     CollaborationEditComponent,
     RoleTableComponent,
     CdkDetailRowDirective,
-    TableComponent,
+    UserTableComponent,
   ],
   imports: [
     BrowserModule,
