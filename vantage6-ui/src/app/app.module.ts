@@ -44,7 +44,8 @@ import { NodeViewComponent } from './components/node/node-view/node-view.compone
 import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
-import { CdkDetailRowDirective } from './components/role/role-table/cdk-detail-row-directive';
+import { CdkDetailRowDirective } from './components/table/cdk-detail-row-directive';
+import { TableComponent } from './components/table/table.component';
 
 @NgModule({
   declarations: [
@@ -68,6 +69,7 @@ import { CdkDetailRowDirective } from './components/role/role-table/cdk-detail-r
     CollaborationEditComponent,
     RoleTableComponent,
     CdkDetailRowDirective,
+    TableComponent,
   ],
   imports: [
     BrowserModule,
