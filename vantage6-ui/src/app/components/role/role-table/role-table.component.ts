@@ -3,11 +3,13 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { Organization } from 'src/app/interfaces/organization';
+import {
+  EMPTY_ORGANIZATION,
+  Organization,
+} from 'src/app/interfaces/organization';
 import { Role, RoleWithOrg } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
-import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
@@ -45,6 +47,7 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
   rules: Rule[] = [];
   roles: RoleWithOrg[] = [];
   organizations: Organization[] = [];
+  current_organization: Organization | null = null;
   displayedColumns: string[] = ['name', 'organization', 'descr'];
   data = new MatTableDataSource<RoleWithOrg>(this.roles);
 
@@ -55,8 +58,7 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private userPermission: UserPermissionService,
-    private utilsService: UtilsService,
+    public userPermission: UserPermissionService,
     private roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
     private orgDataService: OrgDataService
@@ -92,9 +94,11 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
       if (isNaN(org_id)) {
         this.single_org = false;
         this.route_org_id = null;
+        this.current_organization = null;
       } else {
         this.single_org = true;
         this.route_org_id = org_id;
+        this.setCurrentOrganization();
       }
       this.setup();
     });
@@ -106,6 +110,19 @@ export class RoleTableComponent implements OnInit, AfterViewInit {
     await this.addOrganizationsToRoles();
 
     this.data.data = this.roles;
+  }
+
+  private setCurrentOrganization(): void {
+    for (let org of this.organizations) {
+      if (org.id === this.route_org_id) {
+        this.current_organization = org;
+        break;
+      }
+    }
+  }
+
+  getOrgName(): string {
+    return this.current_organization ? this.current_organization.name : 'All';
   }
 
   private async setRoles() {

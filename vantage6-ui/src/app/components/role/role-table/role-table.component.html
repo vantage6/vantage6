@@ -1,3 +1,28 @@
+<div *ngIf="userPermission.hasPermission('view', 'role', 'global')">
+  <mat-card>
+    Select organization to view:
+    <div class="inline">
+      <div ngbDropdown class="d-inline-block">
+        <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>
+          {{getOrgName()}}
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
+          <button ngbDropdownItem
+                [routerLink]="['/roles']">
+              All
+            </button>
+          <div *ngFor="let org of organizations">
+            <button ngbDropdownItem
+                [routerLink]="['/roles', org.id]">
+              {{org.name}}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-card>
+</div>
+
 <div class="mat-elevation-z8">
   <table mat-table [dataSource]="data" >
     <ng-container matColumnDef="name">
