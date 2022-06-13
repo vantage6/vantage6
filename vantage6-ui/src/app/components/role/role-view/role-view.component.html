@@ -1,45 +1,33 @@
-<mat-expansion-panel>
-  <mat-expansion-panel-header>
-    <mat-panel-title>
-      {{role.name}}
-    </mat-panel-title>
-    <mat-panel-description class="right-aligned-header">
-      <div *ngIf="isDefaultRole(role)">
-        This is a default role
-      </div>
-    </mat-panel-description>
-  </mat-expansion-panel-header>
-  <table style="width: 100%">
-    <colgroup>
-      <col span="1" style="width: 20%;"/>
-      <col span="1" style="width: 80%;"/>
-    </colgroup>
-    <tr>
-      <td>Description:</td>
-      <td>{{role.description}}</td>
-    </tr>
-  </table>
-  This role gives the following permissions:
-  <app-permission-table
-    [given_roles]="[role]"
-    [given_rules]="[]"
-    [loggedin_user_rules]="userPermission.userRules"
-    [is_edit_mode]="false"
-  ></app-permission-table>
-  <div *ngIf="!isDefaultRole(role); else defaultRoleMsg">
-    <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
-      mat-button class="btn btn-edit inline"
-      (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
-        Edit
-    </button>
-    <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
-      mat-button class="btn btn-delete-strong"
-      (click)="deleteRole()">
-        Delete
-    </button>
-  </div>
-  <ng-template #defaultRoleMsg>
-    This default role is predefined and is available to all organizaitons.
-    It cannot be changed or deleted.
-  </ng-template>
-</mat-expansion-panel>
+<table style="width: 100%">
+  <colgroup>
+    <col span="1" style="width: 20%;"/>
+    <col span="1" style="width: 80%;"/>
+  </colgroup>
+  <tr>
+    <td>Description:</td>
+    <td>{{role.description}}</td>
+  </tr>
+</table>
+This role gives the following permissions:
+<app-permission-table
+  [given_roles]="[role]"
+  [given_rules]="[]"
+  [loggedin_user_rules]="userPermission.userRules"
+  [is_edit_mode]="false"
+></app-permission-table>
+<div *ngIf="!roleDataService.isDefaultRole(role); else defaultRoleMsg">
+  <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
+    mat-button class="btn btn-edit inline"
+    (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
+      Edit
+  </button>
+  <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
+    mat-button class="btn btn-delete-strong"
+    (click)="deleteRole()">
+      Delete
+  </button>
+</div>
+<ng-template #defaultRoleMsg>
+  This default role is predefined and is available to all organizaitons.
+  It cannot be changed or deleted.
+</ng-template>

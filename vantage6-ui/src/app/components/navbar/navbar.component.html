@@ -39,6 +39,14 @@
       <span>Organization</span>
     </button>
   </div>
+  <div *ngIf="userPermission.hasPermission('view', 'role', '*')">
+    <button mat-button class="menu-button"
+            [routerLink]="['/roles']"
+            routerLinkActive="menu-is-active">
+      <mat-icon>roller_skating</mat-icon>
+      <span>Roles</span>
+    </button>
+  </div>
   <button mat-button class="menu-button">
     <mat-icon>person</mat-icon>
     <span>Profile</span>

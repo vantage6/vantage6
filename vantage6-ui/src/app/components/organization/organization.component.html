@@ -57,14 +57,30 @@
         <div *ngIf="!userPermission.can('view', 'role', current_organization.id)">
           You do not have permission to view the roles!
         </div>
-        <div *ngFor="let role of roles; let idx = index">
-          <div *ngIf="role.name !== 'container' && role.name !== 'node'">
+        <div *ngFor="let role of roles | slice:0:MAX_ITEMS_DISPLAY">
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{role.name}}
+              </mat-panel-title>
+              <mat-panel-description class="right-aligned-header">
+                <div *ngIf="roleDataService.isDefaultRole(role)">
+                  This is a default role
+                </div>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
             <app-role-view
               [role]="role"
               (deletingRole)="deleteRole(role)"
             ></app-role-view>
-          </div>
+          </mat-expansion-panel>
         </div>
+        <button mat-button class="btn btn-dflt btn-top-margin"
+          *ngIf="roles.length > MAX_ITEMS_DISPLAY"
+          [routerLink]="['/roles', current_organization.id]"
+          >
+            View all roles
+        </button>
       </mat-card>
     </div>
 
@@ -86,7 +102,7 @@
             This organization has no users!
           </ng-template>
         </div>
-        <div *ngFor="let user of organization_users; let idx = index">
+        <div *ngFor="let user of organization_users">
           <app-user-view
             [user]="user"
             (deletingUser)="deleteUser(user)"

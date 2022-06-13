@@ -14,7 +14,6 @@ import { getEmptyUser, User } from 'src/app/interfaces/user';
   styleUrls: ['./navbar.component.scss'],
 })
 export class NavbarComponent implements OnInit {
-  isLoggedIn = true; // TODO remove
   loggedin_user: User = getEmptyUser();
 
   @ViewChild(MatSidenav)
