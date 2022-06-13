@@ -12,14 +12,8 @@ export interface Role {
   rules: Rule[];
 }
 
-export interface RoleWithOrg {
-  id: number;
-  type: string;
-  name: string;
-  description: string;
-  organization_id: number;
+export interface RoleWithOrg extends Role {
   organization?: Organization;
-  rules: Rule[];
 }
 
 export const EMPTY_ROLE: Role = {

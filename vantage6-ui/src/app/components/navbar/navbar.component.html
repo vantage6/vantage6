@@ -47,6 +47,14 @@
       <span>Roles</span>
     </button>
   </div>
+  <div *ngIf="userPermission.hasPermission('view', 'user', 'organization') || userPermission.hasPermission('view', 'user', 'global')">
+    <button mat-button class="menu-button"
+            [routerLink]="['/users']"
+            routerLinkActive="menu-is-active">
+      <mat-icon>people</mat-icon>
+      <span>Users</span>
+    </button>
+  </div>
   <button mat-button class="menu-button">
     <mat-icon>person</mat-icon>
     <span>Profile</span>

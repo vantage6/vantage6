@@ -102,13 +102,31 @@
             This organization has no users!
           </ng-template>
         </div>
-        <div *ngFor="let user of organization_users">
-          <app-user-view
-            [user]="user"
-            (deletingUser)="deleteUser(user)"
-            (editingUser)="editUser(user)"
-          ></app-user-view>
+        <div *ngFor="let user of organization_users | slice:0:MAX_ITEMS_DISPLAY">
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{user.first_name}} {{user.last_name}}
+              </mat-panel-title>
+              <mat-panel-description>
+                <div *ngIf="user.is_logged_in">
+                  It's you!
+                </div>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <app-user-view
+              [user]="user"
+              (deletingUser)="deleteUser(user)"
+              (editingUser)="editUser(user)"
+            ></app-user-view>
+          </mat-expansion-panel>
         </div>
+        <button mat-button class="btn btn-dflt btn-top-margin"
+          *ngIf="organization_users.length > MAX_ITEMS_DISPLAY"
+          [routerLink]="['/users', current_organization.id]"
+          >
+            View all users
+        </button>
       </mat-card>
     </div>
   </div>
