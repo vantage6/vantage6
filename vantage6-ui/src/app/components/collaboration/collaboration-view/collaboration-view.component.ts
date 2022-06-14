@@ -1,4 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { Router } from '@angular/router';
 
 import {
@@ -27,7 +34,7 @@ import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.
     './collaboration-view.component.scss',
   ],
 })
-export class CollaborationViewComponent implements OnInit {
+export class CollaborationViewComponent implements OnInit, OnChanges {
   @Input() collaboration: Collaboration = EMPTY_COLLABORATION;
   @Output() deletingCollab = new EventEmitter<Collaboration>();
   @Output() editingCollab = new EventEmitter<Collaboration>();
@@ -44,8 +51,10 @@ export class CollaborationViewComponent implements OnInit {
     private convertJsonService: ConvertJsonService
   ) {}
 
-  ngOnInit(): void {
-    this.setMissingNodes();
+  ngOnInit(): void {}
+
+  ngOnChanges(): void {
+    if (this.collaboration !== undefined) this.setMissingNodes();
   }
 
   encrypted(): string {

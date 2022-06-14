@@ -20,6 +20,7 @@ import { CollaborationEditComponent } from './components/collaboration/collabora
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
 import { UserTableComponent } from './components/user/user-table/user-table.component';
 import { NodeTableComponent } from './components/node/node-table/node-table.component';
+import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
 
 const routes: Routes = [
   {
@@ -144,6 +145,16 @@ const routes: Routes = [
       permissionScope: ScopeType.GLOBAL,
     },
     canActivate: [AccessGuard],
+  },
+  {
+    path: 'collaboration/:id/:org_id',
+    component: CollaborationViewSingleComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.COLLABORATION,
+    },
+    canActivate: [AccessGuardByOrgId],
   },
   {
     path: 'roles',

@@ -14,13 +14,31 @@
       <td>{{getStatus()}}</td>
     </tr>
     <tr>
-      <td>Last seen:</td>
+      <td>Last node-server contact:</td>
       <td *ngIf="node.last_seen !== null">{{node.last_seen.toString()}}</td>
       <td *ngIf="node.last_seen === null">This node has not yet been online!</td>
     </tr>
     <tr *ngIf="node.ip !== null">
       <td>VPN IP address:</td>
       <td>{{node.ip}}</td>
+    </tr>
+    <tr *ngIf="node.organization">
+      <td>Organization:</td>
+      <td>
+        <button mat-button class="btn btn-save"
+            [routerLink]="['/organization', node.organization.id]">
+          {{node.organization.name}}
+        </button>
+      </td>
+    </tr>
+    <tr *ngIf="node.collaboration">
+      <td>Collaboration:</td>
+      <td>
+        <button mat-button class="btn btn-save"
+            [routerLink]="['/collaboration', node.collaboration.id, node.organization_id]">
+          {{node.collaboration.name}}
+        </button>
+      </td>
     </tr>
   </table>
   <button *ngIf="userPermission.can('edit', 'node', node.organization_id)"

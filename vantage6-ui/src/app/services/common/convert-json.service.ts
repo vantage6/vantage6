@@ -90,16 +90,19 @@ export class ConvertJsonService {
     };
   }
 
+  // TODO we have to come up with something where we can also obtain the
+  // collaborations without first obtaining the organizations. Especially because
+  // we don't now how many organizations there may be (could be hundreds)
   getCollaboration(
     coll_json: any,
     organizations: Organization[]
   ): Collaboration {
     let orgs: Organization[] = [];
     if (coll_json.organizations) {
-      coll_json.organizations.forEach((org: any) => {
-        let o = deepcopy(getById(organizations, org.id));
-        if (o !== undefined) {
-          orgs.push(o);
+      coll_json.organizations.forEach((org_json: any) => {
+        let org = getById(organizations, org_json.id);
+        if (org) {
+          orgs.push(deepcopy(org));
         }
       });
     }

@@ -37,7 +37,7 @@ export class CollaborationComponent implements OnInit {
   constructor(
     public userPermission: UserPermissionService,
     private nodeDataService: NodeDataService,
-    private collabDataService: CollabDataService,
+    public collabDataService: CollabDataService,
     private orgDataService: OrgDataService
   ) {}
 
@@ -106,6 +106,7 @@ export class CollaborationComponent implements OnInit {
     }
   }
 
+  // TODO the two functions below are copied in a few locations. Refactor!
   deleteCollaboration(col: Collaboration) {
     // delete nodes of collaboration
     for (let org of col.organizations) {
@@ -121,9 +122,5 @@ export class CollaborationComponent implements OnInit {
     );
     this.updateCollaborations();
     this.collabDataService.remove(col);
-  }
-
-  editCollaboration(col: Collaboration) {
-    this.collabDataService.save(col);
   }
 }

@@ -56,11 +56,18 @@
         </div>
         <div class="vertical-spacer"></div>
         <div *ngFor="let col of collaborations">
-          <app-collaboration-view
-            [collaboration]="col"
-            (deletingCollab)="deleteCollaboration(col)"
-            (editingCollab)="editCollaboration(col)"
-          ></app-collaboration-view>
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{col.name}}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <app-collaboration-view
+              [collaboration]="col"
+              (deletingCollab)="deleteCollaboration(col)"
+              (editingCollab)="editCollaboration(col)"
+            ></app-collaboration-view>
+          </mat-expansion-panel>
         </div>
       </mat-card>
 

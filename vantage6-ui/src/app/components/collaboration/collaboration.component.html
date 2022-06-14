@@ -12,11 +12,18 @@
     </div>
     <div class="vertical-spacer"></div>
     <div *ngFor="let col of my_collaborations">
-      <app-collaboration-view
-        [collaboration]="col"
-        (deletingCollab)="deleteCollaboration(col)"
-        (editingCollab)="editCollaboration(col)"
-      ></app-collaboration-view>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{col.name}}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <app-collaboration-view
+          [collaboration]="col"
+          (deletingCollab)="deleteCollaboration(col)"
+          (editingCollab)="collabDataService.save(col)"
+        ></app-collaboration-view>
+      </mat-expansion-panel>
     </div>
   </mat-card>
 </div>
@@ -30,11 +37,18 @@
       You can only see these because you have root permissions!
     </p>
     <div *ngFor="let col of other_collaborations">
-      <app-collaboration-view
-        [collaboration]="col"
-        (deletingCollab)="deleteCollaboration(col)"
-        (editingCollab)="editCollaboration(col)"
-      ></app-collaboration-view>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{col.name}}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <app-collaboration-view
+          [collaboration]="col"
+          (deletingCollab)="deleteCollaboration(col)"
+          (editingCollab)="collabDataService.save(col)"
+        ></app-collaboration-view>
+      </mat-expansion-panel>
     </div>
   </mat-card>
 </div>

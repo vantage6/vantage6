@@ -22,15 +22,23 @@ export class CollabDataService extends BaseDataService {
 
   async get(
     id: number,
-    organizations: Organization[],
+    organizations: Organization[] = [],
+    nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Collaboration> {
-    return (await super.get_base(
+    let collaboration = (await super.get_base(
       id,
       this.convertJsonService.getCollaboration,
       [organizations],
       force_refresh
     )) as Collaboration;
+    if (nodes.length > 0) {
+      // Delete nodes from collab, then add them back (this updates
+      // nodes that were just deleted)
+      this.deleteNodesFromCollaboration(collaboration);
+      this.addNodesToCollaboration(collaboration, nodes);
+    }
+    return collaboration;
   }
 
   async list(

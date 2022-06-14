@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { take } from 'rxjs/operators';
 
-import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
+import { EMPTY_NODE, NodeWithOrg } from 'src/app/interfaces/node';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { ExitMode, ResType } from 'src/app/shared/enum';
 
@@ -11,6 +11,9 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { CollabDataService } from 'src/app/services/data/collab-data.service';
+import { Organization } from 'src/app/interfaces/organization';
 
 @Component({
   selector: 'app-node-view',
@@ -21,12 +24,14 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
   ],
 })
 export class NodeViewComponent implements OnInit {
-  node: Node = EMPTY_NODE;
+  node: NodeWithOrg = EMPTY_NODE;
 
   constructor(
     private activatedRoute: ActivatedRoute,
     private apiNodeService: ApiNodeService,
     private nodeDataService: NodeDataService,
+    private orgDataService: OrgDataService,
+    private collabDataService: CollabDataService,
     private utilsService: UtilsService,
     public userPermission: UserPermissionService,
     private modalService: ModalService
@@ -44,12 +49,30 @@ export class NodeViewComponent implements OnInit {
       if (id === EMPTY_NODE.id) {
         return; // cannot get organization
       }
-      this.setNode(id);
+      this.setup(id);
     });
+  }
+
+  async setup(node_id: number): Promise<void> {
+    await this.setNode(node_id);
+    await this.setOrganization();
+    this.setCollaboration();
   }
 
   async setNode(id: number): Promise<void> {
     this.node = await this.nodeDataService.get(id);
+  }
+
+  async setOrganization(): Promise<void> {
+    this.node.organization = await this.orgDataService.get(
+      this.node.organization_id
+    );
+  }
+  async setCollaboration(): Promise<void> {
+    this.node.collaboration = await this.collabDataService.get(
+      this.node.collaboration_id,
+      [this.node.organization as Organization]
+    );
   }
 
   getStatus(): string {
