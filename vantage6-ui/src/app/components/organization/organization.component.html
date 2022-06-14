@@ -46,6 +46,25 @@
       </mat-card>
 
       <mat-card>
+        <h4>Collaborations</h4>
+        <div *ngIf="userPermission.hasPermission('create', 'collaboration', 'global')" class="inline">
+          <button mat-button class="btn btn-dflt btn-right"
+                  [routerLink]="['/collaboration', 'create']">
+            <mat-icon>add_circle</mat-icon>
+            <span>New collaboration</span>
+          </button>
+        </div>
+        <div class="vertical-spacer"></div>
+        <div *ngFor="let col of collaborations">
+          <app-collaboration-view
+            [collaboration]="col"
+            (deletingCollab)="deleteCollaboration(col)"
+            (editingCollab)="editCollaboration(col)"
+          ></app-collaboration-view>
+        </div>
+      </mat-card>
+
+      <mat-card>
         <h4>Roles</h4>
         <div *ngIf="userPermission.can('create', 'role', current_organization.id)" class="inline">
           <button mat-button class="btn btn-dflt btn-right"
@@ -126,6 +145,36 @@
           [routerLink]="['/users', current_organization.id]"
           >
             View all users
+        </button>
+      </mat-card>
+
+      <mat-card>
+        <h4>Nodes</h4>
+        <div *ngIf="nodes.length===0">
+          <div *ngIf="!userPermission.can('view', 'node', current_organization.id); else noNodesBlock">
+            You do not have permission to view the nodes!
+          </div>
+          <ng-template #noNodesBlock>
+            This organization has no nodes!
+          </ng-template>
+        </div>
+        <div *ngFor="let node of nodes | slice:0:MAX_ITEMS_DISPLAY">
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                {{node.name}}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <button mat-button class="btn btn-dflt" style="max-width: 120px" ngbDropdownItem [routerLink]="['/node', node.id, 'view', current_organization.id]">
+              View node
+            </button>
+          </mat-expansion-panel>
+        </div>
+        <button mat-button class="btn btn-dflt"
+          *ngIf="nodes.length > MAX_ITEMS_DISPLAY"
+          [routerLink]="['/nodes', current_organization.id]"
+          >
+            View all nodes
         </button>
       </mat-card>
     </div>

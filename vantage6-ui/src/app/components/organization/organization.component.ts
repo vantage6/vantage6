@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
-import { EMPTY_USER, getEmptyUser, User } from 'src/app/interfaces/user';
-import { getEmptyRole, Role } from 'src/app/interfaces/role';
+import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
+import { Node } from 'src/app/interfaces/node';
 import {
   EMPTY_ORGANIZATION,
   Organization,
@@ -23,6 +24,9 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { NodeDataService } from 'src/app/services/data/node-data.service';
+import { CollabDataService } from 'src/app/services/data/collab-data.service';
+import { Collaboration } from 'src/app/interfaces/collaboration';
 
 @Component({
   selector: 'app-organization',
@@ -41,6 +45,8 @@ export class OrganizationComponent implements OnInit {
   roles: Role[] = [];
   roles_assignable: Role[] = [];
   rules: Rule[] = [];
+  nodes: Node[] = [];
+  collaborations: Collaboration[] = [];
   MAX_ITEMS_DISPLAY: number = 5;
 
   constructor(
@@ -51,6 +57,8 @@ export class OrganizationComponent implements OnInit {
     private userDataService: UserDataService,
     public roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
+    private nodeDataService: NodeDataService,
+    private collabDataService: CollabDataService,
     private modalService: ModalService,
     private utilsService: UtilsService
   ) {}
@@ -133,6 +141,12 @@ export class OrganizationComponent implements OnInit {
 
     // collect users for current organization
     this.setUsers();
+
+    // collect nodes for current organization
+    this.setNodes();
+
+    // collect collaborations for current organization
+    this.setCollaborations();
   }
 
   async sortRoles(roles: Role[]): Promise<Role[]> {
@@ -150,6 +164,18 @@ export class OrganizationComponent implements OnInit {
     for (let user of this.organization_users) {
       user.is_logged_in = user.id === this.loggedin_user.id;
     }
+  }
+
+  async setNodes(): Promise<void> {
+    this.nodes = await this.nodeDataService.org_list(this.route_org_id);
+  }
+
+  async setCollaborations(): Promise<void> {
+    this.collaborations = await this.collabDataService.org_list(
+      this.current_organization.id,
+      this.organizations,
+      this.nodes
+    );
   }
 
   editOrganization(org: Organization): void {
@@ -184,6 +210,24 @@ export class OrganizationComponent implements OnInit {
     for (let user of this.organization_users) {
       user.roles = removeMatchedIdFromArray(user.roles, role.id);
     }
+  }
+
+  // TODO these functions are duplicate from collaboration Component. Refactor?!
+  deleteCollaboration(col: Collaboration) {
+    // delete nodes of collaboration
+    for (let org of col.organizations) {
+      if (org.node) {
+        this.nodeDataService.remove(org.node);
+        removeMatchedIdFromArray(this.nodes, org.node.id);
+      }
+    }
+    // delete collaboration
+    this.collaborations = removeMatchedIdFromArray(this.collaborations, col.id);
+    this.collabDataService.remove(col);
+  }
+
+  editCollaboration(col: Collaboration) {
+    this.collabDataService.save(col);
   }
 
   showPublicKey(): void {

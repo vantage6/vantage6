@@ -73,7 +73,6 @@ export class NodeTableComponent
     } else {
       this.displayMode = DisplayMode.ALL;
     }
-    console.log(this.displayMode);
 
     this.activatedRoute.paramMap.subscribe((params: any) => {
       let id: any;
@@ -82,7 +81,6 @@ export class NodeTableComponent
       } else if (this.displayMode === DisplayMode.COL) {
         id = parseId(params.get('collab_id'));
       }
-      console.log(id);
       if (isNaN(id)) {
         this.route_org_id = null;
         this.current_organization = null;
@@ -97,8 +95,6 @@ export class NodeTableComponent
           this.current_organization = null;
         }
       }
-      console.log(this.current_organization);
-      console.log(this.current_collaboration);
       this.setup();
     });
   }

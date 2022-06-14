@@ -11,6 +11,8 @@ import { BaseDataService } from './base-data.service';
   providedIn: 'root',
 })
 export class CollabDataService extends BaseDataService {
+  org_dict: { [org_id: number]: Collaboration[] } = {};
+
   constructor(
     protected apiCollabService: ApiCollaborationService,
     protected convertJsonService: ConvertJsonService
@@ -44,15 +46,46 @@ export class CollabDataService extends BaseDataService {
     if (nodes.length > 0) {
       // Delete nodes from collabs, then add them back (this updates
       // nodes that were just deleted)
-      this.deleteNodesFromCollaborations();
-      this.addNodesToCollaborations(nodes);
+      this.deleteNodesFromCollaborations(
+        this.resource_list.value as Collaboration[]
+      );
+      this.addNodesToCollaborations(
+        this.resource_list.value as Collaboration[],
+        nodes
+      );
     }
     return collaborations;
   }
 
-  addNodesToCollaborations(nodes: Node[]): void {
-    for (let c of this.resource_list.value) {
-      this.addNodesToCollaboration(c as Collaboration, nodes);
+  async org_list(
+    organization_id: number,
+    organizations: Organization[],
+    nodes: Node[] = [],
+    force_refresh: boolean = false
+  ): Promise<Collaboration[]> {
+    if (
+      force_refresh ||
+      !(organization_id in this.org_dict) ||
+      this.org_dict[organization_id].length === 0
+    ) {
+      this.org_dict[organization_id] = (await this.apiService.getResources(
+        this.convertJsonService.getCollaboration,
+        [organizations],
+        { organization_id: organization_id }
+      )) as Collaboration[];
+    }
+    if (nodes.length > 0) {
+      // Delete nodes from collabs, then add them back (this updates
+      // nodes that were just deleted)
+      this.deleteNodesFromCollaborations(this.org_dict[organization_id]);
+      this.addNodesToCollaborations(this.org_dict[organization_id], nodes);
+    }
+    return this.org_dict[organization_id];
+  }
+
+  addNodesToCollaborations(collabs: Collaboration[], nodes: Node[]): void {
+    for (let c of collabs) {
+      this.addNodesToCollaboration(c, nodes);
     }
   }
 
@@ -66,9 +99,9 @@ export class CollabDataService extends BaseDataService {
     }
   }
 
-  deleteNodesFromCollaborations(): void {
-    for (let c of this.resource_list.value) {
-      this.deleteNodesFromCollaboration(c as Collaboration);
+  deleteNodesFromCollaborations(collabs: Collaboration[]): void {
+    for (let c of collabs) {
+      this.deleteNodesFromCollaboration(c);
     }
   }
 
