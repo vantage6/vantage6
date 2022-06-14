@@ -196,7 +196,7 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   {
-    path: 'nodes/:org_id',
+    path: 'nodes/org/:org_id',
     component: NodeTableComponent,
     data: {
       requiresLogin: true,
@@ -204,6 +204,17 @@ const routes: Routes = [
       permissionResource: ResType.NODE,
     },
     canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'nodes/collab/:collab_id',
+    component: NodeTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.NODE,
+      permissionScope: ScopeType.GLOBAL,
+    },
+    canActivate: [AccessGuard],
   },
 ];
 //TODO add * path with 404 not found page

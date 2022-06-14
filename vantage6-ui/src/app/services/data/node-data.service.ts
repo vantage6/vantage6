@@ -10,6 +10,7 @@ import { Node } from 'src/app/interfaces/node';
 })
 export class NodeDataService extends BaseDataService {
   org_dict: { [org_id: number]: Node[] } = {};
+  collab_dict: { [collab_id: number]: Node[] } = {};
 
   constructor(
     protected apiService: ApiNodeService,
@@ -45,11 +46,29 @@ export class NodeDataService extends BaseDataService {
       this.org_dict[organization_id].length === 0
     ) {
       this.org_dict[organization_id] = (await this.apiService.getResources(
-        this.convertJsonService.getRole,
+        this.convertJsonService.getNode,
         [],
-        { organization_id: organization_id, include_root: true }
+        { organization_id: organization_id }
       )) as Node[];
     }
     return this.org_dict[organization_id];
+  }
+
+  async collab_list(
+    collaboration_id: number,
+    force_refresh: boolean = false
+  ): Promise<Node[]> {
+    if (
+      force_refresh ||
+      !(collaboration_id in this.collab_dict) ||
+      this.collab_dict[collaboration_id].length === 0
+    ) {
+      this.collab_dict[collaboration_id] = (await this.apiService.getResources(
+        this.convertJsonService.getNode,
+        [],
+        { collaboration_id: collaboration_id }
+      )) as Node[];
+    }
+    return this.collab_dict[collaboration_id];
   }
 }

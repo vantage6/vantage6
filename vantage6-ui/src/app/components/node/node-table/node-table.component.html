@@ -1,7 +1,10 @@
-<div *ngIf="userPermission.hasPermission('view', 'node', 'global')">
+<div *ngIf="(userPermission.hasPermission('view', 'organization', 'collaboration') ||
+             userPermission.hasPermission('view', 'organization', 'global') ||
+             userPermission.hasPermission('view', 'collaboration', '*')
+             ) && userPermission.hasPermission('view', 'node', 'global')">
   <mat-card>
-    Select organization to view:
     <div class="inline">
+      {{getSelectDropdownText()}}
       <div ngbDropdown class="d-inline-block">
         <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>
           {{getOrgNameDropdown()}}
@@ -10,12 +13,27 @@
           <button ngbDropdownItem
                 [routerLink]="['/nodes']">
               All
-            </button>
-          <div *ngFor="let org of organizations">
-            <button ngbDropdownItem
-                [routerLink]="['/nodes', org.id]">
-              {{org.name}}
-            </button>
+          </button>
+          <div *ngIf="userPermission.hasPermission('view', 'organization', 'collaboration') ||
+                      userPermission.hasPermission('view', 'organization', 'global')">
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-subsection">Organizations</div>
+            <div *ngFor="let org of organizations">
+              <button ngbDropdownItem
+                  [routerLink]="['/nodes/org', org.id]">
+                {{org.name}}
+              </button>
+            </div>
+          </div>
+          <div *ngIf="userPermission.hasPermission('view', 'collaboration', '*')">
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-subsection">Collaborations</div>
+            <div *ngFor="let col of collaborations">
+              <button ngbDropdownItem
+                  [routerLink]="['/nodes/collab', col.id]">
+                {{col.name}}
+              </button>
+            </div>
           </div>
         </div>
       </div>
