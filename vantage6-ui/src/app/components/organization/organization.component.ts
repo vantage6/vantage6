@@ -7,6 +7,7 @@ import { Node } from 'src/app/interfaces/node';
 import {
   EMPTY_ORGANIZATION,
   Organization,
+  OrganizationInCollaboration,
 } from 'src/app/interfaces/organization';
 import { ResType } from 'src/app/shared/enum';
 import {
@@ -37,15 +38,16 @@ import { Collaboration } from 'src/app/interfaces/collaboration';
   ],
 })
 export class OrganizationComponent implements OnInit {
-  organizations: Organization[] = [];
+  organizations: OrganizationInCollaboration[] = [];
   route_org_id: number = EMPTY_ORGANIZATION.id;
-  current_organization: Organization = EMPTY_ORGANIZATION;
+  current_organization: OrganizationInCollaboration = EMPTY_ORGANIZATION;
   loggedin_user: User = EMPTY_USER;
   organization_users: User[] = [];
   roles: Role[] = [];
   roles_assignable: Role[] = [];
   rules: Rule[] = [];
   nodes: Node[] = [];
+  organization_nodes: Node[] = [];
   collaborations: Collaboration[] = [];
   MAX_ITEMS_DISPLAY: number = 5;
 
@@ -143,7 +145,7 @@ export class OrganizationComponent implements OnInit {
     this.setUsers();
 
     // collect nodes for current organization
-    this.setNodes();
+    await this.setNodes();
 
     // collect collaborations for current organization
     this.setCollaborations();
@@ -167,7 +169,13 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setNodes(): Promise<void> {
-    this.nodes = await this.nodeDataService.org_list(this.route_org_id);
+    (await this.nodeDataService.list()).subscribe((nodes) => {
+      this.nodes = nodes;
+      let id = this.route_org_id;
+      this.organization_nodes = this.nodes.filter(function (n: Node) {
+        return n.organization_id !== id;
+      });
+    });
   }
 
   async setCollaborations(): Promise<void> {

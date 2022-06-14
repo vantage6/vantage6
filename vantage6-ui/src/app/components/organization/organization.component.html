@@ -165,7 +165,7 @@
             This organization has no nodes!
           </ng-template>
         </div>
-        <div *ngFor="let node of nodes | slice:0:MAX_ITEMS_DISPLAY">
+        <div *ngFor="let node of organization_nodes | slice:0:MAX_ITEMS_DISPLAY">
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
@@ -178,7 +178,7 @@
           </mat-expansion-panel>
         </div>
         <button mat-button class="btn btn-dflt"
-          *ngIf="nodes.length > MAX_ITEMS_DISPLAY"
+          *ngIf="organization_nodes.length > MAX_ITEMS_DISPLAY"
           [routerLink]="['/nodes', current_organization.id]"
           >
             View all nodes
