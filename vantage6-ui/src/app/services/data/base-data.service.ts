@@ -78,4 +78,9 @@ export abstract class BaseDataService {
   hasListStored(): boolean {
     return this.resource_list.value.length > 0;
   }
+
+  clear(): void {
+    this.resource_list.next([]);
+    this.saved_single_resources = {};
+  }
 }
