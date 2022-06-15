@@ -198,7 +198,7 @@ export class UserEditComponent implements OnInit {
         if (this.mode === OpsType.CREATE) {
           // save user is to data service (so it is displayed everywhere)
           this.user.id = data.id;
-          this.userDataService.add(this.user);
+          this.userDataService.save(this.user);
         }
       },
       (error) => {

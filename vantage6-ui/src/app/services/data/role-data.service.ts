@@ -6,14 +6,11 @@ import { Rule } from 'src/app/interfaces/rule';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
-import { add_to_org, remove_from_org } from './utils';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RoleDataService extends BaseDataService {
-  org_roles_dict: { [org_id: number]: Role[] } = {};
-
   constructor(
     protected apiService: ApiRoleService,
     protected convertJsonService: ConvertJsonService
@@ -50,29 +47,29 @@ export class RoleDataService extends BaseDataService {
     rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Role[]> {
-    if (
-      force_refresh ||
-      !(organization_id in this.org_roles_dict) ||
-      this.org_roles_dict[organization_id].length === 0
-    ) {
-      let roles = (await this.apiService.getResources(
+    let roles: Role[] = [];
+    if (force_refresh || !this.queried_org_ids.includes(organization_id)) {
+      roles = (await this.apiService.getResources(
         this.convertJsonService.getRole,
         [rules],
         { organization_id: organization_id, include_root: true }
       )) as Role[];
-      this.org_roles_dict[organization_id] = this.remove_non_user_roles(roles);
+      this.queried_org_ids.push(organization_id);
+      this.saveMultiple(roles);
+    } else {
+      // this organization has been queried before: get matches from the saved
+      // data
+      for (let role of this.resource_list.value as Role[]) {
+        if (
+          role.organization_id === organization_id ||
+          role.organization_id === null
+        ) {
+          roles.push(role);
+        }
+      }
     }
-    return this.org_roles_dict[organization_id];
-  }
-
-  add(role: Role) {
-    super.add(role);
-    add_to_org(role, this.org_roles_dict);
-  }
-
-  remove(role: Role) {
-    super.remove(role);
-    remove_from_org(role, this.org_roles_dict);
+    roles = this.remove_non_user_roles(roles);
+    return roles;
   }
 
   private remove_non_user_roles(roles: Role[]) {

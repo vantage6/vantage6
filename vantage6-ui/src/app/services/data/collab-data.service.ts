@@ -1,18 +1,20 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Collaboration } from 'src/app/interfaces/collaboration';
-import { Organization } from 'src/app/interfaces/organization';
+import {
+  Organization,
+  OrganizationInCollaboration,
+} from 'src/app/interfaces/organization';
 import { Node } from 'src/app/interfaces/node';
 import { ApiCollaborationService } from '../api/api-collaboration.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
+import { JsonpClientBackend } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CollabDataService extends BaseDataService {
-  org_dict: { [org_id: number]: Collaboration[] } = {};
-
   constructor(
     protected apiCollabService: ApiCollaborationService,
     protected convertJsonService: ConvertJsonService
@@ -32,12 +34,7 @@ export class CollabDataService extends BaseDataService {
       [organizations],
       force_refresh
     )) as Collaboration;
-    if (nodes.length > 0) {
-      // Delete nodes from collab, then add them back (this updates
-      // nodes that were just deleted)
-      this.deleteNodesFromCollaboration(collaboration);
-      this.addNodesToCollaboration(collaboration, nodes);
-    }
+    await this.refreshNodes([collaboration], nodes);
     return collaboration;
   }
 
@@ -51,17 +48,7 @@ export class CollabDataService extends BaseDataService {
       [organizations],
       force_refresh
     )) as Observable<Collaboration[]>;
-    if (nodes.length > 0) {
-      // Delete nodes from collabs, then add them back (this updates
-      // nodes that were just deleted)
-      this.deleteNodesFromCollaborations(
-        this.resource_list.value as Collaboration[]
-      );
-      this.addNodesToCollaborations(
-        this.resource_list.value as Collaboration[],
-        nodes
-      );
-    }
+    await this.refreshNodes(this.resource_list.value as Collaboration[], nodes);
     return collaborations;
   }
 
@@ -71,24 +58,79 @@ export class CollabDataService extends BaseDataService {
     nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Collaboration[]> {
-    if (
-      force_refresh ||
-      !(organization_id in this.org_dict) ||
-      this.org_dict[organization_id].length === 0
-    ) {
-      this.org_dict[organization_id] = (await this.apiService.getResources(
+    let org_resources: Collaboration[] = [];
+    if (force_refresh || !this.queried_org_ids.includes(organization_id)) {
+      org_resources = (await this.apiService.getResources(
         this.convertJsonService.getCollaboration,
         [organizations],
         { organization_id: organization_id }
       )) as Collaboration[];
+      this.queried_org_ids.push(organization_id);
+      this.saveMultiple(org_resources);
+    } else {
+      // this organization has been queried before: get matches from the saved
+      // data
+      for (let resource of this.resource_list.value as Collaboration[]) {
+        if (
+          (resource as Collaboration).organization_ids.includes(organization_id)
+        ) {
+          org_resources.push(resource);
+        }
+      }
     }
+    await this.refreshNodes(org_resources, nodes);
+    return org_resources;
+  }
+
+  async addOrgsAndNodes(
+    organizations: OrganizationInCollaboration[],
+    nodes: Node[]
+  ): Promise<Collaboration[]> {
+    let collabs = [...(this.resource_list.value as Collaboration[])];
+
+    this.deleteOrgsFromCollaborations(collabs);
+    this.addOrgsToCollaborations(collabs, organizations);
+
+    this.deleteNodesFromCollaborations(collabs);
+    this.addNodesToCollaborations(collabs, nodes);
+
+    if (JSON.stringify(this.resource_list.value) !== JSON.stringify(collabs)) {
+      this.resource_list.next(collabs);
+    }
+    return collabs;
+  }
+
+  async refreshNodes(collabs: Collaboration[], nodes: Node[]) {
+    // Delete nodes from collabs, then add them back (this updates
+    // nodes that were just deleted)
     if (nodes.length > 0) {
-      // Delete nodes from collabs, then add them back (this updates
-      // nodes that were just deleted)
-      this.deleteNodesFromCollaborations(this.org_dict[organization_id]);
-      this.addNodesToCollaborations(this.org_dict[organization_id], nodes);
+      this.deleteNodesFromCollaborations(collabs);
+      this.addNodesToCollaborations(collabs, nodes);
     }
-    return this.org_dict[organization_id];
+    // save the updated collaborations
+    this.saveMultiple(collabs);
+  }
+
+  addOrgsToCollaborations(
+    collabs: Collaboration[],
+    orgs: OrganizationInCollaboration[]
+  ): void {
+    for (let c of collabs) {
+      this.addOrgsToCollaboration(c, orgs);
+    }
+  }
+
+  addOrgsToCollaboration(
+    c: Collaboration,
+    orgs: OrganizationInCollaboration[]
+  ): void {
+    for (let org_id of c.organization_ids) {
+      for (let org of orgs) {
+        if (org.id === org_id) {
+          c.organizations.push(org);
+        }
+      }
+    }
   }
 
   addNodesToCollaborations(collabs: Collaboration[], nodes: Node[]): void {
@@ -105,6 +147,16 @@ export class CollabDataService extends BaseDataService {
         }
       }
     }
+  }
+
+  deleteOrgsFromCollaborations(collabs: Collaboration[]): void {
+    for (let c of collabs) {
+      this.deleteOrgsFromCollaboration(c);
+    }
+  }
+
+  deleteOrgsFromCollaboration(c: Collaboration): void {
+    c.organizations = [];
   }
 
   deleteNodesFromCollaborations(collabs: Collaboration[]): void {

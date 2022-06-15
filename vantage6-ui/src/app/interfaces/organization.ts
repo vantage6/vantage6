@@ -12,6 +12,7 @@ export interface Organization {
   domain: string;
   public_key: string;
   is_being_created?: boolean;
+  collaboration_ids: number[];
 }
 
 export interface OrganizationInCollaboration extends Organization {
@@ -28,4 +29,5 @@ export const EMPTY_ORGANIZATION = {
   country: '',
   domain: '',
   public_key: '',
+  collaboration_ids: [],
 };

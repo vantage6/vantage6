@@ -54,7 +54,9 @@ export class CollaborationViewComponent implements OnInit, OnChanges {
   ngOnInit(): void {}
 
   ngOnChanges(): void {
-    if (this.collaboration !== undefined) this.setMissingNodes();
+    if (this.collaboration !== undefined) {
+      this.setMissingNodes();
+    }
   }
 
   encrypted(): string {
@@ -139,7 +141,7 @@ configuration file for the node using 'vnode new'.`,
         // set the new node as part of the organization
         org.node = this.convertJsonService.getNode(node_json);
         // store the node
-        this.nodeDataService.add(org.node);
+        this.nodeDataService.save(org.node);
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [

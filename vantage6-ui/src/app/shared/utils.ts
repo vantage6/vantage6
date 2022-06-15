@@ -22,6 +22,14 @@ export function removeMatchedIdsFromArray(array: any[], ids: number[]): any[] {
   return array;
 }
 
+export function removeDuplicateIds(array: any[]): any[] {
+  // remove duplicate id elements
+  return array.filter(
+    (value, index, self) =>
+      index === self.findIndex((value2) => value2.id === value.id)
+  );
+}
+
 export function getById(array: any[], id: number): any | undefined {
   return array.find((x) => x.id === id);
 }
@@ -30,6 +38,21 @@ export function getIdsFromArray(array: any[]): number[] {
   return array.map((a) => {
     return a.id;
   });
+}
+
+export function replaceMatchedId(array: any[], replacer: any) {
+  return array.map((original) =>
+    original.id === replacer.id ? replacer : original
+  );
+}
+
+export function addOrReplace(array: any[], new_val: any) {
+  if (getById(array, new_val.id)) {
+    return replaceMatchedId(array, new_val);
+  } else {
+    array.push(new_val);
+    return array;
+  }
 }
 
 export function arrayContainsObjWithId(id: number, array: any[]) {
