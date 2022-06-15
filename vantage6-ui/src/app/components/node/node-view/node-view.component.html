@@ -16,7 +16,7 @@
     <tr>
       <td>Last node-server contact:</td>
       <td *ngIf="node.last_seen !== null">{{node.last_seen.toString()}}</td>
-      <td *ngIf="node.last_seen === null">This node has not yet been online!</td>
+      <td *ngIf="node.last_seen === null">Never - this node has not yet been online!</td>
     </tr>
     <tr *ngIf="node.ip !== null">
       <td>VPN IP address:</td>
@@ -25,7 +25,7 @@
     <tr *ngIf="node.organization">
       <td>Organization:</td>
       <td>
-        <button mat-button class="btn btn-save"
+        <button mat-button class="btn btn-detail"
             [routerLink]="['/organization', node.organization.id]">
           {{node.organization.name}}
         </button>
@@ -34,7 +34,7 @@
     <tr *ngIf="node.collaboration">
       <td>Collaboration:</td>
       <td>
-        <button mat-button class="btn btn-save"
+        <button mat-button class="btn btn-detail"
             [routerLink]="['/collaboration', node.collaboration.id, node.organization_id]">
           {{node.collaboration.name}}
         </button>

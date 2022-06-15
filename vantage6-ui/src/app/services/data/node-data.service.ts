@@ -4,13 +4,12 @@ import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Node } from 'src/app/interfaces/node';
+import { addOrReplace } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NodeDataService extends BaseDataService {
-  collab_dict: { [collab_id: number]: Node[] } = {};
-
   constructor(
     protected apiService: ApiNodeService,
     protected convertJsonService: ConvertJsonService
@@ -57,5 +56,11 @@ export class NodeDataService extends BaseDataService {
       [],
       force_refresh
     )) as Node[];
+  }
+
+  public save(node: Node): void {
+    let updated_list = [...this.resource_list.value];
+    updated_list = addOrReplace(updated_list, node);
+    this.resource_list.next(updated_list);
   }
 }

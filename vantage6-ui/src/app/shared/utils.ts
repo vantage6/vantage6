@@ -22,6 +22,14 @@ export function removeMatchedIdsFromArray(array: any[], ids: number[]): any[] {
   return array;
 }
 
+export function removeDuplicateIds(array: any[]): any[] {
+  // remove duplicate id elements
+  return array.filter(
+    (value, index, self) =>
+      index === self.findIndex((value2) => value2.id === value.id)
+  );
+}
+
 export function getById(array: any[], id: number): any | undefined {
   return array.find((x) => x.id === id);
 }

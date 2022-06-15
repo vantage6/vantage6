@@ -1,4 +1,7 @@
-import { Injectable } from '@angular/core';
+import {
+  Injectable,
+  ɵNOT_FOUND_CHECK_ONLY_ELEMENT_INJECTOR,
+} from '@angular/core';
 
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
@@ -77,6 +80,12 @@ export class ConvertJsonService {
   }
 
   getOrganization(org_json: any): Organization {
+    let col_ids: number[] = [];
+    if (org_json.collaborations) {
+      for (let col of org_json.collaborations) {
+        col_ids.push(col.id);
+      }
+    }
     return {
       id: org_json.id,
       type: ResType.ORGANIZATION,
@@ -87,6 +96,7 @@ export class ConvertJsonService {
       country: org_json.country,
       domain: org_json.domain,
       public_key: org_json.public_key,
+      collaboration_ids: col_ids,
     };
   }
 

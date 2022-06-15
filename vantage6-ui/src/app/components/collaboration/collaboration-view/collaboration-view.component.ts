@@ -54,7 +54,9 @@ export class CollaborationViewComponent implements OnInit, OnChanges {
   ngOnInit(): void {}
 
   ngOnChanges(): void {
-    if (this.collaboration !== undefined) this.setMissingNodes();
+    if (this.collaboration !== undefined) {
+      this.setMissingNodes();
+    }
   }
 
   encrypted(): string {

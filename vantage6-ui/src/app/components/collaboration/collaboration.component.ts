@@ -10,6 +10,8 @@ import {
 } from 'src/app/interfaces/organization';
 import {
   arrayContainsObjWithId,
+  removeArrayDoubles,
+  removeDuplicateIds,
   removeMatchedIdFromArray,
 } from 'src/app/shared/utils';
 
@@ -52,14 +54,8 @@ export class CollaborationComponent implements OnInit {
   async init() {
     this.loggedin_user = this.userPermission.user;
 
-    // set the nodes
-    await this.setNodes(false);
-
-    // set the organizations
-    await this.setOrganizations(false);
-
     // set all collaborations
-    this.setCollaborations();
+    await this.setCollaborations();
   }
 
   async setCollaborations(): Promise<void> {
@@ -67,22 +63,45 @@ export class CollaborationComponent implements OnInit {
       await this.collabDataService.list(this.organizations, this.nodes)
     ).subscribe((collabs: Collaboration[]) => {
       this.all_collaborations = collabs;
-      this.updateCollaborations();
+      this.update();
     });
   }
 
-  async setOrganizations(update_collabs: boolean = true): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-      this.organizations = orgs;
-      if (update_collabs) this.setCollaborations();
-    });
+  async update() {
+    // set the nodes
+    await this.setNodes();
+
+    // set the organizations
+    await this.setOrganizations();
+
+    // organizations and nodes to collaborations
+    this.all_collaborations = await this.collabDataService.addOrgsAndNodes(
+      this.organizations,
+      this.nodes
+    );
+
+    this.updateCollaborations();
   }
 
-  async setNodes(update_collabs: boolean = true): Promise<void> {
-    (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
-      this.nodes = nodes;
-      if (update_collabs) this.setCollaborations();
-    });
+  async setOrganizations(): Promise<void> {
+    // TODO make method to get all collaborations organizations in one go -->
+    // best way for that is to modify the server API to allow giving multiple
+    // collaboration ids
+    this.organizations = [];
+    for (let collab of this.all_collaborations) {
+      const collab_orgs = await this.orgDataService.collab_list(collab.id);
+      this.organizations.push(...collab_orgs);
+    }
+    this.organizations = removeDuplicateIds(this.organizations);
+  }
+
+  async setNodes(): Promise<void> {
+    this.nodes = [];
+    for (let collab of this.all_collaborations) {
+      const nodes = await this.nodeDataService.collab_list(collab.id);
+      this.nodes.push(...nodes);
+    }
+    this.nodes = removeDuplicateIds(this.nodes);
   }
 
   updateCollaborations(): void {

@@ -14,6 +14,7 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Organization } from 'src/app/interfaces/organization';
+import { deepcopy } from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-node-view',
@@ -60,7 +61,7 @@ export class NodeViewComponent implements OnInit {
   }
 
   async setNode(id: number): Promise<void> {
-    this.node = await this.nodeDataService.get(id);
+    this.node = deepcopy(await this.nodeDataService.get(id));
   }
 
   async setOrganization(): Promise<void> {

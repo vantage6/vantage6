@@ -12,7 +12,9 @@ import {
 import { ResType } from 'src/app/shared/enum';
 import {
   arrayContainsObjWithId,
+  deepcopy,
   getById,
+  removeDuplicateIds,
   removeMatchedIdFromArray,
 } from 'src/app/shared/utils';
 
@@ -144,11 +146,11 @@ export class OrganizationComponent implements OnInit {
     // collect users for current organization
     this.setUsers();
 
+    // collect collaborations for current organization
+    await this.setCollaborations();
+
     // collect nodes for current organization
     await this.setNodes();
-
-    // collect collaborations for current organization
-    this.setCollaborations();
   }
 
   async sortRoles(roles: Role[]): Promise<Role[]> {
@@ -169,13 +171,26 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setNodes(): Promise<void> {
-    (await this.nodeDataService.list()).subscribe((nodes) => {
-      this.nodes = nodes;
-      let id = this.route_org_id;
-      this.organization_nodes = this.nodes.filter(function (n: Node) {
-        return n.organization_id !== id;
-      });
-    });
+    this.organization_nodes = await this.nodeDataService.org_list(
+      this.route_org_id
+    );
+
+    // obtain the nodes relevant to the collaborations
+    this.nodes = [];
+    for (let collab of this.collaborations) {
+      const nodes = await this.nodeDataService.collab_list(collab.id);
+      this.nodes.push(...nodes);
+    }
+    this.nodes = removeDuplicateIds(this.nodes);
+
+    // add the nodes to the collaborations
+    // NB deepcopy serves to fire ngOnChanges in child component
+    this.collaborations = deepcopy(
+      await this.collabDataService.addOrgsAndNodes(
+        this.organizations,
+        this.nodes
+      )
+    );
   }
 
   async setCollaborations(): Promise<void> {

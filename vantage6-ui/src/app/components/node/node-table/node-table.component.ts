@@ -7,7 +7,7 @@ import { TableComponent } from '../../table/table.component';
 import { Node, NodeWithOrg } from 'src/app/interfaces/node';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
-import { parseId } from 'src/app/shared/utils';
+import { deepcopy, parseId } from 'src/app/shared/utils';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 
 enum DisplayMode {
@@ -118,6 +118,9 @@ export class NodeTableComponent
         this.resources = nodes;
       });
     }
+    // make a copy to prevent that changes in these resources are directly
+    // reflected in the resources within dataServices
+    this.resources = deepcopy(this.resources);
   }
 
   protected async addCollaborationsToResources() {
