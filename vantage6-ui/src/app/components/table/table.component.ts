@@ -10,7 +10,11 @@ import {
 } from '@angular/animations';
 import { ResourceWithOrg } from 'src/app/shared/types';
 import { Organization } from 'src/app/interfaces/organization';
-import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
+import {
+  deepcopy,
+  parseId,
+  removeMatchedIdFromArray,
+} from 'src/app/shared/utils';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
@@ -115,11 +119,12 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
     return resource.organization ? resource.organization.name : '- any -';
   }
 
-  protected isShowingSingleOrg(): boolean {
+  public isShowingSingleOrg(): boolean {
     return this.route_org_id !== null;
   }
 
   deleteResource(resource: ResourceWithOrg) {
     this.resources = removeMatchedIdFromArray(this.resources, resource.id);
+    this.table_data.data = this.resources;
   }
 }

@@ -6,7 +6,9 @@ import { Rule } from 'src/app/interfaces/rule';
 import { getEmptyUser, User } from 'src/app/interfaces/user';
 
 import {
+  deepcopy,
   getIdsFromArray,
+  parseId,
   removeMatchedIdFromArray,
   removeMatchedIdsFromArray,
 } from 'src/app/shared/utils';
@@ -16,10 +18,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
+import {
+  EMPTY_ORGANIZATION,
+  Organization,
+} from 'src/app/interfaces/organization';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
 
 // TODO add option to assign user to different organization?
 
@@ -42,6 +48,9 @@ export class UserEditComponent implements OnInit {
   can_assign_roles_rules: boolean = false;
   mode = OpsType.EDIT;
   organization_id: number = EMPTY_ORGANIZATION.id;
+  organizations: Organization[] = [];
+  selected_org: Organization | null = null;
+  route_id: number | null = null;
 
   constructor(
     private router: Router,
@@ -52,7 +61,8 @@ export class UserEditComponent implements OnInit {
     private utilsService: UtilsService,
     private modalService: ModalService,
     private roleDataService: RoleDataService,
-    private ruleDataService: RuleDataService
+    private ruleDataService: RuleDataService,
+    private orgDataService: OrgDataService
   ) {}
 
   ngOnInit(): void {
@@ -74,18 +84,25 @@ export class UserEditComponent implements OnInit {
 
     // subscribe to id parameter in route to change edited user if required
     this.activatedRoute.paramMap.subscribe((params) => {
-      let id = this.utilsService.getId(params, ResType.USER);
       if (this.mode === OpsType.CREATE) {
-        this.organization_id = this.utilsService.getId(
-          params,
-          ResType.ORGANIZATION,
-          'org_id'
-        );
-        this.setAssignableRoles();
+        this.route_id = parseId(params.get('org_id'));
+        this.organization_id = this.route_id;
+        this.setupCreateUser();
       } else {
+        let id = this.utilsService.getId(params, ResType.USER);
         this.setUser(id);
       }
     });
+  }
+
+  async setupCreateUser() {
+    if (!this.organization_id) {
+      (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
+        this.organizations = orgs;
+      });
+    } else {
+      this.setAssignableRoles();
+    }
   }
 
   async setRules(): Promise<void> {
@@ -115,13 +132,16 @@ export class UserEditComponent implements OnInit {
 
   async setAssignableRoles(): Promise<void> {
     if (
-      this.roles_assignable_all.length === 0 &&
-      this.organization_id !== EMPTY_ORGANIZATION.id
+      (this.roles_assignable_all.length === 0 &&
+        this.organization_id !== EMPTY_ORGANIZATION.id) ||
+      !this.rolesMatchOrgId()
     ) {
       // first get all roles assignable for the organization this user is in
-      this.roles_assignable_all = await this.roleDataService.org_list(
-        this.organization_id,
-        this.rules_all
+      this.roles_assignable_all = deepcopy(
+        await this.roleDataService.org_list(
+          this.organization_id,
+          this.rules_all
+        )
       );
       // if we are creating a new user, and there are no roles to assign, recheck
       // whether there are any roles to assign (they may be lost by page refresh)
@@ -133,6 +153,17 @@ export class UserEditComponent implements OnInit {
     this.can_assign_roles_rules = this.userPermission.canModifyRulesOtherUser(
       this.user
     );
+  }
+
+  rolesMatchOrgId(): boolean {
+    for (let role of this.roles_assignable_all) {
+      if (
+        role.organization_id !== null &&
+        role.organization_id !== this.organization_id
+      )
+        return false;
+    }
+    return true;
   }
 
   filterAssignableRoles(): void {
@@ -220,5 +251,31 @@ export class UserEditComponent implements OnInit {
 
   isCreate(): boolean {
     return this.mode === OpsType.CREATE;
+  }
+
+  getTextReasonNoRoles(): string {
+    if (!this.can_assign_roles_rules) {
+      return "You cannot change the permissions of this user because they have permissions you don't have.";
+    } else if (this.isCreateAnyOrg()) {
+      return 'Please select an organization first to determine which roles are available.';
+    } else {
+      return 'There are no roles left that you can assign to this user.';
+    }
+  }
+
+  isCreateAnyOrg(): boolean {
+    return this.isCreate() && !this.route_id && this.selected_org === null;
+  }
+
+  selectOrg(org: Organization): void {
+    this.selected_org = org;
+    this.organization_id = org.id;
+    this.setAssignableRoles();
+  }
+
+  getNameOrgDropdown(): string {
+    return this.selected_org === null
+      ? 'Select organization'
+      : this.selected_org.name;
   }
 }

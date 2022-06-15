@@ -82,6 +82,16 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   {
+    path: 'user/create',
+    component: UserEditComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.USER,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
     // TODO think what happens if a user tries to go to edit a user that they're
     // not allowed to edit, by directly going to the path? Does it work? Otherwise,
     // change the accessguard

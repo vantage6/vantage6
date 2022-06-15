@@ -33,6 +33,23 @@
       <td>Last name:</td>
       <td><input [(ngModel)]="user.last_name"/></td>
     </tr>
+    <div *ngIf="isCreateAnyOrg()">
+      <tr>
+        <td>Organization:</td>
+        <td>
+          <div ngbDropdown class="d-inline-block">
+            <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
+              <span class="align-top">{{getNameOrgDropdown()}}</span>
+            </button>
+            <div ngbDropdownMenu aria-labelledby="dropdownRoles">
+              <div *ngFor="let org of organizations">
+                <button ngbDropdownItem (click)="selectOrg(org)">{{org.name}}</button>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </div>
     <tr>
       <td>Role(s):</td>
         <td>
@@ -66,13 +83,7 @@
             </div>
           </div>
           <ng-template #noAssignableRolesBlock>
-            <div *ngIf="!can_assign_roles_rules; else noRolesBlock">
-              You cannot change the permissions of this user because they have
-              permissions you don't have.
-            </div>
-            <ng-template #noRolesBlock>
-              There are no roles left that you can assign to this user
-            </ng-template>
+            {{ getTextReasonNoRoles()}}
           </ng-template>
         </ng-template>
       </td>
