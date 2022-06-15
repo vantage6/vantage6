@@ -1,27 +1,42 @@
-<div *ngIf="userPermission.hasPermission('view', 'user', 'global')">
-  <mat-card>
+<mat-card *ngIf="userPermission.hasPermission('view', 'user', 'global') ||
+                 userPermission.hasPermission('create', 'user', '*')">
+  <div *ngIf="userPermission.hasPermission('view', 'user', 'global')" class="inline">
     Select organization to view:
-    <div class="inline">
-      <div ngbDropdown class="d-inline-block">
-        <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>
-          {{getOrgNameDropdown()}}
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
+    <div ngbDropdown class="d-inline-block">
+      <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>
+        {{getOrgNameDropdown()}}
+      </button>
+      <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
+        <button ngbDropdownItem
+              [routerLink]="['/users']">
+            All
+          </button>
+        <div *ngFor="let org of organizations">
           <button ngbDropdownItem
-                [routerLink]="['/users']">
-              All
-            </button>
-          <div *ngFor="let org of organizations">
-            <button ngbDropdownItem
-                [routerLink]="['/users', org.id]">
-              {{org.name}}
-            </button>
-          </div>
+              [routerLink]="['/users', org.id]">
+            {{org.name}}
+          </button>
         </div>
       </div>
     </div>
-  </mat-card>
-</div>
+  </div>
+  <div *ngIf="userPermission.hasPermission('create', 'user', '*')" class="inline">
+    <div *ngIf="isShowingSingleOrg() || userPermission.hasPermission('create', 'user', 'organization'); else createAnyOrgBlock" class="inline">
+      <button mat-button class="btn btn-dflt btn-right"
+          [routerLink]="['/user/create', route_org_id]">
+        <mat-icon>add_circle</mat-icon>
+        <span>New user</span>
+      </button>
+    </div>
+    <ng-template #createAnyOrgBlock>
+      <button mat-button class="btn btn-dflt btn-right"
+          [routerLink]="['/user/create']">
+        <mat-icon>add_circle</mat-icon>
+        <span>New user</span>
+      </button>
+    </ng-template>
+  </div>
+</mat-card>
 
 <div class="mat-elevation-z8">
   <table mat-table [dataSource]="table_data" >

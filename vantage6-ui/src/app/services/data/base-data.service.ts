@@ -72,7 +72,6 @@ export abstract class BaseDataService {
     return this.resource_list.asObservable();
   }
 
-  // TODO this isnt used yet, test it!
   async org_list_base(
     organization_id: number,
     convertJsonFunc: Function,
