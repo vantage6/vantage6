@@ -32,6 +32,21 @@ export function getIdsFromArray(array: any[]): number[] {
   });
 }
 
+export function replaceMatchedId(array: any[], replacer: any) {
+  return array.map((original) =>
+    original.id === replacer.id ? replacer : original
+  );
+}
+
+export function addOrReplace(array: any[], new_val: any) {
+  if (getById(array, new_val.id)) {
+    return replaceMatchedId(array, new_val);
+  } else {
+    array.push(new_val);
+    return array;
+  }
+}
+
 export function arrayContainsObjWithId(id: number, array: any[]) {
   return array.some((u) => u.id === id);
 }

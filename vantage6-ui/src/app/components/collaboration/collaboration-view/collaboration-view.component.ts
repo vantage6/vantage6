@@ -139,7 +139,7 @@ configuration file for the node using 'vnode new'.`,
         // set the new node as part of the organization
         org.node = this.convertJsonService.getNode(node_json);
         // store the node
-        this.nodeDataService.add(org.node);
+        this.nodeDataService.save(org.node);
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [

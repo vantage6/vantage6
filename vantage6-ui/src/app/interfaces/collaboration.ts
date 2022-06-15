@@ -6,6 +6,7 @@ export interface Collaboration {
   type: ResType;
   name: string;
   encrypted: boolean;
+  organization_ids: number[];
   organizations: OrganizationInCollaboration[];
 }
 
@@ -15,4 +16,5 @@ export const EMPTY_COLLABORATION = {
   type: ResType.COLLABORATION,
   encrypted: true,
   organizations: [],
+  organization_ids: [],
 };

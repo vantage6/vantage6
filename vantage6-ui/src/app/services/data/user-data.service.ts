@@ -6,14 +6,11 @@ import { User } from 'src/app/interfaces/user';
 import { ApiUserService } from '../api/api-user.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
-import { add_to_org, remove_from_org } from './utils';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserDataService extends BaseDataService {
-  org_users_dict: { [org_id: number]: User[] } = {};
-
   constructor(
     protected apiService: ApiUserService,
     protected convertJsonService: ConvertJsonService
@@ -53,28 +50,11 @@ export class UserDataService extends BaseDataService {
     rules: Rule[],
     force_refresh: boolean = false
   ): Promise<User[]> {
-    if (
-      force_refresh ||
-      !(organization_id in this.org_users_dict) ||
-      this.org_users_dict[organization_id].length === 0
-    ) {
-      this.org_users_dict[organization_id] =
-        (await this.apiService.getResources(
-          this.convertJsonService.getUser,
-          [roles, rules],
-          { organization_id: organization_id }
-        )) as User[];
-    }
-    return this.org_users_dict[organization_id];
-  }
-
-  add(user: User) {
-    super.add(user);
-    add_to_org(user, this.org_users_dict);
-  }
-
-  remove(user: User) {
-    super.remove(user);
-    remove_from_org(user, this.org_users_dict);
+    return (await super.org_list_base(
+      organization_id,
+      this.convertJsonService.getUser,
+      [roles, rules],
+      force_refresh
+    )) as User[];
   }
 }

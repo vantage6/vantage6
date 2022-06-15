@@ -64,7 +64,7 @@ export class OrganizationEditComponent implements OnInit {
 
     request.subscribe(
       (new_org) => {
-        if (is_created) this.orgDataService.add(new_org);
+        if (is_created) this.orgDataService.save(new_org);
         this.router.navigate([`/organization/${new_org.id}`]);
       },
       (error) => {

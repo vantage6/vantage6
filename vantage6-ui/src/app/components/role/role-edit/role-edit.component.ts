@@ -102,7 +102,7 @@ export class RoleEditComponent implements OnInit {
         this.utilsService.goToPreviousPage();
         if (this.mode === OpsType.CREATE) {
           this.role.id = data.id;
-          this.roleDataService.add(this.role);
+          this.roleDataService.save(this.role);
         }
       },
       (error) => {

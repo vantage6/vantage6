@@ -121,7 +121,7 @@ export class CollaborationEditComponent implements OnInit {
       new_collab_json,
       this.all_organizations
     );
-    this.collabDataService.add(this.collaboration);
+    this.collabDataService.save(this.collaboration);
     // create the nodes for the new collaboration, and add them to it
     let nodes = await this.createNodes();
     this.collabDataService.addNodesToCollaboration(this.collaboration, nodes);
@@ -143,7 +143,7 @@ export class CollaborationEditComponent implements OnInit {
           .toPromise();
         api_keys.push(`${org.name}: ${node_json.api_key}`);
         new_node.id = node_json.id;
-        this.nodeDataService.add(new_node);
+        this.nodeDataService.save(new_node);
         new_nodes.push(new_node);
       } catch (error: any) {
         this.modalService.openMessageModal(ModalMessageComponent, [

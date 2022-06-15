@@ -10,3 +10,5 @@ export type Resource = User | Role | Rule | Organization | Collaboration | Node;
 export type ResourceWithOrg = RoleWithOrg | UserWithOrg | NodeWithOrg;
 
 export type ResourceInOrg = User | Role | Node;
+
+export type ResourceInCollab = Node;
