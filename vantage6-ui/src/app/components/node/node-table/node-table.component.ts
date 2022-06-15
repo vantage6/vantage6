@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { TableComponent } from '../../table/table.component';
+import { TableComponent } from '../../base/table/table.component';
 import { Node, NodeWithOrg } from 'src/app/interfaces/node';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';

@@ -6,7 +6,7 @@ import { Rule } from 'src/app/interfaces/rule';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
-import { TableComponent } from 'src/app/components/table/table.component';
+import { TableComponent } from 'src/app/components/base/table/table.component';
 
 @Component({
   selector: 'app-role-table',

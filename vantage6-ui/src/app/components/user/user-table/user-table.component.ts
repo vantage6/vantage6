@@ -10,7 +10,7 @@ import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { parseId } from 'src/app/shared/utils';
-import { TableComponent } from '../../table/table.component';
+import { TableComponent } from '../../base/table/table.component';
 
 @Component({
   selector: 'app-user-table',

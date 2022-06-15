@@ -44,7 +44,7 @@ import { NodeViewComponent } from './components/node/node-view/node-view.compone
 import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
-import { CdkDetailRowDirective } from './components/table/cdk-detail-row-directive';
+import { CdkDetailRowDirective } from './components/base/table/cdk-detail-row-directive';
 import { UserTableComponent } from './components/user/user-table/user-table.component';
 import { NodeTableComponent } from './components/node/node-table/node-table.component';
 import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
