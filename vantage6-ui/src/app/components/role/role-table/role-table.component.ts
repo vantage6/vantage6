@@ -13,7 +13,7 @@ import { TableComponent } from 'src/app/components/base/table/table.component';
   templateUrl: './role-table.component.html',
   styleUrls: [
     '../../../shared/scss/buttons.scss',
-    '../../table/table.component.scss',
+    '../../base/table/table.component.scss',
     './role-table.component.scss',
   ],
 })

@@ -17,7 +17,7 @@ import { TableComponent } from '../../base/table/table.component';
   templateUrl: './user-table.component.html',
   styleUrls: [
     '../../../shared/scss/buttons.scss',
-    '../../table/table.component.scss',
+    '../../base/table/table.component.scss',
     './user-table.component.scss',
   ],
 })
