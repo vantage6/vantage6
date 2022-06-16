@@ -83,10 +83,11 @@ export class CollabDataService extends BaseDataService {
   }
 
   async addOrgsAndNodes(
+    collabs: Collaboration[],
     organizations: OrganizationInCollaboration[],
     nodes: Node[]
   ): Promise<Collaboration[]> {
-    let collabs = [...(this.resource_list.value as Collaboration[])];
+    let updated_collabs = [...collabs];
 
     this.deleteOrgsFromCollaborations(collabs);
     this.addOrgsToCollaborations(collabs, organizations);
@@ -94,8 +95,8 @@ export class CollabDataService extends BaseDataService {
     this.deleteNodesFromCollaborations(collabs);
     this.addNodesToCollaborations(collabs, nodes);
 
-    if (JSON.stringify(this.resource_list.value) !== JSON.stringify(collabs)) {
-      this.resource_list.next(collabs);
+    if (JSON.stringify(updated_collabs) !== JSON.stringify(collabs)) {
+      this.saveMultiple(collabs);
     }
     return collabs;
   }

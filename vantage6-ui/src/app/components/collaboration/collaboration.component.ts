@@ -76,6 +76,7 @@ export class CollaborationComponent implements OnInit {
 
     // organizations and nodes to collaborations
     this.all_collaborations = await this.collabDataService.addOrgsAndNodes(
+      this.all_collaborations,
       this.organizations,
       this.nodes
     );

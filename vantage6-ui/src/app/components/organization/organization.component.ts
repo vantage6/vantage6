@@ -187,6 +187,7 @@ export class OrganizationComponent implements OnInit {
     // NB deepcopy serves to fire ngOnChanges in child component
     this.collaborations = deepcopy(
       await this.collabDataService.addOrgsAndNodes(
+        this.collaborations,
         this.organizations,
         this.nodes
       )
