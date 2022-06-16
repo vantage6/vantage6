@@ -1,5 +1,6 @@
-<div *ngIf="userPermission.hasPermission('view', 'role', 'global')">
-  <mat-card>
+<mat-card *ngIf="userPermission.hasPermission('view', 'role', 'global') ||
+                 userPermission.hasPermission('create', 'role', '*')">
+  <div *ngIf="userPermission.hasPermission('view', 'role', 'global')" class="inline">
     Select organization to view:
     <div class="inline">
       <div ngbDropdown class="d-inline-block">
@@ -20,8 +21,24 @@
         </div>
       </div>
     </div>
-  </mat-card>
-</div>
+  </div>
+  <div *ngIf="userPermission.hasPermission('create', 'role', '*')" class="inline">
+    <div *ngIf="isShowingSingleOrg() || !userPermission.hasPermission('create', 'role', 'global'); else createAnyOrgBlock" class="inline">
+      <button mat-button class="btn btn-dflt btn-right"
+          [routerLink]="['/role/create', route_org_id]">
+        <mat-icon>add_circle</mat-icon>
+        <span>New role</span>
+      </button>
+    </div>
+    <ng-template #createAnyOrgBlock>
+      <button mat-button class="btn btn-dflt btn-right"
+          [routerLink]="['/role/create']">
+        <mat-icon>add_circle</mat-icon>
+        <span>New role</span>
+      </button>
+    </ng-template>
+  </div>
+</mat-card>
 
 <div class="mat-elevation-z8">
   <table mat-table [dataSource]="table_data" >

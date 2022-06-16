@@ -33,23 +33,21 @@
       <td>Last name:</td>
       <td><input [(ngModel)]="user.last_name"/></td>
     </tr>
-    <div *ngIf="isCreateAnyOrg()">
-      <tr>
-        <td>Organization:</td>
-        <td>
-          <div ngbDropdown class="d-inline-block">
-            <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
-              <span class="align-top">{{getNameOrgDropdown()}}</span>
-            </button>
-            <div ngbDropdownMenu aria-labelledby="dropdownRoles">
-              <div *ngFor="let org of organizations">
-                <button ngbDropdownItem (click)="selectOrg(org)">{{org.name}}</button>
-              </div>
+    <tr *ngIf="isCreateAnyOrg()">
+      <td>Organization:</td>
+      <td>
+        <div ngbDropdown class="d-inline-block">
+          <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
+            <span class="align-top">{{getNameOrgDropdown()}}</span>
+          </button>
+          <div ngbDropdownMenu aria-labelledby="dropdownRoles">
+            <div *ngFor="let org of organizations">
+              <button ngbDropdownItem (click)="selectOrg(org)">{{org.name}}</button>
             </div>
           </div>
-        </td>
-      </tr>
-    </div>
+        </div>
+      </td>
+    </tr>
     <tr>
       <td>Role(s):</td>
         <td>

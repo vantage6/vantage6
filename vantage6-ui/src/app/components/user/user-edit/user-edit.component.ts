@@ -152,13 +152,9 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
 
   rolesMatchOrgId(): boolean {
     for (let role of this.roles_assignable_all) {
-      if (
-        role.organization_id !== null &&
-        role.organization_id !== this.organization_id
-      )
-        return false;
+      if (role.organization_id === this.organization_id) return true;
     }
-    return true;
+    return false;
   }
 
   filterAssignableRoles(): void {
@@ -234,6 +230,12 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
 
   selectOrg(org: Organization): void {
     super.selectOrg(org);
+    // remove any roles from the user that are only applicable to another
+    // organization
+    this.user.roles = this.user.roles.filter((role) => {
+      return role.organization_id === null || role.organization_id === org.id;
+    });
+    // set assignable roles for this organization
     this.setAssignableRoles();
   }
 }

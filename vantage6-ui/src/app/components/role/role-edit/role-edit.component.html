@@ -12,6 +12,21 @@
       <td>Description:</td>
       <td><input [(ngModel)]="role.description"/></td>
     </tr>
+    <tr *ngIf="isCreateAnyOrg()">
+      <td>Organization:</td>
+      <td>
+        <div ngbDropdown class="d-inline-block">
+          <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
+            <span class="align-top">{{getNameOrgDropdown()}}</span>
+          </button>
+          <div ngbDropdownMenu aria-labelledby="dropdownRoles">
+            <div *ngFor="let org of organizations">
+              <button ngbDropdownItem (click)="selectOrg(org)">{{org.name}}</button>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
   </table>
   <app-permission-table
     [given_roles]="[]"

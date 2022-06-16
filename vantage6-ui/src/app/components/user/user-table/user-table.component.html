@@ -21,7 +21,7 @@
     </div>
   </div>
   <div *ngIf="userPermission.hasPermission('create', 'user', '*')" class="inline">
-    <div *ngIf="isShowingSingleOrg() || userPermission.hasPermission('create', 'user', 'organization'); else createAnyOrgBlock" class="inline">
+    <div *ngIf="isShowingSingleOrg() || !userPermission.hasPermission('create', 'user', 'global'); else createAnyOrgBlock" class="inline">
       <button mat-button class="btn btn-dflt btn-right"
           [routerLink]="['/user/create', route_org_id]">
         <mat-icon>add_circle</mat-icon>

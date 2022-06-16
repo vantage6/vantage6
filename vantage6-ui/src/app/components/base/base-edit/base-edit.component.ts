@@ -73,7 +73,7 @@ export abstract class BaseEditComponent implements OnInit {
   }
 
   public isCreateAnyOrg(): boolean {
-    return this.isCreate() && !this.route_id && this.selected_org === null;
+    return this.isCreate() && !this.route_id;
   }
 
   public selectOrg(org: Organization): void {
