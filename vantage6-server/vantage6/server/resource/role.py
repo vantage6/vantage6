@@ -296,6 +296,10 @@ class Role(RoleBase):
     def get(self, id):
         role = db.Role.get(id)
 
+        if not role:
+            return {"msg": f"Role with id={id} not found."}, \
+                HTTPStatus.NOT_FOUND
+
         # check permissions. A user can always view their own roles
         if not (self.r.v_glo.can() or role in g.user.roles):
             if not (self.r.v_org.can()
