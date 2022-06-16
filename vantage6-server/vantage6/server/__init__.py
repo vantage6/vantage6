@@ -378,14 +378,14 @@ class ServerApp:
             module = importlib.import_module('vantage6.server.resource.' + res)
             module.setup(self.api, self.ctx.config['api_path'], services)
 
-    def _add_default_roles(self):
+    # TODO consider moving this method elsewhere. This is not trivial at the
+    # moment because of the circular import issue with `db`, see
+    # https://github.com/vantage6/vantage6/issues/53
+    @staticmethod
+    def _add_default_roles():
         for role in get_default_roles(db):
             if not db.Role.get_by_name(role['name']):
                 log.warn(f"Creating new default role {role['name']}...")
-                print(role['rules'])
-                for r in role['rules']:
-                    print(r)
-                    print(r.id)
                 new_role = db.Role(
                     name=role['name'],
                     description=role['description'],
