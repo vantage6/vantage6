@@ -6,6 +6,7 @@ import { Rule } from 'src/app/interfaces/rule';
 import { Node } from 'src/app/interfaces/node';
 import {
   EMPTY_ORGANIZATION,
+  getEmptyOrganization,
   Organization,
   OrganizationInCollaboration,
 } from 'src/app/interfaces/organization';
@@ -41,8 +42,8 @@ import { Collaboration } from 'src/app/interfaces/collaboration';
 })
 export class OrganizationComponent implements OnInit {
   organizations: OrganizationInCollaboration[] = [];
-  route_org_id: number = EMPTY_ORGANIZATION.id;
-  current_organization: OrganizationInCollaboration = EMPTY_ORGANIZATION;
+  current_organization: OrganizationInCollaboration = getEmptyOrganization();
+  route_org_id: number = this.current_organization.id;
   loggedin_user: User = EMPTY_USER;
   organization_users: User[] = [];
   roles: Role[] = [];
@@ -76,11 +77,11 @@ export class OrganizationComponent implements OnInit {
   }
 
   async init(): Promise<void> {
+    this.loggedin_user = this.userPermission.user;
     // get rules
     (await this.ruleDataService.list()).subscribe((rules) => {
       this.rules = rules;
     });
-    // TODO this has a nested subscribe, fix that
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
@@ -88,10 +89,7 @@ export class OrganizationComponent implements OnInit {
       }
       if (new_id !== this.route_org_id) {
         this.route_org_id = new_id;
-        this.loggedin_user = this.userPermission.user;
-        if (this.loggedin_user !== EMPTY_USER) {
-          this.setup();
-        }
+        this.setup();
       }
     });
   }
@@ -130,6 +128,7 @@ export class OrganizationComponent implements OnInit {
         'organization',
         this.loggedin_user.organization_id,
       ]);
+      return;
     }
 
     // first collect roles for current organization. This is done before

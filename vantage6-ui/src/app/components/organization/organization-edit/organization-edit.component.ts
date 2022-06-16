@@ -3,15 +3,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import {
   EMPTY_ORGANIZATION,
+  getEmptyOrganization,
   Organization,
 } from 'src/app/interfaces/organization';
 
 import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { BaseEditComponent } from 'src/app/components/base/base-edit/base-edit.component';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 
 @Component({
   selector: 'app-organization-edit',
@@ -21,20 +23,30 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
     './organization-edit.component.scss',
   ],
 })
-export class OrganizationEditComponent implements OnInit {
-  organization: Organization = EMPTY_ORGANIZATION;
+export class OrganizationEditComponent
+  extends BaseEditComponent
+  implements OnInit
+{
+  organization: Organization = getEmptyOrganization();
 
   constructor(
-    private router: Router,
-    private activatedRoute: ActivatedRoute,
-    private orgApiService: ApiOrganizationService,
-    private orgDataService: OrgDataService,
-    private modalService: ModalService,
-    private utilsService: UtilsService
-  ) {}
-
-  ngOnInit(): void {
-    this.init();
+    protected router: Router,
+    protected activatedRoute: ActivatedRoute,
+    protected orgApiService: ApiOrganizationService,
+    protected orgDataService: OrgDataService,
+    protected modalService: ModalService,
+    protected utilsService: UtilsService,
+    public userPermission: UserPermissionService
+  ) {
+    super(
+      router,
+      activatedRoute,
+      userPermission,
+      utilsService,
+      orgApiService,
+      orgDataService,
+      modalService
+    );
   }
 
   async init(): Promise<void> {
@@ -45,38 +57,23 @@ export class OrganizationEditComponent implements OnInit {
       if (id === EMPTY_ORGANIZATION.id) {
         return; // cannot get organization
       }
-      this.setOrganization(id);
+      this.setupEdit(id);
     });
   }
 
-  async setOrganization(id: number) {
-    this.organization = await this.orgDataService.get(id);
-  }
-
-  saveEdit(): void {
-    const is_created: boolean = this.organization.id === EMPTY_ORGANIZATION.id;
-    let request;
-    if (is_created) {
-      request = this.orgApiService.create(this.organization);
-    } else {
-      request = this.orgApiService.update(this.organization);
+  async setupEdit(id: number) {
+    let org = await this.orgDataService.get(id);
+    if (org) {
+      this.organization = org;
     }
-
-    request.subscribe(
-      (new_org) => {
-        if (is_created) this.orgDataService.save(new_org);
-        this.router.navigate([`/organization/${new_org.id}`]);
-      },
-      (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          'Error:',
-          error.error.msg,
-        ]);
-      }
-    );
   }
 
-  cancelEdit(): void {
-    this.utilsService.goToPreviousPage();
+  setupCreate(): void {
+    // nothing has to be done here for organizations - just implementing
+    // abstract base function
+  }
+
+  save(): void {
+    super.save(this.organization, 'organization');
   }
 }

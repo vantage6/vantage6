@@ -87,7 +87,7 @@ export abstract class BaseEditComponent implements OnInit {
       : this.selected_org.name;
   }
 
-  public save(resource: Resource): void {
+  public save(resource: Resource, new_resource_route: string = ''): void {
     let request;
     if (this.mode === OpsType.CREATE) {
       request = this.apiService.create(resource);
@@ -97,10 +97,14 @@ export abstract class BaseEditComponent implements OnInit {
 
     request.subscribe(
       (data) => {
-        this.utilsService.goToPreviousPage();
         if (this.mode === OpsType.CREATE) {
           resource.id = data.id;
           this.dataService.save(resource);
+        }
+        if (new_resource_route) {
+          this.router.navigate([`/${new_resource_route}/${resource.id}`]);
+        } else {
+          this.utilsService.goToPreviousPage();
         }
       },
       (error) => {

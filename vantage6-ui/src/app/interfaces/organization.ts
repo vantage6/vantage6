@@ -1,5 +1,6 @@
 import { Node } from 'src/app/interfaces/node';
 import { ResType } from 'src/app/shared/enum';
+import { deepcopy } from '../shared/utils';
 
 export interface Organization {
   id: number;
@@ -31,3 +32,7 @@ export const EMPTY_ORGANIZATION = {
   public_key: '',
   collaboration_ids: [],
 };
+
+export function getEmptyOrganization() {
+  return deepcopy(EMPTY_ORGANIZATION);
+}
