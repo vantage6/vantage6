@@ -73,7 +73,8 @@ export class OrganizationEditComponent
     // abstract base function
   }
 
-  save(): void {
-    super.save(this.organization, 'organization');
+  async save(): Promise<void> {
+    let org_json = await super.save(this.organization, false);
+    this.router.navigate([`/organization/${org_json.id}`]);
   }
 }

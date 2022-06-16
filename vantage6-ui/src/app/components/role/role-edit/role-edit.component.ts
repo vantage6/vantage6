@@ -87,7 +87,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
     });
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (this.role.rules.length === 0) {
       this.modalService.openMessageModal(ModalMessageComponent, [
         'You have not selected any permissions! Please select at least one permission.',

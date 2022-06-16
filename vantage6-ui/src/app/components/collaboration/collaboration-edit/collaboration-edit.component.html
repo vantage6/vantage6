@@ -47,7 +47,7 @@
         </ng-template>
       </td>
     </tr>
-    <tr *ngIf="is_being_created">
+    <tr *ngIf="isCreate()">
       <td></td>
       <td>
         <mat-checkbox class="example-margin" [(ngModel)]="is_register_nodes">
@@ -56,10 +56,10 @@
       </td>
     </tr>
   </table>
-  <button mat-button class="btn btn-save" (click)="saveEdit()">
+  <button mat-button class="btn btn-save" (click)="save()">
     Save
   </button>
-  <button mat-button class="btn btn-dflt" (click)="cancelEdit()">
+  <button mat-button class="btn btn-dflt" (click)="cancel()">
     Cancel
   </button>
 </mat-card>

@@ -87,7 +87,10 @@ export abstract class BaseEditComponent implements OnInit {
       : this.selected_org.name;
   }
 
-  public save(resource: Resource, new_resource_route: string = ''): void {
+  public async save(
+    resource: Resource,
+    goToPreviousPage: boolean = true
+  ): Promise<any> {
     let request;
     if (this.mode === OpsType.CREATE) {
       request = this.apiService.create(resource);
@@ -95,23 +98,20 @@ export abstract class BaseEditComponent implements OnInit {
       request = this.apiService.update(resource);
     }
 
-    request.subscribe(
-      (data) => {
-        if (this.mode === OpsType.CREATE) {
-          resource.id = data.id;
-          this.dataService.save(resource);
-        }
-        if (new_resource_route) {
-          this.router.navigate([`/${new_resource_route}/${resource.id}`]);
-        } else {
-          this.utilsService.goToPreviousPage();
-        }
-      },
-      (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          error.error.msg,
-        ]);
-      }
-    );
+    let data = await request.toPromise().catch((error: any) => {
+      this.modalService.openMessageModal(ModalMessageComponent, [
+        error.error.msg,
+      ]);
+      return null;
+    });
+
+    if (this.mode === OpsType.CREATE) {
+      resource.id = data.id;
+      this.dataService.save(resource);
+    }
+    if (goToPreviousPage) {
+      this.utilsService.goToPreviousPage();
+    }
+    return data;
   }
 }

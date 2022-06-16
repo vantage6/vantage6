@@ -195,7 +195,7 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     return rules_not_in_roles;
   }
 
-  save(): void {
+  async save(): Promise<void> {
     this.user.rules = this.getRulesNotInRoles();
 
     if (this.organization_id) this.user.organization_id = this.organization_id;

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   Collaboration,
   EMPTY_COLLABORATION,
@@ -22,6 +22,8 @@ import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { Node, getEmptyNode } from 'src/app/interfaces/node';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
+import { BaseEditComponent } from '../../base/base-edit/base-edit.component';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 
 @Component({
   selector: 'app-collaboration-edit',
@@ -31,28 +33,37 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
     './collaboration-edit.component.scss',
   ],
 })
-export class CollaborationEditComponent implements OnInit {
+export class CollaborationEditComponent
+  extends BaseEditComponent
+  implements OnInit
+{
   collaboration: Collaboration = EMPTY_COLLABORATION;
   all_organizations: OrganizationInCollaboration[] = [];
   organizations_not_in_collab: OrganizationInCollaboration[] = [];
-  is_being_created: boolean = false;
   is_register_nodes: boolean = true;
 
   constructor(
-    private activatedRoute: ActivatedRoute,
-    private collabApiService: ApiCollaborationService,
+    protected router: Router,
+    protected activatedRoute: ActivatedRoute,
+    public userPermission: UserPermissionService,
+    protected collabApiService: ApiCollaborationService,
     private nodeApiService: ApiNodeService,
-    private collabDataService: CollabDataService,
+    protected collabDataService: CollabDataService,
     private orgDataService: OrgDataService,
     private nodeDataService: NodeDataService,
-    private modalService: ModalService,
-    private utilsService: UtilsService,
+    protected modalService: ModalService,
+    protected utilsService: UtilsService,
     private convertJsonService: ConvertJsonService
-  ) {}
-
-  ngOnInit(): void {
-    this.collaboration = deepcopy(EMPTY_COLLABORATION);
-    this.init();
+  ) {
+    super(
+      router,
+      activatedRoute,
+      userPermission,
+      utilsService,
+      collabApiService,
+      collabDataService,
+      modalService
+    );
   }
 
   async init(): Promise<void> {
@@ -61,21 +72,11 @@ export class CollaborationEditComponent implements OnInit {
       this.all_organizations = organizations;
       this.organizations_not_in_collab = deepcopy(organizations);
     });
-    console.log(this.organizations_not_in_collab);
 
-    // subscribe to id parameter in route to change edited collaboration if
-    // required
-    this.activatedRoute.paramMap.subscribe((params) => {
-      let id = this.utilsService.getId(params, ResType.COLLABORATION);
-      if (id === EMPTY_COLLABORATION.id) {
-        this.is_being_created = true;
-        return; // cannot get collaboration
-      }
-      this.setCollaboration(id);
-    });
+    this.readRoute();
   }
 
-  async setCollaboration(id: number) {
+  async setupEdit(id: number) {
     this.collaboration = await this.collabDataService.get(
       id,
       this.all_organizations
@@ -88,33 +89,15 @@ export class CollaborationEditComponent implements OnInit {
     );
   }
 
-  saveEdit(): void {
-    let request;
-    if (this.is_being_created) {
-      request = this.collabApiService.create(this.collaboration);
-    } else {
-      request = this.collabApiService.update(this.collaboration);
-    }
-
-    request.subscribe(
-      (new_collab_json) => {
-        this.processCollaborationChanges(new_collab_json);
-      },
-      (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          'Error:',
-          error.error.msg,
-        ]);
-      }
-    );
+  setupCreate(): void {
+    // no specific actions required here, just implementing abstract parent
   }
 
-  async processCollaborationChanges(collab_json: any) {
-    if (this.is_being_created) {
+  async save(): Promise<void> {
+    let collab_json = await super.save(this.collaboration);
+    if (this.isCreate()) {
       await this.addNewCollaboration(collab_json);
     }
-    // go to previous page only after adding the new collaboration
-    this.utilsService.goToPreviousPage();
   }
 
   async addNewCollaboration(new_collab_json: any) {
@@ -158,10 +141,6 @@ export class CollaborationEditComponent implements OnInit {
       'Please distribute these API keys to the organizations hosting the nodes.',
     ]);
     return new_nodes;
-  }
-
-  cancelEdit(): void {
-    this.utilsService.goToPreviousPage();
   }
 
   addOrg(org: OrganizationInCollaboration): void {
