@@ -61,6 +61,7 @@ export class CollaborationEditComponent implements OnInit {
       this.all_organizations = organizations;
       this.organizations_not_in_collab = deepcopy(organizations);
     });
+    console.log(this.organizations_not_in_collab);
 
     // subscribe to id parameter in route to change edited collaboration if
     // required
@@ -81,8 +82,8 @@ export class CollaborationEditComponent implements OnInit {
     );
     // remove organizations that are already in collaboration from the
     // organizations that can be added to it
-    removeMatchedIdsFromArray(
-      this.all_organizations,
+    this.organizations_not_in_collab = removeMatchedIdsFromArray(
+      this.organizations_not_in_collab,
       getIdsFromArray(this.collaboration.organizations)
     );
   }
@@ -184,8 +185,8 @@ export class CollaborationEditComponent implements OnInit {
     );
     // add organization to list of organizations that may be added to collab
     this.organizations_not_in_collab = [
-      ...this.organizations_not_in_collab,
       org,
+      ...this.organizations_not_in_collab,
     ];
   }
 }
