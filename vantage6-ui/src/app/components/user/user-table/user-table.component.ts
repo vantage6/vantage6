@@ -1,15 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { Organization } from 'src/app/interfaces/organization';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { User } from 'src/app/interfaces/user';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
-import { parseId } from 'src/app/shared/utils';
 import { TableComponent } from '../../base/table/table.component';
 
 @Component({

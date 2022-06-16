@@ -26,6 +26,7 @@ import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { BaseEditComponent } from '../../base/base-edit/base-edit.component';
 
 // TODO add option to assign user to different organization?
 
@@ -37,65 +38,56 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
     './user-edit.component.scss',
   ],
 })
-export class UserEditComponent implements OnInit {
+export class UserEditComponent extends BaseEditComponent implements OnInit {
+  loggedin_user: User = getEmptyUser();
   user: User = getEmptyUser();
   rules_all: Rule[] = [];
   roles_all: Role[] = [];
   roles_assignable_all: Role[] = [];
   roles_assignable: Role[] = [];
-  loggedin_user: User = getEmptyUser();
+
   added_rules: Rule[] = [];
   can_assign_roles_rules: boolean = false;
-  mode = OpsType.EDIT;
-  organization_id: number = EMPTY_ORGANIZATION.id;
-  organizations: Organization[] = [];
-  selected_org: Organization | null = null;
-  route_id: number | null = null;
 
   constructor(
-    private router: Router,
-    private activatedRoute: ActivatedRoute,
+    protected router: Router,
+    protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private userService: ApiUserService,
-    private userDataService: UserDataService,
-    private utilsService: UtilsService,
-    private modalService: ModalService,
+    protected apiUserService: ApiUserService,
+    protected userDataService: UserDataService,
+    protected utilsService: UtilsService,
+    protected modalService: ModalService,
     private roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
     private orgDataService: OrgDataService
-  ) {}
+  ) {
+    super(
+      router,
+      activatedRoute,
+      userPermission,
+      utilsService,
+      apiUserService,
+      userDataService,
+      modalService
+    );
+  }
 
   ngOnInit(): void {
-    if (this.router.url.includes(OpsType.CREATE)) {
-      this.mode = OpsType.CREATE;
-    }
-    this.userPermission.isInitialized().subscribe((ready) => {
-      if (ready) {
-        this.loggedin_user = this.userPermission.user;
-        this.init();
-      }
-    });
+    super.ngOnInit();
   }
 
   async init() {
+    this.loggedin_user = this.userPermission.user;
+
     // collect roles and rules (which is required to collect users)
     await this.setRules();
     await this.setRoles();
 
-    // subscribe to id parameter in route to change edited user if required
-    this.activatedRoute.paramMap.subscribe((params) => {
-      if (this.mode === OpsType.CREATE) {
-        this.route_id = parseId(params.get('org_id'));
-        this.organization_id = this.route_id;
-        this.setupCreateUser();
-      } else {
-        let id = this.utilsService.getId(params, ResType.USER);
-        this.setUser(id);
-      }
-    });
+    // subscribe to id/org_id parameter in route
+    this.readRoute();
   }
 
-  async setupCreateUser() {
+  async setupCreate() {
     if (!this.organization_id) {
       (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
         this.organizations = orgs;
@@ -111,6 +103,7 @@ export class UserEditComponent implements OnInit {
     });
   }
 
+  // TODO get only roles from the relevant organization
   async setRoles(): Promise<void> {
     (await this.roleDataService.list(this.rules_all)).subscribe(
       (roles: Role[]) => {
@@ -120,26 +113,28 @@ export class UserEditComponent implements OnInit {
     );
   }
 
-  async setUser(id: number) {
-    this.user = await this.userDataService.get(
+  async setupEdit(id: number) {
+    let user = await this.userDataService.get(
       id,
       this.roles_all,
       this.rules_all
     );
-    this.organization_id = this.user.organization_id;
-    this.setAssignableRoles();
+    if (user) {
+      this.user = user;
+      this.organization_id = this.user.organization_id;
+      this.setAssignableRoles();
+    }
   }
 
   async setAssignableRoles(): Promise<void> {
     if (
-      (this.roles_assignable_all.length === 0 &&
-        this.organization_id !== EMPTY_ORGANIZATION.id) ||
+      (this.roles_assignable_all.length === 0 && this.organization_id) ||
       !this.rolesMatchOrgId()
     ) {
       // first get all roles assignable for the organization this user is in
       this.roles_assignable_all = deepcopy(
         await this.roleDataService.org_list(
-          this.organization_id,
+          this.organization_id as number,
           this.rules_all
         )
       );
@@ -204,53 +199,27 @@ export class UserEditComponent implements OnInit {
     return rules_not_in_roles;
   }
 
-  saveEditedUser(): void {
+  save(): void {
     this.user.rules = this.getRulesNotInRoles();
 
-    if (this.organization_id !== -1)
-      this.user.organization_id = this.organization_id;
+    if (this.organization_id) this.user.organization_id = this.organization_id;
 
-    let user_request;
-    if (this.mode === OpsType.CREATE) {
-      if (this.user.password !== this.user.password_repeated) {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          'Passwords do not match! Cannot create this user.',
-        ]);
-        return;
-      }
-      user_request = this.userService.create(this.user);
-    } else {
-      user_request = this.userService.update(this.user);
+    if (
+      this.mode === OpsType.CREATE &&
+      this.user.password !== this.user.password_repeated
+    ) {
+      this.modalService.openMessageModal(ModalMessageComponent, [
+        'Passwords do not match! Cannot create this user.',
+      ]);
+      return;
     }
 
-    user_request.subscribe(
-      (data) => {
-        this.utilsService.goToPreviousPage();
-        if (this.mode === OpsType.CREATE) {
-          // save user is to data service (so it is displayed everywhere)
-          this.user.id = data.id;
-          this.userDataService.save(this.user);
-        }
-      },
-      (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          error.error.msg,
-        ]);
-      }
-    );
-  }
-
-  cancelEdit(): void {
-    this.utilsService.goToPreviousPage();
+    super.save(this.user);
   }
 
   updateAddedRules($event: Rule[]) {
     this.added_rules = $event;
     this.user.rules = $event;
-  }
-
-  isCreate(): boolean {
-    return this.mode === OpsType.CREATE;
   }
 
   getTextReasonNoRoles(): string {
@@ -263,19 +232,8 @@ export class UserEditComponent implements OnInit {
     }
   }
 
-  isCreateAnyOrg(): boolean {
-    return this.isCreate() && !this.route_id && this.selected_org === null;
-  }
-
   selectOrg(org: Organization): void {
-    this.selected_org = org;
-    this.organization_id = org.id;
+    super.selectOrg(org);
     this.setAssignableRoles();
-  }
-
-  getNameOrgDropdown(): string {
-    return this.selected_org === null
-      ? 'Select organization'
-      : this.selected_org.name;
   }
 }

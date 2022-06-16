@@ -70,10 +70,11 @@ export abstract class ApiService {
       );
       return this.resource_single.value;
     } catch (error: any) {
-      console.log(error);
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        'Error: ' + error.error.msg,
-      ]);
+      this.modalService.openMessageModal(
+        ModalMessageComponent,
+        ['Error: ' + error.error.msg],
+        true
+      );
       return null;
     }
   }

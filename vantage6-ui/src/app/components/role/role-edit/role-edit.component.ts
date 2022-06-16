@@ -12,6 +12,9 @@ import { ModalMessageComponent } from 'src/app/components/modal/modal-message/mo
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { BaseEditComponent } from '../../base/base-edit/base-edit.component';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { Organization } from 'src/app/interfaces/organization';
 
 @Component({
   selector: 'app-role-edit',
@@ -21,22 +24,32 @@ import { RuleDataService } from 'src/app/services/data/rule-data.service';
     './role-edit.component.scss',
   ],
 })
-export class RoleEditComponent implements OnInit {
-  role: Role = getEmptyRole();
+export class RoleEditComponent extends BaseEditComponent implements OnInit {
   rules: Rule[] = [];
   mode: OpsType = OpsType.EDIT;
-  organization_id: number | null = null;
+  role: Role = getEmptyRole();
 
   constructor(
-    private router: Router,
-    private activatedRoute: ActivatedRoute,
+    protected router: Router,
+    protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private roleService: ApiRoleService,
-    private roleDataService: RoleDataService,
-    private modalService: ModalService,
-    private utilsService: UtilsService,
-    private ruleDataService: RuleDataService
-  ) {}
+    protected roleService: ApiRoleService,
+    protected roleDataService: RoleDataService,
+    protected modalService: ModalService,
+    protected utilsService: UtilsService,
+    private ruleDataService: RuleDataService,
+    private orgDataService: OrgDataService
+  ) {
+    super(
+      router,
+      activatedRoute,
+      userPermission,
+      utilsService,
+      roleService,
+      roleDataService,
+      modalService
+    );
+  }
 
   ngOnInit(): void {
     if (this.router.url.includes(OpsType.CREATE)) {
@@ -50,28 +63,22 @@ export class RoleEditComponent implements OnInit {
     await this.setRules();
 
     // subscribe to id parameter in route to change edited role if required
-    this.activatedRoute.paramMap.subscribe((params) => {
-      if (this.mode !== OpsType.CREATE) {
-        let new_id = this.utilsService.getId(params, ResType.ROLE);
-        this.setRole(new_id);
-      } else {
-        this.organization_id = this.utilsService.getId(
-          params,
-          ResType.ORGANIZATION,
-          'org_id'
-        );
-      }
-    });
+    this.readRoute();
   }
 
-  async setRole(id: number): Promise<void> {
-    this.role = await this.roleDataService.get(id, this.rules);
-    // // TODO opern modal if role is empty:
-    //   this.modalService.openMessageModal(
-    //     ModalMessageComponent,
-    //     [error.error.msg],
-    //     true
-    //   );
+  async setupCreate() {
+    if (!this.organization_id) {
+      (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
+        this.organizations = orgs;
+      });
+    }
+  }
+
+  async setupEdit(id: number): Promise<void> {
+    let role = await this.roleDataService.get(id, this.rules);
+    if (role) {
+      this.role = role;
+    }
   }
 
   async setRules(): Promise<void> {
@@ -80,48 +87,19 @@ export class RoleEditComponent implements OnInit {
     });
   }
 
-  saveEdit(): void {
+  save(): void {
     if (this.role.rules.length === 0) {
       this.modalService.openMessageModal(ModalMessageComponent, [
         'You have not selected any permissions! Please select at least one permission.',
       ]);
       return;
     }
-
     if (this.organization_id) this.role.organization_id = this.organization_id;
 
-    let request;
-    if (this.mode === OpsType.CREATE) {
-      request = this.roleService.create(this.role);
-    } else {
-      request = this.roleService.update(this.role);
-    }
-
-    request.subscribe(
-      (data) => {
-        this.utilsService.goToPreviousPage();
-        if (this.mode === OpsType.CREATE) {
-          this.role.id = data.id;
-          this.roleDataService.save(this.role);
-        }
-      },
-      (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          error.error.msg,
-        ]);
-      }
-    );
-  }
-
-  cancelEdit(): void {
-    this.utilsService.goToPreviousPage();
+    super.save(this.role);
   }
 
   updateAddedRules($event: Rule[]) {
     this.role.rules = $event;
-  }
-
-  isCreate(): boolean {
-    return this.mode === OpsType.CREATE;
   }
 }
