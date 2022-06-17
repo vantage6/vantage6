@@ -220,7 +220,7 @@ export class OrganizationComponent implements OnInit {
   async deleteRole(role: Role): Promise<void> {
     // remove role
     this.roles = removeMatchedIdFromArray(this.roles, role.id);
-    // set data on which roles user can assign
+    // reset data on which roles user can assign
     this.roles_assignable = await this.userPermission.getAssignableRoles(
       this.roles
     );
