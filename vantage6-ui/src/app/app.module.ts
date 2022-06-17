@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -93,6 +94,7 @@ import { CollaborationViewSingleComponent } from './components/collaboration/col
     MatCheckboxModule,
     MatTableModule,
     MatPaginatorModule,
+    MatSortModule,
     CommonModule,
     NgbModule,
   ],

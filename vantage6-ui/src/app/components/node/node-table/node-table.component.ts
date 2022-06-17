@@ -64,6 +64,23 @@ export class NodeTableComponent
     this.readRoute();
   }
 
+  ngAfterViewInit(): void {
+    super.ngAfterViewInit();
+    this.table_data.sortingDataAccessor = (item: any, property: any) => {
+      let sorter: any;
+      if (property === 'name') {
+        sorter = item.name;
+      } else if (property === 'organization') {
+        sorter = item.organization.name;
+      } else if (property === 'collaboration') {
+        sorter = item.collaboration.name;
+      } else {
+        sorter = item[property];
+      }
+      return sorter.toLocaleLowerCase();
+    };
+  }
+
   async readRoute() {
     // TODO refactor
     if (this.router.url.includes('org')) {
