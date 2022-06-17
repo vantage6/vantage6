@@ -66,7 +66,7 @@ export class NodeTableComponent
 
   ngAfterViewInit(): void {
     super.ngAfterViewInit();
-    this.table_data.sortingDataAccessor = (item: any, property: any) => {
+    this.dataSource.sortingDataAccessor = (item: any, property: any) => {
       let sorter: any;
       if (property === 'organization') {
         sorter = item.organization.name;

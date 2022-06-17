@@ -39,7 +39,7 @@
 </mat-card>
 
 <div class="mat-elevation-z8">
-  <table mat-table [dataSource]="table_data" matSort>
+  <table mat-table [dataSource]="dataSource" matSort>
     <ng-container matColumnDef="username">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Username</th>
       <td mat-cell *matCellDef="let elem">{{elem.username}}</td>

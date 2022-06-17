@@ -39,7 +39,7 @@ export class RoleTableComponent
 
   ngAfterViewInit(): void {
     super.ngAfterViewInit();
-    this.table_data.sortingDataAccessor = (item: any, property: any) => {
+    this.dataSource.sortingDataAccessor = (item: any, property: any) => {
       let sorter: any;
       if (property === 'organization') {
         sorter = item.organization ? item.organization.name : '';
@@ -82,12 +82,12 @@ export class RoleTableComponent
   toggleDefaultRoles(): void {
     this.show_default_roles = !this.show_default_roles;
     if (this.show_default_roles) {
-      this.table_data.data = this.resources;
+      this.dataSource.data = this.resources;
     } else {
       this.roles_without_defaults = this.resources.filter(function (elem: any) {
         return elem.organization_id !== null;
       }) as Role[];
-      this.table_data.data = this.roles_without_defaults;
+      this.dataSource.data = this.roles_without_defaults;
     }
   }
 }

@@ -15,6 +15,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatInputModule } from '@angular/material/input';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
@@ -49,6 +50,7 @@ import { CdkDetailRowDirective } from './components/base/table/cdk-detail-row-di
 import { UserTableComponent } from './components/user/user-table/user-table.component';
 import { NodeTableComponent } from './components/node/node-table/node-table.component';
 import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @NgModule({
   declarations: [
@@ -95,6 +97,8 @@ import { CollaborationViewSingleComponent } from './components/collaboration/col
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
+    MatFormFieldModule,
+    MatInputModule,
     CommonModule,
     NgbModule,
   ],

@@ -38,7 +38,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   route_org_id: number | null = null;
   resources: ResourceWithOrg[] = [];
 
-  public table_data = new MatTableDataSource<ResourceWithOrg>();
+  public dataSource = new MatTableDataSource<ResourceWithOrg>();
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -61,8 +61,8 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.table_data.paginator = this.paginator;
-    this.table_data.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
   }
 
   protected abstract init(): void;
@@ -73,7 +73,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
     await this.addOrganizationsToResources();
 
-    this.table_data.data = this.resources;
+    this.dataSource.data = this.resources;
   }
 
   async readRoute() {
@@ -124,6 +124,11 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
   deleteResource(resource: ResourceWithOrg) {
     this.resources = removeMatchedIdFromArray(this.resources, resource.id);
-    this.table_data.data = this.resources;
+    this.dataSource.data = this.resources;
+  }
+
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.dataSource.filter = filterValue.trim().toLowerCase();
   }
 }
