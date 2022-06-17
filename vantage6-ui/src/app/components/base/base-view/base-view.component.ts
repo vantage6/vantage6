@@ -28,17 +28,16 @@ export class BaseViewComponent implements OnInit {
 
   async delete(resource: Resource): Promise<void> {
     // delete collaboration
-    this.apiService.delete(resource).subscribe(
-      (data) => {
-        this.deletingResource.emit(resource);
-        this.dataService.remove(resource);
-      },
-      (error) => {
+    let data = this.apiService
+      .delete(resource)
+      .toPromise()
+      .catch((error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
           error.error.msg,
         ]);
-      }
-    );
+      });
+    this.deletingResource.emit(resource);
+    this.dataService.remove(resource);
   }
 
   askConfirmDelete(

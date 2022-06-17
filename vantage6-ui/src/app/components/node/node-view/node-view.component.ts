@@ -15,6 +15,7 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Organization } from 'src/app/interfaces/organization';
 import { deepcopy } from 'src/app/shared/utils';
+import { BaseViewComponent } from '../../base/base-view/base-view.component';
 
 @Component({
   selector: 'app-node-view',
@@ -24,19 +25,21 @@ import { deepcopy } from 'src/app/shared/utils';
     './node-view.component.scss',
   ],
 })
-export class NodeViewComponent implements OnInit {
+export class NodeViewComponent extends BaseViewComponent implements OnInit {
   node: NodeWithOrg = EMPTY_NODE;
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private apiNodeService: ApiNodeService,
-    private nodeDataService: NodeDataService,
+    protected apiNodeService: ApiNodeService,
+    protected nodeDataService: NodeDataService,
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
     private utilsService: UtilsService,
     public userPermission: UserPermissionService,
-    private modalService: ModalService
-  ) {}
+    protected modalService: ModalService
+  ) {
+    super(apiNodeService, nodeDataService, modalService);
+  }
 
   ngOnInit(): void {
     this.init();
@@ -119,28 +122,12 @@ export class NodeViewComponent implements OnInit {
     );
   }
 
-  deleteNode() {
-    // open modal window to ask for confirmation of irreversible delete action
-    this.modalService
-      .openDeleteModal(this.node, ResType.NODE)
-      .result.then((exit_mode) => {
-        if (exit_mode === ExitMode.DELETE) {
-          this.executeDelete();
-        }
-      });
+  askConfirmDelete() {
+    super.askConfirmDelete(this.node, ResType.NODE);
   }
 
-  executeDelete() {
-    this.apiNodeService.delete(this.node).subscribe(
-      (data) => {
-        this.nodeDataService.remove(this.node);
-        this.utilsService.goToPreviousPage();
-      },
-      (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          `Error: ${error.error.msg}`,
-        ]);
-      }
-    );
+  async delete() {
+    super.delete(this.node);
+    this.utilsService.goToPreviousPage();
   }
 }

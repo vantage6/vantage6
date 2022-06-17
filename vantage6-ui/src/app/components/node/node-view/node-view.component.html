@@ -48,7 +48,7 @@
   </button>
   <button *ngIf="userPermission.can('delete', 'node', node.organization_id)"
       mat-button class="btn btn-delete-strong"
-      (click)="deleteNode()">
+      (click)="askConfirmDelete()">
     Delete node
   </button>
   <br/>
