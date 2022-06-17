@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { Role } from 'src/app/interfaces/role';
+import { Role, RoleWithOrg } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
@@ -22,8 +22,10 @@ export class RoleTableComponent
   implements OnInit, AfterViewInit
 {
   rules: Rule[] = [];
+  show_default_roles: boolean = true;
+  roles_without_defaults: Role[] = [];
 
-  displayedColumns: string[] = ['name', 'organization', 'descr'];
+  displayedColumns: string[] = ['name', 'organization', 'description'];
 
   constructor(
     protected activatedRoute: ActivatedRoute,
@@ -33,6 +35,19 @@ export class RoleTableComponent
     private orgDataService: OrgDataService
   ) {
     super(activatedRoute, userPermission);
+  }
+
+  ngAfterViewInit(): void {
+    super.ngAfterViewInit();
+    this.table_data.sortingDataAccessor = (item: any, property: any) => {
+      let sorter: any;
+      if (property === 'organization') {
+        sorter = item.organization ? item.organization.name : '';
+      } else {
+        sorter = item[property];
+      }
+      return sorter ? sorter.toLocaleLowerCase() : '';
+    };
   }
 
   async init(): Promise<void> {
@@ -61,6 +76,18 @@ export class RoleTableComponent
           this.resources = roles;
         }
       );
+    }
+  }
+
+  toggleDefaultRoles(): void {
+    this.show_default_roles = !this.show_default_roles;
+    if (this.show_default_roles) {
+      this.table_data.data = this.resources;
+    } else {
+      this.roles_without_defaults = this.resources.filter(function (elem: any) {
+        return elem.organization_id !== null;
+      }) as Role[];
+      this.table_data.data = this.roles_without_defaults;
     }
   }
 }

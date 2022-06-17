@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
+import { MatSort } from '@angular/material/sort';
 import {
   animate,
   state,
@@ -10,11 +11,7 @@ import {
 } from '@angular/animations';
 import { ResourceWithOrg } from 'src/app/shared/types';
 import { Organization } from 'src/app/interfaces/organization';
-import {
-  deepcopy,
-  parseId,
-  removeMatchedIdFromArray,
-} from 'src/app/shared/utils';
+import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
@@ -44,6 +41,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   public table_data = new MatTableDataSource<ResourceWithOrg>();
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
 
   isExpansionDetailRow = (index: any, row: any) =>
     row.hasOwnProperty('detailRow');
@@ -64,6 +62,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.table_data.paginator = this.paginator;
+    this.table_data.sort = this.sort;
   }
 
   protected abstract init(): void;
