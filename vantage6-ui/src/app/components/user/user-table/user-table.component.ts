@@ -75,8 +75,4 @@ export class UserTableComponent extends TableComponent implements OnInit {
       );
     }
   }
-
-  editUser(user: User): void {
-    this.userDataService.save(user);
-  }
 }

@@ -205,16 +205,11 @@ export class OrganizationComponent implements OnInit {
     this.orgDataService.save(org);
   }
 
-  editUser(user: User): void {
-    this.userDataService.save(user);
-  }
-
   deleteUser(user: User): void {
     this.organization_users = removeMatchedIdFromArray(
       this.organization_users,
       user.id
     );
-    this.userDataService.remove(user);
   }
 
   async deleteRole(role: Role): Promise<void> {
