@@ -1,7 +1,6 @@
 <mat-card>
   <app-collaboration-view
     [collaboration]="collaboration"
-    (deletingCollab)="deleteCollaboration(collaboration)"
-    (editingCollab)="editCollaboration(collaboration)"
+    (deletingResource)="goBackToPreviousPage()"
   ></app-collaboration-view>
 </mat-card>

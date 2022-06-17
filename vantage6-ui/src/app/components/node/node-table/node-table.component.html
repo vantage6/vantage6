@@ -69,7 +69,7 @@
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-      matRipple class="element-row" [cdkDetailRow]="row" [cdkDetailRowTpl]="tpl"
+      matRipple class="element-row"
     ></tr>
   </table>
 
@@ -78,13 +78,3 @@
                   aria-label="Select page">
   </mat-paginator>
 </div>
-
-<ng-template #tpl let-element>
-	<div class="mat-row detail-row" [routerLink]="['/node', element.id, 'view', element.organization.id]">
-    <!-- <app-node-view
-    ></app-node-view>
-  -->
-    <!-- [role]="element"
-    (deletingRole)="deleteResource(element)" -->
-	</div>
-</ng-template>

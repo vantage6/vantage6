@@ -15,15 +15,15 @@ This role gives the following permissions:
   [loggedin_user_rules]="userPermission.userRules"
   [is_edit_mode]="false"
 ></app-permission-table>
-<div *ngIf="!roleDataService.isDefaultRole(role); else defaultRoleMsg">
+<div *ngIf="!isDefaultRole(); else defaultRoleMsg">
   <button *ngIf="userPermission.can('edit', 'role', role.organization_id)"
     mat-button class="btn btn-edit inline"
-    (click)="editRole()" [routerLink]="['/role', role.id, 'edit']">
+    (click)="edit(role)" [routerLink]="['/role', role.id, 'edit']">
       Edit
   </button>
   <button *ngIf="userPermission.can('delete', 'role', role.organization_id)"
     mat-button class="btn btn-delete-strong"
-    (click)="deleteRole()">
+    (click)="askConfirmDelete()">
       Delete
   </button>
 </div>

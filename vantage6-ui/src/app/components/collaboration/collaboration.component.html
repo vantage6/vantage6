@@ -20,8 +20,7 @@
         </mat-expansion-panel-header>
         <app-collaboration-view
           [collaboration]="col"
-          (deletingCollab)="deleteCollaboration(col)"
-          (editingCollab)="collabDataService.save(col)"
+          (deletingResource)="deleteCollaboration(col)"
         ></app-collaboration-view>
       </mat-expansion-panel>
     </div>
@@ -45,8 +44,7 @@
         </mat-expansion-panel-header>
         <app-collaboration-view
           [collaboration]="col"
-          (deletingCollab)="deleteCollaboration(col)"
-          (editingCollab)="collabDataService.save(col)"
+          (deletingResource)="deleteCollaboration(col)"
         ></app-collaboration-view>
       </mat-expansion-panel>
     </div>

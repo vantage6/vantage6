@@ -39,7 +39,7 @@
       userPermission.can('edit', 'user', user.organization_id) ||
       (user.is_logged_in && userPermission.hasPermission('edit', 'user', 'own'))"
     mat-button class="btn btn-edit inline"
-    (click)="editUser()"
+    (click)="edit(user)"
     [routerLink]="['/user', user.id, 'edit']"
     >
   Edit
@@ -48,6 +48,6 @@
       userPermission.can('delete', 'user', user.organization_id) ||
       (user.is_logged_in && userPermission.hasPermission('delete', 'user', 'own'))"
     mat-button class="btn btn-delete-strong"
-    (click)="deleteUser()">
+    (click)="askConfirmDelete()">
   Delete
 </button>

@@ -64,8 +64,7 @@
             </mat-expansion-panel-header>
             <app-collaboration-view
               [collaboration]="col"
-              (deletingCollab)="deleteCollaboration(col)"
-              (editingCollab)="editCollaboration(col)"
+              (deletingResource)="deleteCollaboration(col)"
             ></app-collaboration-view>
           </mat-expansion-panel>
         </div>
@@ -97,7 +96,7 @@
             </mat-expansion-panel-header>
             <app-role-view
               [role]="role"
-              (deletingRole)="deleteRole(role)"
+              (deletingResource)="deleteRole(role)"
             ></app-role-view>
           </mat-expansion-panel>
         </div>
@@ -142,8 +141,7 @@
             </mat-expansion-panel-header>
             <app-user-view
               [user]="user"
-              (deletingUser)="deleteUser(user)"
-              (editingUser)="editUser(user)"
+              (deletingResource)="deleteUser(user)"
             ></app-user-view>
           </mat-expansion-panel>
         </div>

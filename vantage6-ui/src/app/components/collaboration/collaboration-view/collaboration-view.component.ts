@@ -1,30 +1,22 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-} from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import {
   Collaboration,
   EMPTY_COLLABORATION,
 } from 'src/app/interfaces/collaboration';
 import { getEmptyNode } from 'src/app/interfaces/node';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
-
-import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
-import { ApiNodeService } from 'src/app/services/api/api-node.service';
-import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
-import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
+import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { CollabDataService } from 'src/app/services/data/collab-data.service';
+import { NodeDataService } from 'src/app/services/data/node-data.service';
+import { OpsType, ResType } from 'src/app/shared/enum';
+import { removeMatchedIdFromArray } from 'src/app/shared/utils';
+import { BaseViewComponent } from '../../base/base-view/base-view.component';
+import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -34,24 +26,25 @@ import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.
     './collaboration-view.component.scss',
   ],
 })
-export class CollaborationViewComponent implements OnInit, OnChanges {
+export class CollaborationViewComponent
+  extends BaseViewComponent
+  implements OnInit, OnChanges
+{
   @Input() collaboration: Collaboration = EMPTY_COLLABORATION;
-  @Output() deletingCollab = new EventEmitter<Collaboration>();
-  @Output() editingCollab = new EventEmitter<Collaboration>();
   orgs_without_nodes: OrganizationInCollaboration[] = [];
 
   constructor(
     private router: Router,
     public userPermission: UserPermissionService,
     private nodeDataService: NodeDataService,
-    private collabDataService: CollabDataService,
+    protected collabDataService: CollabDataService,
     private apiNodeService: ApiNodeService,
-    private apiCollabService: ApiCollaborationService,
-    private modalService: ModalService,
+    protected apiCollabService: ApiCollaborationService,
+    protected modalService: ModalService,
     private convertJsonService: ConvertJsonService
-  ) {}
-
-  ngOnInit(): void {}
+  ) {
+    super(apiCollabService, collabDataService, modalService);
+  }
 
   ngOnChanges(): void {
     if (this.collaboration !== undefined) {
@@ -59,12 +52,8 @@ export class CollaborationViewComponent implements OnInit, OnChanges {
     }
   }
 
-  encrypted(): string {
+  encryptedText(): string {
     return this.collaboration.encrypted ? 'Yes' : 'No';
-  }
-
-  editCollab(): void {
-    this.collabDataService.save(this.collaboration);
   }
 
   getButtonClasses(org: OrganizationInCollaboration): string {
@@ -152,36 +141,22 @@ configuration file for the node using 'vnode new'.`,
     );
   }
 
-  async executeDelete(): Promise<void> {
+  async delete(): Promise<void> {
     // delete nodes
     for (let org of this.collaboration.organizations) {
-      if (org.node) await this.apiNodeService.delete(org.node).toPromise();
-    }
-    // delete collaboration
-    this.apiCollabService.delete(this.collaboration).subscribe(
-      (data) => {
-        this.deletingCollab.emit(this.collaboration);
-      },
-      (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          error.error.msg,
-        ]);
+      if (org.node) {
+        await this.apiNodeService.delete(org.node).toPromise();
+        this.nodeDataService.remove(org.node);
       }
-    );
+    }
+    super.delete(this.collaboration);
   }
 
-  delete(): void {
-    // open modal window to ask for confirmation of irreversible delete action
-    this.modalService
-      .openDeleteModal(
-        this.collaboration,
-        ResType.COLLABORATION,
-        'Note that any registered nodes in this collaboration will also be deleted.'
-      )
-      .result.then((exit_mode) => {
-        if (exit_mode === ExitMode.DELETE) {
-          this.executeDelete();
-        }
-      });
+  askConfirmDelete(): void {
+    super.askConfirmDelete(
+      this.collaboration,
+      ResType.COLLABORATION,
+      'Note that any registered nodes in this collaboration will also be deleted.'
+    );
   }
 }

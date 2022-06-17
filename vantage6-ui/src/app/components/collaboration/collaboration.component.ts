@@ -126,12 +126,10 @@ export class CollaborationComponent implements OnInit {
     }
   }
 
-  // TODO the two functions below are copied in a few locations. Refactor!
   deleteCollaboration(col: Collaboration) {
     // delete nodes of collaboration
     for (let org of col.organizations) {
       if (org.node) {
-        this.nodeDataService.remove(org.node);
         removeMatchedIdFromArray(this.nodes, org.node.id);
       }
     }
@@ -141,6 +139,5 @@ export class CollaborationComponent implements OnInit {
       col.id
     );
     this.updateCollaborations();
-    this.collabDataService.remove(col);
   }
 }

@@ -81,8 +81,7 @@
 	<div class="mat-row detail-row" [@detailExpand] style="overflow: hidden; margin: 15px;">
     <app-user-view
             [user]="element"
-            (deletingUser)="deleteResource(element)"
-            (editingUser)="editUser(element)"
+            (deletingResource)="deleteResource(element)"
     ></app-user-view>
 	</div>
 </ng-template>
