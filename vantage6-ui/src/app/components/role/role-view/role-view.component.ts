@@ -1,12 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ResType } from 'src/app/shared/enum';
-
-import { getEmptyRole, Role } from 'src/app/interfaces/role';
-import { ModalService } from 'src/app/services/common/modal.service';
-
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { getEmptyRole, Role } from 'src/app/interfaces/role';
 import { ApiRoleService } from 'src/app/services/api/api-role.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { ResType } from 'src/app/shared/enum';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';
 
 @Component({

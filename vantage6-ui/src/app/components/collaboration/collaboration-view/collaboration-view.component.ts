@@ -1,31 +1,22 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-} from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import {
   Collaboration,
   EMPTY_COLLABORATION,
 } from 'src/app/interfaces/collaboration';
 import { getEmptyNode } from 'src/app/interfaces/node';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
-
-import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
-import { ApiNodeService } from 'src/app/services/api/api-node.service';
-import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
-import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
+import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { CollabDataService } from 'src/app/services/data/collab-data.service';
+import { NodeDataService } from 'src/app/services/data/node-data.service';
+import { OpsType, ResType } from 'src/app/shared/enum';
+import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';
+import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-collaboration-view',

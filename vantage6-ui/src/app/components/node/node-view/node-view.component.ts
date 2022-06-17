@@ -1,19 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { take } from 'rxjs/operators';
-
-import { EMPTY_NODE, NodeWithOrg } from 'src/app/interfaces/node';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import { ExitMode, ResType } from 'src/app/shared/enum';
-
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
+import { EMPTY_NODE, NodeWithOrg } from 'src/app/interfaces/node';
+import { Organization } from 'src/app/interfaces/organization';
+import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
-import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { CollabDataService } from 'src/app/services/data/collab-data.service';
-import { Organization } from 'src/app/interfaces/organization';
+import { ExitMode, ResType } from 'src/app/shared/enum';
 import { deepcopy } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';
 
