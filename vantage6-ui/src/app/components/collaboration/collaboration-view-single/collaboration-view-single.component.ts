@@ -88,19 +88,7 @@ export class CollaborationViewSingleComponent implements OnInit {
     });
   }
 
-  deleteCollaboration(col: Collaboration) {
-    // delete nodes of collaboration
-    for (let org of col.organizations) {
-      if (org.node) {
-        this.nodeDataService.remove(org.node);
-        removeMatchedIdFromArray(this.nodes, org.node.id);
-      }
-    }
-    this.collabDataService.remove(col);
+  goBackToPreviousPage() {
     this.utilsService.goToPreviousPage();
-  }
-
-  editCollaboration(col: Collaboration) {
-    this.collabDataService.save(col);
   }
 }

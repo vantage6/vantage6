@@ -235,22 +235,15 @@ export class OrganizationComponent implements OnInit {
     }
   }
 
-  // TODO these functions are duplicate from collaboration Component. Refactor?!
   deleteCollaboration(col: Collaboration) {
     // delete nodes of collaboration
     for (let org of col.organizations) {
       if (org.node) {
-        this.nodeDataService.remove(org.node);
         removeMatchedIdFromArray(this.nodes, org.node.id);
       }
     }
     // delete collaboration
     this.collaborations = removeMatchedIdFromArray(this.collaborations, col.id);
-    this.collabDataService.remove(col);
-  }
-
-  editCollaboration(col: Collaboration) {
-    this.collabDataService.save(col);
   }
 
   showPublicKey(): void {

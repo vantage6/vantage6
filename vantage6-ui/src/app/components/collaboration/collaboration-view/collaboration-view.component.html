@@ -9,7 +9,7 @@
   </tr>
   <tr>
     <td>Encrypted:</td>
-    <td>{{encrypted()}}</td>
+    <td>{{encryptedText()}}</td>
   </tr>
   <tr>
     <td>Organization(s):</td>
@@ -62,12 +62,12 @@
 <br/>
 <button *ngIf="userPermission.hasPermission('edit', 'collaboration', 'global')"
     mat-button class="btn btn-edit inline"
-    (click)="editCollab()" [routerLink]="['/collaboration', collaboration.id, 'edit']"
+    (click)="edit(collaboration)" [routerLink]="['/collaboration', collaboration.id, 'edit']"
     >
   Edit
 </button>
 <button *ngIf="userPermission.hasPermission('delete', 'collaboration', 'global')"
-    mat-button class="btn btn-delete-strong" (click)="delete()"
+    mat-button class="btn btn-delete-strong" (click)="askConfirmDelete()"
     >
   Delete
 </button>
