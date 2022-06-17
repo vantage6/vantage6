@@ -125,6 +125,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
   deleteResource(resource: ResourceWithOrg) {
     this.resources = removeMatchedIdFromArray(this.resources, resource.id);
+    console.log(this.resources);
     this.table_data.data = this.resources;
   }
 }
