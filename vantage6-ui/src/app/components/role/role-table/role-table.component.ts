@@ -23,7 +23,7 @@ export class RoleTableComponent
 {
   rules: Rule[] = [];
 
-  displayedColumns: string[] = ['name', 'organization', 'descr'];
+  displayedColumns: string[] = ['name', 'organization', 'description'];
 
   constructor(
     protected activatedRoute: ActivatedRoute,
@@ -33,6 +33,19 @@ export class RoleTableComponent
     private orgDataService: OrgDataService
   ) {
     super(activatedRoute, userPermission);
+  }
+
+  ngAfterViewInit(): void {
+    super.ngAfterViewInit();
+    this.table_data.sortingDataAccessor = (item: any, property: any) => {
+      let sorter: any;
+      if (property === 'organization') {
+        sorter = item.organization ? item.organization.name : '';
+      } else {
+        sorter = item[property];
+      }
+      return sorter ? sorter.toLocaleLowerCase() : '';
+    };
   }
 
   async init(): Promise<void> {
