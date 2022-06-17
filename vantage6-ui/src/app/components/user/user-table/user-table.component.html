@@ -39,29 +39,29 @@
 </mat-card>
 
 <div class="mat-elevation-z8">
-  <table mat-table [dataSource]="table_data" >
+  <table mat-table [dataSource]="table_data" matSort>
     <ng-container matColumnDef="username">
-      <th mat-header-cell *matHeaderCellDef>Username</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Username</th>
       <td mat-cell *matCellDef="let elem">{{elem.username}}</td>
     </ng-container>
 
     <ng-container matColumnDef="email">
-      <th mat-header-cell *matHeaderCellDef>Email</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
       <td mat-cell *matCellDef="let elem">{{elem.email}}</td>
     </ng-container>
 
-    <ng-container matColumnDef="firstname">
-      <th mat-header-cell *matHeaderCellDef>First name</th>
+    <ng-container matColumnDef="first_name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>First name</th>
       <td mat-cell *matCellDef="let elem">{{elem.first_name}}</td>
     </ng-container>
 
-    <ng-container matColumnDef="lastname">
-      <th mat-header-cell *matHeaderCellDef>Last name</th>
+    <ng-container matColumnDef="last_name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Last name</th>
       <td mat-cell *matCellDef="let elem">{{elem.last_name}}</td>
     </ng-container>
 
     <ng-container matColumnDef="organization">
-      <th mat-header-cell *matHeaderCellDef>Organization</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Organization</th>
       <td mat-cell *matCellDef="let elem">{{getOrgNameTable(elem)}}</td>
     </ng-container>
 
