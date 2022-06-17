@@ -147,6 +147,12 @@ export class NodeTableComponent
     }
   }
 
+  getNameDropdown() {
+    if (this.current_organization) return this.current_organization.name;
+    else if (this.current_collaboration) return this.current_collaboration.name;
+    else return 'All';
+  }
+
   getSelectDropdownText(): string {
     let entity: string = '';
     if (
