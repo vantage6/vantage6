@@ -38,7 +38,11 @@
     </ng-template>
   </div>
   <br/>
-  <mat-checkbox [checked]="show_default_roles" (change)="toggleDefaultRoles()">
+  <mat-form-field appearance="standard" class="inline">
+    <mat-label>Filter columns</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Search columns" #input/>
+  </mat-form-field>
+  <mat-checkbox [checked]="show_default_roles" (change)="toggleDefaultRoles()" class="inline">
     Show default roles
   </mat-checkbox>
 </mat-card>

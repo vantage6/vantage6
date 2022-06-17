@@ -36,6 +36,10 @@
       </button>
     </ng-template>
   </div>
+  <mat-form-field appearance="standard">
+    <mat-label>Filter columns</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Search columns" #input/>
+  </mat-form-field>
 </mat-card>
 
 <div class="mat-elevation-z8">
