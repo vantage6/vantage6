@@ -22,6 +22,7 @@ import { UserTableComponent } from './components/user/user-table/user-table.comp
 import { NodeTableComponent } from './components/node/node-table/node-table.component';
 import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
 import { TaskTableComponent } from './components/task/task-table/task-table.component';
+import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
 
 const routes: Routes = [
   {
@@ -279,6 +280,17 @@ const routes: Routes = [
       permissionResource: ResType.TASK,
       permissionScope: ScopeType.GLOBAL,
     },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'task/view/:id/:org_id',
+    component: TaskViewSingleComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuardByOrgId],
   },
 ];
 //TODO add * path with 404 not found page

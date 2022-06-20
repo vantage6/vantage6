@@ -1,0 +1,7 @@
+<mat-card>
+  <app-task-view
+    [task]="task"
+		[org_id]="organization_id"
+    (deletingResource)="goBackToPreviousPage()"
+  ></app-task-view>
+</mat-card>

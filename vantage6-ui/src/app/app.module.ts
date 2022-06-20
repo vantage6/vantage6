@@ -53,6 +53,7 @@ import { CollaborationViewSingleComponent } from './components/collaboration/col
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TaskTableComponent } from './components/task/task-table/task-table.component';
 import { TaskViewComponent } from './components/task/task-view/task-view.component';
+import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
 
 @NgModule({
   declarations: [
@@ -81,6 +82,7 @@ import { TaskViewComponent } from './components/task/task-view/task-view.compone
     CollaborationViewSingleComponent,
     TaskTableComponent,
     TaskViewComponent,
+    TaskViewSingleComponent,
   ],
   imports: [
     BrowserModule,

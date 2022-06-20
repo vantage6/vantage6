@@ -35,11 +35,11 @@ export class TaskViewComponent extends BaseViewComponent implements OnInit {
   }
 
   getCollaborationName(): string {
-    return (this.task.collaboration as Collaboration).name;
+    return this.task.collaboration ? this.task.collaboration.name : '';
   }
 
   getInitiatorName(): string {
-    return (this.task.initiator as Organization).name;
+    return this.task.initiator ? this.task.initiator.name : '';
   }
 
   getDatabaseName(): string {

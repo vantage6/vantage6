@@ -17,7 +17,13 @@
     </tr>
     <tr>
       <td>Collaboration:</td>
-      <td>{{getCollaborationName()}}</td>
+      <td>
+        <button mat-button
+            class="btn btn-detail inline"
+            [routerLink]="['/collaboration/', task.collaboration_id, org_id]">
+          {{getCollaborationName()}}
+        </button>
+      </td>
     </tr>
     <tr>
       <td>Run id:</td>
@@ -33,7 +39,13 @@
     </tr>
     <tr>
         <td>Initiator:</td>
-        <td>{{getInitiatorName()}}</td>
+        <td>
+          <button mat-button
+              class="btn btn-detail inline"
+              [routerLink]="['/organization/', task.initiator_id]">
+            {{getInitiatorName()}}
+          </button>
+        </td>
     </tr>
     <!-- TODO links to parents/children -->
     <tr>
@@ -41,7 +53,7 @@
       <td>
         <button mat-button *ngIf="task.parent_id; else noParentBlock"
             class="btn btn-detail inline"
-            [routerLink]="['/task', task.parent_id, 'view']">
+            [routerLink]="['/task/view', task.parent_id, org_id]">
           Task #{{task.parent_id}}
         </button>
         <ng-template #noParentBlock>
@@ -56,8 +68,8 @@
           <div *ngFor="let child_id of task.children_ids">
             <button mat-button
                 class="btn btn-detail inline"
-                [routerLink]="['/task', child_id, 'view']">
-              Task #{{task.parent_id}}
+                [routerLink]="['/task/view', child_id, org_id]">
+              Task #{{child_id}}
             </button>
           </div>
         </div>
