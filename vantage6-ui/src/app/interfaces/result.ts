@@ -10,7 +10,8 @@ export interface Result {
   log: string | null;
   task_id: number; // TODO necessary?
   organization_id: number;
-  ports: Port[];
+  ports?: Port[];
+  port_ids: number[];
   started_at: Date | null;
   assigned_at: Date | null;
   finished_at: Date | null;

@@ -1,86 +1,101 @@
+<h5>Task</h5>
 <table style="width: 100%">
+  <colgroup>
+    <col span="1" style="width: 20%;"/>
+    <col span="1" style="width: 80%;"/>
+  </colgroup>
+  <tr>
+    <td>Name:</td>
+    <td>{{task.name}}</td>
+  </tr>
+  <tr>
+    <td>Description:</td>
+    <td>{{task.description}}</td>
+  </tr>
+  <tr>
+    <td>Docker image:</td>
+    <td>{{task.image}}</td>
+  </tr>
+  <tr>
+    <td>Collaboration:</td>
+    <td>
+      <button mat-button
+          class="btn btn-detail inline"
+          [routerLink]="['/collaboration/', task.collaboration_id, org_id]">
+        {{getCollaborationName()}}
+      </button>
+    </td>
+  </tr>
+  <tr>
+    <td>Run id:</td>
+    <td>{{task.run_id}}</td>
+  </tr>
+  <tr>
+      <td>Database:</td>
+      <td>{{getDatabaseName()}}</td>
+  </tr>
+  <tr>
+      <td>Completed:</td>
+      <td>{{task.complete ? 'Yes': 'No'}}</td>
+  </tr>
+  <tr>
+      <td>Initiator:</td>
+      <td>
+        <button mat-button
+            class="btn btn-detail inline"
+            [routerLink]="['/organization/', task.initiator_id]">
+          {{getInitiatorName()}}
+        </button>
+      </td>
+  </tr>
+  <!-- TODO links to parents/children -->
+  <tr>
+    <td>Parent:</td>
+    <td>
+      <button mat-button *ngIf="task.parent_id; else noParentBlock"
+          class="btn btn-detail inline"
+          [routerLink]="['/task/view', task.parent_id, org_id]">
+        Task #{{task.parent_id}}
+      </button>
+      <ng-template #noParentBlock>
+        None
+      </ng-template>
+    </td>
+  </tr>
+  <tr>
+    <td>Children:</td>
+    <td>
+      <div *ngIf="task.children_ids.length > 0; else noChildrenBlock">
+        <div *ngFor="let child_id of task.children_ids">
+          <button mat-button
+              class="btn btn-detail inline"
+              [routerLink]="['/task/view', child_id, org_id]">
+            Task #{{child_id}}
+          </button>
+        </div>
+      </div>
+      <ng-template #noChildrenBlock>
+        None
+      </ng-template>
+    </td>
+  </tr>
+</table>
+<h5>Results</h5>
+<div *ngFor="let result of results">
+  <!-- // TODO refactor to separate component -->
+  <table style="width: 100%">
     <colgroup>
       <col span="1" style="width: 20%;"/>
       <col span="1" style="width: 80%;"/>
     </colgroup>
     <tr>
-      <td>Name:</td>
-      <td>{{task.name}}</td>
-    </tr>
-    <tr>
-      <td>Description:</td>
-      <td>{{task.description}}</td>
-    </tr>
-    <tr>
-      <td>Docker image:</td>
-      <td>{{task.image}}</td>
-    </tr>
-    <tr>
-      <td>Collaboration:</td>
-      <td>
-        <button mat-button
-            class="btn btn-detail inline"
-            [routerLink]="['/collaboration/', task.collaboration_id, org_id]">
-          {{getCollaborationName()}}
-        </button>
-      </td>
-    </tr>
-    <tr>
-      <td>Run id:</td>
-      <td>{{task.run_id}}</td>
-    </tr>
-    <tr>
-        <td>Database:</td>
-        <td>{{getDatabaseName()}}</td>
-    </tr>
-    <tr>
-        <td>Completed:</td>
-        <td>{{task.complete ? 'Yes': 'No'}}</td>
-    </tr>
-    <tr>
-        <td>Initiator:</td>
-        <td>
-          <button mat-button
-              class="btn btn-detail inline"
-              [routerLink]="['/organization/', task.initiator_id]">
-            {{getInitiatorName()}}
-          </button>
-        </td>
-    </tr>
-    <!-- TODO links to parents/children -->
-    <tr>
-      <td>Parent:</td>
-      <td>
-        <button mat-button *ngIf="task.parent_id; else noParentBlock"
-            class="btn btn-detail inline"
-            [routerLink]="['/task/view', task.parent_id, org_id]">
-          Task #{{task.parent_id}}
-        </button>
-        <ng-template #noParentBlock>
-          None
-        </ng-template>
-      </td>
-    </tr>
-    <tr>
-      <td>Children:</td>
-      <td>
-        <div *ngIf="task.children_ids.length > 0; else noChildrenBlock">
-          <div *ngFor="let child_id of task.children_ids">
-            <button mat-button
-                class="btn btn-detail inline"
-                [routerLink]="['/task/view', child_id, org_id]">
-              Task #{{child_id}}
-            </button>
-          </div>
-        </div>
-        <ng-template #noChildrenBlock>
-          None
-        </ng-template>
-      </td>
+      <td>Log:</td>
+      <td>{{result.log}}</td>
     </tr>
   </table>
-  <button *ngIf="userPermission.can('delete', 'task', org_id)"
-      mat-button class="btn btn-delete-strong"
-      (click)="askConfirmDelete()">
-    Delete
-  </button>
+</div>
+<button *ngIf="userPermission.can('delete', 'task', org_id)"
+    mat-button class="btn btn-delete-strong"
+    (click)="askConfirmDelete()">
+  Delete
+</button>
