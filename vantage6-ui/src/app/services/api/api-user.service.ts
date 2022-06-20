@@ -13,8 +13,6 @@ import { ModalService } from 'src/app/services/common/modal.service';
   providedIn: 'root',
 })
 export class ApiUserService extends ApiService {
-  rules: Rule[] = [];
-
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

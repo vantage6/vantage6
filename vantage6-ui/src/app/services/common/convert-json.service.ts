@@ -1,12 +1,10 @@
-import {
-  Injectable,
-  ɵNOT_FOUND_CHECK_ONLY_ELEMENT_INJECTOR,
-} from '@angular/core';
+import { Injectable } from '@angular/core';
 
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 import { Node } from 'src/app/interfaces/node';
+import { Task } from 'src/app/interfaces/task';
 import { Organization } from 'src/app/interfaces/organization';
 import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/interfaces/collaboration';
@@ -138,6 +136,29 @@ export class ConvertJsonService {
       ip: node_json.ip,
       is_online: node_json.status === 'online' ? true : false,
       last_seen: node_json.last_seen ? new Date(node_json.last_seen) : null,
+    };
+  }
+
+  getTask(json: any): Task {
+    let child_ids = [];
+    if (json.children) {
+      for (let child of json.children) {
+        child_ids.push(child.id);
+      }
+    }
+    return {
+      id: json.id,
+      type: ResType.TASK,
+      name: json.name,
+      description: json.description,
+      image: json.image,
+      collaboration_id: json.collaboration.id,
+      initiator_id: json.initiator,
+      run_id: json.run_id,
+      parent_id: json.parent ? json.parent.id : null,
+      database: json.database,
+      complete: json.complete,
+      children_ids: child_ids,
     };
   }
 }

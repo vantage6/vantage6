@@ -9,7 +9,7 @@ import {
   transition,
   trigger,
 } from '@angular/animations';
-import { ResourceWithOrg } from 'src/app/shared/types';
+import { Resource, ResourceWithOrg } from 'src/app/shared/types';
 import { Organization } from 'src/app/interfaces/organization';
 import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ActivatedRoute } from '@angular/router';
@@ -36,9 +36,9 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   organizations: Organization[] = [];
   current_organization: Organization | null = null;
   route_org_id: number | null = null;
-  resources: ResourceWithOrg[] = [];
+  resources: Resource[] = [];
 
-  public table_data = new MatTableDataSource<ResourceWithOrg>();
+  public dataSource = new MatTableDataSource<Resource>();
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -61,8 +61,8 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.table_data.paginator = this.paginator;
-    this.table_data.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
   }
 
   protected abstract init(): void;
@@ -73,7 +73,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
     await this.addOrganizationsToResources();
 
-    this.table_data.data = this.resources;
+    this.dataSource.data = this.resources;
   }
 
   async readRoute() {
@@ -100,7 +100,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   protected async addOrganizationsToResources() {
-    for (let r of this.resources) {
+    for (let r of this.resources as ResourceWithOrg[]) {
       for (let org of this.organizations) {
         if (org.id === r.organization_id) {
           r.organization = org;
@@ -124,6 +124,11 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
   deleteResource(resource: ResourceWithOrg) {
     this.resources = removeMatchedIdFromArray(this.resources, resource.id);
-    this.table_data.data = this.resources;
+    this.dataSource.data = this.resources;
+  }
+
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.dataSource.filter = filterValue.trim().toLowerCase();
   }
 }

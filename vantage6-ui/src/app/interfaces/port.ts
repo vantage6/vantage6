@@ -1,5 +1,3 @@
-import { Resource } from 'src/app/shared/enum';
-
 // TODO include result?
 export interface Port {
   id: number;

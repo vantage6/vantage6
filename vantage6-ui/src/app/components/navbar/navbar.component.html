@@ -63,6 +63,14 @@
       <span>Nodes</span>
     </button>
   </div>
+  <div *ngIf="userPermission.hasPermission('view', 'task', '*')">
+    <button mat-button class="menu-button"
+            [routerLink]="['/tasks']"
+            routerLinkActive="menu-is-active">
+      <mat-icon>science</mat-icon>
+      <span>Tasks</span>
+    </button>
+  </div>
   <button mat-button class="menu-button">
     <mat-icon>person</mat-icon>
     <span>Profile</span>

@@ -6,6 +6,10 @@ th {
     font-size: large;
 }
 
+::ng-deep .mat-form-field-wrapper {
+  max-width: 200px;
+}
+
 .example-container {
     display: flex;
     flex-direction: column;
