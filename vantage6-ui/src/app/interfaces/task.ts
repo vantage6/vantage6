@@ -1,4 +1,6 @@
 import { Result } from 'src/app/interfaces/result';
+import { ResType } from '../shared/enum';
+import { deepcopy } from '../shared/utils';
 import { Collaboration } from './collaboration';
 import { Organization } from './organization';
 
@@ -22,18 +24,21 @@ export interface Task {
   complete: boolean;
 }
 
-// export const EMPTY_USER: User = {
-//   id: -1,
-//   type: Resource.USER,
-//   username: '',
-//   email: '',
-//   first_name: '',
-//   last_name: '',
-//   organization_id: -1,
-//   roles: [],
-//   rules: [],
-// };
+export const EMPTY_TASK: Task = {
+  id: -1,
+  type: ResType.TASK,
+  name: '',
+  description: '',
+  image: '',
+  database: '',
+  collaboration_id: -1,
+  initiator_id: -1,
+  run_id: -1,
+  parent_id: -1,
+  children_ids: [],
+  complete: false,
+};
 
-// export function getEmptyUser(): User {
-//   return deepcopy(EMPTY_USER);
-// }
+export function getEmptyTask(): Task {
+  return deepcopy(EMPTY_TASK);
+}

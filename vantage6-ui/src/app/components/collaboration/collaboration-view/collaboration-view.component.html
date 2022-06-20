@@ -12,7 +12,7 @@
     <td>{{encryptedText()}}</td>
   </tr>
   <tr>
-    <td>Organization(s):</td>
+    <td>Organizations:</td>
     <td>
       <div *ngFor="let org of collaboration.organizations" class="inline">
           <button mat-button class="btn-detail" (click)="goToOrg(org)"
@@ -26,7 +26,7 @@
     </td>
   </tr>
   <tr>
-    <td>Node(s):</td>
+    <td>Nodes:</td>
     <td>
       <div *ngFor="let org of collaboration.organizations" class="inline">
           <!-- <button mat-button class="btn-detail inline" disabled> -->
@@ -41,6 +41,15 @@
       <div *ngIf="collaboration.organizations.length===0">
         No organizations are taking part in this collaboration!
       </div>
+    </td>
+  </tr>
+  <tr>
+    <td>Tasks</td>
+    <td>
+      <button mat-button class="btn btn-detail inline"
+          [routerLink]="['/tasks/collab', collaboration.id]">
+        {{n_completed_tasks}} complete / {{tasks.length}} total
+      </button>
     </td>
   </tr>
 

@@ -52,6 +52,8 @@ import { NodeTableComponent } from './components/node/node-table/node-table.comp
 import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TaskTableComponent } from './components/task/task-table/task-table.component';
+import { TaskViewComponent } from './components/task/task-view/task-view.component';
+import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
 
 @NgModule({
   declarations: [
@@ -79,6 +81,8 @@ import { TaskTableComponent } from './components/task/task-table/task-table.comp
     NodeTableComponent,
     CollaborationViewSingleComponent,
     TaskTableComponent,
+    TaskViewComponent,
+    TaskViewSingleComponent,
   ],
   imports: [
     BrowserModule,

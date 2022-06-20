@@ -85,9 +85,10 @@
 
 <ng-template #tpl let-element>
 	<div class="mat-row detail-row" [@detailExpand] style="overflow: hidden; margin: 15px;">
-    <!-- <app-user-view
-            [user]="element"
-            (deletingResource)="deleteResource(element)"
-    ></app-user-view> -->
+    <app-task-view
+      [task]="element"
+      [org_id]="loggedin_user.organization_id"
+      (deletingResource)="deleteResource(element)"
+    ></app-task-view>
 	</div>
 </ng-template>

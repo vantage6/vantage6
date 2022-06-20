@@ -15,7 +15,6 @@ import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { ResType } from 'src/app/shared/enum';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-collaboration-view-single',
