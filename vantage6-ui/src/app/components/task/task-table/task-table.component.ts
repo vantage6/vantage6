@@ -65,8 +65,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     super.ngAfterViewInit();
     this.dataSource.sortingDataAccessor = (item: any, property: any) => {
       let sorter: any;
-      if (property === 'organization') {
-        sorter = item.organization.name;
+      if (property === 'initiator') {
+        sorter = item.initiator.name;
       } else if (property === 'collaboration') {
         sorter = item.collaboration.name;
       } else {
