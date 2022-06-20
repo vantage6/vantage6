@@ -15,6 +15,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatInputModule } from '@angular/material/input';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
@@ -99,6 +100,7 @@ import { TaskTableComponent } from './components/task/task-table/task-table.comp
     MatPaginatorModule,
     MatSortModule,
     MatFormFieldModule,
+    MatInputModule,
     CommonModule,
     NgbModule,
   ],
