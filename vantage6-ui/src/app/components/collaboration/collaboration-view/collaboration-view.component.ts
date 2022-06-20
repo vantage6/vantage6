@@ -6,6 +6,7 @@ import {
   EMPTY_COLLABORATION,
 } from 'src/app/interfaces/collaboration';
 import { getEmptyNode } from 'src/app/interfaces/node';
+import { Task } from 'src/app/interfaces/task';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
@@ -17,6 +18,7 @@ import { OpsType, ResType } from 'src/app/shared/enum';
 import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';
 import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
+import { TaskDataService } from 'src/app/services/data/task-data.service';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -32,6 +34,8 @@ export class CollaborationViewComponent
 {
   @Input() collaboration: Collaboration = EMPTY_COLLABORATION;
   orgs_without_nodes: OrganizationInCollaboration[] = [];
+  tasks: Task[] = [];
+  n_completed_tasks: number = 0;
 
   constructor(
     private router: Router,
@@ -41,7 +45,8 @@ export class CollaborationViewComponent
     private apiNodeService: ApiNodeService,
     protected apiCollabService: ApiCollaborationService,
     protected modalService: ModalService,
-    private convertJsonService: ConvertJsonService
+    private convertJsonService: ConvertJsonService,
+    private taskDataService: TaskDataService
   ) {
     super(apiCollabService, collabDataService, modalService);
   }
@@ -49,7 +54,15 @@ export class CollaborationViewComponent
   ngOnChanges(): void {
     if (this.collaboration !== undefined) {
       this.setMissingNodes();
+      this.setTasks();
     }
+  }
+
+  async setTasks(): Promise<void> {
+    this.tasks = await this.taskDataService.collab_list(this.collaboration.id);
+    this.n_completed_tasks = this.tasks.filter(
+      (task) => task.complete === true
+    ).length;
   }
 
   encryptedText(): string {
