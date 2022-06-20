@@ -1,51 +1,48 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { TableComponent } from '../../base/table/table.component';
-import { Node, NodeWithOrg } from 'src/app/interfaces/node';
-import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
+import { CollabDataService } from 'src/app/services/data/collab-data.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { deepcopy, parseId } from 'src/app/shared/utils';
+import { TableComponent } from '../../base/table/table.component';
+import { DisplayMode } from '../../node/node-table/node-table.component';
+import { Task } from 'src/app/interfaces/task';
+import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
+import { Organization } from 'src/app/interfaces/organization';
 
-export enum DisplayMode {
-  COL = 'collaboration',
-  ORG = 'organization',
-  ALL = 'all',
-}
-
+// TODO this contains a lot of duplication from NodeTableComponent, fix that
 @Component({
-  selector: 'app-node-table',
-  templateUrl: './node-table.component.html',
+  selector: 'app-task-table',
+  templateUrl: './task-table.component.html',
   styleUrls: [
     '../../../shared/scss/buttons.scss',
     '../../base/table/table.component.scss',
-    './node-table.component.scss',
+    './task-table.component.scss',
   ],
 })
-export class NodeTableComponent
-  extends TableComponent
-  implements OnInit, AfterViewInit
-{
+export class TaskTableComponent extends TableComponent implements OnInit {
   collaborations: Collaboration[] = [];
   current_collaboration: Collaboration | null;
+  displayMode = DisplayMode.ALL;
+
   displayedColumns: string[] = [
     'name',
-    'organization',
+    // 'description',
+    'image',
     'collaboration',
-    'details',
+    'initiator',
+    'completed',
   ];
-  displayMode = DisplayMode.ALL;
 
   constructor(
     private router: Router,
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private nodeDataService: NodeDataService,
     private orgDataService: OrgDataService,
-    private collabDataService: CollabDataService
+    private collabDataService: CollabDataService,
+    private taskDataService: TaskDataService
   ) {
     super(activatedRoute, userPermission);
   }
@@ -66,7 +63,7 @@ export class NodeTableComponent
 
   ngAfterViewInit(): void {
     super.ngAfterViewInit();
-    this.table_data.sortingDataAccessor = (item: any, property: any) => {
+    this.dataSource.sortingDataAccessor = (item: any, property: any) => {
       let sorter: any;
       if (property === 'organization') {
         sorter = item.organization.name;
@@ -118,50 +115,35 @@ export class NodeTableComponent
 
     await this.addCollaborationsToResources();
 
+    await this.addInitiatorsToTasks();
+
     this.dataSource.data = this.resources;
   }
 
   protected async setResources() {
     if (this.displayMode === DisplayMode.ORG) {
-      this.resources = await this.nodeDataService.org_list(
-        this.route_org_id as number
-      );
+      console.log('ahoi');
+      // if displaying tasks for a certain organization, display the tasks for
+      // each collaboration that the organization is involved in
+      this.resources = [];
+      for (let collab_id of (this.current_organization as Organization)
+        .collaboration_ids) {
+        this.resources.push(
+          ...(await this.taskDataService.collab_list(collab_id))
+        );
+      }
     } else if (this.displayMode === DisplayMode.COL) {
-      this.resources = await this.nodeDataService.collab_list(
+      this.resources = await this.taskDataService.collab_list(
         this.route_org_id as number
       );
     } else {
-      (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
-        this.resources = nodes;
+      (await this.taskDataService.list()).subscribe((tasks: Task[]) => {
+        this.resources = tasks;
       });
     }
     // make a copy to prevent that changes in these resources are directly
     // reflected in the resources within dataServices
     this.resources = deepcopy(this.resources);
-  }
-
-  protected async addCollaborationsToResources() {
-    for (let r of this.resources as NodeWithOrg[]) {
-      for (let col of this.collaborations) {
-        if (col.id === r.collaboration_id) {
-          r.collaboration = col;
-          break;
-        }
-      }
-    }
-  }
-
-  getCollabNameDropdown(): string {
-    return this.current_collaboration ? this.current_collaboration.name : 'All';
-  }
-
-  setCurrentCollaboration(): void {
-    for (let col of this.collaborations) {
-      if (col.id === this.route_org_id) {
-        this.current_collaboration = col;
-        break;
-      }
-    }
   }
 
   getNameDropdown() {
@@ -198,4 +180,41 @@ export class NodeTableComponent
     }
     return `Select ${entity} to view:`;
   }
+
+  protected async addCollaborationsToResources() {
+    for (let r of this.resources as Task[]) {
+      for (let col of this.collaborations) {
+        if (col.id === r.collaboration_id) {
+          r.collaboration = col;
+          break;
+        }
+      }
+    }
+  }
+
+  protected async addInitiatorsToTasks() {
+    for (let r of this.resources as Task[]) {
+      for (let org of this.organizations) {
+        if (org.id === r.initiator_id) {
+          r.initiator = org;
+          break;
+        }
+      }
+    }
+  }
+
+  setCurrentCollaboration(): void {
+    for (let col of this.collaborations) {
+      if (col.id === this.route_org_id) {
+        this.current_collaboration = col;
+        break;
+      }
+    }
+  }
+
+  getCompletedText(task: Task) {
+    return task.complete ? 'Yes' : 'No';
+  }
+
+  getInitiatorName(task: Task) {}
 }

@@ -1,5 +1,4 @@
-import { Resource } from 'src/app/shared/enum';
-import { Port } from 'src/app/port/interfaces/port';
+import { Port } from 'src/app/interfaces/port';
 
 // TODO include result?
 export interface Result {

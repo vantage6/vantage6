@@ -1,6 +1,6 @@
-import { Resource } from 'src/app/shared/enum';
-
-import { Result } from 'src/app/result/interfaces/result';
+import { Result } from 'src/app/interfaces/result';
+import { Collaboration } from './collaboration';
+import { Organization } from './organization';
 
 export interface Task {
   id: number;
@@ -9,13 +9,16 @@ export interface Task {
   description: string;
   image: string;
   collaboration_id: number;
+  collaboration?: Collaboration;
   run_id: number;
-  parent_id: number;
+  parent_id: number | null;
+  parent?: Task;
   database: string;
   initiator_id: number;
-  parent: Task | null;
-  children: Task[];
-  results: Result[];
+  initiator?: Organization;
+  children_ids: number[];
+  children?: Task[];
+  results?: Result[];
   complete: boolean;
 }
 

@@ -21,6 +21,7 @@ import { RoleTableComponent } from './components/role/role-table/role-table.comp
 import { UserTableComponent } from './components/user/user-table/user-table.component';
 import { NodeTableComponent } from './components/node/node-table/node-table.component';
 import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
+import { TaskTableComponent } from './components/task/task-table/task-table.component';
 
 const routes: Routes = [
   {
@@ -248,6 +249,36 @@ const routes: Routes = [
       permissionScope: ScopeType.GLOBAL,
     },
     canActivate: [AccessGuard],
+  },
+  {
+    path: 'tasks',
+    component: TaskTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'tasks/org/:org_id',
+    component: TaskTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'tasks/collab/:collab_id',
+    component: TaskTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.TASK,
+      permissionScope: ScopeType.GLOBAL,
+    },
   },
 ];
 //TODO add * path with 404 not found page

@@ -9,7 +9,7 @@ import {
   transition,
   trigger,
 } from '@angular/animations';
-import { ResourceWithOrg } from 'src/app/shared/types';
+import { Resource, ResourceWithOrg } from 'src/app/shared/types';
 import { Organization } from 'src/app/interfaces/organization';
 import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { ActivatedRoute } from '@angular/router';
@@ -36,7 +36,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   organizations: Organization[] = [];
   current_organization: Organization | null = null;
   route_org_id: number | null = null;
-  resources: ResourceWithOrg[] = [];
+  resources: Resource[] = [];
 
   public table_data = new MatTableDataSource<ResourceWithOrg>();
 
@@ -100,7 +100,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   protected async addOrganizationsToResources() {
-    for (let r of this.resources) {
+    for (let r of this.resources as ResourceWithOrg[]) {
       for (let org of this.organizations) {
         if (org.id === r.organization_id) {
           r.organization = org;
