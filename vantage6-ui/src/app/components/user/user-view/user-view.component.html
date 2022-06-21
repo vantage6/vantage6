@@ -12,6 +12,14 @@
     <td>{{user.email}}</td>
   </tr>
   <tr>
+    <td>First name:</td>
+    <td>{{user.first_name}}</td>
+  </tr>
+  <tr>
+    <td>Last name:</td>
+    <td>{{user.last_name}}</td>
+  </tr>
+  <tr>
     <td>Role(s):</td>
     <td>
       <div *ngFor="let role of user.roles" class="inline">

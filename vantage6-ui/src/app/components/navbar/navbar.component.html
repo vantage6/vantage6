@@ -11,6 +11,10 @@
 
   <span class="spacer"></span>
 
+  <button mat-button class="profile btn-default" [routerLink]="['/profile']">
+    <mat-icon class="profile-icon">person</mat-icon>
+    <span>{{loggedin_user.username}}</span>
+  </button>
   <button class="btn-primary" mat-button (click)="logout()">
     Logout
   </button>
@@ -71,10 +75,6 @@
       <span>Tasks</span>
     </button>
   </div>
-  <button mat-button class="menu-button">
-    <mat-icon>person</mat-icon>
-    <span>Profile</span>
-  </button>
 
   <mat-divider></mat-divider>
 

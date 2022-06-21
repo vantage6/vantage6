@@ -55,6 +55,7 @@ import { TaskTableComponent } from './components/task/task-table/task-table.comp
 import { TaskViewComponent } from './components/task/task-view/task-view.component';
 import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
 import { ResultViewComponent } from './components/result/result-view/result-view.component';
+import { ProfileComponent } from './components/profile/profile.component';
 
 @NgModule({
   declarations: [
@@ -85,6 +86,7 @@ import { ResultViewComponent } from './components/result/result-view/result-view
     TaskViewComponent,
     TaskViewSingleComponent,
     ResultViewComponent,
+    ProfileComponent,
   ],
   imports: [
     BrowserModule,

@@ -23,6 +23,7 @@ import { NodeTableComponent } from './components/node/node-table/node-table.comp
 import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
 import { TaskTableComponent } from './components/task/task-table/task-table.component';
 import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
+import { ProfileComponent } from './components/profile/profile.component';
 
 const routes: Routes = [
   {
@@ -36,6 +37,12 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   { path: '', redirectTo: '/home', pathMatch: 'full' },
+  {
+    path: 'profile',
+    component: ProfileComponent,
+    data: { requiresLogin: true },
+    canActivate: [AccessGuard],
+  },
   {
     path: 'collaboration',
     component: CollaborationComponent,

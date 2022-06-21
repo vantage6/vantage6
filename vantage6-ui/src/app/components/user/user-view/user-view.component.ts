@@ -28,6 +28,11 @@ export class UserViewComponent extends BaseViewComponent implements OnInit {
   }
 
   askConfirmDelete(): void {
-    super.askConfirmDelete(this.user, ResType.USER);
+    let message = '';
+    if (this.user.id === this.userPermission.user.id) {
+      message =
+        'This is your own account! You will be logged out if you delete it.';
+    }
+    super.askConfirmDelete(this.user, ResType.USER, message);
   }
 }

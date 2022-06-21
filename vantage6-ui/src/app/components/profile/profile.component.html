@@ -1,0 +1,34 @@
+<mat-card>
+  <h6>User details</h6>
+  <app-user-view
+    [user]="user"
+    (deletingResource)="signOut()"
+  ></app-user-view>
+  <h6>Reset your password</h6>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Old password:</td>
+      <input type="password" [(ngModel)]="old_password"/>
+    </tr>
+    <tr>
+      <td>Password:</td>
+      <td><input type="password" [(ngModel)]="user.password"/></td>
+    </tr>
+    <tr>
+      <td>Repeat password:</td>
+      <td>
+        <input type="password" [(ngModel)]="user.password_repeated"/>
+        <p class="inline text-warning" *ngIf="user.password != user.password_repeated">
+          Passwords do not match!
+        </p>
+      </td>
+    </tr>
+    <button mat-button class="btn btn-save" (click)="savePassword()">
+      Save new password
+    </button>
+  </table>
+</mat-card>
