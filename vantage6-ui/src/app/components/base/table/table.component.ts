@@ -46,6 +46,12 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   isExpansionDetailRow = (index: any, row: any) =>
     row.hasOwnProperty('detailRow');
 
+  sortBy(sorter: any) {
+    if (!sorter) return '';
+    else if (sorter instanceof String) return sorter.toLocaleLowerCase();
+    else return sorter;
+  }
+
   constructor(
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService

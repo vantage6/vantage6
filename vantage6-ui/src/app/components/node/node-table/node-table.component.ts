@@ -32,6 +32,7 @@ export class NodeTableComponent
   collaborations: Collaboration[] = [];
   current_collaboration: Collaboration | null;
   displayedColumns: string[] = [
+    'id',
     'name',
     'organization',
     'collaboration',
@@ -75,7 +76,7 @@ export class NodeTableComponent
       } else {
         sorter = item[property];
       }
-      return sorter ? sorter.toLocaleLowerCase() : '';
+      return this.sortBy(sorter);
     };
   }
 
