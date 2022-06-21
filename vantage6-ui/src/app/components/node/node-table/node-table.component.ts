@@ -118,6 +118,8 @@ export class NodeTableComponent
 
     await this.addCollaborationsToResources();
 
+    await this.addOrganizationsToResources();
+
     this.dataSource.data = this.resources;
   }
 
