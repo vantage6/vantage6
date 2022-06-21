@@ -143,6 +143,13 @@
               [user]="user"
               (deletingResource)="deleteUser(user)"
             ></app-user-view>
+            <div *ngIf="user.id===loggedin_user.id" class="inline">
+              <button mat-button class="btn btn-dflt btn-top-margin"
+                [routerLink]="['/profile']"
+                >
+                  Go to your profile page
+              </button>
+            </div>
           </mat-expansion-panel>
         </div>
         <button mat-button class="btn btn-dflt btn-top-margin"

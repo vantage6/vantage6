@@ -92,5 +92,12 @@
             [user]="element"
             (deletingResource)="deleteResource(element)"
     ></app-user-view>
+    <div *ngIf="element.id===loggedin_user.id" class="inline">
+      <button mat-button class="btn btn-dflt btn-top-margin"
+        [routerLink]="['/profile']"
+        >
+          Go to your profile page
+      </button>
+    </div>
 	</div>
 </ng-template>
