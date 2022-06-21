@@ -30,13 +30,13 @@ mat-sidenav {
 }
 
 .content {
-  height: calc(100vh - 88px);
+  min-height: calc(100vh - 88px);
+  background-color: v.$vtg-blue-opac03;
   border-radius: 10px;
   margin: 6px;
   margin-left: 32px;
-
-  // display: flex;
-  background-color: v.$vtg-blue-opac03;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
 }
 
 mat-sidenav-container {
@@ -72,5 +72,5 @@ mat-divider {
 }
 
 .vertical-spacer {
-  height: 25px;
+  height: 16px;
 }
