@@ -84,6 +84,11 @@
     </td>
   </tr>
 </table>
+<button *ngIf="userPermission.can('delete', 'task', org_id)"
+    mat-button class="btn btn-delete-strong"
+    (click)="askConfirmDelete()">
+  Delete
+</button>
 <h5>Results</h5>
 <div *ngIf="results.length !== 1; else singleResultBlock">
   <div *ngFor="let result of results">
@@ -104,8 +109,3 @@
     [result]="results[0]"
   ></app-result-view>
 </ng-template>
-<button *ngIf="userPermission.can('delete', 'task', org_id)"
-    mat-button class="btn btn-delete-strong"
-    (click)="askConfirmDelete()">
-  Delete
-</button>

@@ -215,6 +215,4 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   getCompletedText(task: Task) {
     return task.complete ? 'Yes' : 'No';
   }
-
-  getInitiatorName(task: Task) {}
 }
