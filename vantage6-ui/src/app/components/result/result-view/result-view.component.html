@@ -9,6 +9,14 @@
   </tr>
   <tr>
     <td>Log:</td>
-    <td>{{result.log}}</td>
+    <td>
+      <button *ngIf="result.log; else noLogBlock" mat-button class="btn btn-detail"
+          (click)="downloadLog()">
+        Download logs
+      </button>
+      <ng-template #noLogBlock>
+        No logs available
+      </ng-template>
+    </td>
   </tr>
 </table>
