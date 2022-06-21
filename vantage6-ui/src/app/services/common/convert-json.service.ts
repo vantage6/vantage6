@@ -178,7 +178,7 @@ export class ConvertJsonService {
       result: json.result,
       log: json.log,
       task_id: json.task_id,
-      organization_id: json.organization_id,
+      organization_id: json.organization,
       port_ids: port_ids,
       started_at: json.started_at,
       assigned_at: json.assigned_at,

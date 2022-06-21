@@ -8,6 +8,7 @@ import { Task, getEmptyTask, EMPTY_TASK } from 'src/app/interfaces/task';
 import { ResType } from 'src/app/shared/enum';
 import { Result } from 'src/app/interfaces/result';
 import { ResultDataService } from 'src/app/services/data/result-data.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
 
 @Component({
   selector: 'app-task-view',
@@ -30,7 +31,8 @@ export class TaskViewComponent
     protected apiTaskService: ApiTaskService,
     protected taskDataService: TaskDataService,
     protected modalService: ModalService,
-    private resultDataService: ResultDataService
+    private resultDataService: ResultDataService,
+    private orgDataService: OrgDataService
   ) {
     super(apiTaskService, taskDataService, modalService);
   }
@@ -43,6 +45,11 @@ export class TaskViewComponent
 
   async setResults(): Promise<void> {
     this.results = await this.resultDataService.get_by_task_id(this.task.id);
+
+    for (let r of this.results) {
+      if (r.organization_id)
+        r.organization = await this.orgDataService.get(r.organization_id);
+    }
   }
 
   askConfirmDelete(): void {
@@ -59,5 +66,11 @@ export class TaskViewComponent
 
   getDatabaseName(): string {
     return this.task.database ? this.task.database : 'default';
+  }
+
+  getResultPanelTitle(result: Result): string {
+    let title = result.name ? result.name : result.id.toString();
+    if (result.organization) title += ` (${result.organization.name})`;
+    return title;
   }
 }

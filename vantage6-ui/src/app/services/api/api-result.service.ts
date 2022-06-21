@@ -23,6 +23,8 @@ export class ApiResultService extends ApiService {
     return this.http.get(environment.api_url + '/task/' + task_id + '/result');
   }
 
+  // TODO this function is only required when creating/updating resources, so
+  // for a result it is never used I think (?)
   get_data(result: Result): any {
     let data: any = {
       name: result.name,

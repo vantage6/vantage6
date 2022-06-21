@@ -5,6 +5,10 @@
     <col span="1" style="width: 80%;"/>
   </colgroup>
   <tr>
+    <td>ID:</td>
+    <td>{{task.id}}</td>
+  </tr>
+  <tr>
     <td>Name:</td>
     <td>{{task.name}}</td>
   </tr>
@@ -81,19 +85,25 @@
   </tr>
 </table>
 <h5>Results</h5>
-<div *ngFor="let result of results">
-  <!-- // TODO refactor to separate component -->
-  <table style="width: 100%">
-    <colgroup>
-      <col span="1" style="width: 20%;"/>
-      <col span="1" style="width: 80%;"/>
-    </colgroup>
-    <tr>
-      <td>Log:</td>
-      <td>{{result.log}}</td>
-    </tr>
-  </table>
+<div *ngIf="results.length !== 1; else singleResultBlock">
+  <div *ngFor="let result of results">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          {{getResultPanelTitle(result)}}
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <app-result-view
+        [result]="result"
+      ></app-result-view>
+    </mat-expansion-panel>
+  </div>
 </div>
+<ng-template #singleResultBlock>
+  <app-result-view
+    [result]="results[0]"
+  ></app-result-view>
+</ng-template>
 <button *ngIf="userPermission.can('delete', 'task', org_id)"
     mat-button class="btn btn-delete-strong"
     (click)="askConfirmDelete()">
