@@ -1,0 +1,50 @@
+<table style="width: 100%">
+  <colgroup>
+    <col span="1" style="width: 20%;"/>
+    <col span="1" style="width: 80%;"/>
+  </colgroup>
+  <tr>
+    <td>ID:</td>
+    <td>{{result.id}}</td>
+  </tr>
+  <tr>
+    <td>Name:</td>
+    <td>{{result.name}}</td>
+  </tr>
+  <tr>
+    <td>Received:</td>
+    <td *ngIf="result.assigned_at !== null">{{result.assigned_at | date: "MMMM d, y, HH:mm:ss"}}</td>
+    <td *ngIf="result.assigned_at === null">Unknown</td>
+  </tr>
+  <tr>
+    <td>Started:</td>
+    <td *ngIf="result.started_at !== null">{{result.started_at | date: "MMMM d, y, HH:mm:ss"}}</td>
+    <td *ngIf="result.started_at === null">No</td>
+  </tr>
+  <tr>
+    <td>Finished:</td>
+    <td *ngIf="result.finished_at !== null">{{result.finished_at | date: "MMMM d, y, HH:mm:ss"}}</td>
+    <td *ngIf="result.finished_at === null">No</td>
+  </tr>
+  <tr>
+    <td>Log:</td>
+    <td>
+      <button *ngIf="result.log; else noLogBlock" mat-button class="btn btn-dflt"
+          (click)="downloadLog()">
+        Download logs
+      </button>
+      <ng-template #noLogBlock>
+        No logs available
+      </ng-template>
+    </td>
+  </tr>
+  <tr *ngIf="result.organization">
+    <td>Organization:</td>
+    <td>
+      <button mat-button class="btn btn-detail"
+          [routerLink]="['/organization', result.organization.id]">
+        {{result.organization.name}}
+      </button>
+    </td>
+  </tr>
+</table>

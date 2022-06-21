@@ -1,6 +1,8 @@
 import { Port } from 'src/app/interfaces/port';
+import { ResType } from '../shared/enum';
+import { deepcopy } from '../shared/utils';
+import { Organization } from './organization';
 
-// TODO include result?
 export interface Result {
   id: number;
   type: string;
@@ -8,10 +10,31 @@ export interface Result {
   input: string;
   result: string;
   log: string | null;
-  task_id: number; // TODO necessary?
+  task_id: number;
   organization_id: number;
-  ports: Port[];
+  organization?: Organization;
+  ports?: Port[];
+  port_ids: number[];
   started_at: Date | null;
   assigned_at: Date | null;
   finished_at: Date | null;
+}
+
+export const EMPTY_RESULT: Result = {
+  id: -1,
+  type: ResType.RESULT,
+  name: '',
+  input: '',
+  result: '',
+  log: null,
+  task_id: -1,
+  organization_id: -1,
+  port_ids: [],
+  started_at: null,
+  assigned_at: null,
+  finished_at: null,
+};
+
+export function getEmptyResult(): Result {
+  return deepcopy(EMPTY_RESULT);
 }

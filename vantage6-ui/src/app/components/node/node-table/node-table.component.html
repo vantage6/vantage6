@@ -46,6 +46,11 @@
 
 <div class="mat-elevation-z8">
   <table mat-table [dataSource]="dataSource" matSort>
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+      <td mat-cell *matCellDef="let elem">{{elem.id}}</td>
+    </ng-container>
+
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
       <td mat-cell *matCellDef="let elem">{{elem.name}}</td>
@@ -64,7 +69,7 @@
     <ng-container matColumnDef="details">
       <th mat-header-cell *matHeaderCellDef>Details</th>
       <td mat-cell *matCellDef="let elem">
-        <button mat-button class="btn btn-dflt" ngbDropdownItem [routerLink]="['/node', elem.id, 'view', elem.organization.id]">
+        <button mat-button class="btn btn-dflt" ngbDropdownItem [routerLink]="['/node', elem.id, 'view', elem.organization_id]">
           View node
         </button>
       </td>

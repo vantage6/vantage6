@@ -9,6 +9,7 @@ import { Organization } from 'src/app/interfaces/organization';
 import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { ResType } from 'src/app/shared/enum';
+import { Result } from 'src/app/interfaces/result';
 
 @Injectable({
   providedIn: 'root',
@@ -159,6 +160,29 @@ export class ConvertJsonService {
       database: json.database,
       complete: json.complete,
       children_ids: child_ids,
+    };
+  }
+
+  getResult(json: any): Result {
+    let port_ids = [];
+    if (json.port_ids) {
+      for (let port of json.port_ids) {
+        port_ids.push(port.id);
+      }
+    }
+    return {
+      id: json.id,
+      type: ResType.RESULT,
+      name: json.name,
+      input: json.input,
+      result: json.result,
+      log: json.log,
+      task_id: json.task_id,
+      organization_id: json.organization,
+      port_ids: port_ids,
+      started_at: json.started_at,
+      assigned_at: json.assigned_at,
+      finished_at: json.finished_at,
     };
   }
 }

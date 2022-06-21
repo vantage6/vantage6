@@ -25,7 +25,7 @@ export class RoleTableComponent
   show_default_roles: boolean = true;
   roles_without_defaults: Role[] = [];
 
-  displayedColumns: string[] = ['name', 'organization', 'description'];
+  displayedColumns: string[] = ['id', 'name', 'organization', 'description'];
 
   constructor(
     protected activatedRoute: ActivatedRoute,
@@ -46,7 +46,7 @@ export class RoleTableComponent
       } else {
         sorter = item[property];
       }
-      return sorter ? sorter.toLocaleLowerCase() : '';
+      return this.sortBy(sorter);
     };
   }
 

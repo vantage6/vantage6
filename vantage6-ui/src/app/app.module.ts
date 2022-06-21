@@ -54,6 +54,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { TaskTableComponent } from './components/task/task-table/task-table.component';
 import { TaskViewComponent } from './components/task/task-view/task-view.component';
 import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
+import { ResultViewComponent } from './components/result/result-view/result-view.component';
 
 @NgModule({
   declarations: [
@@ -83,6 +84,7 @@ import { TaskViewSingleComponent } from './components/task/task-view-single/task
     TaskTableComponent,
     TaskViewComponent,
     TaskViewSingleComponent,
+    ResultViewComponent,
   ],
   imports: [
     BrowserModule,

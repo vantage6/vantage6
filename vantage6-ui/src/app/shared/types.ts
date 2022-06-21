@@ -5,6 +5,7 @@ import { Rule } from 'src/app/interfaces/rule';
 import { Node, NodeWithOrg } from 'src/app/interfaces/node';
 import { Organization } from 'src/app/interfaces/organization';
 import { Task } from 'src/app/interfaces/task';
+import { Result } from '../interfaces/result';
 
 export type Resource =
   | User
@@ -13,7 +14,8 @@ export type Resource =
   | Organization
   | Collaboration
   | Node
-  | Task;
+  | Task
+  | Result;
 
 export type ResourceWithOrg = RoleWithOrg | UserWithOrg | NodeWithOrg;
 

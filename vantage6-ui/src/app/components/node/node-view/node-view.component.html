@@ -15,7 +15,7 @@
     </tr>
     <tr>
       <td>Last node-server contact:</td>
-      <td *ngIf="node.last_seen !== null">{{node.last_seen.toString()}}</td>
+      <td *ngIf="node.last_seen !== null">{{node.last_seen | date: "MMMM d, y, HH:mm:ss"}}</td>
       <td *ngIf="node.last_seen === null">Never - this node has not yet been online!</td>
     </tr>
     <tr *ngIf="node.ip !== null">

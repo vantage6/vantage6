@@ -24,6 +24,7 @@ export class UserTableComponent extends TableComponent implements OnInit {
   roles: Role[] = [];
 
   displayedColumns: string[] = [
+    'id',
     'username',
     'email',
     'first_name',
@@ -51,7 +52,7 @@ export class UserTableComponent extends TableComponent implements OnInit {
       } else {
         sorter = item[property];
       }
-      return sorter ? sorter.toLocaleLowerCase() : '';
+      return this.sortBy(sorter);
     };
   }
 

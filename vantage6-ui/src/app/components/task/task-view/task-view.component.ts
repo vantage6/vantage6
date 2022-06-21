@@ -1,13 +1,14 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ApiTaskService } from 'src/app/services/api/api-task.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';
-import { Task, getEmptyTask } from 'src/app/interfaces/task';
+import { Task, getEmptyTask, EMPTY_TASK } from 'src/app/interfaces/task';
 import { ResType } from 'src/app/shared/enum';
-import { Collaboration } from 'src/app/interfaces/collaboration';
-import { Organization } from 'src/app/interfaces/organization';
+import { Result } from 'src/app/interfaces/result';
+import { ResultDataService } from 'src/app/services/data/result-data.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
 
 @Component({
   selector: 'app-task-view',
@@ -17,17 +18,38 @@ import { Organization } from 'src/app/interfaces/organization';
     './task-view.component.scss',
   ],
 })
-export class TaskViewComponent extends BaseViewComponent implements OnInit {
+export class TaskViewComponent
+  extends BaseViewComponent
+  implements OnInit, OnChanges
+{
   @Input() task: Task = getEmptyTask();
   @Input() org_id: number = -1;
+  results: Result[] = [];
 
   constructor(
     public userPermission: UserPermissionService,
     protected apiTaskService: ApiTaskService,
     protected taskDataService: TaskDataService,
-    protected modalService: ModalService
+    protected modalService: ModalService,
+    private resultDataService: ResultDataService,
+    private orgDataService: OrgDataService
   ) {
     super(apiTaskService, taskDataService, modalService);
+  }
+
+  ngOnChanges() {
+    if (this.task.id !== EMPTY_TASK.id) {
+      this.setResults();
+    }
+  }
+
+  async setResults(): Promise<void> {
+    this.results = await this.resultDataService.get_by_task_id(this.task.id);
+
+    for (let r of this.results) {
+      if (r.organization_id)
+        r.organization = await this.orgDataService.get(r.organization_id);
+    }
   }
 
   askConfirmDelete(): void {
@@ -44,5 +66,11 @@ export class TaskViewComponent extends BaseViewComponent implements OnInit {
 
   getDatabaseName(): string {
     return this.task.database ? this.task.database : 'default';
+  }
+
+  getResultPanelTitle(result: Result): string {
+    let title = result.name ? result.name : result.id.toString();
+    if (result.organization) title += ` (${result.organization.name})`;
+    return title;
   }
 }

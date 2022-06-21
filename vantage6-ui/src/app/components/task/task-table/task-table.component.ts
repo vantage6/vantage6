@@ -28,12 +28,13 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   displayMode = DisplayMode.ALL;
 
   displayedColumns: string[] = [
+    'id',
     'name',
     // 'description',
     'image',
     'collaboration',
     'initiator',
-    'completed',
+    'complete',
   ];
 
   constructor(
@@ -72,7 +73,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       } else {
         sorter = item[property];
       }
-      return sorter ? sorter.toLocaleLowerCase() : '';
+      return this.sortBy(sorter);
     };
   }
 
@@ -214,6 +215,4 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   getCompletedText(task: Task) {
     return task.complete ? 'Yes' : 'No';
   }
-
-  getInitiatorName(task: Task) {}
 }
