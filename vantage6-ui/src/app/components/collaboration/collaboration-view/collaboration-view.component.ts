@@ -1,4 +1,11 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import {
@@ -7,6 +14,7 @@ import {
 } from 'src/app/interfaces/collaboration';
 import { getEmptyNode } from 'src/app/interfaces/node';
 import { Task } from 'src/app/interfaces/task';
+import { Node } from 'src/app/interfaces/node';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
@@ -33,6 +41,7 @@ export class CollaborationViewComponent
   implements OnInit, OnChanges
 {
   @Input() collaboration: Collaboration = EMPTY_COLLABORATION;
+  @Output() createdNode = new EventEmitter<Node>();
   orgs_without_nodes: OrganizationInCollaboration[] = [];
   tasks: Task[] = [];
   n_completed_tasks: number = 0;
@@ -144,6 +153,7 @@ configuration file for the node using 'vnode new'.`,
         org.node = this.convertJsonService.getNode(node_json);
         // store the node
         this.nodeDataService.save(org.node);
+        this.createdNode.emit(org.node);
       },
       (error) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
