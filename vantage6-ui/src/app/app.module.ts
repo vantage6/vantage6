@@ -40,7 +40,6 @@ import { RoleEditComponent } from './components/role/role-edit/role-edit.compone
 import { ModalDeleteComponent } from './components/modal/modal-delete/modal-delete.component';
 import { ModalMessageComponent } from './components/modal/modal-message/modal-message.component';
 import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
-import { CollaborationComponent } from './components/collaboration/collaboration.component';
 import { CollaborationViewComponent } from './components/collaboration/collaboration-view/collaboration-view.component';
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
@@ -56,6 +55,7 @@ import { TaskViewComponent } from './components/task/task-view/task-view.compone
 import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
 import { ResultViewComponent } from './components/result/result-view/result-view.component';
 import { ProfileComponent } from './components/profile/profile.component';
+import { CollaborationTableComponent } from './components/collaboration/collaboration-table/collaboration-table.component';
 
 @NgModule({
   declarations: [
@@ -72,7 +72,6 @@ import { ProfileComponent } from './components/profile/profile.component';
     ModalDeleteComponent,
     ModalMessageComponent,
     OrganizationEditComponent,
-    CollaborationComponent,
     CollaborationViewComponent,
     NodeViewComponent,
     ModalEditComponent,
@@ -87,6 +86,7 @@ import { ProfileComponent } from './components/profile/profile.component';
     TaskViewSingleComponent,
     ResultViewComponent,
     ProfileComponent,
+    CollaborationTableComponent,
   ],
   imports: [
     BrowserModule,

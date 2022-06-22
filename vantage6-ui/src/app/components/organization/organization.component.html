@@ -56,7 +56,7 @@
           </button>
         </div>
         <div class="vertical-spacer"></div>
-        <div *ngFor="let col of collaborations">
+        <div *ngFor="let col of collaborations | slice:0:MAX_ITEMS_DISPLAY">
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
@@ -69,6 +69,12 @@
             ></app-collaboration-view>
           </mat-expansion-panel>
         </div>
+        <button mat-button class="btn btn-dflt btn-top-margin"
+          *ngIf="collaborations.length > MAX_ITEMS_DISPLAY"
+          [routerLink]="['/collaborations', current_organization.id]"
+          >
+            View all collaborations
+        </button>
       </mat-card>
 
       <mat-card>
@@ -183,7 +189,7 @@
             </button>
           </mat-expansion-panel>
         </div>
-        <button mat-button class="btn btn-dflt"
+        <button mat-button class="btn btn-dflt btn-top-margin"
           *ngIf="organization_nodes.length > MAX_ITEMS_DISPLAY"
           [routerLink]="['/nodes', current_organization.id]"
           >

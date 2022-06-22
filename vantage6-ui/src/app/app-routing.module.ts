@@ -14,7 +14,6 @@ import { OrganizationComponent } from './components/organization/organization.co
 import { UserEditComponent } from './components/user/user-edit/user-edit.component';
 import { RoleEditComponent } from './components/role/role-edit/role-edit.component';
 import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
-import { CollaborationComponent } from './components/collaboration/collaboration.component';
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
@@ -24,6 +23,7 @@ import { CollaborationViewSingleComponent } from './components/collaboration/col
 import { TaskTableComponent } from './components/task/task-table/task-table.component';
 import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
 import { ProfileComponent } from './components/profile/profile.component';
+import { CollaborationTableComponent } from './components/collaboration/collaboration-table/collaboration-table.component';
 
 const routes: Routes = [
   {
@@ -41,16 +41,6 @@ const routes: Routes = [
     path: 'profile',
     component: ProfileComponent,
     data: { requiresLogin: true },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'collaboration',
-    component: CollaborationComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.COLLABORATION,
-    },
     canActivate: [AccessGuard],
   },
   {
@@ -224,6 +214,26 @@ const routes: Routes = [
       requiresLogin: true,
       permissionType: OpsType.VIEW,
       permissionResource: ResType.USER,
+    },
+    canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'collaborations',
+    component: CollaborationTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.COLLABORATION,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'collaborations/:org_id',
+    component: CollaborationTableComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.COLLABORATION,
     },
     canActivate: [AccessGuardByOrgId],
   },

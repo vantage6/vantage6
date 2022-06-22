@@ -39,7 +39,7 @@ export class CollabDataService extends BaseDataService {
   }
 
   async list(
-    organizations: Organization[],
+    organizations: Organization[] = [],
     nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration[]>> {
@@ -54,7 +54,7 @@ export class CollabDataService extends BaseDataService {
 
   async org_list(
     organization_id: number,
-    organizations: Organization[],
+    organizations: Organization[] = [],
     nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Collaboration[]> {
