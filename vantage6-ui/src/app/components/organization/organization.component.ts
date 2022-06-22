@@ -195,11 +195,8 @@ export class OrganizationComponent implements OnInit {
     );
   }
 
-  async updateNodeList(): Promise<void> {
-    this.organization_nodes = await this.nodeDataService.org_list(
-      this.route_org_id,
-      true
-    );
+  updateNodeList(node: Node) {
+    this.organization_nodes.push(node);
   }
 
   async setCollaborations(): Promise<void> {
