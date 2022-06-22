@@ -14,7 +14,6 @@ import { OrganizationComponent } from './components/organization/organization.co
 import { UserEditComponent } from './components/user/user-edit/user-edit.component';
 import { RoleEditComponent } from './components/role/role-edit/role-edit.component';
 import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
-import { CollaborationComponent } from './components/collaboration/collaboration.component';
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
@@ -42,16 +41,6 @@ const routes: Routes = [
     path: 'profile',
     component: ProfileComponent,
     data: { requiresLogin: true },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'collaboration',
-    component: CollaborationComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.COLLABORATION,
-    },
     canActivate: [AccessGuard],
   },
   {

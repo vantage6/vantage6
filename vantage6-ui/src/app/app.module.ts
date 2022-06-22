@@ -40,7 +40,6 @@ import { RoleEditComponent } from './components/role/role-edit/role-edit.compone
 import { ModalDeleteComponent } from './components/modal/modal-delete/modal-delete.component';
 import { ModalMessageComponent } from './components/modal/modal-message/modal-message.component';
 import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
-import { CollaborationComponent } from './components/collaboration/collaboration.component';
 import { CollaborationViewComponent } from './components/collaboration/collaboration-view/collaboration-view.component';
 import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
@@ -73,7 +72,6 @@ import { CollaborationTableComponent } from './components/collaboration/collabor
     ModalDeleteComponent,
     ModalMessageComponent,
     OrganizationEditComponent,
-    CollaborationComponent,
     CollaborationViewComponent,
     NodeViewComponent,
     ModalEditComponent,

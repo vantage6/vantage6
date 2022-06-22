@@ -37,14 +37,6 @@
   </div>
   <div *ngIf="userPermission.hasPermission('view', 'collaboration', '*')">
     <button mat-button class="menu-button"
-            [routerLink]="['/collaboration']"
-            routerLinkActive="menu-is-active">
-      <mat-icon>train</mat-icon>
-      <span>Collaborations</span>
-    </button>
-  </div>
-  <div *ngIf="userPermission.hasPermission('view', 'collaboration', '*')">
-    <button mat-button class="menu-button"
             [routerLink]="['/collaborations']"
             routerLinkActive="menu-is-active">
       <mat-icon>train</mat-icon>
