@@ -1,24 +1,26 @@
 import {
   Component,
+  EventEmitter,
   Input,
   OnChanges,
   OnInit,
   Output,
-  EventEmitter,
 } from '@angular/core';
 
 import { Role } from 'src/app/interfaces/role';
 import { Rule, RuleGroup } from 'src/app/interfaces/rule';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import {
   arrayContainsObjWithId,
   arrayIdsEqual,
   deepcopy,
+  getIdsFromArray,
   removeArrayDoubles,
-  removeMatchedIdFromArray,
+  removeMatchedIdsFromArray,
 } from 'src/app/shared/utils';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { OpsType } from 'src/app/shared/enum';
 
 @Component({
   selector: 'app-permission-table',
@@ -226,14 +228,56 @@ export class PermissionTableComponent implements OnInit, OnChanges {
     return true;
   }
 
-  selectOrDeselect(rule: Rule): void {
+  selectOrDeselect(rule: Rule, rule_group: RuleGroup): void {
     if (!rule.is_assigned_to_user) {
-      this.added_rules.push(rule);
+      let rules_to_add = this.getRulesToAdd(rule, rule_group);
+      this.added_rules.push(...rules_to_add);
     } else {
-      this.added_rules = removeMatchedIdFromArray(this.added_rules, rule.id);
+      let rules_to_delete = this.getRulesToDelete(rule, rule_group);
+      this.added_rules = removeMatchedIdsFromArray(
+        this.added_rules,
+        getIdsFromArray(rules_to_delete)
+      );
     }
     rule.is_assigned_to_user = !rule.is_assigned_to_user;
     this.addedRulesChangeEvent.emit(this.added_rules);
+  }
+
+  private getRulesToAdd(rule: Rule, rule_group: RuleGroup): Rule[] {
+    // If someone selects the rule to edit, create, or delete a resource, they
+    // must always be able to view that resource (otherwise assigning that rule
+    // makes little sense). This functions adds the relevant VIEW rule in case
+    // the user did not have it yet
+    let rules_to_add = [rule];
+    if (rule.operation !== OpsType.VIEW) {
+      for (let r of rule_group.rules) {
+        if (r.operation === OpsType.VIEW && !r.is_assigned_to_user) {
+          rules_to_add.push(r);
+        }
+      }
+    }
+    return rules_to_add;
+  }
+
+  private getRulesToDelete(rule: Rule, rule_group: RuleGroup): Rule[] {
+    // This function is the reverse of getRulesToAdd(): if someone has
+    // permission to view and edit/create/delete a resource, and the view
+    // rule is removed from the user, the edit etc rules should also be deleted
+    // because the user can no longer see them (unless they are specifically
+    // part of a role)
+    let rules_to_delete = [rule];
+    if (rule.operation === OpsType.VIEW) {
+      for (let r of rule_group.rules) {
+        if (
+          r.operation !== OpsType.VIEW &&
+          r.is_assigned_to_user &&
+          !r.is_part_role
+        ) {
+          rules_to_delete.push(r);
+        }
+      }
+    }
+    return rules_to_delete;
   }
 
   selectOrDeselectScope(rule_group: RuleGroup): void {
@@ -244,14 +288,14 @@ export class PermissionTableComponent implements OnInit, OnChanges {
       // deselect rules in scope that are not part of a role
       for (let rule of rule_group.rules) {
         if (!rule.is_part_role) {
-          this.selectOrDeselect(rule);
+          this.selectOrDeselect(rule, rule_group);
         }
       }
     } else {
       // select all remaining rules that can be assigned to the user
       for (let rule of rule_group.rules) {
         if (!rule.is_assigned_to_user && rule.is_assigned_to_loggedin) {
-          this.selectOrDeselect(rule);
+          this.selectOrDeselect(rule, rule_group);
           rule.is_part_role = false;
         }
       }
