@@ -34,8 +34,9 @@
           {{current_organization.country}}<br/>
           {{current_organization.domain}}
         </address>
-        <button mat-button class="btn btn-dflt btn-in-block" (click)="showPublicKey()">
-          View public key
+        <button mat-button *ngIf="current_organization.public_key"
+          class="btn btn-dflt btn-in-block" (click)="downloadPublicKey()">
+          Download public key
         </button>
         <button *ngIf="userPermission.can('edit', 'organization', current_organization.id)"
                 mat-button class="btn-edit"
