@@ -93,10 +93,11 @@ export class CollaborationEditComponent
   }
 
   async save(): Promise<void> {
-    let collab_json = await super.save(this.collaboration);
+    let collab_json = await super.save(this.collaboration, false);
     if (this.isCreate()) {
       await this.addNewCollaboration(collab_json);
     }
+    this.utilsService.goToPreviousPage();
   }
 
   async addNewCollaboration(new_collab_json: any) {
