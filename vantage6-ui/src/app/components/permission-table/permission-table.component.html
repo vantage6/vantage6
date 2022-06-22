@@ -30,7 +30,7 @@
           <button *ngFor="let rule of rule_group.rules"
             [className]="getClass(rule)"
             [disabled]="isDisabled(rule)"
-            (click)="selectOrDeselect(rule)"
+            (click)="selectOrDeselect(rule, rule_group)"
           >
             {{rule.operation | titlecase}}
           </button>
