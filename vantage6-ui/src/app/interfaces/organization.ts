@@ -11,7 +11,7 @@ export interface Organization {
   zipcode: string;
   country: string;
   domain: string;
-  public_key: string;
+  public_key: string | null;
   is_being_created?: boolean;
   collaboration_ids: number[];
 }

@@ -31,6 +31,7 @@ import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
+import { FileService } from 'src/app/services/common/file.service';
 
 @Component({
   selector: 'app-organization',
@@ -65,7 +66,8 @@ export class OrganizationComponent implements OnInit {
     private nodeDataService: NodeDataService,
     private collabDataService: CollabDataService,
     private modalService: ModalService,
-    private utilsService: UtilsService
+    private utilsService: UtilsService,
+    private fileService: FileService
   ) {}
 
   // TODO Now it is shown that there are no users/roles until they are loaded,
@@ -241,11 +243,11 @@ export class OrganizationComponent implements OnInit {
     this.collaborations = removeMatchedIdFromArray(this.collaborations, col.id);
   }
 
-  showPublicKey(): void {
-    this.modalService.openMessageModal(ModalMessageComponent, [
-      'The public key is:',
-      this.current_organization.public_key,
-    ]);
-    // TODO add functionality to modify the public key
+  downloadPublicKey(): void {
+    if (this.current_organization.public_key)
+      this.fileService.downloadTxtFile(
+        this.current_organization.public_key,
+        `public_key_organization_${this.current_organization.name}.pub`
+      );
   }
 }

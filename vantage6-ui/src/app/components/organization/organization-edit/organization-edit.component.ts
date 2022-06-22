@@ -14,6 +14,7 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { BaseEditComponent } from 'src/app/components/base/base-edit/base-edit.component';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { FileService } from 'src/app/services/common/file.service';
 
 @Component({
   selector: 'app-organization-edit',
@@ -28,6 +29,8 @@ export class OrganizationEditComponent
   implements OnInit
 {
   organization: Organization = getEmptyOrganization();
+  public_key_file: File | null = null;
+  delete_public_key: boolean = false;
 
   constructor(
     protected router: Router,
@@ -36,7 +39,8 @@ export class OrganizationEditComponent
     protected orgDataService: OrgDataService,
     protected modalService: ModalService,
     protected utilsService: UtilsService,
-    public userPermission: UserPermissionService
+    public userPermission: UserPermissionService,
+    private fileService: FileService
   ) {
     super(
       router,
@@ -74,7 +78,32 @@ export class OrganizationEditComponent
   }
 
   async save(): Promise<void> {
+    if (this.delete_public_key) {
+      this.organization.public_key = null;
+    }
+    const new_public_key = await this.readUploadedFile();
+    if (new_public_key) {
+      this.organization.public_key = new_public_key;
+    }
     let org_json = await super.save(this.organization, false);
     this.router.navigate([`/organization/${org_json.id}`]);
+  }
+
+  uploadPublicKey($event: any): void {
+    this.public_key_file = this.fileService.uploadFile($event);
+  }
+
+  uploadPublicKeyText(): string {
+    return this.organization.public_key
+      ? 'Upload new public key:'
+      : 'Upload public key:';
+  }
+
+  async readUploadedFile(): Promise<string | undefined> {
+    if (this.public_key_file) {
+      return await this.fileService.readFile(this.public_key_file as File);
+    } else {
+      return undefined;
+    }
   }
 }
