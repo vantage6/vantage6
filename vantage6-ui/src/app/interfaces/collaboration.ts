@@ -1,5 +1,6 @@
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { ResType } from 'src/app/shared/enum';
+import { deepcopy } from '../shared/utils';
 
 export interface Collaboration {
   id: number;
@@ -18,3 +19,7 @@ export const EMPTY_COLLABORATION = {
   organizations: [],
   organization_ids: [],
 };
+
+export function getEmptyCollaboration(): Collaboration {
+  return deepcopy(EMPTY_COLLABORATION);
+}

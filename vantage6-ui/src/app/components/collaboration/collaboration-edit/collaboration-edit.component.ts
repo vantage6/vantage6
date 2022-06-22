@@ -1,16 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import {
   Collaboration,
-  EMPTY_COLLABORATION,
+  getEmptyCollaboration,
 } from 'src/app/interfaces/collaboration';
+import { getEmptyNode, Node } from 'src/app/interfaces/node';
+import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
+import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
-import { ResType } from 'src/app/shared/enum';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
+import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import {
   deepcopy,
@@ -18,12 +22,7 @@ import {
   removeMatchedIdFromArray,
   removeMatchedIdsFromArray,
 } from 'src/app/shared/utils';
-import { ApiNodeService } from 'src/app/services/api/api-node.service';
-import { Node, getEmptyNode } from 'src/app/interfaces/node';
-import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
-import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { BaseEditComponent } from '../../base/base-edit/base-edit.component';
-import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 
 @Component({
   selector: 'app-collaboration-edit',
@@ -37,7 +36,7 @@ export class CollaborationEditComponent
   extends BaseEditComponent
   implements OnInit
 {
-  collaboration: Collaboration = EMPTY_COLLABORATION;
+  collaboration: Collaboration = getEmptyCollaboration();
   all_organizations: OrganizationInCollaboration[] = [];
   organizations_not_in_collab: OrganizationInCollaboration[] = [];
   is_register_nodes: boolean = true;
