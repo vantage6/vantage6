@@ -10,6 +10,7 @@ import { ApiCollaborationService } from '../api/api-collaboration.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 import { JsonpClientBackend } from '@angular/common/http';
+import { deepcopy } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -128,7 +129,7 @@ export class CollabDataService extends BaseDataService {
     for (let org_id of c.organization_ids) {
       for (let org of orgs) {
         if (org.id === org_id) {
-          c.organizations.push(org);
+          c.organizations.push(deepcopy(org));
         }
       }
     }
