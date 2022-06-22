@@ -47,11 +47,11 @@
         </ng-template>
       </td>
     </tr>
-    <tr *ngIf="isCreate()">
+    <tr *ngIf="isCreate() || hasNewOrgsInCollab()">
       <td></td>
       <td>
         <mat-checkbox [(ngModel)]="is_register_nodes">
-          Register nodes
+          {{registerNodeText()}}
         </mat-checkbox>
       </td>
     </tr>

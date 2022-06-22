@@ -30,6 +30,18 @@ export function removeDuplicateIds(array: any[]): any[] {
   );
 }
 
+export function filterByOtherArrayIds(
+  big_array: any[],
+  small_array: any[]
+): any[] {
+  // return all objects in big array with ids that do NOT occur in the small array
+  return big_array.filter((big) => {
+    return small_array.every((small) => {
+      return small.id !== big.id;
+    });
+  });
+}
+
 export function getById(array: any[], id: number): any | undefined {
   return array.find((x) => x.id === id);
 }
