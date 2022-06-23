@@ -72,6 +72,22 @@ export abstract class BaseDataService {
     return this.resource_list.asObservable();
   }
 
+  async list_with_params_base(
+    convertJsonFunc: Function,
+    additionalConvertArgs: Resource[][] = [],
+    request_params: any
+  ): Promise<Resource[]> {
+    // TODO find a way to detect if this query was sent before, now it is
+    // always repeated
+    const resources = await this.apiService.getResources(
+      convertJsonFunc,
+      additionalConvertArgs,
+      request_params
+    );
+    this.saveMultiple(resources);
+    return resources;
+  }
+
   async org_list_base(
     organization_id: number,
     convertJsonFunc: Function,

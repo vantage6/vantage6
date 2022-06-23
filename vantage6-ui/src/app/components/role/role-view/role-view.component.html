@@ -7,6 +7,16 @@
     <td>Description:</td>
     <td>{{role.description}}</td>
   </tr>
+  <tr *ngIf="users_with_this_role &&
+              (userPermission.hasPermission('view', 'user', 'organization') ||
+               userPermission.hasPermission('view', 'user', 'global'))">
+    <td>Users with this role:</td>
+    <td>
+      <div *ngFor="let user of users_with_this_role" class="inline">
+        {{user.username}}
+      </div>
+    </td>
+  </tr>
 </table>
 This role gives the following permissions:
 <app-permission-table
