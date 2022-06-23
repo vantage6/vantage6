@@ -75,7 +75,8 @@ export abstract class BaseDataService {
   async list_with_params_base(
     convertJsonFunc: Function,
     additionalConvertArgs: Resource[][] = [],
-    request_params: any
+    request_params: any,
+    save: boolean = true
   ): Promise<Resource[]> {
     // TODO find a way to detect if this query was sent before, now it is
     // always repeated
@@ -84,7 +85,7 @@ export abstract class BaseDataService {
       additionalConvertArgs,
       request_params
     );
-    this.saveMultiple(resources);
+    if (save) this.saveMultiple(resources);
     return resources;
   }
 

@@ -7,13 +7,17 @@
     <td>Description:</td>
     <td>{{role.description}}</td>
   </tr>
-  <tr *ngIf="users_with_this_role &&
+  <tr *ngIf="users_with_this_role.length > 0 &&
               (userPermission.hasPermission('view', 'user', 'organization') ||
                userPermission.hasPermission('view', 'user', 'global'))">
     <td>Users with this role:</td>
     <td>
-      <div *ngFor="let user of users_with_this_role" class="inline">
-        {{user.username}}
+      <div *ngFor="let user of users_with_this_role" class="inline"
+          [routerLink]="['/user/view', user.id, user.organization_id]">
+        <button mat-button class="btn btn-detail inline"
+          [routerLink]="['/user/view', user.id, user.organization_id]">
+            {{getUserNameText(user)}}
+        </button>
       </div>
     </td>
   </tr>

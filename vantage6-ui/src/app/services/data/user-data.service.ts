@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
-import { Resource } from 'src/app/shared/types';
 import { ApiUserService } from '../api/api-user.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
@@ -34,8 +33,8 @@ export class UserDataService extends BaseDataService {
   }
 
   async list(
-    roles: Role[] = [],
-    rules: Rule[] = [],
+    roles: Role[],
+    rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Observable<User[]>> {
     return (await super.list_base(
@@ -48,12 +47,14 @@ export class UserDataService extends BaseDataService {
   async list_with_params(
     roles: Role[] = [],
     rules: Rule[] = [],
-    request_params: any = {}
+    request_params: any = {},
+    save: boolean = true
   ): Promise<User[]> {
     return (await super.list_with_params_base(
       this.convertJsonService.getUser,
       [roles, rules],
-      request_params
+      request_params,
+      save
     )) as User[];
   }
 

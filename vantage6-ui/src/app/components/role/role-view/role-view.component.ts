@@ -46,7 +46,8 @@ export class RoleViewComponent
       [],
       {
         role_id: this.role.id,
-      }
+      },
+      false
     );
   }
 
@@ -60,5 +61,11 @@ export class RoleViewComponent
       ResType.ROLE,
       'This role will also be deleted from any users that possess this role.'
     );
+  }
+
+  getUserNameText(user: User): string {
+    return user.first_name
+      ? `${user.first_name} ${user.last_name}`
+      : user.username;
   }
 }
