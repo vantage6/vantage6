@@ -42,6 +42,14 @@ export function filterByOtherArrayIds(
   });
 }
 
+export function filterArray(array: any[], to_remove: any[]): any[] {
+  return array.filter((el) => !to_remove.includes(el));
+}
+
+export function removeValueFromArray(array: any[], value: any): any[] {
+  return array.filter((el) => el !== value);
+}
+
 export function getById(array: any[], id: number): any | undefined {
   return array.find((x) => x.id === id);
 }

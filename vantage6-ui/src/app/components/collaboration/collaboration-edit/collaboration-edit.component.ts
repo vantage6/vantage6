@@ -23,6 +23,7 @@ import {
   getIdsFromArray,
   removeMatchedIdFromArray,
   removeMatchedIdsFromArray,
+  removeValueFromArray,
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../../base/base-edit/base-edit.component';
 
@@ -175,6 +176,7 @@ export class CollaborationEditComponent
       ...this.collaboration.organizations,
       org,
     ];
+    this.collaboration.organization_ids.push(org.id);
     // remove organization from list that can be added
     this.organizations_not_in_collab = removeMatchedIdFromArray(
       this.organizations_not_in_collab,
@@ -186,6 +188,10 @@ export class CollaborationEditComponent
     // remove organization from collaboration
     this.collaboration.organizations = removeMatchedIdFromArray(
       this.collaboration.organizations,
+      org.id
+    );
+    this.collaboration.organization_ids = removeValueFromArray(
+      this.collaboration.organization_ids,
       org.id
     );
     // add organization to list of organizations that may be added to collab
