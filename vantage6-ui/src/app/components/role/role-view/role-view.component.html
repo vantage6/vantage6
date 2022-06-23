@@ -14,7 +14,7 @@
     <td>
       <div *ngFor="let user of users_with_this_role" class="inline"
           [routerLink]="['/user/view', user.id, user.organization_id]">
-        <button mat-button class="btn btn-detail inline"
+        <button mat-button class="btn btn-link inline"
           [routerLink]="['/user/view', user.id, user.organization_id]">
             {{getUserNameText(user)}}
         </button>

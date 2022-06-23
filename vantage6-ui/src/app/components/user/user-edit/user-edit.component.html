@@ -53,7 +53,7 @@
         <td>
         <div *ngIf="user.id===loggedin_user.id; else modifyRulesBlock">
           <div *ngFor="let role of user.roles" class="inline">
-            <button mat-button class="btn btn-detail btn-inline" disabled>
+            <button mat-button class="btn btn-link btn-inline" disabled>
               {{role.name}}
             </button>
           </div>

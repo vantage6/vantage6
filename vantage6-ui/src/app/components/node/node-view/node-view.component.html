@@ -25,7 +25,7 @@
     <tr *ngIf="node.organization">
       <td>Organization:</td>
       <td>
-        <button mat-button class="btn btn-detail"
+        <button mat-button class="btn btn-link"
             [routerLink]="['/organization', node.organization.id]">
           {{node.organization.name}}
         </button>
@@ -34,7 +34,7 @@
     <tr *ngIf="node.collaboration">
       <td>Collaboration:</td>
       <td>
-        <button mat-button class="btn btn-detail"
+        <button mat-button class="btn btn-link"
             [routerLink]="['/collaboration', node.collaboration.id, node.organization_id]">
           {{node.collaboration.name}}
         </button>

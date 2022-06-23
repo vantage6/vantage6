@@ -24,7 +24,7 @@
     <td>Collaboration:</td>
     <td>
       <button mat-button
-          class="btn btn-detail inline"
+          class="btn btn-link inline"
           [routerLink]="['/collaboration/', task.collaboration_id, org_id]">
         {{getCollaborationName()}}
       </button>
@@ -46,7 +46,7 @@
       <td>Initiator:</td>
       <td>
         <button mat-button
-            class="btn btn-detail inline"
+            class="btn btn-link inline"
             [routerLink]="['/organization/', task.initiator_id]">
           {{getInitiatorName()}}
         </button>
@@ -57,7 +57,7 @@
     <td>Parent:</td>
     <td>
       <button mat-button *ngIf="task.parent_id; else noParentBlock"
-          class="btn btn-detail inline"
+          class="btn btn-link inline"
           [routerLink]="['/task/view', task.parent_id, org_id]">
         Task #{{task.parent_id}}
       </button>
@@ -72,7 +72,7 @@
       <div *ngIf="task.children_ids.length > 0; else noChildrenBlock">
         <div *ngFor="let child_id of task.children_ids">
           <button mat-button
-              class="btn btn-detail inline"
+              class="btn btn-link inline"
               [routerLink]="['/task/view', child_id, org_id]">
             Task #{{child_id}}
           </button>

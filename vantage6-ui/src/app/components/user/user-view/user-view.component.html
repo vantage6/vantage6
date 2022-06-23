@@ -23,7 +23,7 @@
     <td>Role(s):</td>
     <td>
       <div *ngFor="let role of user.roles" class="inline">
-          <button mat-button class="btn-detail inline"
+          <button mat-button class="btn-link inline"
               [routerLink]="['/role/view', role.id, user.organization_id]">
             {{role.name}}
           </button>
@@ -37,7 +37,7 @@
     <td>Extra rules:</td>
     <td>
       <div *ngFor="let rule of user.rules" class="inline">
-        <button mat-button class="btn-detail inline" disabled>
+        <button mat-button class="btn-link inline" disabled>
           {{rule.operation}} {{rule.resource}} ({{rule.scope}})
         </button>
       </div>

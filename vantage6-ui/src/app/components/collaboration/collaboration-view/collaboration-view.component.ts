@@ -79,7 +79,7 @@ export class CollaborationViewComponent
   }
 
   getButtonClasses(org: OrganizationInCollaboration): string {
-    let default_classes = 'mat-button btn-detail inline ';
+    let default_classes = 'mat-button btn-link inline ';
     if (!org.node) return default_classes;
     else if (org.node.is_online) return default_classes + 'btn-online';
     else return default_classes + 'btn-offline';
