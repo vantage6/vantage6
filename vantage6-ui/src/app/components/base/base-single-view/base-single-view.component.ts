@@ -30,7 +30,10 @@ export abstract class BaseSingleViewComponent implements OnInit {
     });
   }
 
-  abstract init(): void;
+  async init() {
+    this.readRoute();
+  }
+
   abstract setResources(): void;
 
   protected readRoute(): void {
