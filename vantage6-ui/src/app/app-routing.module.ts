@@ -24,6 +24,7 @@ import { TaskTableComponent } from './components/task/task-table/task-table.comp
 import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { CollaborationTableComponent } from './components/collaboration/collaboration-table/collaboration-table.component';
+import { RoleViewSingleComponent } from './components/role/role-view-single/role-view-single.component';
 
 const routes: Routes = [
   {
@@ -306,6 +307,16 @@ const routes: Routes = [
       requiresLogin: true,
       permissionType: OpsType.VIEW,
       permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'role/view/:id/:org_id',
+    component: RoleViewSingleComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.ROLE,
     },
     canActivate: [AccessGuardByOrgId],
   },

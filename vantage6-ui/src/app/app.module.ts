@@ -56,6 +56,7 @@ import { TaskViewSingleComponent } from './components/task/task-view-single/task
 import { ResultViewComponent } from './components/result/result-view/result-view.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { CollaborationTableComponent } from './components/collaboration/collaboration-table/collaboration-table.component';
+import { RoleViewSingleComponent } from './components/role/role-view-single/role-view-single.component';
 
 @NgModule({
   declarations: [
@@ -87,6 +88,7 @@ import { CollaborationTableComponent } from './components/collaboration/collabor
     ResultViewComponent,
     ProfileComponent,
     CollaborationTableComponent,
+    RoleViewSingleComponent,
   ],
   imports: [
     BrowserModule,
