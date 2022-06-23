@@ -154,6 +154,11 @@ class Roles(RoleBase):
                 type: integer
               description: rule that is part of a role
             - in: query
+              name: user_id
+              schema:
+                type: integer
+              description: get roles for this user id
+            - in: query
               name: include_root
               schema:
                  type: boolean
@@ -208,6 +213,10 @@ class Roles(RoleBase):
         if 'rule_id' in args:
             q = q.join(db.role_rule_association).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
+
+        if 'user_id' in args:
+            q = q.join(db.Permission).join(db.User)\
+                 .filter(db.User.id == args['user_id'])
 
         if not self.r.v_glo.can():
             own_role_ids = [role.id for role in g.user.roles]
