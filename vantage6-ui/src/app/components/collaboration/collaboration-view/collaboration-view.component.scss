@@ -1,9 +1,5 @@
 @use 'src/app/shared/scss/variables' as v;
 
-.inline {
-  display: inline;
-}
-
 .btn-offline {
   background-color: v.$red !important;
 }
