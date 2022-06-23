@@ -1,38 +1,34 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { EMPTY_NODE } from 'src/app/interfaces/node';
 import { EMPTY_ROLE, Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { ResType } from 'src/app/shared/enum';
+import { BaseSingleViewComponent } from '../../base/base-single-view/base-single-view.component';
 
 @Component({
   selector: 'app-role-view-single',
   templateUrl: './role-view-single.component.html',
   styleUrls: ['./role-view-single.component.scss'],
 })
-export class RoleViewSingleComponent implements OnInit {
-  route_id: number | null = null;
+export class RoleViewSingleComponent
+  extends BaseSingleViewComponent
+  implements OnInit
+{
   role: Role = EMPTY_ROLE;
   rules: Rule[] = [];
 
   constructor(
-    private activatedRoute: ActivatedRoute,
+    protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
-    private utilsService: UtilsService
-  ) {}
-
-  ngOnInit(): void {
-    this.userPermission.isInitialized().subscribe((ready: boolean) => {
-      if (ready) {
-        this.init();
-      }
-    });
+    protected utilsService: UtilsService
+  ) {
+    super(activatedRoute, userPermission, utilsService, ResType.ROLE);
   }
 
   async init() {
@@ -40,27 +36,13 @@ export class RoleViewSingleComponent implements OnInit {
       this.rules = rules;
     });
 
-    this.activatedRoute.paramMap.subscribe((params) => {
-      this.route_id = this.utilsService.getId(params, ResType.NODE);
-      if (this.route_id === EMPTY_NODE.id) {
-        return; // cannot get organization
-      }
-      this.setup();
-    });
+    this.readRoute();
   }
 
-  async setup() {
-    this.setRole();
-  }
-
-  async setRole(): Promise<void> {
+  async setResources(): Promise<void> {
     this.role = await this.roleDataService.get(
       this.route_id as number,
       this.rules
     );
-  }
-
-  goBackToPreviousPage() {
-    this.utilsService.goToPreviousPage();
   }
 }
