@@ -42,6 +42,17 @@ export class RoleDataService extends BaseDataService {
     )) as Observable<Role[]>;
   }
 
+  async list_with_params(
+    rules: Rule[] = [],
+    request_params: any = {}
+  ): Promise<Role[]> {
+    return (await super.list_with_params_base(
+      this.convertJsonService.getRole,
+      [rules],
+      request_params
+    )) as Role[];
+  }
+
   async org_list(
     organization_id: number,
     rules: Rule[],

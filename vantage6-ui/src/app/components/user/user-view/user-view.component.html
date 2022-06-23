@@ -23,7 +23,8 @@
     <td>Role(s):</td>
     <td>
       <div *ngFor="let role of user.roles" class="inline">
-          <button mat-button class="btn-detail inline" disabled>
+          <button mat-button class="btn-detail inline"
+              [routerLink]="['/role/view', role.id, user.organization_id]">
             {{role.name}}
           </button>
       </div>

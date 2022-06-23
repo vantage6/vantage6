@@ -8,35 +8,33 @@ import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { ResType } from 'src/app/shared/enum';
+import { BaseSingleViewComponent } from '../../base/base-single-view/base-single-view.component';
 
 @Component({
   selector: 'app-task-view-single',
   templateUrl: './task-view-single.component.html',
   styleUrls: ['./task-view-single.component.scss'],
 })
-export class TaskViewSingleComponent implements OnInit {
+export class TaskViewSingleComponent
+  extends BaseSingleViewComponent
+  implements OnInit
+{
   route_id: number | null = null;
   task: Task = getEmptyTask();
   organization_id: number = -1;
 
   constructor(
-    private activatedRoute: ActivatedRoute,
+    protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private utilsService: UtilsService,
+    protected utilsService: UtilsService,
     private taskDataService: TaskDataService,
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService
-  ) {}
-
-  ngOnInit(): void {
-    this.userPermission.isInitialized().subscribe((ready: boolean) => {
-      if (ready) {
-        this.init();
-      }
-    });
+  ) {
+    super(activatedRoute, userPermission, utilsService, ResType.TASK);
   }
 
-  async init() {
+  protected readRoute(): void {
     this.activatedRoute.paramMap.subscribe((params) => {
       this.route_id = this.utilsService.getId(params, ResType.TASK);
       this.organization_id = this.utilsService.getId(
@@ -54,7 +52,7 @@ export class TaskViewSingleComponent implements OnInit {
     });
   }
 
-  async setup() {
+  async setResources() {
     await this.setTask();
 
     await this.setInitiatingOrganization();
@@ -74,9 +72,5 @@ export class TaskViewSingleComponent implements OnInit {
 
   async setTask(): Promise<void> {
     this.task = await this.taskDataService.get(this.route_id as number);
-  }
-
-  goBackToPreviousPage() {
-    this.utilsService.goToPreviousPage();
   }
 }

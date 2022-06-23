@@ -15,46 +15,33 @@ import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { ResType } from 'src/app/shared/enum';
+import { BaseSingleViewComponent } from '../../base/base-single-view/base-single-view.component';
 
 @Component({
   selector: 'app-collaboration-view-single',
   templateUrl: './collaboration-view-single.component.html',
   styleUrls: ['./collaboration-view-single.component.scss'],
 })
-export class CollaborationViewSingleComponent implements OnInit {
-  route_id: number | null = null;
+export class CollaborationViewSingleComponent
+  extends BaseSingleViewComponent
+  implements OnInit
+{
   organizations: OrganizationInCollaboration[] = [];
   nodes: Node[] = [];
   collaboration: Collaboration = EMPTY_COLLABORATION;
 
   constructor(
-    private activatedRoute: ActivatedRoute,
+    protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private nodeDataService: NodeDataService,
     private collabDataService: CollabDataService,
-    private utilsService: UtilsService,
+    protected utilsService: UtilsService,
     private orgDataService: OrgDataService
-  ) {}
-
-  ngOnInit(): void {
-    this.userPermission.isInitialized().subscribe((ready: boolean) => {
-      if (ready) {
-        this.init();
-      }
-    });
+  ) {
+    super(activatedRoute, userPermission, utilsService, ResType.COLLABORATION);
   }
 
-  async init() {
-    this.activatedRoute.paramMap.subscribe((params) => {
-      this.route_id = this.utilsService.getId(params, ResType.NODE);
-      if (this.route_id === EMPTY_NODE.id) {
-        return; // cannot get organization
-      }
-      this.setup();
-    });
-  }
-
-  async setup() {
+  async setResources() {
     // TODO organize this in a different way: first get the collaboration, then
     // get ONLY the organizations and nodes relevant for that collab, instead
     // of all of them first and then getting single collaboration
@@ -85,9 +72,5 @@ export class CollaborationViewSingleComponent implements OnInit {
       this.nodes = nodes;
       if (update_collabs) this.setCollaboration();
     });
-  }
-
-  goBackToPreviousPage() {
-    this.utilsService.goToPreviousPage();
   }
 }
