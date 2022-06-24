@@ -8,3 +8,27 @@
 ::ng-deep .mat-checkbox-checked.mat-accent .mat-checkbox-background,.mat-checkbox-indeterminate.mat-accent .mat-checkbox-background {
     background-color: v.$vtg-blue;
 }
+
+// Set column widths
+// This is unfortunately not possible automatically with the <mat-table> tag,
+// see https://github.com/angular/components/issues/5866
+// and https://stackoverflow.com/questions/48684560/mat-table-auto-fit-column-width-to-bigger-content
+mat-cell:nth-child(1),
+mat-header-cell:nth-child(1)
+{
+    flex: 0 0 10%;
+}
+
+mat-cell:nth-child(2),
+mat-header-cell:nth-child(2),
+mat-cell:nth-child(3),
+mat-header-cell:nth-child(3)
+{
+    flex: 0 0 20%;
+}
+
+mat-cell:nth-child(4),
+mat-header-cell:nth-child(4)
+{
+    flex: 0 0 50%;
+}
