@@ -23,8 +23,10 @@ export class NavbarComponent implements OnInit {
     public userPermission: UserPermissionService,
     private signOutService: SignOutService
   ) {
-    this.userPermission.getUser().subscribe((user) => {
-      this.loggedin_user = user;
+    this.userPermission.isInitialized().subscribe((ready) => {
+      if (ready) {
+        this.loggedin_user = this.userPermission.user;
+      }
     });
   }
 

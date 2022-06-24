@@ -166,6 +166,9 @@ export abstract class BaseDataService {
   }
 
   public clear(): void {
+    this.has_queried_list = false;
+    this.queried_org_ids = [];
+    this.queried_collab_ids = [];
     this.resource_list.next([]);
   }
 }
