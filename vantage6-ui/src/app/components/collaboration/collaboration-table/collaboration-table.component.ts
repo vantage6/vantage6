@@ -26,7 +26,7 @@ export class CollaborationTableComponent
   organizations: OrganizationInCollaboration[] = [];
   nodes: Node[] = [];
 
-  displayedColumns: string[] = ['id', 'name', 'encrypted', 'organizations'];
+  displayedColumns: string[] = ['id', 'name', 'organizations', 'encrypted'];
 
   constructor(
     protected activatedRoute: ActivatedRoute,

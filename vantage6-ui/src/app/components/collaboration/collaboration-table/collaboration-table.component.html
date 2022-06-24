@@ -38,34 +38,34 @@
 </mat-card>
 
 <div class="mat-elevation-z8">
-  <table mat-table [dataSource]="dataSource" matSort>
+  <mat-table #table [dataSource]="dataSource" matSort>
     <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
-      <td mat-cell *matCellDef="let elem">{{elem.id}}</td>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
+      <mat-cell *matCellDef="let elem">{{elem.id}}</mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-      <td mat-cell *matCellDef="let elem">{{elem.name}}</td>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+      <mat-cell *matCellDef="let elem">{{elem.name}}</mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="encrypted">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Encrypted</th>
-      <td mat-cell *matCellDef="let elem">{{isEncryptedText(elem)}}</td>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Encrypted</mat-header-cell>
+      <mat-cell *matCellDef="let elem">{{isEncryptedText(elem)}}</mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="organizations">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Organizations</th>
-      <td mat-cell *matCellDef="let elem">
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Organizations</mat-header-cell>
+      <mat-cell *matCellDef="let elem">
         {{getOrgsText(elem)}}
-      </td>
+      </mat-cell>
     </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"
       matRipple class="element-row" [cdkDetailRow]="row" [cdkDetailRowTpl]="tpl"
-    ></tr>
-  </table>
+    ></mat-row>
+  </mat-table>
 
   <mat-paginator [pageSizeOptions]="[10, 5, 20]"
                   showFirstLastButtons
