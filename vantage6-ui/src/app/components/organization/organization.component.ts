@@ -218,6 +218,14 @@ export class OrganizationComponent implements OnInit {
     );
   }
 
+  deleteNode(node: Node): void {
+    this.nodes = removeMatchedIdFromArray(this.nodes, node.id);
+    this.organization_nodes = removeMatchedIdFromArray(
+      this.organization_nodes,
+      node.id
+    );
+  }
+
   async deleteRole(role: Role): Promise<void> {
     // remove role
     this.roles = removeMatchedIdFromArray(this.roles, role.id);

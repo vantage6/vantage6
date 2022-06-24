@@ -14,7 +14,6 @@ import { OrganizationComponent } from './components/organization/organization.co
 import { UserEditComponent } from './components/user/user-edit/user-edit.component';
 import { RoleEditComponent } from './components/role/role-edit/role-edit.component';
 import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
-import { NodeViewComponent } from './components/node/node-view/node-view.component';
 import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
 import { RoleTableComponent } from './components/role/role-table/role-table.component';
 import { UserTableComponent } from './components/user/user-table/user-table.component';
@@ -26,6 +25,7 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { CollaborationTableComponent } from './components/collaboration/collaboration-table/collaboration-table.component';
 import { RoleViewSingleComponent } from './components/role/role-view-single/role-view-single.component';
 import { UserViewSingleComponent } from './components/user/user-view-single/user-view-single.component';
+import { NodeSingleViewComponent } from './components/node/node-single-view/node-single-view.component';
 
 const routes: Routes = [
   {
@@ -139,7 +139,7 @@ const routes: Routes = [
   },
   {
     path: 'node/:id/view/:org_id',
-    component: NodeViewComponent,
+    component: NodeSingleViewComponent,
     data: {
       requiresLogin: true,
       permissionType: OpsType.VIEW,

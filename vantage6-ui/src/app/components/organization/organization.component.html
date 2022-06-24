@@ -185,9 +185,10 @@
                 {{node.name}}
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <button mat-button class="btn btn-dflt" style="max-width: 120px" ngbDropdownItem [routerLink]="['/node', node.id, 'view', current_organization.id]">
-              View node
-            </button>
+            <app-node-view
+              [node]="node"
+              (deletingResource)="deleteNode(node)"
+            ></app-node-view>
           </mat-expansion-panel>
         </div>
         <button mat-button class="btn btn-dflt btn-top-margin"

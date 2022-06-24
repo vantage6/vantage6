@@ -58,6 +58,7 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { CollaborationTableComponent } from './components/collaboration/collaboration-table/collaboration-table.component';
 import { RoleViewSingleComponent } from './components/role/role-view-single/role-view-single.component';
 import { UserViewSingleComponent } from './components/user/user-view-single/user-view-single.component';
+import { NodeSingleViewComponent } from './components/node/node-single-view/node-single-view.component';
 
 @NgModule({
   declarations: [
@@ -91,6 +92,7 @@ import { UserViewSingleComponent } from './components/user/user-view-single/user
     CollaborationTableComponent,
     RoleViewSingleComponent,
     UserViewSingleComponent,
+    NodeSingleViewComponent,
   ],
   imports: [
     BrowserModule,

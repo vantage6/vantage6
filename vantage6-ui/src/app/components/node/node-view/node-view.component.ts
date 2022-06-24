@@ -1,17 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, Input, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import { EMPTY_NODE, NodeWithOrg } from 'src/app/interfaces/node';
-import { Organization } from 'src/app/interfaces/organization';
+import { getEmptyNode, NodeWithOrg } from 'src/app/interfaces/node';
 import { ApiNodeService } from 'src/app/services/api/api-node.service';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { UtilsService } from 'src/app/services/common/utils.service';
-import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { ExitMode, ResType } from 'src/app/shared/enum';
-import { deepcopy } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';
 
 @Component({
@@ -23,57 +17,15 @@ import { BaseViewComponent } from '../../base/base-view/base-view.component';
   ],
 })
 export class NodeViewComponent extends BaseViewComponent implements OnInit {
-  node: NodeWithOrg = EMPTY_NODE;
+  @Input() node: NodeWithOrg = getEmptyNode();
 
   constructor(
-    private activatedRoute: ActivatedRoute,
     protected apiNodeService: ApiNodeService,
     protected nodeDataService: NodeDataService,
-    private orgDataService: OrgDataService,
-    private collabDataService: CollabDataService,
-    private utilsService: UtilsService,
     public userPermission: UserPermissionService,
     protected modalService: ModalService
   ) {
     super(apiNodeService, nodeDataService, modalService);
-  }
-
-  ngOnInit(): void {
-    this.init();
-  }
-
-  async init(): Promise<void> {
-    // subscribe to id parameter in route to change edited organization if
-    // required
-    this.activatedRoute.paramMap.subscribe((params) => {
-      let id = this.utilsService.getId(params, ResType.NODE);
-      if (id === EMPTY_NODE.id) {
-        return; // cannot get organization
-      }
-      this.setup(id);
-    });
-  }
-
-  async setup(node_id: number): Promise<void> {
-    await this.setNode(node_id);
-    await this.setOrganization();
-    this.setCollaboration();
-  }
-
-  async setNode(id: number): Promise<void> {
-    this.node = deepcopy(await this.nodeDataService.get(id));
-  }
-
-  async setOrganization(): Promise<void> {
-    this.node.organization = await this.orgDataService.get(
-      this.node.organization_id
-    );
-  }
-  async setCollaboration(): Promise<void> {
-    this.node.collaboration = await this.collabDataService.get(
-      this.node.collaboration_id,
-      [this.node.organization as Organization]
-    );
   }
 
   getStatus(): string {
@@ -121,10 +73,5 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
 
   askConfirmDelete() {
     super.askConfirmDelete(this.node, ResType.NODE);
-  }
-
-  async delete() {
-    super.delete(this.node);
-    this.utilsService.goToPreviousPage();
   }
 }

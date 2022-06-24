@@ -31,13 +31,7 @@ export class NodeTableComponent
 {
   collaborations: Collaboration[] = [];
   current_collaboration: Collaboration | null;
-  displayedColumns: string[] = [
-    'id',
-    'name',
-    'organization',
-    'collaboration',
-    'details',
-  ];
+  displayedColumns: string[] = ['id', 'name', 'organization', 'collaboration'];
   displayMode = DisplayMode.ALL;
 
   constructor(
