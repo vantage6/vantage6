@@ -1,7 +1,3 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatSort } from '@angular/material/sort';
 import {
   animate,
   state,
@@ -9,12 +5,16 @@ import {
   transition,
   trigger,
 } from '@angular/animations';
-import { Resource, ResourceWithOrg } from 'src/app/shared/types';
-import { Organization } from 'src/app/interfaces/organization';
-import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { Organization } from 'src/app/interfaces/organization';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { Resource, ResourceWithOrg } from 'src/app/shared/types';
+import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-table',

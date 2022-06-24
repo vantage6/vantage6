@@ -2,24 +2,12 @@ table {
     width: 100%;
 }
 
-th {
-    font-size: large;
-}
-
 ::ng-deep .mat-form-field-wrapper {
   max-width: 200px;
 }
 
-.example-container {
-    display: flex;
-    flex-direction: column;
-    max-height: 500px;
-    min-width: 300px;
-}
-
-.example-header {
-  min-height: 64px;
-  padding: 8px 24px 0;
+.mat-header-cell {
+  font-size: large;
 }
 
 .mat-form-field {
@@ -29,7 +17,6 @@ th {
 
 .mat-table {
   overflow: auto;
-  max-height: 500px;
 }
 
 .element-row {
