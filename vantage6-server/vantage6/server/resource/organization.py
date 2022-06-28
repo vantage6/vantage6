@@ -190,14 +190,8 @@ class Organizations(OrganizationBase):
                  .filter(db.Collaboration.id == args['collaboration_id'])
 
         # filter the list of organizations based on the scope
-        if self.r.v_glo.can():
-            # view all organizations
-            log.debug('glo')
-            pass
-
-        elif self.r.v_col.can():
+        if not self.r.v_glo.can() and self.r.v_col.can():
             # obtain collaborations your organization participates in
-            log.debug('col')
             collabs = g.session.query(db.Collaboration).filter(
                 db.Collaboration.organizations.any(id=auth_org.id)
             ).all()
