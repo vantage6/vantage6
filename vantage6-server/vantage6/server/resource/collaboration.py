@@ -118,8 +118,8 @@ class Collaborations(CollaborationBase):
     @with_user
     def get(self):
         """Returns a list of collaborations
-        ---
 
+        ---
         description: >-
             Returns a list of collaborations. Depending on your permission, all
             collaborations are shown or only collaborations in which your
@@ -219,6 +219,7 @@ class Collaborations(CollaborationBase):
     @with_user
     def post(self):
         """ Create collaboration
+
         ---
         description: >-
             Create a new collaboration between organizations.\n\n
@@ -261,7 +262,6 @@ class Collaborations(CollaborationBase):
 
         tags: ["Collaboration"]
         """
-
         parser = reqparse.RequestParser()
         parser.add_argument('name', type=str, required=True,
                             help="This field cannot be left blank!")
@@ -299,7 +299,7 @@ class Collaboration(CollaborationBase):
 
     @only_for(['user', 'node', 'container'])
     def get(self, id):
-        """Get collaboration
+        """ Get collaboration
         ---
         description: >-
           Returns the collaboration with the specified id.\n
@@ -351,7 +351,8 @@ class Collaboration(CollaborationBase):
 
     @with_user
     def patch(self, id):
-        """Update collaboration
+        """ Update collaboration
+
         ---
         description: >-
           Updates the collaboration with the specified id.\n\n
@@ -428,7 +429,8 @@ class Collaboration(CollaborationBase):
 
     @with_user
     def delete(self, id):
-        """Delete collaboration
+        """ Delete collaboration
+
         ---
         description: >-
           Removes the collaboration from the database entirely.
@@ -485,7 +487,8 @@ class CollaborationOrganization(ServicesResources):
 
     @only_for(["node", "user", "container"])
     def get(self, id):
-        """Returns organizations that participate in the collaboration
+        """ Returns organizations that participate in the collaboration
+
         ---
         description: >-
             Returns a list of all organizations that belong to the specified
@@ -560,7 +563,8 @@ class CollaborationOrganization(ServicesResources):
 
     @with_user
     def post(self, id):
-        """Add organization to collaboration
+        """ Add organization to collaboration
+
         ---
         description: >-
           Adds a single organization to an existing collaboration.
@@ -627,7 +631,8 @@ class CollaborationOrganization(ServicesResources):
 
     @with_user
     def delete(self, id):
-        """Remove organization from collaboration
+        """ Remove organization from collaboration
+
         ---
         description: >-
           Removes a single organization from an existing collaboration.\n
@@ -689,7 +694,8 @@ class CollaborationNode(ServicesResources):
 
     @with_user
     def get(self, id):
-        """List nodes in collaboration.
+        """ List nodes in collaboration.
+
         ---
         description: >-
             Returns a list of node(s) which belong to the specified
@@ -762,7 +768,8 @@ class CollaborationNode(ServicesResources):
 
     @with_user
     def post(self, id):
-        """Add node to collaboration
+        """ Add node to collaboration
+
         ---
         description: >-
           Add node to an existing collaboration.\n
@@ -829,7 +836,8 @@ class CollaborationNode(ServicesResources):
 
     @with_user
     def delete(self, id):
-        """Remove node from collaboration
+        """ Remove node from collaboration
+
         ---
         description: >-
           Removes a single node from an existing collaboration.
@@ -894,6 +902,7 @@ class CollaborationTask(ServicesResources):
     @with_user_or_node
     def get(self, id):
         """List tasks from collaboration
+
         ---
         description: >-
             Returns a list of all tasks that belong to the collaboration.\n\n
