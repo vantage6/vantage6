@@ -2,8 +2,6 @@
 import logging
 
 from http import HTTPStatus
-from flasgger import swag_from
-from pathlib import Path
 from sqlalchemy.exc import InvalidRequestError
 from flask.globals import g
 
@@ -41,9 +39,24 @@ def setup(api, api_base, services):
 # ------------------------------------------------------------------------------
 class Health(ServicesResources):
 
-    @swag_from(str(Path(r"swagger/get_health.yaml")), endpoint='health')
     def get(self):
-        """displays the health of services"""
+        """Displays the health of services
+        ---
+        description: >-
+          Checks if communication is stable with the database in the Server.\n
+
+          If not it throws an exception. Else it returns a 200 to signify that
+          communication is stable.
+
+        responses:
+          200:
+            description: Ok
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Database"]
+        """
 
         # test DB
         db_ok = False

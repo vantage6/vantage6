@@ -3,13 +3,10 @@ import logging
 
 from flask import request
 from flask_restful import reqparse
-from flasgger import swag_from
 from http import HTTPStatus
-from pathlib import Path
 
 from vantage6.server import db
 from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.model.organization import Organization
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
@@ -220,10 +217,50 @@ class Collaborations(CollaborationBase):
         return self.response(page, collaboration_schema)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_without_id.yaml")),
-               endpoint='collaboration_without_id')
     def post(self):
-        """create a new collaboration"""
+        """ Create collaboration
+        ---
+        description: >-
+            Create a new collaboration between organizations.\n\n
+
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Assigned to Node|Assigned to
+            Container|Description|\n
+            |--|--|--|--|--|--|\n
+            |Collaboration|Global|Create|❌|❌|Create collaboration|
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    description: Unique human readable name for collaboration
+                  organization_ids:
+                    type: array
+                    items:
+                    type: integer
+                    description: List of organization ids which form the
+                      collaboration
+                  encrypted:
+                    type: integer
+                    description: Boolean (0 or 1) to indicate if the
+                      collaboration uses encryption
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Collaboration name already exists
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
 
         parser = reqparse.RequestParser()
         parser.add_argument('name', type=str, required=True,
@@ -261,10 +298,36 @@ class Collaborations(CollaborationBase):
 class Collaboration(CollaborationBase):
 
     @only_for(['user', 'node', 'container'])
-    @swag_from(str(Path(r"swagger/get_collaboration_with_id.yaml")),
-               endpoint='collaboration_with_id')
     def get(self, id):
-        """collaboration or list of collaborations in case no id is provided"""
+        """Get collaboration
+        ---
+        description: >-
+          Returns the collaboration with the specified id.\n
+          Only returns the collaboration if the user or node has the required
+          permissions.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+              minimum: 1
+            description: "unique node identifier"
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: collaboration with specified id is not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
         collaboration = db.Collaboration.get(id)
 
         # check that collaboration exists, unlikely to happen without ID
@@ -287,11 +350,52 @@ class Collaboration(CollaborationBase):
             HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(str(Path(r"swagger/patch_collaboration_with_id.yaml")),
-               endpoint='collaboration_with_id')
     def patch(self, id):
-        """update a collaboration"""
+        """Update collaboration
+        ---
+        description: >-
+          Updates the collaboration with the specified id.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|Edit|❌|❌|Update a collaboration|
 
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: collaboration id
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    description: Human readable label
+                  organization_ids:
+                    type: array
+                    items:
+                      type: integer
+                    description: list of organization ids
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: collaboration with specified id is not found
+          401:
+            description: Unauthorized or missing permissions
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
         collaboration = db.Collaboration.get(id)
 
         # check if collaboration exists
@@ -323,10 +427,39 @@ class Collaboration(CollaborationBase):
             HTTPStatus.OK  # 200
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_with_id.yaml")),
-               endpoint='collaboration_with_id')
     def delete(self, id):
-        """delete collaboration"""
+        """Delete collaboration
+        ---
+        description: >-
+          Removes the collaboration from the database entirely.
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|Delete|❌|❌|Remove node from database|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: collaboration id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: collaboration with specified id is not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
 
         collaboration = db.Collaboration.get(id)
         if not collaboration:
@@ -426,12 +559,48 @@ class CollaborationOrganization(ServicesResources):
         return self.response(page, org_schema)
 
     @with_user
-    @swag_from(
-        str(Path(r"swagger/post_collaboration_with_id_organization.yaml")),
-        endpoint='collaboration_with_id_organization'
-    )
     def post(self, id):
-        """Add an organizations to a specific collaboration."""
+        """Add organization to collaboration
+        ---
+        description: >-
+          Adds a single organization to an existing collaboration.
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|Edit|❌|❌|Add organization to a collaboration|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: collaboration id
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    description: organization id which needs to be added
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: specified collaboration or organization does not exist
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
         # get collaboration to which te organization should be added
         collaboration = db.Collaboration.get(id)
         if not collaboration:
@@ -457,10 +626,36 @@ class CollaborationOrganization(ServicesResources):
             HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_organization.yaml")),
-               endpoint='collaboration_with_id_organization')
     def delete(self, id):
-        """Removes an organization from a collaboration."""
+        """Remove organization from collaboration
+        ---
+        description: >-
+          Removes a single organization from an existing collaboration.\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|Edit|❌|❌|Remove an organization from an
+          existing collaboration|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: collaboration id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: specified collaboration or organization does not exist
+          401:
+            description: Unauthorized or missing permissions
+
+        tags: ["Collaboration"]
+        """
         # get collaboration from which organization should be removed
         collaboration = db.Collaboration.get(id)
         if not collaboration:
@@ -566,10 +761,49 @@ class CollaborationNode(ServicesResources):
         return self.response(page, node_schema)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_collaboration_with_id_node.yaml")),
-               endpoint='collaboration_with_id_node')
     def post(self, id):
-        """Add an node to a specific collaboration."""
+        """Add node to collaboration
+        ---
+        description: >-
+          Add node to an existing collaboration.\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|Create|❌|❌|Add node to collaboration|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: collaboration id
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    description: if of node to be added
+
+        responses:
+          201:
+            description: Added node to collaboration
+          404:
+            description: Collaboration or node not found
+          400:
+            description: Node is already in collaboration
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Collaboration"]
+        """
         collaboration = db.Collaboration.get(id)
         if not collaboration:
             return {"msg": f"collaboration having collaboration_id={id} can "
@@ -594,10 +828,39 @@ class CollaborationNode(ServicesResources):
             HTTPStatus.CREATED
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_collaboration_with_id_node.yaml")),
-               endpoint='collaboration_with_id_node')
     def delete(self, id):
-        """Remove node from collaboration."""
+        """Remove node from collaboration
+        ---
+        description: >-
+          Removes a single node from an existing collaboration.
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|Edit|❌|❌|Remove node from collaboration|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Collaboration id from which the node is to be deleted
+              from.
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: collaboration or node not found
+          400:
+            description: node is not part of the collaboration
+          401:
+            description: Unauthorized or missing permissions
+
+        tags: ["Collaboration"]
+        """
         collaboration = db.Collaboration.get(id)
         if not collaboration:
             return {"msg": f"collaboration having collaboration_id={id} can "

@@ -85,59 +85,59 @@ class Ports(PortBase):
         ---
 
         description: >-
-            Returns a list of all ports only if the node, user or container
-            have the proper authorization to do so.\n\n
+          Returns a list of all ports only if the node, user or container
+          have the proper authorization to do so.\n\n
 
-            ### Permission Table\n
-            |Rulename|Scope|Operation|Node|Container|Description|\n
-            |--|--|--|--|--|--|\n
-            |Port|Global|View|❌|❌|View any result|\n
-            |Port|Organization|View|✅|✅|View the ports of your
-            organizations collaborations|\n\n
+          ### Permission Table\n
+          |Rulename|Scope|Operation|Node|Container|Description|\n
+          |--|--|--|--|--|--|\n
+          |Port|Global|View|❌|❌|View any result|\n
+          |Port|Organization|View|✅|✅|View the ports of your
+          organizations collaborations|\n\n
 
-            Accesible as: `node` , `user` and `container`.\n\n
+          Accesible as: `node` , `user` and `container`.\n\n
 
-            Ports can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+          Ports can be paginated by using the parameter `page`. The
+          pagination metadata can be included using `include=metadata`, note
+          that this will put the actual data in an envelope.
 
         parameters:
-            - in: query
-              name: task_id
-              schema:
-                type: integer
-              description: task id
-            - in: query
-              name: result_id
-              schema:
-                type: integer
-              description: result id
-            - in: query
-              name: run_id
-              schema:
-                type: integer
-              description: run id
-            - in: query
-              name: parent_id
-              schema:
-                type: integer
-              description: task id of parent task
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: query
+            name: task_id
+            schema:
+              type: integer
+            description: task id
+          - in: query
+            name: result_id
+            schema:
+              type: integer
+            description: result id
+          - in: query
+            name: run_id
+            schema:
+              type: integer
+            description: run id
+          - in: query
+            name: parent_id
+            schema:
+              type: integer
+            description: task id of parent task
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: number of items per page
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
 
         security:
         - bearerAuth: []
@@ -183,34 +183,34 @@ class Ports(PortBase):
         """Create a list of port description
         ---
         description: >-
-            Creates a description of a port that is available for VPN
-            communication for a certain algorithm. Only the node on which the
-            algorithm is running is allowed to create this.\n\n
+          Creates a description of a port that is available for VPN
+          communication for a certain algorithm. Only the node on which the
+          algorithm is running is allowed to create this.\n\n
 
-            Accesible for: `node`\n\n
+          Accesible for: `node`\n\n
 
         requestBody:
-            content:
-                application/json:
-                    schema:
-                        properties:
-                        port:
-                            type: int
-                            description: Port that receives container's VPN
-                                traffic
-                        result_id:
-                            type: int
-                            description: algorithm's result_id
-                        label:
-                            type: string
-                            description: Label for port specified in algorithm
-                                docker image
+          content:
+            application/json:
+              schema:
+                properties:
+                  port:
+                    type: integer
+                    description: Port that receives container's VPN
+                      traffic
+                  result_id:
+                    type: integer
+                    description: algorithm's result_id
+                  label:
+                    type: string
+                    description: Label for port specified in algorithm
+                      docker image
 
         responses:
-            201:
-                description: Ok
-            401:
-                description: Unauthorized or missing permission
+          201:
+            description: Ok
+          401:
+            description: Unauthorized or missing permission
 
         security:
             - bearerAuth: []
@@ -239,16 +239,16 @@ class Ports(PortBase):
 
     @with_node
     def delete(self):
+        # FIXME should we have swagger docs if only accessible for node? Also
+        # same case for post request
         """ Delete ports by result_id
         ---
-
         description: >-
-            Deletes descriptions of a port that is available for VPN
-            communication for a certain algorithm. The ports are deleted based
-            on result_id. Only the node on which the algorithm is running is
-            allowed to delete this.\n\n
-
-            Accesible for: `node`\n\n
+          Deletes descriptions of a port that is available for VPN
+          communication for a certain algorithm. The ports are deleted based
+          on result_id. Only the node on which the algorithm is running is
+          allowed to delete this.\n\n
+          Accesible for: `node`\n\n
 
         parameters:
           - in: path
@@ -261,13 +261,13 @@ class Ports(PortBase):
 
         responses:
           200:
-              description: Ok
+            description: Ok
           400:
-              description: Not all required parameters were included
+            description: Not all required parameters were included
           401:
-              description: Unauthorized or missing permission
+            description: Unauthorized or missing permission
           404:
-              description: Port id not found
+            description: Port id not found
 
         security:
           - bearerAuth: []

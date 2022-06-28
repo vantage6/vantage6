@@ -2,9 +2,7 @@
 import logging
 
 from flask import request, g
-from flasgger import swag_from
 from http import HTTPStatus
-from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -224,10 +222,49 @@ class Organizations(OrganizationBase):
         return self.response(page, org_schema)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
-               endpoint='organization_without_id')
     def post(self):
-        """Create a new organization."""
+        """Create new organization without id
+        ---
+        description: >-
+          Creates a new organization from the specified values\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|Create|❌|❌|Create a new organization|
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    description: Organizations name
+                  address1:
+                    type: string
+                  address2:
+                    type: string
+                  zipcode:
+                    type: string
+                  country:
+                    type: string
+                  public_key:
+                    type: string
+                  domain:
+                    type: string
+
+        responses:
+          201:
+            description: Ok
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
 
         if not self.r.c_glo.can():
             return {'msg': 'You lack the permissions to do that!'},\
@@ -252,9 +289,42 @@ class Organizations(OrganizationBase):
 class Organization(OrganizationBase):
 
     @only_for(["user", "node", "container"])
-    @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")),
-               endpoint='organization_with_id')
     def get(self, id):
+        """Get organization
+        ---
+        description: >-
+          Returns the organization specified by the id\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|View|❌|❌|View all organizations|\n
+          |Organization|Collaboration|View|✅|✅|View a list of organizations
+          within the scope of the collaboration|\n
+          |Organization|Organization|View|❌|❌|View a list of organizations
+          that the user is part of|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: organization id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: organization not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
 
         # obtain organization of authenticated
         auth_org = self.obtain_auth_organization()
@@ -288,10 +358,61 @@ class Organization(OrganizationBase):
                 HTTPStatus.UNAUTHORIZED
 
     @only_for(["user", "node"])
-    @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
-               endpoint='organization_with_id')
     def patch(self, id):
-        """Update organization."""
+        """Update organization
+        ---
+        description: >-
+          Updates the organization with the specified id.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|Edit|❌|❌|Update an organization with
+          specified id|\n
+          |Organization|Organization|Edit|❌|❌|Update an organization that
+          the user is part of|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: organization id
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                  address1:
+                    type: string
+                  address2:
+                    type: string
+                  zipcode:
+                    type: string
+                  country:
+                    type: string
+                  public_key:
+                    type: string
+                  domain:
+                    type: string
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: organization with specified id is not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
 
         organization = db.Organization.get(id)
         if not organization:
@@ -324,10 +445,41 @@ class OrganizationCollaboration(ServicesResources):
     col_schema = CollaborationSchema()
 
     @only_for(["user", "node"])
-    @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")),
-               endpoint='organization_collaboration')
     def get(self, id):
+        """Get collaborations from organization
+        ---
+        description: >-
+          Returns a list of collaborations in which the organization is a
+          participant of.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|View|❌|❌|View all collaborations|\n
+          |Collaboration|Organization|View|✅|✅|View a list of collaborations
+          that the organization is a part of|
 
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: organization id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: organization not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
         organization = db.Organization.get(id)
         if not organization:
             return {"msg": f"organization id={id} not found"}, \
@@ -356,10 +508,40 @@ class OrganizationNode(ServicesResources):
     nod_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_organization_node.yaml")),
-               endpoint='organization_node')
     def get(self, id):
-        """Return a list of Nodes."""
+        """Return a list of nodes.
+        ---
+        description: >-
+          Returns a list of nodes which are from the organization.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Node|Global|View|❌|❌|View any node|\n
+          |Node|Organization|View|✅|✅|View a list of nodes that belong to
+          your organization|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: organization id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Organization not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
         organization = db.Organization.get(id)
         if not organization:
             return {"msg": f"organization id={id} not found"}, \

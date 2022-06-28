@@ -13,9 +13,7 @@ from flask_jwt_extended import (
     create_refresh_token,
     get_jwt_identity
 )
-from flasgger import swag_from
 from http import HTTPStatus
-from pathlib import Path
 
 from vantage6 import server
 from vantage6.server import db
@@ -72,10 +70,28 @@ def setup(api, api_base, services):
 class UserToken(ServicesResources):
     """resource for api/token"""
 
-    @swag_from(str(Path(r"swagger/post_token_user.yaml")),
-               endpoint='user_token')
     def post(self):
-        """Authenticate user or node"""
+        """Login user
+        ---
+        description: >-
+          Allows for user sign-in, by supplying a username and password in the
+          body.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+        responses:
+          200:
+            description: Ok, authenticated
+          400:
+            description: No or wrong body specified, or username/password
+              combination unknown
+
+        tags: ["Authentication"]
+        """
         log.debug("Authenticate user using username and password")
 
         if not request.is_json:
@@ -132,10 +148,29 @@ class UserToken(ServicesResources):
 
 class NodeToken(ServicesResources):
 
-    @swag_from(str(Path(r"swagger/post_token_node.yaml")),
-               endpoint='node_token')
     def post(self):
-        """Authenticate as Node."""
+        """Login node
+        ---
+        description: >-
+          Allows for node sign-in using a unique api-key. If the login is
+          successful this returns a dictionairy with access and refresh tokens
+          for the node as well as a node_url and a refresh_url.\n\n
+          It also returns a jwt-token so that the user can login again.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+
+        responses:
+          200:
+            description: Ok, authenticated
+          400:
+            description: No or wrong JSON-body, or invalid api-key provided
+
+        tags: ["Authentication"]
+        """
         log.debug("Authenticate Node using api key")
 
         if not request.is_json:
@@ -172,10 +207,29 @@ class NodeToken(ServicesResources):
 class ContainerToken(ServicesResources):
 
     @with_node
-    @swag_from(str(Path(r"swagger/post_token_container.yaml")),
-               endpoint='container_token')
     def post(self):
-        """Create a token for a container running on a node."""
+        """Container login
+        ---
+        description: >-
+          Allows for token-generation for a specific task, image and
+          collaboration.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerToken'
+
+        responses:
+          200:
+            description: Container token generated
+          400:
+            description: Task does not exist or is already completed
+          401:
+            description: Key request for invalid image or task
+
+        tags: ["Authentication"]
+        """
         log.debug("Creating a token for a container running on a node")
 
         data = request.get_json()
@@ -233,10 +287,20 @@ class ContainerToken(ServicesResources):
 class RefreshToken(ServicesResources):
 
     @jwt_refresh_token_required
-    @swag_from(str(Path(r"swagger/post_token_refresh.yaml")),
-               endpoint='refresh_token')
     def post(self):
-        """Create a token from a refresh token."""
+        """Refresh token
+        ---
+        description: Refresh access token if the previous one is expired.
+
+        responses:
+          200:
+            description: Token refreshed
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Authentication"]
+        """
         user_or_node_id = get_jwt_identity()
         log.info(f'Refreshing token for user or node "{user_or_node_id}"')
         user_or_node = db.Authenticatable.get(user_or_node_id)

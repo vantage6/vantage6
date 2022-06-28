@@ -4,8 +4,6 @@ import json
 
 from flask import g, request, url_for
 from http import HTTPStatus
-from flasgger import swag_from
-from pathlib import Path
 from sqlalchemy import desc
 
 from vantage6.common.globals import STRING_ENCODING
@@ -254,10 +252,59 @@ class Tasks(TaskBase):
         return self.response(page, schema)
 
     @only_for(["user", "container"])
-    @swag_from(str(Path(r"swagger/post_task_without_id.yaml")),
-               endpoint='task_without_id')
     def post(self):
-        """Create a new Task."""
+        """Adds new computation task
+        ---
+
+        description: >-
+          Creates a new task within a collaboration. If no `organization_ids`
+          are given the task is send to all organizations within the
+          collaboration. The endpoint can be accessed by both a `User` and
+          `Container`.\n
+
+          ## Accessed as `User`\n
+          When this endpoint is accessed by a `User` a new `run_id` is created.
+          The user needs to be within a organization that is part of the
+          collaboration to which the task is posted.\n\n
+          ## Accessed as `Container`\n
+          When this endpoint is accessed by a `Container` it is considered to
+          be a child-task of the `Container`, and will get the `run_id` from
+          the initial task. This does not have to be the same as the parent
+          task, as it is possible that sub-tasks have sub-tasks themselfs.
+          The container has limited permissions to create tasks, it is only
+          allowed to create tasks in the same collaboration using the same
+          image.\n\n
+          ## Accessed as `Node`\n
+          Nodes do not have permission to create tasks. This will return
+          `401`.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Task|Global|Create|❌|❌|Create a new task|\n
+          |Task|Organization|Create|❌|❌|Create a new task for the
+          collaborations in which your organization participates with|
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Collaboration having `colaboration_id` is not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Task"]
+        """
         data = request.get_json()
         collaboration_id = data.get('collaboration_id')
         collaboration = db.Collaboration.get(collaboration_id)
@@ -441,10 +488,41 @@ class Task(TaskBase):
     """Resource for /api/task"""
 
     @only_for(["user", "node", "container"])
-    @swag_from(str(Path(r"swagger/get_task_with_id.yaml")),
-               endpoint='task_with_id')
     def get(self, id):
-        """List tasks"""
+        """Get task
+        ---
+        description: >-
+          Returns a list of tasks specified by the id(s). The authorisation has
+          to come from the correct organization otherwise you cannot view
+          specific tasks at the node.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Task|Global|View|❌|❌|View any task|\n
+          |Task|Organization|View|✅|✅|View any task in your organization|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: task id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Task not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Task"]
+        """
         task = db.Task.get(id)
         if not task:
             return {"msg": f"task id={id} is not found"}, HTTPStatus.NOT_FOUND
@@ -466,10 +544,40 @@ class Task(TaskBase):
         return schema.dump(task, many=False).data, HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_task_with_id.yaml")),
-               endpoint='task_with_id')
     def delete(self, id):
-        """Deletes a task and their results."""
+        """Remove task
+        ---
+        description: >-
+          Remove tasks and their results entirely from the database.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Task|Global|Delete|❌|❌|Delete a task|\n
+          |Task|Organization|Delete|❌|❌|Delete a task from a collaboration
+          in which your organization participates|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: task id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Task not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Task"]
+        """
 
         task = db.Task.get(id)
         if not task:

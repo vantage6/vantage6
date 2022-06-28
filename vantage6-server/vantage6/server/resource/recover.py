@@ -8,9 +8,7 @@ from flask_jwt_extended import (
     decode_token
 )
 from jwt.exceptions import DecodeError
-from flasgger import swag_from
 from http import HTTPStatus
-from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 import uuid
 
@@ -58,11 +56,32 @@ def setup(api, api_base, services):
 class ResetPassword(ServicesResources):
     """user can use recover token to reset their password."""
 
-    @swag_from(str(Path(r"swagger/post_reset_password.yaml")),
-               endpoint='reset_password')
     def post(self):
-        """"submit email-adress receive token."""
+        """Set a new password using a recover token
+        ---
+        description: >-
+          If the user received a recover token they can reset their password
 
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  reset_token:
+                    type: string
+                    description: recover token (received by email)
+                  password:
+                    type: string
+                    description: new chosen password
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: password or token is missing from JSON body or invalid
+
+        tags: ["Password recovery"]
+        """
         # retrieve user based on email or username
         body = request.get_json()
         reset_token = body.get("reset_token")
@@ -93,11 +112,35 @@ class ResetPassword(ServicesResources):
 class RecoverPassword(ServicesResources):
     """send a mail containing a recover token"""
 
-    @swag_from(str(Path(r"swagger/post_recover_password.yaml")),
-               endpoint='recover_password')
     def post(self):
-        """username or email generates a token which is mailed."""
+        """Request a recover token
+        ---
+        description: >-
+          If a user lost its password it can request a recover token. Either
+          the email or username needs to be supplied
 
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: username from which the password needs to be
+                      recovered
+                  email:
+                    type: string
+                    description: username from which the password needs to be
+                      recovered
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: No username or email provided
+
+        tags: ["Password recovery"]
+        """
         # default return string
         ret = {"msg": "If the username or email is in our database you "
                       "will soon receive an email."}
