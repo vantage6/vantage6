@@ -2,9 +2,7 @@
 import logging
 import uuid
 
-from pathlib import Path
 from http import HTTPStatus
-from flasgger.utils import swag_from
 from flask import g, request
 from flask_restful import reqparse
 
@@ -182,9 +180,9 @@ class Nodes(NodeBase):
         if 'name' in args:
             q = q.filter(db.Node.name.like(args['name']))
 
-        if f'last_seen_till' in args:
+        if 'last_seen_till' in args:
             q = q.filter(db.Node.last_seen <= args['last_seen_till'])
-        if f'last_seen_from' in args:
+        if 'last_seen_from' in args:
             q = q.filter(db.Node.last_seen >= args['last_seen_from'])
 
         if not self.r.v_glo.can():
@@ -201,13 +199,47 @@ class Nodes(NodeBase):
         # model serialization
         return self.response(page, node_schema)
 
-    # TODO the example is swagger docs for this doesn't include
+    # TODO the example in swagger docs for this doesn't include
     # organization_id. Find out why
     @with_user
-    @swag_from(str(Path(r"swagger/post_node_without_node_id.yaml")),
-               endpoint='node_without_id')
     def post(self):
-        """ Create a new node account"""
+        """Create node
+        ---
+        description: >-
+          Creates a new node-account belonging to a specific collaboration
+          which is specified in the POST body.\n\n
+          The organization of the user needs to be within the collaboration.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Node|Global|Create|❌|❌|Create a new node account belonging to a
+          specific collaboration|\n
+          |Node|Organization|Create|❌|❌|Create a new node account belonging
+          to a specific organization which is also part of the collaboration|
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collaboration'
+
+        responses:
+          201:
+            description: new node-account created
+          404:
+            description: collaboration specified by id does not exists
+          403:
+            description: organization is not part of the collaboration
+          401:
+            description: Unauthorized or missing permissions
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Node"]
+        """
         parser = reqparse.RequestParser()
         parser.add_argument("collaboration_id", type=int, required=True,
                             help="This field cannot be left blank!")
@@ -266,10 +298,43 @@ class Nodes(NodeBase):
 class Node(NodeBase):
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_node_with_id.yaml")),
-               endpoint='node_with_id')
     def get(self, id):
-        """ View node that belong in the same organization"""
+        """Get node
+        ---
+        description: >-
+          Returns the node by the specified id.\n\n
+          Only returns the node if the user or node has the required
+          permission.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Node|Global|View|❌|❌|View any node information|\n
+          |Node|Organization|View|✅|✅|View node information for nodes that
+          belong to your organization|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+              minimum: 1
+            description: "unique node identifier"
+            required: tr
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: node with specified id is not found
+          403:
+            description: you do not have permission to view this node
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Node"]
+        """
         node = db.Node.get(id)
         if not node:
             return {'msg': f'Node id={id} is not found!'}, HTTPStatus.NOT_FOUND
@@ -287,10 +352,43 @@ class Node(NodeBase):
         return node_schema.dump(node, many=False).data, HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_node_with_id.yaml")),
-               endpoint='node_with_id')
     def delete(self, id):
-        """delete node account"""
+        """
+        Delete node
+        ---
+        description: >-
+          Delete node from organization. Only users that belong to the
+          organization of the node can delete it.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Node|Global|Delete|❌|❌|Delete any node|\n
+          |Node|Organization|Delete|❌|❌|Delete any node that belongs to your
+          organization|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+              minimum: 1
+            description: "unique node identifier"
+            required: tr
+
+        responses:
+          200:
+            description: Ok, node is deleted
+          404:
+            description: Node with specified id is not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Node"]
+        """
         node = db.Node.get(id)
         if not node:
             return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
@@ -305,10 +403,50 @@ class Node(NodeBase):
         return {"msg": f"successfully deleted node id={id}"}, HTTPStatus.OK
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/patch_node_with_id.yaml")),
-               endpoint='node_with_id')
     def patch(self, id):
-        """update existing node"""
+        """Update node
+        ---
+        description: >-
+          Update the node specified by the id. Only a user or node that belongs
+          to the organization of the node are allowed to update it.\n\n
+          If the node does not exists it is created as a new node.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Node|Global|Edit|❌|❌|Update a node specified by id|\n
+          |Node|Organization|Edit|❌|❌|Update a node specified by id which is
+          part of your organization|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: "unique node identifier"
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collaboration'
+
+        responses:
+          200:
+            description: Ok, node is updated
+          403:
+            description: you do not have permission to alter this node
+          401:
+            description: Unauthorized
+          404:
+            description: Not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Node"]
+        """
         node = db.Node.get(id)
         if not node:
             return {'msg': f'Node id={id} not found!'}, HTTPStatus.NOT_FOUND

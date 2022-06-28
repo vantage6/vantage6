@@ -5,8 +5,6 @@ import sqlalchemy.exc
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import reqparse
-from flasgger import swag_from
-from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -228,10 +226,60 @@ class Users(UserBase):
         return self.response(page, user_schema)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_user_without_id.yaml")),
-               endpoint='user_without_id')
     def post(self):
-        """Create a new User."""
+        """Add user
+        ---
+        description: >-
+          Creates new user from the request data to the users organization.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |User|Global|Create|❌|❌|Create a new user|\n
+          |User|Organization|Create|❌|❌|Create a new user as part of your
+          organization|
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: unique username
+                  firstname:
+                    type: string
+                  lastname:
+                    type: string
+                  password:
+                    type: string
+                  organization_id:
+                    type: integer
+                  roles:
+                    type: array
+                    items:
+                      type: integer
+                    description: user roles
+                  rules:
+                    type: integer
+                    description: rules assigned to the roles
+                  email:
+                    type: string
+
+
+        responses:
+          400:
+            description: Username already exists
+          201:
+            description: Ok
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=True)
         parser.add_argument("firstname", type=str, required=True)
@@ -382,10 +430,65 @@ class User(UserBase):
                     HTTPStatus.UNAUTHORIZED
 
     @with_user
-    @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")),
-               endpoint='user_with_id')
     def patch(self, id):
+        """Update user
+        ---
+        description: >-
+          Update user information.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |User|Global|Edit|❌|❌|Edit any user|
 
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                  firstname:
+                    type: string
+                  lastname:
+                    type: string
+                  password:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                    description: user roles
+                  rules:
+                    type: integer
+                    description: rules assigned to the user role
+                  organization_id:
+                    type: integer
+
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: user id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          403:
+            description: No permission to update this user
+          404:
+            description: User not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
         user = db.User.get(id)
 
         if not user:
@@ -516,10 +619,41 @@ class User(UserBase):
         return user_schema.dump(user).data, HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")),
-               endpoint='user_with_id')
     def delete(self, id):
-        """Remove user from the database."""
+        """Remove user.
+        ---
+        description: >-
+          Remove user entirely from the database.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |User|Global|Delete|❌|❌|Delete any user|\n
+          |User|Organization|Delete|❌|❌|Delete users from your
+          organization|\n
+          |User|Own|Delete|❌|❌|Delete your own account|
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: user id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: User not found
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
         user = db.User.get(id)
         if not user:
             return {"msg": f"user id={id} not found"}, \

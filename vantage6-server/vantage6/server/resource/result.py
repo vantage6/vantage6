@@ -3,8 +3,6 @@ import logging
 
 from flask import g, request
 from http import HTTPStatus
-from flasgger import swag_from
-from pathlib import Path
 from sqlalchemy import desc
 
 from vantage6.common import logger_name
@@ -309,10 +307,43 @@ class Result(ResultBase):
         return s.dump(result, many=False).data, HTTPStatus.OK
 
     @with_node
-    @swag_from(str(Path(r"swagger/patch_result_with_id.yaml")),
-               endpoint="result_with_id")
     def patch(self, id):
-        """Update a Result."""
+        """Update results
+        ---
+        description: >-
+          Update results if the task_id belongs to the specific organization
+          and comes from the correct node.\n\n
+          The user cannot access or tamper with any results, rather, the node
+          that accesses this endpoint needs to be authenticated.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+              minimum: 1
+            description: "unique task identifier"
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collaboration'
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: not owner of this task or results already posted
+          401:
+            description: Unauthorized or missing permission
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Result"]
+        """
         result = db_Result.get(id)
         if not result:
             return {'msg': f'Result id={id} not found!'}, HTTPStatus.NOT_FOUND

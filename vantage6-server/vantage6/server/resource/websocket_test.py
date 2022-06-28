@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from flasgger import swag_from
-from pathlib import Path
 from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.server.resource import ServicesResources
@@ -31,9 +29,17 @@ def setup(api, api_base, services):
 # ------------------------------------------------------------------------------
 class Test(ServicesResources):
 
-    @swag_from(str(Path(r"swagger/websocket-test.yaml")),
-               endpoint='websocket_test')
     def get(self):
-        """Return something."""
+        """Web socket test
+        ---
+        description: >-
+          Returns a response to check that the websocket works as intended.
+
+        responses:
+          200:
+            description: Ok
+
+        tags: ["Other"]
+        """
         self.socketio.send("you're welcome!", room='all_nodes')
         return self.socketio.server.manager.rooms, HTTPStatus.OK
