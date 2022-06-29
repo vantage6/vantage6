@@ -496,6 +496,16 @@ class User(UserBase):
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
 
+            # validate that user is not deleting rules they do not have
+            # themselves
+            deleted_rules = [r for r in user.rules if r not in rules]
+            denied = self.permissions.verify_user_rules(deleted_rules)
+            if denied:
+                return {"msg": (
+                    f"{denied['msg']}. You can't delete permissions for "
+                    "another user that you don't have yourself!"
+                )}, HTTPStatus.UNAUTHORIZED
+
             user.rules = rules
 
         if data["organization_id"] and \
