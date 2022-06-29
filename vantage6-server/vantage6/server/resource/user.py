@@ -435,7 +435,7 @@ class User(UserBase):
             # validate that these roles exist
             roles = []
             for role_id in json_data['roles']:
-                role = db.Role.get(role_id)  # somehow a nontype endup here
+                role = db.Role.get(role_id)
                 if not role:
                     return {'msg': f'Role={role_id} can not be found!'}, \
                         HTTPStatus.NOT_FOUND
@@ -459,6 +459,19 @@ class User(UserBase):
                     return {'msg': (
                         "You can't assign that role to that user as the role "
                         "belongs to a different organization than the user "
+                    )}, HTTPStatus.UNAUTHORIZED
+
+            # validate that user is not deleting roles they cannot assign
+            # e.g. an organization admin is not allowed to delete a root role
+            deleted_roles = [r for r in user.roles if r not in roles]
+            for role in deleted_roles:
+                denied = self.permissions.verify_user_rules(role.rules)
+                if denied:
+                    return {"msg": (
+                        f"You are trying to delete the role {role.name} from "
+                        "this user but that is not allowed because they have "
+                        f"permissions you don't have: {denied['msg']} (and "
+                        "they do!)"
                     )}, HTTPStatus.UNAUTHORIZED
 
             user.roles = roles
