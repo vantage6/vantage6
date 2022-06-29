@@ -44,6 +44,14 @@ def setup(api, api_base, services):
     )
 
     api.add_resource(
+        ChangePassword,
+        path+'/change',
+        endpoint='change_password',
+        methods=('POST',),
+        resource_class_kwargs=services
+    )
+
+    api.add_resource(
         ResetAPIKey,
         path+'/node',
         endpoint="reset_api_key",
@@ -139,6 +147,73 @@ class RecoverPassword(ServicesResources):
         )
 
         return ret
+
+
+# TODO swagger
+class ChangePassword(ServicesResources):
+    """ Let user to change their password with old password as verification """
+
+    @with_user
+    def post(self):
+        """Set a new password using the current password
+        ---
+        description: >-
+          Users can change their password by submitting their current password
+          and a new password
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  current_password:
+                    type: string
+                    description: current password
+                  new_password:
+                    type: string
+                    description: new password
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Current or new password is missing from JSON body
+          401:
+            description: Current password is incorrect
+
+        tags: ["Password recovery"]
+        """
+        body = request.get_json()
+        old_password = body.get("current_password")
+        new_password = body.get("new_password")
+
+        if not old_password:
+            return {"msg": "Your current password is missing"},  \
+                HTTPStatus.BAD_REQUEST
+        elif not new_password:
+            return {"msg": "Your new password is missing!"}, \
+                HTTPStatus.BAD_REQUEST
+
+        user = g.user
+        log.debug(f"Changing password for user {user.id}")
+
+        # check if the old password is correct
+        pw_correct = user.check_password(old_password)
+        if not pw_correct:
+            return {"msg": "Your current password is not correct!"}, \
+                HTTPStatus.UNAUTHORIZED
+
+        if old_password == new_password:
+            return {"msg": "New password is the same as current password!"}, \
+                HTTPStatus.BAD_REQUEST
+
+        # set password
+        user.set_password(new_password)
+        user.save()
+
+        log.info(f"Successful password change for '{user.username}'")
+        return {"msg": "The password has been changed successfully!"}, \
+            HTTPStatus.OK
 
 
 class ResetAPIKey(ServicesResources):
