@@ -34,6 +34,7 @@ from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.common.exceptions import AuthenticationException
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
@@ -464,6 +465,11 @@ class Node(object):
             try:
                 self.server_io.authenticate(api_key)
 
+            except AuthenticationException as e:
+                msg = "Authentication failed: API key is wrong!"
+                self.log.warning(msg)
+                self.log.debug(e)
+                break
             except Exception as e:
                 msg = 'Authentication failed. Retrying in 10 seconds!'
                 self.log.warning(msg)
