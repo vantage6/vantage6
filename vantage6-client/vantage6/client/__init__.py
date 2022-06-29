@@ -16,6 +16,7 @@ import json as json_lib
 from pathlib import Path
 from typing import Tuple
 
+from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.client import serialization, deserialization
@@ -310,8 +311,11 @@ class ClientBase(object):
 
         # handle negative responses
         if response.status_code > 200:
-            self.log.critical(f"Failed to authenticate {data.get('msg')}")
-            raise Exception("Failed to authenticate")
+            self.log.critical(f"Failed to authenticate: {data.get('msg')}")
+            if response.status_code == 401:
+                raise AuthenticationException("Failed to authenticate")
+            else:
+                raise Exception("Failed to authenticate")
 
         # store tokens in object
         self.log.info("Successfully authenticated")
