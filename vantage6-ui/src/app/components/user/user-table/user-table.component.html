@@ -1,5 +1,5 @@
-<mat-card *ngIf="userPermission.hasPermission('view', 'user', 'global') ||
-                 userPermission.hasPermission('create', 'user', '*')">
+<mat-card>
+  <h4>View users</h4>
   <div *ngIf="userPermission.hasPermission('view', 'user', 'global')" class="inline">
     Select organization to view:
     <div ngbDropdown class="d-inline-block">

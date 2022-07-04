@@ -28,6 +28,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
   rules: Rule[] = [];
   mode: OpsType = OpsType.EDIT;
   role: Role = getEmptyRole();
+  role_orig_name: string = '';
 
   constructor(
     protected router: Router,
@@ -78,6 +79,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
     let role = await this.roleDataService.get(id, this.rules);
     if (role) {
       this.role = role;
+      this.role_orig_name = this.role.name;
     }
   }
 
@@ -101,5 +103,11 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
 
   updateAddedRules($event: Rule[]) {
     this.role.rules = $event;
+  }
+
+  getTitle(): string {
+    return this.mode === OpsType.EDIT
+      ? `Edit role '${this.role_orig_name}'`
+      : 'Create a new role';
   }
 }

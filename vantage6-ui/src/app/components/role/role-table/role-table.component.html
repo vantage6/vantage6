@@ -1,4 +1,5 @@
 <mat-card>
+  <h4>View roles</h4>
   <div *ngIf="userPermission.hasPermission('view', 'role', 'global') &&
               userPermission.hasPermission('view', 'organization', 'global')"
       class="inline">

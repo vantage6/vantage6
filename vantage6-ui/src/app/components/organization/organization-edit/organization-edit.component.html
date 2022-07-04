@@ -1,50 +1,51 @@
 <mat-card>
-    <table style="width: 100%">
-      <colgroup>
-        <col span="1" style="width: 20%;"/>
-        <col span="1" style="width: 80%;"/>
-      </colgroup>
-      <tr>
-        <td>Name:</td>
-        <td><input [(ngModel)]="organization.name"/></td>
-      </tr>
-      <tr>
-        <td>Address 1:</td>
-        <td><input [(ngModel)]="organization.address1"/></td>
-      </tr>
-      <tr>
-        <td>Address 2:</td>
-        <td><input [(ngModel)]="organization.address2"/></td>
-      </tr>
-      <tr>
-        <td>Country:</td>
-        <td><input [(ngModel)]="organization.country"/></td>
-      </tr>
-      <tr>
-        <td>Domain:</td>
-        <td><input [(ngModel)]="organization.domain"/></td>
-      </tr>
-      <tr>
-        <td>{{uploadPublicKeyText()}}</td>
-        <td>
-          <div class="form-group">
-            <input type="file" id="file" (change)="uploadPublicKey($event)"/>
-          </div>
-        </td>
-      </tr>
-      <tr *ngIf="organization.public_key">
-        <td>Remove your public key:</td>
-        <td>
-          <mat-checkbox [(ngModel)]="delete_public_key">
-            Only do this if your organization doesn't require a public key for encrypted collaborations.
-          </mat-checkbox>
-        </td>
-      </tr>
-    </table>
-    <button mat-button class="btn btn-save" (click)="save()">
-      Save
-    </button>
-    <button mat-button class="btn btn-dflt" (click)="cancel()">
-      Cancel
-    </button>
-  </mat-card>
+  <h4>Edit organization '{{organization.name}}'</h4>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Name:</td>
+      <td><input [(ngModel)]="organization.name"/></td>
+    </tr>
+    <tr>
+      <td>Address 1:</td>
+      <td><input [(ngModel)]="organization.address1"/></td>
+    </tr>
+    <tr>
+      <td>Address 2:</td>
+      <td><input [(ngModel)]="organization.address2"/></td>
+    </tr>
+    <tr>
+      <td>Country:</td>
+      <td><input [(ngModel)]="organization.country"/></td>
+    </tr>
+    <tr>
+      <td>Domain:</td>
+      <td><input [(ngModel)]="organization.domain"/></td>
+    </tr>
+    <tr>
+      <td>{{uploadPublicKeyText()}}</td>
+      <td>
+        <div class="form-group">
+          <input type="file" id="file" (change)="uploadPublicKey($event)"/>
+        </div>
+      </td>
+    </tr>
+    <tr *ngIf="organization.public_key">
+      <td>Remove your public key:</td>
+      <td>
+        <mat-checkbox [(ngModel)]="delete_public_key">
+          Only do this if your organization doesn't require a public key for encrypted collaborations.
+        </mat-checkbox>
+      </td>
+    </tr>
+  </table>
+  <button mat-button class="btn btn-save" (click)="save()">
+    Save
+  </button>
+  <button mat-button class="btn btn-dflt" (click)="cancel()">
+    Cancel
+  </button>
+</mat-card>

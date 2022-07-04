@@ -1,31 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 
 import { Role } from 'src/app/interfaces/role';
-import { OpsType, ResType } from 'src/app/shared/enum';
 import { Rule } from 'src/app/interfaces/rule';
 import { getEmptyUser, User } from 'src/app/interfaces/user';
+import { OpsType } from 'src/app/shared/enum';
 
+import { ActivatedRoute, Router } from '@angular/router';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
+import { Organization } from 'src/app/interfaces/organization';
+import { ApiUserService } from 'src/app/services/api/api-user.service';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { UtilsService } from 'src/app/services/common/utils.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { UserDataService } from 'src/app/services/data/user-data.service';
 import {
   deepcopy,
   getIdsFromArray,
-  parseId,
   removeMatchedIdFromArray,
   removeMatchedIdsFromArray,
 } from 'src/app/shared/utils';
-import { ApiUserService } from 'src/app/services/api/api-user.service';
-import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { UtilsService } from 'src/app/services/common/utils.service';
-import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
-import {
-  EMPTY_ORGANIZATION,
-  Organization,
-} from 'src/app/interfaces/organization';
-import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { UserDataService } from 'src/app/services/data/user-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
-import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { BaseEditComponent } from '../../base/base-edit/base-edit.component';
 
 // TODO add option to assign user to different organization?
@@ -41,6 +37,7 @@ import { BaseEditComponent } from '../../base/base-edit/base-edit.component';
 export class UserEditComponent extends BaseEditComponent implements OnInit {
   loggedin_user: User = getEmptyUser();
   user: User = getEmptyUser();
+  user_orig_name: string = '';
   rules_all: Rule[] = [];
   roles_all: Role[] = [];
   roles_assignable_all: Role[] = [];
@@ -121,6 +118,7 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     );
     if (user) {
       this.user = user;
+      this.user_orig_name = this.user.username;
       this.organization_id = this.user.organization_id;
       this.setAssignableRoles();
     }
@@ -237,5 +235,11 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     });
     // set assignable roles for this organization
     this.setAssignableRoles();
+  }
+
+  getTitle(): string {
+    return this.mode === OpsType.EDIT
+      ? `Edit user '${this.user_orig_name}'`
+      : 'Create a new user';
   }
 }

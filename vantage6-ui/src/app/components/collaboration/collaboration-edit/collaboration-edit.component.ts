@@ -40,6 +40,7 @@ export class CollaborationEditComponent
   implements OnInit
 {
   collaboration: Collaboration = getEmptyCollaboration();
+  collaboration_orig_name: string = '';
   all_organizations: OrganizationInCollaboration[] = [];
   collab_organizations_original: OrganizationInCollaboration[] = [];
   organizations_not_in_collab: OrganizationInCollaboration[] = [];
@@ -84,6 +85,7 @@ export class CollaborationEditComponent
       id,
       this.all_organizations
     );
+    this.collaboration_orig_name = this.collaboration.name;
     // remove organizations that are already in collaboration from the
     // organizations that can be added to it
     this.organizations_not_in_collab = removeMatchedIdsFromArray(
@@ -236,5 +238,11 @@ export class CollaborationEditComponent
     return this.mode === OpsType.EDIT
       ? 'Register nodes for new organizations'
       : 'Register nodes';
+  }
+
+  getTitle(): string {
+    return this.mode === OpsType.EDIT
+      ? `Edit collaboration '${this.collaboration_orig_name}'`
+      : 'Create a new collaboration';
   }
 }
