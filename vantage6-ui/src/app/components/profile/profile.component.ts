@@ -9,15 +9,18 @@ import { ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
 import { deepcopy } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../base/base-view/base-view.component';
+import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss'],
+  styleUrls: ['../../shared/scss/buttons.scss', './profile.component.scss'],
 })
 export class ProfileComponent extends BaseViewComponent implements OnInit {
   user: User = getEmptyUser();
   old_password: string = '';
+  new_password: string = '';
+  new_password_repeated: string = '';
 
   constructor(
     public userPermission: UserPermissionService,
@@ -43,6 +46,32 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
     this.signOutService.signOut();
   }
 
+  hasFilledInPasswords(): boolean {
+    return (
+      this.old_password.length > 0 &&
+      this.new_password.length > 0 &&
+      this.new_password === this.new_password_repeated
+    );
+  }
+
   // TODO implement changing a password when it has been implemented server-side
-  savePassword(): void {}
+  async savePassword(): Promise<void> {
+    this.apiUserService
+      .change_password(this.old_password, this.new_password)
+      .subscribe(
+        (data: any) => {
+          this.modalService.openMessageModal(ModalMessageComponent, [
+            'Your password was changed successfully!',
+          ]);
+          this.old_password = '';
+          this.new_password = '';
+          this.new_password_repeated = '';
+        },
+        (error: any) => {
+          this.modalService.openMessageModal(ModalMessageComponent, [
+            error.error.msg,
+          ]);
+        }
+      );
+  }
 }

@@ -16,18 +16,18 @@
     </tr>
     <tr>
       <td>Password:</td>
-      <td><input type="password" [(ngModel)]="user.password"/></td>
+      <td><input type="password" [(ngModel)]="new_password"/></td>
     </tr>
     <tr>
       <td>Repeat password:</td>
       <td>
-        <input type="password" [(ngModel)]="user.password_repeated"/>
-        <p class="inline text-warning" *ngIf="user.password != user.password_repeated">
+        <input type="password" [(ngModel)]="new_password_repeated"/>
+        <p class="inline text-warning" *ngIf="new_password != new_password_repeated">
           Passwords do not match!
         </p>
       </td>
     </tr>
-    <button mat-button class="btn btn-save" (click)="savePassword()">
+    <button mat-button class="btn btn-save" (click)="savePassword()" [disabled]="!hasFilledInPasswords()">
       Save new password
     </button>
   </table>
