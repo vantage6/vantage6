@@ -8,6 +8,7 @@ import { getIdsFromArray } from 'src/app/shared/utils';
 import { ApiService } from 'src/app/services/api/api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -34,5 +35,12 @@ export class ApiUserService extends ApiService {
       data.password = user.password;
     }
     return data;
+  }
+
+  change_password(current_password: string, new_password: string) {
+    return this.http.post<any>(environment.api_url + '/recover/change', {
+      current_password: current_password,
+      new_password: new_password,
+    });
   }
 }
