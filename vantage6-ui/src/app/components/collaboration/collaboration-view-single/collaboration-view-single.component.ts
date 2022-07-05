@@ -10,6 +10,7 @@ import {
   Organization,
   OrganizationInCollaboration,
 } from 'src/app/interfaces/organization';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
@@ -36,9 +37,16 @@ export class CollaborationViewSingleComponent
     private nodeDataService: NodeDataService,
     private collabDataService: CollabDataService,
     protected utilsService: UtilsService,
-    private orgDataService: OrgDataService
+    private orgDataService: OrgDataService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, utilsService, ResType.COLLABORATION);
+    super(
+      activatedRoute,
+      userPermission,
+      utilsService,
+      ResType.COLLABORATION,
+      modalService
+    );
   }
 
   async setResources() {
@@ -49,7 +57,7 @@ export class CollaborationViewSingleComponent
 
     await this.setOrganizations(false);
 
-    this.setCollaboration();
+    await this.setCollaboration();
   }
 
   async setCollaboration(): Promise<void> {

@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_NODE, NodeWithOrg } from 'src/app/interfaces/node';
 import { Organization } from 'src/app/interfaces/organization';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
@@ -28,15 +29,22 @@ export class NodeSingleViewComponent
     private nodeDataService: NodeDataService,
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
-    protected utilsService: UtilsService
+    protected utilsService: UtilsService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, utilsService, ResType.NODE);
+    super(
+      activatedRoute,
+      userPermission,
+      utilsService,
+      ResType.NODE,
+      modalService
+    );
   }
 
   async setResources(): Promise<void> {
     await this.setNode();
     await this.setOrganization();
-    this.setCollaboration();
+    await this.setCollaboration();
   }
 
   async setNode(): Promise<void> {

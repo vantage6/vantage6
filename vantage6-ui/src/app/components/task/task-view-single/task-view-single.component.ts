@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
 import { EMPTY_TASK, getEmptyTask, Task } from 'src/app/interfaces/task';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
@@ -29,9 +30,16 @@ export class TaskViewSingleComponent
     protected utilsService: UtilsService,
     private taskDataService: TaskDataService,
     private orgDataService: OrgDataService,
-    private collabDataService: CollabDataService
+    private collabDataService: CollabDataService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, utilsService, ResType.TASK);
+    super(
+      activatedRoute,
+      userPermission,
+      utilsService,
+      ResType.TASK,
+      modalService
+    );
   }
 
   protected readRoute(): void {

@@ -7,6 +7,7 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { TableComponent } from 'src/app/components/base/table/table.component';
+import { ModalService } from 'src/app/services/common/modal.service';
 
 @Component({
   selector: 'app-role-table',
@@ -32,9 +33,10 @@ export class RoleTableComponent
     public userPermission: UserPermissionService,
     private roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
-    private orgDataService: OrgDataService
+    private orgDataService: OrgDataService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission);
+    super(activatedRoute, userPermission, modalService);
   }
 
   ngAfterViewInit(): void {

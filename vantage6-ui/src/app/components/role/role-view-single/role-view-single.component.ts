@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_ROLE, Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
@@ -26,9 +27,16 @@ export class RoleViewSingleComponent
     public userPermission: UserPermissionService,
     private roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
-    protected utilsService: UtilsService
+    protected utilsService: UtilsService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, utilsService, ResType.ROLE);
+    super(
+      activatedRoute,
+      userPermission,
+      utilsService,
+      ResType.ROLE,
+      modalService
+    );
   }
 
   async init() {

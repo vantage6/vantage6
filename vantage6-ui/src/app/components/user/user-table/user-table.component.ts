@@ -4,6 +4,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
@@ -38,9 +39,10 @@ export class UserTableComponent extends TableComponent implements OnInit {
     private roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
     private userDataService: UserDataService,
-    private orgDataService: OrgDataService
+    private orgDataService: OrgDataService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission);
+    super(activatedRoute, userPermission, modalService);
   }
 
   ngAfterViewInit(): void {

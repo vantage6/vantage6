@@ -4,6 +4,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { Node } from 'src/app/interfaces/node';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
@@ -33,9 +34,10 @@ export class CollaborationTableComponent
     public userPermission: UserPermissionService,
     private collabDataService: CollabDataService,
     private orgDataService: OrgDataService,
-    private nodeDataService: NodeDataService
+    private nodeDataService: NodeDataService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission);
+    super(activatedRoute, userPermission, modalService);
   }
 
   async init() {

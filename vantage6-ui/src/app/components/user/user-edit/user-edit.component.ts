@@ -69,10 +69,6 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     );
   }
 
-  ngOnInit(): void {
-    super.ngOnInit();
-  }
-
   async init() {
     this.loggedin_user = this.userPermission.user;
 

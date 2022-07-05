@@ -11,6 +11,8 @@ import { Task } from 'src/app/interfaces/task';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
+import { ModalService } from 'src/app/services/common/modal.service';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 // TODO this contains a lot of duplication from NodeTableComponent, fix that
 @Component({
@@ -43,9 +45,10 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     public userPermission: UserPermissionService,
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
-    private taskDataService: TaskDataService
+    private taskDataService: TaskDataService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission);
+    super(activatedRoute, userPermission, modalService);
   }
 
   async init(): Promise<void> {
@@ -119,6 +122,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     await this.addInitiatorsToTasks();
 
     this.dataSource.data = this.resources;
+
+    this.modalService.closeLoadingModal();
   }
 
   protected async setResources() {

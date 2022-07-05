@@ -33,6 +33,7 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.modalService.openLoadingModal();
     this.userPermission.isInitialized().subscribe((ready: boolean) => {
       if (ready) this.init();
     });
@@ -40,6 +41,7 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
 
   init(): void {
     this.user = deepcopy(this.userPermission.user);
+    this.modalService.closeLoadingModal();
   }
 
   signOut() {

@@ -4,6 +4,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
@@ -30,20 +31,27 @@ export class UserViewSingleComponent
     private roleDataService: RoleDataService,
     private ruleDataService: RuleDataService,
     private userDataService: UserDataService,
-    protected utilsService: UtilsService
+    protected utilsService: UtilsService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, utilsService, ResType.USER);
+    super(
+      activatedRoute,
+      userPermission,
+      utilsService,
+      ResType.USER,
+      modalService
+    );
   }
 
   async setResources() {
-    // TODO organize this in a different way: first get the collaboration, then
-    // get ONLY the organizations and nodes relevant for that collab, instead
-    // of all of them first and then getting single collaboration
+    // TODO organize this in a different way: first get the user, then
+    // get ONLY the rules and roles relevant for that user, instead
+    // of all of them
     await this.setRules();
 
     await this.setRoles();
 
-    this.setUser();
+    await this.setUser();
   }
 
   async setRules() {
