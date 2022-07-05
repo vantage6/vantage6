@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Organization } from 'src/app/interfaces/organization';
 import { User } from 'src/app/interfaces/user';
@@ -36,32 +36,34 @@ export abstract class BaseEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.modalService.openLoadingModal();
     if (this.router.url.includes(OpsType.CREATE)) {
       this.mode = OpsType.CREATE;
     }
-    this.userPermission.isInitialized().subscribe((ready) => {
-      if (ready) {
-        this.init();
-      }
-    });
+    this.init();
   }
 
   abstract init(): void;
 
   abstract setupCreate(): void;
-  abstract setupEdit(id: number): void;
+  abstract setupEdit(id: number): Promise<void>;
 
   protected readRoute() {
     this.activatedRoute.paramMap.subscribe((params) => {
-      if (this.mode === OpsType.CREATE) {
-        this.route_id = parseId(params.get('org_id'));
-        this.organization_id = this.route_id; // TODO should we do with a single variable? Get rid of route_id?
-        this.setupCreate();
-      } else {
-        let id = this.utilsService.getId(params, ResType.USER);
-        this.setupEdit(id);
-      }
+      this.setup(params);
     });
+  }
+
+  protected async setup(params: ParamMap) {
+    if (this.mode === OpsType.CREATE) {
+      this.route_id = parseId(params.get('org_id'));
+      this.organization_id = this.route_id; // TODO should we do with a single variable? Get rid of route_id?
+      await this.setupCreate();
+    } else {
+      let id = this.utilsService.getId(params, ResType.USER);
+      await this.setupEdit(id);
+    }
+    this.modalService.closeLoadingModal();
   }
 
   public cancel(): void {

@@ -16,6 +16,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
@@ -59,6 +60,7 @@ import { CollaborationTableComponent } from './components/collaboration/collabor
 import { RoleViewSingleComponent } from './components/role/role-view-single/role-view-single.component';
 import { UserViewSingleComponent } from './components/user/user-view-single/user-view-single.component';
 import { NodeSingleViewComponent } from './components/node/node-single-view/node-single-view.component';
+import { ModalLoadingComponent } from './components/modal/modal-loading/modal-loading.component';
 
 @NgModule({
   declarations: [
@@ -93,6 +95,7 @@ import { NodeSingleViewComponent } from './components/node/node-single-view/node
     RoleViewSingleComponent,
     UserViewSingleComponent,
     NodeSingleViewComponent,
+    ModalLoadingComponent,
   ],
   imports: [
     BrowserModule,
@@ -115,6 +118,7 @@ import { NodeSingleViewComponent } from './components/node/node-single-view/node
     MatSortModule,
     MatFormFieldModule,
     MatInputModule,
+    MatProgressSpinnerModule,
     CommonModule,
     NgbModule,
   ],

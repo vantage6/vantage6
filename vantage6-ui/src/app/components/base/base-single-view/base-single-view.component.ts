@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { ResType } from 'src/app/shared/enum';
 
@@ -17,12 +18,14 @@ export abstract class BaseSingleViewComponent implements OnInit {
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     protected utilsService: UtilsService,
-    resource_type: ResType
+    resource_type: ResType,
+    protected modalService: ModalService
   ) {
     this.resource_type = resource_type;
   }
 
   ngOnInit(): void {
+    this.modalService.openLoadingModal();
     this.userPermission.isInitialized().subscribe((ready: boolean) => {
       if (ready) {
         this.init();
@@ -34,7 +37,7 @@ export abstract class BaseSingleViewComponent implements OnInit {
     this.readRoute();
   }
 
-  abstract setResources(): void;
+  abstract setResources(): Promise<void>;
 
   protected readRoute(): void {
     this.activatedRoute.paramMap.subscribe((params) => {
@@ -47,7 +50,8 @@ export abstract class BaseSingleViewComponent implements OnInit {
   }
 
   protected async setup() {
-    this.setResources();
+    await this.setResources();
+    this.modalService.closeLoadingModal();
   }
 
   public goBackToPreviousPage() {

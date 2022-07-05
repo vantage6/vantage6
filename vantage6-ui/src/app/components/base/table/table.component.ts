@@ -10,9 +10,11 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Organization } from 'src/app/interfaces/organization';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { ModalService } from 'src/app/services/common/modal.service';
 import { Resource, ResourceWithOrg } from 'src/app/shared/types';
 import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
 
@@ -54,10 +56,13 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
   constructor(
     protected activatedRoute: ActivatedRoute,
-    public userPermission: UserPermissionService
+    public userPermission: UserPermissionService,
+    protected modalService: ModalService
   ) {}
 
   ngOnInit(): void {
+    this.modalService.openLoadingModal();
+
     this.userPermission.isInitialized().subscribe((ready: boolean) => {
       if (ready) {
         this.loggedin_user = this.userPermission.user;
@@ -80,6 +85,8 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
     await this.addOrganizationsToResources();
 
     this.dataSource.data = this.resources;
+
+    this.modalService.closeLoadingModal();
   }
 
   async readRoute() {

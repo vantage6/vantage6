@@ -73,6 +73,7 @@ export class OrganizationComponent implements OnInit {
   // TODO Now it is shown that there are no users/roles until they are loaded,
   // instead should say that they are being loaded
   ngOnInit(): void {
+    this.modalService.openLoadingModal();
     this.userPermission.isInitialized().subscribe((ready: boolean) => {
       if (ready) this.init();
     });
@@ -133,6 +134,9 @@ export class OrganizationComponent implements OnInit {
       return;
     }
 
+    // TODO there are things that can be parallelized below, but they should
+    // still be awaited... refactor
+
     // first collect roles for current organization. This is done before
     // collecting the users so that the users can possess these roles
     this.roles = await this.roleDataService.org_list(
@@ -152,6 +156,8 @@ export class OrganizationComponent implements OnInit {
 
     // collect nodes for current organization
     await this.setNodes();
+
+    this.modalService.closeLoadingModal();
   }
 
   async sortRoles(roles: Role[]): Promise<Role[]> {

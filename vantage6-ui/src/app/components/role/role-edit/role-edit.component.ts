@@ -52,13 +52,6 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
     );
   }
 
-  ngOnInit(): void {
-    if (this.router.url.includes(OpsType.CREATE)) {
-      this.mode = OpsType.CREATE;
-    }
-    this.init();
-  }
-
   async init(): Promise<void> {
     // subscribe to rule data service to have all rules available
     await this.setRules();

@@ -7,6 +7,7 @@ import {
 
 import { ModalDeleteComponent } from 'src/app/components/modal/modal-delete/modal-delete.component';
 import { ModalEditComponent } from 'src/app/components/modal/modal-edit/modal-edit.component';
+import { ModalLoadingComponent } from 'src/app/components/modal/modal-loading/modal-loading.component';
 import { ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
 
@@ -14,6 +15,8 @@ import { Resource } from 'src/app/shared/types';
   providedIn: 'root',
 })
 export class ModalService {
+  loadingModal: NgbModalRef | null = null;
+
   constructor(private modalService: NgbModal) {}
 
   openMessageModal(
@@ -33,6 +36,22 @@ export class ModalService {
     modalRef.componentInstance.messages = messages;
     modalRef.componentInstance.go_back_after_close = go_back_after_close;
     return modalRef;
+  }
+
+  openLoadingModal(keepOpen = true): void {
+    let options: NgbModalOptions = {};
+    if (keepOpen) {
+      options = {
+        backdrop: 'static',
+        keyboard: false,
+        windowClass: 'loading-modal',
+      };
+    }
+    this.loadingModal = this.modalService.open(ModalLoadingComponent, options);
+  }
+
+  closeLoadingModal(): void {
+    this.loadingModal?.close();
   }
 
   openEditModal(param_name: string, current_value: string): NgbModalRef {

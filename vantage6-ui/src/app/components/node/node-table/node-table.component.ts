@@ -9,6 +9,7 @@ import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { deepcopy, parseId } from 'src/app/shared/utils';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
+import { ModalService } from 'src/app/services/common/modal.service';
 
 export enum DisplayMode {
   COL = 'collaboration',
@@ -40,9 +41,10 @@ export class NodeTableComponent
     public userPermission: UserPermissionService,
     private nodeDataService: NodeDataService,
     private orgDataService: OrgDataService,
-    private collabDataService: CollabDataService
+    private collabDataService: CollabDataService,
+    protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission);
+    super(activatedRoute, userPermission, modalService);
   }
 
   async init(): Promise<void> {
@@ -116,6 +118,8 @@ export class NodeTableComponent
     await this.addOrganizationsToResources();
 
     this.dataSource.data = this.resources;
+
+    this.modalService.closeLoadingModal();
   }
 
   protected async setResources() {
