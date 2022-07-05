@@ -78,6 +78,9 @@ class ServerApp:
         # Setup the Flask-Mail client
         self.mail = MailService(self.app, Mail(self.app))
 
+        # Set nodes to offline -- required before setting up the SocketIO
+        self._set_nodes_offline()
+
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
@@ -128,6 +131,14 @@ class ServerApp:
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
+
+    @staticmethod
+    def _set_nodes_offline():
+        """Set all nodes to offline (before starting the socket connection)"""
+        nodes = db.Node.get()
+        for node in nodes:
+            node.status = 'offline'
+            node.save()
 
     @staticmethod
     def configure_logging():
@@ -406,14 +417,6 @@ class ServerApp:
                            organization=org, email="root@domain.ext",
                            password=SUPER_USER_INFO['password'])
             user.save()
-
-        # set all nodes to offline
-        # TODO: this is *not* the way
-        nodes = db.Node.get()
-        for node in nodes:
-            node.status = 'offline'
-            node.save()
-        # session.commit()
 
         return self
 
