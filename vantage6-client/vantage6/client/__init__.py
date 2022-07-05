@@ -605,7 +605,8 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            id_ = jwt.decode(self.token, verify=False)['identity']
+            id_ = jwt.decode(
+                self.token, options={"verify_signature": False})['identity']
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
             organization_id = user.get("organization").get("id")
@@ -1826,7 +1827,8 @@ class ContainerClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        container_identity = jwt.decode(token, verify=False)['identity']
+        container_identity = jwt.decode(
+            token, options={"verify_signature": False})['identity']
         self.image = container_identity.get("image")
         self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")
