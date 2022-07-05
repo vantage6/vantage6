@@ -51,7 +51,7 @@ setup(
             'SQLAlchemy==1.3.15',
             'schema==0.7.1',
             'appdirs==1.4.3',
-            'PyJWT==1.7.1',
+            'PyJWT',
             'Flask==1.1.1'
         ]
     },
