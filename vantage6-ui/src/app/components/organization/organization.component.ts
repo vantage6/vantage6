@@ -262,4 +262,15 @@ export class OrganizationComponent implements OnInit {
         `public_key_organization_${this.current_organization.name}.pub`
       );
   }
+
+  getNodeButtonText(node: Node): string {
+    const online_text = node.is_online ? ' (online)' : ' (offline)';
+    return node.name + online_text;
+  }
+
+  getButtonClasses(node: Node): string {
+    let default_classes = 'mat-button btn-link inline ';
+    if (node.is_online) return default_classes + 'btn-online';
+    else return default_classes + 'btn-offline';
+  }
 }

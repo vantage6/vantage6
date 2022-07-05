@@ -170,7 +170,8 @@
 
       <mat-card>
         <h4>Nodes</h4>
-        <div *ngIf="nodes.length===0">
+        <br/>
+        <div *ngIf="organization_nodes.length===0">
           <div *ngIf="!userPermission.can('view', 'node', current_organization.id); else noNodesBlock">
             You do not have permission to view the nodes!
           </div>
@@ -178,18 +179,13 @@
             This organization has no nodes!
           </ng-template>
         </div>
-        <div *ngFor="let node of organization_nodes | slice:0:MAX_ITEMS_DISPLAY">
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{node.name}}
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <app-node-view
-              [node]="node"
-              (deletingResource)="deleteNode(node)"
-            ></app-node-view>
-          </mat-expansion-panel>
+        <div *ngFor="let node of organization_nodes | slice:0:MAX_ITEMS_DISPLAY" class="inline">
+          <button mat-button
+                  [className]="getButtonClasses(node)"
+                  [routerLink]="['/node', node.id, 'view', node.organization_id]"
+                  >
+            {{getNodeButtonText(node)}}
+          </button>
         </div>
         <button mat-button class="btn btn-dflt btn-top-margin"
           *ngIf="organization_nodes.length > MAX_ITEMS_DISPLAY"

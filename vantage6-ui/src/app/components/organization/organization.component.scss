@@ -32,3 +32,15 @@ mat-expansion-panel {
 .btn-top-margin {
   margin-top: 10px;
 }
+
+.btn-offline {
+  background-color: v.$red !important;
+}
+
+.btn-online {
+  background-color: v.$green !important;
+}
+
+.inline {
+  display: inline;
+}
