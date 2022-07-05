@@ -62,12 +62,12 @@ export class ModalService {
   }
 
   openDeleteModal(
-    obj_to_delete: Resource,
+    to_delete: Resource | Resource[],
     obj_type: ResType,
     extra_message: string | null = null
   ): NgbModalRef {
     const modalRef = this.modalService.open(ModalDeleteComponent, {});
-    modalRef.componentInstance.obj_to_delete = obj_to_delete;
+    modalRef.componentInstance.to_delete = to_delete;
     modalRef.componentInstance.obj_type = obj_type;
     modalRef.componentInstance.extra_message = extra_message;
     return modalRef;

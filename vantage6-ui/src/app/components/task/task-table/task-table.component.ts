@@ -7,12 +7,14 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { deepcopy, parseId } from 'src/app/shared/utils';
 import { TableComponent } from '../../base/table/table.component';
 import { DisplayMode } from '../../node/node-table/node-table.component';
-import { Task } from 'src/app/interfaces/task';
+import { EMPTY_TASK, Task } from 'src/app/interfaces/task';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
-import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
+import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ApiTaskService } from 'src/app/services/api/api-task.service';
+import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 // TODO this contains a lot of duplication from NodeTableComponent, fix that
 @Component({
@@ -30,6 +32,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   displayMode = DisplayMode.ALL;
 
   displayedColumns: string[] = [
+    'select',
     'id',
     'name',
     // 'description',
@@ -46,6 +49,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
     private taskDataService: TaskDataService,
+    private apiTaskService: ApiTaskService,
     protected modalService: ModalService
   ) {
     super(activatedRoute, userPermission, modalService);
@@ -219,5 +223,64 @@ export class TaskTableComponent extends TableComponent implements OnInit {
 
   getCompletedText(task: Task) {
     return task.complete ? 'Yes' : 'No';
+  }
+
+  async deleteSelectedTasks(): Promise<void> {
+    for (let task of this.selection.selected) {
+      let data = this.apiTaskService
+        .delete(task)
+        .toPromise()
+        .catch((error) => {
+          this.modalService.openMessageModal(ModalMessageComponent, [
+            error.error.msg,
+          ]);
+        });
+      this.taskDataService.remove(task);
+    }
+    // reinitialize table to reflect the deleted tasks
+    this.setup();
+    this.selection.clear();
+  }
+
+  askConfirmDelete(): void {
+    // open modal window to ask for confirmation of irreversible delete action
+    this.modalService
+      .openDeleteModal(this.selection.selected, ResType.TASK)
+      .result.then((exit_mode) => {
+        if (exit_mode === ExitMode.DELETE) {
+          this.deleteSelectedTasks();
+        }
+      });
+  }
+
+  canDeleteSelection(): boolean {
+    // cannot delete if none selected
+    if (this.selection.selected.length === 0) return false;
+    // can delete if global delete rights
+    if (
+      this.userPermission.hasPermission(
+        OpsType.DELETE,
+        ResType.TASK,
+        ScopeType.GLOBAL
+      )
+    )
+      return true;
+    // otherwise check if allowed to delete all individual tasks
+    for (let task of this.selection.selected as Task[]) {
+      if (
+        !this.userPermission.can(
+          OpsType.DELETE,
+          ResType.TASK,
+          task.initiator_id
+        )
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  canOnlyDeleteSubset(): boolean {
+    return this.selection.selected.length > 0 && !this.canDeleteSelection();
   }
 }

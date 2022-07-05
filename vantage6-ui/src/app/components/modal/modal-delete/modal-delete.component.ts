@@ -16,7 +16,7 @@ import { Resource } from 'src/app/shared/types';
   ],
 })
 export class ModalDeleteComponent implements OnInit {
-  @Input() obj_to_delete: Resource | undefined;
+  @Input() to_delete: Resource | Resource[] | undefined;
   @Input() obj_type: ResType | undefined;
   @Input() extra_message: string | null = null;
 
@@ -25,10 +25,12 @@ export class ModalDeleteComponent implements OnInit {
   ngOnInit(): void {}
 
   getDeleteText(): string {
-    if ((this.obj_to_delete as User).username) {
-      return `the ${this.obj_type} '${(this.obj_to_delete as User).username}'`;
+    if (Array.isArray(this.to_delete)) {
+      return `the ${this.to_delete.length} ${this.obj_type}(s) you have selected`;
+    } else if ((this.to_delete as User).username) {
+      return `the ${this.obj_type} '${(this.to_delete as User).username}'`;
     } else {
-      return `the ${this.obj_type} '${(this.obj_to_delete as Role).name}'`;
+      return `the ${this.obj_type} '${(this.to_delete as Role).name}'`;
     }
   }
 

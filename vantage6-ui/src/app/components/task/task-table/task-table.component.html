@@ -38,63 +38,88 @@
     <mat-label>Filter columns</mat-label>
     <input matInput (keyup)="applyFilter($event)" placeholder="Search columns" #input/>
   </mat-form-field>
+
+  <div class="mat-elevation-z8">
+    <mat-table #table [dataSource]="dataSource" matSort>
+      <!-- Checkbox Column -->
+      <ng-container matColumnDef="select">
+        <mat-header-cell *matHeaderCellDef>
+          <mat-checkbox (change)="$event ? masterToggle() : null"
+                        [checked]="selection.hasValue() && isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()">
+          </mat-checkbox>
+        </mat-header-cell>
+        <mat-cell *matCellDef="let row">
+          <mat-checkbox (click)="$event.stopPropagation()"
+                        (change)="$event ? selection.toggle(row) : null"
+                        [checked]="selection.isSelected(row)">
+          </mat-checkbox>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.id}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.name}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="description">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Description</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.description}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="image">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Docker image</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.image}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="collaboration">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Collaboration</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.collaboration.name}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="initiator">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Initiator</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.initiator.name}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="complete">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Completed?</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{getCompletedText(elem)}}</mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"
+        matRipple class="element-row" [cdkDetailRow]="row" [cdkDetailRowTpl]="tpl"
+      ></mat-row>
+    </mat-table>
+
+    <mat-paginator [pageSizeOptions]="[10, 5, 20]"
+                    showFirstLastButtons
+                    aria-label="Select page">
+    </mat-paginator>
+  </div>
+
+  <ng-template #tpl let-element>
+    <div class="mat-row detail-row" [@detailExpand] style="overflow: hidden; margin: 15px;">
+      <app-task-view
+        [task]="element"
+        [org_id]="loggedin_user.organization_id"
+        (deletingResource)="deleteResource(element)"
+      ></app-task-view>
+    </div>
+  </ng-template>
+
+  <button *ngIf="userPermission.hasPermission('delete', 'task', '*')"
+    mat-button class="btn btn-delete-strong" style="margin-top: 10px;"
+    (click)="askConfirmDelete()" [disabled]="!canDeleteSelection()">
+    Delete selected tasks
+  </button>
+  <div class="inline" *ngIf="canOnlyDeleteSubset()">
+    You have selected some tasks you cannot delete!
+  </div>
 </mat-card>
-
-<div class="mat-elevation-z8">
-  <mat-table #table [dataSource]="dataSource" matSort>
-    <ng-container matColumnDef="id">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
-      <mat-cell *matCellDef="let elem">{{elem.id}}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="name">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
-      <mat-cell *matCellDef="let elem">{{elem.name}}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="description">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Description</mat-header-cell>
-      <mat-cell *matCellDef="let elem">{{elem.description}}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="image">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Docker image</mat-header-cell>
-      <mat-cell *matCellDef="let elem">{{elem.image}}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="collaboration">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Collaboration</mat-header-cell>
-      <mat-cell *matCellDef="let elem">{{elem.collaboration.name}}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="initiator">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Initiator</mat-header-cell>
-      <mat-cell *matCellDef="let elem">{{elem.initiator.name}}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="complete">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Completed?</mat-header-cell>
-      <mat-cell *matCellDef="let elem">{{getCompletedText(elem)}}</mat-cell>
-    </ng-container>
-
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"
-      matRipple class="element-row" [cdkDetailRow]="row" [cdkDetailRowTpl]="tpl"
-    ></mat-row>
-  </mat-table>
-
-  <mat-paginator [pageSizeOptions]="[10, 5, 20]"
-                  showFirstLastButtons
-                  aria-label="Select page">
-  </mat-paginator>
-</div>
-
-<ng-template #tpl let-element>
-	<div class="mat-row detail-row" [@detailExpand] style="overflow: hidden; margin: 15px;">
-    <app-task-view
-      [task]="element"
-      [org_id]="loggedin_user.organization_id"
-      (deletingResource)="deleteResource(element)"
-    ></app-task-view>
-	</div>
-</ng-template>
