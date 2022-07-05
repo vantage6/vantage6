@@ -4,27 +4,32 @@
 // and https://stackoverflow.com/questions/48684560/mat-table-auto-fit-column-width-to-bigger-content
 mat-cell:nth-child(1),
 mat-header-cell:nth-child(1)
-mat-cell:nth-child(6),
-mat-header-cell:nth-child(6)
 {
-    flex: 0 0 9%;
+    flex: 0 0 4%;
 }
-
 mat-cell:nth-child(2),
-mat-header-cell:nth-child(2) {
-    flex: 0 0 21%;
+mat-header-cell:nth-child(2),
+mat-cell:nth-child(7),
+mat-header-cell:nth-child(7)
+{
+    flex: 0 0 8%;
 }
 
 mat-cell:nth-child(3),
-mat-header-cell:nth-child(3)
-{
-    flex: 0 0 35%;
+mat-header-cell:nth-child(3) {
+    flex: 0 0 20%;
 }
 
 mat-cell:nth-child(4),
-mat-header-cell:nth-child(4),
+mat-header-cell:nth-child(4)
+{
+    flex: 0 0 34%;
+}
+
 mat-cell:nth-child(5),
-mat-header-cell:nth-child(5)
+mat-header-cell:nth-child(5),
+mat-cell:nth-child(6),
+mat-header-cell:nth-child(6)
 {
     flex: 0 0 13%;
 }
