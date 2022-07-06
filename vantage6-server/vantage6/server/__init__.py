@@ -134,7 +134,7 @@ class ServerApp:
 
     @staticmethod
     def _set_nodes_offline():
-        """Set all nodes to offline (before starting the socket connection)"""
+        """Set all nodes to offline (before starting the socket connection)."""
         nodes = db.Node.get()
         for node in nodes:
             node.status = 'offline'
