@@ -53,17 +53,26 @@ class NetworkManager(object):
             self.log.warn(f"Network {self.network_name} was already created!")
             return
 
-        self.log.debug(
-            f"Creating Docker network {self.network_name}!")
-        # Delete network if it already exists
-        self.delete()
-
-        self.network = self.docker.networks.create(
-            self.network_name,
-            driver="bridge",
-            internal=is_internal,
-            scope="local",
+        existing_networks = self.docker.networks.list(
+            names=[self.network_name]
         )
+        if existing_networks:
+            if len(existing_networks) > 1:
+                self.log.error(
+                    f"Found multiple ({len(existing_networks)}) existing "
+                    "networks {self.network_name}. Please delete all or all "
+                    "but one before starting the server!")
+                exit(1)
+            self.log.info(f"Network {self.network_name} already exists! Using "
+                          "existing network")
+            self.network = existing_networks[0]
+        else:
+            self.network = self.docker.networks.create(
+                self.network_name,
+                driver="bridge",
+                internal=is_internal,
+                scope="local",
+            )
 
     def delete(self, kill_containers: bool = True) -> None:
         """ Delete network
