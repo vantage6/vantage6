@@ -2,12 +2,10 @@ import os
 import base64
 import click
 import appdirs
-import string
-import random
+import ipaddress
 
 from colorama import init, Fore, Style
 
-from ._version import version_info, __version__
 from vantage6.common.globals import STRING_ENCODING
 
 
@@ -117,3 +115,23 @@ def check_write_permissions(folder):
         w_ok = False
 
     return w_ok
+
+
+def is_ip_address(ip: str) -> bool:
+    """ Test if input IP address is a valid IP address
+
+    Parameters
+    ----------
+    ip: str
+        IP address to validate
+
+    Returns
+    -------
+    bool: whether or not IP address is valid
+
+    """
+    try:
+        _ = ipaddress.ip_address(ip)
+        return True
+    except Exception:
+        return False

@@ -34,7 +34,7 @@ from vantage6.cli.configuration_wizard import (
 )
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
-from vantage6.cli import __version__
+from vantage6.cli import __version__, rabbitmq
 
 
 def click_insert_context(func):
@@ -263,14 +263,18 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
 def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
                     network_mgr: NetworkManager) -> None:
     """ Starts a RabbitMQ container """
-    if not ctx.config.get('rabbitmq_uri'):
+    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    if not rabbit_uri:
         warning('Message queue disabled! This means that the server '
                 'application cannot scale horizontally!')
-    else:
+    elif rabbitmq.is_local_address(rabbit_uri):
         # kick off RabbitMQ container
         rabbit_mgr = RabbitMQManager(
             ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
         rabbit_mgr.start()
+    else:
+        info("Detected that the RabbitMQ service is a external service. "
+             "Assuming this service is up and running.")
 
 
 #
