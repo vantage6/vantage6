@@ -38,7 +38,7 @@ from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
 from vantage6.node.server_io import NodeClient
-from vantage6.node.proxy_server import app
+from vantage6.node import proxy_server
 from vantage6.node.util import logger_name
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.common.docker.network_manager import NetworkManager
@@ -142,7 +142,7 @@ class Node(object):
         # already
         try:
             self.initialize()
-        except Exception as e:
+        except Exception:
             self.cleanup()
             raise
 
@@ -238,12 +238,6 @@ class Node(object):
             A proxy for communication between algorithms and central
             server.
         """
-        # supply the proxy server with a destination (the central server)
-        # we might want to not use enviroment vars
-        os.environ["SERVER_URL"] = self.server_io.host
-        os.environ["SERVER_PORT"] = self.server_io.port
-        os.environ["SERVER_PATH"] = self.server_io.path
-
         if self.ctx.running_in_docker:
             # NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
             # when running in the isolated docker network.
@@ -263,13 +257,14 @@ class Node(object):
 
         # 'app' is defined in vantage6.node.proxy_server
         # app.debug = True
-        app.config["SERVER_IO"] = self.server_io
+        proxy_server.app.config["SERVER_IO"] = self.server_io
+        proxy_server.server_url = self.server_io.base_path
 
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
-            http_server = WSGIServer(('0.0.0.0', proxy_port), app)
+            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app)
 
             try:
                 http_server.serve_forever()
@@ -416,8 +411,11 @@ class Node(object):
                     f"Sending result (id={results.result_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
-                # just store the task_id when retrieving the task the first time?
-                response = self.server_io.request(f"result/{results.result_id}")
+                # just store the task_id when retrieving the task the first
+                # time?
+                response = self.server_io.request(
+                    f"result/{results.result_id}"
+                )
                 task_id = response.get("task").get("id")
 
                 if not task_id:
