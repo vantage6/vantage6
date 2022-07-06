@@ -607,11 +607,12 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    # kill the RabbitMQ container (if it exists)
-    rabbit_container_name = f'{APPNAME}-{config_name}-rabbitmq'
-    remove_container_if_exists(client, name=rabbit_container_name)
-    info(f"Stopped the {Fore.GREEN}{rabbit_container_name}{Style.RESET_ALL} "
-         "container.")
+    # TODO only kill RabbitMQ if no other servers are connected to it
+    # # kill the RabbitMQ container (if it exists)
+    # rabbit_container_name = f'{APPNAME}-{config_name}-rabbitmq'
+    # remove_container_if_exists(client, name=rabbit_container_name)
+    # info(f"Stopped the {Fore.GREEN}{rabbit_container_name}{Style.RESET_ALL} "
+        #  "container.")
 
 
 #

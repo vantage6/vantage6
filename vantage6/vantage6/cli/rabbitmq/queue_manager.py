@@ -11,7 +11,7 @@ from typing import Dict
 
 from vantage6.common.globals import APPNAME
 from vantage6.common import debug, info, error
-from vantage6.common.docker.addons import remove_container_if_exists
+from vantage6.common.docker.addons import get_container
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.cli.context import ServerContext
 from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
@@ -98,12 +98,16 @@ class RabbitMQManager:
             '15672/tcp': 8080
         }
 
-        # if a RabbitMQ container is already running, kill and remove it
-        remove_container_if_exists(
+        # check if a RabbitMQ container is already running
+        self.rabbit_container = get_container(
             docker_client=self.docker, name=self.rabbit_container_name
         )
+        if self.rabbit_container:
+            info("RabbitMQ is already running! Linking the server to that "
+                 "queue")
+            return
 
-        # run rabbitMQ container
+        # start rabbitMQ container
         self.rabbit_container = self.docker.containers.run(
             name=self.rabbit_container_name,
             image=self.image,
