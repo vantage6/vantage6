@@ -1,6 +1,8 @@
-from typing import List, Union
 import docker
 import logging
+
+from typing import List, Union
+from docker.models.containers import Container
 
 from vantage6.common.docker.addons import remove_container
 from vantage6.common import logger_name
@@ -66,6 +68,7 @@ class NetworkManager(object):
             self.log.info(f"Network {self.network_name} already exists! Using "
                           "existing network")
             self.network = existing_networks[0]
+            self.network.reload()  # required to initialize containers in netw
         else:
             self.network = self.docker.networks.create(
                 self.network_name,
@@ -103,6 +106,22 @@ class NetworkManager(object):
             except Exception:
                 self.log.warn(
                     f"Could not delete existing network {self.network_name}")
+
+    def contains(self, container: Container) -> bool:
+        """ Whether or not this network contains a certain container
+
+        Parameters
+        ----------
+        container: Container
+            container to look for in network
+
+        Returns
+        -------
+        bool
+            Whether or not container is in the network
+        """
+        self.network.reload()
+        return container in self.network.containers
 
     def connect(self, container_name: str, aliases: List[str] = [],
                 ipv4: Union[str, None] = None) -> None:

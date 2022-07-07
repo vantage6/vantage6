@@ -10,6 +10,7 @@ import pathlib
 from dateutil.parser import parse
 from docker.client import DockerClient
 from docker.models.containers import Container
+from typing import Dict
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
@@ -310,8 +311,56 @@ def remove_container(container: Container, kill=False) -> None:
     try:
         container.remove()
     except Exception as e:
-        log.error(f"Failed to remove container {container.name}")
+        log.exception(f"Failed to remove container {container.name}")
         log.debug(e)
+
+
+def get_networks_of_container(container: Container) -> Dict:
+    """ Get list of networks the container is in
+
+    Parameters
+    ----------
+    container: Container
+        The container in which we are interested
+
+    Returns
+    -------
+    dict
+        Describes container's networks and their properties
+
+    """
+    container.reload()
+    return container.attrs['NetworkSettings']['Networks']
+
+
+def get_num_nonempty_networks(container: Container) -> int:
+    """ Get number of networks the container is in where it is not the only one
+
+    Parameters
+    ----------
+    container: Container
+        The container in which we are interested
+
+    Returns
+    -------
+    int
+        Number of networks in which the container resides in which there are
+        also other containers
+    """
+    client = docker.from_env()
+    count_non_empty_networks = 0
+
+    networks = get_networks_of_container(container)
+    for network_name, network_properties in networks.items():
+        network_obj = client.networks.get(
+            network_properties['NetworkID']
+        )
+        if not network_obj:
+            continue
+        containers = network_obj.attrs['Containers']
+        if len(containers) > 1:
+            count_non_empty_networks += 1
+    return count_non_empty_networks
 
 
 def get_server_config_name(container_name: str, scope: str):

@@ -52,7 +52,6 @@ class RabbitMQManager:
 
         self.docker = docker.from_env()
         self.image = image if image else DEFAULT_RABBIT_IMAGE
-        self.rabbit_container_name = f'{APPNAME}-{ctx.name}-rabbitmq'
 
     def start(self) -> None:
         """
@@ -74,16 +73,18 @@ class RabbitMQManager:
 
         # check if a RabbitMQ container is already running
         self.rabbit_container = get_container(
-            docker_client=self.docker, name=self.rabbit_container_name
+            docker_client=self.docker, name=self.host
         )
         if self.rabbit_container:
             info("RabbitMQ is already running! Linking the server to that "
                  "queue")
+            if not self.network_mgr.contains(self.rabbit_container):
+                self.network_mgr.connect(self.rabbit_container)
             return
 
         # start rabbitMQ container
         self.rabbit_container = self.docker.containers.run(
-            name=self.rabbit_container_name,
+            name=self.host,
             image=self.image,
             volumes=volumes,
             ports=ports,

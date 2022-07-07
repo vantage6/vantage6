@@ -14,8 +14,8 @@ from docker.client import DockerClient
 from vantage6.common import (info, warning, error, debug as debug_msg,
                              check_config_write_permissions)
 from vantage6.common.docker.addons import (
-    pull_if_newer, check_docker_running, remove_container_if_exists,
-    get_server_config_name
+    pull_if_newer, check_docker_running, remove_container,
+    get_server_config_name, get_container, get_num_nonempty_networks
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
@@ -24,6 +24,7 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_SERVER_IMAGE
 )
+from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
 from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
                                   DEFAULT_SERVER_SYSTEM_FOLDERS)
@@ -35,6 +36,32 @@ from vantage6.cli.configuration_wizard import (
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
+
+
+def getServerContext(name, environment, system_folders):
+    # raise error if config could not be found
+    if not ServerContext.config_exists(
+            name,
+            environment,
+            system_folders
+    ):
+        scope = "system" if system_folders else "user"
+        error(
+                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+                f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
+                f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
+            )
+        exit(1)
+
+        # create server context, and initialize db
+    ServerContext.LOGGING_ENABLED = False
+    ctx = ServerContext(
+            name,
+            environment=environment,
+            system_folders=system_folders
+        )
+
+    return ctx
 
 
 def click_insert_context(func):
@@ -73,27 +100,7 @@ def click_insert_context(func):
                     error("No configurations could be found!")
                     exit(1)
 
-            # raise error if config could not be found
-            if not ServerContext.config_exists(
-                name,
-                environment,
-                system_folders
-            ):
-                scope = "system" if system_folders else "user"
-                error(
-                    f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                    f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
-                    f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
-                )
-                exit(1)
-
-            # create server context, and initialize db
-            ServerContext.LOGGING_ENABLED = False
-            ctx = ServerContext(
-                name,
-                environment=environment,
-                system_folders=system_folders
-            )
+            ctx = getServerContext(name, environment, system_folders)
 
         return func(ctx, *args, **kwargs)
     return func_with_context
@@ -559,11 +566,13 @@ def cli_server_shell(ctx):
 #
 @cli_server.command(name='stop')
 @click.option("-n", "--name", default=None, help="Configuration name")
+@click.option('-e', '--environment', default=DEFAULT_SERVER_ENVIRONMENT,
+              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 @click.option('--all', 'all_servers', flag_value=True, help="Stop all servers")
-def cli_server_stop(name, system_folders, all_servers):
+def cli_server_stop(name, environment, system_folders, all_servers):
     """ Stop a running server """
 
     client = docker.from_env()
@@ -580,7 +589,8 @@ def cli_server_stop(name, system_folders, all_servers):
 
     if all_servers:
         for container_name in running_server_names:
-            _stop_server_containers(client, container_name, system_folders)
+            _stop_server_containers(client, container_name, environment,
+                                    system_folders)
     else:
         if not name:
             container_name = q.select("Select the server you wish to stop:",
@@ -590,13 +600,14 @@ def cli_server_stop(name, system_folders, all_servers):
             container_name = f"{APPNAME}-{name}-{post_fix}-server"
 
         if container_name in running_server_names:
-            _stop_server_containers(client, container_name, system_folders)
+            _stop_server_containers(client, container_name, environment,
+                                    system_folders)
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
 
 
 def _stop_server_containers(client: DockerClient, container_name: str,
-                            system_folders: bool) -> None:
+                            environment: str, system_folders: bool) -> None:
     """
     Given a server's name, kill its docker container and related (RabbitMQ)
     containers.
@@ -611,12 +622,17 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    # TODO only kill RabbitMQ if no other servers are connected to it
-    # # kill the RabbitMQ container (if it exists)
-    # rabbit_container_name = f'{APPNAME}-{config_name}-rabbitmq'
-    # remove_container_if_exists(client, name=rabbit_container_name)
-    # info(f"Stopped the {Fore.GREEN}{rabbit_container_name}{Style.RESET_ALL} "
-        #  "container.")
+    ctx = getServerContext(config_name, environment, system_folders)
+
+    # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
+    # is not in other docker networks with other containers)
+    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    rabbit_container_name = split_rabbitmq_uri(rabbit_uri=rabbit_uri)['host']
+    rabbit_container = get_container(client, name=rabbit_container_name)
+    if rabbit_container and get_num_nonempty_networks(rabbit_container) == 0:
+        remove_container(rabbit_container, kill=True)
+        info(f"Stopped the {Fore.GREEN}{rabbit_container_name}"
+             f"{Style.RESET_ALL} container.")
 
 
 #
