@@ -118,7 +118,7 @@ def check_write_permissions(folder):
 
 
 def is_ip_address(ip: str) -> bool:
-    """ Test if input IP address is a valid IP address
+    """Test if input IP address is a valid IP address
 
     Parameters
     ----------

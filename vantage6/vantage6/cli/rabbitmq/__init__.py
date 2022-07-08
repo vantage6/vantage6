@@ -4,8 +4,7 @@ from vantage6.common import is_ip_address
 
 
 def split_rabbitmq_uri(rabbit_uri: str) -> Dict:
-    """
-    Get details (user, pass, host, vhost, port) from a RabbitMQ uri
+    """Get details (user, pass, host, vhost, port) from a RabbitMQ uri
 
     Parameters
     ----------
@@ -31,7 +30,7 @@ def split_rabbitmq_uri(rabbit_uri: str) -> Dict:
 
 
 def is_local_address(rabbit_uri: str) -> bool:
-    """ Test if the host of a RabbitMQ uri is an external IP address or not
+    """Test if the host of a RabbitMQ uri is an external IP address or not
 
     Parameters
     ----------

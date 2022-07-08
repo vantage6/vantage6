@@ -78,7 +78,7 @@ class NetworkManager(object):
             )
 
     def delete(self, kill_containers: bool = True) -> None:
-        """ Delete network
+        """Delete network
 
         Parameters
         ----------
@@ -108,7 +108,7 @@ class NetworkManager(object):
                     f"Could not delete existing network {self.network_name}")
 
     def contains(self, container: Container) -> bool:
-        """ Whether or not this network contains a certain container
+        """Whether or not this network contains a certain container
 
         Parameters
         ----------

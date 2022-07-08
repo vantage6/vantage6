@@ -627,12 +627,15 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
     # is not in other docker networks with other containers)
     rabbit_uri = ctx.config.get('rabbitmq_uri')
-    rabbit_container_name = split_rabbitmq_uri(rabbit_uri=rabbit_uri)['host']
-    rabbit_container = get_container(client, name=rabbit_container_name)
-    if rabbit_container and get_num_nonempty_networks(rabbit_container) == 0:
-        remove_container(rabbit_container, kill=True)
-        info(f"Stopped the {Fore.GREEN}{rabbit_container_name}"
-             f"{Style.RESET_ALL} container.")
+    if rabbit_uri:
+        rabbit_container_name = split_rabbitmq_uri(
+            rabbit_uri=rabbit_uri)['host']
+        rabbit_container = get_container(client, name=rabbit_container_name)
+        if rabbit_container and \
+                get_num_nonempty_networks(rabbit_container) == 0:
+            remove_container(rabbit_container, kill=True)
+            info(f"Stopped the {Fore.GREEN}{rabbit_container_name}"
+                 f"{Style.RESET_ALL} container.")
 
 
 #
