@@ -316,7 +316,8 @@ def remove_container(container: Container, kill=False) -> None:
 
 
 def get_networks_of_container(container: Container) -> Dict:
-    """Get list of networks the container is in
+    """
+    Get list of networks the container is in
 
     Parameters
     ----------
@@ -327,14 +328,14 @@ def get_networks_of_container(container: Container) -> Dict:
     -------
     dict
         Describes container's networks and their properties
-
     """
     container.reload()
     return container.attrs['NetworkSettings']['Networks']
 
 
 def get_num_nonempty_networks(container: Container) -> int:
-    """Get number of networks the container is in where it is not the only one
+    """
+    Get number of networks the container is in where it is not the only one
 
     Parameters
     ----------
