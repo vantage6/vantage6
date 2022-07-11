@@ -5,6 +5,7 @@ Resources below '/<api_base>/token'
 from __future__ import print_function, unicode_literals
 
 import logging
+import datetime as dt
 
 from flask import request, g
 from flask_jwt_extended import (
@@ -93,8 +94,7 @@ class UserToken(ServicesResources):
 
         user, code = self.user_login(username, password)
         if code is not HTTPStatus.OK:  # login failed
-            log.error(f"Incorrect username/password combination for "
-                      f"user='{username}'")
+            log.error(f"Failed to login for user='{username}'")
             return user, code
 
         token = create_access_token(user)
@@ -112,13 +112,24 @@ class UserToken(ServicesResources):
 
     @staticmethod
     def user_login(username, password):
-        """Returns user or message in case of failed login attempt"""
+        """Returns user a message in case of failed login attempt"""
         log.info(f"Trying to login '{username}'")
 
         if db.User.username_exists(username):
             user = db.User.get_by_username(username)
-            if user.check_password(password):
+            is_blocked, time_remaining_msg = user.is_blocked()
+            if is_blocked:
+                return {"msg": time_remaining_msg}, HTTPStatus.UNAUTHORIZED
+            elif user.check_password(password):
+                user.failed_login_attempts = 0
+                user.save()
                 return user, HTTPStatus.OK
+            else:
+                # update the number of failed login attempts
+                user.failed_login_attempts = user.failed_login_attempts + 1 \
+                    if user.failed_login_attempts else 1
+                user.last_login_attempt = dt.datetime.now()
+                user.save()
 
         return {"msg": "Invalid username or password!"}, \
             HTTPStatus.UNAUTHORIZED

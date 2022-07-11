@@ -1,10 +1,14 @@
 import bcrypt
 import re
+import datetime as dt
 
 from typing import Union
-from sqlalchemy import Column, String, Integer, ForeignKey, exists
+from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
 from sqlalchemy.orm import relationship, validates
 
+from vantage6.server.globals import (
+    INACTIVATION_PERIOD_HOURS, MAX_FAILED_LOGIN_ATTEMPTS
+)
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
 
@@ -30,6 +34,8 @@ class User(Authenticatable):
     lastname = Column(String)
     email = Column(String, unique=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
+    failed_login_attempts = Column(Integer, default=0)
+    last_login_attempt = Column(DateTime)
 
     # relationships
     organization = relationship("Organization", back_populates="users")
@@ -92,6 +98,35 @@ class User(Authenticatable):
             expected_hash = self.password.encode('utf8')
             return bcrypt.checkpw(pw.encode('utf8'), expected_hash)
         return False
+
+    def is_blocked(self):
+        """
+        Check if user can login or if they are temporarily blocked because they
+        entered a wrong password too often
+
+        Returns
+        -------
+        bool
+            Whether or not user is blocked temporarily
+        str | None
+            Message if user is blocked, else None
+        """
+        td_max_blocked = dt.timedelta(hours=INACTIVATION_PERIOD_HOURS)
+        td_last_login = dt.datetime.now() - self.last_login_attempt \
+            if self.last_login_attempt else None
+        has_max_attempts = (
+            self.failed_login_attempts >= MAX_FAILED_LOGIN_ATTEMPTS
+            if self.failed_login_attempts else False
+        )
+        if has_max_attempts and td_last_login < td_max_blocked:
+            hours_remaining = \
+                (td_max_blocked - td_last_login).seconds // 3600 + 1
+            return True, (
+                f"Your account is blocked for the next {hours_remaining} "
+                "hours. Please wait or reactivate your account via email."
+            )
+        else:
+            return False, None
 
     @classmethod
     def get_by_username(cls, username):

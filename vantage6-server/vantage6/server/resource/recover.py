@@ -89,6 +89,11 @@ class ResetPassword(ServicesResources):
         log.debug(user_id)
         user = db.User.get(user_id)
 
+        # reset number of failed login attempts to prevent that user cannot
+        # reactivate via email
+        user.failed_login_attempts = 0
+        user.save()
+
         # set password
         msg = user.set_password(password)
         if msg:
@@ -152,7 +157,6 @@ class RecoverPassword(ServicesResources):
         return ret
 
 
-# TODO swagger
 class ChangePassword(ServicesResources):
     """ Let user to change their password with old password as verification """
 
