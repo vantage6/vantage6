@@ -1,5 +1,7 @@
 import bcrypt
+import re
 
+from typing import Union
 from sqlalchemy import Column, String, Integer, ForeignKey, exists
 from sqlalchemy.orm import relationship, validates
 
@@ -49,7 +51,40 @@ class User(Authenticatable):
     def _validate_password(self, key, password):
         return self.hash(password)
 
-    def set_password(self, pw):
+    def set_password(self, pw) -> Union[str, None]:
+        """
+        Set the password of the current user. This function doesn't save the
+        new password to the database
+
+        Parameters
+        ----------
+        pw: str
+            The new password
+
+        Returns
+        -------
+        str | None
+            If the new password fails to pass the checks, a message is
+            returned. Else, none is returned
+        """
+        if len(pw) < 8:
+            return (
+                "Password too short: use at least 8 characters with mixed "
+                "lowercase, uppercase, numbers and special characters"
+            )
+        elif len(pw) > 128:
+            # because long passwords can be used for DoS attacks (long pw
+            # hashing consumes a lot of resources)
+            return "Password too long: use at most 128 characters"
+        elif re.search('[0-9]', pw) is None:
+            return "Password should contain at least one number"
+        elif re.search('[A-Z]', pw) is None:
+            return "Password should contain at least one uppercase letter"
+        elif re.search('[a-z]', pw) is None:
+            return "Password should contain at least one lowercase letter"
+        elif pw.isalnum():
+            return "Password should contain at least one special character"
+
         self.password = pw
 
     def check_password(self, pw):

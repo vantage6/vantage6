@@ -90,7 +90,10 @@ class ResetPassword(ServicesResources):
         user = db.User.get(user_id)
 
         # set password
-        user.set_password(password)
+        msg = user.set_password(password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
         user.save()
 
         log.info(f"Successfull password reset for '{user.username}'")
@@ -208,7 +211,10 @@ class ChangePassword(ServicesResources):
                 HTTPStatus.BAD_REQUEST
 
         # set password
-        user.set_password(new_password)
+        msg = user.set_password(new_password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
         user.save()
 
         log.info(f"Successful password change for '{user.username}'")
