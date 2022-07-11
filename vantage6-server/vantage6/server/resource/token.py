@@ -91,7 +91,6 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        log.debug(f"Trying to login {username}")
         user, code = self.user_login(username, password)
         if code is not HTTPStatus.OK:  # login failed
             log.error(f"Incorrect username/password combination for "
@@ -114,20 +113,15 @@ class UserToken(ServicesResources):
     @staticmethod
     def user_login(username, password):
         """Returns user or message in case of failed login attempt"""
-        log.info(f"trying to login '{username}'")
+        log.info(f"Trying to login '{username}'")
 
         if db.User.username_exists(username):
             user = db.User.get_by_username(username)
-            if not user.check_password(password):
-                msg = f"password for '{username}' is invalid"
-                log.error(msg)
-                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-        else:
-            msg = f"username '{username}' does not exist"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+            if user.check_password(password):
+                return user, HTTPStatus.OK
 
-        return user, HTTPStatus.OK
+        return {"msg": "Invalid username or password!"}, \
+            HTTPStatus.UNAUTHORIZED
 
 
 class NodeToken(ServicesResources):
