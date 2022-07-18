@@ -382,9 +382,64 @@ class User(UserBase):
                     HTTPStatus.UNAUTHORIZED
 
     @with_user
-    @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")),
-               endpoint='user_with_id')
     def patch(self, id):
+        """ Update user
+        ---
+        description: >-
+          Update user information.\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |User|Global|Edit|❌|❌|Edit any user|
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                  firstname:
+                    type: string
+                  lastname:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                    description: user roles
+                  rules:
+                    type: integer
+                    description: rules assigned to the user role
+                  organization_id:
+                    type: integer
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: user id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Wrong input arguments
+          401:
+            description: Unauthorized or missing permission
+          403:
+            description: No permission to update this user
+          404:
+            description: User not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
 
         user = db.User.get(id)
 
@@ -403,10 +458,18 @@ class User(UserBase):
         parser.add_argument("username", type=str, required=False)
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
-        parser.add_argument("password", type=str, required=False)
         parser.add_argument("email", type=str, required=False)
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
+
+        # check if user defined a password, which is deprecated
+        # FIXME BvB 22-06-29: with time, this check may be removed. Now it is
+        # here for backwards compatibility (if people have scripts using this,
+        # this makes them aware something changed)
+        request_json = request.get_json()
+        if request_json.get("password"):
+            return {"msg": "You cannot change your password here!"}, \
+                HTTPStatus.BAD_REQUEST
 
         if data["username"]:
             if (user.username != data["username"] and
@@ -419,8 +482,6 @@ class User(UserBase):
             user.firstname = data["firstname"]
         if data["lastname"]:
             user.lastname = data["lastname"]
-        if data["password"]:
-            user.password = data["password"]
         if data["email"]:
             if (user.email != data["email"] and
                     db.User.exists("email", data["email"])):

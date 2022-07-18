@@ -1,8 +1,14 @@
 import bcrypt
+import re
+import datetime as dt
 
-from sqlalchemy import Column, String, Integer, ForeignKey, exists
+from typing import Union
+from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
 from sqlalchemy.orm import relationship, validates
 
+from vantage6.server.globals import (
+    INACTIVATION_PERIOD_HOURS, MAX_FAILED_LOGIN_ATTEMPTS
+)
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
 
@@ -28,6 +34,8 @@ class User(Authenticatable):
     lastname = Column(String)
     email = Column(String, unique=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
+    failed_login_attempts = Column(Integer, default=0)
+    last_login_attempt = Column(DateTime)
 
     # relationships
     organization = relationship("Organization", back_populates="users")
@@ -49,7 +57,40 @@ class User(Authenticatable):
     def _validate_password(self, key, password):
         return self.hash(password)
 
-    def set_password(self, pw):
+    def set_password(self, pw) -> Union[str, None]:
+        """
+        Set the password of the current user. This function doesn't save the
+        new password to the database
+
+        Parameters
+        ----------
+        pw: str
+            The new password
+
+        Returns
+        -------
+        str | None
+            If the new password fails to pass the checks, a message is
+            returned. Else, none is returned
+        """
+        if len(pw) < 8:
+            return (
+                "Password too short: use at least 8 characters with mixed "
+                "lowercase, uppercase, numbers and special characters"
+            )
+        elif len(pw) > 128:
+            # because long passwords can be used for DoS attacks (long pw
+            # hashing consumes a lot of resources)
+            return "Password too long: use at most 128 characters"
+        elif re.search('[0-9]', pw) is None:
+            return "Password should contain at least one number"
+        elif re.search('[A-Z]', pw) is None:
+            return "Password should contain at least one uppercase letter"
+        elif re.search('[a-z]', pw) is None:
+            return "Password should contain at least one lowercase letter"
+        elif pw.isalnum():
+            return "Password should contain at least one special character"
+
         self.password = pw
 
     def check_password(self, pw):
@@ -57,6 +98,35 @@ class User(Authenticatable):
             expected_hash = self.password.encode('utf8')
             return bcrypt.checkpw(pw.encode('utf8'), expected_hash)
         return False
+
+    def is_blocked(self):
+        """
+        Check if user can login or if they are temporarily blocked because they
+        entered a wrong password too often
+
+        Returns
+        -------
+        bool
+            Whether or not user is blocked temporarily
+        str | None
+            Message if user is blocked, else None
+        """
+        td_max_blocked = dt.timedelta(hours=INACTIVATION_PERIOD_HOURS)
+        td_last_login = dt.datetime.now() - self.last_login_attempt \
+            if self.last_login_attempt else None
+        has_max_attempts = (
+            self.failed_login_attempts >= MAX_FAILED_LOGIN_ATTEMPTS
+            if self.failed_login_attempts else False
+        )
+        if has_max_attempts and td_last_login < td_max_blocked:
+            hours_remaining = \
+                (td_max_blocked - td_last_login).seconds // 3600 + 1
+            return True, (
+                f"Your account is blocked for the next {hours_remaining} "
+                "hours. Please wait or reactivate your account via email."
+            )
+        else:
+            return False, None
 
     @classmethod
     def get_by_username(cls, username):

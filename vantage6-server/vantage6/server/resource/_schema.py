@@ -291,7 +291,7 @@ class UserSchema(HATEOASModelSchema):
 
     class Meta:
         model = db.User
-        exclude = ('password',)
+        exclude = ('password', 'failed_login_attempts', 'last_login_attempt')
 
     roles = fields.Method("roles")
     rules = fields.Method("rules")

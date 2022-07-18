@@ -404,7 +404,9 @@ class ServerApp:
 
             user = db.User(username=SUPER_USER_INFO['username'], roles=[root],
                            organization=org, email="root@domain.ext",
-                           password=SUPER_USER_INFO['password'])
+                           password=SUPER_USER_INFO['password'],
+                           failed_login_attempts=0,
+                           last_login_attempt=None)
             user.save()
 
         # set all nodes to offline
