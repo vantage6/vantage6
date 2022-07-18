@@ -257,6 +257,8 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
                 time.sleep(1)
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
+                info("Note that your server is still running! Shut it down "
+                     f"with '{Fore.RED}vserver stop{Style.RESET_ALL}'")
                 exit(0)
 
 
@@ -648,6 +650,8 @@ def cli_server_attach(name, system_folders):
                 time.sleep(1)
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
+                info("Note that your server is still running! Shut it down "
+                     f"with '{Fore.RED}vserver stop{Style.RESET_ALL}'")
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")

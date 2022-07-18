@@ -419,6 +419,8 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
                 time.sleep(1)
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
+                info("Note that your node is still running! Shut it down with "
+                     f"'{Fore.RED}vnode stop{Style.RESET_ALL}'")
                 exit(0)
 
 
@@ -497,6 +499,8 @@ def cli_node_attach(name, system_folders):
                 time.sleep(1)
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
+                info("Note that your node is still running! Shut it down with "
+                     f"'{Fore.RED}vnode stop{Style.RESET_ALL}'")
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
