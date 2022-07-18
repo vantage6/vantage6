@@ -112,7 +112,7 @@ class UserToken(ServicesResources):
 
     @staticmethod
     def user_login(username, password):
-        """Returns user a message in case of failed login attempt"""
+        """Returns user a message in case of failed login attempt."""
         log.info(f"Trying to login '{username}'")
 
         if db.User.username_exists(username):

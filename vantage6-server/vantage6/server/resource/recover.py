@@ -158,11 +158,11 @@ class RecoverPassword(ServicesResources):
 
 
 class ChangePassword(ServicesResources):
-    """ Let user to change their password with old password as verification """
+    """Let user to change their password with old password as verification."""
 
     @with_user
     def post(self):
-        """Set a new password using the current password
+        """Set a new password using the current password.
         ---
         description: >-
           Users can change their password by submitting their current password
