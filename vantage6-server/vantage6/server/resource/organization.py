@@ -103,7 +103,7 @@ class Organizations(OrganizationBase):
     @only_for(["user", "node", "container"])
     def get(self):
         """ Returns a list organizations
-
+        ---
         description: >-
             Filters through a list of organizations based on scope and returns
             a list of organizations\n\n
