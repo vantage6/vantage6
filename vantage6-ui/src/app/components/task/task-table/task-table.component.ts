@@ -283,4 +283,19 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   canOnlyDeleteSubset(): boolean {
     return this.selection.selected.length > 0 && !this.canDeleteSelection();
   }
+
+  filterTaskStatus(show: string): void {
+    // if showing all, set to all and return
+    if (show === 'all') {
+      this.dataSource.data = this.resources;
+      return;
+    }
+
+    // else, filter resources by 'complete' or 'incomplete' tasks
+    let show_complete = show === 'complete' ? true : false;
+    let resources_shown = this.resources.filter(function (elem: any) {
+      return elem.complete === show_complete;
+    });
+    this.dataSource.data = resources_shown;
+  }
 }
