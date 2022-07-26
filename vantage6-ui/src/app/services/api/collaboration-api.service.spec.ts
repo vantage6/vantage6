@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CollabApiService } from './api-collaboration.service';
+import { CollabApiService } from './collaboration-api.service';
 
 describe('CollabApiService', () => {
   let service: CollabApiService;

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Organization } from 'src/app/interfaces/organization';
-import { OrganizationApiService } from 'src/app/services/api/api-organization.service';
+import { OrganizationApiService } from 'src/app/services/api/organization-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 

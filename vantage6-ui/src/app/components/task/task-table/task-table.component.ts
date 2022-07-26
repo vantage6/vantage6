@@ -13,7 +13,7 @@ import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { TaskApiService } from 'src/app/services/api/api-task.service';
+import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 // TODO this contains a lot of duplication from NodeTableComponent, fix that

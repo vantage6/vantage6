@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { TaskApiService } from 'src/app/services/api/api-task.service';
+import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';

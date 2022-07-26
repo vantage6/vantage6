@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { RoleApiService } from './api-role.service';
+import { RoleApiService } from './role-api.service';
 
 describe('RoleApiService', () => {
   let service: RoleApiService;

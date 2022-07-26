@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'src/app/interfaces/result';
-import { ResultApiService } from '../api/api-result.service';
+import { ResultApiService } from '../api/result-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 

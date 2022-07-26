@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Result, getEmptyResult } from 'src/app/interfaces/result';
-import { ResultApiService } from 'src/app/services/api/api-result.service';
+import { ResultApiService } from 'src/app/services/api/result-api.service';
 import { FileService } from 'src/app/services/common/file.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResultDataService } from 'src/app/services/data/result-data.service';

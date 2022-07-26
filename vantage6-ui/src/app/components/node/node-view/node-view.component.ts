@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { getEmptyNode, NodeWithOrg } from 'src/app/interfaces/node';
-import { NodeApiService } from 'src/app/services/api/api-node.service';
+import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { ExitMode, ResType } from 'src/app/shared/enum';

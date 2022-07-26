@@ -8,8 +8,8 @@ import {
 } from 'src/app/interfaces/collaboration';
 import { getEmptyNode, Node } from 'src/app/interfaces/node';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { CollabApiService } from 'src/app/services/api/api-collaboration.service';
-import { NodeApiService } from 'src/app/services/api/api-node.service';
+import { CollabApiService } from 'src/app/services/api/collaboration-api.service';
+import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';

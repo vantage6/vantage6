@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { NodeApiService } from 'src/app/services/api/api-node.service';
+import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Node } from 'src/app/interfaces/node';

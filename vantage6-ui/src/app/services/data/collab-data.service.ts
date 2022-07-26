@@ -6,7 +6,7 @@ import {
   OrganizationInCollaboration,
 } from 'src/app/interfaces/organization';
 import { Node } from 'src/app/interfaces/node';
-import { CollabApiService } from '../api/api-collaboration.service';
+import { CollabApiService } from '../api/collaboration-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 import { JsonpClientBackend } from '@angular/common/http';

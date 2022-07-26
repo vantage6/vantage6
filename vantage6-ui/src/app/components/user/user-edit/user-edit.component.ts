@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { Organization } from 'src/app/interfaces/organization';
-import { UserApiService } from 'src/app/services/api/api-user.service';
+import { UserApiService } from 'src/app/services/api/user-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';

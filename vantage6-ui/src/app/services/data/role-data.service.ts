@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { RoleApiService } from 'src/app/services/api/api-role.service';
+import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 

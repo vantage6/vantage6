@@ -7,7 +7,7 @@ import {
   Organization,
 } from 'src/app/interfaces/organization';
 
-import { OrganizationApiService } from 'src/app/services/api/api-organization.service';
+import { OrganizationApiService } from 'src/app/services/api/organization-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';
