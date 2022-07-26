@@ -1,3 +1,5 @@
+@use 'src/app/shared/scss/variables' as v;
+
 // Set column widths
 // This is unfortunately not possible automatically with the <mat-table> tag,
 // see https://github.com/angular/components/issues/5866
@@ -32,4 +34,21 @@ mat-cell:nth-child(6),
 mat-header-cell:nth-child(6)
 {
     flex: 0 0 13%;
+}
+
+.mat-radio-button ~ .mat-radio-button {
+  margin-left: 16px;
+}
+
+::ng-deep .mat-radio-button.mat-accent.mat-radio-checked .mat-radio-outer-circle {
+    border-color:v.$vtg-blue;
+}
+
+::ng-deep  .mat-radio-button.mat-accent .mat-radio-inner-circle{
+    color:v.$vtg-blue;
+    background-color:v.$vtg-blue;
+}
+
+::ng-deep .mat-radio-button.mat-accent .mat-radio-ripple .mat-ripple-element {
+    background-color:v.$vtg-blue;
 }
