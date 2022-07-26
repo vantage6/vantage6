@@ -14,7 +14,7 @@ import { ModalService } from 'src/app/services/common/modal.service';
   templateUrl: './role-table.component.html',
   styleUrls: [
     '../../../shared/scss/buttons.scss',
-    '../../base/table/table.component.scss',
+    '../../table/base-table/table.component.scss',
     './role-table.component.scss',
   ],
 })

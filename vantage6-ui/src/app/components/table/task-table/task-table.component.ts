@@ -22,7 +22,7 @@ import { ModalMessageComponent } from '../../modal/modal-message/modal-message.c
   templateUrl: './task-table.component.html',
   styleUrls: [
     '../../../shared/scss/buttons.scss',
-    '../../base/table/table.component.scss',
+    '../../table/base-table/table.component.scss',
     './task-table.component.scss',
   ],
 })

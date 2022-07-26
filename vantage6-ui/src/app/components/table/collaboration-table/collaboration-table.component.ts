@@ -16,7 +16,7 @@ import { TableComponent } from '../base-table/table.component';
   templateUrl: './collaboration-table.component.html',
   styleUrls: [
     '../../../shared/scss/buttons.scss',
-    '../../base/table/table.component.scss',
+    '../../table/base-table/table.component.scss',
     './collaboration-table.component.scss',
   ],
 })
