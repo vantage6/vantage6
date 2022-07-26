@@ -21,7 +21,8 @@ class Configuration(collections.UserDict):
             self.VALIDATORS.get(key, lambda x: True),
             ignore_extra_keys=True
         )
-        assert schema.is_valid(value), f"Invalid Value! {value} for {schema}"
+        assert schema.is_valid(value), \
+            f"Invalid value '{value}' provided for field '{key}'"
         super().__setitem__(key, value)
 
     def __getitem__(self, key):
