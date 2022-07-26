@@ -11,21 +11,21 @@ import {
 import { LoginComponent } from './components/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { OrganizationComponent } from './components/organization/organization.component';
-import { UserEditComponent } from './components/user/user-edit/user-edit.component';
-import { RoleEditComponent } from './components/role/role-edit/role-edit.component';
-import { OrganizationEditComponent } from './components/organization/organization-edit/organization-edit.component';
-import { CollaborationEditComponent } from './components/collaboration/collaboration-edit/collaboration-edit.component';
-import { RoleTableComponent } from './components/role/role-table/role-table.component';
-import { UserTableComponent } from './components/user/user-table/user-table.component';
-import { NodeTableComponent } from './components/node/node-table/node-table.component';
-import { CollaborationViewSingleComponent } from './components/collaboration/collaboration-view-single/collaboration-view-single.component';
-import { TaskTableComponent } from './components/task/task-table/task-table.component';
-import { TaskViewSingleComponent } from './components/task/task-view-single/task-view-single.component';
+import { UserEditComponent } from './components/edit/user-edit/user-edit.component';
+import { RoleEditComponent } from './components/edit/role-edit/role-edit.component';
+import { OrganizationEditComponent } from './components/edit/organization-edit/organization-edit.component';
+import { CollaborationEditComponent } from './components/edit/collaboration-edit/collaboration-edit.component';
+import { RoleTableComponent } from './components/table/role-table/role-table.component';
+import { UserTableComponent } from './components/table/user-table/user-table.component';
+import { NodeTableComponent } from './components/table/node-table/node-table.component';
+import { CollaborationViewSingleComponent } from './components/view-single/collaboration-view-single/collaboration-view-single.component';
+import { TaskTableComponent } from './components/table/task-table/task-table.component';
+import { TaskViewSingleComponent } from './components/view-single/task-view-single/task-view-single.component';
 import { ProfileComponent } from './components/profile/profile.component';
-import { CollaborationTableComponent } from './components/collaboration/collaboration-table/collaboration-table.component';
-import { RoleViewSingleComponent } from './components/role/role-view-single/role-view-single.component';
-import { UserViewSingleComponent } from './components/user/user-view-single/user-view-single.component';
-import { NodeSingleViewComponent } from './components/node/node-single-view/node-single-view.component';
+import { CollaborationTableComponent } from './components/table/collaboration-table/collaboration-table.component';
+import { RoleViewSingleComponent } from './components/view-single/role-view-single/role-view-single.component';
+import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
+import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
 
 const routes: Routes = [
   {

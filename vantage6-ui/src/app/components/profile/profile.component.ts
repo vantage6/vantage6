@@ -8,7 +8,7 @@ import { UserDataService } from 'src/app/services/data/user-data.service';
 import { ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
 import { deepcopy } from 'src/app/shared/utils';
-import { BaseViewComponent } from '../base/base-view/base-view.component';
+import { BaseViewComponent } from '../view/base-view/base-view.component';
 import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
 
 @Component({
