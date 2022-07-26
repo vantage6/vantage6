@@ -11,7 +11,7 @@ import { BehaviorSubject } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
-export abstract class ApiService {
+export abstract class BaseApiService {
   resource_type: ResType;
   resource_single = new BehaviorSubject<Resource | null>(null);
   resource_list = new BehaviorSubject<Resource[]>([]);

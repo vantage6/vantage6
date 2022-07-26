@@ -5,12 +5,12 @@ import { ResType } from 'src/app/shared/enum';
 import { environment } from 'src/environments/environment';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { ModalService } from '../common/modal.service';
-import { ApiService } from './api.service';
+import { BaseApiService } from './base-api.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ResultApiService extends ApiService {
+export class ResultApiService extends BaseApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService,

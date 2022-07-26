@@ -9,7 +9,6 @@ import { Node } from 'src/app/interfaces/node';
 import { CollabApiService } from '../api/collaboration-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
-import { JsonpClientBackend } from '@angular/common/http';
 import { deepcopy } from 'src/app/shared/utils';
 
 @Injectable({

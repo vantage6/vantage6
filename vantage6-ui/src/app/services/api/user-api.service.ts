@@ -5,7 +5,7 @@ import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 
 import { getIdsFromArray } from 'src/app/shared/utils';
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { environment } from 'src/environments/environment';
@@ -13,7 +13,7 @@ import { environment } from 'src/environments/environment';
 @Injectable({
   providedIn: 'root',
 })
-export class UserApiService extends ApiService {
+export class UserApiService extends BaseApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

@@ -11,7 +11,7 @@ import {
   getById,
   removeMatchedIdFromArray,
 } from 'src/app/shared/utils';
-import { ApiService } from '../api/api.service';
+import { BaseApiService } from '../api/base-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 
 @Injectable({
@@ -24,7 +24,7 @@ export abstract class BaseDataService {
   queried_collab_ids: number[] = [];
 
   constructor(
-    protected apiService: ApiService,
+    protected apiService: BaseApiService,
     protected convertJsonService: ConvertJsonService
   ) {}
 

@@ -3,13 +3,13 @@ import { Injectable } from '@angular/core';
 
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { ResType } from 'src/app/shared/enum';
 
 @Injectable({
   providedIn: 'root',
 })
-export class OrganizationApiService extends ApiService {
+export class OrganizationApiService extends BaseApiService {
   organization_list: Organization[] = [];
 
   constructor(

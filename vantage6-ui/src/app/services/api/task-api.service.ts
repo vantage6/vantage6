@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ResType } from 'src/app/shared/enum';
-import { ApiService } from './api.service';
+import { BaseApiService } from './base-api.service';
 import { Task } from 'src/app/interfaces/task';
 import { HttpClient } from '@angular/common/http';
 import { ModalService } from '../common/modal.service';
@@ -8,7 +8,7 @@ import { ModalService } from '../common/modal.service';
 @Injectable({
   providedIn: 'root',
 })
-export class TaskApiService extends ApiService {
+export class TaskApiService extends BaseApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

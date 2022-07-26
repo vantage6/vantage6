@@ -5,14 +5,14 @@ import { Node } from 'src/app/interfaces/node';
 
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResType } from 'src/app/shared/enum';
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { environment } from 'src/environments/environment';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 
 @Injectable({
   providedIn: 'root',
 })
-export class NodeApiService extends ApiService {
+export class NodeApiService extends BaseApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

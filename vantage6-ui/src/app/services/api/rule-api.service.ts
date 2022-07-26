@@ -4,13 +4,13 @@ import { Injectable } from '@angular/core';
 import { ResType } from 'src/app/shared/enum';
 import { Rule } from 'src/app/interfaces/rule';
 
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class RuleApiService extends ApiService {
+export class RuleApiService extends BaseApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

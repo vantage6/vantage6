@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { ExitMode, ResType } from 'src/app/shared/enum';
@@ -15,7 +15,7 @@ export class BaseViewComponent implements OnInit {
   @Output() deletingResource = new EventEmitter<Resource>();
 
   constructor(
-    protected apiService: ApiService,
+    protected apiService: BaseApiService,
     protected dataService: BaseDataService,
     protected modalService: ModalService
   ) {}

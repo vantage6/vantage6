@@ -5,14 +5,14 @@ import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 
 import { getIdsFromArray } from 'src/app/shared/utils';
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { ResType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class RoleApiService extends ApiService {
+export class RoleApiService extends BaseApiService {
   rules: Rule[] = [];
 
   constructor(

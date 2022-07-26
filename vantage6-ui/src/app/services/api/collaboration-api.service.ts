@@ -6,12 +6,12 @@ import { Collaboration } from 'src/app/interfaces/collaboration';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResType } from 'src/app/shared/enum';
 import { getIdsFromArray } from 'src/app/shared/utils';
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class CollabApiService extends ApiService {
+export class CollabApiService extends BaseApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

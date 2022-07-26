@@ -3,7 +3,7 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Organization } from 'src/app/interfaces/organization';
 import { User } from 'src/app/interfaces/user';
-import { ApiService } from 'src/app/services/api/api.service';
+import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
@@ -30,7 +30,7 @@ export abstract class BaseEditComponent implements OnInit {
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     protected utilsService: UtilsService,
-    protected apiService: ApiService,
+    protected apiService: BaseApiService,
     protected dataService: BaseDataService,
     protected modalService: ModalService
   ) {}
