@@ -12,7 +12,7 @@ import { ModalService } from 'src/app/services/common/modal.service';
 @Injectable({
   providedIn: 'root',
 })
-export class ApiRoleService extends ApiService {
+export class RoleApiService extends ApiService {
   rules: Rule[] = [];
 
   constructor(

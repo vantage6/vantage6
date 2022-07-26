@@ -8,7 +8,7 @@ import { ModalService } from '../common/modal.service';
 @Injectable({
   providedIn: 'root',
 })
-export class ApiTaskService extends ApiService {
+export class TaskApiService extends ApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

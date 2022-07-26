@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'src/app/interfaces/result';
-import { ApiResultService } from '../api/api-result.service';
+import { ResultApiService } from '../api/api-result.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 
@@ -11,7 +11,7 @@ export class ResultDataService extends BaseDataService {
   queried_task_ids: number[] = [];
 
   constructor(
-    protected apiService: ApiResultService,
+    protected apiService: ResultApiService,
     protected convertJsonService: ConvertJsonService
   ) {
     super(apiService, convertJsonService);

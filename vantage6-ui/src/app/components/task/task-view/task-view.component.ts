@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ApiTaskService } from 'src/app/services/api/api-task.service';
+import { TaskApiService } from 'src/app/services/api/api-task.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { BaseViewComponent } from '../../base/base-view/base-view.component';
@@ -28,13 +28,13 @@ export class TaskViewComponent
 
   constructor(
     public userPermission: UserPermissionService,
-    protected apiTaskService: ApiTaskService,
+    protected taskApiService: TaskApiService,
     protected taskDataService: TaskDataService,
     protected modalService: ModalService,
     private resultDataService: ResultDataService,
     private orgDataService: OrgDataService
   ) {
-    super(apiTaskService, taskDataService, modalService);
+    super(taskApiService, taskDataService, modalService);
   }
 
   ngOnChanges() {

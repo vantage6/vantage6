@@ -7,7 +7,7 @@ import {
   Organization,
 } from 'src/app/interfaces/organization';
 
-import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
+import { OrganizationApiService } from 'src/app/services/api/api-organization.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';
@@ -35,7 +35,7 @@ export class OrganizationEditComponent
   constructor(
     protected router: Router,
     protected activatedRoute: ActivatedRoute,
-    protected orgApiService: ApiOrganizationService,
+    protected orgApiService: OrganizationApiService,
     protected orgDataService: OrgDataService,
     protected modalService: ModalService,
     protected utilsService: UtilsService,

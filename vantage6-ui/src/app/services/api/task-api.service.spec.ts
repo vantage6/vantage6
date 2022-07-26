@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { ApiNodeService } from './api-node.service';
+import { TaskApiService } from './api-task.service';
 
-describe('ApiNodeService', () => {
-  let service: ApiNodeService;
+describe('TaskApiService', () => {
+  let service: TaskApiService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(ApiNodeService);
+    service = TestBed.inject(TaskApiService);
   });
 
   it('should be created', () => {

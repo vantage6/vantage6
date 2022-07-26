@@ -9,7 +9,7 @@ import { ResType } from 'src/app/shared/enum';
 @Injectable({
   providedIn: 'root',
 })
-export class ApiOrganizationService extends ApiService {
+export class OrganizationApiService extends ApiService {
   organization_list: Organization[] = [];
 
   constructor(

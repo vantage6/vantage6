@@ -13,7 +13,7 @@ import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ApiTaskService } from 'src/app/services/api/api-task.service';
+import { TaskApiService } from 'src/app/services/api/api-task.service';
 import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 // TODO this contains a lot of duplication from NodeTableComponent, fix that
@@ -49,7 +49,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
     private taskDataService: TaskDataService,
-    private apiTaskService: ApiTaskService,
+    private taskApiService: TaskApiService,
     protected modalService: ModalService
   ) {
     super(activatedRoute, userPermission, modalService);
@@ -227,7 +227,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
 
   async deleteSelectedTasks(): Promise<void> {
     for (let task of this.selection.selected) {
-      let data = this.apiTaskService
+      let data = this.taskApiService
         .delete(task)
         .toPromise()
         .catch((error) => {

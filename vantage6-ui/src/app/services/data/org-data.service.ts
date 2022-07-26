@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Organization } from 'src/app/interfaces/organization';
-import { ApiOrganizationService } from 'src/app/services/api/api-organization.service';
+import { OrganizationApiService } from 'src/app/services/api/api-organization.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 
@@ -10,7 +10,7 @@ import { BaseDataService } from 'src/app/services/data/base-data.service';
 })
 export class OrgDataService extends BaseDataService {
   constructor(
-    protected apiService: ApiOrganizationService,
+    protected apiService: OrganizationApiService,
     protected convertJsonService: ConvertJsonService
   ) {
     super(apiService, convertJsonService);

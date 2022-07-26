@@ -12,7 +12,7 @@ import { ModalMessageComponent } from 'src/app/components/modal/modal-message/mo
 @Injectable({
   providedIn: 'root',
 })
-export class ApiNodeService extends ApiService {
+export class NodeApiService extends ApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

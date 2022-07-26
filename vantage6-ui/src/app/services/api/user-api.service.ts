@@ -13,7 +13,7 @@ import { environment } from 'src/environments/environment';
 @Injectable({
   providedIn: 'root',
 })
-export class ApiUserService extends ApiService {
+export class UserApiService extends ApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService

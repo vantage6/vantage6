@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { NodeApiService } from 'src/app/services/api/api-node.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Node } from 'src/app/interfaces/node';
@@ -11,7 +11,7 @@ import { addOrReplace } from 'src/app/shared/utils';
 })
 export class NodeDataService extends BaseDataService {
   constructor(
-    protected apiService: ApiNodeService,
+    protected apiService: NodeApiService,
     protected convertJsonService: ConvertJsonService
   ) {
     super(apiService, convertJsonService);

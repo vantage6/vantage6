@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
-import { ApiUserService } from '../api/api-user.service';
+import { UserApiService } from '../api/api-user.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 
@@ -12,7 +12,7 @@ import { BaseDataService } from './base-data.service';
 })
 export class UserDataService extends BaseDataService {
   constructor(
-    protected apiService: ApiUserService,
+    protected apiService: UserApiService,
     protected convertJsonService: ConvertJsonService
   ) {
     super(apiService, convertJsonService);

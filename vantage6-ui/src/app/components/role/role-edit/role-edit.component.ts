@@ -5,7 +5,7 @@ import { getEmptyRole, Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { OpsType, ResType } from 'src/app/shared/enum';
 
-import { ApiRoleService } from 'src/app/services/api/api-role.service';
+import { RoleApiService } from 'src/app/services/api/api-role.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
@@ -34,7 +34,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
     protected router: Router,
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    protected roleService: ApiRoleService,
+    protected RoleApiService: RoleApiService,
     protected roleDataService: RoleDataService,
     protected modalService: ModalService,
     protected utilsService: UtilsService,
@@ -46,7 +46,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
       activatedRoute,
       userPermission,
       utilsService,
-      roleService,
+      RoleApiService,
       roleDataService,
       modalService
     );

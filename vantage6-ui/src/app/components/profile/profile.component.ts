@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { getEmptyUser, User } from 'src/app/interfaces/user';
-import { ApiUserService } from 'src/app/services/api/api-user.service';
+import { UserApiService } from 'src/app/services/api/api-user.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { SignOutService } from 'src/app/services/common/sign-out.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
@@ -24,12 +24,12 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
 
   constructor(
     public userPermission: UserPermissionService,
-    protected apiUserService: ApiUserService,
+    protected userApiService: UserApiService,
     protected userDataService: UserDataService,
     protected modalService: ModalService,
     private signOutService: SignOutService
   ) {
-    super(apiUserService, userDataService, modalService);
+    super(userApiService, userDataService, modalService);
   }
 
   ngOnInit(): void {
@@ -58,7 +58,7 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
 
   // TODO implement changing a password when it has been implemented server-side
   async savePassword(): Promise<void> {
-    this.apiUserService
+    this.userApiService
       .change_password(this.old_password, this.new_password)
       .subscribe(
         (data: any) => {

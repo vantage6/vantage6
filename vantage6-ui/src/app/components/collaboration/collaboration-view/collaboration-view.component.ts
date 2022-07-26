@@ -16,8 +16,8 @@ import { getEmptyNode } from 'src/app/interfaces/node';
 import { Task } from 'src/app/interfaces/task';
 import { Node } from 'src/app/interfaces/node';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
-import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { CollabApiService } from 'src/app/services/api/api-collaboration.service';
+import { NodeApiService } from 'src/app/services/api/api-node.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
@@ -51,13 +51,13 @@ export class CollaborationViewComponent
     public userPermission: UserPermissionService,
     private nodeDataService: NodeDataService,
     protected collabDataService: CollabDataService,
-    private apiNodeService: ApiNodeService,
-    protected apiCollabService: ApiCollaborationService,
+    private nodeApiService: NodeApiService,
+    protected collabApiService: CollabApiService,
     protected modalService: ModalService,
     private convertJsonService: ConvertJsonService,
     private taskDataService: TaskDataService
   ) {
-    super(apiCollabService, collabDataService, modalService);
+    super(collabApiService, collabDataService, modalService);
   }
 
   ngOnChanges(): void {
@@ -135,7 +135,7 @@ export class CollaborationViewComponent
     new_node.name = `${this.collaboration.name} - ${org.name}`;
     new_node.organization_id = org.id;
     new_node.collaboration_id = this.collaboration.id;
-    this.apiNodeService.create(new_node).subscribe(
+    this.nodeApiService.create(new_node).subscribe(
       (node_json) => {
         this.modalService.openMessageModal(ModalMessageComponent, [
           `The node '${node_json.name}' has been created! You can now generate a
@@ -168,7 +168,7 @@ configuration file for the node using 'vnode new'.`,
     // delete nodes
     for (let org of this.collaboration.organizations) {
       if (org.node) {
-        await this.apiNodeService.delete(org.node).toPromise();
+        await this.nodeApiService.delete(org.node).toPromise();
         this.nodeDataService.remove(org.node);
       }
     }

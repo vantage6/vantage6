@@ -6,7 +6,7 @@ import {
   OrganizationInCollaboration,
 } from 'src/app/interfaces/organization';
 import { Node } from 'src/app/interfaces/node';
-import { ApiCollaborationService } from '../api/api-collaboration.service';
+import { CollabApiService } from '../api/api-collaboration.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 import { JsonpClientBackend } from '@angular/common/http';
@@ -17,10 +17,10 @@ import { deepcopy } from 'src/app/shared/utils';
 })
 export class CollabDataService extends BaseDataService {
   constructor(
-    protected apiCollabService: ApiCollaborationService,
+    protected collabApiService: CollabApiService,
     protected convertJsonService: ConvertJsonService
   ) {
-    super(apiCollabService, convertJsonService);
+    super(collabApiService, convertJsonService);
   }
 
   async get(

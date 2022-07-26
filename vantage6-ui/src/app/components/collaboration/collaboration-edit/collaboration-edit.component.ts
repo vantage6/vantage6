@@ -8,8 +8,8 @@ import {
 } from 'src/app/interfaces/collaboration';
 import { getEmptyNode, Node } from 'src/app/interfaces/node';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
-import { ApiCollaborationService } from 'src/app/services/api/api-collaboration.service';
-import { ApiNodeService } from 'src/app/services/api/api-node.service';
+import { CollabApiService } from 'src/app/services/api/api-collaboration.service';
+import { NodeApiService } from 'src/app/services/api/api-node.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
@@ -50,8 +50,8 @@ export class CollaborationEditComponent
     protected router: Router,
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    protected collabApiService: ApiCollaborationService,
-    private nodeApiService: ApiNodeService,
+    protected collabApiService: CollabApiService,
+    private nodeApiService: NodeApiService,
     protected collabDataService: CollabDataService,
     private orgDataService: OrgDataService,
     private nodeDataService: NodeDataService,

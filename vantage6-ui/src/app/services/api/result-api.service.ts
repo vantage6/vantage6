@@ -10,7 +10,7 @@ import { ApiService } from './api.service';
 @Injectable({
   providedIn: 'root',
 })
-export class ApiResultService extends ApiService {
+export class ResultApiService extends ApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService,

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Rule, RuleGroup } from 'src/app/interfaces/rule';
-import { ApiRuleService } from 'src/app/services//api/api-rule.service';
+import { RuleApiService } from 'src/app/services//api/api-rule.service';
 import { ConvertJsonService } from 'src/app/services//common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
@@ -14,7 +14,7 @@ export class RuleDataService extends BaseDataService {
   rule_groups = new BehaviorSubject<RuleGroup[]>([]);
 
   constructor(
-    protected apiService: ApiRuleService,
+    protected apiService: RuleApiService,
     protected convertJsonService: ConvertJsonService
   ) {
     super(apiService, convertJsonService);

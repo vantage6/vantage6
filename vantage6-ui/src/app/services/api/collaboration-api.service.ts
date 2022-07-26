@@ -11,7 +11,7 @@ import { ApiService } from 'src/app/services/api/api.service';
 @Injectable({
   providedIn: 'root',
 })
-export class ApiCollaborationService extends ApiService {
+export class CollabApiService extends ApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService
