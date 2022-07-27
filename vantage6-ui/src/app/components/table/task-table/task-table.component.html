@@ -40,9 +40,11 @@
   </mat-form-field>
   <label id="rg-task-completed-label" style="margin-right: 12px;">Task status:</label>
   <mat-radio-group aria-labelledby="rg-task-completed-label">
-    <mat-radio-button (click)="filterTaskStatus('all')" value="0">All</mat-radio-button>
-    <mat-radio-button (click)="filterTaskStatus('complete')" value="1">Completed</mat-radio-button>
-    <mat-radio-button (click)="filterTaskStatus('incomplete')" value="2">Not completed</mat-radio-button>
+    <mat-radio-button *ngFor="let status of task_statuses | keyvalue"
+        (click)="filterTaskStatus(status.value)" [value]="status.value"
+        [checked]="status.value === task_status_selected">
+      {{status.value}}
+    </mat-radio-button>
   </mat-radio-group>
 
   <div class="mat-elevation-z8">

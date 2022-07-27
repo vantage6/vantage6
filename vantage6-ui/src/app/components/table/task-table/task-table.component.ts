@@ -12,9 +12,14 @@ import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
+
+export enum TaskStatus {
+  ALL = 'All',
+  COMPLETE = 'Completed',
+  INCOMPLETE = 'Not completed',
+}
 
 // TODO this contains a lot of duplication from NodeTableComponent, fix that
 @Component({
@@ -30,6 +35,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   collaborations: Collaboration[] = [];
   current_collaboration: Collaboration | null;
   displayMode = DisplayMode.ALL;
+  task_statuses = TaskStatus;
+  task_status_selected = TaskStatus.ALL as string;
 
   displayedColumns: string[] = [
     'select',
@@ -284,15 +291,16 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     return this.selection.selected.length > 0 && !this.canDeleteSelection();
   }
 
-  filterTaskStatus(show: string): void {
+  filterTaskStatus(selected_status: string): void {
     // if showing all, set to all and return
-    if (show === 'all') {
+    this.task_status_selected = selected_status;
+    if (selected_status === TaskStatus.ALL) {
       this.dataSource.data = this.resources;
       return;
     }
 
     // else, filter resources by 'complete' or 'incomplete' tasks
-    let show_complete = show === 'complete' ? true : false;
+    let show_complete = selected_status === TaskStatus.COMPLETE ? true : false;
     let resources_shown = this.resources.filter(function (elem: any) {
       return elem.complete === show_complete;
     });
