@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 const TOKEN_KEY = 'auth-token';
+const REFRESH_TOKEN_KEY = 'refresh-token';
 const USER_KEY = 'auth-user';
 
 @Injectable({
@@ -12,7 +12,7 @@ export class TokenStorageService {
   loggedIn = false;
   loggedInBhs = new BehaviorSubject<boolean>(false);
 
-  constructor(private http: HttpClient) {
+  constructor() {
     // FIXME this is not secure enough I think, token might just have non-valid value
     this.loggedIn = this.getToken() != null;
     this.loggedInBhs.next(this.loggedIn);
@@ -20,6 +20,7 @@ export class TokenStorageService {
 
   public setLoginData(data: any) {
     this.saveToken(data.access_token);
+    this.saveToken(data.refresh_token, REFRESH_TOKEN_KEY);
     this.saveUserInfo(data);
     this.setLoggedIn(true);
   }
@@ -39,13 +40,21 @@ export class TokenStorageService {
     return this.loggedInBhs.asObservable();
   }
 
-  public saveToken(token: string): void {
-    window.sessionStorage.removeItem(TOKEN_KEY);
-    window.sessionStorage.setItem(TOKEN_KEY, token);
+  public deleteToken(key: string = TOKEN_KEY): void {
+    window.sessionStorage.removeItem(key);
+  }
+
+  public saveToken(token: string, key: string = TOKEN_KEY): void {
+    this.deleteToken(key);
+    window.sessionStorage.setItem(key, token);
   }
 
   public getToken(): string | null {
     return window.sessionStorage.getItem(TOKEN_KEY);
+  }
+
+  public getRefreshToken(): string | null {
+    return window.sessionStorage.getItem(REFRESH_TOKEN_KEY);
   }
 
   public saveUserInfo(user: any): void {
