@@ -32,7 +32,7 @@ export class SignOutService {
     this.clearDataServices();
   }
 
-  private clearDataServices(): void {
+  clearDataServices(): void {
     this.nodeDataService.clear();
     this.orgDataService.clear();
     this.collabDataService.clear();
