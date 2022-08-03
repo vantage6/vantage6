@@ -87,6 +87,10 @@
         </ng-template>
       </td>
     </tr>
+    <tr *ngIf="user.organization">
+      <td>Organization:</td>
+      <td>{{user.organization.name}}</td>
+    </tr>
   </table>
   <div *ngIf="user.id!==loggedin_user.id && can_assign_roles_rules">
     <app-permission-table

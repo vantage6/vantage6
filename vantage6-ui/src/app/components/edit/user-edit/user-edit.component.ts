@@ -87,6 +87,9 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
       });
     } else {
       this.setAssignableRoles();
+      this.user.organization = await this.orgDataService.get(
+        this.organization_id
+      );
     }
   }
 
@@ -117,6 +120,9 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
       this.user_orig_name = this.user.username;
       this.organization_id = this.user.organization_id;
       this.setAssignableRoles();
+      this.user.organization = await this.orgDataService.get(
+        this.user.organization_id
+      );
     }
   }
 
