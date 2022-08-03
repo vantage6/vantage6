@@ -7,7 +7,7 @@ from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
 from sqlalchemy.orm import relationship, validates
 
 from vantage6.server.globals import (
-    INACTIVATION_PERIOD_HOURS, MAX_FAILED_LOGIN_ATTEMPTS
+    INACTIVATION_PERIOD_MINUTES, MAX_FAILED_LOGIN_ATTEMPTS
 )
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
@@ -111,7 +111,7 @@ class User(Authenticatable):
         str | None
             Message if user is blocked, else None
         """
-        td_max_blocked = dt.timedelta(hours=INACTIVATION_PERIOD_HOURS)
+        td_max_blocked = dt.timedelta(minutes=INACTIVATION_PERIOD_MINUTES)
         td_last_login = dt.datetime.now() - self.last_login_attempt \
             if self.last_login_attempt else None
         has_max_attempts = (
@@ -119,11 +119,12 @@ class User(Authenticatable):
             if self.failed_login_attempts else False
         )
         if has_max_attempts and td_last_login < td_max_blocked:
-            hours_remaining = \
-                (td_max_blocked - td_last_login).seconds // 3600 + 1
+            minutes_remaining = \
+                (td_max_blocked - td_last_login).seconds // 60 + 1
             return True, (
-                f"Your account is blocked for the next {hours_remaining} "
-                "hours. Please wait or reactivate your account via email."
+                f"Your account is blocked for the next {minutes_remaining} "
+                "minutes due to failed login attempts. Please wait or "
+                "reactivate your account via email."
             )
         else:
             return False, None

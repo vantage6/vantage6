@@ -20,6 +20,7 @@ from pathlib import Path
 
 from vantage6 import server
 from vantage6.server import db
+from vantage6.server.globals import MAX_FAILED_LOGIN_ATTEMPTS
 from vantage6.server.resource import (
     with_node,
     ServicesResources
@@ -126,8 +127,11 @@ class UserToken(ServicesResources):
                 return user, HTTPStatus.OK
             else:
                 # update the number of failed login attempts
-                user.failed_login_attempts = user.failed_login_attempts + 1 \
-                    if user.failed_login_attempts else 1
+                user.failed_login_attempts = 1 \
+                    if (
+                        not user.failed_login_attempts or
+                        user.failed_login_attempts >= MAX_FAILED_LOGIN_ATTEMPTS
+                    ) else user.failed_login_attempts + 1
                 user.last_login_attempt = dt.datetime.now()
                 user.save()
 

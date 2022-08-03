@@ -206,6 +206,7 @@ class ClientBase(object):
                 self.log.debug(response.content)
 
             if first_try:
+                # FIXME BvB 2022-08-01 only try refresh if 401 unauthorized?!
                 self.refresh_token()
                 return self.request(endpoint, json, method, params,
                                     first_try=False)
