@@ -16,5 +16,5 @@ jobs:
           # to the issue
           project-url: https://github.com/orgs/vantage6/projects/3
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
-          labeled: Feature-request
+          labeled: feature-request
           label-operator: OR
