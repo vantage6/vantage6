@@ -22,7 +22,7 @@ export class TokenStorageService {
     this.saveToken(data.access_token);
     if (data.refresh_token)
       this.saveToken(data.refresh_token, REFRESH_TOKEN_KEY);
-    this.saveUserInfo(data);
+    if (data.user_url) this.saveUserInfo(data);
     this.setLoggedIn(true);
   }
 

@@ -32,7 +32,9 @@ export class UserPermissionService {
     private roleDataService: RoleDataService,
     private userDataService: UserDataService
   ) {
-    this.setup();
+    this.tokenStorage.isLoggedIn().subscribe((loggedIn: boolean) => {
+      if (loggedIn) this.setup();
+    });
   }
 
   async setup(): Promise<void> {
