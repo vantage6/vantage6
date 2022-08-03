@@ -37,7 +37,10 @@ from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
-from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
+from vantage6.node.globals import (
+    NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
+    TIME_LIMIT_RETRY_CONNECT_NODE
+)
 from vantage6.node.server_io import NodeClient
 from vantage6.node.proxy_server import app
 from vantage6.node.util import logger_name
@@ -143,7 +146,7 @@ class Node(object):
         # already
         try:
             self.initialize()
-        except Exception as e:
+        except Exception:
             self.cleanup()
             raise
 
@@ -417,8 +420,11 @@ class Node(object):
                     f"Sending result (id={results.result_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
-                # just store the task_id when retrieving the task the first time?
-                response = self.server_io.request(f"result/{results.result_id}")
+                # just store the task_id when retrieving the task the first
+                # time?
+                response = self.server_io.request(
+                    f"result/{results.result_id}"
+                )
                 task_id = response.get("task").get("id")
 
                 if not task_id:
@@ -460,7 +466,7 @@ class Node(object):
 
         success = False
         i = 0
-        while i < 10:
+        while i < TIME_LIMIT_RETRY_CONNECT_NODE / SLEEP_BTWN_NODE_LOGIN_TRIES:
             i = i + 1
             try:
                 self.server_io.authenticate(api_key)
@@ -474,7 +480,7 @@ class Node(object):
                 msg = 'Authentication failed. Retrying in 10 seconds!'
                 self.log.warning(msg)
                 self.log.debug(e)
-                time.sleep(10)
+                time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
 
             else:
                 # This is only executed if try-block executed without error.
