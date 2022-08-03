@@ -93,3 +93,18 @@
   display: block;
   margin-bottom: 10px;
 }
+
+.btn-inactive.mat-button.mat-button-disabled.mat-button-disabled {
+  background-color: v.$white;
+  color: v.$vtg-blue;
+  margin: {
+    right: 10px;
+    bottom: 5px;
+  }
+  border: {
+    color: v.$vtg-blue;
+    style: solid;
+    width: 2px;
+    radius: 4px;
+  }
+}
