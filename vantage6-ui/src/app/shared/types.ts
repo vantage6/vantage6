@@ -1,5 +1,5 @@
 import { Collaboration } from 'src/app/interfaces/collaboration';
-import { User, UserWithOrg } from 'src/app/interfaces/user';
+import { User } from 'src/app/interfaces/user';
 import { Role, RoleWithOrg } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { Node, NodeWithOrg } from 'src/app/interfaces/node';
@@ -17,7 +17,7 @@ export type Resource =
   | Task
   | Result;
 
-export type ResourceWithOrg = RoleWithOrg | UserWithOrg | NodeWithOrg;
+export type ResourceWithOrg = RoleWithOrg | User | NodeWithOrg;
 
 export type ResourceInOrg = User | Role | Node;
 

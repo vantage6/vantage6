@@ -10,6 +10,7 @@ import { Resource } from 'src/app/shared/types';
 import { deepcopy } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../view/base-view/base-view.component';
 import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
 
 @Component({
   selector: 'app-profile',
@@ -27,7 +28,8 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
     protected userApiService: UserApiService,
     protected userDataService: UserDataService,
     protected modalService: ModalService,
-    private signOutService: SignOutService
+    private signOutService: SignOutService,
+    private orgDataService: OrgDataService
   ) {
     super(userApiService, userDataService, modalService);
   }
@@ -39,8 +41,11 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
     });
   }
 
-  init(): void {
+  async init(): Promise<void> {
     this.user = deepcopy(this.userPermission.user);
+    this.user.organization = await this.orgDataService.get(
+      this.user.organization_id
+    );
     this.modalService.closeLoadingModal();
   }
 

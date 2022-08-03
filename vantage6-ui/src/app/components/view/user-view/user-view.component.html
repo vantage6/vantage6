@@ -43,6 +43,15 @@
       </div>
     </td>
   </tr>
+  <tr *ngIf="user.organization">
+    <td>Organization:</td>
+    <td>
+      <button mat-button class="btn-link inline"
+          [routerLink]="['/organization', user.organization_id]">
+        {{user.organization.name}}
+      </button>
+    </td>
+  </tr>
 </table>
 <button *ngIf="
       userPermission.can('edit', 'user', user.organization_id) ||

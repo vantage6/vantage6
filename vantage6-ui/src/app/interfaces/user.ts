@@ -17,9 +17,6 @@ export interface User {
   password?: string;
   password_repeated?: string;
   is_logged_in?: boolean;
-}
-
-export interface UserWithOrg extends User {
   organization?: Organization;
 }
 
