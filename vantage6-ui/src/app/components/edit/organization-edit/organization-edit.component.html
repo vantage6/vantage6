@@ -33,14 +33,6 @@
         </div>
       </td>
     </tr>
-    <tr *ngIf="organization.public_key">
-      <td>Remove your public key:</td>
-      <td>
-        <mat-checkbox [(ngModel)]="delete_public_key">
-          Only do this if your organization doesn't require a public key for encrypted collaborations.
-        </mat-checkbox>
-      </td>
-    </tr>
   </table>
   <button mat-button class="btn btn-save" (click)="save()">
     Save

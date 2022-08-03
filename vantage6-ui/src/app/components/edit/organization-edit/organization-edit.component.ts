@@ -30,7 +30,6 @@ export class OrganizationEditComponent
 {
   organization: Organization = getEmptyOrganization();
   public_key_file: File | null = null;
-  delete_public_key: boolean = false;
 
   constructor(
     protected router: Router,
@@ -70,9 +69,6 @@ export class OrganizationEditComponent
   }
 
   async save(): Promise<void> {
-    if (this.delete_public_key) {
-      this.organization.public_key = null;
-    }
     const new_public_key = await this.readUploadedFile();
     if (new_public_key) {
       this.organization.public_key = new_public_key;
