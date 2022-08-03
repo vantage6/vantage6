@@ -70,8 +70,4 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
       }
     );
   }
-
-  askConfirmDelete() {
-    super.askConfirmDelete(this.node, ResType.NODE);
-  }
 }

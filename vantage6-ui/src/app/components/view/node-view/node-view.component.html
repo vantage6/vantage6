@@ -44,11 +44,6 @@
     (click)="editNodeName()">
   Change node name
 </button>
-<button *ngIf="userPermission.can('delete', 'node', node.organization_id)"
-    mat-button class="btn btn-delete-strong"
-    (click)="askConfirmDelete()">
-  Delete node
-</button>
 <br/>
 <div *ngIf="userPermission.can('edit', 'node', node.organization_id)"
       style="margin-top: 15px;">
