@@ -20,7 +20,8 @@ export class TokenStorageService {
 
   public setLoginData(data: any) {
     this.saveToken(data.access_token);
-    this.saveToken(data.refresh_token, REFRESH_TOKEN_KEY);
+    if (data.refresh_token)
+      this.saveToken(data.refresh_token, REFRESH_TOKEN_KEY);
     this.saveUserInfo(data);
     this.setLoggedIn(true);
   }
