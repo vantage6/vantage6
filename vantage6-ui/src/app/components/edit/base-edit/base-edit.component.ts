@@ -56,6 +56,9 @@ export abstract class BaseEditComponent implements OnInit {
 
   protected async setup(params: ParamMap) {
     if (this.mode === OpsType.CREATE) {
+      // TODO if creating an organization, no organization is available.
+      // Everything goes well nevertheless, but it is a bit weird this code is
+      // executed which sets some NaNs...
       this.route_id = parseId(params.get('org_id'));
       this.organization_id = this.route_id; // TODO should we do with a single variable? Get rid of route_id?
       await this.setupCreate();

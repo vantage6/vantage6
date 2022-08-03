@@ -9,7 +9,7 @@ import {
 
 import { OrganizationApiService } from 'src/app/services/api/organization-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ResType } from 'src/app/shared/enum';
+import { OpsType, ResType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { BaseEditComponent } from 'src/app/components/edit/base-edit/base-edit.component';
@@ -54,15 +54,7 @@ export class OrganizationEditComponent
   }
 
   async init(): Promise<void> {
-    // subscribe to id parameter in route to change edited organization if
-    // required
-    this.activatedRoute.paramMap.subscribe((params) => {
-      let id = this.utilsService.getId(params, ResType.ORGANIZATION);
-      if (id === EMPTY_ORGANIZATION.id) {
-        return; // cannot get organization
-      }
-      this.setupEdit(id);
-    });
+    this.readRoute();
   }
 
   async setupEdit(id: number) {
@@ -105,5 +97,11 @@ export class OrganizationEditComponent
     } else {
       return undefined;
     }
+  }
+
+  getTitle(): string {
+    return this.mode === OpsType.EDIT
+      ? `Edit organization '${this.organization.name}'`
+      : 'Create organization';
   }
 }
