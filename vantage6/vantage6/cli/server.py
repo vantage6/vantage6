@@ -411,10 +411,12 @@ def cli_server_new(name, environment, system_folders):
 @click.argument('file_', type=click.Path(exists=True))
 @click.option('--drop-all', is_flag=True, default=False)
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
+@click.option('--mount-src', default='',
+              help="mount vantage6-master package source")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click_insert_context
-def cli_server_import(ctx, file_, drop_all, image, keep):
+def cli_server_import(ctx, file_, drop_all, image, mount_src, keep):
     """ Import organizations/collaborations/users and tasks.
 
         Especially useful for testing purposes.
@@ -457,6 +459,10 @@ def cli_server_import(ctx, file_, drop_all, image, keep):
     uri = ctx.config['uri']
     url = make_url(uri)
     environment_vars = None
+
+    if mount_src:
+        mount_src = os.path.abspath(mount_src)
+        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
 
     # If host is None, we're dealing with a file-based DB, like SQLite
     if (url.host is None):
