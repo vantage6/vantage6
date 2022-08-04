@@ -38,7 +38,7 @@ class Rule(Base):
                          secondary="UserPermission")
 
     @classmethod
-    def get_by_(cls, name, scope, operation):
+    def get_by_(cls, name: str, scope: str, operation: str):
         session = DatabaseSessionManager.get_session()
         try:
             return session.query(cls).filter_by(
