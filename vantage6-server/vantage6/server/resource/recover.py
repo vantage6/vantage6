@@ -99,8 +99,6 @@ class ResetPassword(ServicesResources):
         if msg:
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        user.save()
-
         log.info(f"Successfull password reset for '{user.username}'")
         return {"msg": "The password has successfully been reset!"}, \
             HTTPStatus.OK
@@ -184,7 +182,9 @@ class ChangePassword(ServicesResources):
           200:
             description: Ok
           400:
-            description: Current or new password is missing from JSON body
+            description: Current or new password is missing from JSON body, or
+              they are the same, or the new password doesn't meet password
+              criteria
           401:
             description: Current password is incorrect
 
@@ -218,8 +218,6 @@ class ChangePassword(ServicesResources):
         msg = user.set_password(new_password)
         if msg:
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
-
-        user.save()
 
         log.info(f"Successful password change for '{user.username}'")
         return {"msg": "The password has been changed successfully!"}, \

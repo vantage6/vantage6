@@ -206,7 +206,6 @@ class ClientBase(object):
                 self.log.debug(response.content)
 
             if first_try:
-                # FIXME BvB 2022-08-01 only try refresh if 401 unauthorized?!
                 self.refresh_token()
                 return self.request(endpoint, json, method, params,
                                     first_try=False)
@@ -654,9 +653,7 @@ class UserClient(ClientBase):
 
         def change_my_password(self, current_password: str,
                                new_password: str) -> dict:
-            """Start reset password procedure
-
-            Either a username of email needs to be provided.
+            """Change your own password by providing your current password
 
             Parameters
             ----------

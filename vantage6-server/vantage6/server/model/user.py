@@ -92,6 +92,7 @@ class User(Authenticatable):
             return "Password should contain at least one special character"
 
         self.password = pw
+        self.save()
 
     def check_password(self, pw):
         if self.password is not None:
