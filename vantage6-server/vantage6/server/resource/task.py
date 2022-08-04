@@ -67,10 +67,6 @@ def permissions(permissions: PermissionManager):
     add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
         assign_to_node=True, description="view tasks of your organization")
 
-    add(scope=S.GLOBAL, operation=P.EDIT, description="edit any task")
-    add(scope=S.ORGANIZATION, operation=P.EDIT,
-        description="edit tasks of your organization")
-
     add(scope=S.GLOBAL, operation=P.CREATE, description="create a new task")
     add(scope=S.ORGANIZATION, operation=P.CREATE,
         description=(
