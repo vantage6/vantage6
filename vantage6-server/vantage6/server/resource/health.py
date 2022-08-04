@@ -43,10 +43,8 @@ class Health(ServicesResources):
         """Displays the health of services
         ---
         description: >-
-          Checks if communication is stable with the database in the Server.\n
-
-          If not it throws an exception. Else it returns a 200 to signify that
-          communication is stable.
+          Checks if server can communicate with the database. If not, it throws
+          an exception.
 
         responses:
           200:

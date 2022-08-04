@@ -190,7 +190,7 @@ class Tasks(TaskBase):
               name: include
               schema:
                 type: string
-              description: what to include in the output ('metadata')
+              description: include 'metadata' to get pagination metadata. Note that this will put the actual data in an envelope.
             - in: query
               name: page
               schema:
@@ -641,7 +641,7 @@ class TaskResult(ServicesResources):
               name: include
               schema:
                 type: string
-              description: what to include in the output ('metadata')
+              description: include 'metadata' to get pagination metadata. Note that this will put the actual data in an envelope.
             - in: query
               name: page
               schema:

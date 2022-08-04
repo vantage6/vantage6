@@ -118,70 +118,66 @@ class Collaborations(CollaborationBase):
     @with_user
     def get(self):
         """Returns a list of collaborations
-
         ---
         description: >-
-            Returns a list of collaborations. Depending on your permission, all
-            collaborations are shown or only collaborations in which your
-            organization participates. See the table bellow.\n\n
+          Returns a list of collaborations. Depending on your permission, all
+          collaborations are shown or only collaborations in which your
+          organization participates. See the table bellow.\n\n
 
-            ### Permission Table\n
-            |Rulename|Scope|Operation|Node|Container|Description|\n
-            | -- | -- | -- | -- | -- | -- |\n
-            |Collaboration|Global|View|❌|❌|All collaborations|\n
-            |Collaboration|Organization|View|✅|✅|Collaborations in which
-            your organization participates |\n\n
+          ### Permission Table\n
+          |Rulename|Scope|Operation|Node|Container|Description|\n
+          | -- | -- | -- | -- | -- | -- |\n
+          |Collaboration|Global|View|❌|❌|All collaborations|\n
+          |Collaboration|Organization|View|✅|✅|Collaborations in which
+          your organization participates |\n\n
 
-            Accessable as: `user`.'\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+          Accessible to users.
 
         parameters:
-            - in: query
-              name: name
-              schema:
-                type: string
-              description: >-
-                Name to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: encrypted
-              schema:
-                type: boolean
-              description: whether or not collaboration is encrypted
-            - in: query
-              name: organization_id
-              schema:
-                type: integer
-              description: organization id
-            - in: query
-              name: include
-              schema:
-                type: string
-              description: what to include in the output ('metadata')
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: query
+            name: name
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: encrypted
+            schema:
+              type: boolean
+            description: Whether or not collaboration is encrypted
+          - in: query
+            name: organization_id
+            schema:
+              type: integer
+            description: Organization id
+          - in: query
+            name: include
+            schema:
+              type: string
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
 
         security:
-            - bearerAuth: []
+          - bearerAuth: []
 
         tags: ["Collaboration"]
         """
@@ -219,16 +215,17 @@ class Collaborations(CollaborationBase):
     @with_user
     def post(self):
         """ Create collaboration
-
         ---
         description: >-
-            Create a new collaboration between organizations.\n\n
+          Create a new collaboration between organizations.\n\n
 
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to Node|Assigned to
-            Container|Description|\n
-            |--|--|--|--|--|--|\n
-            |Collaboration|Global|Create|❌|❌|Create collaboration|
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to Node|Assigned to
+          Container|Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|Create|❌|❌|Create collaboration|\n\n
+
+          Accessible to users.
 
         requestBody:
           content:
@@ -241,9 +238,9 @@ class Collaborations(CollaborationBase):
                   organization_ids:
                     type: array
                     items:
-                    type: integer
-                    description: List of organization ids which form the
-                      collaboration
+                      type: integer
+                      description: List of organization ids which form the
+                        collaboration
                   encrypted:
                     type: integer
                     description: Boolean (0 or 1) to indicate if the
@@ -255,10 +252,10 @@ class Collaborations(CollaborationBase):
           400:
             description: Collaboration name already exists
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
-        - bearerAuth: []
+          - bearerAuth: []
 
         tags: ["Collaboration"]
         """
@@ -303,8 +300,15 @@ class Collaboration(CollaborationBase):
         ---
         description: >-
           Returns the collaboration with the specified id.\n
-          Only returns the collaboration if the user or node has the required
-          permissions.
+
+          ### Permission Table\n
+          |Rulename|Scope|Operation|Node|Container|Description|\n
+          | -- | -- | -- | -- | -- | -- |\n
+          |Collaboration|Global|View|❌|❌|All collaborations|\n
+          |Collaboration|Organization|View|✅|✅|Collaborations in which
+          your organization participates |\n\n
+
+          Accessible to users.
 
         parameters:
           - in: path
@@ -312,14 +316,14 @@ class Collaboration(CollaborationBase):
             schema:
               type: integer
               minimum: 1
-            description: "unique node identifier"
+            description: Collaboration id
             required: true
 
         responses:
           200:
             description: Ok
           404:
-            description: collaboration with specified id is not found
+            description: Collaboration with specified id is not found
           401:
             description: Unauthorized
 
@@ -352,7 +356,6 @@ class Collaboration(CollaborationBase):
     @with_user
     def patch(self, id):
         """ Update collaboration
-
         ---
         description: >-
           Updates the collaboration with the specified id.\n\n
@@ -360,14 +363,16 @@ class Collaboration(CollaborationBase):
           |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Edit|❌|❌|Update a collaboration|
+          |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: collaboration id
+            description: Collaboration id
             required: tr
 
         requestBody:
@@ -382,15 +387,18 @@ class Collaboration(CollaborationBase):
                     type: array
                     items:
                       type: integer
-                    description: list of organization ids
+                    description: List of organization ids
+                  encrypted:
+                    type: boolean
+                    description: Whether collaboration is encrypted or not
 
         responses:
           200:
             description: Ok
           404:
-            description: collaboration with specified id is not found
+            description: Collaboration with specified id is not found
           401:
-            description: Unauthorized or missing permissions
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -430,7 +438,6 @@ class Collaboration(CollaborationBase):
     @with_user
     def delete(self, id):
         """ Delete collaboration
-
         ---
         description: >-
           Removes the collaboration from the database entirely.
@@ -439,21 +446,23 @@ class Collaboration(CollaborationBase):
           |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Delete|❌|❌|Remove node from database|
+          |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: collaboration id
+            description: Collaboration id
             required: true
 
         responses:
           200:
             description: Ok
           404:
-            description: collaboration with specified id is not found
+            description: Collaboration with specified id is not found
           401:
             description: Unauthorized
 
@@ -488,47 +497,43 @@ class CollaborationOrganization(ServicesResources):
     @only_for(["node", "user", "container"])
     def get(self, id):
         """ Returns organizations that participate in the collaboration
-
         ---
         description: >-
-            Returns a list of all organizations that belong to the specified
-            collaboration.
+          Returns a list of all organizations that belong to the specified
+          collaboration.
 
-            ### Permission Table\n
-            |Rulename|Scope|Operation|Node|Container|Description|\n
-            |--|--|--|--|--|--|\n
-            |Collaboration|Global|View|❌|❌|All collaborations|\n
-            |Collaboration|Organization|View|✅|✅|Collaborations
-            in which your organization participates|\n\n
+          ### Permission Table\n
+          |Rulename|Scope|Operation|Node|Container|Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|View|❌|❌|All collaborations|\n
+          |Collaboration|Organization|View|✅|✅|Collaborations
+          in which your organization participates|\n\n
 
-            Accessable as: `user`, `node` and `container`.'\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+          Accessible to users.
 
         parameters:
-            - in: path
-              name: id
-              schema:
-                type: integer
-              description: collaboration id
-              required: true
-            - in: query
-              name: include
-              schema:
-                type: string
-              description: what to include in the output ('metadata')
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Collaboration id
+            required: true
+          - in: query
+            name: include
+            schema:
+              type: string
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
             200:
@@ -564,23 +569,25 @@ class CollaborationOrganization(ServicesResources):
     @with_user
     def post(self, id):
         """ Add organization to collaboration
-
         ---
         description: >-
-          Adds a single organization to an existing collaboration.
+          Adds a single organization to an existing collaboration.\n\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Edit|❌|❌|Add organization to a collaboration|
+          |Collaboration|Global|Edit|❌|❌|Add organization to a
+          collaboration|\n\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: collaboration id
+            description: Collaboration id
             required: tr
 
         requestBody:
@@ -590,13 +597,13 @@ class CollaborationOrganization(ServicesResources):
                 properties:
                   id:
                     type: integer
-                    description: organization id which needs to be added
+                    description: Organization id which needs to be added
 
         responses:
           200:
             description: Ok
           404:
-            description: specified collaboration or organization does not exist
+            description: Specified collaboration or organization does not exist
           401:
             description: Unauthorized
 
@@ -632,32 +639,43 @@ class CollaborationOrganization(ServicesResources):
     @with_user
     def delete(self, id):
         """ Remove organization from collaboration
-
         ---
         description: >-
           Removes a single organization from an existing collaboration.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove an organization from an
-          existing collaboration|
+          existing collaboration|\n\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: collaboration id
+            description: Collaboration id
             required: true
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    description: Organization id which needs to be deleted
 
         responses:
           200:
             description: Ok
           404:
-            description: specified collaboration or organization does not exist
+            description: Specified collaboration or organization does not exist
           401:
-            description: Unauthorized or missing permissions
+            description: Unauthorized
 
         tags: ["Collaboration"]
         """
@@ -695,56 +713,52 @@ class CollaborationNode(ServicesResources):
     @with_user
     def get(self, id):
         """ List nodes in collaboration.
-
         ---
         description: >-
-            Returns a list of node(s) which belong to the specified
-            collaboration.\n\n
+          Returns a list of node(s) which belong to the specified
+          collaboration.\n
 
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
-            |--|--|--|--|--|--|\n
-            |Collaboration|Global|View|❌|❌|List nodes in a specified
-            collaboration|\n
-            |Collaboration|Organization|View|✅|✅|List nodes in a specified
-            collaboration|\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Node|Container|Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|View|❌|❌|List nodes in a specified
+          collaboration|\n
+          |Collaboration|Organization|View|✅|✅|List nodes in a specified
+          collaboration|\n
 
-            Accessable as: `user`.'\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+          Accessible to users.
 
         parameters:
-            - in: path
-              name: id
-              schema:
-                type: integer
-              description: collaboration id
-              required: true
-            - in: query
-              name: include
-              schema:
-                type: string
-              description: what to include in the output ('metadata')
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Collaboration id
+            required: true
+          - in: query
+            name: include
+            schema:
+              type: string
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            404:
-                description: collaboration not found
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
+          404:
+            description: Collaboration not found
+          401:
+            description: Unauthorized
 
         tags: ["Collaboration"]
         """
@@ -769,22 +783,24 @@ class CollaborationNode(ServicesResources):
     @with_user
     def post(self, id):
         """ Add node to collaboration
-
         ---
         description: >-
           Add node to an existing collaboration.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Create|❌|❌|Add node to collaboration|
+          |Collaboration|Global|Create|❌|❌|Add node to collaboration|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: collaboration id
+            description: Collaboration id
             required: tr
 
         requestBody:
@@ -794,7 +810,7 @@ class CollaborationNode(ServicesResources):
                 properties:
                   id:
                     type: integer
-                    description: if of node to be added
+                    description: ID of node to be added
 
         responses:
           201:
@@ -804,7 +820,7 @@ class CollaborationNode(ServicesResources):
           400:
             description: Node is already in collaboration
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -837,7 +853,6 @@ class CollaborationNode(ServicesResources):
     @with_user
     def delete(self, id):
         """ Remove node from collaboration
-
         ---
         description: >-
           Removes a single node from an existing collaboration.
@@ -846,26 +861,36 @@ class CollaborationNode(ServicesResources):
           |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Edit|❌|❌|Remove node from collaboration|
+          |Collaboration|Global|Edit|❌|❌|Remove node from collaboration|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: Collaboration id from which the node is to be deleted
-              from.
+            description: Collaboration id from which the node is to be deleted.
             required: true
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    description: Node id which needs to be deleted
 
         responses:
           200:
             description: Ok
           404:
-            description: collaboration or node not found
+            description: Collaboration or node not found
           400:
-            description: node is not part of the collaboration
+            description: Node is not part of the collaboration
           401:
-            description: Unauthorized or missing permissions
+            description: Unauthorized
 
         tags: ["Collaboration"]
         """
@@ -902,56 +927,50 @@ class CollaborationTask(ServicesResources):
     @with_user_or_node
     def get(self, id):
         """List tasks from collaboration
-
         ---
         description: >-
-            Returns a list of all tasks that belong to the collaboration.\n\n
+            Returns a list of all tasks that belong to the collaboration.\n
 
             ### Permission Table\n
             |Rule name|Scope|Operation|Node|Container|Description|\n
             |--|--|--|--|--|--|\n
-            |Task|Global|View|❌|❌|View tasks|\n
+            |Task|Global|View|❌|❌|View tasks of collaboration|\n
             |Task|Organization|View|✅|✅|View tasks only when your
-            organization participates in the collaboration|\n\n
+            organization participates in the collaboration|\n
 
-
-            Accessible as: `user` and `node`.\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
-
+            Accessible to users.
 
         parameters:
-            - in: path
-              name: id
-              schema:
-                type: integer
-              description: collaboration id
-              required: true
-            - in: query
-              name: include
-              schema:
-                type: string
-              description: what to include in the output ('metadata')
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Collaboration id
+            required: true
+          - in: query
+            name: include
+            schema:
+              type: string
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized or missing permissions
-            404:
-                description: Collaboration not found
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          404:
+            description: Collaboration not found
 
         security:
             - bearerAuth: []
@@ -961,7 +980,7 @@ class CollaborationTask(ServicesResources):
         """
         col = db.Collaboration.get(id)
         if not col:
-            return {"msg": f"collaboration id={id} can not be found"},\
+            return {"msg": f"Collaboration id={id} can not be found"},\
                 HTTPStatus.NOT_FOUND
 
         # obtain auth's organization id
