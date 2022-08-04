@@ -34,9 +34,13 @@ from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.common.exceptions import AuthenticationException
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
-from vantage6.node.globals import NODE_PROXY_SERVER_HOSTNAME
+from vantage6.node.globals import (
+    NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
+    TIME_LIMIT_RETRY_CONNECT_NODE
+)
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import logger_name
@@ -457,16 +461,21 @@ class Node(object):
 
         success = False
         i = 0
-        while i < 10:
+        while i < TIME_LIMIT_RETRY_CONNECT_NODE / SLEEP_BTWN_NODE_LOGIN_TRIES:
             i = i + 1
             try:
                 self.server_io.authenticate(api_key)
 
+            except AuthenticationException as e:
+                msg = "Authentication failed: API key is wrong!"
+                self.log.warning(msg)
+                self.log.debug(e)
+                break
             except Exception as e:
                 msg = 'Authentication failed. Retrying in 10 seconds!'
                 self.log.warning(msg)
                 self.log.debug(e)
-                time.sleep(10)
+                time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
 
             else:
                 # This is only executed if try-block executed without error.

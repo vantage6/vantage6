@@ -132,10 +132,31 @@ class UserToken(ServicesResources):
 
 class NodeToken(ServicesResources):
 
-    @swag_from(str(Path(r"swagger/post_token_node.yaml")),
-               endpoint='node_token')
     def post(self):
-        """Authenticate as Node."""
+        """Login node
+        ---
+        description: >-
+          Allows for node sign-in using a unique api-key. If the login is
+          successful this returns a dictionairy with access and refresh tokens
+          for the node as well as a node_url and a refresh_url.\n\n
+          It also returns a jwt-token so that the user can login again.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+
+        responses:
+          200:
+            description: Ok, authenticated
+          400:
+            description: No or wrong JSON-body
+          401:
+            description: Invalid API key
+
+        tags: ["Authentication"]
+        """
         log.debug("Authenticate Node using api key")
 
         if not request.is_json:
@@ -154,7 +175,8 @@ class NodeToken(ServicesResources):
 
         if not node:  # login failed
             log.error("Api key is not recognized")
-            return {"msg": "Api key is not recognized!"}
+            return {"msg": "Api key is not recognized!"}, \
+                HTTPStatus.UNAUTHORIZED
 
         token = create_access_token(node)
         ret = {
