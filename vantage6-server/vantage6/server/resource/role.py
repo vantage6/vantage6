@@ -199,7 +199,7 @@ class Roles(RoleBase):
                     db.Role.organization_id == None
                 ))
             else:
-                q = q.filter(db.Role.organization_id).in_(org_filters)
+                q = q.filter(db.Role.organization_id.in_(org_filters))
 
         # filter by one or more names or descriptions
         for param in ['name', 'description']:
