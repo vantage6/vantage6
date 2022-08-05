@@ -110,7 +110,7 @@ class Tasks(TaskBase):
             Returns a list of tasks.\n\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|Description|\n
             |--|--|--|--|--|--|\n
             |Task|Global|View|❌|❌|View any task|\n
             |Task|Organization|View|✅|✅|View any task in your organization|
@@ -279,7 +279,7 @@ class Tasks(TaskBase):
           `401`.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Task|Global|Create|❌|❌|Create a new task|\n
@@ -496,7 +496,7 @@ class Task(TaskBase):
           to come from the correct organization otherwise you cannot view
           specific tasks at the node.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Task|Global|View|❌|❌|View any task|\n
@@ -550,7 +550,7 @@ class Task(TaskBase):
         description: >-
           Remove tasks and their results entirely from the database.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Task|Global|Delete|❌|❌|Delete a task|\n
@@ -618,7 +618,7 @@ class TaskResult(ServicesResources):
             Returns the task result specified by the id.\n\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|Description|\n
             |--|--|--|--|--|--|\n
             |Result|Global|View|❌|❌|View any result|\n
             |Result|Organization|View|✅|✅|View results for the

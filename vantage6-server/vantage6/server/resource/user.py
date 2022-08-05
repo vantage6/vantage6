@@ -100,7 +100,7 @@ class Users(UserBase):
             information on the users from within the same scope.\n\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|Description|\n
             |--|--|--|--|--|--|\n
             |User|Global|View|❌|❌|View any user details|\n
             |User|Organization|View|❌|❌|View users from your organization|\n\n
@@ -232,7 +232,7 @@ class Users(UserBase):
         description: >-
           Creates new user from the request data to the users organization.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |User|Global|Create|❌|❌|Create a new user|\n
@@ -381,7 +381,7 @@ class User(UserBase):
             info on the users within the same scope.\n\n
 
             ### Permission Table\n
-            |Rulename|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container||\n
             |-- |--|--|--|--|--|\n
             |User|Global|View|❌|❌|View any user details|\n
             |User|Organization|View|❌|❌|View users from your
@@ -436,7 +436,7 @@ class User(UserBase):
         description: >-
           Update user information.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |User|Global|Edit|❌|❌|Edit any user|
@@ -625,7 +625,7 @@ class User(UserBase):
         description: >-
           Remove user entirely from the database.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |User|Global|Delete|❌|❌|Delete any user|\n

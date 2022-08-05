@@ -110,7 +110,7 @@ class Roles(RoleBase):
             organization.\n\n
 
             ### Permission Table\n
-            |Rulename|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container||\n
             |--|--|--|--|--|--|\n
             |Role|Global|View|❌|❌|View all roles|\n
             |Role|Organization|View|❌|❌|View roles that are part of your
@@ -234,7 +234,7 @@ class Roles(RoleBase):
           roles, and you can only assign roles to other organizations if you
           have gobal permission.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Create|❌|❌|Create a role for any organization|\n
@@ -334,7 +334,7 @@ class Role(RoleBase):
           Depending on permission, you can view nothing, your organization or
           all the available roles at the server.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|View|❌|❌|View all roles|\n
@@ -380,7 +380,7 @@ class Role(RoleBase):
           Updates roles within an organization if the user has permission to do
           so.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Edit|❌|❌|Update any role|\n
@@ -457,7 +457,7 @@ class Role(RoleBase):
           Delete role from an organization only if the user belongs to the
           organization for which the role belongs to.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Delete|❌|❌|Delete any role|\n
@@ -511,7 +511,7 @@ class RoleRules(RoleBase):
             View the rules that belong to a specific role.\n\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|Description|\n
             |--|--|--|--|--|--|\n
             |Role|Global|View|❌|❌|View any role rule|\n
             |Role|Organization|View|❌|❌|View all role rules in your
@@ -582,7 +582,7 @@ class RoleRules(RoleBase):
           Adds a rule to a role given that the role exists already and that the
           user has the permission to do so.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Edit|❌|❌|Edit any role|\n
@@ -653,7 +653,7 @@ class RoleRules(RoleBase):
           Removes a rule from a role given the user has permission and the rule
           id exists.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Delete|❌|❌|Delete any role rule|\n

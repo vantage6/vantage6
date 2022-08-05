@@ -91,7 +91,8 @@ class Nodes(NodeBase):
             this request, all nodes from all organizations are returned.\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
             |Node|Global|View|❌|❌|View any node information|\n
             |Node|Organization|View|✅|✅|View node information for nodes that
@@ -208,7 +209,7 @@ class Nodes(NodeBase):
           The organization of the user needs to be within the collaboration.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|Create|❌|❌|Create a new node account belonging to a
@@ -313,7 +314,7 @@ class Node(NodeBase):
           permission.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|View|❌|❌|View any node information|\n
@@ -370,7 +371,7 @@ class Node(NodeBase):
           organization of the node can delete it.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|Delete|❌|❌|Delete a node|\n
@@ -424,7 +425,7 @@ class Node(NodeBase):
           If the node does not exists it is created as a new node.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|Edit|❌|❌|Update a node specified by id|\n

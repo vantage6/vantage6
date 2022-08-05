@@ -60,7 +60,7 @@ class ResetPassword(ServicesResources):
         """Set a new password using a recover token
         ---
         description: >-
-          If the user received a recover token they can reset their password
+          User can use a recover token to reset their password
 
         requestBody:
           content:
@@ -69,16 +69,16 @@ class ResetPassword(ServicesResources):
                 properties:
                   reset_token:
                     type: string
-                    description: recover token (received by email)
+                    description: Recover token (received by email)
                   password:
                     type: string
-                    description: new chosen password
+                    description: New password
 
         responses:
           200:
             description: Ok
           400:
-            description: password or token is missing from JSON body or invalid
+            description: Password or recovery token is missing or invalid
 
         tags: ["Password recovery"]
         """
@@ -116,8 +116,8 @@ class RecoverPassword(ServicesResources):
         """Request a recover token
         ---
         description: >-
-          If a user lost its password it can request a recover token. Either
-          the email or username needs to be supplied
+          Request a recover token if password is lost. Either email address
+          or username must be supplied.
 
         requestBody:
           content:
@@ -126,11 +126,11 @@ class RecoverPassword(ServicesResources):
                 properties:
                   username:
                     type: string
-                    description: username from which the password needs to be
+                    description: Username from which the password needs to be
                       recovered
                   email:
                     type: string
-                    description: username from which the password needs to be
+                    description: Username from which the password needs to be
                       recovered
 
         responses:
@@ -200,33 +200,33 @@ class ResetAPIKey(ServicesResources):
         description: >-
             If a node's API key is lost, this route can be used to obtain a new
             API key.\n
-            The permission scheme is the same as for a node PATCH request.\n\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
-            |Node|Global|Edit|❌|❌|Update a node specified by id|\n
-            |Node|Organization|Edit|❌|❌|Update a node specified by id which
-            is part of your organization|\n\n
+            |Node|Global|Edit|❌|❌|Reset API key of node specified by id|\n
+            |Node|Organization|Edit|❌|❌|Reset API key of node specified by
+            id which is part of your organization |\n
 
-            Accesible as `user`.\n\n
+            Accessible to users.
 
         requestBody:
-            content:
-                application/json:
-                    schema:
-                        properties:
-                            id:
-                                type: int
-                                description: id of node whose API key is reset
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: int
+                    description: ID of node whose API key is to be reset
 
         responses:
             200:
                 description: Ok
             400:
-                description: id missing from json body
+                description: ID missing from json body
             401:
-                description: Unauthorized, no permission to alter this node
+                description: Unauthorized
             404:
                 description: Node not found
 
@@ -243,7 +243,7 @@ class ResetAPIKey(ServicesResources):
         # check which node should have its API key modified
         id = request.json.get('id', None)
         if not id:
-            msg = "id missing in JSON body"
+            msg = "ID missing in JSON body"
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 

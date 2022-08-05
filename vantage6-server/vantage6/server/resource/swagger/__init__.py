@@ -28,6 +28,49 @@ swagger_template = {
                 },
                 "required": ["image", "collaboration_id"]
             },
+            "Organization": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name"
+                    },
+                    "address1": {
+                        "type": "string",
+                        "description": "Address line 1"
+                    },
+                    "address2": {
+                        "type": "string",
+                        "description": "Address line 2"
+                    },
+                    "zipcode": {
+                        "type": "string",
+                        "description": "Zip code"
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": "Country"
+                    },
+                    "public_key": {
+                        "type": "string",
+                        "description":
+                            "Public key. Note that this should be public key "
+                            "*only*, i.e. without any metadata."
+                    },
+                    "domain": {
+                        "type": "string",
+                        "description": "Link to website of the organization."
+                    }
+                },
+                "example": {
+                    "name": "organization-name",
+                    "address1": "Sunshine lane 1234",
+                    "address2": "Miami, Florida",
+                    "zipcode": "1234 LA",
+                    "country": "USA",
+                    "public_key": "a_public_key",
+                    "domain": "organization.edu"
+                },
+            },
             "Collaboration": {
                 "properties": {
                     "collaboration_id": {"type": "integer"}

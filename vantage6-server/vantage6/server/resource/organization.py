@@ -101,72 +101,67 @@ class Organizations(OrganizationBase):
     @only_for(["user", "node", "container"])
     def get(self):
         """ Returns a list organizations
-
+        ---
         description: >-
-            Filters through a list of organizations based on scope and returns
-            a list of organizations\n\n
+            Get a list of organizations based on filters and user permissions\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
-            |Node|Global|View|❌|❌|View all organizations|\n
-            |Node|Collaboration|View|✅|✅|View a list of organizations within
-            the scope of the collaboration|\n
-            |Node|Organization|View|❌|❌|View a list of organizations that
-            the user is part of|\n\n
+            |Organization|Global|View|❌|❌|View all organizations|\n
+            |Organization|Collaboration|View|✅|✅|View a list of organizations
+            within the scope of the collaboration|\n
+            |Organization|Organization|View|✅|✅|View a 'list' of just the
+            organization you are part of|\n
 
-            Accesable for: `node`, `user` and `container`.\n\n
-
-            Organizations can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+            Accessible to users.
 
         parameters:
-            - in: query
-              name: name
-              schema:
-                type: string
-              description: >-
-                Name to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: country
-              schema:
-                type: string
-              description: country
-            - in: query
-              name: collaboration_id
-              schema:
-                type: integer
-              description: collaboration id
-            - in: query
-              name: include
-              schema:
-                type: string (can be multiple)
-              description: what to include ('metadata')
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: query
+            name: name
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: country
+            schema:
+              type: string
+            description: Country
+          - in: query
+            name: collaboration_id
+            schema:
+              type: integer
+            description: Collaboration id
+          - in: query
+            name: include
+            schema:
+              type: string (can be multiple)
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            404:
-                description: organization not found
-            401:
-                description: Unauthorized or missing permission
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
 
         security:
-            - bearerAuth: []
+          - bearerAuth: []
 
         tags: ["Organization"]
         """
@@ -223,42 +218,30 @@ class Organizations(OrganizationBase):
 
     @with_user
     def post(self):
-        """Create new organization without id
+        """Create new organization
         ---
         description: >-
-          Creates a new organization from the specified values\n\n
+          Creates a new organization from the specified values\n
+
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Organization|Global|Create|❌|❌|Create a new organization|
+          |Organization|Global|Create|❌|❌|Create a new organization|\n
+
+          Accessible to users.
 
         requestBody:
           content:
             application/json:
               schema:
-                properties:
-                  name:
-                    type: string
-                    description: Organizations name
-                  address1:
-                    type: string
-                  address2:
-                    type: string
-                  zipcode:
-                    type: string
-                  country:
-                    type: string
-                  public_key:
-                    type: string
-                  domain:
-                    type: string
+                $ref: '#/components/schemas/Organization'
 
         responses:
           201:
             description: Ok
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -293,32 +276,35 @@ class Organization(OrganizationBase):
         """Get organization
         ---
         description: >-
-          Returns the organization specified by the id\n\n
+          Returns the organization specified by the id\n
+
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Organization|Global|View|❌|❌|View all organizations|\n
           |Organization|Collaboration|View|✅|✅|View a list of organizations
           within the scope of the collaboration|\n
-          |Organization|Organization|View|❌|❌|View a list of organizations
-          that the user is part of|
+          |Organization|Organization|View|✅|✅|View a list of organizations
+          that the user is part of|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: organization id
+            description: Organization id
             required: true
 
         responses:
           200:
             description: Ok
           404:
-            description: organization not found
+            description: Organization not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -362,51 +348,40 @@ class Organization(OrganizationBase):
         """Update organization
         ---
         description: >-
-          Updates the organization with the specified id.\n\n
+          Updates the organization with the specified id.\n
+
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Organization|Global|Edit|❌|❌|Update an organization with
           specified id|\n
-          |Organization|Organization|Edit|❌|❌|Update an organization that
-          the user is part of|
+          |Organization|Organization|Edit|❌|❌|Update the organization that
+          the user is part of|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: organization id
+            description: Organization id
             required: tr
 
         requestBody:
           content:
             application/json:
               schema:
-                properties:
-                  name:
-                    type: string
-                  address1:
-                    type: string
-                  address2:
-                    type: string
-                  zipcode:
-                    type: string
-                  country:
-                    type: string
-                  public_key:
-                    type: string
-                  domain:
-                    type: string
+                $ref: '#/components/schemas/Organization'
 
         responses:
           200:
             description: Ok
           404:
-            description: organization with specified id is not found
+            description: Organization with specified id is not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -450,30 +425,33 @@ class OrganizationCollaboration(ServicesResources):
         ---
         description: >-
           Returns a list of collaborations in which the organization is a
-          participant of.\n\n
+          participant of.\n
+
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|View|❌|❌|View all collaborations|\n
           |Collaboration|Organization|View|✅|✅|View a list of collaborations
-          that the organization is a part of|
+          that the organization is a part of|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: organization id
+            description: Organization id
             required: true
 
         responses:
           200:
             description: Ok
           404:
-            description: organization not found
+            description: Organization not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -512,21 +490,24 @@ class OrganizationNode(ServicesResources):
         """Return a list of nodes.
         ---
         description: >-
-          Returns a list of nodes which are from the organization.\n\n
+          Returns a list of nodes which are from the organization.\n
+
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Node|Global|View|❌|❌|View any node|\n
-          |Node|Organization|View|✅|✅|View a list of nodes that belong to
-          your organization|
+          |Organization|Global|View|❌|❌|View any node|\n
+          |Organization|Organization|View|✅|✅|View a list of nodes that
+          belong to your organization|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: organization id
+            description: Organization id
             required: true
 
         responses:
@@ -535,7 +516,7 @@ class OrganizationNode(ServicesResources):
           404:
             description: Organization not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []

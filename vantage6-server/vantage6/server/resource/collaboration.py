@@ -125,7 +125,8 @@ class Collaborations(CollaborationBase):
           organization participates. See the table bellow.\n\n
 
           ### Permission Table\n
-          |Rulename|Scope|Operation|Node|Container|Description|\n
+          |Rulename|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
           | -- | -- | -- | -- | -- | -- |\n
           |Collaboration|Global|View|❌|❌|All collaborations|\n
           |Collaboration|Organization|View|✅|✅|Collaborations in which
@@ -302,7 +303,8 @@ class Collaboration(CollaborationBase):
           Returns the collaboration with the specified id.\n
 
           ### Permission Table\n
-          |Rulename|Scope|Operation|Node|Container|Description|\n
+          |Rulename|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
           | -- | -- | -- | -- | -- | -- |\n
           |Collaboration|Global|View|❌|❌|All collaborations|\n
           |Collaboration|Organization|View|✅|✅|Collaborations in which
@@ -360,7 +362,7 @@ class Collaboration(CollaborationBase):
         description: >-
           Updates the collaboration with the specified id.\n\n
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n\n
@@ -443,7 +445,7 @@ class Collaboration(CollaborationBase):
           Removes the collaboration from the database entirely.
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n\n
@@ -503,7 +505,8 @@ class CollaborationOrganization(ServicesResources):
           collaboration.
 
           ### Permission Table\n
-          |Rulename|Scope|Operation|Node|Container|Description|\n
+          |Rulename|Scope|Operation|Assigned to Node|Assigned to Container|
+          Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|View|❌|❌|All collaborations|\n
           |Collaboration|Organization|View|✅|✅|Collaborations
@@ -574,7 +577,7 @@ class CollaborationOrganization(ServicesResources):
           Adds a single organization to an existing collaboration.\n\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Add organization to a
@@ -644,7 +647,7 @@ class CollaborationOrganization(ServicesResources):
           Removes a single organization from an existing collaboration.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove an organization from an
@@ -719,7 +722,8 @@ class CollaborationNode(ServicesResources):
           collaboration.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Node|Container|Description|\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|View|❌|❌|List nodes in a specified
           collaboration|\n
@@ -788,7 +792,7 @@ class CollaborationNode(ServicesResources):
           Add node to an existing collaboration.\n
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Create|❌|❌|Add node to collaboration|\n
@@ -858,7 +862,7 @@ class CollaborationNode(ServicesResources):
           Removes a single node from an existing collaboration.
 
           ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to Node|Assigned to Container|
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove node from collaboration|\n
@@ -932,7 +936,8 @@ class CollaborationTask(ServicesResources):
             Returns a list of all tasks that belong to the collaboration.\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
             |Task|Global|View|❌|❌|View tasks of collaboration|\n
             |Task|Organization|View|✅|✅|View tasks only when your
