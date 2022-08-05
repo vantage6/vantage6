@@ -4,5 +4,4 @@ PyJWT==2.4.0
 pyfiglet==0.8.post1
 SPARQLWrapper==1.8.5
 pandas
-vantage6-common
 
