@@ -36,7 +36,7 @@ setup(
     install_requires=[
         'cryptography==3.3.2',
         'requests==2.25.1',
-        'PyJWT',
+        'PyJWT==2.4.0',
         'pandas',
         f'vantage6-common=={version_ns["__version__"]}',
         'pyfiglet==0.8.post1',
