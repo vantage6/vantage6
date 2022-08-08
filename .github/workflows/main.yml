@@ -1,0 +1,34 @@
+name: Move to project
+
+on:
+  issues:
+    types:
+      - opened
+      - labeled
+
+jobs:
+  add-to-feature-board:
+    name: Add issue to feature request board
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v0.3.0
+        with:
+          # You can target a repository in a different organization
+          # to the issue
+          project-url: https://github.com/orgs/vantage6/projects/3
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: feature-request
+          label-operator: OR
+          
+  add-to-HOTFIX-board:
+    name: Add issue to HOTFIX request board
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v0.3.0
+        with:
+          # You can target a repository in a different organization
+          # to the issue
+          project-url: https://github.com/orgs/vantage6/projects/2
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: bug
+          label-operator: OR

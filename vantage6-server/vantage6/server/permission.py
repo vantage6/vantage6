@@ -1,4 +1,3 @@
-import collections
 import logging
 import importlib
 
@@ -146,7 +145,6 @@ class PermissionManager:
             log.critical(f"Missing permission collection! {name}")
             raise e
 
-
     @staticmethod
     def rule_exists_in_db(name, scope, operation):
         """Check if the rule exists in the DB.
@@ -178,6 +176,6 @@ class PermissionManager:
             try:
                 Permission(requires).test()
             except PermissionDenied:
-                return {"msg": f"You dont have the rule ({rule.name},"
+                return {"msg": f"You don't have the rule ({rule.name}, "
                         f"{rule.scope}, {rule.operation})"}
         return False

@@ -247,7 +247,7 @@ class Nodes(NodeBase):
                         HTTPStatus.BAD_REQUEST
 
         # Ok we're good to go!
-        api_key = str(uuid.uuid1())
+        api_key = str(uuid.uuid4())
         node = db.Node(
             name=f"{organization.name} - {collaboration.name} Node",
             collaboration=collaboration,
