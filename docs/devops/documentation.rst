@@ -14,6 +14,9 @@ There are two ways to edit the documentation:
 
 Technical documentation
 -----------------------
-The technical documentation you are currently reading is located in the _vantage6_ repository itself if the `docs` folder.
+The source of the technical documentation you are currently reading is located in the _vantage6_ repository itself if the `docs` folder.
 
 To build the documentation locally you can use the Makefile located in the docs folder. The command `make html` will generate these pages in HTML.
+
+The documentation is also automatically build and published on a commit (on certain branches, including `main`)on readthedocs: `https://tech-docs.vantage6.ai`. Both Frank and Bart have access to the vantage6 project when logged into readthedocs. Here you can manage which branches are synced, the webhook used to trigger a build, and some other -less important- settings.
+
