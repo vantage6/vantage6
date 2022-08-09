@@ -110,3 +110,6 @@ clean:
 	cd vantage6 && make clean
 	cd vantage6-node && make clean
 	cd vantage6-server && make clean
+
+test:
+	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py

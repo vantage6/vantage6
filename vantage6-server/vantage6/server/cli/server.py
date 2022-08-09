@@ -60,7 +60,7 @@ def click_insert_context(func):
             else:
                 try:
                     name, environment = select_configuration_questionaire(
-                        system_folders
+                        "server", system_folders
                     )
                 except Exception:
                     error("No configurations could be found!")

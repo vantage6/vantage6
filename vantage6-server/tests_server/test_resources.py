@@ -63,6 +63,7 @@ class TestResources(unittest.TestCase):
             cls.entities = yaml.safe_load(f.read())
         load(cls.entities)
 
+        server.app.testing = True
         cls.app = server.app.test_client()
 
         cls.credentials = {
@@ -108,9 +109,11 @@ class TestResources(unittest.TestCase):
             headers = {
                 'Authorization': 'Bearer {}'.format(tokens['access_token'])
             }
+            return headers
         else:
             print('something wrong, during login:')
             print(tokens)
+            return None
 
         return headers
 
