@@ -45,9 +45,9 @@ def setup(api, api_base, services):
 
     api.add_resource(
         ChangePassword,
-        path+'/change',
+        api_base+'/password/change',
         endpoint='change_password',
-        methods=('POST',),
+        methods=('PATCH',),
         resource_class_kwargs=services
     )
 
@@ -156,7 +156,7 @@ class ChangePassword(ServicesResources):
     """
 
     @with_user
-    def post(self):
+    def patch(self):
         """Set a new password using the current password
         ---
         description: >-
