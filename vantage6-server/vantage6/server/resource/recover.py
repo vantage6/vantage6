@@ -45,9 +45,9 @@ def setup(api, api_base, services):
 
     api.add_resource(
         ChangePassword,
-        path+'/change',
+        api_base+'/password/change',
         endpoint='change_password',
-        methods=('POST',),
+        methods=('PATCH',),
         resource_class_kwargs=services
     )
 
@@ -156,11 +156,13 @@ class RecoverPassword(ServicesResources):
 
 
 class ChangePassword(ServicesResources):
-    """Let user to change their password with old password as verification."""
+    """
+    Let user change their password with old password as verification
+    """
 
     @with_user
-    def post(self):
-        """Set a new password using the current password.
+    def patch(self):
+        """Set a new password using the current password
         ---
         description: >-
           Users can change their password by submitting their current password
