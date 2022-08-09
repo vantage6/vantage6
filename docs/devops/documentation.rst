@@ -1,7 +1,7 @@
 Documentation
 =============
 
-We maintain 2 documentation pages. The _user_ documentation which is intended for the end users of vantage6 and the technical documentation where you are right now.
+We maintain 2 documentation pages. The **user** documentation which is intended for the end users of vantage6 and the technical documentation where you are right now.
 
 User documentation
 ------------------
@@ -14,9 +14,11 @@ There are two ways to edit the documentation:
 
 Technical documentation
 -----------------------
-The source of the technical documentation you are currently reading is located in the _vantage6_ repository itself if the `docs` folder.
+The source of the technical documentation you are currently reading is located in the *vantage6* repository itself if the ``docs`` folder.
 
-To build the documentation locally you can use the Makefile located in the docs folder. The command `make html` will generate these pages in HTML.
+To build the documentation locally you can use the Makefile located in the docs folder. The command ``make html`` will generate these pages in HTML.
 
-The documentation is also automatically build and published on a commit (on certain branches, including `main`)on readthedocs: `https://tech-docs.vantage6.ai`. Both Frank and Bart have access to the vantage6 project when logged into readthedocs. Here you can manage which branches are synced, the webhook used to trigger a build, and some other -less important- settings.
+The documentation is also automatically build and published on a commit (on certain branches, including ``main``) on readthedocs: `https://tech-docs.vantage6.ai`. Both Frank and Bart have access to the vantage6 project when logged into readthedocs. Here you can manage which branches are synced, the webhook used to trigger a build, and some other -less important- settings.
+
+The files in the documentation use the rst format, to see the syntax view this cheatsheet: `https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst`.
 
