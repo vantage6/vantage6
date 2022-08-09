@@ -1,12 +1,11 @@
-"""RabbitMQ utilities"""
+"""RabbitMQ utilities."""
 from typing import Dict
 
 from vantage6.common import is_ip_address
 
 
 def split_rabbitmq_uri(rabbit_uri: str) -> Dict:
-    """
-    Get details (user, pass, host, vhost, port) from a RabbitMQ uri
+    """Get details (user, pass, host, vhost, port) from a RabbitMQ uri.
 
     Parameters
     ----------

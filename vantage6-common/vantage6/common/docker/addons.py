@@ -348,12 +348,11 @@ def get_num_nonempty_networks(container: Container) -> int:
         Number of networks in which the container resides in which there are
         also other containers
     """
-    client = docker.from_env()
     count_non_empty_networks = 0
 
     networks = get_networks_of_container(container)
     for network_properties in networks.values():
-        network_obj = client.networks.get(
+        network_obj = docker_client.networks.get(
             network_properties['NetworkID']
         )
         if not network_obj:

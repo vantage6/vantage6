@@ -62,7 +62,7 @@ class NetworkManager(object):
             if len(existing_networks) > 1:
                 self.log.error(
                     f"Found multiple ({len(existing_networks)}) existing "
-                    "networks {self.network_name}. Please delete all or all "
+                    f"networks {self.network_name}. Please delete all or all "
                     "but one before starting the server!")
                 exit(1)
             self.log.info(f"Network {self.network_name} already exists! Using "
