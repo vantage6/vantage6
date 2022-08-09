@@ -107,108 +107,106 @@ class Tasks(TaskBase):
         """List tasks
         ---
         description: >-
-            Returns a list of tasks.\n\n
+          Returns a list of tasks.\n
 
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|Description|\n
-            |--|--|--|--|--|--|\n
-            |Task|Global|View|❌|❌|View any task|\n
-            |Task|Organization|View|✅|✅|View any task in your organization|
-            \n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Task|Global|View|❌|❌|View any task|\n
+          |Task|Organization|View|✅|✅|View any task in your organization|
+          \n
 
-            Accessible for: `user`, `node` and `container`.\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
-
+          Accessible to users.
 
         parameters:
-            - in: query
-              name: initiator_id
-              schema:
-                type: int
-              description: The organization id of the origin of the request
-            - in: query
-              name: collaboration_id
-              schema:
-                type: int
-              description: The collaboration id to which the task belongs
-            - in: query
-              name: image
-              schema:
-                type: str
-              description: >-
-                (Docker) image name which is used in the task. Name to match
-                with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: parent_id
-              schema:
-                type: int
-              description: The id of the parent task
-            - in: query
-              name: run_id
-              schema:
-                type: int
-              description: The run id that belongs to the task
-            - in: query
-              name: name
-              schema:
-                type: str
-              description: >-
-                Name to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: description
-              schema:
+          - in: query
+            name: initiator_id
+            schema:
+              type: int
+            description: The organization id of the origin of the request
+          - in: query
+            name: collaboration_id
+            schema:
+              type: int
+            description: The collaboration id to which the task belongs
+          - in: query
+            name: image
+            schema:
+              type: str
+            description: >-
+              (Docker) image name which is used in the task. Name to match
+              with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: parent_id
+            schema:
+              type: int
+            description: The id of the parent task
+          - in: query
+            name: run_id
+            schema:
+              type: int
+            description: The run id that belongs to the task
+          - in: query
+            name: name
+            schema:
+              type: str
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: description
+            schema:
+              type: string
+            description: >-
+              Description to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: database
+            schema:
+              type: string
+            description: >-
+              Database description to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: result_id
+            schema:
+              type: int
+            description: A result id that belongs to the task
+          - in: query
+            name: include
+            schema:
+              type: array
+              items:
                 type: string
-              description: >-
-                Description to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: database
-              schema:
-                type: string
-              description: >-
-                Database description to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: result_id
-              schema:
-                type: int
-              description: A result id that belongs to the task
-            - in: query
-              name: include
-              schema:
-                type: string
-              description: include 'metadata' to get pagination metadata. Note that this will put the actual data in an envelope.
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+            description: Include 'results' to get task results. Include
+              'metadata' to get pagination metadata. Note that this will
+              put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            404:
-                description: Task not found
-            401:
-                description: Unauthorized or missing permission
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
 
         security:
             - bearerAuth: []
@@ -255,36 +253,32 @@ class Tasks(TaskBase):
     def post(self):
         """Adds new computation task
         ---
-
         description: >-
           Creates a new task within a collaboration. If no `organization_ids`
           are given the task is send to all organizations within the
           collaboration. The endpoint can be accessed by both a `User` and
           `Container`.\n
 
-          ## Accessed as `User`\n
-          When this endpoint is accessed by a `User` a new `run_id` is created.
-          The user needs to be within a organization that is part of the
-          collaboration to which the task is posted.\n\n
-          ## Accessed as `Container`\n
-          When this endpoint is accessed by a `Container` it is considered to
-          be a child-task of the `Container`, and will get the `run_id` from
-          the initial task. This does not have to be the same as the parent
-          task, as it is possible that sub-tasks have sub-tasks themselfs.
-          The container has limited permissions to create tasks, it is only
-          allowed to create tasks in the same collaboration using the same
-          image.\n\n
-          ## Accessed as `Node`\n
-          Nodes do not have permission to create tasks. This will return
-          `401`.\n
-
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Task|Global|Create|❌|❌|Create a new task|\n
-          |Task|Organization|Create|❌|❌|Create a new task for the
-          collaborations in which your organization participates with|
+          |Task|Organization|Create|❌|✅|Create a new task for a specific
+          collaboration in which your organization participates|\n
+
+          ## Accessed as `User`\n
+          This endpoint is accessible to users. A new `run_id` is
+          created when a user creates a task. The user needs to be within an
+          organization that is part of the collaboration to which the task is
+          posted.\n
+
+          ## Accessed as `Container`\n
+          When this endpoint is accessed by an algorithm container, it is
+          considered to be a child-task of the container, and will get the
+          `run_id` from the initial task. Containers have limited permissions
+          to create tasks: they are only allowed to create tasks in the same
+          collaboration using the same image.\n
 
         requestBody:
           content:
@@ -295,10 +289,14 @@ class Tasks(TaskBase):
         responses:
           200:
             description: Ok
-          404:
-            description: Collaboration having `colaboration_id` is not found
+          400:
+            description: Supplied organizations are not in the supplied
+              collaboration, or not all required nodes are registered, or you
+              are not in the collaboration yourself
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
+          404:
+            description: Collaboration with `collaboration_id` not found
 
         security:
           - bearerAuth: []
@@ -492,9 +490,8 @@ class Task(TaskBase):
         """Get task
         ---
         description: >-
-          Returns a list of tasks specified by the id(s). The authorisation has
-          to come from the correct organization otherwise you cannot view
-          specific tasks at the node.\n\n
+          Returns the task specified by the id.
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
@@ -502,13 +499,20 @@ class Task(TaskBase):
           |Task|Global|View|❌|❌|View any task|\n
           |Task|Organization|View|✅|✅|View any task in your organization|
 
+          Accessible to users.
+
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: task id
+            description: Task id
             required: true
+          - in: query
+            name: include
+            schema:
+              type: string
+            description: Include 'results' to include the task's results.
 
         responses:
           200:
@@ -516,7 +520,7 @@ class Task(TaskBase):
           404:
             description: Task not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -548,21 +552,24 @@ class Task(TaskBase):
         """Remove task
         ---
         description: >-
-          Remove tasks and their results entirely from the database.\n\n
+          Remove tasks and their results.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Task|Global|Delete|❌|❌|Delete a task|\n
           |Task|Organization|Delete|❌|❌|Delete a task from a collaboration
-          in which your organization participates|
+          in which your organization participates|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: task id
+            description: Task id
             required: true
 
         responses:
@@ -571,7 +578,7 @@ class Task(TaskBase):
           404:
             description: Task not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -615,51 +622,49 @@ class TaskResult(ServicesResources):
         """Return the results for a specific task
         ---
         description: >-
-            Returns the task result specified by the id.\n\n
+          Returns the task's results specified by the task id.\n
 
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|Description|\n
-            |--|--|--|--|--|--|\n
-            |Result|Global|View|❌|❌|View any result|\n
-            |Result|Organization|View|✅|✅|View results for the
-            collaborations in which your organization participates with|\n\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Result|Global|View|❌|❌|View any result|\n
+          |Result|Organization|View|✅|✅|View results for the
+          collaborations in which your organization participates with|\n
 
-            Accessible for: `user` and `container`.\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+          Accessible to users.
 
         parameters:
-            - in: path
-              name: id
-              schema:
-                type: integer
-              description: task id
-              required: true
-            - in: query
-              name: include
-              schema:
-                type: string
-              description: include 'metadata' to get pagination metadata. Note that this will put the actual data in an envelope.
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Task id
+            required: true
+          - in: query
+            name: include
+            schema:
+              type: string
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            404:
-                description: Task not found
-            401:
-                description: Unauthorized or missing permission
+          200:
+            description: Ok
+          404:
+            description: Task not found
+          401:
+            description: Unauthorized
 
         security:
             - bearerAuth: []

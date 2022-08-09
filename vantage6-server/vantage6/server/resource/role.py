@@ -55,7 +55,7 @@ def setup(api, api_base, services):
         RoleRules,
         path + '/<int:id>/rule/<int:rule_id>',
         endpoint='role_rule_with_id',
-        methods=('GET', 'DELETE', 'POST'),
+        methods=('DELETE', 'POST'),
         resource_class_kwargs=services
     )
 
@@ -107,20 +107,17 @@ class Roles(RoleBase):
         description: >-
             Returns a list of roles. Depending on your permission, you get all
             the roles at the server or only the roles that belong to your
-            organization.\n\n
+            organization.\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container||\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
             |Role|Global|View|❌|❌|View all roles|\n
             |Role|Organization|View|❌|❌|View roles that are part of your
-            organization|\n\n
+            organization|\n
 
-            Accesible for: `user`.\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+            Accesible to users.
 
         parameters:
             - in: query
@@ -144,34 +141,42 @@ class Roles(RoleBase):
             - in: query
               name: organization_id
               schema:
-                type: integer
-              description: organization id
+                type: array
+                items:
+                  type: integer
+                  description: Organization id of which you want to get roles
             - in: query
               name: rule_id
               schema:
                 type: integer
-              description: rule that is part of a role
+              description: Rule that is part of a role
             - in: query
               name: include_root
               schema:
                  type: boolean
-              description: whether or not to include root role
+              description: Whether or not to include root role
+            - in: query
+              name: include
+              schema:
+                type: string (can be multiple)
+              description: Include 'metadata' to get pagination metadata. Note
+                that this will put the actual data in an envelope.
             - in: query
               name: page
               schema:
                 type: integer
-              description: page number for pagination
+              description: Page number for pagination
             - in: query
               name: per_page
               schema:
                 type: integer
-              description: number of items per page
+              description: Number of items per page
 
         responses:
             200:
                 description: Ok
             401:
-                description: Unauthorized or missing permissions
+                description: Unauthorized
 
         security:
             - bearerAuth: []
@@ -230,15 +235,18 @@ class Roles(RoleBase):
         """Creates a new role.
         ---
         description: >-
-          You can only assign rules that you own. You need permission to create
-          roles, and you can only assign roles to other organizations if you
-          have gobal permission.\n\n
+          Create a new role. You can only assign rules that you own. You need
+          permission to create roles, and you can only assign roles to other
+          organizations if you have gobal permission.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Create|❌|❌|Create a role for any organization|\n
-          |Role|Organization|Create|❌|❌|Create a role for your organization|
+          |Role|Organization|Create|❌|❌|Create a role for your organization|\n
+
+          Accessible to users.
 
         requestBody:
           content:
@@ -247,19 +255,20 @@ class Roles(RoleBase):
                 properties:
                   name:
                     type: string
-                    description: human readable name for collaboration
+                    description: Human readable name for collaboration
                   description:
                     type: string
-                    description:
+                    description: Human readable description of the role
                   rules:
-                    type: integer
-                    description:
-                  organization_id:
-                    type: integer
+                    type: array
                     items:
                       type: integer
-                    description: list of organization ids which form the
-                      collaboration
+                      description: Rule id's to assign to role
+                  organization_id:
+                    type: integer
+                    description: Organization to which role is added. If you
+                      are root user and want to create a role that will be
+                      available to all organizations, leave this empty.
 
         responses:
           201:
@@ -267,7 +276,7 @@ class Roles(RoleBase):
           404:
             description: Organization or rule was not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -331,15 +340,17 @@ class Role(RoleBase):
         """Get roles
         ---
         description: >-
-          Depending on permission, you can view nothing, your organization or
-          all the available roles at the server.\n\n
+          Get role based on role identifier.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|View|❌|❌|View all roles|\n
           |Role|Organization|View|❌|❌|View roles that are part of your
-          organization|
+          organization|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
@@ -347,14 +358,14 @@ class Role(RoleBase):
             schema:
               type: integer
               minimum: 1
-            description: role_id
+            description: Role id
             required: true
 
         responses:
           200:
             description: Ok
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -377,14 +388,16 @@ class Role(RoleBase):
         """Update role
         ---
         description: >-
-          Updates roles within an organization if the user has permission to do
-          so.\n\n
+          Updates roles if the user has permission to do so.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Edit|❌|❌|Update any role|\n
-          |Role|Organization|Edit|❌|❌|Update a role from your organization|
+          |Role|Organization|Edit|❌|❌|Update a role from your organization|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
@@ -399,13 +412,26 @@ class Role(RoleBase):
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                properties:
+                  name:
+                    type: string
+                    description: Human readable name for collaboration
+                  description:
+                    type: string
+                    description: Human readable description of the role
+                  rules:
+                    type: array
+                    items:
+                      type: integer
+                      description: Rule id's to assign to role
 
         responses:
           200:
             description: Ok
           401:
             description: Unauthorized
+          404:
+            description: Role id or rule id not found
 
         security:
           - bearerAuth: []
@@ -454,14 +480,17 @@ class Role(RoleBase):
         """Delete role
         ---
         description: >-
-          Delete role from an organization only if the user belongs to the
-          organization for which the role belongs to.\n\n
+          Delete role from an organization if user is allowed to delete the
+          role.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Delete|❌|❌|Delete any role|\n
-          |Role|Organization|Delete|❌|❌|Delete a role your organization|
+          |Role|Organization|Delete|❌|❌|Delete a role in your organization|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
@@ -469,14 +498,16 @@ class Role(RoleBase):
             schema:
               type: integer
               minimum: 1
-            description: Role_id
+            description: Role id
             required: true
 
         responses:
           200:
-            description: Ok, role was deleted
+            description: Ok
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
+          404:
+            description: Role id not found
 
         security:
           - bearerAuth: []
@@ -508,20 +539,17 @@ class RoleRules(RoleBase):
         """Returns the rules for a specific role
         ---
         description: >-
-            View the rules that belong to a specific role.\n\n
+            View the rules that belong to a specific role.\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
-            |Role|Global|View|❌|❌|View any role rule|\n
-            |Role|Organization|View|❌|❌|View all role rules in your
-            organization|\n\n
+            |Role|Global|View|❌|❌|View a role's rules|\n
+            |Role|Organization|View|❌|❌|View a role's rules for roles in
+            your organization|\n
 
-            Accessible for: `user`\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+            Accessible to users.
 
         parameters:
             - in: path
@@ -532,15 +560,21 @@ class RoleRules(RoleBase):
               description: Role id
               required: true
             - in: query
+              name: include
+              schema:
+                type: string (can be multiple)
+              description: Include 'metadata' to get pagination metadata. Note
+                that this will put the actual data in an envelope.
+            - in: query
               name: page
               schema:
                 type: integer
-              description: page number for pagination
+              description: Page number for pagination
             - in: query
               name: per_page
               schema:
                 type: integer
-              description: number of items per page
+              description: Number of items per page
 
         responses:
             200:
@@ -548,7 +582,7 @@ class RoleRules(RoleBase):
             404:
                 description: Node with specified id is not found
             401:
-                description: Unauthorized or missing permission
+                description: Unauthorized
 
         security:
             - bearerAuth: []
@@ -579,39 +613,39 @@ class RoleRules(RoleBase):
         """Add a rule to a role.
         ---
         description: >-
-          Adds a rule to a role given that the role exists already and that the
-          user has the permission to do so.\n\n
+          Add a rule to a role given that the role exists already and that the
+          user has the permission to do so.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Edit|❌|❌|Edit any role|\n
-          |Role|Organization|Edit|❌|❌|Edit any role in your organization|
+          |Role|Organization|Edit|❌|❌|Edit any role in your organization|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: collaboration id
+            description: Role id
             required: tr
-
-        requestBody:
-          content:
-            application/json:
-              schema:
-                properties:
-                  id:
-                    type: integer
-                    description: node id which should be added
+          - in: path
+            name: rule_id
+            schema:
+              type: integer
+            description: Rule id to add to role
+            required: tr
 
         responses:
           201:
-            description: Added rule to node
+            description: Added rule to role
           404:
-            description: Collaboration or node not found
+            description: Rule or role not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -651,35 +685,38 @@ class RoleRules(RoleBase):
         ---
         description: >-
           Removes a rule from a role given the user has permission and the rule
-          id exists.\n\n
+          id exists.\n
+
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Delete|❌|❌|Delete any role rule|\n
           |Role|Organization|Delete|❌|❌|Delete any role rule in your
-          organization|
+          organization|\n
+
+          Accessible to users.
 
         parameters:
           - in: path
             name: id
             schema:
               type: integer
-            description: role id within the organization
+            description: Role id
           - in: path
             name: rule_id
             schema:
               type: integer
-            description: rule id
+            description: Rule id to delete from the role
             required: true
 
         responses:
           200:
             description: Ok
           404:
-            description: Collaboration or node not found
+            description: Role or rule id not found
           401:
-            description: Unauthorized or missing permission
+            description: Unauthorized
 
         tags: ["Role"]
         """

@@ -74,8 +74,7 @@ class UserToken(ServicesResources):
         """Login user
         ---
         description: >-
-          Allows for user sign-in, by supplying a username and password in the
-          body.
+          Allow user to sign in by supplying a username and password.
 
         requestBody:
           content:
@@ -87,8 +86,8 @@ class UserToken(ServicesResources):
           200:
             description: Ok, authenticated
           400:
-            description: No or wrong body specified, or username/password
-              combination unknown
+            description: Username/password combination unknown, or missing from
+              request body.
 
         tags: ["Authentication"]
         """
@@ -152,10 +151,9 @@ class NodeToken(ServicesResources):
         """Login node
         ---
         description: >-
-          Allows for node sign-in using a unique api-key. If the login is
+          Allows node to sign in using a unique API key. If the login is
           successful this returns a dictionairy with access and refresh tokens
-          for the node as well as a node_url and a refresh_url.\n\n
-          It also returns a jwt-token so that the user can login again.
+          for the node as well as a node_url and a refresh_url.
 
         requestBody:
           content:
@@ -167,7 +165,7 @@ class NodeToken(ServicesResources):
           200:
             description: Ok, authenticated
           400:
-            description: No or wrong JSON-body, or invalid api-key provided
+            description: No API key provided in request body.
 
         tags: ["Authentication"]
         """
@@ -208,11 +206,12 @@ class ContainerToken(ServicesResources):
 
     @with_node
     def post(self):
-        """Container login
+        """Algorithm container login
         ---
         description: >-
-          Allows for token-generation for a specific task, image and
-          collaboration.
+          Generate token for the algorithm container of a specific task.\n
+
+          Not available to users; only for authenticated nodes.
 
         requestBody:
           content:
@@ -290,7 +289,11 @@ class RefreshToken(ServicesResources):
     def post(self):
         """Refresh token
         ---
-        description: Refresh access token if the previous one is expired.
+        description: >-
+          Refresh access token if the previous one is expired.\n
+
+          Your refresh token must be present in the request headers to use
+          this endpoint.
 
         responses:
           200:

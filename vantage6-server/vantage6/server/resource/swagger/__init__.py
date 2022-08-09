@@ -11,14 +11,44 @@ swagger_template = {
         "schemas": {
             "Task": {
                 "properties": {
-                    "image": {"type": "string"},
-                    "description": {"type": "string"},
-                    "input": {"type": "string"},
-                    "name": {"type": "string"},
-                    "collaboration_id": {"type": "integer"},
-                    "organization_ids": {
+                    "image": {
+                        "type": "string",
+                        "description": "Name of the algorithm's Docker image"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Human-readable task description"
+                    },
+                    "input": {
+                        "type": "string",
+                        "description": "Task input"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable task name"
+                    },
+                    "collaboration_id": {
+                        "type": "integer",
+                        "description": "Collaboration id"
+                    },
+                    "organizations": {
                         "type": "array",
-                        "items": {"type": "integer"}
+                        "items": {"type": "integer"},
+                        "description": (
+                            "Organization ids in collaboration to create task "
+                            "for"
+                        )
+                    },
+                    "database": {
+                        "type": "string",
+                        "description": "Database to use for this task"
+                    },
+                    "master": {
+                        "type": "boolean",
+                        "description": (
+                            "Whether or not this is a master task. Default "
+                            "value is False"
+                        )
                     }
                 },
                 "example": {
@@ -81,7 +111,7 @@ swagger_template = {
             },
             "Node": {
                 "example": {
-                    "api_key": "unique-string"
+                    "api_key": "unique-uuid-string"
                 },
                 "properties": {
                     "api_key": {
