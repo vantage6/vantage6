@@ -532,31 +532,31 @@ class TestResources(unittest.TestCase):
         headers = self.login(user.username)
 
         # test if fails when not providing correct data
-        result = self.app.post("/api/recover/change", headers=headers, json={
+        result = self.app.post("/api/password/change", headers=headers, json={
             "current_password": "Password1!"
         })
         self.assertEqual(result.status_code, 400)
-        result = self.app.post("/api/recover/change", headers=headers, json={
+        result = self.app.post("/api/password/change", headers=headers, json={
             "new_password": "a_new_password"
         })
         self.assertEqual(result.status_code, 400)
 
         # test if fails when wrong password is provided
-        result = self.app.post("/api/recover/change", headers=headers, json={
+        result = self.app.post("/api/password/change", headers=headers, json={
             "current_password": "wrong_password1!",
             "new_password": "a_new_password"
         })
         self.assertEqual(result.status_code, 401)
 
         # test if fails when new password is the same
-        result = self.app.post("/api/recover/change", headers=headers, json={
+        result = self.app.post("/api/password/change", headers=headers, json={
             "current_password": "Password1!",
             "new_password": "Password1!"
         })
         self.assertEqual(result.status_code, 400)
 
         # test if it works when used as intended
-        result = self.app.post("/api/recover/change", headers=headers, json={
+        result = self.app.post("/api/password/change", headers=headers, json={
             "current_password": "Password1!",
             "new_password": "A_new_password1"
         })
