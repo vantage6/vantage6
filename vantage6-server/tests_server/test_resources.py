@@ -115,8 +115,6 @@ class TestResources(unittest.TestCase):
             print(tokens)
             return None
 
-        return headers
-
     def create_user(self, organization=None, rules=[]):
 
         if not organization:

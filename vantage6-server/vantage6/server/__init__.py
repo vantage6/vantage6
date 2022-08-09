@@ -11,6 +11,7 @@ import uuid
 import json
 import traceback
 
+from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
 from flask import Flask, make_response, current_app
@@ -237,10 +238,10 @@ class ServerApp:
             It is important to close the db session to avoid having dangling
             sessions.
             """
-            log.warn('Exception occured during request')
-            log.debug(traceback.format_exc())
+            log.exception('Exception occured during request')
             DatabaseSessionManager.clear_session()
-            return {'msg': f'An unexpected error occurred on the server!'}, 500
+            return {'msg': f'An unexpected error occurred on the server!'}, \
+                HTTPStatus.INTERNAL_SERVER_ERROR
 
     def configure_api(self):
         """"Define global API output."""
