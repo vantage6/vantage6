@@ -151,7 +151,9 @@ class RecoverPassword(ServicesResources):
 
 # TODO swagger
 class ChangePassword(ServicesResources):
-    """ Let user to change their password with old password as verification """
+    """
+    Let user to change their password with old password as verification
+    """
 
     @with_user
     def post(self):
@@ -177,7 +179,8 @@ class ChangePassword(ServicesResources):
           200:
             description: Ok
           400:
-            description: Current or new password is missing from JSON body
+            description: Current or new password is missing from JSON body, or
+              they are the same
           401:
             description: Current password is incorrect
 
