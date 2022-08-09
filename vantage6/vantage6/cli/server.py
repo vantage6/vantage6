@@ -15,7 +15,8 @@ from vantage6.common import (info, warning, error, debug as debug_msg,
                              check_config_write_permissions)
 from vantage6.common.docker.addons import (
     pull_if_newer, check_docker_running, remove_container,
-    get_server_config_name, get_container, get_num_nonempty_networks
+    get_server_config_name, get_container, get_num_nonempty_networks,
+    get_network, delete_network
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
@@ -623,6 +624,11 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     config_name = get_server_config_name(container_name, scope)
 
     ctx = getServerContext(config_name, environment, system_folders)
+
+    # delete the server network
+    network_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
+    network = get_network(client, name=network_name)
+    delete_network(network, kill_containers=False)
 
     # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
     # is not in other docker networks with other containers)

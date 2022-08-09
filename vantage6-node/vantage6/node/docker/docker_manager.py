@@ -226,7 +226,7 @@ class DockerManager(DockerBaseManager):
             task.cleanup()
         for service in self.linked_services:
             self.isolated_network_mgr.disconnect(service)
-        self.isolated_network_mgr.delete()
+        self.isolated_network_mgr.delete(kill_containers=True)
 
     def run(self, result_id: int,  image: str, docker_input: bytes,
             tmp_vol_name: str, token: str, database: str

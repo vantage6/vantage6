@@ -4,7 +4,7 @@ import logging
 from typing import List, Union
 from docker.models.containers import Container
 
-from vantage6.common.docker.addons import remove_container
+from vantage6.common.docker.addons import delete_network
 from vantage6.common import logger_name
 
 
@@ -94,19 +94,7 @@ class NetworkManager(object):
         self.log.debug(
             f"Network {self.network_name} already exists. Deleting it.")
         for network in networks:
-            if kill_containers:
-                # delete any containers that were still attached to the network
-                network.reload()
-                for container in network.containers:
-                    self.log.warn(
-                        f"Removing container {container.name} in old network")
-                    remove_container(container, kill=True)
-            # remove the network
-            try:
-                network.remove()
-            except Exception:
-                self.log.warn(
-                    f"Could not delete existing network {self.network_name}")
+            delete_network(network, kill_containers)
 
     def contains(self, container: Container) -> bool:
         """

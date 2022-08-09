@@ -10,6 +10,7 @@ import pathlib
 from dateutil.parser import parse
 from docker.client import DockerClient
 from docker.models.containers import Container
+from docker.models.networks import Network
 from typing import Dict
 
 from vantage6.common import logger_name
@@ -255,14 +256,19 @@ def get_container(docker_client: DockerClient, **filters) -> Container:
     """
     Return container if it exists after searching using kwargs
 
-    Returns
-    -------
-    Container or None
-        Container if it exists, else None
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Python docker client
     **filters:
         These are arguments that will be passed to the client.container.list()
         function. They should yield 0 or 1 containers as result (e.g.
         name='something')
+
+    Returns
+    -------
+    Container or None
+        Container if it exists, else None
     """
     running_containers = docker_client.containers.list(
         all=True, filters=filters
@@ -313,6 +319,55 @@ def remove_container(container: Container, kill=False) -> None:
     except Exception as e:
         log.exception(f"Failed to remove container {container.name}")
         log.debug(e)
+
+
+def get_network(docker_client: DockerClient, **filters) -> Network:
+    """ Return network if it exists after searching using kwargs
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Python docker client
+    **filters:
+        These are arguments that will be passed to the client.network.list()
+        function. They should yield 0 or 1 networks as result (e.g.
+        name='something')
+
+    Returns
+    -------
+    Container or None
+        Container if it exists, else None
+    """
+    networks = docker_client.networks.list(
+        filters=filters
+    )
+    return networks[0] if networks else None
+
+
+def delete_network(network: Network, kill_containers: bool = True) -> None:
+    """ Delete network and optionally its containers
+
+    Parameters
+    ----------
+    network: Network
+        Network to delete
+    kill_containers: bool
+        Whether to kill the containers in the network (otherwise they are
+        merely disconnected)
+    """
+    network.reload()
+    for container in network.containers:
+        log.info(f"Removing container {container.name} in old network")
+        if kill_containers:
+            log.warn(f"Killing container {container.name}")
+            remove_container(container, kill=True)
+        else:
+            network.disconnect(container)
+    # remove the network
+    try:
+        network.remove()
+    except Exception:
+        log.warn(f"Could not delete existing network {network.name}")
 
 
 def get_networks_of_container(container: Container) -> Dict:
