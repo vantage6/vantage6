@@ -151,6 +151,11 @@ class Roles(RoleBase):
                 type: integer
               description: Rule that is part of a role
             - in: query
+              name: user_id
+              schema:
+                type: integer
+              description: get roles for this user id
+            - in: query
               name: include_root
               schema:
                  type: boolean
@@ -197,7 +202,7 @@ class Roles(RoleBase):
                     db.Role.organization_id == None
                 ))
             else:
-                q = q.filter(db.Role.organization_id).in_(org_filters)
+                q = q.filter(db.Role.organization_id.in_(org_filters))
 
         # filter by one or more names or descriptions
         for param in ['name', 'description']:
@@ -211,6 +216,10 @@ class Roles(RoleBase):
         if 'rule_id' in args:
             q = q.join(db.role_rule_association).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
+
+        if 'user_id' in args:
+            q = q.join(db.Permission).join(db.User)\
+                 .filter(db.User.id == args['user_id'])
 
         if not self.r.v_glo.can():
             own_role_ids = [role.id for role in g.user.roles]
@@ -373,6 +382,10 @@ class Role(RoleBase):
         tags: ["Role"]
         """
         role = db.Role.get(id)
+
+        if not role:
+            return {"msg": f"Role with id={id} not found."}, \
+                HTTPStatus.NOT_FOUND
 
         # check permissions. A user can always view their own roles
         if not (self.r.v_glo.can() or role in g.user.roles):

@@ -196,8 +196,15 @@ class Collaborations(CollaborationBase):
 
         # find collaborations containing a specific organization
         if 'organization_id' in args:
-            q = q.join(db.Member).join(db.Organization)\
-                 .filter(db.Organization.id == args['organization_id'])
+            if not self.r.v_glo.can() and \
+                    args['organization_id'] != str(auth_org_id):
+                return {'msg': 'You lack the permission to request '
+                        'collaborations for this organization!'}
+            elif self.r.v_glo.can():
+                q = q.join(db.Member).join(db.Organization)\
+                    .filter(db.Organization.id == args['organization_id'])
+            # else: no filter if user can only view collaborations of own
+            # organization: the arg 'organization_id' is then superfluous
 
         # filter based on permissions
         if not self.r.v_glo.can():
@@ -485,7 +492,7 @@ class Collaboration(CollaborationBase):
                 HTTPStatus.UNAUTHORIZED
 
         collaboration.delete()
-        return {"msg": f"node id={id} successfully deleted"}, \
+        return {"msg": f"Collaboration id={id} successfully deleted"}, \
             HTTPStatus.OK
 
 

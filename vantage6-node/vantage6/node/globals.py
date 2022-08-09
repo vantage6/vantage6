@@ -22,6 +22,10 @@ DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
 #     VERSION = f.read()
 
 
+# constants for retrying node login
+SLEEP_BTWN_NODE_LOGIN_TRIES = 10  # retry every 10s
+TIME_LIMIT_RETRY_CONNECT_NODE = 60 * 60 * 24 * 7  # i.e. 1 week
+
 #
 #    VPN CONFIGURATION RELATED CONSTANTS
 #

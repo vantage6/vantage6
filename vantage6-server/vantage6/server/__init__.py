@@ -24,7 +24,6 @@ from flask_socketio import SocketIO
 
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
-from vantage6.cli.rabbitmq.queue_manager import split_rabbitmq_uri
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource._schema import HATEOASModelSchema
 from vantage6.common import logger_name
@@ -41,6 +40,7 @@ from vantage6.server.resource.swagger_templates import swagger_template
 from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
+from vantage6.server.default_roles import get_default_roles
 
 
 module_name = logger_name(__name__)
@@ -378,9 +378,27 @@ class ServerApp:
             module = importlib.import_module('vantage6.server.resource.' + res)
             module.setup(self.api, self.ctx.config['api_path'], services)
 
+    # TODO consider moving this method elsewhere. This is not trivial at the
+    # moment because of the circular import issue with `db`, see
+    # https://github.com/vantage6/vantage6/issues/53
+    @staticmethod
+    def _add_default_roles():
+        for role in get_default_roles(db):
+            if not db.Role.get_by_name(role['name']):
+                log.warn(f"Creating new default role {role['name']}...")
+                new_role = db.Role(
+                    name=role['name'],
+                    description=role['description'],
+                    rules=role['rules']
+                )
+                new_role.save()
+
     def start(self):
         """Start the server.
         """
+
+        # add default roles (if they don't exist yet)
+        self._add_default_roles()
 
         # create root user if it is not in the DB yet
         try:
@@ -391,12 +409,8 @@ class ServerApp:
             log.debug("Creating organization for root user")
             org = db.Organization(name="root")
 
-            log.warn("Creating root role...")
-            root = db.Role(
-                name="Root",
-                description="Super role"
-            )
-            root.rules = db.Rule.get()
+            # TODO use constant instead of 'Root' literal
+            root = db.Role.get_by_name("Root")
 
             log.warn(f"Creating root user: "
                      f"username={SUPER_USER_INFO['username']}, "

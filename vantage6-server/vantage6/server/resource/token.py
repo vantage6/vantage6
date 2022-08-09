@@ -166,6 +166,8 @@ class NodeToken(ServicesResources):
             description: Ok, authenticated
           400:
             description: No API key provided in request body.
+          401:
+            description: Invalid API key
 
         tags: ["Authentication"]
         """
@@ -187,7 +189,8 @@ class NodeToken(ServicesResources):
 
         if not node:  # login failed
             log.error("Api key is not recognized")
-            return {"msg": "Api key is not recognized!"}
+            return {"msg": "Api key is not recognized!"}, \
+                HTTPStatus.UNAUTHORIZED
 
         token = create_access_token(node)
         ret = {
