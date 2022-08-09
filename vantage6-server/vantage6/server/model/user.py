@@ -6,9 +6,6 @@ from typing import Union
 from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
 from sqlalchemy.orm import relationship, validates
 
-from vantage6.server.globals import (
-    INACTIVATION_PERIOD_MINUTES, MAX_FAILED_LOGIN_ATTEMPTS
-)
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
 
@@ -100,10 +97,18 @@ class User(Authenticatable):
             return bcrypt.checkpw(pw.encode('utf8'), expected_hash)
         return False
 
-    def is_blocked(self):
+    def is_blocked(self, max_failed_attempts: int,
+                   inactivation_in_minutes: int):
         """
         Check if user can login or if they are temporarily blocked because they
         entered a wrong password too often
+
+        Parameters
+        ----------
+        max_failed_attempts: int
+            Maximum number of attempts to login before temporary deactivation
+        inactivation_minutes: int
+            How many minutes an account is deactivated
 
         Returns
         -------
@@ -112,11 +117,11 @@ class User(Authenticatable):
         str | None
             Message if user is blocked, else None
         """
-        td_max_blocked = dt.timedelta(minutes=INACTIVATION_PERIOD_MINUTES)
+        td_max_blocked = dt.timedelta(minutes=inactivation_in_minutes)
         td_last_login = dt.datetime.now() - self.last_login_attempt \
             if self.last_login_attempt else None
         has_max_attempts = (
-            self.failed_login_attempts >= MAX_FAILED_LOGIN_ATTEMPTS
+            self.failed_login_attempts >= max_failed_attempts
             if self.failed_login_attempts else False
         )
         if has_max_attempts and td_last_login < td_max_blocked:

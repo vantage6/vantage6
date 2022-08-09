@@ -37,8 +37,3 @@ SUPER_USER_INFO = {
 # Whenever the refresh tokens should expire. Note that setting this to true
 # would mean that nodes will disconnect after some time
 REFRESH_TOKENS_EXPIRE = False
-
-# Globals for how many authentication attempts a user can have and what the
-# cooldown period is when user is temporarily blocked
-MAX_FAILED_LOGIN_ATTEMPTS = 5
-INACTIVATION_PERIOD_MINUTES = 15

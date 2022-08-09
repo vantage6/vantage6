@@ -20,7 +20,6 @@ from pathlib import Path
 
 from vantage6 import server
 from vantage6.server import db
-from vantage6.server.globals import MAX_FAILED_LOGIN_ATTEMPTS
 from vantage6.server.resource import (
     with_node,
     ServicesResources
@@ -111,14 +110,18 @@ class UserToken(ServicesResources):
         log.info(f"Succesfull login from {username}")
         return ret, HTTPStatus.OK, {'jwt-token': token}
 
-    @staticmethod
-    def user_login(username, password):
+    def user_login(self, username, password):
         """Returns user a message in case of failed login attempt."""
         log.info(f"Trying to login '{username}'")
 
         if db.User.username_exists(username):
             user = db.User.get_by_username(username)
-            is_blocked, time_remaining_msg = user.is_blocked()
+            pw_policy = self.config.get('password_policy', {})
+            max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
+            inactivation_time = pw_policy.get('inactivation_minutes', 15)
+
+            is_blocked, time_remaining_msg = user.is_blocked(
+              max_failed_attempts, inactivation_time)
             if is_blocked:
                 return {"msg": time_remaining_msg}, HTTPStatus.UNAUTHORIZED
             elif user.check_password(password):
@@ -130,7 +133,7 @@ class UserToken(ServicesResources):
                 user.failed_login_attempts = 1 \
                     if (
                         not user.failed_login_attempts or
-                        user.failed_login_attempts >= MAX_FAILED_LOGIN_ATTEMPTS
+                        user.failed_login_attempts >= max_failed_attempts
                     ) else user.failed_login_attempts + 1
                 user.last_login_attempt = dt.datetime.now()
                 user.save()
