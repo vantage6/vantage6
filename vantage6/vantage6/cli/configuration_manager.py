@@ -54,24 +54,6 @@ class NodeConfiguration(Configuration):
     }
 
 
-class TestConfiguration(Configuration):
-
-    VALIDATORS = {
-        # "api_key": And(Use(str), len),
-        # "logging": {
-        #     "level": And(Use(str), lambda l: l in ("DEBUG", "INFO",
-        #                                            "WARNING", "ERROR",
-        #                                            "CRITICAL", "NONE")),
-        #     "file": Use(str),
-        #     "use_console": Use(bool),
-        #     "backup_count": And(Use(int), lambda n: n > 0),
-        #     "max_size": And(Use(int), lambda b: b > 16),
-        #     "format": Use(str),
-        #     "datefmt": Use(str)
-        # }
-    }
-
-
 class NodeConfigurationManager(ConfigurationManager):
 
     def __init__(self, name, *args, **kwargs):
