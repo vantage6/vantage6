@@ -31,7 +31,7 @@ def dispatch_rpc(data, input_data, module, token):
 
         # read JWT token, to log te collaboration id. The
         # ContainerClient automatically sets the collaboration_id
-        claims = jwt.decode(token, verify=False)
+        claims = jwt.decode(token, options={"verify_signature": False})
         id_ = claims["identity"]["collaboration_id"]
         info(f"Working with collaboration_id <{id_}>")
 

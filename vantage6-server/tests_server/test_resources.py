@@ -63,6 +63,7 @@ class TestResources(unittest.TestCase):
             cls.entities = yaml.safe_load(f.read())
         load(cls.entities)
 
+        server.app.testing = True
         cls.app = server.app.test_client()
 
         cls.credentials = {
@@ -108,11 +109,11 @@ class TestResources(unittest.TestCase):
             headers = {
                 'Authorization': 'Bearer {}'.format(tokens['access_token'])
             }
+            return headers
         else:
             print('something wrong, during login:')
             print(tokens)
-
-        return headers
+            return None
 
     def create_user(self, organization=None, rules=[], password="password"):
 
@@ -1138,14 +1139,38 @@ class TestResources(unittest.TestCase):
         })
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test that you CAN change the rules
+        # test that you cannot assign rules if you don't have all the rules
+        # that the other user has
         headers = self.create_user_and_login(rules=[rule, not_owning_rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'rules': [not_owning_rule.id, rule.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test that you CAN change the rules. To do so, a user is generated
+        # that has same rules as current user, but also rule to edit other
+        # users and another one current user does not possess
+        assigning_user_rules = user.rules
+        assigning_user_rules.append(
+            Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT)
+        )
+        assigning_user_rules.append(not_owning_rule)
+        headers = self.create_user_and_login(rules=assigning_user_rules)
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'rules': [not_owning_rule.id, rule.id]
         })
         self.assertEqual(result.status_code, HTTPStatus.OK)
         user_rule_ids = [rule['id'] for rule in result.json['rules']]
         self.assertIn(not_owning_rule.id, user_rule_ids)
+
+        # test that you cannot assign roles if you don't have all the
+        # permissions for that role yourself (even though you have permission
+        # to assign roles)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'roles': [role.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test that you CAN assign roles
         headers = self.create_user_and_login(rules=[rule, not_owning_rule])

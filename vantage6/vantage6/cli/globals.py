@@ -24,6 +24,8 @@ DEFAULT_NODE_ENVIRONMENT = "application"
 #
 PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
 
+# FIXME BvB 22-06-28 think this is also defined in the node globals, and this
+# one appears not to be used
 NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"

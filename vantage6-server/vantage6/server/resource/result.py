@@ -3,8 +3,6 @@ import logging
 
 from flask import g, request
 from http import HTTPStatus
-from flasgger import swag_from
-from pathlib import Path
 from sqlalchemy import desc
 
 from vantage6.common import logger_name
@@ -96,93 +94,91 @@ class Results(ResultBase):
         ---
 
         description: >-
-            Returns a list of all results only if the node, user or container
-            have the proper authorization to do so.\n\n
+            Returns a list of all results you are allowed to see.\n
 
             ### Permission Table\n
-            |Rulename|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
             |Result|Global|View|❌|❌|View any result|\n
             |Result|Organization|View|✅|✅|View the results of your
-            organizations collaborations|\n\n
+            organization's collaborations|\n
 
-            Accesible as: `node` , `user` and `container`.\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+            Accessible to users.
 
         parameters:
             - in: query
               name: task_id
               schema:
                 type: integer
-              description: task id
+              description: Task id
             - in: query
               name: organization_id
               schema:
                 type: integer
-              description: organization id
+              description: Organization id
             - in: query
               name: assigned_from
               schema:
                 type: date (yyyy-mm-dd)
-              description: show only task assigned from this date
+              description: Show only task assigned from this date
             - in: query
               name: started_from
               schema:
                 type: date (yyyy-mm-dd)
-              description: show only task started from this date
+              description: Show only task started from this date
             - in: query
               name: finished_from
               schema:
                 type: date (yyyy-mm-dd)
-              description: show only task finished from this date
+              description: Show only task finished from this date
             - in: query
               name: assigned_till
               schema:
                 type: date (yyyy-mm-dd)
-              description: show only task assigned till this date
+              description: Show only task assigned till this date
             - in: query
               name: started_till
               schema:
                 type: date (yyyy-mm-dd)
-              description: show only task started till this date
+              description: Show only task started till this date
             - in: query
               name: finished_till
               schema:
                 type: date (yyyy-mm-dd)
-              description: show only task finished till this date
+              description: Show only task finished till this date
             - in: query
               name: state
               schema:
                 type: string
-              description: the state of the task ('open')
+              description: The state of the task ('open')
             - in: query
               name: node_id
               schema:
                 type: integer
-              description: node id
+              description: Node id
             - in: query
               name: port
               schema:
                 type: integer
-              description: port number
+              description: Port number
             - in: query
               name: include
               schema:
                 type: string (can be multiple)
-              description: what to include ('task', 'metadata')
+              description: Include 'task' to include task data. Include
+                'metadata' to get pagination metadata. Note that this will put
+                the actual data in an envelope.
             - in: query
               name: page
               schema:
                 type: integer
-              description: page number for pagination
+              description: Page number for pagination
             - in: query
               name: per_page
               schema:
                 type: integer
-              description: number of items per page
+              description: Number of items per page
 
         responses:
             200:
@@ -252,16 +248,17 @@ class Result(ResultBase):
         ---
 
         description: >-
-            Returns a result from a task specified by an id. \n\n
+            Returns a result from a task specified by an id. \n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
             |Result|Global|View|❌|❌|View any result|\n
             |Result|Organization|View|✅|✅|View the results of your
             organizations collaborations|\n
 
-            Accessable as: `node`, `user` and `container`.
+            Accessible to users.
 
         parameters:
           - in: path
@@ -269,7 +266,7 @@ class Result(ResultBase):
             schema:
               type: integer
             minimum: 1
-            description: unique task identifier
+            description: Task id
             required: true
           - in: query
             name: include
@@ -281,9 +278,9 @@ class Result(ResultBase):
           200:
               description: Ok
           401:
-              description: Unauthorized or missing permission
+              description: Unauthorized
           404:
-              description: result id not found
+              description: Result id not found
 
         security:
           - bearerAuth: []
@@ -309,10 +306,58 @@ class Result(ResultBase):
         return s.dump(result, many=False).data, HTTPStatus.OK
 
     @with_node
-    @swag_from(str(Path(r"swagger/patch_result_with_id.yaml")),
-               endpoint="result_with_id")
     def patch(self, id):
-        """Update a Result."""
+        """Update results
+        ---
+        description: >-
+          Update results from the node. Only done if the request comes from the
+          correct, authenticated node.\n
+
+          The user cannot access this endpoint so they cannot tamper with any
+          results.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+              minimum: 1
+            description: Task id
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  started_at:
+                    type: string
+                    description: Time at which task was started
+                  finished_at:
+                    type: string
+                    description: Time at which task was completed
+                  result:
+                    type: string
+                    description: (Encrypted) result of the task
+                  log:
+                    type: string
+                    description: Task log messages
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Results already posted
+          401:
+            description: Unauthorized
+          404:
+            description: Result id not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Result"]
+        """
         result = db_Result.get(id)
         if not result:
             return {'msg': f'Result id={id} not found!'}, HTTPStatus.NOT_FOUND

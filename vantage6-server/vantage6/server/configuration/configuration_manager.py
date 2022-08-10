@@ -9,6 +9,8 @@ from vantage6.common.configuration_manager import (
 )
 
 
+# FIXME BvB 2022-08-10: this code is duplication of vantage6/cli/config_manager
+# Remove in one of both places
 class ServerConfiguration(Configuration):
 
     VALIDATORS = {

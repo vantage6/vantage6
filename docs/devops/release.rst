@@ -34,8 +34,17 @@ If you specify a tag with a version that already exists, the build pipeline will
 
 Distribute release
 ------------------
-Nodes and servers that already exist will be automatically upgraded to the latest version of their major release when they are restarted. This happens by pulling the newly released docker image. Note that the major release is never automatically updated: for example, a node running version 2.1.0 will update to 2.1.1, but never to 3.0.0.
-Depending on the version of Vantage6 that is being used, there is a reserved Docker image tag. These are the following:
+Nodes and servers that already exist will be automatically upgraded to the latest version of their major release when they are restarted. This happens by pulling the newly released docker image. Note that the major release is never automatically updated: for example, a node running version 2.1.0 will update to 2.1.1, but never to 3.0.0. Depending on the version of Vantage6 that is being used, there is a reserved Docker image tag for distributing the upgrades. These are the following:
+
++---------------+--------------------+
+| Tag           | Description        |
++===============+====================+
+| petronas      | 3.x.x release      |
++---------------+--------------------+
+| harukas       | 2.x.x release      |
++---------------+--------------------+
+| troltunga     | 1.x.x release      |
++---------------+--------------------+
 
 | Docker images can be pulled manually with e.g.
 | ``docker pull harbor2.vantage6.ai/infrastructure/server:petronas``

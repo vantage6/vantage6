@@ -10,6 +10,8 @@ import pathlib
 from dateutil.parser import parse
 from docker.client import DockerClient
 from docker.models.containers import Container
+from docker.models.networks import Network
+from typing import Dict
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
@@ -21,7 +23,7 @@ docker_client = docker.from_env()
 
 
 class ContainerKillListener:
-    """ Listen for signals that the docker container should be shut down """
+    """Listen for signals that the docker container should be shut down """
     kill_now = False
 
     def __init__(self):
@@ -33,7 +35,7 @@ class ContainerKillListener:
 
 
 def check_docker_running():
-    """ Return True if docker engine is running"""
+    """Return True if docker engine is running"""
     try:
         docker_client.ping()
     except Exception as e:
@@ -254,14 +256,19 @@ def get_container(docker_client: DockerClient, **filters) -> Container:
     """
     Return container if it exists after searching using kwargs
 
-    Returns
-    -------
-    Container or None
-        Container if it exists, else None
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Python docker client
     **filters:
         These are arguments that will be passed to the client.container.list()
         function. They should yield 0 or 1 containers as result (e.g.
         name='something')
+
+    Returns
+    -------
+    Container or None
+        Container if it exists, else None
     """
     running_containers = docker_client.containers.list(
         all=True, filters=filters
@@ -310,8 +317,108 @@ def remove_container(container: Container, kill=False) -> None:
     try:
         container.remove()
     except Exception as e:
-        log.error(f"Failed to remove container {container.name}")
+        log.exception(f"Failed to remove container {container.name}")
         log.debug(e)
+
+
+def get_network(docker_client: DockerClient, **filters) -> Network:
+    """ Return network if it exists after searching using kwargs
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Python docker client
+    **filters:
+        These are arguments that will be passed to the client.network.list()
+        function. They should yield 0 or 1 networks as result (e.g.
+        name='something')
+
+    Returns
+    -------
+    Container or None
+        Container if it exists, else None
+    """
+    networks = docker_client.networks.list(
+        filters=filters
+    )
+    return networks[0] if networks else None
+
+
+def delete_network(network: Network, kill_containers: bool = True) -> None:
+    """ Delete network and optionally its containers
+
+    Parameters
+    ----------
+    network: Network
+        Network to delete
+    kill_containers: bool
+        Whether to kill the containers in the network (otherwise they are
+        merely disconnected)
+    """
+    if not network:
+        log.warn("Network not defined! Not removing anything, continuing...")
+        return
+    network.reload()
+    for container in network.containers:
+        log.info(f"Removing container {container.name} in old network")
+        if kill_containers:
+            log.warn(f"Killing container {container.name}")
+            remove_container(container, kill=True)
+        else:
+            network.disconnect(container)
+    # remove the network
+    try:
+        network.remove()
+    except Exception:
+        log.warn(f"Could not delete existing network {network.name}")
+
+
+def get_networks_of_container(container: Container) -> Dict:
+    """
+    Get list of networks the container is in
+
+    Parameters
+    ----------
+    container: Container
+        The container in which we are interested
+
+    Returns
+    -------
+    dict
+        Describes container's networks and their properties
+    """
+    container.reload()
+    return container.attrs['NetworkSettings']['Networks']
+
+
+def get_num_nonempty_networks(container: Container) -> int:
+    """
+    Get number of networks the container is in where it is not the only one
+
+    Parameters
+    ----------
+    container: Container
+        The container in which we are interested
+
+    Returns
+    -------
+    int
+        Number of networks in which the container resides in which there are
+        also other containers
+    """
+    count_non_empty_networks = 0
+
+    networks = get_networks_of_container(container)
+    for network_properties in networks.values():
+        network_obj = docker_client.networks.get(
+            network_properties['NetworkID']
+        )
+        if not network_obj:
+            continue
+        containers = network_obj.attrs['Containers']
+        if len(containers) > 1:
+            count_non_empty_networks += 1
+    return count_non_empty_networks
 
 
 def get_server_config_name(container_name: str, scope: str):

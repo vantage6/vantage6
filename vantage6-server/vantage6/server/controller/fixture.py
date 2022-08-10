@@ -7,6 +7,26 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
+# TODO maybe move this function to a more general location (utils?)
+def _is_valid_uuid(uuid_to_test):
+    """
+    Check if uuid_to_test is a valid UUID.
+
+     Parameters
+    ----------
+    uuid_to_test : str
+
+     Returns
+    -------
+    `True` if uuid_to_test is a valid UUID, otherwise `False`.
+    """
+    try:
+        uuid_obj = uuid.UUID(uuid_to_test)
+    except ValueError:
+        return False
+    return str(uuid_obj) == uuid_to_test
+
+
 def load(fixtures, drop_all=False):
     # TODO we are not sure the DB is connected here....
 
@@ -44,13 +64,22 @@ def load(fixtures, drop_all=False):
         # append organizations to the collaboration
 
         for participant in col.get("participants", {}):
+            if not isinstance(participant, dict) \
+                    or not participant.get('name') \
+                    or not participant.get('api_key'):
+                log.error("Collaboration participants should contain the "
+                          "fields 'name' and 'api_key'. This is not the case "
+                          f"for participant {participant} in collaboration "
+                          f"{collaboration.name}")
+                exit(1)
 
-            if isinstance(participant, str):
-                org_name = participant
-                node_api_key = str(uuid.uuid1())
-            else:  # == isinstance(participant, dict):
-                org_name = participant.get("name")
-                node_api_key = participant.get("api-key", str(uuid.uuid1()))
+            org_name = participant.get("name")
+            node_api_key = participant.get("api_key")
+
+            # check if api key is valid uuid
+            if not _is_valid_uuid(node_api_key):
+                log.error(f"API key '{node_api_key}' is not a valid UUID!")
+                exit(1)
 
             organization = db.Organization.get_by_name(org_name)
             collaboration.organizations.append(organization)
