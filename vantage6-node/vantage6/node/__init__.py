@@ -1,18 +1,28 @@
-""" Node
-
+"""
 A node in its simplest would retrieve a task from the central server by
 an API call, run this task and finally return the results to the central
 server again.
 
-The node application is seperated in 4 threads:
-- main thread, waits for new tasks to be added to the queue and
-    run the tasks
-- listening thread, listens for incommin websocket messages. Which
-    are handled by NodeTaskNamespace.
-- speaking thread, waits for results from docker to return and posts
-    them at the central server
-- proxy server thread, provides an interface for master containers
-    to post tasks and retrieve results
+The node application is runs 4 (Python-)threads:
+
+*Main thread*
+    Waits for new tasks to be added to the queue and run the tasks
+*Listening thread*
+    Listens for incommin websocket messages. Which are handled by
+    NodeTaskNamespace.
+*Speaking thread*
+    Waits for results from docker to return and posts them at the central
+    server
+*Proxy server thread*
+    Algorithm containers are isolated from the internet because of obvious
+    security reasons. The local-proxy-server provides an interface for
+    *master* containers to post tasks and retrieve their results.
+
+The node connects to the server using a websocket connection. This connection
+is mainly used for sharing status updates. This avoids the need for polling to
+see if there are new tasks available.
+
+-------------------------------------------------------------------------------
 """
 import sys
 import os

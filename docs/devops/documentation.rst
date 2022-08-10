@@ -16,9 +16,16 @@ Technical documentation
 -----------------------
 The source of the technical documentation you are currently reading is located in the *vantage6* repository itself if the ``docs`` folder.
 
-To build the documentation locally you can use the Makefile located in the docs folder. The command ``make html`` will generate these pages in HTML.
+To build the documentation locally you can use the Makefile located in the docs folder. The command ``make html`` will generate these pages in HTML. To automatically build when you make a change you can use `sphinx-autobuild <https://pypi.org/project/sphinx-autobuild/>`_, assuming you are in the main directory:
+
+::
+
+    pip install sphinx-autobuild
+    sphinx-autobuild docs docs/_build/html --watch .
+
+Then you can access the documentation on ``http://127.0.0.1:8000``. The ``--watch`` option makes sure that if you make changes to the docstrings the documentation is also reloaded.
 
 The documentation is also automatically build and published on a commit (on certain branches, including ``main``) on readthedocs: `https://tech-docs.vantage6.ai`. Both Frank and Bart have access to the vantage6 project when logged into readthedocs. Here you can manage which branches are synced, the webhook used to trigger a build, and some other -less important- settings.
 
-The files in the documentation use the rst format, to see the syntax view this cheatsheet: `https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst`.
+The files in the documentation use the rst format, to see the syntax view `this cheatsheet <https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst>`_.
 

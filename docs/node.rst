@@ -1,8 +1,6 @@
 Node
 ====
 
-base
-----
 .. automodule:: vantage6.node
    :members:
 
