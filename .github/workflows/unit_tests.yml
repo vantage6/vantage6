@@ -6,7 +6,7 @@ name: Unit tests
 on: [pull_request]
 
 jobs:
-  build:
+  unittest:
 
     runs-on: ubuntu-latest
 
