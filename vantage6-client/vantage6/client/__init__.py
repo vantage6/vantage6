@@ -658,9 +658,7 @@ class UserClient(ClientBase):
 
         def change_my_password(self, current_password: str,
                                new_password: str) -> dict:
-            """Start reset password procedure
-
-            Either a username of email needs to be provided.
+            """Change your own password by providing your current password
 
             Parameters
             ----------
