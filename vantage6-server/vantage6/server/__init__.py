@@ -11,6 +11,7 @@ import uuid
 import json
 import traceback
 
+from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
 from flask import Flask, make_response, current_app
@@ -219,28 +220,28 @@ class ServerApp:
             return response
 
         @self.app.errorhandler(HTTPException)
-        def error_remove_db_session(error):
+        def error_remove_db_session(error: HTTPException):
             """In case an HTTP-exception occurs during the request.
 
             It is important to close the db session to avoid having dangling
             sessions.
             """
-            log.warn('Error occured during request')
+            log.warn('HTTP Exception occured during request')
             log.debug(traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
 
         @self.app.errorhandler(Exception)
         def error2_remove_db_session(error):
-            """In case an HTTP-exception occurs during the request.
+            """In case an exception occurs during the request.
 
             It is important to close the db session to avoid having dangling
             sessions.
             """
-            log.warn('Error occured during request')
-            log.debug(traceback.format_exc())
+            log.exception('Exception occured during request')
             DatabaseSessionManager.clear_session()
-            return {'msg': f'An unexpected error occurred on the server!'}, 500
+            return {'msg': f'An unexpected error occurred on the server!'}, \
+                HTTPStatus.INTERNAL_SERVER_ERROR
 
     def configure_api(self):
         """"Define global API output."""
@@ -265,8 +266,8 @@ class ServerApp:
     def configure_jwt(self):
         """Load user and its claims."""
 
-        @self.jwt.user_claims_loader
-        def user_claims_loader(identity):
+        @self.jwt.additional_claims_loader
+        def additional_claims_loader(identity):
             roles = []
             if isinstance(identity, db.User):
                 type_ = 'user'
@@ -298,9 +299,11 @@ class ServerApp:
             log.error(f"Could not create a JSON serializable identity \
                         from '{str(identity)}'")
 
-        @self.jwt.user_loader_callback_loader
-        def user_loader_callback(identity):
+        @self.jwt.user_lookup_loader
+        def user_lookup_loader(jwt_payload, jwt_headers):
+            identity = jwt_headers['sub']
             auth_identity = Identity(identity)
+
             # in case of a user or node an auth id is shared as identity
             if isinstance(identity, int):
 
