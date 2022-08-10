@@ -450,6 +450,7 @@ class User(UserBase):
 
     @with_user
     def patch(self, id):
+
         """Update user
         ---
         description: >-
@@ -537,10 +538,18 @@ class User(UserBase):
         parser.add_argument("username", type=str, required=False)
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
-        parser.add_argument("password", type=str, required=False)
         parser.add_argument("email", type=str, required=False)
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
+
+        # check if user defined a password, which is deprecated
+        # FIXME BvB 22-06-29: with time, this check may be removed. Now it is
+        # here for backwards compatibility (if people have scripts using this,
+        # this makes them aware something changed)
+        request_json = request.get_json()
+        if request_json.get("password"):
+            return {"msg": "You cannot change your password here!"}, \
+                HTTPStatus.BAD_REQUEST
 
         if data["username"]:
             if (user.username != data["username"] and
@@ -553,8 +562,6 @@ class User(UserBase):
             user.firstname = data["firstname"]
         if data["lastname"]:
             user.lastname = data["lastname"]
-        if data["password"]:
-            user.password = data["password"]
         if data["email"]:
             if (user.email != data["email"] and
                     db.User.exists("email", data["email"])):

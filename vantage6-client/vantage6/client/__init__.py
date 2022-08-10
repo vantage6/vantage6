@@ -656,6 +656,32 @@ class UserClient(ClientBase):
             """
             return self.parent.request('health')
 
+        def change_my_password(self, current_password: str,
+                               new_password: str) -> dict:
+            """Change your own password by providing your current password
+
+            Parameters
+            ----------
+            current_password : str
+                Your current password
+            new_password : str
+                Your new password
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            result = self.parent.request(
+                'recover/change', method='post', json={
+                    'current_password': current_password,
+                    'new_password': new_password
+                }
+            )
+            msg = result.get('msg')
+            self.parent.log.info(f'--> {msg}')
+            return result
+
         def reset_my_password(self, email: str = None,
                               username: str = None) -> dict:
             """Start reset password procedure
@@ -1211,9 +1237,9 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def update(self, id_: int = None, firstname: str = None,
-                   lastname: str = None, password: str = None,
-                   organization: int = None, rules: list = None,
-                   roles: list = None, email: str = None) -> dict:
+                   lastname: str = None, organization: int = None,
+                   rules: list = None, roles: list = None, email: str = None
+                   ) -> dict:
             """Update user details
 
             In case you do not supply a user_id, your user is being
@@ -1227,8 +1253,6 @@ class UserClient(ClientBase):
                 Your first name
             lastname : str
                 Your last name
-            password : str
-                The password you use to login
             organization : int
                 Organization id of the organization you want to be part
                 of. This can only done by super-users.
@@ -1252,7 +1276,6 @@ class UserClient(ClientBase):
             json_body = {
                 "firstname": firstname,
                 "lastname": lastname,
-                "password": password,
                 "organization_id": organization,
                 "rules": rules,
                 "roles": roles,

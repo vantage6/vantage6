@@ -42,6 +42,14 @@ def setup(api, api_base, services):
     )
 
     api.add_resource(
+        ChangePassword,
+        api_base+'/password/change',
+        endpoint='change_password',
+        methods=('PATCH',),
+        resource_class_kwargs=services
+    )
+
+    api.add_resource(
         ResetAPIKey,
         path+'/node',
         endpoint="reset_api_key",
@@ -100,9 +108,15 @@ class ResetPassword(ServicesResources):
         log.debug(user_id)
         user = db.User.get(user_id)
 
-        # set password
-        user.set_password(password)
+        # reset number of failed login attempts to prevent that user cannot
+        # reactivate via email
+        user.failed_login_attempts = 0
         user.save()
+
+        # set password
+        msg = user.set_password(password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
         log.info(f"Successfull password reset for '{user.username}'")
         return {"msg": "The password has successfully been reset!"}, \
@@ -182,6 +196,77 @@ class RecoverPassword(ServicesResources):
         )
 
         return ret
+
+
+class ChangePassword(ServicesResources):
+    """
+    Let user change their password with old password as verification
+    """
+
+    @with_user
+    def patch(self):
+        """Set a new password using the current password
+        ---
+        description: >-
+          Users can change their password by submitting their current password
+          and a new password
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  current_password:
+                    type: string
+                    description: current password
+                  new_password:
+                    type: string
+                    description: new password
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Current or new password is missing from JSON body, or
+              they are the same, or the new password doesn't meet password
+              criteria
+          401:
+            description: Current password is incorrect
+
+        tags: ["Password recovery"]
+        """
+        body = request.get_json()
+        old_password = body.get("current_password")
+        new_password = body.get("new_password")
+
+        if not old_password:
+            return {"msg": "Your current password is missing"},  \
+                HTTPStatus.BAD_REQUEST
+        elif not new_password:
+            return {"msg": "Your new password is missing!"}, \
+                HTTPStatus.BAD_REQUEST
+
+        user = g.user
+        log.debug(f"Changing password for user {user.id}")
+
+        # check if the old password is correct
+        pw_correct = user.check_password(old_password)
+        if not pw_correct:
+            return {"msg": "Your current password is not correct!"}, \
+                HTTPStatus.UNAUTHORIZED
+
+        if old_password == new_password:
+            return {"msg": "New password is the same as current password!"}, \
+                HTTPStatus.BAD_REQUEST
+
+        # set password
+        msg = user.set_password(new_password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
+        log.info(f"Successful password change for '{user.username}'")
+        return {"msg": "The password has been changed successfully!"}, \
+            HTTPStatus.OK
 
 
 class ResetAPIKey(ServicesResources):
