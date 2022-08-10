@@ -611,8 +611,7 @@ class UserClient(ClientBase):
         try:
             type_ = "user"
             id_ = jwt.decode(self.token,
-                             options={"verify_signature": False},
-                             algorithms=["HS256"])['sub']
+                             options={"verify_signature": False})['sub']
 
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
@@ -1835,7 +1834,7 @@ class ContainerClient(ClientBase):
 
         # obtain the identity from the token
         container_identity = jwt.decode(
-            token, options={"verify_signature": False})['identity']
+            token, options={"verify_signature": False})['sub']
         self.image = container_identity.get("image")
         self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")
