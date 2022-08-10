@@ -36,7 +36,6 @@ def get_default_roles(db):
     # 3. Researcher role
     RESEARCHER_RULES = VIEWER_RULES + [
         db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.CREATE),
-        db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.EDIT),
         db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.DELETE),
     ]
     RESEARCHER_ROLE = {
