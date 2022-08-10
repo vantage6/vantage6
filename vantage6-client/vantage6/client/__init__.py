@@ -5,6 +5,7 @@ This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
 import logging
+import traceback
 import pickle
 import time
 import typing
@@ -609,8 +610,10 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            id_ = jwt.decode(
-                self.token, options={"verify_signature": False})['identity']
+            id_ = jwt.decode(self.token,
+                             options={"verify_signature": False},
+                             algorithms=["HS256"])['sub']
+
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
             organization_id = user.get("organization").get("id")
@@ -631,7 +634,7 @@ class UserClient(ClientBase):
                           f"(id={organization_id})")
         except Exception as e:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.debug(e)
+            self.log.debug(traceback.format_exc())
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
