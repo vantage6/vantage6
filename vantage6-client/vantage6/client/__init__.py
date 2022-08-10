@@ -925,10 +925,10 @@ class UserClient(ClientBase):
                 Collaboration id to which this node belongs
             organization : int, optional
                 Organization id to which this node belongs. If no id provided
-                the users organization is used. By default None
+                the users organization is used. Default value is None
             name : str, optional
-                Name of the node. If no name is profided the server will
-                generate one. By default None
+                Name of the node. If no name is provided the server will
+                generate one. Default value is None
 
             Returns
             -------
@@ -1035,7 +1035,7 @@ class UserClient(ClientBase):
             ----------
             id_ : int, optional
                 Organization `id` of the organization you want to view.
-                In case no `id` is profided it will display your own
+                In case no `id` is provided it will display your own
                 organization, default value is None.
 
             Returns
