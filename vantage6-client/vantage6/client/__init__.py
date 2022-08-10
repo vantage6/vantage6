@@ -915,7 +915,8 @@ class UserClient(ClientBase):
             return self.parent.request('node', params=params)
 
         @post_filtering(iterable=False)
-        def create(self, collaboration: int, organization: int = None) -> dict:
+        def create(self, collaboration: int, organization: int = None,
+                   name: str = None) -> dict:
             """Register new node
 
             Parameters
@@ -925,6 +926,9 @@ class UserClient(ClientBase):
             organization : int, optional
                 Organization id to which this node belongs. If no id provided
                 the users organization is used. By default None
+            name : str, optional
+                Name of the node. If no name is profided the server will
+                generate one. By default None
 
             Returns
             -------
@@ -936,7 +940,8 @@ class UserClient(ClientBase):
 
             return self.parent.request('node', method='post', json={
                 'organization_id': organization,
-                'collaboration_id': collaboration
+                'collaboration_id': collaboration,
+                'name': name
             })
 
         @post_filtering(iterable=False)
