@@ -5,6 +5,7 @@ This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
 import logging
+import traceback
 import pickle
 import time
 import typing
@@ -609,8 +610,9 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            id_ = jwt.decode(
-                self.token, options={"verify_signature": False})['identity']
+            id_ = jwt.decode(self.token,
+                             options={"verify_signature": False})['sub']
+
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
             organization_id = user.get("organization").get("id")
@@ -631,7 +633,7 @@ class UserClient(ClientBase):
                           f"(id={organization_id})")
         except Exception as e:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.debug(e)
+            self.log.debug(traceback.format_exc())
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
@@ -939,7 +941,8 @@ class UserClient(ClientBase):
             return self.parent.request('node', params=params)
 
         @post_filtering(iterable=False)
-        def create(self, collaboration: int, organization: int = None) -> dict:
+        def create(self, collaboration: int, organization: int = None,
+                   name: str = None) -> dict:
             """Register new node
 
             Parameters
@@ -948,7 +951,10 @@ class UserClient(ClientBase):
                 Collaboration id to which this node belongs
             organization : int, optional
                 Organization id to which this node belongs. If no id provided
-                the users organization is used. By default None
+                the users organization is used. Default value is None
+            name : str, optional
+                Name of the node. If no name is provided the server will
+                generate one. Default value is None
 
             Returns
             -------
@@ -960,7 +966,8 @@ class UserClient(ClientBase):
 
             return self.parent.request('node', method='post', json={
                 'organization_id': organization,
-                'collaboration_id': collaboration
+                'collaboration_id': collaboration,
+                'name': name
             })
 
         @post_filtering(iterable=False)
@@ -1054,7 +1061,7 @@ class UserClient(ClientBase):
             ----------
             id_ : int, optional
                 Organization `id` of the organization you want to view.
-                In case no `id` is profided it will display your own
+                In case no `id` is provided it will display your own
                 organization, default value is None.
 
             Returns
@@ -1855,7 +1862,7 @@ class ContainerClient(ClientBase):
 
         # obtain the identity from the token
         container_identity = jwt.decode(
-            token, options={"verify_signature": False})['identity']
+            token, options={"verify_signature": False})['sub']
         self.image = container_identity.get("image")
         self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")

@@ -230,6 +230,10 @@ class Nodes(NodeBase):
                   organization_id:
                     type: integer
                     description: Organization id
+                  name:
+                    type: str
+                    description: Human-readable name, if not profided a name
+                      is generated
 
         responses:
           201:
@@ -251,6 +255,7 @@ class Nodes(NodeBase):
         parser.add_argument("collaboration_id", type=int, required=True,
                             help="This field cannot be left blank!")
         parser.add_argument("organization_id", type=int, required=False)
+        parser.add_argument("name", type=str, required=False)
         data = parser.parse_args()
 
         collaboration = db.Collaboration.get(data["collaboration_id"])
@@ -285,10 +290,14 @@ class Nodes(NodeBase):
                     f'node for collaboration id={collaboration.id}'}, \
                         HTTPStatus.BAD_REQUEST
 
+        # if no name is profided, generate one
+        name = data['name'] if data['name'] else \
+            f"{organization.name} - {collaboration.name} Node"
+
         # Ok we're good to go!
         api_key = str(uuid.uuid4())
         node = db.Node(
-            name=f"{organization.name} - {collaboration.name} Node",
+            name=name,
             collaboration=collaboration,
             organization=organization,
             api_key=api_key
