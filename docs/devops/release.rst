@@ -5,18 +5,14 @@ Create a release
 ----------------
 To create a new release, one should go through the following steps:
 
-* | Check out the correct branches of all the repositories (common, server, node, client, and CLI). Make sure that they are up to date and that you have no local changes. This may be done with the Makefile in the master repo:
-  | ``make git-checkout BRANCH={your_branch}``
-  | ``make git-pull``
+* | Check out the correct branche of the `vantage6 <https://github.com/vantage6/vantage6>` repository and pull the latest version:
+  | ``git checkout main``
+  | ``git pull``
 
-* | Make a commit on the master repo
-  | ``git add .``
-  | ``git commit -m "message"``
-
-* | Create a tag for the release. See   for more details on version names.
+* | Create a tag for the release. See `versioning <devops/versioning>` for more details on version names:
   | ``git tag version/x.y.z``
 
-* | Push the tag. This triggers the release pipeline on Github
+* | Push the tag to the remote. This should trigger the release pipeline on Github:
   | ``git push origin version/x.y.z``
 
 What does the release pipeline do?
