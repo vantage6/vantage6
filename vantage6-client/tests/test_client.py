@@ -121,5 +121,5 @@ class TestClient(TestCase):
     @staticmethod
     def _create_mock_jwt() -> MagicMock:
         mock_jwt = MagicMock()
-        mock_jwt.decode.return_value = {'identity': FAKE_ID}
+        mock_jwt.decode.return_value = {'sub': FAKE_ID}
         return mock_jwt

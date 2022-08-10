@@ -101,7 +101,7 @@ class ResetPassword(ServicesResources):
 
         # obtain user
         try:
-            user_id = decode_token(reset_token)['identity'].get('id')
+            user_id = decode_token(reset_token)['sub'].get('id')
         except DecodeError:
             return {"msg": "Invalid recovery token!"}, HTTPStatus.BAD_REQUEST
 

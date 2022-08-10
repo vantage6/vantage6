@@ -508,7 +508,7 @@ class TestResources(unittest.TestCase):
 
     @patch("vantage6.server.resource.recover.decode_token")
     def test_recover_password(self, decode_token):
-        decode_token.return_value = {'identity': {'id': 1}}
+        decode_token.return_value = {'sub': {'id': 1}}
         new_password = {
             "password": "$Ecret88!",
             "reset_token": "token"
