@@ -987,7 +987,7 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(self, name: str = None, country: int = None,
                  collaboration: int = None, page: int = None,
-                 per_page: int = None, include_metadata: bool = False) -> list:
+                 per_page: int = None, include_metadata: bool = True) -> list:
             """List organizations
 
             Parameters
