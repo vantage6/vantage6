@@ -355,6 +355,9 @@ def delete_network(network: Network, kill_containers: bool = True) -> None:
         Whether to kill the containers in the network (otherwise they are
         merely disconnected)
     """
+    if not network:
+        log.warn("Network not defined! Not removing anything, continuing...")
+        return
     network.reload()
     for container in network.containers:
         log.info(f"Removing container {container.name} in old network")
