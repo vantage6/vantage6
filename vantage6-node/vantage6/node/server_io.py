@@ -43,7 +43,7 @@ class NodeClient(ClientBase):
 
         # obtain the server authenticatable id
         id_ = jwt.decode(
-            self.token, options={"verify_signature": False})['identity']
+            self.token, options={"verify_signature": False})['sub']
 
         # get info on how the server sees me
         node = self.request(f"node/{id_}")
