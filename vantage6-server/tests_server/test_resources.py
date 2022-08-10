@@ -510,61 +510,60 @@ class TestResources(unittest.TestCase):
     def test_recover_password(self, decode_token):
         decode_token.return_value = {'identity': {'id': 1}}
         new_password = {
-            "password": "$ecret88!",
+            "password": "$Ecret88!",
             "reset_token": "token"
         }
         result = self.app.post("/api/recover/reset", json=new_password)
-
         self.assertEqual(result.status_code, 200)
 
         # verify that the new password works
         result = self.app.post("/api/token/user", json={
             "username": "root",
-            "password": "$ecret88!"
+            "password": "$Ecret88!"
         })
         self.assertIn("access_token", result.json)
-        self.credentials["root"]["password"] = "$ecret88!"
+        self.credentials["root"]["password"] = "$Ecret88!"
 
     def test_fail_recover_password(self):
         result = self.app.post("/api/recover/reset", json={})
         self.assertEqual(result.status_code, 400)
 
     def test_change_password(self):
-        user = self.create_user(password="password")
+        user = self.create_user(password="Password1!")
         headers = self.login(user.username)
 
         # test if fails when not providing correct data
-        result = self.app.post("/api/recover/change", headers=headers, json={
-            "current_password": "password"
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "Password1!"
         })
         self.assertEqual(result.status_code, 400)
-        result = self.app.post("/api/recover/change", headers=headers, json={
+        result = self.app.patch("/api/password/change", headers=headers, json={
             "new_password": "a_new_password"
         })
         self.assertEqual(result.status_code, 400)
 
         # test if fails when wrong password is provided
-        result = self.app.post("/api/recover/change", headers=headers, json={
-            "current_password": "wrong_password",
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "wrong_password1!",
             "new_password": "a_new_password"
         })
         self.assertEqual(result.status_code, 401)
 
         # test if fails when new password is the same
-        result = self.app.post("/api/recover/change", headers=headers, json={
-            "current_password": "password",
-            "new_password": "password"
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "Password1!",
+            "new_password": "Password1!"
         })
         self.assertEqual(result.status_code, 400)
 
         # test if it works when used as intended
-        result = self.app.post("/api/recover/change", headers=headers, json={
-            "current_password": "password",
-            "new_password": "a_new_password"
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "Password1!",
+            "new_password": "A_new_password1"
         })
         self.assertEqual(result.status_code, 200)
         db.session.refresh(user)
-        self.assertTrue(user.check_password("a_new_password"))
+        self.assertTrue(user.check_password("A_new_password1"))
 
     def test_view_rules(self):
         headers = self.login("root")

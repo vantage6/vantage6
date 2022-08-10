@@ -43,9 +43,9 @@ def setup(api, api_base, services):
 
     api.add_resource(
         ChangePassword,
-        path+'/change',
+        api_base+'/password/change',
         endpoint='change_password',
-        methods=('POST',),
+        methods=('PATCH',),
         resource_class_kwargs=services
     )
 
@@ -108,9 +108,15 @@ class ResetPassword(ServicesResources):
         log.debug(user_id)
         user = db.User.get(user_id)
 
-        # set password
-        user.set_password(password)
+        # reset number of failed login attempts to prevent that user cannot
+        # reactivate via email
+        user.failed_login_attempts = 0
         user.save()
+
+        # set password
+        msg = user.set_password(password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
         log.info(f"Successfull password reset for '{user.username}'")
         return {"msg": "The password has successfully been reset!"}, \
@@ -192,14 +198,13 @@ class RecoverPassword(ServicesResources):
         return ret
 
 
-# TODO swagger
 class ChangePassword(ServicesResources):
     """
-    Let user to change their password with old password as verification
+    Let user change their password with old password as verification
     """
 
     @with_user
-    def post(self):
+    def patch(self):
         """Set a new password using the current password
         ---
         description: >-
@@ -223,7 +228,8 @@ class ChangePassword(ServicesResources):
             description: Ok
           400:
             description: Current or new password is missing from JSON body, or
-              they are the same
+              they are the same, or the new password doesn't meet password
+              criteria
           401:
             description: Current password is incorrect
 
@@ -254,8 +260,9 @@ class ChangePassword(ServicesResources):
                 HTTPStatus.BAD_REQUEST
 
         # set password
-        user.set_password(new_password)
-        user.save()
+        msg = user.set_password(new_password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
         log.info(f"Successful password change for '{user.username}'")
         return {"msg": "The password has been changed successfully!"}, \

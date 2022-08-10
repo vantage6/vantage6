@@ -5,6 +5,7 @@ Resources below '/<api_base>/token'
 from __future__ import print_function, unicode_literals
 
 import logging
+import datetime as dt
 
 from flask import request, g
 from flask_jwt_extended import (
@@ -106,11 +107,9 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        log.debug(f"Trying to login {username}")
         user, code = self.user_login(username, password)
         if code is not HTTPStatus.OK:  # login failed
-            log.error(f"Incorrect username/password combination for "
-                      f"user='{username}'")
+            log.error(f"Failed to login for user='{username}'")
             return user, code
 
         token = create_access_token(user)
@@ -126,23 +125,36 @@ class UserToken(ServicesResources):
         log.info(f"Succesfull login from {username}")
         return ret, HTTPStatus.OK, {'jwt-token': token}
 
-    @staticmethod
-    def user_login(username, password):
-        """Returns user or message in case of failed login attempt"""
-        log.info(f"trying to login '{username}'")
+    def user_login(self, username, password):
+        """Returns user a message in case of failed login attempt."""
+        log.info(f"Trying to login '{username}'")
 
         if db.User.username_exists(username):
             user = db.User.get_by_username(username)
-            if not user.check_password(password):
-                msg = f"password for '{username}' is invalid"
-                log.error(msg)
-                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-        else:
-            msg = f"username '{username}' does not exist"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+            pw_policy = self.config.get('password_policy', {})
+            max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
+            inactivation_time = pw_policy.get('inactivation_minutes', 15)
 
-        return user, HTTPStatus.OK
+            is_blocked, time_remaining_msg = user.is_blocked(
+              max_failed_attempts, inactivation_time)
+            if is_blocked:
+                return {"msg": time_remaining_msg}, HTTPStatus.UNAUTHORIZED
+            elif user.check_password(password):
+                user.failed_login_attempts = 0
+                user.save()
+                return user, HTTPStatus.OK
+            else:
+                # update the number of failed login attempts
+                user.failed_login_attempts = 1 \
+                    if (
+                        not user.failed_login_attempts or
+                        user.failed_login_attempts >= max_failed_attempts
+                    ) else user.failed_login_attempts + 1
+                user.last_login_attempt = dt.datetime.now()
+                user.save()
+
+        return {"msg": "Invalid username or password!"}, \
+            HTTPStatus.UNAUTHORIZED
 
 
 class NodeToken(ServicesResources):

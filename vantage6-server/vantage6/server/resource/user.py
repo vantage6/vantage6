@@ -450,6 +450,7 @@ class User(UserBase):
 
     @with_user
     def patch(self, id):
+
         """Update user
         ---
         description: >-
