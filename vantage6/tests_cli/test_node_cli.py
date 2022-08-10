@@ -10,7 +10,6 @@ from docker.errors import APIError
 
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
-from vantage6.common.docker.addons import check_docker_running
 from vantage6.cli.node import (
     cli_node_list,
     cli_node_new_configuration,
@@ -273,6 +272,8 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(
             result.output,
             "[info]  - Closing log file. Keyboard Interrupt.\n"
+            "[info]  - Note that your node is still running! Shut it down "
+            "with 'vnode stop'\n"
         )
         self.assertEqual(result.exit_code, 0)
 

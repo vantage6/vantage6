@@ -1,10 +1,10 @@
 appdirs==1.4.3
-certifi==2020.4.5.1
-click==8.0.3
-colorama==0.4.3
-contextlib2==0.5.5
-PyYAML==5.4
 schema==0.7.1
 termcolor==1.1.0
-wincertstore==0.2
+colorama==0.4.3
+click==8.0.3
+PyYAML==5.4
 pyfiglet==0.8.post1
+wincertstore==0.2
+contextlib2==0.5.5
+certifi==2020.4.5.1

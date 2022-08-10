@@ -16,6 +16,7 @@ import json as json_lib
 from pathlib import Path
 from typing import Tuple
 
+from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.client import serialization, deserialization
@@ -310,8 +311,11 @@ class ClientBase(object):
 
         # handle negative responses
         if response.status_code > 200:
-            self.log.critical(f"Failed to authenticate {data.get('msg')}")
-            raise Exception("Failed to authenticate")
+            self.log.critical(f"Failed to authenticate: {data.get('msg')}")
+            if response.status_code == 401:
+                raise AuthenticationException("Failed to authenticate")
+            else:
+                raise Exception("Failed to authenticate")
 
         # store tokens in object
         self.log.info("Successfully authenticated")
@@ -605,7 +609,8 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            id_ = jwt.decode(self.token, verify=False)['identity']
+            id_ = jwt.decode(
+                self.token, options={"verify_signature": False})['identity']
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
             organization_id = user.get("organization").get("id")
@@ -1849,7 +1854,8 @@ class ContainerClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        container_identity = jwt.decode(token, verify=False)['identity']
+        container_identity = jwt.decode(
+            token, options={"verify_signature": False})['identity']
         self.image = container_identity.get("image")
         self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")

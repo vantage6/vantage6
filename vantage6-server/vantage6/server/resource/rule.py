@@ -51,57 +51,53 @@ class Rules(ServicesResources):
         """List Rules
         ---
         description: >-
-            List of all available rules at the server. The user does not
-            require any additional permissions to view these.\n\n
+            List of all available rules at the server. The user must be
+            authenticated, but does not require any additional permissions to
+            view the rules.\n
 
-            Accessible for: `user`.\n\n
-
-            Results can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+            Accesible to users.
 
         parameters:
             - in: query
               name: name
               schema:
                 type: string
-              description: name of the rule
+              description: Filter by name of the rule
             - in: query
               name: operation
               schema:
                 type: string
-              description: rule operation
+              description: Get rules for a specific type of operation
             - in: query
               name: scope
               schema:
                 type: string
-              description: rule scope
+              description: Get rules for a specific scope
             - in: query
               name: role_id
               schema:
                 type: integer
-              description: rules that are included in this role
+              description: Get rules for a specific role
             - in: query
               name: include
               schema:
                 type: string (can be multiple)
-              description: what to include ('metadata')
+              description: Include 'metadata' to get pagination metadata. Note
+                that this will put the actual data in an envelope.
             - in: query
               name: page
               schema:
                 type: integer
-              description: page number for pagination
+              description: Page number for pagination
             - in: query
               name: per_page
               schema:
                 type: integer
-              description: number of items per page
+              description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
 
         security:
             - bearerAuth: []
@@ -136,10 +132,10 @@ class Rule(ServicesResources):
         """Returns a specific rule
         ---
         description: >-
-            Inspect a specific rule. The user does not need any additional
-            permissions to view these.
+            Get a rule by it's id. The user must be authenticated, but does
+            not require any additional permissions to view rules.\n
 
-            Accessible as: `user`.
+            Accesible to users.
 
         parameters:
         - in: path
@@ -151,12 +147,10 @@ class Rule(ServicesResources):
           required: true
 
         responses:
-            200:
-                description: Ok
-            404:
-                description: Rule not found
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
+          404:
+            description: Rule not found
 
         security:
             - bearerAuth: []
