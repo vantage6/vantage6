@@ -8,7 +8,7 @@ import logging
 
 from flask import request, g
 from flask_jwt_extended import (
-    jwt_refresh_token_required,
+    jwt_required,
     create_access_token,
     create_refresh_token,
     get_jwt_identity
@@ -288,7 +288,7 @@ class ContainerToken(ServicesResources):
 
 class RefreshToken(ServicesResources):
 
-    @jwt_refresh_token_required
+    @jwt_required(refresh=True)
     def post(self):
         """Refresh token
         ---

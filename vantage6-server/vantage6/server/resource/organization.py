@@ -184,13 +184,9 @@ class Organizations(OrganizationBase):
 
         # filter the list of organizations based on the scope
         if self.r.v_glo.can():
-            # view all organizations
-            log.debug('glo')
-            pass
-
+            pass  # don't apply filters
         elif self.r.v_col.can():
             # obtain collaborations your organization participates in
-            log.debug('col')
             collabs = g.session.query(db.Collaboration).filter(
                 db.Collaboration.organizations.any(id=auth_org.id)
             ).all()
@@ -204,7 +200,6 @@ class Organizations(OrganizationBase):
             q = q.filter(db.Organization.id.in_(org_ids))
 
         elif self.r.v_org.can():
-            log.debug('org')
             q = q.filter(db.Organization.id == auth_org.id)
         else:
             return {'msg': 'You lack the permission to do that!'}, \
