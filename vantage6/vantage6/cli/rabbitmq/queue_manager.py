@@ -11,42 +11,16 @@ from typing import Dict
 
 from vantage6.common.globals import APPNAME
 from vantage6.common import debug, info, error
-from vantage6.common.docker.addons import remove_container_if_exists
+from vantage6.common.docker.addons import get_container
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.cli.context import ServerContext
 from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
 from vantage6.cli.globals import RABBIT_TIMEOUT
+from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
 DEFAULT_RABBIT_IMAGE = 'harbor2.vantage6.ai/infrastructure/rabbitmq'
 RABBIT_CONFIG = 'rabbitmq.config'
 RABBIT_DIR = 'rabbitmq'
-
-
-def split_rabbitmq_uri(rabbit_uri: str) -> Dict:
-    """
-    Get details (user, pass, host, vhost, port) from a RabbitMQ uri
-
-    Parameters
-    ----------
-    rabbit_uri: str
-        URI of RabbitMQ service ('amqp://$user:$pass@$host:$port/$vhost')
-
-    Returns
-    -------
-    Dict[str]
-        The vhost defined in the RabbitMQ URI
-    """
-    (user_details, location_details) = rabbit_uri.split('@', 1)
-    (user, password) = user_details.split('/')[-1].split(':', 1)
-    (host, remainder) = location_details.split(':', 1)
-    port, vhost = remainder.split('/', 1)
-    return {
-        'user': user,
-        'password': password,
-        'host': host,
-        'port': port,
-        'vhost': vhost,
-    }
 
 
 class RabbitMQManager:
@@ -78,7 +52,6 @@ class RabbitMQManager:
 
         self.docker = docker.from_env()
         self.image = image if image else DEFAULT_RABBIT_IMAGE
-        self.rabbit_container_name = f'{APPNAME}-{ctx.name}-rabbitmq'
 
     def start(self) -> None:
         """
@@ -98,14 +71,20 @@ class RabbitMQManager:
             '15672/tcp': 8080
         }
 
-        # if a RabbitMQ container is already running, kill and remove it
-        remove_container_if_exists(
-            docker_client=self.docker, name=self.rabbit_container_name
+        # check if a RabbitMQ container is already running
+        self.rabbit_container = get_container(
+            docker_client=self.docker, name=self.host
         )
+        if self.rabbit_container:
+            info("RabbitMQ is already running! Linking the server to that "
+                 "queue")
+            if not self.network_mgr.contains(self.rabbit_container):
+                self.network_mgr.connect(self.rabbit_container)
+            return
 
-        # run rabbitMQ container
+        # start rabbitMQ container
         self.rabbit_container = self.docker.containers.run(
-            name=self.rabbit_container_name,
+            name=self.host,
             image=self.image,
             volumes=volumes,
             ports=ports,
