@@ -4,8 +4,6 @@ Resources below '/<api_base>/version'
 """
 import logging
 
-from flasgger import swag_from
-from pathlib import Path
 from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.server.resource import ServicesResources
@@ -35,8 +33,15 @@ def setup(api, api_base, services):
 # ------------------------------------------------------------------------------
 class Version(ServicesResources):
 
-    @swag_from(str(Path(r"swagger/get_version.yaml")), endpoint='version')
     def get(self):
-        """Return the version of this server."""
+        """Get version
+        ---
+        description: Return the version of the server instance
 
+        responses:
+          200:
+            description: Ok
+
+        tags: ["Other"]
+        """
         return {"version": __version__}, HTTPStatus.OK

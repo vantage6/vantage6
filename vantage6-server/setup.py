@@ -73,7 +73,6 @@ setup(
             '__build__',
             '_data/**/*.yaml',
             'server_data/*.yaml',
-            'resource/swagger/*.yaml'
         ],
     },
     entry_points={

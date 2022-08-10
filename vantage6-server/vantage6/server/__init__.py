@@ -37,7 +37,7 @@ from vantage6.server.globals import (
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE
 )
-from vantage6.server.resource.swagger import swagger_template
+from vantage6.server.resource.swagger_templates import swagger_template
 from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
