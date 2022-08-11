@@ -381,6 +381,12 @@ class Users(UserBase):
             email=data["email"],
             password=data["password"]
         )
+
+        # check if the password meets password criteria
+        msg = user.set_password(data["password"])
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
         user.save()
 
         return user_schema.dump(user).data, HTTPStatus.CREATED
@@ -450,7 +456,6 @@ class User(UserBase):
 
     @with_user
     def patch(self, id):
-
         """Update user
         ---
         description: >-
