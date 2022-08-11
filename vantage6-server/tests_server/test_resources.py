@@ -444,9 +444,14 @@ class TestResources(unittest.TestCase):
             "username": "unittest",
             "firstname": "unit",
             "lastname": "test",
-            "password": "super-secret",
             "email": "unit@test.org",
         }
+        # with a bad password, user should not be created
+        new_user['password'] = "1234"
+        result = self.app.post('/api/user', headers=headers, json=new_user)
+        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+
+        new_user['password'] = "Welkom01!"
         result = self.app.post("/api/user", headers=headers,
                                json=new_user)
         self.assertEqual(result.status_code, 201)
@@ -998,7 +1003,7 @@ class TestResources(unittest.TestCase):
             "username": "smarty",
             "firstname": "Smart",
             "lastname": "Pants",
-            "password": "welkom01",
+            "password": "Welkom01!",
             "email": "mail-us@me.org"
         }
 
