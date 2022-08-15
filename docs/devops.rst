@@ -6,5 +6,4 @@ DevOps
 
    devops/documentation
    devops/release
-   devops/versioning
    devops/contribute
