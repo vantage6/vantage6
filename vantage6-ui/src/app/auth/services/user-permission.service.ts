@@ -115,12 +115,14 @@ export class UserPermissionService {
     );
   }
 
-  can(
+  async can(
     operation: OpsType | string,
     resource: ResType | string,
     org_id: number | null
-  ): boolean {
+  ): Promise<boolean> {
+    if (!this.ready.value) await this.setup();
     return (
+      // The problem is that this.user.organization_id below is not initialized after page refresh...
       this.hasPermission(operation, resource, ScopeType.GLOBAL) ||
       (org_id === this.user.organization_id &&
         this.hasPermission(operation, resource, ScopeType.ORGANIZATION))
