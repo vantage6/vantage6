@@ -87,11 +87,26 @@ Finally, push your commits to your fork on Github and create a pull request.
     $ git push --set-upstream fork your-branch-name
 
 A few notes on coding:
+
 * Use the `PEP008 <https://peps.python.org/pep-0008/>`_ standards
 * ...
 
-Testing & coverage
-^^^^^^^^^^^^^^^^^^
+
+Local test setup
+^^^^^^^^^^^^^^^^
+To test any code changes it is usefull to create a local test setup. There are several ways of doing this.
+
+1. Use the command ``vserver-local`` and ``vnode-local``. This runs the application in your current activated Python environment.
+2. Use the command ``vserver`` and ``vnode`` in combintation with the options ``--mount-src`` and optionally ``--image``.
+   * The ``--mount-src`` option should point towards the root folder of the `vantage6   repository <https://github.com/vantage6/vantage6>`_.
+   * The ``--image`` can be used to point towards a custom build infrastructure image. Note that when your code update includes dependency upgrades you need to build a custom infrastructure image as the *old* images do not contain these and the ``--mount-src`` will only overwrite the source and not re-install dependencies.
+
+.. note::
+
+  When using Docker Desktop (usually the case on Windows or MacOS) and want to setup a test environment you can use ``http://host.docker.interal`` for the node configuration file server address. As the server container is bound to the host ``0.0.0.0`` interface.
+
+Unittest & coverage
+^^^^^^^^^^^^^^^^^^^
 If you added unittest you can test them using the ``test`` command in the Makefile:
 
   ::
