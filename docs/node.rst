@@ -1,11 +1,18 @@
-Node
+API reference
 ====
 
-.. automodule:: vantage6.node
+``Node`` class
+----
+.. module:: vantage6.node
+.. autoclass:: Node
    :members:
+.. .. automodule:: vantage6.node
+..    :members: Node
 
-context
+Context
 -------
+.. autoclass:: vantage6.cli.context.NodeContext
+
 .. automodule:: vantage6.node.context
    :members:
 

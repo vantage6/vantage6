@@ -128,28 +128,21 @@ class NodeTaskNamespace(ClientNamespace):
 
 # ------------------------------------------------------------------------------
 class Node(object):
-    """Node to handle incomming computation requests.
-
-    The main steps this application follows: 1) retrieve (new) tasks
-    from the central server, 2) kick-off docker algorithm containers
-    based on this task and 3) retrieve the docker results and post
-    them to the central server.
-
-    TODO: read allowed repositories from the config file
     """
+    Authenticates to the central server, setup encrpytion, a
+    websocket connection, retrieving task that were posted while
+    offline, preparing dataset for usage and finally setup a
+    local proxy server.
 
-    def __init__(self, ctx):
-        """ Initialize a new Node instance.
+    Parameters
+    ----------
+    ctx
+        Application context object.
 
-            Authenticates to the central server, setup encrpytion, a
-            websocket connection, retrieving task that were posted while
-            offline, preparing dataset for usage and finally setup a
-            local proxy server.
+    """
+    def __init__(self, ctx: Union[NodeContext, DockerNodeContext]):
 
-            :param ctx: application context, see utils
-        """
         self.log = logging.getLogger(logger_name(__name__))
-
         self.ctx = ctx
 
         # Initialize the node. If it crashes, shut down the parts that started
@@ -462,11 +455,12 @@ class Node(object):
                 self.log.debug(e)
 
     def authenticate(self):
-        """ Authenticate to the central server
-
-            Authenticate with the server using the api-key. If the
-            server rejects for any reason we keep trying.
         """
+        Authenticate with the server using the api-key from the configuration
+        file. If the server rejects for any reason -other than a wrong API key-
+        serveral attempts are taken to retry.
+        """
+
         api_key = self.config.get("api_key")
 
         success = False
@@ -701,12 +695,10 @@ class Node(object):
             )
 
     def connect_to_socket(self):
-        """ Create long-lasting websocket connection with the server.
-
-            The connection is used to receive status updates, such as
-            new tasks.
         """
-
+        Create long-lasting websocket connection with the server. The
+        connection is used to receive status updates, such as new tasks.
+        """
         self.socketIO = SocketIO(request_timeout=60)
 
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
@@ -725,12 +717,16 @@ class Node(object):
         self.log.info(f'Connected to host={self.server_io.host} on port='
                       f'{self.server_io.port}')
 
-    def get_task_and_add_to_queue(self, task_id):
-        """Fetches (open) task with task_id from the server.
-
-            The `task_id` is delivered by the websocket-connection.
+    def get_task_and_add_to_queue(self, task_id: int):
         """
+        Fetches (open) task with task_id from the server. The `task_id` is
+        delivered by the websocket-connection.
 
+        Parameters
+        ----------
+        task_id : int
+            Task identifyer
+        """
         # fetch (open) result for the node with the task_id
         tasks = self.server_io.get_results(
             include_task=True,

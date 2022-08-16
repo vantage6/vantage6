@@ -56,5 +56,10 @@ html_static_path = ['_static']
 
 html_theme_options = {
     'logo': "logo.png",
-    'logo_name': False
+    'logo_name': False,
+    'github_user': 'vantage6',
+    'github_repo': 'vantage6',
+    'fixed_sidebar': True,
 }
+
+add_module_names = False
