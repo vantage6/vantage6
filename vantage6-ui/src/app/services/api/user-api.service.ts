@@ -38,7 +38,7 @@ export class UserApiService extends BaseApiService {
   }
 
   change_password(current_password: string, new_password: string) {
-    return this.http.post<any>(environment.api_url + '/recover/change', {
+    return this.http.patch<any>(environment.api_url + '/password/change', {
       current_password: current_password,
       new_password: new_password,
     });
