@@ -10,6 +10,8 @@ import { CollabApiService } from '../api/collaboration-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 import { deepcopy } from 'src/app/shared/utils';
+import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { OpsType, ResType } from 'src/app/shared/enum';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +19,8 @@ import { deepcopy } from 'src/app/shared/utils';
 export class CollabDataService extends BaseDataService {
   constructor(
     protected collabApiService: CollabApiService,
-    protected convertJsonService: ConvertJsonService
+    protected convertJsonService: ConvertJsonService,
+    private userPermission: UserPermissionService
   ) {
     super(collabApiService, convertJsonService);
   }
@@ -58,6 +61,15 @@ export class CollabDataService extends BaseDataService {
     nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Collaboration[]> {
+    if (
+      !this.userPermission.can(
+        OpsType.VIEW,
+        ResType.COLLABORATION,
+        organization_id
+      )
+    ) {
+      return [];
+    }
     let org_resources: Collaboration[] = [];
     if (force_refresh || !this.queried_org_ids.includes(organization_id)) {
       org_resources = (await this.apiService.getResources(

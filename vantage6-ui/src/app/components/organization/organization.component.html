@@ -56,26 +56,31 @@
           </button>
         </div>
         <div class="vertical-spacer"></div>
-        <div *ngFor="let col of collaborations | slice:0:MAX_ITEMS_DISPLAY">
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{col.name}}
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <app-collaboration-view
-              [collaboration]="col"
-              (deletingResource)="deleteCollaboration(col)"
-              (createdNode)="updateNodeList($event)"
-            ></app-collaboration-view>
-          </mat-expansion-panel>
+        <div *ngIf="!userPermission.can('view', 'collaboration', current_organization.id); else showCollabsBlock">
+          You do not have permission to view the collaborations!
         </div>
-        <button mat-button class="btn btn-dflt btn-top-margin"
-          *ngIf="collaborations.length > MAX_ITEMS_DISPLAY"
-          [routerLink]="['/collaborations', current_organization.id]"
-          >
-            View all collaborations
-        </button>
+        <ng-template #showCollabsBlock>
+          <div *ngFor="let col of collaborations | slice:0:MAX_ITEMS_DISPLAY">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{col.name}}
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <app-collaboration-view
+                [collaboration]="col"
+                (deletingResource)="deleteCollaboration(col)"
+                (createdNode)="updateNodeList($event)"
+              ></app-collaboration-view>
+            </mat-expansion-panel>
+          </div>
+          <button mat-button class="btn btn-dflt btn-top-margin"
+            *ngIf="collaborations.length > MAX_ITEMS_DISPLAY"
+            [routerLink]="['/collaborations', current_organization.id]"
+            >
+              View all collaborations
+          </button>
+        </ng-template>
       </mat-card>
 
       <mat-card>
@@ -87,33 +92,35 @@
             <span>New role</span>
           </button>
         </div>
-        <div *ngIf="!userPermission.can('view', 'role', current_organization.id)">
+        <div *ngIf="!userPermission.can('view', 'role', current_organization.id); else showRolesBlock">
           You do not have permission to view the roles!
         </div>
-        <div *ngFor="let role of roles | slice:0:MAX_ITEMS_DISPLAY">
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{role.name}}
-              </mat-panel-title>
-              <mat-panel-description class="right-aligned-header">
-                <div *ngIf="roleDataService.isDefaultRole(role)">
-                  This is a default role
-                </div>
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <app-role-view
-              [role]="role"
-              (deletingResource)="deleteRole(role)"
-            ></app-role-view>
-          </mat-expansion-panel>
-        </div>
-        <button mat-button class="btn btn-dflt btn-top-margin"
-          *ngIf="roles.length > MAX_ITEMS_DISPLAY"
-          [routerLink]="['/roles', current_organization.id]"
-          >
-            View all roles
-        </button>
+        <ng-template #showRolesBlock>
+          <div *ngFor="let role of roles | slice:0:MAX_ITEMS_DISPLAY">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{role.name}}
+                </mat-panel-title>
+                <mat-panel-description class="right-aligned-header">
+                  <div *ngIf="roleDataService.isDefaultRole(role)">
+                    This is a default role
+                  </div>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <app-role-view
+                [role]="role"
+                (deletingResource)="deleteRole(role)"
+              ></app-role-view>
+            </mat-expansion-panel>
+          </div>
+          <button mat-button class="btn btn-dflt btn-top-margin"
+            *ngIf="roles.length > MAX_ITEMS_DISPLAY"
+            [routerLink]="['/roles', current_organization.id]"
+            >
+              View all roles
+          </button>
+        </ng-template>
       </mat-card>
     </div>
 
