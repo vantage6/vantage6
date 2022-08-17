@@ -225,11 +225,12 @@ class Roles(RoleBase):
             own_role_ids = [role.id for role in g.user.roles]
             if self.r.v_org.can():
                 # allow user to view all roles of their organization and any
-                # other roles they may have themselves
-                q = q.join(db.Organization)\
-                    .filter(or_(
+                # other roles they may have themselves, or default roles from
+                # the root organization
+                q = q.filter(or_(
                         db.Role.organization_id == auth_org_id,
-                        db.Role.id.in_(own_role_ids)
+                        db.Role.id.in_(own_role_ids),
+                        db.Role.organization_id == None
                     ))
             else:
                 # allow users without permission to view only their own roles
