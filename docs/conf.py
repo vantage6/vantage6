@@ -31,7 +31,8 @@ author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
+              'sphinx_autodoc_typehints']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -62,4 +63,9 @@ html_theme_options = {
     'fixed_sidebar': True,
 }
 
+# The master toctree document.
+master_doc = 'index'
+
 add_module_names = False
+
+pygments_style = None

@@ -1,5 +1,5 @@
-How to contribute to vantage6
-=============================
+Contribute
+==========
 
 Support questions
 -----------------
@@ -25,6 +25,10 @@ When using the templates, it is easier for us to manage the projects. You can se
 Submitting patches
 ------------------
 If there is not an open issue for what you want to submit, open one for discussion before submitting the PR. We encourage you to also discuss with us on `Discord <https://discord.gg/yAyFf6Y>`_, so that we together make sure your contribution is added to the repository.
+
+Planning
+^^^^^^^^
+* Meetings? / Discord? / ...?
 
 Setup
 ^^^^^

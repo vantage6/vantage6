@@ -29,7 +29,8 @@ Other possible interesting resources:
 
    intro
    server/server
-   node
+   node/node
+   api
    devops
 
 
@@ -40,7 +41,3 @@ Other possible interesting resources:
 .. * :ref:`genindex`
 .. * :ref:`modindex`
 .. * :ref:`search`
-
-
-.. .. automodule:: vantage6.cli.node
-..    :members:

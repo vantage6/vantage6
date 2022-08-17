@@ -4,6 +4,6 @@ DevOps
    :maxdepth: 3
    :caption: Contents:
 
+   devops/contribute
    devops/documentation
    devops/release
-   devops/contribute

@@ -1,30 +1,27 @@
-API reference
+Node
 ====
 
 ``Node`` class
-----
-.. module:: vantage6.node
-.. autoclass:: Node
-   :members:
-.. .. automodule:: vantage6.node
-..    :members: Node
+--------------
+.. automodule:: vantage6.node
+   :members: Node
 
-Context
--------
+``ServerContext`` class
+-----------------------
+.. autoclass:: vantage6.cli.context.ServerContext
+   :members:
+
+``NodeContext`` class
+---------------------
 .. autoclass:: vantage6.cli.context.NodeContext
-
-.. automodule:: vantage6.node.context
    :members:
 
-.. globals
-.. -------
-.. .. automodule:: vantage6.node.globals
-..    :members:
-
-Proxy server
-------------
-.. automodule:: vantage6.node.proxy_server
+``DockerNodeContext`` class
+---------------------------
+.. autoclass:: vantage6.node.context.DockerNodeContext
    :members:
+
+
 
 Docker
 ------

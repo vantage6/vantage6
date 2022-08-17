@@ -4,4 +4,5 @@
 -r vantage6-common/requirements.txt
 -r vantage6-node/requirements.txt
 -r vantage6-server/requirements.txt
-sphinx==4.4.0
+sphinx==1.8.6
+sphinx-autodoc-typehints

@@ -132,11 +132,11 @@ class Node(object):
     Authenticates to the central server, setup encrpytion, a
     websocket connection, retrieving task that were posted while
     offline, preparing dataset for usage and finally setup a
-    local proxy server.
+    local proxy server..
 
     Parameters
     ----------
-    ctx
+    ctx:
         Application context object.
 
     """
@@ -153,7 +153,8 @@ class Node(object):
             self.cleanup()
             raise
 
-    def initialize(self):
+    def initialize(self) -> None:
+        """Initialization of the node"""
         # check if docker is running, otherwise exit with error
         check_docker_running()
 
@@ -239,7 +240,7 @@ class Node(object):
 
         self.log.info('Init complete')
 
-    def __proxy_server_worker(self):
+    def __proxy_server_worker(self) -> None:
         """ Proxy algorithm container communcation.
 
             A proxy for communication between algorithms and central
@@ -293,7 +294,7 @@ class Node(object):
                 self.log.error('Proxyserver could not be started or crashed!')
                 self.log.error(e)
 
-    def sync_task_queue_with_server(self):
+    def sync_task_queue_with_server(self) -> None:
         """ Get all unprocessed tasks from the server for this node."""
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
@@ -305,13 +306,15 @@ class Node(object):
 
         self.log.info(f"received {self.queue._qsize()} tasks")
 
-    def __start_task(self, taskresult):
-        """Start a task.
+    def __start_task(self, taskresult: dict) -> None:
+        """
+        Start the docker image and notify the server that the task has been
+        started.
 
-            Start the docker image and notify the server that the task
-            has been started.
-
-            :param taskresult: an empty taskresult
+        Parameters
+        ----------
+        taskresult : dict
+            an 'empty' taskresult
         """
         task = taskresult['task']
         self.log.info("Starting task {id} - {name}".format(**task))
@@ -366,7 +369,7 @@ class Node(object):
                 f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
             )
 
-    def __listening_worker(self):
+    def __listening_worker(self) -> None:
         """ Listen for incoming (websocket) messages from the server.
 
             Runs in a separate thread. Received events are dispatched
@@ -386,7 +389,7 @@ class Node(object):
                 self.log.error('Listening thread had an exception')
                 self.log.debug(e)
 
-    def __speaking_worker(self):
+    def __speaking_worker(self) -> None:
         """ Sending messages to central server.
 
             Routine that is in a seperate thread sending results
@@ -454,7 +457,7 @@ class Node(object):
                 self.log.error('Speaking thread had an exception')
                 self.log.debug(e)
 
-    def authenticate(self):
+    def authenticate(self) -> None:
         """
         Authenticate with the server using the api-key from the configuration
         file. If the server rejects for any reason -other than a wrong API key-
@@ -492,7 +495,7 @@ class Node(object):
             self.log.critical('Unable to authenticate. Exiting')
             exit(1)
 
-    def private_key_filename(self):
+    def private_key_filename(self) -> Path:
         """Get the path to the private key."""
 
         # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
@@ -511,7 +514,7 @@ class Node(object):
 
         return fullpath
 
-    def setup_encryption(self):
+    def setup_encryption(self) -> None:
         """Setup encryption ... or don't."""
         encrypted_collaboration = self.server_io.is_encrypted_collaboration()
         encrypted_node = self.config['encryption']["enabled"]
@@ -570,11 +573,9 @@ class Node(object):
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_vpn_connection(
-        self,
-        isolated_network_mgr: NetworkManager,
-        ctx: Union[DockerNodeContext, NodeContext]
-    ) -> VPNManager:
+    def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
+                             ctx: Union[DockerNodeContext, NodeContext]) \
+                                -> VPNManager:
         """
         Setup container which has a VPN connection
 
@@ -684,7 +685,7 @@ class Node(object):
             f.write(ovpn_config)
         return True
 
-    def link_docker_services(self):
+    def link_docker_services(self) -> None:
         docker_services = self.ctx.config.get("docker_services")
         if not docker_services:
             return
@@ -694,7 +695,7 @@ class Node(object):
                 container_name=container_name, config_alias=alias
             )
 
-    def connect_to_socket(self):
+    def connect_to_socket(self) -> None:
         """
         Create long-lasting websocket connection with the server. The
         connection is used to receive status updates, such as new tasks.
@@ -717,7 +718,7 @@ class Node(object):
         self.log.info(f'Connected to host={self.server_io.host} on port='
                       f'{self.server_io.port}')
 
-    def get_task_and_add_to_queue(self, task_id: int):
+    def get_task_and_add_to_queue(self, task_id: int) -> None:
         """
         Fetches (open) task with task_id from the server. The `task_id` is
         delivered by the websocket-connection.
@@ -739,7 +740,7 @@ class Node(object):
         for task in tasks:
             self.queue.put(task)
 
-    def run_forever(self):
+    def run_forever(self) -> None:
         """Forever check self.queue for incoming tasks (and execute them)."""
         kill_listener = ContainerKillListener()
         try:
@@ -775,7 +776,7 @@ class Node(object):
             self.cleanup()
             sys.exit()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if hasattr(self, 'socketIO') and self.socketIO:
             self.socketIO.disconnect()
         if hasattr(self, 'vpn_manager') and self.vpn_manager:
