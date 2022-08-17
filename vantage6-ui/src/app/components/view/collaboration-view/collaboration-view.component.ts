@@ -101,7 +101,7 @@ export class CollaborationViewComponent
     );
   }
 
-  async getNodeButtonText(org: OrganizationInCollaboration): Promise<string> {
+  getNodeButtonText(org: OrganizationInCollaboration): string {
     let online_text: string = ' ';
     let user_can_view: boolean = this.userPermission.sync_can(
       OpsType.VIEW,
@@ -115,7 +115,6 @@ export class CollaborationViewComponent
     } else {
       online_text += '(unknown status)';
     }
-
     return org.name + online_text;
   }
 
