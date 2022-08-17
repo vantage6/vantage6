@@ -73,7 +73,7 @@ export class OrgAccessGuard implements CanActivate {
     // edit/create organization.
     let permission: boolean = false;
     if (id && id > 0) {
-      permission = await this.userPermission.can(
+      permission = await this.userPermission.async_can(
         permissionType,
         ResType.ORGANIZATION,
         id
@@ -128,7 +128,7 @@ export class AccessGuardByOrgId implements CanActivate {
     // edit/create organization.
     let permission: boolean = false;
     if (org_id && org_id > 0) {
-      permission = await this.userPermission.can(
+      permission = await this.userPermission.async_can(
         permissionType,
         permissionResource,
         org_id

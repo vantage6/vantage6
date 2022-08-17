@@ -115,16 +115,16 @@ export class UserPermissionService {
     );
   }
 
-  async can(
+  async async_can(
     operation: OpsType | string,
     resource: ResType | string,
     org_id: number | null
   ): Promise<boolean> {
     if (!this.ready.value) await this.setup();
-    return this.sync_can(operation, resource, org_id);
+    return this.can(operation, resource, org_id);
   }
 
-  sync_can(
+  can(
     operation: OpsType | string,
     resource: ResType | string,
     org_id: number | null

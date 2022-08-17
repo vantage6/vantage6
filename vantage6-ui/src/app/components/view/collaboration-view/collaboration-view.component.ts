@@ -103,7 +103,7 @@ export class CollaborationViewComponent
 
   getNodeButtonText(org: OrganizationInCollaboration): string {
     let online_text: string = ' ';
-    let user_can_view: boolean = this.userPermission.sync_can(
+    let user_can_view: boolean = this.userPermission.can(
       OpsType.VIEW,
       ResType.NODE,
       org.id
