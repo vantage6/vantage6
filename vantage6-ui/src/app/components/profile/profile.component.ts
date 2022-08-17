@@ -5,8 +5,6 @@ import { UserApiService } from 'src/app/services/api/user-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { SignOutService } from 'src/app/services/common/sign-out.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
-import { ResType } from 'src/app/shared/enum';
-import { Resource } from 'src/app/shared/types';
 import { deepcopy } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../view/base-view/base-view.component';
 import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';

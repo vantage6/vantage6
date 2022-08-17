@@ -208,6 +208,13 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
         'Passwords do not match! Cannot create this user.',
       ]);
       return;
+    } else if (
+      this.mode === OpsType.EDIT &&
+      this.user.id === this.userPermission.user.id
+    ) {
+      // if the logged-in user edits themselves, update the user also in the
+      // userPermission service
+      this.userPermission.user = this.user;
     }
 
     super.save(this.user);
