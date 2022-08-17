@@ -297,7 +297,6 @@ const routes: Routes = [
       requiresLogin: true,
       permissionType: OpsType.VIEW,
       permissionResource: ResType.TASK,
-      permissionScope: ScopeType.GLOBAL,
     },
     canActivate: [AccessGuard],
   },

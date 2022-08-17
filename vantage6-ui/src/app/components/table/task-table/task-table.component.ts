@@ -163,7 +163,15 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   }
 
   getNameDropdown() {
-    if (this.current_organization) return this.current_organization.name;
+    if (
+      this.current_organization &&
+      this.userPermission.hasPermission(
+        OpsType.VIEW,
+        ResType.ORGANIZATION,
+        ScopeType.GLOBAL
+      )
+    )
+      return this.current_organization.name;
     else if (this.current_collaboration) return this.current_collaboration.name;
     else return 'All';
   }
@@ -171,11 +179,6 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   getSelectDropdownText(): string {
     let entity: string = '';
     if (
-      this.userPermission.hasPermission(
-        OpsType.VIEW,
-        ResType.ORGANIZATION,
-        ScopeType.COLLABORATION
-      ) ||
       this.userPermission.hasPermission(
         OpsType.VIEW,
         ResType.ORGANIZATION,
