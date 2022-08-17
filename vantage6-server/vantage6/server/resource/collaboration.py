@@ -198,8 +198,10 @@ class Collaborations(CollaborationBase):
         if 'organization_id' in args:
             if not self.r.v_glo.can() and \
                     args['organization_id'] != str(auth_org_id):
-                return {'msg': 'You lack the permission to request '
-                        'collaborations for this organization!'}
+                return {
+                    'msg': 'You lack the permission to request collaborations '
+                    'for this organization!'
+                }, HTTPStatus.UNAUTHORIZED
             elif self.r.v_glo.can():
                 q = q.join(db.Member).join(db.Organization)\
                     .filter(db.Organization.id == args['organization_id'])
@@ -212,7 +214,8 @@ class Collaborations(CollaborationBase):
                 q = q.join(db.Organization, db.Collaboration.organizations)\
                     .filter(db.Collaboration.organizations.any(id=auth_org_id))
             else:
-                return {'msg': 'You lack the permission to do that!'}
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
 
         # paginate the results
         page = Pagination.from_query(query=q, request=request)
