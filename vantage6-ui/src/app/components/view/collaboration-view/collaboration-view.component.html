@@ -29,7 +29,6 @@
     <td>Nodes:</td>
     <td>
       <div *ngFor="let org of collaboration.organizations" class="inline">
-          <!-- <button mat-button class="btn-link inline" disabled> -->
           <button mat-button
                   [className]="getButtonClasses(org)"
                   [disabled]="isDisabled(org)"

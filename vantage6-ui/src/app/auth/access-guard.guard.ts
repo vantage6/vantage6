@@ -61,7 +61,7 @@ export class OrgAccessGuard implements CanActivate {
     });
   }
 
-  canActivate(route: ActivatedRouteSnapshot): boolean {
+  async canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
     if (!this.tokenStorage.loggedIn) {
       this.router.navigate(['login']);
     }
@@ -73,7 +73,7 @@ export class OrgAccessGuard implements CanActivate {
     // edit/create organization.
     let permission: boolean = false;
     if (id && id > 0) {
-      permission = this.userPermission.can(
+      permission = await this.userPermission.can(
         permissionType,
         ResType.ORGANIZATION,
         id
@@ -115,7 +115,7 @@ export class AccessGuardByOrgId implements CanActivate {
     });
   }
 
-  canActivate(route: ActivatedRouteSnapshot): boolean {
+  async canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
     if (!this.tokenStorage.loggedIn) {
       this.router.navigate(['login']);
     }
@@ -128,7 +128,7 @@ export class AccessGuardByOrgId implements CanActivate {
     // edit/create organization.
     let permission: boolean = false;
     if (org_id && org_id > 0) {
-      permission = this.userPermission.can(
+      permission = await this.userPermission.can(
         permissionType,
         permissionResource,
         org_id
