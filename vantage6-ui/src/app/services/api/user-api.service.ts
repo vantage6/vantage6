@@ -30,7 +30,7 @@ export class UserApiService extends BaseApiService {
     };
     // option to not include the roles/rules of a user as updating these in
     // a patch request by the user themselves will lead to errors
-    if (exclude_own_permissions && user.is_logged_in) {
+    if (!(user.is_logged_in && exclude_own_permissions)) {
       data.roles = getIdsFromArray(user.roles);
       data.rules = getIdsFromArray(user.rules);
     }

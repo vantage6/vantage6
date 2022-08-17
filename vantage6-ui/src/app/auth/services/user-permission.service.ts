@@ -166,6 +166,7 @@ export class UserPermissionService {
       this.roles,
       this.all_rules
     );
+    this.user.is_logged_in = true;
 
     await this._setPermissions(this.user, this.all_rules);
 
