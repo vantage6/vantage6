@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 
 import { getIdsFromArray } from 'src/app/shared/utils';
@@ -21,20 +20,29 @@ export class UserApiService extends BaseApiService {
     super(ResType.USER, http, modalService);
   }
 
-  get_data(user: User): any {
+  get_data(user: User, exclude_own_permissions: boolean = false): any {
     let data: any = {
       username: user.username,
       email: user.email,
       firstname: user.first_name,
       lastname: user.last_name,
       organization_id: user.organization_id,
-      roles: getIdsFromArray(user.roles),
-      rules: getIdsFromArray(user.rules),
     };
+    // option to not include the roles/rules of a user as updating these in
+    // a patch request by the user themselves will lead to errors
+    if (exclude_own_permissions && user.is_logged_in) {
+      data.roles = getIdsFromArray(user.roles);
+      data.rules = getIdsFromArray(user.rules);
+    }
     if (user.password) {
       data.password = user.password;
     }
     return data;
+  }
+
+  update(user: User) {
+    const data = this.get_data(user, true);
+    return this.http.patch<any>(environment.api_url + '/user/' + user.id, data);
   }
 
   change_password(current_password: string, new_password: string) {

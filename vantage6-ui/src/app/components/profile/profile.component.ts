@@ -61,7 +61,6 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
     );
   }
 
-  // TODO implement changing a password when it has been implemented server-side
   async savePassword(): Promise<void> {
     this.userApiService
       .change_password(this.old_password, this.new_password)

@@ -12,15 +12,15 @@
       <col span="1" style="width: 80%;"/>
     </colgroup>
     <tr>
-      <td>Old password:</td>
+      <td>Current password:</td>
       <input type="password" [(ngModel)]="old_password"/>
     </tr>
     <tr>
-      <td>Password:</td>
+      <td>New password:</td>
       <td><input type="password" [(ngModel)]="new_password"/></td>
     </tr>
     <tr>
-      <td>Repeat password:</td>
+      <td>Repeat new password:</td>
       <td>
         <input type="password" [(ngModel)]="new_password_repeated"/>
         <p class="inline text-warning" *ngIf="new_password != new_password_repeated">
