@@ -24,10 +24,11 @@ Other possible interesting resources:
 -----------------------------------------------
 
 .. toctree::
+   :numbered:
    :maxdepth: 3
    :caption: Contents:
 
-   intro
+   introduction
    server/server
    node/node
    api

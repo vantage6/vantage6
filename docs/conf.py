@@ -69,3 +69,5 @@ master_doc = 'index'
 add_module_names = False
 
 pygments_style = None
+
+numfig = True
