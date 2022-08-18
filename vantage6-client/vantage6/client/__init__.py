@@ -1254,7 +1254,7 @@ class UserClient(ClientBase):
 
             Parameters
             ----------
-            user_id : int
+            id_ : int
                 User `id` from the user you want to update
             firstname : str
                 Your first name
