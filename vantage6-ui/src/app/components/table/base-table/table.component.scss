@@ -1,3 +1,5 @@
+@use 'src/app/shared/scss/variables' as v;
+
 table {
     width: 100%;
 }
@@ -33,4 +35,20 @@ table {
 
 .element-row.expanded {
   border-bottom-color: transparent;
+}
+
+
+mat-table {
+
+
+  .detail-row{
+    border-color: v.$vtg-blue-opac03;
+    border-width: 0 4px 4px 4px;
+    border-style: solid;
+    font-size: 0.9em;
+    padding: 0 20px 20px 20px;
+    border-radius: 0 0 10px 10px;
+  }
+
+
 }

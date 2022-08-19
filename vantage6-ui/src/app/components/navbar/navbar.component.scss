@@ -1,6 +1,6 @@
 @use 'src/app/shared/scss/variables' as v;
 
-$toolbar_height: 70px;
+$toolbar_height: 80px;
 
 mat-toolbar {
   background: v.$white;
@@ -8,8 +8,9 @@ mat-toolbar {
   height: $toolbar_height;
 
   .logo {
-    height: $toolbar_height * 0.9;
+    height: $toolbar_height * 0.8;
     margin-left: 16px;
+    margin-top: 10px;
   }
 
   .spacer {
@@ -24,15 +25,16 @@ mat-sidenav {
   border-right: none;
   background: v.$vtg-blue;
   color: v.$white;
-  border-radius: 10px;
+  border-radius: 0 10px 0 0;
   padding: 16px;
   text-align: center;
+  bottom: auto;
 }
 
 .content {
   min-height: calc(100vh - 88px);
   background-color: v.$vtg-blue-opac03;
-  border-radius: 10px;
+  border-radius: 10px 0 0 10px;
   margin: 6px;
   margin-left: 32px;
   padding-bottom: 16px;
