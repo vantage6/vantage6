@@ -610,8 +610,15 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            id_ = jwt.decode(self.token,
-                             options={"verify_signature": False})['sub']
+            jwt_payload = jwt.decode(self.token,
+                             options={"verify_signature": False})
+
+            # FIXME: 'identity' is no longer needed in version 4+. So this if
+            # statement can be removed
+            if 'sub' in jwt_payload:
+                id_ = jwt_payload['sub']
+            elif 'identity' in jwt_payload:
+                id_ = jwt_payload['identity']
 
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
@@ -1861,8 +1868,16 @@ class ContainerClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        container_identity = jwt.decode(
-            token, options={"verify_signature": False})['sub']
+        jwt_payload = jwt.decode(
+            token, options={"verify_signature": False})
+
+        # FIXME: 'identity' is no longer needed in version 4+. So this if
+        # statement can be removed
+        if 'sub' in jwt_payload:
+            container_identity = jwt_payload['sub']
+        elif 'identity' in jwt_payload:
+            container_identity = jwt_payload['identity']
+
         self.image = container_identity.get("image")
         self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")
