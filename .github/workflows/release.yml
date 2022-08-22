@@ -138,7 +138,7 @@ jobs:
 
       - name: Install dependancies
         run: |
-          pip install discord.py
+          pip install discord.py==1.7.3
           pip install click
 
       - name: Notify Discord community
