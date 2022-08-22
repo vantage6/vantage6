@@ -26,11 +26,21 @@ import { CollaborationTableComponent } from './components/table/collaboration-ta
 import { RoleViewSingleComponent } from './components/view-single/role-view-single/role-view-single.component';
 import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
 import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
+import { PasswordLostComponent } from './components/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './components/password-recover/password-recover.component';
 
 const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
+  },
+  {
+    path: 'password_lost',
+    component: PasswordLostComponent,
+  },
+  {
+    path: 'password_recover',
+    component: PasswordRecoverComponent,
   },
   {
     path: 'home',

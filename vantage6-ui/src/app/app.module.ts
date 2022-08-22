@@ -61,6 +61,8 @@ import { RoleViewSingleComponent } from './components/view-single/role-view-sing
 import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
 import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
 import { ModalLoadingComponent } from './components/modal/modal-loading/modal-loading.component';
+import { PasswordLostComponent } from './components/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './components/password-recover/password-recover.component';
 
 @NgModule({
   declarations: [
@@ -96,6 +98,8 @@ import { ModalLoadingComponent } from './components/modal/modal-loading/modal-lo
     UserViewSingleComponent,
     NodeSingleViewComponent,
     ModalLoadingComponent,
+    PasswordLostComponent,
+    PasswordRecoverComponent,
   ],
   imports: [
     BrowserModule,
