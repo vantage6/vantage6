@@ -9,7 +9,7 @@ from flask import url_for
 from vantage6.server import db
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
-
+from vantage6.server.model import Organization
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -82,7 +82,15 @@ class HATEOASModelSchema(ModelSchema):
         hateos_list = list()
         plural_ = plural if plural else name+"s"
         endpoint = endpoint if endpoint else name
-        for elem in getattr(obj, plural_):
+        # FIXME 2022-08-18 this is a quick n dirty fix for making the endpoint
+        # /organization/{id} faster by preventing it reads all columns from
+        # all the organization's results.
+        # THIS SHOULD NEVER MAKE IT INTO VERSION 4 AND HIGHER!!
+        if isinstance(obj, Organization) and plural_ == 'results':
+            elements = obj.get_result_ids()
+        else:
+            elements = getattr(obj, plural_)
+        for elem in elements:
             hateos = self._hateos_from_related(elem, endpoint)
             hateos_list.append(hateos)
 
