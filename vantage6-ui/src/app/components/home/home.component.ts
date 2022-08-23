@@ -7,7 +7,7 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
-  server_name = environment.server_name;
+  api_url = environment.api_url;
 
   constructor() {}
 
