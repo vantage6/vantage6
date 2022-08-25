@@ -1,0 +1,15 @@
+<div class="background-img" style="background-image: {{_getBackgroundImage()}};">
+  <div class="col-md-12">
+    <div class="card card-container">
+      <div *ngIf="router.url === '/login'">
+        <app-login></app-login>
+      </div>
+      <div *ngIf="router.url === '/password_lost'">
+        <app-password-lost></app-password-lost>
+      </div>
+      <div *ngIf="router.url === '/password_recover'">
+        <app-password-recover></app-password-recover>
+      </div>
+    </div>
+  </div>
+</div>

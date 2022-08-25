@@ -8,7 +8,7 @@ import {
   OrgAccessGuard,
 } from 'src/app/auth/access-guard.guard';
 
-import { LoginComponent } from './components/login/login.component';
+import { LoginComponent } from './components/login/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { UserEditComponent } from './components/edit/user-edit/user-edit.component';
@@ -26,21 +26,20 @@ import { CollaborationTableComponent } from './components/table/collaboration-ta
 import { RoleViewSingleComponent } from './components/view-single/role-view-single/role-view-single.component';
 import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
 import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
-import { PasswordLostComponent } from './components/password-lost/password-lost.component';
-import { PasswordRecoverComponent } from './components/password-recover/password-recover.component';
+import { LoginPageComponent } from './components/login/login-page/login-page.component';
 
 const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent,
+    component: LoginPageComponent,
   },
   {
     path: 'password_lost',
-    component: PasswordLostComponent,
+    component: LoginPageComponent,
   },
   {
     path: 'password_recover',
-    component: PasswordRecoverComponent,
+    component: LoginPageComponent,
   },
   {
     path: 'home',
