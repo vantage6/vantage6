@@ -1,6 +1,6 @@
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/theming
-@use '~@angular/material' as mat;
+@use '@angular/material' as mat;
 // Plus imports for other components in your app.
 @use 'src/app/shared/scss/variables' as v;
 
@@ -57,4 +57,10 @@ body {
 
 .loading-modal .modal-dialog {
   max-width: 360px
+}
+
+// the following ensures that modal windows are always shown in the foreground
+// i.e. they will never be greyed out together with the other non-modal elems
+.modal.fade {
+  z-index: 10000000 !important;
 }
