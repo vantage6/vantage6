@@ -58,3 +58,9 @@ body {
 .loading-modal .modal-dialog {
   max-width: 360px
 }
+
+// the following ensures that modal windows are always shown in the foreground
+// i.e. they will never be greyed out together with the other non-modal elems
+.modal.fade {
+  z-index: 10000000 !important;
+}
