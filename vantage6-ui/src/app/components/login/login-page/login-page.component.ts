@@ -1,13 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-
-let BACKGROUND_IMAGES = [
-  'cuppolone.jpg',
-  'taipei101.png',
-  'trolltunga.jpg',
-  // 'harukas2.jpg',
-  'petronas.jpg',
-];
+import { LoginImageService } from 'src/app/services/common/login-image.service';
 
 @Component({
   selector: 'app-login-page',
@@ -17,20 +10,14 @@ let BACKGROUND_IMAGES = [
 export class LoginPageComponent implements OnInit {
   background_img = '';
 
-  constructor(public router: Router) {}
+  constructor(
+    public router: Router,
+    private backgroundImageService: LoginImageService
+  ) {}
 
-  ngOnInit(): void {
-    this.background_img = this._pickBackgroundImage();
-  }
+  ngOnInit(): void {}
 
-  private _pickBackgroundImage(): string {
-    // pick random background image
-    return BACKGROUND_IMAGES[
-      Math.floor(Math.random() * BACKGROUND_IMAGES.length)
-    ];
-  }
-
-  _getBackgroundImage() {
-    return `url('../../../../assets/images/login_backgrounds/${this.background_img}')`;
+  getBackgroundImage() {
+    return this.backgroundImageService.get();
   }
 }
