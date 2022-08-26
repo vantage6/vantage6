@@ -115,6 +115,10 @@ class NodeTaskNamespace(ClientNamespace):
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
 
+    def on_kill_containers(self, kill_info):
+        self.log.info(f"Received instruction to kill task: {kill_info}")
+        self.node_worker_ref.kill_containers(kill_info)
+
 
 # ------------------------------------------------------------------------------
 class Node(object):
@@ -768,6 +772,25 @@ class Node(object):
             self.log.info("Vnode is interrupted, shutting down...")
             self.cleanup()
             sys.exit()
+
+    def kill_containers(self, kill_info):
+        if kill_info['collaboration_id'] != self.server_io.collaboration_id:
+            self.log.debug(
+                "Not killing tasks as this node is in another collaboration."
+            )
+            return
+        elif 'node_id' in kill_info and \
+                kill_info['node_id'] != self.server_io.whoami.id_:
+            self.log.debug(
+                "Not killing tasks as instructions to kill tasks were directed"
+                " at another node in this collaboration.")
+            return
+
+        # kill specific task if specified, else kill all algorithms
+        kill_list = kill_info.get('kill_list', None)
+        self.__docker.kill_tasks(
+            org_id=self.server_io.whoami.organization_id, kill_list=kill_list
+        )
 
     def cleanup(self):
         if hasattr(self, 'socketIO') and self.socketIO:

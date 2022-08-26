@@ -669,8 +669,7 @@ class TaskResult(ServicesResources):
         """
         task = db.Task.get(id)
         if not task:
-            return {"msg": f"task id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # obtain organization model
         org = self.obtain_auth_organization()
