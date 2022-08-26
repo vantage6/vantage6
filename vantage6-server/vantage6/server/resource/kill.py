@@ -99,19 +99,25 @@ class KillTask(ServicesResources):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
+        # Gather results and task ids of current task and child tasks
+        child_results = [r for child in task.children for r in child.results]
+        all_results = task.results + child_results
+        child_task_ids = [child.id for child in task.children]
+        all_task_ids = [id_] + child_task_ids
+
         kill_list = [{
-            'task_id': id_,
-            'result_id': r.id,
-            'organization_id': r.organization_id
-        } for r in task.results]
+            'task_id': task_id,
+            'result_id': result.id,
+            'organization_id': result.organization_id
+        } for result, task_id in zip(all_results, all_task_ids)]
+
+        # emit socket event to the node to execute the container kills
         self.socketio.emit(
             'kill_containers', {
                 'kill_list': kill_list,
                 'collaboration_id': task.collaboration.id
             }, namespace='/tasks'
         )
-
-        # TODO ensure child tasks are also killed
 
         return {
             "msg": "Nodes have been instructed to kill any containers running "
