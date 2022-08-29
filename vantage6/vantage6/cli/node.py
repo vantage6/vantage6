@@ -299,7 +299,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
         custom_images: dict = ctx.config.get('images')
         if custom_images:
-            image = custom_images.get("image")
+            image = custom_images.get("node")
         if not image:
             image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
 
