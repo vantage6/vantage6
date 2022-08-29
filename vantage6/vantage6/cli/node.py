@@ -289,10 +289,19 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if not image:
-        image = ctx.config.get(
-            "image",
-            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
-        )
+
+        # FIXME: remove me in version 4+, as this is to support older
+        # configuration files. So the outer `image` key is no longer supported
+        if ctx.config.get('image'):
+            warning('Using the `image` option in the config file is to be '
+                    'removed in version 4+.')
+            image = ctx.config.get('image')
+
+        custom_images: dict = ctx.config.get('images')
+        if custom_images:
+            image = custom_images.get("image")
+        if not image:
+            image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
 
     info(f"Pulling latest node image '{image}'")
     try:
