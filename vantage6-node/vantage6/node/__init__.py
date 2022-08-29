@@ -39,7 +39,7 @@ from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
-    TIME_LIMIT_RETRY_CONNECT_NODE
+    TIME_LIMIT_RETRY_CONNECT_NODE, TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
@@ -705,12 +705,19 @@ class Node(object):
         self.socketIO.connect(
             url=f'{self.server_io.host}:{self.server_io.port}',
             headers=self.server_io.headers,
+            wait=False
         )
 
         # Log the outcome
+        i = 0
         while not self.socketIO.connected:
+            if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
+                self.log.critical('Could not connect to the websocket '
+                                  'channels, do you have a slow connection?')
+                exit(1)
             self.log.debug('Waiting for socket connection...')
             time.sleep(1)
+            i += 1
 
         self.log.info(f'Connected to host={self.server_io.host} on port='
                       f'{self.server_io.port}')
