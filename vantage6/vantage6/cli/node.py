@@ -441,7 +441,8 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--all', 'all_nodes', flag_value=True)
-def cli_node_stop(name, system_folders, all_nodes):
+@click.option('--force', 'force', flag_value=True, help="kills containers instantly")
+def cli_node_stop(name, system_folders, all_nodes, force):
     """Stop a running container. """
 
     client = docker.from_env()
@@ -453,10 +454,19 @@ def cli_node_stop(name, system_folders, all_nodes):
         warning("No nodes are currently running.")
         return
 
+    if force:
+        warning('Forcing the node to stop will not terminate helper '
+                'containers, neither will it remove routing rules made on the '
+                'host!')
+
+
     if all_nodes:
         for name in running_node_names:
             container = client.containers.get(name)
-            container.kill()
+            if force:
+                container.kill()
+            else:
+                container.stop()
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
     else:
         if not name:
@@ -471,7 +481,10 @@ def cli_node_stop(name, system_folders, all_nodes):
             container = client.containers.get(name)
             # Stop the container. Using stop() gives the container 10s to exit
             # itself, if not then it will be killed
-            container.stop()
+            if force:
+                container.kill()
+            else:
+                container.stop()
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
