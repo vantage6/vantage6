@@ -55,7 +55,7 @@ install-dev:
 	cd vantage6-server && pip install -e .
 
 image:
-	docker build -t harbor2.vantage6.ai/infrastructure/node:${TAG} .
+	docker build -f ./docker/node-and-server.Dockerfile -t harbor2.vantage6.ai/infrastructure/node:${TAG} .
 	docker tag harbor2.vantage6.ai/infrastructure/node:${TAG} harbor2.vantage6.ai/infrastructure/server:${TAG}
 
 docker-push:
