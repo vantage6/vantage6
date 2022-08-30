@@ -450,10 +450,14 @@ def cli_node_stop(name, system_folders, all_nodes, force):
                 'containers, neither will it remove routing rules made on the '
                 'host!')
 
+
     if all_nodes:
         for name in running_node_names:
             container = client.containers.get(name)
-            container.stop() if not force else container.kill()
+            if force:
+                container.kill()
+            else:
+                container.stop()
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
     else:
         if not name:
@@ -468,7 +472,10 @@ def cli_node_stop(name, system_folders, all_nodes, force):
             container = client.containers.get(name)
             # Stop the container. Using stop() gives the container 10s to exit
             # itself, if not then it will be killed
-            container.stop() if not force else container.kill()
+            if force:
+                container.kill()
+            else:
+                container.stop()
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
