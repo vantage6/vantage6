@@ -249,17 +249,19 @@ def proxy_task():
         log.error("No organizations found in proxy request..")
         return jsonify({"msg": "Organizations missing from input"}), 400
 
-    log.debug(f"{len(organizations)} organizations, attemping to encrypt")
+    log.debug(f"{len(organizations)} organizations")
 
     # For every organization we need to encrypt the input field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organizationn the public key is retrieved an the input is
     # encrypted specifically for them.
     if server_io.is_encrypted_collaboration():
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(encrypt_input, o)
-                       for o in organizations]
-        data["organizations"] = [future.result() for future in futures]
+        log.debug("Applying end-to-end encryption")
+        with app.app_context():
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [executor.submit(encrypt_input, o)
+                        for o in organizations]
+            data["organizations"] = [future.result() for future in futures]
 
     # Attempt to send the task to the central server
     try:
