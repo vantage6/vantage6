@@ -87,7 +87,7 @@ def only_for(types=['user', 'node', 'container']):
             claims = get_jwt()
 
             # check that identity has access to endpoint
-            g.type = claims["type"]
+            g.type = claims["client_type"]
             # log.debug(f"Endpoint accessed as {g.type}")
 
             if g.type not in types:
