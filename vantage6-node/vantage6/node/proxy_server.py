@@ -6,7 +6,7 @@ from http import HTTPStatus
 from requests import Response
 from typing import Callable
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, copy_current_request_context
 
 from vantage6.node.server_io import NodeClient
 from vantage6.node.util import (
@@ -100,8 +100,7 @@ def make_request(method: str, endpoint: str, json: dict = None,
         Response from the vantage6-server
     """
 
-    # Obtain http method from request and map it to the same `requests` method
-    method = get_method(request.method)
+    method = get_method(method)
 
     # Forward the request to the central server. Retry when an exception is
     # raised (e.g. timeout or connection error) or when the server gives an
@@ -117,7 +116,7 @@ def make_request(method: str, endpoint: str, json: dict = None,
             if response.status_code > 210:
                 log.warn('Proxy server received status code:'
                          f'{response.status_code}')
-                log.debug(f'url: {url}, json: {json}, params: {params}, '
+                log.debug(f'method: {request.method}, url: {url}, json: {json}, params: {params}, '
                           f'headers: {headers}')
                 if 'application/json' in response.headers.get('Content-Type'):
                     log.debug(response.json().get("msg", "no description..."))
@@ -133,42 +132,6 @@ def make_request(method: str, endpoint: str, json: dict = None,
 
     # if all attemps fail, raise an exception to be handled by its parent
     raise Exception("Proxy request failed")
-
-
-def encrypt_input(organization: dict) -> dict:
-    """
-    Encrypt the input for a specific organization by using its private key.
-    This method is run as background
-
-    Parameters
-    ----------
-    organization : dict
-        Input as specified by the client (algorithm in this case)
-
-    Returns
-    -------
-    dict
-        Modified organization dictionary in which the `input` key is
-        contains encrypted input
-    """
-    input_ = organization.get("input", {})
-    organization_id = organization.get("id")
-
-    # retrieve public key of the organization
-    log.debug(f"Retrieving public key of org: {organization_id}")
-    response = make_request('get', f'organization/{organization_id}')
-    public_key = response.json().get("public_key")
-
-    # Encrypt the input field
-    server_io: NodeClient = app.config.get("SERVER_IO")
-    organization["input"] = server_io.cryptor.encrypt_bytes_to_str(
-        base64s_to_bytes(input_),
-        public_key
-    )
-
-    log.debug("Input succesfully encrypted for organization "
-              f"{organization_id}!")
-    return organization
 
 
 def decrypt_result(result: dict) -> dict:
@@ -249,21 +212,64 @@ def proxy_task():
         log.error("No organizations found in proxy request..")
         return jsonify({"msg": "Organizations missing from input"}), 400
 
-    log.debug(f"{len(organizations)} organizations, attemping to encrypt")
+    try:
+        headers = {'Authorization': request.headers['Authorization']}
+    except Exception:
+        log.exception('Could not extract headers from request...')
+
+    log.debug(f"{len(organizations)} organizations")
 
     # For every organization we need to encrypt the input field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organizationn the public key is retrieved an the input is
     # encrypted specifically for them.
+    @copy_current_request_context
+    def encrypt_input(organization: dict) -> dict:
+        """
+        Encrypt the input for a specific organization by using its private key.
+        This method is run as background
+
+        Parameters
+        ----------
+        organization : dict
+            Input as specified by the client (algorithm in this case)
+
+        Returns
+        -------
+        dict
+            Modified organization dictionary in which the `input` key is
+            contains encrypted input
+        """
+        input_ = organization.get("input", {})
+        organization_id = organization.get("id")
+
+        # retrieve public key of the organization
+        log.debug(f"Retrieving public key of org: {organization_id}")
+        response = make_request('get', f'organization/{organization_id}',
+                                headers=headers)
+        public_key = response.json().get("public_key")
+
+        # Encrypt the input field
+        server_io: NodeClient = app.config.get("SERVER_IO")
+        organization["input"] = server_io.cryptor.encrypt_bytes_to_str(
+            base64s_to_bytes(input_),
+            public_key
+        )
+
+        log.debug("Input succesfully encrypted for organization "
+                f"{organization_id}!")
+        return organization
+
     if server_io.is_encrypted_collaboration():
+        log.debug("Applying end-to-end encryption")
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(encrypt_input, o)
-                       for o in organizations]
+                    for o in organizations]
         data["organizations"] = [future.result() for future in futures]
 
     # Attempt to send the task to the central server
     try:
-        headers = {'Authorization': request.headers['Authorization']}
         response = make_request('post', 'task', data, headers=headers)
     except Exception:
         log.exception('post task failed')
