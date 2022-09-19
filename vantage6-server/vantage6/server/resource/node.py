@@ -465,6 +465,9 @@ class Node(NodeBase):
                   name:
                     type: string
                     description: Node name
+                  ip:
+                    type: string
+                    description: The node's VPN IP address
 
         responses:
           200:
@@ -537,6 +540,11 @@ class Node(NodeBase):
                         f'{node.organization.id} and collaboration id='
                         f'{node.collaboration.id} already exists!'}, \
                             HTTPStatus.BAD_REQUEST
+
+        # update node IP address if it is given
+        ip = data.get('ip')
+        if ip:
+            node.ip = ip
 
         node.save()
         return node_schema.dump(node).data, HTTPStatus.OK
