@@ -136,21 +136,23 @@ jobs:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
       major_name: ${{ needs.version.outputs.major_name }}
-    if: ${{  env.stage == ''  &&  env.major_name != '' }}
     steps:
 
       - name: Pull docker images
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
         run: |
           docker pull harbor2.vantage6.ai/infrastructure/server:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
 
       - name: Tag docker images
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
         run: |
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
 
       - name: Push docker images
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
         run: |
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
