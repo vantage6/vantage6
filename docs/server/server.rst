@@ -128,18 +128,62 @@ which can be picked up by the node by a function like:
       def on_message(self, message):
           self.log.info(message)
 
+RabbitMQ
+++++++++
+
+An optional component of the vantage6 infrastructure is a
+`RabbitMQ server <https://https://www.rabbitmq.com/>`_. RabbitMQ is a widely
+used message broker that we use to enable horizontal scaling (i.e. using more
+than one instance) of the vantage6 server. Horizontal scaling is useful if
+you have a high workload on your vantage6 server where a single server is node
+longer sufficient. Below, we will first explain what we use RabbitMQ for, and
+then discuss the implementation.
+
+The websocket connection between server and nodes is used to process various
+changes in the network's state. For example, a node can create a new (sub)task
+for the other nodes in the collaboration. The server then communicates these
+tasks via the socket connection. Now, if we use multiple instances of the
+central server, different nodes in the same collaboration may connect to
+different instances, and then, the server would not be able to deliver the new
+task properly. This is where RabbitMQ comes in.
+
+When RabbitMQ is enabled, the websocket messages are directed over the RabbitMQ
+message queue, and delivered to the nodes regardless of which server instance
+they are connected to. The RabbitMQ service thus helps to ensure that all
+websocket events are still communicated properly to all involved parties.
+
+If you use multiple server instances, you should always connect them to the same
+RabbitMQ instance. You can achieve this by adding your RabbitMQ server when you
+create a new server with :code:`vserver new`, or you can add it later to your
+server configuration file with the flag :code:`rabbitmq_uri: <your URI>`.
+
+A RabbitMQ URI is set up in the following way:
+
+::
+
+  amqp://$user:$password@$host:$port/$vhost
+
+Where :code:`user` is the username, :code:`password` is the password,
+:code:`host` is the URL where your RabbitMQ service is running, :code:`port` is
+the queue's port (which is 5672 if you are using the RabbitMQ Docker image), and
+:code:`vhost` is the name of your
+`virtual host <https://www.rabbitmq.com/vhosts.html>`_ (you could e.g. run one
+instance group per vhost).
+
+We can recommend running the `Docker implementation <https://hub.docker.com/_/rabbitmq>`_
+of RabbitMQ. It also ships a 'management' container that gives you a user
+interface to manage your connections on port 15672.
+
+
 Items left
 ----------
 * API design
 * HATEOS
 * Serialization
-* RBAC
 * background tasks
 * Database
 * Models / structure
 * Relation to other components
-* SocketIO connection
-* RabbitMQ
 * VPN server
 * CLI (vserver local)
 
