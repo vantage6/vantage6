@@ -1,5 +1,5 @@
-Node
-====
+vantage6-node
+=============
 
 ``Node`` class
 --------------
@@ -21,24 +21,25 @@ Node
 .. autoclass:: vantage6.node.context.DockerNodeContext
    :members:
 
-
-
-Docker
-------
-.. automodule:: vantage6.node.docker.docker_base
+``DockerBaseManager`` class
+---------------------------
+.. autoclass:: vantage6.node.docker.docker_base.DockerBaseManager
    :members:
 
-.. automodule:: vantage6.node.docker.docker_manager
+``DockerManager`` class
+---------------------------
+.. autoclass:: vantage6.node.docker.docker_manager.DockerManager
    :members:
 
-.. automodule:: vantage6.node.docker.network_manager
+.. autoclass:: vantage6.node.docker.docker_manager.Result
    :members:
 
-.. automodule:: vantage6.node.docker.task_manager
+``DockerTaskManager`` class
+---------------------------
+.. autoclass:: vantage6.node.docker.network_manager
    :members:
 
-.. automodule:: vantage6.node.docker.utils
-   :members:
-
-.. automodule:: vantage6.node.docker.vpn_manager
+``VPNManager`` class
+--------------------
+.. autoclass:: vantage6.node.docker.vpn_manager.VPNManager
    :members:
