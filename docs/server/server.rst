@@ -128,10 +128,34 @@ which can be picked up by the node by a function like:
       def on_message(self, message):
           self.log.info(message)
 
+VPN Server
+++++++++++
+
+The VPN server is an optional component of the vantage6 infrastructure that
+allows algorithms running on different nodes to communicate with one another.
+Its implementation is discussed at length in this `paper <https://ebooks.iospress.nl/pdf/doi/10.3233/SHTI220682>`_
+and you can find information on how to set it up in our `user documentation <https://docs.vantage6.ai/installation/server/eduvpn>`_.
+
+Now, when is the VPN server useful? The VPN server allows each node to establish
+a VPN connection to the VPN server. The algorithm containers can use the VPN connection to communicate
+with algorithm containers running on other nodes (provided those nodes have also
+established a VPN connection). For each algorithm, the VPN IP address and one
+or more ports with labels are stored in the database, which allows other
+algorithm containers to find their contact details. This finally allows
+algorithms to exchange information quickly without the need to go through the
+central server for all communication.
+
+.. todo::
+  I guess this is documented elsewhere? Or it should be documented somewhere
+  where algorithm building is discussed.
+
+
+
+
 RabbitMQ
 ++++++++
 
-An optional component of the vantage6 infrastructure is a
+Another optional component of the vantage6 infrastructure is a
 `RabbitMQ server <https://https://www.rabbitmq.com/>`_. RabbitMQ is a widely
 used message broker that we use to enable horizontal scaling (i.e. using more
 than one instance) of the vantage6 server. Horizontal scaling is useful if
