@@ -2154,6 +2154,12 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.json['organization']['id'], org2.id)
         self.assertEqual(results.json['collaboration']['id'], col2.id)
 
+        # try to patch the node's VPN IP address
+        results = self.app.patch(f'/api/node/{node.id}', headers=headers,
+                                 json={'ip':'0.0.0.0'})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['ip'], '0.0.0.0')
+
         # assign unknow organization
         results = self.app.patch(f'/api/node/{node.id}', headers=headers,
                                  json={'organization_id': -1})
