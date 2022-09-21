@@ -120,7 +120,17 @@ If you want to execute a specific unit test (e.g. the one you just created or on
 
 Unless you are inside the ``tests_folder``, then you should remove that section.
 
-When you submit your PR, the automated pipeline `Github actions <https://github.com/vantage6/vantage6/actions/workflows/unit_tests.yml>`_ both runs the unit tests and computes the coverage.
+Pull Request
+^^^^^^^^^^^^
+Before the PR can be merged in the code the following conditions are met:
+
+* At least one approved review of a code owner
+* All `unit tests <https://github.com/vantage6/vantage6/actions/workflows/unit_tests.yml>`_ should pass
+* `CodeQL <https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/about-code-scanning-with-codeql>`_ should pass - Vunerability scanning
+
+The following conditions are optional, but should be considered before merging:
+* `Codacy <https://app.codacy.com/gh/vantage6/vantage6/dashboard>`_ - Code quality checks
+* `Coveralls <https://coveralls.io/github/vantage6/vantage6>`_ - Code coverage analysis
 
 
 Documentation
