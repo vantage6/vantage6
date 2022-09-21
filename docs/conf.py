@@ -22,7 +22,9 @@ sys.path.insert(0, os.path.abspath('../vantage6-common'))
 # -- Project information -----------------------------------------------------
 
 project = 'vantage6'
-copyright = '2022, F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
+copyright = (
+    '2022, F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
+)
 author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 
 

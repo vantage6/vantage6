@@ -45,7 +45,14 @@ instance, nodes are only allowed to update their own results, and not those of
 other nodes. These checks are performed within the endpoints themselves.
 
 The following rules are defined:
-<TODO insert rule figure>
+
+.. figure:: /images/rules-overview.png
+   :alt: Rule overview
+   :align: center
+
+   The rules that are available per resource, scope, and operation. For example,
+   the first rule with resource 'User', scope 'Own' and operation 'View' will
+   allow a user to view their own user details.
 
 The rules have an operation, a scope, and a resource that they work on. For
 instance, a rule with operation 'View', scope 'Organization' and resource
@@ -63,31 +70,7 @@ CREATE and DELETE requests, respectively. The scopes are:
 API documentation
 -----------------
 
-We use swagger for documentation. The docstrings of the API endpoint functions
-therefore have a swagger-specific setup, which looks like this:
-::
-
-  <Some summary text of the endpoint>
-  ---
-  description: >-
-    <Some description text>
-
-  responses:
-    200:
-      description: Ok
-    401:
-      description: Unauthorized
-
-  security:
-    - bearerAuth: []
-
-  tags: ["<tag_name>"]
-
-For more examples, check out the endpoint code.
-
-When the server is started, an endpoint is created where the swagger docs can
-be viewed at the endpoint apidocs (see for instance
-https://petronas.vantage6.ai/apidocs/).
+We use OAS3+ for API documentation. This is already described in the section :ref:`oas3`.
 
 Response structure (HATEOAS)
 ----------------------------
@@ -149,7 +132,6 @@ Items left
 ----------
 * API design
 * HATEOS
-* Swagger
 * Serialization
 * RBAC
 * background tasks
