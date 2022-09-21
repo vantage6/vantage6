@@ -31,13 +31,19 @@ jobs:
           TAG=${GITHUB_REF#refs/*/}
           VERSION=${TAG#version/*}
           PARTS=(${VERSION//\./ })
+          MAJOR=${PARTS[0]}
           echo "::set-output name=version::${VERSION}"
-          echo "::set-output name=major::${PARTS[0]}"
+          echo "::set-output name=major::${MAJOR}"
           echo "::set-output name=minor::${PARTS[1]}"
           PARTS2=( $(grep -Eo '[[:digit:]]+|[^[:digit:]]+' <<< ${PARTS[2]} ) )
           echo "::set-output name=patch::${PARTS2[0]}"
           echo "::set-output name=stage::${PARTS2[1]}"
           echo "::set-output name=build::${PARTS2[2]}"
+          MAJOR_NAME=''
+          if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
+          if [[ $MAJOR == '2' ]]; then MAJOR_NAME="harukas"; fi
+          if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
+          echo "::set-output name=major_name::${MAJOR_NAME}"
     outputs:
       version: ${{ steps.split.outputs.version }}
       major: ${{ steps.split.outputs.major }}
@@ -45,6 +51,7 @@ jobs:
       patch: ${{ steps.split.outputs.patch }}
       stage: ${{ steps.split.outputs.stage }}
       build: ${{ steps.split.outputs.build }}
+      major_name: ${{ steps.split.outputs.major_name }}
 
   # Build an release all the vantage6 infrastructure packakes. For all
   # the packages it will (1) update the version as specified in the tag,
@@ -70,8 +77,6 @@ jobs:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_TOKEN }}
         run: |
-          echo "::debug::$USERNAME"
-          echo "::debug::$PASSWORD"
           docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
       - name: Checkout repository
@@ -84,7 +89,7 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Install dependancies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install click
@@ -100,7 +105,6 @@ jobs:
           if [[ $stage == 'b' ]]; then SPEC="--spec beta"; fi
           if [[ $stage == 'rc' ]]; then SPEC="--spec candidate"; fi
           FLAGS="--version ${major}.${minor}.${patch} $BUILD --post 0 $SPEC"
-          echo "::debug::$FLAGS"
           make set-version FLAGS="$FLAGS"
 
       - name: Build project
@@ -123,8 +127,45 @@ jobs:
       - name: Push Docker image
         run: make docker-push TAG=$version
 
-  # When the project is build and released the Discord community is
-  # notified.
+  # Update the server and node images on harbor2 for this major version,
+  # including the 'live' tag that triggers a redeployment of the IKNL deployment
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [version, build-n-release]
+    env:
+      version: ${{ needs.version.outputs.version }}
+      stage: ${{ needs.version.outputs.stage }}
+      major_name: ${{ needs.version.outputs.major_name }}
+    steps:
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Pull docker images
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        run: |
+          docker pull harbor2.vantage6.ai/infrastructure/server:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/node:${version}
+
+      - name: Tag docker images
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        run: |
+          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
+          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
+          docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
+
+      - name: Push docker images
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        run: |
+          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
+          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
+          docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
+
+  # When the project is built and released the Discord community is notified.
   notify:
     runs-on: ubuntu-latest
     needs: [version, build-n-release]
@@ -136,7 +177,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install dependancies
+      - name: Install dependencies
         run: |
           pip install discord.py
           pip install click
