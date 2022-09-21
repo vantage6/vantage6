@@ -70,17 +70,18 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   }
 
   async init() {
-    this.loggedin_user = this.userPermission.user;
-
-    // collect roles and rules (which is required to collect users)
-    await this.setRules();
-    await this.setRoles();
-
-    // subscribe to id/org_id parameter in route
-    this.readRoute();
+    this.userPermission.isInitialized().subscribe((ready) => {
+      if (ready) {
+        this.loggedin_user = this.userPermission.user;
+        this.readRoute();
+      }
+    });
   }
 
   async setupCreate() {
+    // collect roles and rules (which is required to collect users)
+    await this.setRules();
+    await this.setAssignableRoles();
     if (!this.organization_id) {
       (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
         this.organizations = orgs;
@@ -99,17 +100,10 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     });
   }
 
-  // TODO get only roles from the relevant organization
-  async setRoles(): Promise<void> {
-    (await this.roleDataService.list(this.rules_all)).subscribe(
-      (roles: Role[]) => {
-        this.roles_all = roles;
-        this.setAssignableRoles();
-      }
-    );
-  }
-
   async setupEdit(id: number) {
+    // collect roles and rules (which is required to collect users)
+    await this.setRules();
+    await this.setAssignableRoles();
     let user = await this.userDataService.get(
       id,
       this.roles_all,
