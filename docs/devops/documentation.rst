@@ -31,6 +31,8 @@ This documentation is automatically built and published on a commit (on certain 
 
 The files in this documentation use the rst format, to see the syntax view `this cheatsheet <https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst>`_.
 
+.. _oas3:
+
 API Documenation with OAS3+
 -----------------------------------------
 The API documentation is hosted at the server at the ``/apidocs`` endpoint. This documentation is generated from the docstrings using `Flasgger <https://github.com/flasgger/flasgger>`_. The source of this documentation can be found in the docstrings of the API functions.
