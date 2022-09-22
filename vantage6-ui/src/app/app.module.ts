@@ -23,7 +23,7 @@ import { CommonModule } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './components/login/login.component';
+import { LoginComponent } from './components/login/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import {
   AccessGuard,
@@ -61,6 +61,9 @@ import { RoleViewSingleComponent } from './components/view-single/role-view-sing
 import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
 import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
 import { ModalLoadingComponent } from './components/modal/modal-loading/modal-loading.component';
+import { PasswordLostComponent } from './components/login/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './components/login/password-recover/password-recover.component';
+import { LoginPageComponent } from './components/login/login-page/login-page.component';
 
 @NgModule({
   declarations: [
@@ -96,6 +99,9 @@ import { ModalLoadingComponent } from './components/modal/modal-loading/modal-lo
     UserViewSingleComponent,
     NodeSingleViewComponent,
     ModalLoadingComponent,
+    PasswordLostComponent,
+    PasswordRecoverComponent,
+    LoginPageComponent,
   ],
   imports: [
     BrowserModule,
