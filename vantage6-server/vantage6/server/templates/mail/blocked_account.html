@@ -94,11 +94,6 @@
                     max-width: 100%;
                 }
             }
-            /* #11B5E9; light blue
-            #0f497b; Dark blue
-            #f9f9f9; White
-            #f9ac23; Orange
-            #aabfce; Light grey? */
         </style>
     </head>
     <body>
@@ -125,11 +120,16 @@
 
                                             Dear <strong>{{firstname}}</strong>,
 
-                                            <p>To reset your password use the following token:</p>
-                                            <p style="font-family: 'Courier New', Courier, monospace; font-size: 12px; overflow-wrap:break-word;padding:10px; color: white; background-color: #0f497b;">
-                                                {{token}}
+                                            <p>
+                                                After {{number_of_allowed_attempts}} failed login attempts your user account has been blocked.<br/>
+                                                <ul>
+                                                    <li>Source IP: {{ip}}</li>
+                                                    <li>Last attempt at: {{time}} (UTC)</li>
+                                                </ul>
                                             </p>
-                                            <p>If you have not requested a password reset simply ignore this message.</p>
+                                            <p>
+                                                Your account will be unlocked in {{time_remaining}} minutes. Please wait or reactivate your account via email.
+                                            </p>
                                             <p>Sincerely, <br/>vantage6 Support Team</p>
                                         </td>
                                     </tr>

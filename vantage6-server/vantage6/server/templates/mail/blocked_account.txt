@@ -1,0 +1,10 @@
+Dear {{firstname}},
+
+After {{number_of_allowed_attempts}} failed login attempts your user account has been blocked.
+
+Source IP: {{ip}}
+Last attempt at: {{time}} (UTC)
+
+Your account will be unlocked in {{time_remaining}} minutes. After that you can retry to login.
+
+Sincerely, vantage6 Support Team

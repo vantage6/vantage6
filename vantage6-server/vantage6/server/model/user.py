@@ -127,11 +127,7 @@ class User(Authenticatable):
         if has_max_attempts and td_last_login < td_max_blocked:
             minutes_remaining = \
                 (td_max_blocked - td_last_login).seconds // 60 + 1
-            return True, (
-                f"Your account is blocked for the next {minutes_remaining} "
-                "minutes due to failed login attempts. Please wait or "
-                "reactivate your account via email."
-            )
+            return True, minutes_remaining
         else:
             return False, None
 

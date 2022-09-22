@@ -2,12 +2,11 @@
 """
 Resources below '/<api_base>/token'
 """
-from __future__ import print_function, unicode_literals
-
 import logging
 import datetime as dt
 
-from flask import request, g
+from typing import Union
+from flask import request, g, render_template
 from flask_jwt_extended import (
     jwt_required,
     create_access_token,
@@ -125,7 +124,7 @@ class UserToken(ServicesResources):
         log.info(f"Succesfull login from {username}")
         return ret, HTTPStatus.OK, {'jwt-token': token}
 
-    def user_login(self, username, password):
+    def user_login(self, username: str, password: str) -> Union[dict, db.User]:
         """Returns user a message in case of failed login attempt."""
         log.info(f"Trying to login '{username}'")
 
@@ -135,10 +134,11 @@ class UserToken(ServicesResources):
             max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
             inactivation_time = pw_policy.get('inactivation_minutes', 15)
 
-            is_blocked, time_remaining_msg = user.is_blocked(
-              max_failed_attempts, inactivation_time)
+            is_blocked, min_rem = user.is_blocked(max_failed_attempts,
+                                                  inactivation_time)
             if is_blocked:
-                return {"msg": time_remaining_msg}, HTTPStatus.UNAUTHORIZED
+                self.notify_user_blocked(user, max_failed_attempts, min_rem)
+                return {"msg": "Failed to login"}, HTTPStatus.UNAUTHORIZED
             elif user.check_password(password):
                 user.failed_login_attempts = 0
                 user.save()
@@ -153,8 +153,31 @@ class UserToken(ServicesResources):
                 user.last_login_attempt = dt.datetime.now()
                 user.save()
 
-        return {"msg": "Invalid username or password!"}, \
-            HTTPStatus.UNAUTHORIZED
+        return {"msg": "Failed to login"}, HTTPStatus.UNAUTHORIZED
+
+    def notify_user_blocked(self, user: db.User, max_n_attempts: int,
+                            min_rem: int) -> None:
+        """Sends an email to the user when his or her account is locked"""
+        if not user.email:
+            log.warning(f'User {user.username} is locked, but does not have'
+                        'an email registered. So no message has been send.')
+
+        template_vars = {'firstname': user.firstname,
+                         'number_of_allowed_attempts': max_n_attempts,
+                         'ip': request.access_route[-1],
+                         'time': dt.datetime.now(dt.timezone.utc),
+                         'time_remaining': min_rem}
+
+        self.mail.send_email(
+            "Your account has been temporary suspended",
+            sender="support@vantage6.ai",
+            recipients=[user.email],
+            text_body=render_template("mail/blocked_account.txt",
+                                      **template_vars),
+            html_body=render_template("mail/blocked_account.html",
+                                      **template_vars)
+        )
+
 
 
 class NodeToken(ServicesResources):
