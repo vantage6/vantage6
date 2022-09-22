@@ -223,7 +223,7 @@ def proxy_task():
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organizationn the public key is retrieved an the input is
     # encrypted specifically for them.
-    @copy_current_request_context
+    # @copy_current_request_context
     def encrypt_input(organization: dict) -> dict:
         """
         Encrypt the input for a specific organization by using its private key.
@@ -261,12 +261,14 @@ def proxy_task():
         return organization
 
     if server_io.is_encrypted_collaboration():
-        log.debug("Applying end-to-end encryption")
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(encrypt_input, o)
-                    for o in organizations]
-        data["organizations"] = [future.result() for future in futures]
+        log.debug("Applying end-to-end encryption")
+        data["organizations"] = [encrypt_input(o) for o in organizations]
+
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     futures = [executor.submit(encrypt_input, o)
+        #             for o in organizations]
+        # data["organizations"] = [future.result() for future in futures]
 
     # Attempt to send the task to the central server
     try:
