@@ -39,7 +39,7 @@ from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
-    TIME_LIMIT_RETRY_CONNECT_NODE
+    TIME_LIMIT_RETRY_CONNECT_NODE, TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
@@ -595,12 +595,27 @@ class Node(object):
         self.log.info("Setting up VPN client container")
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
+
+        #FIXME: remove me in 4+. alpine image has been moved into the `images`
+        # key. This is to support older configuration files.
+        legacy_alpine = self.config.get('alpine')
+
+        # user can specify custom images in the configuration file
+        custom_alpine = self.config['images'].get('alpine') \
+            if 'images' in self.config else None
+        custom_vpn_client = self.config['images'].get('vpn_client') \
+            if 'images' in self.config else None
+        custom_network = self.config['images'].get('network_config') \
+            if 'images' in self.config else None
+
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name,
             vpn_volume_name=vpn_volume_name,
             vpn_subnet=self.config.get('vpn_subnet'),
-            alpine_image=self.config.get('alpine')
+            alpine_image=custom_alpine or legacy_alpine,
+            vpn_client_image=custom_vpn_client,
+            network_config_image=custom_network
         )
 
         if not self.config.get('vpn_subnet'):
@@ -709,12 +724,19 @@ class Node(object):
         self.socketIO.connect(
             url=f'{self.server_io.host}:{self.server_io.port}',
             headers=self.server_io.headers,
+            wait=False
         )
 
         # Log the outcome
+        i = 0
         while not self.socketIO.connected:
+            if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
+                self.log.critical('Could not connect to the websocket '
+                                  'channels, do you have a slow connection?')
+                exit(1)
             self.log.debug('Waiting for socket connection...')
             time.sleep(1)
+            i += 1
 
         self.log.info(f'Connected to host={self.server_io.host} on port='
                       f'{self.server_io.port}')

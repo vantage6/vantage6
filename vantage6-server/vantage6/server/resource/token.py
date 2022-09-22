@@ -206,7 +206,7 @@ class NodeToken(ServicesResources):
 
         token = create_access_token(node)
         ret = {
-            'access_token': create_access_token(node),
+            'access_token': token,
             'refresh_token': create_refresh_token(node),
             'node_url': self.api.url_for(server.resource.node.Node,
                                          id=node.id),
@@ -286,7 +286,7 @@ class ContainerToken(ServicesResources):
         # container identity consists of its node_id,
         # task_id, collaboration_id and image_id
         container = {
-            "type": "container",
+            "client_type": "container",
             "node_id": g.node.id,
             "organization_id": g.node.organization_id,
             "collaboration_id": g.node.collaboration_id,

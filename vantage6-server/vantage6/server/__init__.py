@@ -282,7 +282,7 @@ class ServerApp:
                 return
 
             claims = {
-                'type': type_,
+                'client_type': type_,
                 'roles': roles,
             }
 
