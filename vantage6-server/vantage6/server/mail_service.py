@@ -20,7 +20,7 @@ class MailService:
         with app.app_context():
             try:
                 self.mail.send(msg)
-            except ConnectionRefusedError as e:
+            except Exception as e:
                 log.error("Mailserver error!")
                 log.debug(e)
 

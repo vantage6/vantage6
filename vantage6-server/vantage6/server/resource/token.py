@@ -162,6 +162,8 @@ class UserToken(ServicesResources):
             log.warning(f'User {user.username} is locked, but does not have'
                         'an email registered. So no message has been send.')
 
+        log.info(f'User {user.username} is locked')
+
         template_vars = {'firstname': user.firstname,
                          'number_of_allowed_attempts': max_n_attempts,
                          'ip': request.access_route[-1],
