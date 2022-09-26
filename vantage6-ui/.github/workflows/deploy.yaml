@@ -7,7 +7,6 @@ on:
   push:
     tags:
       - "version/**"
-      - "test/**"
 
 jobs:
   # Check that the tag that is being used starts with `version/`. If
