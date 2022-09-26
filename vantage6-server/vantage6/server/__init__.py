@@ -14,7 +14,9 @@ import traceback
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
-from flask import Flask, make_response, current_app
+from flask import (
+    Flask, make_response, current_app, request, send_from_directory
+)
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
@@ -57,7 +59,8 @@ class ServerApp:
         self.ctx = ctx
 
         # initialize, configure Flask
-        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
+        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__),
+                         static_folder='static')
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
@@ -242,6 +245,11 @@ class ServerApp:
             DatabaseSessionManager.clear_session()
             return {'msg': f'An unexpected error occurred on the server!'}, \
                 HTTPStatus.INTERNAL_SERVER_ERROR
+
+        @self.app.route('/robots.txt')
+        def static_from_root():
+            return send_from_directory(self.app.static_folder,
+                                       request.path[1:])
 
     def configure_api(self):
         """"Define global API output."""
