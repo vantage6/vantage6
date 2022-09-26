@@ -127,7 +127,7 @@ class UserToken(ServicesResources):
     def user_login(self, username: str, password: str) -> Union[dict, db.User]:
         """Returns user a message in case of failed login attempt."""
         log.info(f"Trying to login '{username}'")
-
+        failed_login_msg = "Failed to login"
         if db.User.username_exists(username):
             user = db.User.get_by_username(username)
             pw_policy = self.config.get('password_policy', {})
@@ -138,7 +138,7 @@ class UserToken(ServicesResources):
                                                   inactivation_time)
             if is_blocked:
                 self.notify_user_blocked(user, max_failed_attempts, min_rem)
-                return {"msg": "Failed to login"}, HTTPStatus.UNAUTHORIZED
+                return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
             elif user.check_password(password):
                 user.failed_login_attempts = 0
                 user.save()
@@ -153,14 +153,14 @@ class UserToken(ServicesResources):
                 user.last_login_attempt = dt.datetime.now()
                 user.save()
 
-        return {"msg": "Failed to login"}, HTTPStatus.UNAUTHORIZED
+        return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
 
     def notify_user_blocked(self, user: db.User, max_n_attempts: int,
                             min_rem: int) -> None:
         """Sends an email to the user when his or her account is locked"""
         if not user.email:
             log.warning(f'User {user.username} is locked, but does not have'
-                        'an email registered. So no message has been send.')
+                        'an email registered. So no message has been sent.')
 
         log.info(f'User {user.username} is locked')
 
