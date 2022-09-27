@@ -24,8 +24,6 @@ import {
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
 
-// TODO add option to assign user to different organization?
-
 @Component({
   selector: 'app-user-edit',
   templateUrl: './user-edit.component.html',
@@ -73,9 +71,17 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     this.userPermission.isInitialized().subscribe((ready) => {
       if (ready) {
         this.loggedin_user = this.userPermission.user;
-        this.readRoute();
+        this.async_init();
       }
     });
+  }
+
+  async async_init() {
+    // collect roles and rules (which is required to collect users)
+    await this.setRules();
+    await this.setRoles();
+
+    this.readRoute();
   }
 
   async setupCreate() {
@@ -87,7 +93,6 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
         this.organizations = orgs;
       });
     } else {
-      this.setAssignableRoles();
       this.user.organization = await this.orgDataService.get(
         this.organization_id
       );
@@ -100,15 +105,23 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     });
   }
 
+  async setRoles(): Promise<void> {
+    (await this.roleDataService.list(this.rules_all)).subscribe(
+      (roles: Role[]) => {
+        this.roles_all = roles;
+        this.setAssignableRoles();
+      }
+    );
+  }
+
   async setupEdit(id: number) {
     // collect roles and rules (which is required to collect users)
-    await this.setRules();
-    await this.setAssignableRoles();
     let user = await this.userDataService.get(
       id,
       this.roles_all,
       this.rules_all
     );
+    this.organization_id = this.user.organization_id;
     if (user) {
       this.user = user;
       this.user_orig_name = this.user.username;
@@ -121,9 +134,11 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   }
 
   async setAssignableRoles(): Promise<void> {
+    // only set assignable roles if organization id is already known and not
+    // matching with the roles that are present
     if (
-      (this.roles_assignable_all.length === 0 && this.organization_id) ||
-      !this.rolesMatchOrgId()
+      this.organization_id &&
+      (this.roles_assignable_all.length === 0 || !this.rolesMatchOrgId())
     ) {
       // first get all roles assignable for the organization this user is in
       this.roles_assignable_all = deepcopy(
@@ -146,9 +161,13 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
 
   rolesMatchOrgId(): boolean {
     for (let role of this.roles_assignable_all) {
-      if (role.organization_id === this.organization_id) return true;
+      if (
+        role.organization_id !== this.organization_id &&
+        role.organization_id !== null
+      )
+        return false;
     }
-    return false;
+    return true;
   }
 
   filterAssignableRoles(): void {
