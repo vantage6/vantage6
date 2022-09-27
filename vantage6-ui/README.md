@@ -52,6 +52,4 @@ for a development server. Navigate to `http://localhost:4200/` to use it.
 
 Angular production servers can be deployed in many ways. Angular's
 [deployment documentation](https://angular.io/guide/deployment) offers a number
-of options. Alternatively, you can use the Docker image we have made available on
-[harbor2.vantage6.ai/infrastructure/ui](harbor2.vantage6.ai/infrastructure/ui)
-to deploy you own UI.
+of options. Alternatively, you can use the Docker image `harbor2.vantage6.ai/infrastructure/ui` to deploy you own UI.
