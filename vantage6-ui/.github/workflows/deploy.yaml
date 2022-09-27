@@ -49,7 +49,7 @@ jobs:
 
       - name: Update UI version in package.json
         run: |
-          npm version $version
+          npm version --no-git-tag-version --allow-same-version $version
 
       - name: Set up Node.js version
         uses: actions/setup-node@v1
