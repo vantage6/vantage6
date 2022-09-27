@@ -4,7 +4,6 @@
 </h1>
 
 <h3 align=center> A privacy preserving federated learning solution</h3>
-<h3 align="center">
 
 <p align="center">
   <a href="#books-documentation">Documentation</a> •
