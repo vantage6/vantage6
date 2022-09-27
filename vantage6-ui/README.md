@@ -31,9 +31,9 @@ such as Harukas. Please consider upgrading your project to Petronas.
 
 This UI is an [Angular](https://github.com/angular/angular-cli) (version 14.1.3)
 application. For general information on how to work with Angular, we refer to
-the [Angular CLI home page](https://angular.io/cli). You may need to install the
-following [requirements](https://angular.io/guide/setup-local) to run Angular
-applications.
+the [Angular CLI home page](https://angular.io/cli). You may need to install these
+[requirements](https://angular.io/guide/setup-local) to run Angular
+applications locally.
 
 Before running the application, you may need to update the configuration. Update
 the file in `src/environments/environment.ts` to set where your vantage6 server
@@ -52,7 +52,6 @@ for a development server. Navigate to `http://localhost:4200/` to use it.
 
 Angular production servers can be deployed in many ways. Angular's
 [deployment documentation](https://angular.io/guide/deployment) offers a number
-of options.
-
-Alternatively, you can use the Docker image we have made available on
-harbor2.vantage6.ai/infrastructure/ui to deploy you own UI.
+of options. Alternatively, you can use the Docker image we have made available on
+[harbor2.vantage6.ai/infrastructure/ui](harbor2.vantage6.ai/infrastructure/ui)
+to deploy you own UI.
