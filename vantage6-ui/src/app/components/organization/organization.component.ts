@@ -82,9 +82,7 @@ export class OrganizationComponent implements OnInit {
   async init(): Promise<void> {
     this.loggedin_user = this.userPermission.user;
     // get rules
-    (await this.ruleDataService.list()).subscribe((rules) => {
-      this.rules = rules;
-    });
+    this.rules = await this.ruleDataService.list();
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
@@ -98,9 +96,7 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setup() {
-    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-      this.organizations = orgs;
-    });
+    this.organizations = await this.orgDataService.list();
 
     // get all organizations that the user is allowed to see
     this.current_organization = getById(this.organizations, this.route_org_id);

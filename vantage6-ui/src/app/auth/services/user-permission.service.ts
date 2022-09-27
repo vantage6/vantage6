@@ -39,14 +39,8 @@ export class UserPermissionService {
 
   async setup(): Promise<void> {
     // request rules and roles
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
-      this.all_rules = rules;
-    });
-    (await this.roleDataService.list(this.all_rules)).subscribe(
-      (roles: Role[]) => {
-        this.roles = roles;
-      }
-    );
+    this.all_rules = await this.ruleDataService.list();
+    this.roles = await this.roleDataService.list(this.all_rules);
 
     // get user information
     let user_info = this.tokenStorage.getUserInfo();

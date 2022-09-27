@@ -36,12 +36,12 @@ export class UserDataService extends BaseDataService {
     roles: Role[],
     rules: Rule[],
     force_refresh: boolean = false
-  ): Promise<Observable<User[]>> {
+  ): Promise<User[]> {
     return (await super.list_base(
       this.convertJsonService.getUser,
       [roles, rules],
       force_refresh
-    )) as Observable<User[]>;
+    )) as User[];
   }
 
   async list_with_params(
