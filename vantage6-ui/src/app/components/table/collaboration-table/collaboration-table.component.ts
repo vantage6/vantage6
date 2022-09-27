@@ -8,7 +8,6 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { removeDuplicateIds } from 'src/app/shared/utils';
 import { TableComponent } from '../base-table/table.component';
 
 @Component({
@@ -50,19 +49,19 @@ export class CollaborationTableComponent
   }
 
   async setResources(): Promise<void> {
+    await this.setNodes();
     if (this.isShowingSingleOrg()) {
       this.resources = await this.collabDataService.org_list(
         this.route_org_id as number,
-        this.organizations
+        this.organizations,
+        this.nodes
       );
-      this.addNodes();
     } else {
-      (await this.collabDataService.list(this.organizations)).subscribe(
-        (collabs: Collaboration[]) => {
-          this.resources = collabs;
-          this.addNodes();
-        }
-      );
+      (
+        await this.collabDataService.list(this.organizations, this.nodes)
+      ).subscribe((collabs: Collaboration[]) => {
+        this.resources = collabs;
+      });
     }
   }
 
@@ -79,15 +78,16 @@ export class CollaborationTableComponent
   }
 
   async setNodes(): Promise<void> {
-    this.nodes = [];
-    // TODO make method to get all collaborations nodes in one go -->
-    // best way for that is to modify the server API to allow giving multiple
-    // collaboration ids
-    for (let collab of this.resources) {
-      const nodes = await this.nodeDataService.collab_list(collab.id);
-      this.nodes.push(...nodes);
-    }
-    this.nodes = removeDuplicateIds(this.nodes);
+    (await this.nodeDataService.list()).subscribe((nodes) => {
+      this.nodes = nodes;
+    });
+    // TODO now we gather all nodes
+    // this.nodes = [];
+    // for (let collab of this.resources) {
+    //   const nodes = await this.nodeDataService.collab_list(collab.id);
+    //   this.nodes.push(...nodes);
+    // }
+    // this.nodes = removeDuplicateIds(this.nodes);
   }
 
   isEncryptedText(collab: Collaboration): string {
