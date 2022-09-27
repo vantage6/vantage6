@@ -1,27 +1,59 @@
-# Vantage6UI
+<h1 align="center">
+  <br>
+  <a href="https://vantage6.ai"><img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" alt="vantage6" width="350"></a>
+</h1>
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.0.3.
+<h3 align=center> A privacy preserving federated learning solution</h3>
+<h3 align="center">
 
-## Development server
+<p align="center">
+  <a href="#books-documentation">Documentation</a> •
+  <a href="#gift_heart-contributing">Contributing</a> •
+  <a href="#black_nib-references">References</a>
+</p>
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+---
 
-## Code scaffolding
+This repository is part of **vantage6**, and contains the code for our User Interface.
+This is a web application that allows you to communicate easily with your **vantage6** server.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## How to use
 
-## Build
+For instructions on how to run your own user interface, see the instructions below.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+If you are using our Petronas server you can use this user interface by logging
+on to https://portal.petronas.vantage6.ai/. Contact us if you would like to have
+a user account.
 
-## Running unit tests
+Note that the user interface is not available for older **vantage6** servers
+such as Harukas. Please consider upgrading your project to Petronas.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Running the UI
 
-## Running end-to-end tests
+This UI is an [Angular](https://github.com/angular/angular-cli) (version 14.1.3)
+application. For general information on how to work with Angular, we refer to
+the [Angular CLI home page](https://angular.io/cli). You may need to install the
+following [requirements](https://angular.io/guide/setup-local) to run Angular
+applications.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+Before running the application, you may need to update the configuration. Update
+the file in `src/environments/environment.ts` to set where your vantage6 server
+is running (or, alternatively, update `environment.prod.ts` if you want to run a
+production application).
 
-## Further help
+When you have completed the steps above, run
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```
+ng serve
+```
+
+for a development server. Navigate to `http://localhost:4200/` to use it.
+
+### Deployment
+
+Angular production servers can be deployed in many ways. Angular's
+[deployment documentation](https://angular.io/guide/deployment) offers a number
+of options.
+
+Alternatively, you can use the Docker image we have made available on
+harbor2.vantage6.ai/infrastructure/ui to deploy you own UI.
