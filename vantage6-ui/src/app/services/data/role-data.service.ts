@@ -31,15 +31,12 @@ export class RoleDataService extends BaseDataService {
     )) as Role;
   }
 
-  async list(
-    rules: Rule[],
-    force_refresh: boolean = false
-  ): Promise<Observable<Role[]>> {
+  async list(rules: Rule[], force_refresh: boolean = false): Promise<Role[]> {
     return (await super.list_base(
       this.convertJsonService.getRole,
       [rules],
       force_refresh
-    )) as Observable<Role[]>;
+    )) as Role[];
   }
 
   async list_with_params(
@@ -70,7 +67,7 @@ export class RoleDataService extends BaseDataService {
     } else {
       // this organization has been queried before: get matches from the saved
       // data
-      for (let role of this.resource_list.value as Role[]) {
+      for (let role of this.resource_list as Role[]) {
         if (
           role.organization_id === organization_id ||
           role.organization_id === null

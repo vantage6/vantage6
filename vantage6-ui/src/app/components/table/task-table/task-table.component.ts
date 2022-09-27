@@ -63,15 +63,9 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs) => {
-      this.organizations = orgs;
-    });
+    this.organizations = await this.orgDataService.list();
 
-    (await this.collabDataService.list(this.organizations)).subscribe(
-      (cols) => {
-        this.collaborations = cols;
-      }
-    );
+    this.collaborations = await this.collabDataService.list(this.organizations);
 
     this.readRoute();
   }
@@ -153,9 +147,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
         this.route_org_id as number
       );
     } else {
-      (await this.taskDataService.list()).subscribe((tasks: Task[]) => {
-        this.resources = tasks;
-      });
+      this.resources = await this.taskDataService.list();
     }
     // make a copy to prevent that changes in these resources are directly
     // reflected in the resources within dataServices

@@ -26,12 +26,12 @@ export class NodeDataService extends BaseDataService {
     )) as Node;
   }
 
-  async list(force_refresh: boolean = false): Promise<Observable<Node[]>> {
+  async list(force_refresh: boolean = false): Promise<Node[]> {
     return (await super.list_base(
       this.convertJsonService.getNode,
       [],
       force_refresh
-    )) as Observable<Node[]>;
+    )) as Node[];
   }
 
   async org_list(
@@ -56,11 +56,5 @@ export class NodeDataService extends BaseDataService {
       [],
       force_refresh
     )) as Node[];
-  }
-
-  public save(node: Node): void {
-    let updated_list = [...this.resource_list.value];
-    updated_list = addOrReplace(updated_list, node);
-    this.resource_list.next(updated_list);
   }
 }
