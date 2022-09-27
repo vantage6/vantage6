@@ -69,6 +69,8 @@ export abstract class BaseDataService {
       this.has_queried_list = true;
       this.saveMultiple(resources);
     }
+    // TODO why do we return an observable here? I think it is much easier
+    // to just return the resources (they are stored in dataServices anyway)
     return this.resource_list.asObservable();
   }
 
