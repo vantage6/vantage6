@@ -63,6 +63,7 @@ class TestResources(unittest.TestCase):
             cls.entities = yaml.safe_load(f.read())
         load(cls.entities)
 
+        server.app.testing = True
         cls.app = server.app.test_client()
 
         cls.credentials = {
@@ -108,13 +109,13 @@ class TestResources(unittest.TestCase):
             headers = {
                 'Authorization': 'Bearer {}'.format(tokens['access_token'])
             }
+            return headers
         else:
             print('something wrong, during login:')
             print(tokens)
+            return None
 
-        return headers
-
-    def create_user(self, organization=None, rules=[]):
+    def create_user(self, organization=None, rules=[], password="password"):
 
         if not organization:
             organization = Organization(name="some-organization")
@@ -122,10 +123,8 @@ class TestResources(unittest.TestCase):
 
         # user details
         username = str(uuid.uuid1())
-        password = "password"
 
         # create a temporary organization
-
         user = User(username=username, password=password,
                     organization=organization, email=f"{username}@test.org",
                     rules=rules)
@@ -445,9 +444,14 @@ class TestResources(unittest.TestCase):
             "username": "unittest",
             "firstname": "unit",
             "lastname": "test",
-            "password": "super-secret",
             "email": "unit@test.org",
         }
+        # with a bad password, user should not be created
+        new_user['password'] = "1234"
+        result = self.app.post('/api/user', headers=headers, json=new_user)
+        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+
+        new_user['password'] = "Welkom01!"
         result = self.app.post("/api/user", headers=headers,
                                json=new_user)
         self.assertEqual(result.status_code, 201)
@@ -509,26 +513,62 @@ class TestResources(unittest.TestCase):
 
     @patch("vantage6.server.resource.recover.decode_token")
     def test_recover_password(self, decode_token):
-        decode_token.return_value = {'identity': {'id': 1}}
+        decode_token.return_value = {'sub': {'id': 1}}
         new_password = {
-            "password": "$ecret88!",
+            "password": "$Ecret88!",
             "reset_token": "token"
         }
         result = self.app.post("/api/recover/reset", json=new_password)
-
         self.assertEqual(result.status_code, 200)
 
         # verify that the new password works
         result = self.app.post("/api/token/user", json={
             "username": "root",
-            "password": "$ecret88!"
+            "password": "$Ecret88!"
         })
         self.assertIn("access_token", result.json)
-        self.credentials["root"]["password"] = "$ecret88!"
+        self.credentials["root"]["password"] = "$Ecret88!"
 
     def test_fail_recover_password(self):
         result = self.app.post("/api/recover/reset", json={})
         self.assertEqual(result.status_code, 400)
+
+    def test_change_password(self):
+        user = self.create_user(password="Password1!")
+        headers = self.login(user.username)
+
+        # test if fails when not providing correct data
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "Password1!"
+        })
+        self.assertEqual(result.status_code, 400)
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "new_password": "a_new_password"
+        })
+        self.assertEqual(result.status_code, 400)
+
+        # test if fails when wrong password is provided
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "wrong_password1!",
+            "new_password": "a_new_password"
+        })
+        self.assertEqual(result.status_code, 401)
+
+        # test if fails when new password is the same
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "Password1!",
+            "new_password": "Password1!"
+        })
+        self.assertEqual(result.status_code, 400)
+
+        # test if it works when used as intended
+        result = self.app.patch("/api/password/change", headers=headers, json={
+            "current_password": "Password1!",
+            "new_password": "A_new_password1"
+        })
+        self.assertEqual(result.status_code, 200)
+        db.session.refresh(user)
+        self.assertTrue(user.check_password("A_new_password1"))
 
     def test_view_rules(self):
         headers = self.login("root")
@@ -963,7 +1003,7 @@ class TestResources(unittest.TestCase):
             "username": "smarty",
             "firstname": "Smart",
             "lastname": "Pants",
-            "password": "welkom01",
+            "password": "Welkom01!",
             "email": "mail-us@me.org"
         }
 
@@ -1067,19 +1107,23 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("whatever", user.firstname)
 
-        # edit user from different organization, and test other edit fields
+        # check that password cannot be edited
         rule = Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'password': 'keep-it-safe'
+        })
+        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+
+        # edit user from different organization, and test other edit fields
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'again',
             'lastname': 'and again',
-            'password': 'keep-it-safe'
         })
         db.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("again", user.firstname)
         self.assertEqual("and again", user.lastname)
-        self.assertTrue(user.check_password("keep-it-safe"))
 
         # test that you cannot assign rules that you not own
         not_owning_rule = Rule.get_by_("user", Scope.OWN,
@@ -2109,6 +2153,12 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(results.json['organization']['id'], org2.id)
         self.assertEqual(results.json['collaboration']['id'], col2.id)
+
+        # try to patch the node's VPN IP address
+        results = self.app.patch(f'/api/node/{node.id}', headers=headers,
+                                 json={'ip':'0.0.0.0'})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['ip'], '0.0.0.0')
 
         # assign unknow organization
         results = self.app.patch(f'/api/node/{node.id}', headers=headers,

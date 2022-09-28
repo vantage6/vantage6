@@ -5,8 +5,6 @@ import sqlalchemy.exc
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import reqparse
-from flasgger import swag_from
-from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -95,96 +93,101 @@ class Users(UserBase):
         """List users
         ---
         description: >-
-            Returns a list of users that are within the organization of the
-            user. In case of an **administrator** all users from all
-            organizations are returned. This also returns the info for the
-            users given that they have authorization and only request
-            information on the users from within the same scope.\n\n
+            Returns a list of users that you are allowed to see.
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
             |User|Global|View|❌|❌|View any user details|\n
-            |User|Organization|View|❌|❌|View users from your organization|\n\n
+            |User|Organization|View|❌|❌|View users from your organization|\n
+
+            Accessible to users.
 
         parameters:
-            - in: query
-              name: username
-              schema:
-                type: string
-              description: >-
-                Name to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: organization_id
-              schema:
-                type: integer
-              description: organization id
-            - in: query
-              name: firstname
-              schema:
-                type: string
-              description: >-
-                Name to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: lastname
-              schema:
-                type: string
-              description: >-
-                Name to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: email
-              schema:
-                type: string
-              description: >-
-                Email to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: role_id
-              schema:
-                type: integer
-              description: role that is assigned to user
-            - in: query
-              name: rule_id
-              schema:
-                type: integer
-              description: rule that is assigned to user
-            - in: query
-              name: last_seen_from
-              schema:
-                type: date (yyyy-mm-dd)
-              description: show only users seen since this date
-            - in: query
-              name: last_seen_till
-              schema:
-                type: date (yyyy-mm-dd)
-              description: show only users last seen before this date
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: query
+            name: username
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: organization_id
+            schema:
+              type: integer
+            description: Organization id
+          - in: query
+            name: firstname
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: lastname
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: email
+            schema:
+              type: string
+            description: >-
+              Email to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: role_id
+            schema:
+              type: integer
+            description: Role that is assigned to user
+          - in: query
+            name: rule_id
+            schema:
+              type: integer
+            description: Rule that is assigned to user
+          - in: query
+            name: last_seen_from
+            schema:
+              type: date (yyyy-mm-dd)
+            description: Show only users seen since this date
+          - in: query
+            name: last_seen_till
+            schema:
+              type: date (yyyy-mm-dd)
+            description: Show only users last seen before this date
+          - in: query
+            name: include
+            schema:
+              type: string
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized or missing permission
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
 
         security:
             - bearerAuth: []
@@ -228,10 +231,71 @@ class Users(UserBase):
         return self.response(page, user_schema)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_user_without_id.yaml")),
-               endpoint='user_without_id')
     def post(self):
-        """Create a new User."""
+        """Create user
+        ---
+        description: >-
+          Creates new user from the request data to the users organization.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |User|Global|Create|❌|❌|Create a new user|\n
+          |User|Organization|Create|❌|❌|Create a new user as part of your
+          organization|\n
+
+          Accessible to users.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: Unique username
+                  firstname:
+                    type: string
+                    description: First name
+                  lastname:
+                    type: string
+                    description: Last name
+                  password:
+                    type: string
+                    description: Password
+                  organization_id:
+                    type: integer
+                    description: Organization id to which user is assigned
+                  roles:
+                    type: array
+                    items:
+                      type: integer
+                    description: User's roles
+                  rules:
+                    type: array
+                    items:
+                      type: integer
+                    description: Extra rules for the user on top of the roles
+                  email:
+                    type: string
+                    description: Email address
+
+        responses:
+          201:
+            description: Ok
+          400:
+            description: Username or email already exists
+          401:
+            description: Unauthorized
+          404:
+            description: Organization id does not exist
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=True)
         parser.add_argument("firstname", type=str, required=True)
@@ -317,6 +381,12 @@ class Users(UserBase):
             email=data["email"],
             password=data["password"]
         )
+
+        # check if the password meets password criteria
+        msg = user.set_password(data["password"])
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
         user.save()
 
         return user_schema.dump(user).data, HTTPStatus.CREATED
@@ -329,22 +399,25 @@ class User(UserBase):
         """Get user
         ---
         description: >-
-            Returns the user specified by the id as well as be able to view the
-            info on the users within the same scope.\n\n
+            Returns the user specified by the id.\n
 
             ### Permission Table\n
-            |Rulename|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |-- |--|--|--|--|--|\n
             |User|Global|View|❌|❌|View any user details|\n
             |User|Organization|View|❌|❌|View users from your
-            organization|\n\n
+            organization|\n
+            |User|Organization|Own|❌|❌|View details about your own user|\n
+
+            Accessible to users.
 
         parameters:
             - in: path
               name: id
               schema:
                 type: integer
-              description: user id
+              description: User id
               required: true
 
         responses:
@@ -353,7 +426,7 @@ class User(UserBase):
             404:
                 description: User not found
             401:
-                description: Unauthorized or missing permission
+                description: Unauthorized
 
         security:
             - bearerAuth: []
@@ -382,10 +455,77 @@ class User(UserBase):
                     HTTPStatus.UNAUTHORIZED
 
     @with_user
-    @swag_from(str(Path(r"swagger/patch_user_with_id.yaml")),
-               endpoint='user_with_id')
     def patch(self, id):
+        """Update user
+        ---
+        description: >-
+          Update user information.\n
 
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |User|Global|Edit|❌|❌|Edit any user|\n
+          |User|Organization|Edit|❌|❌|Edit any user in your organization|\n
+          |User|Own|Edit|❌|❌|Edit your own user account|\n
+
+          Accessible to users.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: Unique username
+                  firstname:
+                    type: string
+                    description: First name
+                  lastname:
+                    type: string
+                    description: Last name
+                  email:
+                    type: string
+                    description: Email address
+                  roles:
+                    type: array
+                    items:
+                      type: integer
+                    description: User's roles
+                  rules:
+                    type: array
+                    items:
+                      type: integer
+                    description: Extra rules for the user on top of the roles
+                  organization_id:
+                    type: integer
+                    description: Organization id of the user
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: User id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: User cannot be updated to contents of request body,
+              e.g. due to duplicate email address.
+          404:
+            description: User not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
         user = db.User.get(id)
 
         if not user:
@@ -403,10 +543,18 @@ class User(UserBase):
         parser.add_argument("username", type=str, required=False)
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
-        parser.add_argument("password", type=str, required=False)
         parser.add_argument("email", type=str, required=False)
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
+
+        # check if user defined a password, which is deprecated
+        # FIXME BvB 22-06-29: with time, this check may be removed. Now it is
+        # here for backwards compatibility (if people have scripts using this,
+        # this makes them aware something changed)
+        request_json = request.get_json()
+        if request_json.get("password"):
+            return {"msg": "You cannot change your password here!"}, \
+                HTTPStatus.BAD_REQUEST
 
         if data["username"]:
             if (user.username != data["username"] and
@@ -419,8 +567,6 @@ class User(UserBase):
             user.firstname = data["firstname"]
         if data["lastname"]:
             user.lastname = data["lastname"]
-        if data["password"]:
-            user.password = data["password"]
         if data["email"]:
             if (user.email != data["email"] and
                     db.User.exists("email", data["email"])):
@@ -539,10 +685,44 @@ class User(UserBase):
         return user_schema.dump(user).data, HTTPStatus.OK
 
     @with_user
-    @swag_from(str(Path(r"swagger/delete_user_with_id.yaml")),
-               endpoint='user_with_id')
     def delete(self, id):
-        """Remove user from the database."""
+        """Remove user.
+        ---
+        description: >-
+          Delete a user account permanently.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |User|Global|Delete|❌|❌|Delete any user|\n
+          |User|Organization|Delete|❌|❌|Delete users from your
+          organization|\n
+          |User|Own|Delete|❌|❌|Delete your own account|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: User id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: User not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
         user = db.User.get(id)
         if not user:
             return {"msg": f"user id={id} not found"}, \

@@ -8,7 +8,7 @@ from functools import wraps
 from flask import g, request
 from flask_restful import Resource
 from flask_jwt_extended import (
-    get_jwt_claims, get_jwt_identity, jwt_required
+    get_jwt, get_jwt_identity, jwt_required
 )
 
 from vantage6.common import logger_name
@@ -84,10 +84,10 @@ def only_for(types=['user', 'node', 'container']):
 
             # decode JWT-token
             identity = get_jwt_identity()
-            claims = get_jwt_claims()
+            claims = get_jwt()
 
             # check that identity has access to endpoint
-            g.type = claims["type"]
+            g.type = claims["client_type"]
             # log.debug(f"Endpoint accessed as {g.type}")
 
             if g.type not in types:
@@ -116,7 +116,7 @@ def only_for(types=['user', 'node', 'container']):
                 raise Exception(f"Unknown entity: {g.type}")
 
             return fn(*args, **kwargs)
-        return jwt_required(decorator)
+        return jwt_required()(decorator)
     return protection_decorator
 
 

@@ -5,6 +5,7 @@ This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
 import logging
+import traceback
 import pickle
 import time
 import typing
@@ -609,7 +610,16 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            id_ = jwt.decode(self.token, verify=False)['identity']
+            jwt_payload = jwt.decode(self.token,
+                             options={"verify_signature": False})
+
+            # FIXME: 'identity' is no longer needed in version 4+. So this if
+            # statement can be removed
+            if 'sub' in jwt_payload:
+                id_ = jwt_payload['sub']
+            elif 'identity' in jwt_payload:
+                id_ = jwt_payload['identity']
+
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
             organization_id = user.get("organization").get("id")
@@ -630,7 +640,7 @@ class UserClient(ClientBase):
                           f"(id={organization_id})")
         except Exception as e:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.debug(e)
+            self.log.debug(traceback.format_exc())
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
@@ -654,6 +664,32 @@ class UserClient(ClientBase):
                 Containing the server health information
             """
             return self.parent.request('health')
+
+        def change_my_password(self, current_password: str,
+                               new_password: str) -> dict:
+            """Change your own password by providing your current password
+
+            Parameters
+            ----------
+            current_password : str
+                Your current password
+            new_password : str
+                Your new password
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            result = self.parent.request(
+                'recover/change', method='post', json={
+                    'current_password': current_password,
+                    'new_password': new_password
+                }
+            )
+            msg = result.get('msg')
+            self.parent.log.info(f'--> {msg}')
+            return result
 
         def reset_my_password(self, email: str = None,
                               username: str = None) -> dict:
@@ -912,7 +948,8 @@ class UserClient(ClientBase):
             return self.parent.request('node', params=params)
 
         @post_filtering(iterable=False)
-        def create(self, collaboration: int, organization: int = None) -> dict:
+        def create(self, collaboration: int, organization: int = None,
+                   name: str = None) -> dict:
             """Register new node
 
             Parameters
@@ -921,7 +958,10 @@ class UserClient(ClientBase):
                 Collaboration id to which this node belongs
             organization : int, optional
                 Organization id to which this node belongs. If no id provided
-                the users organization is used. By default None
+                the users organization is used. Default value is None
+            name : str, optional
+                Name of the node. If no name is provided the server will
+                generate one. Default value is None
 
             Returns
             -------
@@ -933,7 +973,8 @@ class UserClient(ClientBase):
 
             return self.parent.request('node', method='post', json={
                 'organization_id': organization,
-                'collaboration_id': collaboration
+                'collaboration_id': collaboration,
+                'name': name
             })
 
         @post_filtering(iterable=False)
@@ -986,7 +1027,7 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(self, name: str = None, country: int = None,
                  collaboration: int = None, page: int = None,
-                 per_page: int = None, include_metadata: bool = False) -> list:
+                 per_page: int = None, include_metadata: bool = True) -> list:
             """List organizations
 
             Parameters
@@ -1027,7 +1068,7 @@ class UserClient(ClientBase):
             ----------
             id_ : int, optional
                 Organization `id` of the organization you want to view.
-                In case no `id` is profided it will display your own
+                In case no `id` is provided it will display your own
                 organization, default value is None.
 
             Returns
@@ -1210,9 +1251,9 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def update(self, id_: int = None, firstname: str = None,
-                   lastname: str = None, password: str = None,
-                   organization: int = None, rules: list = None,
-                   roles: list = None, email: str = None) -> dict:
+                   lastname: str = None, organization: int = None,
+                   rules: list = None, roles: list = None, email: str = None
+                   ) -> dict:
             """Update user details
 
             In case you do not supply a user_id, your user is being
@@ -1220,14 +1261,12 @@ class UserClient(ClientBase):
 
             Parameters
             ----------
-            user_id : int
+            id_ : int
                 User `id` from the user you want to update
             firstname : str
                 Your first name
             lastname : str
                 Your last name
-            password : str
-                The password you use to login
             organization : int
                 Organization id of the organization you want to be part
                 of. This can only done by super-users.
@@ -1251,7 +1290,6 @@ class UserClient(ClientBase):
             json_body = {
                 "firstname": firstname,
                 "lastname": lastname,
-                "password": password,
                 "organization_id": organization,
                 "rules": rules,
                 "roles": roles,
@@ -1830,7 +1868,16 @@ class ContainerClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        container_identity = jwt.decode(token, verify=False)['identity']
+        jwt_payload = jwt.decode(
+            token, options={"verify_signature": False})
+
+        # FIXME: 'identity' is no longer needed in version 4+. So this if
+        # statement can be removed
+        if 'sub' in jwt_payload:
+            container_identity = jwt_payload['sub']
+        elif 'identity' in jwt_payload:
+            container_identity = jwt_payload['identity']
+
         self.image = container_identity.get("image")
         self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")

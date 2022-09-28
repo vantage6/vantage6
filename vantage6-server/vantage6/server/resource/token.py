@@ -5,17 +5,16 @@ Resources below '/<api_base>/token'
 from __future__ import print_function, unicode_literals
 
 import logging
+import datetime as dt
 
 from flask import request, g
 from flask_jwt_extended import (
-    jwt_refresh_token_required,
+    jwt_required,
     create_access_token,
     create_refresh_token,
     get_jwt_identity
 )
-from flasgger import swag_from
 from http import HTTPStatus
-from pathlib import Path
 
 from vantage6 import server
 from vantage6.server import db
@@ -72,10 +71,27 @@ def setup(api, api_base, services):
 class UserToken(ServicesResources):
     """resource for api/token"""
 
-    @swag_from(str(Path(r"swagger/post_token_user.yaml")),
-               endpoint='user_token')
     def post(self):
-        """Authenticate user or node"""
+        """Login user
+        ---
+        description: >-
+          Allow user to sign in by supplying a username and password.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+        responses:
+          200:
+            description: Ok, authenticated
+          400:
+            description: Username/password combination unknown, or missing from
+              request body.
+
+        tags: ["Authentication"]
+        """
         log.debug("Authenticate user using username and password")
 
         if not request.is_json:
@@ -91,11 +107,9 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        log.debug(f"Trying to login {username}")
         user, code = self.user_login(username, password)
         if code is not HTTPStatus.OK:  # login failed
-            log.error(f"Incorrect username/password combination for "
-                      f"user='{username}'")
+            log.error(f"Failed to login for user='{username}'")
             return user, code
 
         token = create_access_token(user)
@@ -111,23 +125,36 @@ class UserToken(ServicesResources):
         log.info(f"Succesfull login from {username}")
         return ret, HTTPStatus.OK, {'jwt-token': token}
 
-    @staticmethod
-    def user_login(username, password):
-        """Returns user or message in case of failed login attempt"""
-        log.info(f"trying to login '{username}'")
+    def user_login(self, username, password):
+        """Returns user a message in case of failed login attempt."""
+        log.info(f"Trying to login '{username}'")
 
         if db.User.username_exists(username):
             user = db.User.get_by_username(username)
-            if not user.check_password(password):
-                msg = f"password for '{username}' is invalid"
-                log.error(msg)
-                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-        else:
-            msg = f"username '{username}' does not exist"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+            pw_policy = self.config.get('password_policy', {})
+            max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
+            inactivation_time = pw_policy.get('inactivation_minutes', 15)
 
-        return user, HTTPStatus.OK
+            is_blocked, time_remaining_msg = user.is_blocked(
+              max_failed_attempts, inactivation_time)
+            if is_blocked:
+                return {"msg": time_remaining_msg}, HTTPStatus.UNAUTHORIZED
+            elif user.check_password(password):
+                user.failed_login_attempts = 0
+                user.save()
+                return user, HTTPStatus.OK
+            else:
+                # update the number of failed login attempts
+                user.failed_login_attempts = 1 \
+                    if (
+                        not user.failed_login_attempts or
+                        user.failed_login_attempts >= max_failed_attempts
+                    ) else user.failed_login_attempts + 1
+                user.last_login_attempt = dt.datetime.now()
+                user.save()
+
+        return {"msg": "Invalid username or password!"}, \
+            HTTPStatus.UNAUTHORIZED
 
 
 class NodeToken(ServicesResources):
@@ -136,10 +163,9 @@ class NodeToken(ServicesResources):
         """Login node
         ---
         description: >-
-          Allows for node sign-in using a unique api-key. If the login is
+          Allows node to sign in using a unique API key. If the login is
           successful this returns a dictionairy with access and refresh tokens
-          for the node as well as a node_url and a refresh_url.\n\n
-          It also returns a jwt-token so that the user can login again.
+          for the node as well as a node_url and a refresh_url.
 
         requestBody:
           content:
@@ -151,7 +177,7 @@ class NodeToken(ServicesResources):
           200:
             description: Ok, authenticated
           400:
-            description: No or wrong JSON-body
+            description: No API key provided in request body.
           401:
             description: Invalid API key
 
@@ -180,7 +206,7 @@ class NodeToken(ServicesResources):
 
         token = create_access_token(node)
         ret = {
-            'access_token': create_access_token(node),
+            'access_token': token,
             'refresh_token': create_refresh_token(node),
             'node_url': self.api.url_for(server.resource.node.Node,
                                          id=node.id),
@@ -194,10 +220,30 @@ class NodeToken(ServicesResources):
 class ContainerToken(ServicesResources):
 
     @with_node
-    @swag_from(str(Path(r"swagger/post_token_container.yaml")),
-               endpoint='container_token')
     def post(self):
-        """Create a token for a container running on a node."""
+        """Algorithm container login
+        ---
+        description: >-
+          Generate token for the algorithm container of a specific task.\n
+
+          Not available to users; only for authenticated nodes.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerToken'
+
+        responses:
+          200:
+            description: Container token generated
+          400:
+            description: Task does not exist or is already completed
+          401:
+            description: Key request for invalid image or task
+
+        tags: ["Authentication"]
+        """
         log.debug("Creating a token for a container running on a node")
 
         data = request.get_json()
@@ -240,7 +286,7 @@ class ContainerToken(ServicesResources):
         # container identity consists of its node_id,
         # task_id, collaboration_id and image_id
         container = {
-            "type": "container",
+            "client_type": "container",
             "node_id": g.node.id,
             "organization_id": g.node.organization_id,
             "collaboration_id": g.node.collaboration_id,
@@ -254,11 +300,25 @@ class ContainerToken(ServicesResources):
 
 class RefreshToken(ServicesResources):
 
-    @jwt_refresh_token_required
-    @swag_from(str(Path(r"swagger/post_token_refresh.yaml")),
-               endpoint='refresh_token')
+    @jwt_required(refresh=True)
     def post(self):
-        """Create a token from a refresh token."""
+        """Refresh token
+        ---
+        description: >-
+          Refresh access token if the previous one is expired.\n
+
+          Your refresh token must be present in the request headers to use
+          this endpoint.
+
+        responses:
+          200:
+            description: Token refreshed
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Authentication"]
+        """
         user_or_node_id = get_jwt_identity()
         log.info(f'Refreshing token for user or node "{user_or_node_id}"')
         user_or_node = db.Authenticatable.get(user_or_node_id)

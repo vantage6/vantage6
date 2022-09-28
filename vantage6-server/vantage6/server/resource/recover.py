@@ -8,9 +8,7 @@ from flask_jwt_extended import (
     decode_token
 )
 from jwt.exceptions import DecodeError
-from flasgger import swag_from
 from http import HTTPStatus
-from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 import uuid
 
@@ -44,6 +42,14 @@ def setup(api, api_base, services):
     )
 
     api.add_resource(
+        ChangePassword,
+        api_base+'/password/change',
+        endpoint='change_password',
+        methods=('PATCH',),
+        resource_class_kwargs=services
+    )
+
+    api.add_resource(
         ResetAPIKey,
         path+'/node',
         endpoint="reset_api_key",
@@ -58,11 +64,32 @@ def setup(api, api_base, services):
 class ResetPassword(ServicesResources):
     """user can use recover token to reset their password."""
 
-    @swag_from(str(Path(r"swagger/post_reset_password.yaml")),
-               endpoint='reset_password')
     def post(self):
-        """"submit email-adress receive token."""
+        """Set a new password using a recover token
+        ---
+        description: >-
+          User can use a recover token to reset their password
 
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  reset_token:
+                    type: string
+                    description: Recover token (received by email)
+                  password:
+                    type: string
+                    description: New password
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Password or recovery token is missing or invalid
+
+        tags: ["Password recovery"]
+        """
         # retrieve user based on email or username
         body = request.get_json()
         reset_token = body.get("reset_token")
@@ -74,16 +101,22 @@ class ResetPassword(ServicesResources):
 
         # obtain user
         try:
-            user_id = decode_token(reset_token)['identity'].get('id')
+            user_id = decode_token(reset_token)['sub'].get('id')
         except DecodeError:
             return {"msg": "Invalid recovery token!"}, HTTPStatus.BAD_REQUEST
 
         log.debug(user_id)
         user = db.User.get(user_id)
 
-        # set password
-        user.set_password(password)
+        # reset number of failed login attempts to prevent that user cannot
+        # reactivate via email
+        user.failed_login_attempts = 0
         user.save()
+
+        # set password
+        msg = user.set_password(password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
         log.info(f"Successfull password reset for '{user.username}'")
         return {"msg": "The password has successfully been reset!"}, \
@@ -93,11 +126,35 @@ class ResetPassword(ServicesResources):
 class RecoverPassword(ServicesResources):
     """send a mail containing a recover token"""
 
-    @swag_from(str(Path(r"swagger/post_recover_password.yaml")),
-               endpoint='recover_password')
     def post(self):
-        """username or email generates a token which is mailed."""
+        """Request a recover token
+        ---
+        description: >-
+          Request a recover token if password is lost. Either email address
+          or username must be supplied.
 
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: Username from which the password needs to be
+                      recovered
+                  email:
+                    type: string
+                    description: Username from which the password needs to be
+                      recovered
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: No username or email provided
+
+        tags: ["Password recovery"]
+        """
         # default return string
         ret = {"msg": "If the username or email is in our database you "
                       "will soon receive an email."}
@@ -141,6 +198,77 @@ class RecoverPassword(ServicesResources):
         return ret
 
 
+class ChangePassword(ServicesResources):
+    """
+    Let user change their password with old password as verification
+    """
+
+    @with_user
+    def patch(self):
+        """Set a new password using the current password
+        ---
+        description: >-
+          Users can change their password by submitting their current password
+          and a new password
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  current_password:
+                    type: string
+                    description: current password
+                  new_password:
+                    type: string
+                    description: new password
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Current or new password is missing from JSON body, or
+              they are the same, or the new password doesn't meet password
+              criteria
+          401:
+            description: Current password is incorrect
+
+        tags: ["Password recovery"]
+        """
+        body = request.get_json()
+        old_password = body.get("current_password")
+        new_password = body.get("new_password")
+
+        if not old_password:
+            return {"msg": "Your current password is missing"},  \
+                HTTPStatus.BAD_REQUEST
+        elif not new_password:
+            return {"msg": "Your new password is missing!"}, \
+                HTTPStatus.BAD_REQUEST
+
+        user = g.user
+        log.debug(f"Changing password for user {user.id}")
+
+        # check if the old password is correct
+        pw_correct = user.check_password(old_password)
+        if not pw_correct:
+            return {"msg": "Your current password is not correct!"}, \
+                HTTPStatus.UNAUTHORIZED
+
+        if old_password == new_password:
+            return {"msg": "New password is the same as current password!"}, \
+                HTTPStatus.BAD_REQUEST
+
+        # set password
+        msg = user.set_password(new_password)
+        if msg:
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
+        log.info(f"Successful password change for '{user.username}'")
+        return {"msg": "The password has been changed successfully!"}, \
+            HTTPStatus.OK
+
+
 class ResetAPIKey(ServicesResources):
     """User can reset API key."""
 
@@ -157,33 +285,33 @@ class ResetAPIKey(ServicesResources):
         description: >-
             If a node's API key is lost, this route can be used to obtain a new
             API key.\n
-            The permission scheme is the same as for a node PATCH request.\n\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
-            |Node|Global|Edit|❌|❌|Update a node specified by id|\n
-            |Node|Organization|Edit|❌|❌|Update a node specified by id which
-            is part of your organization|\n\n
+            |Node|Global|Edit|❌|❌|Reset API key of node specified by id|\n
+            |Node|Organization|Edit|❌|❌|Reset API key of node specified by
+            id which is part of your organization |\n
 
-            Accesible as `user`.\n\n
+            Accessible to users.
 
         requestBody:
-            content:
-                application/json:
-                    schema:
-                        properties:
-                            id:
-                                type: int
-                                description: id of node whose API key is reset
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: int
+                    description: ID of node whose API key is to be reset
 
         responses:
             200:
                 description: Ok
             400:
-                description: id missing from json body
+                description: ID missing from json body
             401:
-                description: Unauthorized, no permission to alter this node
+                description: Unauthorized
             404:
                 description: Node not found
 
@@ -200,7 +328,7 @@ class ResetAPIKey(ServicesResources):
         # check which node should have its API key modified
         id = request.json.get('id', None)
         if not id:
-            msg = "id missing in JSON body"
+            msg = "ID missing in JSON body"
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 

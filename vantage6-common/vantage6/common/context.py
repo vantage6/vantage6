@@ -12,7 +12,8 @@ from vantage6.common.globals import DEFAULT_ENVIRONMENT, APPNAME
 from vantage6.common.configuration_manager import (
     ConfigurationManager
 )
-from vantage6.common import __version__
+from vantage6.common._version import __version__
+
 
 class AppContext(metaclass=Singleton):
 
@@ -129,7 +130,6 @@ class AppContext(metaclass=Singleton):
         # check that environment is present in config-file
         config_manager = cls.INST_CONFIG_MANAGER.from_file(config_file)
         return bool(getattr(config_manager, environment))
-
 
     @staticmethod
     def type_data_folder(instance_type, system_folders):

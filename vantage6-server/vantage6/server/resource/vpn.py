@@ -52,21 +52,19 @@ class VPNConfig(ServicesResources):
         """Get OVPN configuration file
         ---
         description: >-
-            Returns the contents of an OVPN configuration file. This
-            configuration allows the node to connect to EduVPN. To access this
-            endpoint, the node needs to be authenticated.\n\n
+          Returns the contents of an OVPN configuration file. This
+          configuration allows the node to connect to the VPN server.\n
 
-            Accesible for: `node`\n\n
+          This endpoint is not accessible for users, but only for
+          authenticated nodes.
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized or missing permission
-            501:
-                description: The vantage6-server has no VPN service
-            503:
-                description: The VPN server is not reachable
+          200:
+            description: Ok
+          501:
+            description: This server has no VPN service
+          503:
+            description: The VPN server cannot be reached
 
         security:
             - bearerAuth: []
@@ -98,24 +96,32 @@ class VPNConfig(ServicesResources):
         """ Update an OVPN configuration file
         ---
         description: >-
-            Returns an OVPN configuration file with renewed keypair. This
-            allows the node to connect to EduVPN when the keypair was
-            invalidated. To access this endpoint, the node needs to be
-            authenticated.\n\n
+          Returns an OVPN configuration file with renewed keypair. This
+          allows the node to connect to the VPN server again if the keypair was
+          invalidated.\n
 
-            Accesible for: `node`\n\n
+          This endpoint is not accessible for users, but only for
+          authenticated nodes.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  vpn_config:
+                    type: string
+                    description: Current VPN config file contents with expired
+                      keypair
 
         responses:
-            200:
-                description: Ok
-            400:
-                description: No VPN configuration found in request body
-            401:
-                description: Unauthorized or missing permission
-            501:
-                description: The vantage6-server has no VPN service
-            503:
-                description: The VPN server is not reachable
+          200:
+            description: Ok
+          400:
+            description: No VPN configuration found in request body
+          501:
+            description: This server has no VPN service
+          503:
+            description: The VPN server cannot be reached
 
         security:
             - bearerAuth: []

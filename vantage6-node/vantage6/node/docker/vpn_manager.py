@@ -29,7 +29,9 @@ class VPNManager(DockerBaseManager):
 
     def __init__(self, isolated_network_mgr: NetworkManager,
                  node_name: str, vpn_volume_name: str, vpn_subnet: str,
-                 alpine_image: Union[str, None] = None) -> None:
+                 alpine_image: Union[str, None] = None,
+                 vpn_client_image: Union[str, None] = None,
+                 network_config_image: Union[str, None] = None) -> None:
         """
         Initializes a VPN manager instance
 
@@ -51,8 +53,17 @@ class VPNManager(DockerBaseManager):
         self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
         self.vpn_volume_name = vpn_volume_name
         self.subnet = vpn_subnet
-        self.alpine_image = ALPINE_IMAGE if alpine_image is None \
+        self.alpine_image = ALPINE_IMAGE if not alpine_image \
             else alpine_image
+        self.vpn_client_image = VPN_CLIENT_IMAGE if not vpn_client_image else \
+            vpn_client_image
+        self.network_config_image = NETWORK_CONFIG_IMAGE \
+            if not network_config_image else network_config_image
+
+        self.log.debug('Used VPN images:')
+        self.log.debug(f'  Alpine: {self.alpine_image}')
+        self.log.debug(f'  Client: {self.vpn_client_image}')
+        self.log.debug(f'  Config: {self.network_config_image}')
 
         self.has_vpn = False
 
@@ -89,7 +100,7 @@ class VPNManager(DockerBaseManager):
         # start vpnclient
         self.log.debug("Starting VPN client container")
         self.vpn_client_container = self.docker.containers.run(
-            image=VPN_CLIENT_IMAGE,
+            image=self.vpn_client_image,
             command="",  # commands to run are already defined in docker image
             volumes=volumes,
             detach=True,
@@ -164,7 +175,7 @@ class VPNManager(DockerBaseManager):
             '"'
         )
         self.docker.containers.run(
-            image=NETWORK_CONFIG_IMAGE,
+            image=self.network_config_image,
             network='host',
             cap_add='NET_ADMIN',
             command=command,
@@ -386,7 +397,7 @@ class VPNManager(DockerBaseManager):
 
         # Get network config from host namespace
         host_interfaces = self.docker.containers.run(
-            image=NETWORK_CONFIG_IMAGE,
+            image=self.network_config_image,
             network='host',
             command=['ip', '--json', 'addr'],
             remove=True
@@ -463,7 +474,7 @@ class VPNManager(DockerBaseManager):
         )
 
         self.docker.containers.run(
-            image=NETWORK_CONFIG_IMAGE,
+            image=self.network_config_image,
             network='host',
             cap_add='NET_ADMIN',
             command=command,

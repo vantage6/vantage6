@@ -1,8 +1,10 @@
-from typing import List, Union
 import docker
 import logging
 
-from vantage6.common.docker.addons import remove_container
+from typing import List, Union
+from docker.models.containers import Container
+
+from vantage6.common.docker.addons import delete_network
 from vantage6.common import logger_name
 
 
@@ -53,20 +55,31 @@ class NetworkManager(object):
             self.log.warn(f"Network {self.network_name} was already created!")
             return
 
-        self.log.debug(
-            f"Creating Docker network {self.network_name}!")
-        # Delete network if it already exists
-        self.delete()
-
-        self.network = self.docker.networks.create(
-            self.network_name,
-            driver="bridge",
-            internal=is_internal,
-            scope="local",
+        existing_networks = self.docker.networks.list(
+            names=[self.network_name]
         )
+        if existing_networks:
+            if len(existing_networks) > 1:
+                self.log.error(
+                    f"Found multiple ({len(existing_networks)}) existing "
+                    f"networks {self.network_name}. Please delete all or all "
+                    "but one before starting the server!")
+                exit(1)
+            self.log.info(f"Network {self.network_name} already exists! Using "
+                          "existing network")
+            self.network = existing_networks[0]
+            self.network.reload()  # required to initialize containers in netw
+        else:
+            self.network = self.docker.networks.create(
+                self.network_name,
+                driver="bridge",
+                internal=is_internal,
+                scope="local",
+            )
 
     def delete(self, kill_containers: bool = True) -> None:
-        """ Delete network
+        """
+        Delete network
 
         Parameters
         ----------
@@ -81,19 +94,24 @@ class NetworkManager(object):
         self.log.debug(
             f"Network {self.network_name} already exists. Deleting it.")
         for network in networks:
-            if kill_containers:
-                # delete any containers that were still attached to the network
-                network.reload()
-                for container in network.containers:
-                    self.log.warn(
-                        f"Removing container {container.name} in old network")
-                    remove_container(container, kill=True)
-            # remove the network
-            try:
-                network.remove()
-            except Exception:
-                self.log.warn(
-                    f"Could not delete existing network {self.network_name}")
+            delete_network(network, kill_containers)
+
+    def contains(self, container: Container) -> bool:
+        """
+        Whether or not this network contains a certain container
+
+        Parameters
+        ----------
+        container: Container
+            container to look for in network
+
+        Returns
+        -------
+        bool
+            Whether or not container is in the network
+        """
+        self.network.reload()
+        return container in self.network.containers
 
     def connect(self, container_name: str, aliases: List[str] = [],
                 ipv4: Union[str, None] = None) -> None:

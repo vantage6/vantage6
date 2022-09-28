@@ -1,6 +1,7 @@
 cryptography==3.3.2
 requests==2.25.1
-PyJWT==1.7.1
-vantage6-common >= 1.0.0b13
+PyJWT==2.4.0
 pyfiglet==0.8.post1
 SPARQLWrapper==1.8.5
+pandas
+

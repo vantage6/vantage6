@@ -2,9 +2,7 @@
 import logging
 
 from flask import request, g
-from flasgger import swag_from
 from http import HTTPStatus
-from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -105,70 +103,65 @@ class Organizations(OrganizationBase):
         """ Returns a list organizations
         ---
         description: >-
-            Filters through a list of organizations based on scope and returns
-            a list of organizations\n\n
+            Get a list of organizations based on filters and user permissions\n
 
             ### Permission Table\n
-            |Rule name|Scope|Operation|Node|Container|Description|\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
             |--|--|--|--|--|--|\n
-            |Node|Global|View|❌|❌|View all organizations|\n
-            |Node|Collaboration|View|✅|✅|View a list of organizations within
-            the scope of the collaboration|\n
-            |Node|Organization|View|❌|❌|View a list of organizations that
-            the user is part of|\n\n
+            |Organization|Global|View|❌|❌|View all organizations|\n
+            |Organization|Collaboration|View|✅|✅|View a list of organizations
+            within the scope of the collaboration|\n
+            |Organization|Organization|View|✅|✅|View a 'list' of just the
+            organization you are part of|\n
 
-            Accesable for: `node`, `user` and `container`.\n\n
-
-            Organizations can be paginated by using the parameter `page`. The
-            pagination metadata can be included using `include=metadata`, note
-            that this will put the actual data in an envelope.
+            Accessible to users.
 
         parameters:
-            - in: query
-              name: name
-              schema:
-                type: string
-              description: >-
-                Name to match with a LIKE operator. \n
-                * The percent sign (%) represents zero, one, or multiple
-                characters\n
-                * underscore sign (_) represents one, single character
-            - in: query
-              name: country
-              schema:
-                type: string
-              description: country
-            - in: query
-              name: collaboration_id
-              schema:
-                type: integer
-              description: collaboration id
-            - in: query
-              name: include
-              schema:
-                type: string (can be multiple)
-              description: what to include ('metadata')
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: page number for pagination
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: number of items per page
+          - in: query
+            name: name
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: country
+            schema:
+              type: string
+            description: Country
+          - in: query
+            name: collaboration_id
+            schema:
+              type: integer
+            description: Collaboration id
+          - in: query
+            name: include
+            schema:
+              type: string (can be multiple)
+            description: Include 'metadata' to get pagination metadata. Note
+              that this will put the actual data in an envelope.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page
 
         responses:
-            200:
-                description: Ok
-            404:
-                description: organization not found
-            401:
-                description: Unauthorized or missing permission
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
 
         security:
-            - bearerAuth: []
+          - bearerAuth: []
 
         tags: ["Organization"]
         """
@@ -191,13 +184,9 @@ class Organizations(OrganizationBase):
 
         # filter the list of organizations based on the scope
         if self.r.v_glo.can():
-            # view all organizations
-            log.debug('glo')
-            pass
-
+            pass  # don't apply filters
         elif self.r.v_col.can():
             # obtain collaborations your organization participates in
-            log.debug('col')
             collabs = g.session.query(db.Collaboration).filter(
                 db.Collaboration.organizations.any(id=auth_org.id)
             ).all()
@@ -211,7 +200,6 @@ class Organizations(OrganizationBase):
             q = q.filter(db.Organization.id.in_(org_ids))
 
         elif self.r.v_org.can():
-            log.debug('org')
             q = q.filter(db.Organization.id == auth_org.id)
         else:
             return {'msg': 'You lack the permission to do that!'}, \
@@ -224,10 +212,37 @@ class Organizations(OrganizationBase):
         return self.response(page, org_schema)
 
     @with_user
-    @swag_from(str(Path(r"swagger/post_organization_without_id.yaml")),
-               endpoint='organization_without_id')
     def post(self):
-        """Create a new organization."""
+        """Create new organization
+        ---
+        description: >-
+          Creates a new organization from the specified values\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|Create|❌|❌|Create a new organization|\n
+
+          Accessible to users.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+
+        responses:
+          201:
+            description: Ok
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
 
         if not self.r.c_glo.can():
             return {'msg': 'You lack the permissions to do that!'},\
@@ -252,9 +267,45 @@ class Organizations(OrganizationBase):
 class Organization(OrganizationBase):
 
     @only_for(["user", "node", "container"])
-    @swag_from(str(Path(r"swagger/get_organization_with_id.yaml")),
-               endpoint='organization_with_id')
     def get(self, id):
+        """Get organization
+        ---
+        description: >-
+          Returns the organization specified by the id\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|View|❌|❌|View all organizations|\n
+          |Organization|Collaboration|View|✅|✅|View a list of organizations
+          within the scope of the collaboration|\n
+          |Organization|Organization|View|✅|✅|View a list of organizations
+          that the user is part of|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Organization id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Organization not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
 
         # obtain organization of authenticated
         auth_org = self.obtain_auth_organization()
@@ -288,10 +339,50 @@ class Organization(OrganizationBase):
                 HTTPStatus.UNAUTHORIZED
 
     @only_for(["user", "node"])
-    @swag_from(str(Path(r"swagger/patch_organization_with_id.yaml")),
-               endpoint='organization_with_id')
     def patch(self, id):
-        """Update organization."""
+        """Update organization
+        ---
+        description: >-
+          Updates the organization with the specified id.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|Edit|❌|❌|Update an organization with
+          specified id|\n
+          |Organization|Organization|Edit|❌|❌|Update the organization that
+          the user is part of|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Organization id
+            required: tr
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Organization with specified id is not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
 
         organization = db.Organization.get(id)
         if not organization:
@@ -324,10 +415,44 @@ class OrganizationCollaboration(ServicesResources):
     col_schema = CollaborationSchema()
 
     @only_for(["user", "node"])
-    @swag_from(str(Path(r"swagger/get_organization_collaboration.yaml")),
-               endpoint='organization_collaboration')
     def get(self, id):
+        """Get collaborations from organization
+        ---
+        description: >-
+          Returns a list of collaborations in which the organization is a
+          participant of.\n
 
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Collaboration|Global|View|❌|❌|View all collaborations|\n
+          |Collaboration|Organization|View|✅|✅|View a list of collaborations
+          that the organization is a part of|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Organization id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Organization not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
         organization = db.Organization.get(id)
         if not organization:
             return {"msg": f"organization id={id} not found"}, \
@@ -356,10 +481,43 @@ class OrganizationNode(ServicesResources):
     nod_schema = NodeSchema()
 
     @with_user_or_node
-    @swag_from(str(Path(r"swagger/get_organization_node.yaml")),
-               endpoint='organization_node')
     def get(self, id):
-        """Return a list of Nodes."""
+        """Return a list of nodes.
+        ---
+        description: >-
+          Returns a list of nodes which are from the organization.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|View|❌|❌|View any node|\n
+          |Organization|Organization|View|✅|✅|View a list of nodes that
+          belong to your organization|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Organization id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Organization not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
         organization = db.Organization.get(id)
         if not organization:
             return {"msg": f"organization id={id} not found"}, \

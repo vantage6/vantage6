@@ -37,7 +37,7 @@ setup(
         'flask==2.0.2',
         'Flask-RESTful==0.3.9',
         'Flask-Cors==3.0.9',
-        'Flask-JWT-Extended==3.24.1',
+        'Flask-JWT-Extended==4.4.3',
         'flask-marshmallow==0.11.0',
         'Flask-SocketIO==5.1.1',
         'SQLAlchemy==1.3.15',
@@ -73,7 +73,6 @@ setup(
             '__build__',
             '_data/**/*.yaml',
             'server_data/*.yaml',
-            'resource/swagger/*.yaml'
         ],
     },
     entry_points={
