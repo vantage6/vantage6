@@ -89,3 +89,19 @@ Docker images can be pulled manually with e.g.
   $ docker pull harbor2.vantage6.ai/infrastructure/server:petronas
   $ docker pull harbor2.vantage6.ai/infrastructure/node:3.1.0
 
+User Interface release
+----------------------
+The release process for the user interface (UI) is very similar to the release
+of the infrastructure detailed above. The same versioning format is used, and
+when you push a version tag, the automated release process is triggered.
+
+We have synchronized the version of the UI with that of the infrastructure. In
+case we create a new release of the UI without updating the infrastructure, we
+do so via a post release, i.e. `version/x.y.z-post1` for the first post release.
+
+The release pipeline for the UI executes the following steps:
+
+1. Version tag is verified (same as infrastructure)
+2. Version is updated in the code (same as infrastructure)
+3. Application is built
+4. Application is pushed to our UI deployment slot (an Azure app service)

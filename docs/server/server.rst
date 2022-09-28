@@ -210,4 +210,5 @@ Items left
 * Relation to other components
 * VPN server
 * CLI (vserver local)
-
+* Clients (Python, R) (maybe elsewhere?)
+* UI (maybe elsewhere?)
