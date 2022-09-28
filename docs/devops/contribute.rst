@@ -8,11 +8,14 @@ If you have questions, you can use
 * `Github discussions <https://github.com/vantage6/vantage6/discussions>`_
 * Ask us on `Discord <https://discord.gg/yAyFf6Y>`_
 
-We prefer that you ask questions via these routes rather than creating Github issues. The issue tracker is intended to address bugs, feature requests, and code changes.
+We prefer that you ask questions via these routes rather than creating Github issues.
+The issue tracker is intended to address bugs, feature requests, and code changes.
 
 Reporting issues
 ----------------
-Issues can be posted at our `Github issue <https://github.com/vantage6/vantage6/issues>`_ page. Please use one of the templates:
+Issues can be posted at our `Github issue page <https://github.com/vantage6/vantage6/issues>`_,
+or, if you have issues that are specific to the user interface, please post
+them to the `UI issue page <https://github.com/vantage6/vantage6-UI/issues>`_.
 
 * Bug report: you encountered broken code
 * Feature request: you want something to be added
@@ -30,7 +33,16 @@ We plan to organize meetings periodically to coordinate and plan the development
 
 Submitting patches
 ------------------
-If there is not an open issue for what you want to submit, please open one for discussion before submitting the PR. We encourage you to reach out to us on `Discord <https://discord.gg/yAyFf6Y>`_, so that we can work together to ensure your contribution is added to the repository.
+If there is not an open issue for what you want to submit, please open one for
+discussion before submitting the PR. We encourage you to reach out to us on
+`Discord <https://discord.gg/yAyFf6Y>`_, so that we can work together to ensure
+your contribution is added to the repository.
+
+The workflow below is specific to the
+`vantage6 infrastructure repository <https://github.com/vantage6/vantage6>`_.
+However, the concepts for our other repositories are the same. Then, modify
+the links below and ignore steps that may be irrelevant to that particular
+repository.
 
 Setup your environment
 ^^^^^^^^^^^^^^^^^^^^^^
