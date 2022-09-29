@@ -6,7 +6,13 @@ import { TokenStorageService } from 'src/app/services/common/token-storage.servi
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { environment } from 'src/environments/environment';
 
-let BACKGROUND_IMAGES = ['cuppolone.jpg', 'taipei101.png', 'trolltunga.jpg'];
+let BACKGROUND_IMAGES = [
+  'cuppolone.jpg',
+  'taipei101.png',
+  'trolltunga.jpg',
+  // 'harukas2.jpg',
+  'petronas.jpg',
+];
 
 @Component({
   selector: 'app-login',
@@ -23,7 +29,6 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   background_img = '';
 
-  // TODO count number of times login failed?
   // TODO if user is logged in, force that it redirects to HomeComponent
 
   constructor(

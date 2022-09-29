@@ -29,7 +29,7 @@ export class ResultDataService extends BaseDataService {
       this.saveMultiple(results);
     } else {
       // this task has been queried before: get matches from the saved data
-      for (let r of this.resource_list.value) {
+      for (let r of this.resource_list) {
         if ((r as Result).task_id === task_id) {
           results.push(r as Result);
         }

@@ -54,14 +54,10 @@ export class RoleTableComponent
 
   async init(): Promise<void> {
     // get rules
-    (await this.ruleDataService.list()).subscribe((rules) => {
-      this.rules = rules;
-    });
+    this.rules = await this.ruleDataService.list();
 
     // get organizations
-    (await this.orgDataService.list()).subscribe((orgs) => {
-      this.organizations = orgs;
-    });
+    this.organizations = await this.orgDataService.list();
 
     this.readRoute();
   }
@@ -73,11 +69,7 @@ export class RoleTableComponent
         this.rules
       );
     } else {
-      (await this.roleDataService.list(this.rules)).subscribe(
-        (roles: Role[]) => {
-          this.resources = roles;
-        }
-      );
+      this.resources = await this.roleDataService.list(this.rules);
     }
   }
 

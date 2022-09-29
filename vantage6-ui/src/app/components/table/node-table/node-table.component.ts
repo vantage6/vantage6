@@ -48,15 +48,9 @@ export class NodeTableComponent
   }
 
   async init(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs) => {
-      this.organizations = orgs;
-    });
+    this.organizations = await this.orgDataService.list();
 
-    (await this.collabDataService.list(this.organizations)).subscribe(
-      (cols) => {
-        this.collaborations = cols;
-      }
-    );
+    this.collaborations = await this.collabDataService.list(this.organizations);
 
     this.readRoute();
   }
@@ -132,9 +126,7 @@ export class NodeTableComponent
         this.route_org_id as number
       );
     } else {
-      (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
-        this.resources = nodes;
-      });
+      this.resources = await this.nodeDataService.list();
     }
     // make a copy to prevent that changes in these resources are directly
     // reflected in the resources within dataServices

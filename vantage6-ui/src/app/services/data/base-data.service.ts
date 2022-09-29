@@ -18,7 +18,7 @@ import { ConvertJsonService } from '../common/convert-json.service';
   providedIn: 'root',
 })
 export abstract class BaseDataService {
-  resource_list = new BehaviorSubject<Resource[]>([]);
+  resource_list: Resource[] = [];
   has_queried_list: boolean = false;
   queried_org_ids: number[] = [];
   queried_collab_ids: number[] = [];
@@ -43,7 +43,7 @@ export abstract class BaseDataService {
       );
       if (resource !== null) this.save(resource);
     } else {
-      resource = getById(this.resource_list.value, id);
+      resource = getById(this.resource_list, id);
       if (resource === undefined) {
         resource = await this.apiService.getResource(
           id,
@@ -60,7 +60,7 @@ export abstract class BaseDataService {
     convertJsonFunc: Function,
     additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
-  ): Promise<Observable<Resource[]>> {
+  ): Promise<Resource[]> {
     if (force_refresh || !this.has_queried_list) {
       const resources = await this.apiService.getResources(
         convertJsonFunc,
@@ -69,7 +69,7 @@ export abstract class BaseDataService {
       this.has_queried_list = true;
       this.saveMultiple(resources);
     }
-    return this.resource_list.asObservable();
+    return this.resource_list;
   }
 
   async list_with_params_base(
@@ -109,7 +109,7 @@ export abstract class BaseDataService {
     } else {
       // this organization has been queried before: get matches from the saved
       // data
-      for (let resource of this.resource_list.value) {
+      for (let resource of this.resource_list) {
         if ((resource as ResourceInOrg).organization_id === organization_id) {
           org_resources.push(resource);
         }
@@ -136,7 +136,7 @@ export abstract class BaseDataService {
     } else {
       // this organization has been queried before: get matches from the saved
       // data
-      for (let resource of this.resource_list.value) {
+      for (let resource of this.resource_list) {
         if (
           (resource as ResourceInCollab).collaboration_id === collaboration_id
         ) {
@@ -154,14 +154,15 @@ export abstract class BaseDataService {
   }
 
   public save(resource: Resource): void {
-    let updated_list = [...this.resource_list.value];
+    let updated_list = [...this.resource_list];
     updated_list = addOrReplace(updated_list, resource);
-    this.resource_list.next(updated_list);
+    this.resource_list = updated_list;
   }
 
   public remove(resource: Resource): void {
-    this.resource_list.next(
-      removeMatchedIdFromArray(this.resource_list.value, resource.id)
+    this.resource_list = removeMatchedIdFromArray(
+      this.resource_list,
+      resource.id
     );
   }
 
@@ -169,6 +170,6 @@ export abstract class BaseDataService {
     this.has_queried_list = false;
     this.queried_org_ids = [];
     this.queried_collab_ids = [];
-    this.resource_list.next([]);
+    this.resource_list = [];
   }
 }

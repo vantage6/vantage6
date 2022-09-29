@@ -62,9 +62,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
 
   async setupCreate() {
     if (!this.organization_id) {
-      (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-        this.organizations = orgs;
-      });
+      this.organizations = await this.orgDataService.list();
     }
   }
 
@@ -77,9 +75,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
   }
 
   async setRules(): Promise<void> {
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
-      this.rules = rules;
-    });
+    this.rules = await this.ruleDataService.list();
   }
 
   async save(): Promise<void> {
