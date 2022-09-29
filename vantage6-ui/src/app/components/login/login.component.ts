@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from 'src/app/auth/services/auth.service';
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { environment } from 'src/environments/environment';
 
 let BACKGROUND_IMAGES = ['cuppolone.jpg', 'taipei101.png', 'trolltunga.jpg'];
 
@@ -56,7 +57,7 @@ export class LoginComponent implements OnInit {
       },
       (err) => {
         if (err.status === 0) {
-          this.errorMessage = 'Cannot connect to server!';
+          this.errorMessage = `Cannot connect to server! Server URL is ${environment.api_url}.`;
         } else {
           this.errorMessage = err.error.msg;
         }
