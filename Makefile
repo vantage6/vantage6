@@ -58,6 +58,19 @@ image:
 	docker build -f ./docker/node-and-server.Dockerfile -t harbor2.vantage6.ai/infrastructure/node:${TAG} .
 	docker tag harbor2.vantage6.ai/infrastructure/node:${TAG} harbor2.vantage6.ai/infrastructure/server:${TAG}
 
+arm-image:
+	docker buildx build \
+		-f docker/arm/infrastructure-base.Dockerfile \
+		--platform linux/arm64 \
+		-t harbor2.vantage6.ai/infrastructure/arm-base:latest \
+		--push .
+
+	docker buildx build \
+		-f docker/arm/node-and-server.Dockerfile \
+		--platform linux/arm64 \
+		-t harbor2.vantage6/demo/vantage6-arm \
+		--push .
+
 docker-push:
 	docker push harbor2.vantage6.ai/infrastructure/node:${TAG}
 	docker push harbor2.vantage6.ai/infrastructure/server:${TAG}
