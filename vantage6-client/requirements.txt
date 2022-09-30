@@ -2,6 +2,7 @@ cryptography==3.3.2
 requests==2.25.1
 PyJWT==2.4.0
 pyfiglet==0.8.post1
+python-socketio==5.5.0
 SPARQLWrapper==1.8.5
 pandas
 

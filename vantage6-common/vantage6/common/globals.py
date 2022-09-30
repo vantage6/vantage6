@@ -22,3 +22,6 @@ DEFAULT_SERVER_IMAGE = "infrastructure/server:petronas"
 PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 VPN_CONFIG_FILE = 'vpn-config.ovpn.conf'
+
+# constant for waiting for the initial websocket connection for client
+TIME_LIMIT_CLIENT_CONNECTION_WEBSOCKET = 60

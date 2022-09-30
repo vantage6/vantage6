@@ -5,7 +5,6 @@ This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
 import logging
-import traceback
 import pickle
 import time
 import typing
@@ -16,13 +15,17 @@ import json as json_lib
 
 from pathlib import Path
 from typing import Tuple
+from socketio import Client as SocketIO
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import (
+    APPNAME, TIME_LIMIT_CLIENT_CONNECTION_WEBSOCKET
+)
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.encryption import RSACryptor, DummyCryptor
+# from vantage6.client.socket import ClientSocketNamespace
 
 
 module_name = __name__.split('.')[1]
@@ -53,6 +56,72 @@ class WhoAmI(typing.NamedTuple):
                 f"(id={self.organization_id})"
                 ">")
 
+import logging
+
+from socketio import ClientNamespace
+
+from vantage6.common import logger_name
+
+
+class ClientSocketNamespace(ClientNamespace):
+    """Class that handles incoming websocket events."""
+
+    # reference to the node objects, so a callback can edit the
+    # node instance.
+    client_ref = None
+
+    def __init__(self, *args, **kwargs):
+        """ Handler for a websocket namespace.
+        """
+        super().__init__(*args, **kwargs)
+        self.log = logging.getLogger(logger_name(__name__))
+
+    def on_message(self, data):
+        self.log.info(data)
+
+    def on_connect(self):
+        """On connect or reconnect"""
+        self.log.info('(Re)Connected to the /tasks namespace')
+        # self.client_ref.sync_task_queue_with_server()
+        # self.log.debug("Tasks synced again with the server...")
+
+    def on_disconnect(self):
+        """ Server disconnects event."""
+        # self.client_ref.socketIO.disconnect()
+        self.log.info('Disconnected from the server')
+
+    # def on_new_task(self, task_id):
+    #     """ New task event."""
+    #     if self.client_ref:
+    #         self.client_ref.get_task_and_add_to_queue(task_id)
+    #         self.log.info(f'New task has been added task_id={task_id}')
+
+    #     else:
+    #         self.log.critical(
+    #             'Task Master Node reference not set is socket namespace'
+    #         )
+
+    # def on_container_failed(self, run_id):
+    #     """A container in the collaboration has failed event.
+
+    #     TODO handle run sequence at this node. Maybe terminate all
+    #         containers with the same run_id?
+    #     """
+    #     self.log.critical(
+    #         f"A container on a node within your collaboration part of "
+    #         f"run_id={run_id} has exited with a non-zero status_code"
+    #     )
+
+    # def on_expired_token(self, msg):
+    #     self.log.warning("Your token is no longer valid... reconnecting")
+    #     self.client_ref.socketIO.disconnect()
+    #     self.log.debug("Old socket connection terminated")
+    #     self.client_ref.server_io.refresh_token()
+    #     self.log.debug("Token refreshed")
+    #     self.client_ref.connect_to_socket()
+    #     self.log.debug("Connected to socket")
+    #     self.client_ref.sync_task_queue_with_server()
+    #     self.log.debug("Tasks synced again with the server...")
 
 class ClientBase(object):
     """Common interface to the central server.
@@ -88,6 +157,7 @@ class ClientBase(object):
 
         self.cryptor = None
         self.whoami = None
+        self.socketIO = None
 
     @property
     def name(self) -> str:
@@ -129,6 +199,64 @@ class ClientBase(object):
             return f"{self.host}:{self.port}{self.__api_path}"
 
         return f"{self.host}{self.__api_path}"
+
+    def has_socket_connection(self) -> bool:
+        """
+        Check if client has a websocket connection
+
+        Returns
+        -------
+        bool:
+            Whether or not websocket connection is established
+        """
+        return self.socketIO is not None and self.socketIO.connected
+
+    def _connect_to_socket(self) -> None:
+        """ Create long-lasting websocket connection with the server. """
+        if self.has_socket_connection():
+            return  # socket connection already established
+
+        self.log.info("Creating durable connection to server via websocket")
+        self.socketIO = SocketIO(request_timeout=60)
+
+        self.socketIO.register_namespace(ClientSocketNamespace('/tasks'))
+        ClientSocketNamespace.client_ref = self
+
+        self.socketIO.connect(
+            url=f'{self.host}:{self.port}',
+            headers=self.headers,
+            wait=False
+        )
+
+        # Log the outcome
+        i = 0
+        while not self.socketIO.connected:
+            if i > TIME_LIMIT_CLIENT_CONNECTION_WEBSOCKET:
+                self.log.error('Could not connect to the websocket channels. '
+                               'Do you have a slow connection?')
+                self.socketIO = None
+
+            self.log.debug('Waiting for socket connection...')
+            time.sleep(1)
+            i += 1
+
+        self.log.info(f"Connected via websocket to the server at {self.host}:"
+                      f"{self.port}")
+        print(self.socketIO.namespaces)
+
+    def _join_collaboration_room(self, collab_id: int) -> None:
+        """
+        Join a socket room for a specific collaboration id
+
+        Paramters
+        ---------
+        collab_id:
+            ID of the collaboration whose socket channel you want to connect to
+        """
+        self._connect_to_socket()
+        if self.has_socket_connection():
+            self.socketIO.emit("join_room", f"collaboration_{collab_id}",
+                               namespace='/tasks')
 
     def generate_path_to(self, endpoint: str) -> str:
         """Generate URL to endpoint using host, port and endpoint
@@ -611,7 +739,7 @@ class UserClient(ClientBase):
         try:
             type_ = "user"
             jwt_payload = jwt.decode(self.token,
-                             options={"verify_signature": False})
+                                     options={"verify_signature": False})
 
             # FIXME: 'identity' is no longer needed in version 4+. So this if
             # statement can be removed
@@ -640,7 +768,7 @@ class UserClient(ClientBase):
                           f"(id={organization_id})")
         except Exception as e:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.debug(traceback.format_exc())
+            self.log.exception(e)
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""

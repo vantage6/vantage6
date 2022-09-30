@@ -26,8 +26,6 @@ DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
 SLEEP_BTWN_NODE_LOGIN_TRIES = 10  # retry every 10s
 TIME_LIMIT_RETRY_CONNECT_NODE = 60 * 60 * 24 * 7  # i.e. 1 week
 
-# constant for waiting for the initial websocket connection
-TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET = 60
 #
 #    VPN CONFIGURATION RELATED CONSTANTS
 #
