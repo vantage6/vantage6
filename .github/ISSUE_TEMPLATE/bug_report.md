@@ -1,11 +1,13 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Create a report to help us improve, not intented for security issues.
 title: "[Bug]"
 labels: bug
 assignees: bartvanb, frankcorneliusmartin
 
 ---
+IMPORTANT
+Do not use the issue tracker for exposing security issues. Please reach out to us directly on [vantage6@iknl.nl](mailto:vantage6@iknl.nl).
 
 **Describe the bug**
 A clear and concise description of what the bug is.
