@@ -99,13 +99,13 @@ def load(fixtures, drop_all=False):
         # append dummy tasks to the collaboration
         log.debug("Processing Task Assignments")
         for image in col.get("tasks", {}):
-            initiator = collaboration.organizations[0]
+            init_org = collaboration.organizations[0]
             task = db.Task(
-                name=f"Example task",
+                name="Example task",
                 image=image,
                 collaboration=collaboration,
                 run_id=db.Task.next_run_id(),
-                initiator=initiator
+                init_org=init_org
             )
 
             for organization in collaboration.organizations:
