@@ -17,17 +17,13 @@ import sys
 
 from pathlib import Path
 from typing import Dict, Tuple
-from socketio import Client as SocketIO
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
-from vantage6.common.globals import (
-    APPNAME, TIME_LIMIT_CLIENT_CONNECTION_WEBSOCKET
-)
+from vantage6.common.globals import APPNAME
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.encryption import RSACryptor, DummyCryptor
-from vantage6.client.socket import ClientSocketNamespace
 
 
 module_name = __name__.split('.')[1]
@@ -93,7 +89,6 @@ class ClientBase(object):
 
         self.cryptor = None
         self.whoami = None
-        self.socketIO = None
 
     @property
     def name(self) -> str:
@@ -135,63 +130,6 @@ class ClientBase(object):
             return f"{self.host}:{self.port}{self.__api_path}"
 
         return f"{self.host}{self.__api_path}"
-
-    def has_socket_connection(self) -> bool:
-        """
-        Check if client has a websocket connection
-
-        Returns
-        -------
-        bool:
-            Whether or not websocket connection is established
-        """
-        return self.socketIO is not None and self.socketIO.connected
-
-    def _connect_to_socket(self) -> None:
-        """ Create long-lasting websocket connection with the server. """
-        if self.has_socket_connection():
-            return  # socket connection already established
-
-        self.log.info("Creating durable connection to server via websocket")
-        self.socketIO = SocketIO(request_timeout=60)
-
-        self.socketIO.register_namespace(ClientSocketNamespace('/tasks'))
-        ClientSocketNamespace.client_ref = self
-
-        self.socketIO.connect(
-            url=f'{self.host}:{self.port}',
-            headers=self.headers,
-            wait=False
-        )
-
-        # Log the outcome
-        i = 0
-        while not self.socketIO.connected:
-            if i > TIME_LIMIT_CLIENT_CONNECTION_WEBSOCKET:
-                self.log.error('Could not connect to the websocket channels. '
-                               'Do you have a slow connection?')
-                self.socketIO = None
-
-            self.log.debug('Waiting for socket connection...')
-            time.sleep(1)
-            i += 1
-
-        self.log.info(f"Connected via websocket to the server at {self.host}:"
-                      f"{self.port}")
-
-    def _join_collaboration_room(self, collab_id: int) -> None:
-        """
-        Join a socket room for a specific collaboration id
-
-        Paramters
-        ---------
-        collab_id:
-            ID of the collaboration whose socket channel you want to connect to
-        """
-        self._connect_to_socket()
-        if self.has_socket_connection():
-            self.socketIO.emit("join_room", f"collaboration_{collab_id}",
-                               namespace='/tasks')
 
     def generate_path_to(self, endpoint: str) -> str:
         """Generate URL to endpoint using host, port and endpoint

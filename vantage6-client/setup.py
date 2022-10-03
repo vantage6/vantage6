@@ -40,7 +40,6 @@ setup(
         'pandas',
         f'vantage6-common=={version_ns["__version__"]}',
         'pyfiglet==0.8.post1',
-        'python-socketio[client]==5.5.0',
         'SPARQLWrapper==1.8.5'
     ],
     tests_require=["pytest"],
