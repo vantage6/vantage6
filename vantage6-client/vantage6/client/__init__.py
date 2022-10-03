@@ -16,7 +16,7 @@ import itertools
 import sys
 
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple
 from socketio import Client as SocketIO
 
 from vantage6.common.exceptions import AuthenticationException
@@ -705,7 +705,23 @@ class UserClient(ClientBase):
             self.log.info('--> Retrieving additional user info failed!')
             self.log.exception(e)
 
-    def wait_for_results(self, task_or_id, sleep=1):
+    def wait_for_results(self, task_id: int, sleep: float = 1) -> Dict:
+        """
+        Polls the server to check when results are ready, and returns the
+        results when the task is completed.
+
+        Parameters
+        ----------
+        task_id: int
+            ID of the task that you are waiting for
+        sleep: float
+            Interval in seconds between checks if task is finished. Default 1.
+
+        Returns
+        -------
+        Dict
+            A dictionary with the results of the task, after it has completed.
+        """
         # Disable logging (additional logging would prevent the 'wait' message
         # from being printed on a single line)
         if isinstance(self.log, logging.Logger):
@@ -714,14 +730,6 @@ class UserClient(ClientBase):
         elif isinstance(self.log, UserClient.Log):
             prev_level = self.log.enabled
             self.log.enabled = False
-
-        # Retrieve task details if necesary.
-        if isinstance(task_or_id, int):
-            task_id = task_or_id
-            task = self.task.get(task_id)
-        else:
-            task = task_or_id
-            task_id = task['id']
 
         animation = itertools.cycle(['|', '/', '-', '\\'])
         t = time.time()
@@ -733,7 +741,6 @@ class UserClient(ClientBase):
             )
             sys.stdout.flush()
             time.sleep(sleep)
-
         sys.stdout.write('\rDone!                  ')
 
         # Re-enable logging
