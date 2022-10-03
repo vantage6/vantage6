@@ -12,6 +12,8 @@ import jwt
 import requests
 import pyfiglet
 import json as json_lib
+import itertools
+import sys
 
 from pathlib import Path
 from typing import Tuple
@@ -25,7 +27,7 @@ from vantage6.common.globals import (
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.encryption import RSACryptor, DummyCryptor
-# from vantage6.client.socket import ClientSocketNamespace
+from vantage6.client.socket import ClientSocketNamespace
 
 
 module_name = __name__.split('.')[1]
@@ -56,72 +58,6 @@ class WhoAmI(typing.NamedTuple):
                 f"(id={self.organization_id})"
                 ">")
 
-import logging
-
-from socketio import ClientNamespace
-
-from vantage6.common import logger_name
-
-
-class ClientSocketNamespace(ClientNamespace):
-    """Class that handles incoming websocket events."""
-
-    # reference to the node objects, so a callback can edit the
-    # node instance.
-    client_ref = None
-
-    def __init__(self, *args, **kwargs):
-        """ Handler for a websocket namespace.
-        """
-        super().__init__(*args, **kwargs)
-        self.log = logging.getLogger(logger_name(__name__))
-
-    def on_message(self, data):
-        self.log.info(data)
-
-    def on_connect(self):
-        """On connect or reconnect"""
-        self.log.info('(Re)Connected to the /tasks namespace')
-        # self.client_ref.sync_task_queue_with_server()
-        # self.log.debug("Tasks synced again with the server...")
-
-    def on_disconnect(self):
-        """ Server disconnects event."""
-        # self.client_ref.socketIO.disconnect()
-        self.log.info('Disconnected from the server')
-
-    # def on_new_task(self, task_id):
-    #     """ New task event."""
-    #     if self.client_ref:
-    #         self.client_ref.get_task_and_add_to_queue(task_id)
-    #         self.log.info(f'New task has been added task_id={task_id}')
-
-    #     else:
-    #         self.log.critical(
-    #             'Task Master Node reference not set is socket namespace'
-    #         )
-
-    # def on_container_failed(self, run_id):
-    #     """A container in the collaboration has failed event.
-
-    #     TODO handle run sequence at this node. Maybe terminate all
-    #         containers with the same run_id?
-    #     """
-    #     self.log.critical(
-    #         f"A container on a node within your collaboration part of "
-    #         f"run_id={run_id} has exited with a non-zero status_code"
-    #     )
-
-    # def on_expired_token(self, msg):
-    #     self.log.warning("Your token is no longer valid... reconnecting")
-    #     self.client_ref.socketIO.disconnect()
-    #     self.log.debug("Old socket connection terminated")
-    #     self.client_ref.server_io.refresh_token()
-    #     self.log.debug("Token refreshed")
-    #     self.client_ref.connect_to_socket()
-    #     self.log.debug("Connected to socket")
-    #     self.client_ref.sync_task_queue_with_server()
-    #     self.log.debug("Tasks synced again with the server...")
 
 class ClientBase(object):
     """Common interface to the central server.
@@ -242,7 +178,6 @@ class ClientBase(object):
 
         self.log.info(f"Connected via websocket to the server at {self.host}:"
                       f"{self.port}")
-        print(self.socketIO.namespaces)
 
     def _join_collaboration_room(self, collab_id: int) -> None:
         """
@@ -769,6 +704,45 @@ class UserClient(ClientBase):
         except Exception as e:
             self.log.info('--> Retrieving additional user info failed!')
             self.log.exception(e)
+
+    def wait_for_results(self, task_or_id, sleep=1):
+        # Disable logging (additional logging would prevent the 'wait' message
+        # from being printed on a single line)
+        if isinstance(self.log, logging.Logger):
+            prev_level = self.log.level
+            self.log.setLevel(logging.WARN)
+        elif isinstance(self.log, UserClient.Log):
+            prev_level = self.log.enabled
+            self.log.enabled = False
+
+        # Retrieve task details if necesary.
+        if isinstance(task_or_id, int):
+            task_id = task_or_id
+            task = self.task.get(task_id)
+        else:
+            task = task_or_id
+            task_id = task['id']
+
+        animation = itertools.cycle(['|', '/', '-', '\\'])
+        t = time.time()
+
+        while not self.task.get(task_id)['complete']:
+            frame = next(animation)
+            sys.stdout.write(
+                f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
+            )
+            sys.stdout.flush()
+            time.sleep(sleep)
+
+        sys.stdout.write('\rDone!                  ')
+
+        # Re-enable logging
+        if isinstance(self.log, logging.Logger):
+            self.log.setLevel(prev_level)
+        elif isinstance(self.log, UserClient.Log):
+            self.log.enabled = prev_level
+
+        return self.get_results(task_id=task_id)
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
