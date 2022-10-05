@@ -2,12 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
+import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
 import { EMPTY_TASK, getEmptyTask, Task } from 'src/app/interfaces/task';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
+import { UserDataService } from 'src/app/services/data/user-data.service';
 import { ResType } from 'src/app/shared/enum';
 import { BaseSingleViewComponent } from '../base-single-view/base-single-view.component';
 
@@ -22,6 +27,8 @@ export class TaskViewSingleComponent
 {
   route_id: number | null = null;
   task: Task = getEmptyTask();
+  rules: Rule[] = [];
+  roles: Role[] = [];
   organization_id: number = -1;
 
   constructor(
@@ -31,6 +38,9 @@ export class TaskViewSingleComponent
     private taskDataService: TaskDataService,
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
+    private userDataService: UserDataService,
+    private ruleDataService: RuleDataService,
+    private roleDataService: RoleDataService,
     protected modalService: ModalService
   ) {
     super(
@@ -65,11 +75,25 @@ export class TaskViewSingleComponent
 
     await this.setInitiatingOrganization();
 
+    await this.setInitiatingUser();
+
     await this.setCollaboration();
   }
 
   async setInitiatingOrganization() {
-    this.task.initiator = await this.orgDataService.get(this.task.initiator_id);
+    this.task.init_org = await this.orgDataService.get(this.task.init_org_id);
+  }
+
+  async setInitiatingUser() {
+    // TODO it's stupid we first need to get all rules and roles just to set
+    // a user
+    this.rules = await this.ruleDataService.list();
+    this.roles = await this.roleDataService.list(this.rules);
+    this.task.init_user = await this.userDataService.get(
+      this.task.init_user_id,
+      this.roles,
+      this.rules
+    );
   }
 
   async setCollaboration() {

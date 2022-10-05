@@ -12,6 +12,10 @@ table {
   font-size: large;
 }
 
+::ng-deep .mat-sort-header-content {
+  text-align: left !important;
+}
+
 .mat-form-field {
   font-size: 14px;
   width: 100%;

@@ -51,6 +51,21 @@
     </mat-radio-button>
   </mat-radio-group>
 
+  <br/>
+  <div class="inline">
+    Show tasks initiated by:
+    <div ngbDropdown  class="d-inline-block">
+      <button class="btn btn-dropdown" id="dropdownInits" ngbDropdownToggle>
+        {{task_initiator_selected}}
+      </button>
+      <div ngbDropdownMenu aria-labelledby="dropdownInits">
+        <button ngbDropdownItem  *ngFor="let status of task_initiators | keyvalue" (click)="filterTasksByInitiator(status.value)">
+            {{status.value}}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="mat-elevation-z8">
     <mat-table #table [dataSource]="dataSource" matSort>
       <!-- Checkbox Column -->
@@ -94,9 +109,14 @@
         <mat-cell *matCellDef="let elem">{{elem.collaboration.name}}</mat-cell>
       </ng-container>
 
-      <ng-container matColumnDef="initiator">
-        <mat-header-cell *matHeaderCellDef mat-sort-header>Initiator</mat-header-cell>
-        <mat-cell *matCellDef="let elem">{{elem.initiator.name}}</mat-cell>
+      <ng-container matColumnDef="init_org">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Initiating organization</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.init_org.name}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="init_user">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Initiating user</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{elem.init_user.username}}</mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="complete">
