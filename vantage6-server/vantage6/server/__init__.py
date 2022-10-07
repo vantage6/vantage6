@@ -37,7 +37,8 @@ from vantage6.server.globals import (
     JWT_TEST_ACCESS_TOKEN_EXPIRES,
     RESOURCES,
     SUPER_USER_INFO,
-    REFRESH_TOKENS_EXPIRE
+    REFRESH_TOKENS_EXPIRE,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS
 )
 from vantage6.server.resource.swagger_templates import swagger_template
 from vantage6.server._version import __version__
@@ -191,7 +192,7 @@ class ServerApp:
         self.app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
         self.app.config["MAIL_USERNAME"] = mail_config.get(
             "username",
-            "support@vantage6.ai"
+            DEFAULT_SUPPORT_EMAIL_ADDRESS
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
         self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS",
