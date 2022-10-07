@@ -42,15 +42,8 @@ class NodeClient(ClientBase):
         super().authenticate({"api_key": api_key}, path="token/node")
 
         # obtain the server authenticatable id
-        jwt_payload = jwt.decode(self.token,
-                                 options={"verify_signature": False})
-
-        # FIXME: 'identity' is no longer needed in version 4+. So this if
-        # statement can be removed
-        if 'sub' in jwt_payload:
-            id_ = jwt_payload['sub']
-        elif 'identity' in jwt_payload:
-            id_ = jwt_payload['identity']
+        id_ = jwt.decode(
+            self.token, options={"verify_signature": False})['sub']
 
         # get info on how the server sees me
         node = self.request(f"node/{id_}")
