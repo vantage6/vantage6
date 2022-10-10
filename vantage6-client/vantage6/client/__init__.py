@@ -682,7 +682,7 @@ class UserClient(ClientBase):
                 Message from the server
             """
             result = self.parent.request(
-                'recover/change', method='post', json={
+                'password/change', method='patch', json={
                     'current_password': current_password,
                     'new_password': new_password
                 }
