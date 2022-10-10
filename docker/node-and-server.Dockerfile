@@ -5,10 +5,10 @@
 # * harbor2.vantage6.ai/infrastructure/node:x.x.x
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
-FROM harbor2.vantage6.ai/infrastructure/base
+ARG TAG=latest
+FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${TAG}
 
-LABEL version="3"
-LABEL infrastructure_version = "3.3.2"
+LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
 # Enable SSH access in Azure App service

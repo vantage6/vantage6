@@ -1,4 +1,5 @@
-FROM alpine:3.13
+ARG ALPINE_VERSION=3.13
+FROM alpine:${ALPINE_VERSION}
 
 RUN apk add --no-cache \
         bind-tools \
@@ -6,6 +7,6 @@ RUN apk add --no-cache \
 
 RUN mkdir /app
 
-COPY . /app/
+COPY vpn/vpn-client/ /app/
 
 ENTRYPOINT ["/app/entry.sh"]
