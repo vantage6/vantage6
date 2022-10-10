@@ -122,7 +122,7 @@ jobs:
           make publish
 
       - name: Build Docker support images
-        run: make base-image TAG=$version
+        run: make support-image TAG=$version
 
       - name: Build Docker base image
         run: make base-image TAG=$version
