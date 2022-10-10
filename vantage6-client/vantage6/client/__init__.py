@@ -941,10 +941,11 @@ class UserClient(ClientBase):
                 'page': page, 'per_page': per_page, 'include': includes,
                 'name': name, 'organization_id': organization,
                 'collaboration_id': collaboration, 'ip': ip,
-                'status': 'online' if is_online else 'offline',
                 'last_seen_from': last_seen_from,
                 'last_seen_till': last_seen_till
             }
+            if is_online is not None:
+                params['status'] = 'online' if is_online else 'offline'
             return self.parent.request('node', params=params)
 
         @post_filtering(iterable=False)
