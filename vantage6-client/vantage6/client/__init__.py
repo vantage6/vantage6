@@ -1351,7 +1351,7 @@ class UserClient(ClientBase):
 
         @post_filtering()
         def list(self, name: str = None, description: str = None,
-                 organization: int = None, rule: int = None,
+                 organization: int = None, rule: int = None, user: int = None,
                  include_root: bool = None, page: int = 1, per_page: int = 20,
                  include_metadata: bool = True) -> list:
             """List of roles
@@ -1366,6 +1366,8 @@ class UserClient(ClientBase):
                 Filter by organization id
             rule: int, optional
                 Only show roles that contain this rule id
+            user: int, optional
+                Only show roles that belong to a particular user id
             include_root: bool, optional
                 Include roles that are not assigned to any particular
                 organization
@@ -1388,7 +1390,7 @@ class UserClient(ClientBase):
                 'page': page, 'per_page': per_page, 'include': includes,
                 'name': name, 'description': description,
                 'organization_id': organization, 'rule_id': rule,
-                'include_root': include_root,
+                'include_root': include_root, 'user_id': user,
             }
             return self.parent.request('role', params=params)
 
