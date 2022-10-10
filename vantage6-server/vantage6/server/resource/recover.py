@@ -197,7 +197,8 @@ class RecoverPassword(ServicesResources):
             text_body=render_template("mail/reset_password_token.txt",
                                       token=reset_token),
             html_body=render_template("mail/reset_password_token.html",
-                                      token=reset_token)
+                                      token=reset_token,
+                                      support_email=email_sender)
         )
 
         return ret
