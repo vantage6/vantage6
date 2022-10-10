@@ -34,7 +34,7 @@ author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
-              'sphinx_autodoc_typehints']
+              'sphinx_autodoc_typehints', 'sphinx.ext.autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

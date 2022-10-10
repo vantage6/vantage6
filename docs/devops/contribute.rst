@@ -20,12 +20,76 @@ them to the `UI issue page <https://github.com/vantage6/vantage6-UI/issues>`_.
 * Bug report: you encountered broken code
 * Feature request: you want something to be added
 * Change request: there is a something you would like to be different but it is not considered a new feature nor is something broken
+* Security vunerabilities: you found a security issue
 
 Using these templates makes it easier for us to manage the projects. You can see what we are working on here:
 
 * `Sprints <https://github.com/orgs/vantage6/projects/1>`_
 * `Hotfixes <https://github.com/orgs/vantage6/projects/2>`_
 * `Feature requests <https://github.com/orgs/vantage6/projects/3>`_
+
+.. warning::
+
+    Security vunerabilities should not be reported in the Github issue tracker
+    for obvious reasons. To see how we deal with security vunerabilities read
+    our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
+
+    See the :ref:`Security vunerabilities` section on how to release a security
+    patch.
+
+Security vunerabilities
+-----------------------
+When you have proper access to the Gihub repository you can create an security
+advisory in the `Security <https://github.com/vantage6/vantage6/security/
+advisories>`_ tab. You need to fill a few details, see
+:numref:`advisory`.
+
+.. list-table:: Advisory details
+   :name: advisory
+   :widths: 33 67
+   :header-rows: 1
+
+   * - Name
+     - Details
+   * - Ecosystem
+     - Set to ``pip``
+   * - Package name
+     - Set to ``vantage6``
+   * - Affected versions
+     - Specify the versions (or set of verions) that are affected
+   * - Patched version
+     - Version where the issue is addessed, you can fill this in later when
+       the patch is released.
+   * - Severity
+     - Determine severity score using `this <https://nvd.nist.gov/vuln-metrics/
+       cvss/v3-calculator>`_ tool. Then use table :numref:`severity` to determine
+       the level from this score.
+   * - Common weakness enumerator (CWE)
+     - Find the CWE (or multiple) on `this <https://cwe.mitre.org/>`_ website.
+
+.. list-table:: Severity
+   :name: severity
+   :widths: 33 67
+   :header-rows: 1
+
+   * - Score
+     - Level
+   * - 0.1-3.9
+     - Low
+   * - 4.0-6.9
+     - Medium
+   * - 7.0-8.9
+     - High
+   * - 9.0-10.0
+     - Critical
+
+Once the advisory has been created it is possible to create a private fork from
+there (Look for the button ``Start a temporary private fork``). This private
+fork should be used to solve the issue.
+
+From the same page you should request a CVE number so we can alert dependant
+software project. Github will review the request (not sure on what), but so
+far approved all requests.
 
 Planning
 --------
