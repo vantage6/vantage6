@@ -227,4 +227,13 @@ export class UserPermissionService {
     }
     return true;
   }
+
+  clear(): void {
+    this.user = EMPTY_USER;
+    this.userBhs.next(this.user);
+    this.userRules = [];
+    this.userExtraRules = [];
+    this.roles = [];
+    this.ready.next(false);
+  }
 }
