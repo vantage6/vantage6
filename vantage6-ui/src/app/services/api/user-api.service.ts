@@ -20,7 +20,11 @@ export class UserApiService extends BaseApiService {
     super(ResType.USER, http, modalService);
   }
 
-  get_data(user: User, exclude_own_permissions: boolean = false): any {
+  get_data(
+    user: User,
+    exclude_own_permissions: boolean = false,
+    include_password = true
+  ): any {
     let data: any = {
       username: user.username,
       email: user.email,
@@ -34,14 +38,14 @@ export class UserApiService extends BaseApiService {
       data.roles = getIdsFromArray(user.roles);
       data.rules = getIdsFromArray(user.rules);
     }
-    if (user.password) {
+    if (user.password && include_password) {
       data.password = user.password;
     }
     return data;
   }
 
   update(user: User) {
-    const data = this.get_data(user, true);
+    const data = this.get_data(user, true, false);
     return this.http.patch<any>(environment.api_url + '/user/' + user.id, data);
   }
 
