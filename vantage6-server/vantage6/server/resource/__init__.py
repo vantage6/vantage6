@@ -104,18 +104,23 @@ def only_for(types=['user', 'node', 'container']):
                 g.user = user
                 assert g.user.type == g.type
                 log.debug(
-                    f"Received request from user {user.username} ({user.id})")
+                    f"Received request {request.method} {request.url_rule} "
+                    f"from user {user.username} ({user.id})")
 
             elif g.type == 'node':
                 node = get_and_update_authenticatable_info(identity)
                 g.node = node
                 assert g.node.type == g.type
                 log.debug(
-                    f"Received request from node {node.name} ({node.id})")
+                    f"Received request {request.method} {request.url_rule} "
+                    f"from node {node.name} ({node.id})")
 
             elif g.type == 'container':
                 g.container = identity
-                log.debug("Received request from container")
+                log.debug(
+                    f"Received request {request.method} {request.url_rule} "
+                    f"from container from node id {identity['node_id']} and "
+                    f"task id {identity['task_id']}")
 
             else:
                 raise Exception(f"Unknown entity: {g.type}")
