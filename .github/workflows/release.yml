@@ -121,11 +121,18 @@ jobs:
         run: |
           make publish
 
+      - name: Build Docker support images
+        run: make support-image TAG=$version
+
+      - name: Build Docker base image
+        run: make base-image TAG=$version
+
       - name: Build Docker image
         run: make image TAG=$version
 
-      - name: Push Docker image
-        run: make docker-push TAG=$version
+      # this is now handled by `docker buildx`
+      # - name: Push Docker image
+      #   run: make docker-push TAG=$version
 
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment

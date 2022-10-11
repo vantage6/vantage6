@@ -4,6 +4,7 @@
 TAG ?= trolltunga
 BUILDNR ?= 1
 BRANCH ?= master
+REPO ?= harbor2.vantage6.ai
 
 help:
 	@echo "Available commands to 'make':"
@@ -13,7 +14,8 @@ help:
 	@echo "  install      : do a regular install of all vantage6 packages"
 	@echo "  install-dev  : do an editable install of all vantage6 packages"
 	@echo "  image 		  : build the node/server docker image"
-	@echo "  docker-push  : push the node/server docker image"
+	@echo "  base-image   : build the infrastructure base image"
+	@echo "  support-image: build the supporing images"
 	@echo "  rebuild      : rebuild all python packages"
 	@echo "  publish-test : publish built python packages to test.pypi.org"
 	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
@@ -54,13 +56,50 @@ install-dev:
 	cd vantage6-node && pip install -e .
 	cd vantage6-server && pip install -e .
 
-image:
-	docker build -t harbor2.vantage6.ai/infrastructure/node:${TAG} .
-	docker tag harbor2.vantage6.ai/infrastructure/node:${TAG} harbor2.vantage6.ai/infrastructure/server:${TAG}
+base-image:
+	@echo "Building ${REPO}/infrastructure/infrastructure-base:${TAG}"
+	docker buildx build \
+		--tag ${REPO}/infrastructure/infrastructure-base:${TAG} \
+		--platform linux/arm64,linux/amd64 \
+		-f .\docker\infrastructure-base.Dockerfile \
+		--push .
 
-docker-push:
-	docker push harbor2.vantage6.ai/infrastructure/node:${TAG}
-	docker push harbor2.vantage6.ai/infrastructure/server:${TAG}
+support-image:
+	@echo "Building ${REPO}/infrastructure/alpine:${TAG}"
+	@echo "Building ${REPO}/infrastructure/vpn-client:${TAG}"
+	@echo "Building ${REPO}/infrastructure/vpn-configurator:${TAG}"
+	@echo "All images are also tagged with `latest`"
+
+	docker buildx build \
+		--tag ${REPO}/infrastructure/alpine:${TAG} \
+		--tag ${REPO}/infrastructure/alpine:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f .\docker\alpine.Dockerfile \
+		--push .
+
+	docker buildx build \
+		--tag ${REPO}/infrastructure/vpn-client:${TAG} \
+		--tag ${REPO}/infrastructure/vpn-client:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f .\docker\vpn-client.Dockerfile \
+		--push .
+
+	docker buildx build \
+		--tag ${REPO}/infrastructure/vpn-configurator:${TAG} \
+		--tag ${REPO}/infrastructure/vpn-configurator:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f .\docker\vpn-configurator.Dockerfile \
+		--push .
+
+image:
+	@echo "Building ${REPO}/infrastructure/node:${TAG}"
+	@echo "Building ${REPO}/infrastructure/server:${TAG}"
+	docker buildx build \
+		--tag ${REPO}/infrastructure/node:${TAG} \
+		--tag ${REPO}/infrastructure/server:${TAG} \
+		--platform linux/arm64,linux/amd64 \
+		-f .\docker\node-and-server.Dockerfile \
+		--push .
 
 rebuild:
 	@echo "------------------------------------"
