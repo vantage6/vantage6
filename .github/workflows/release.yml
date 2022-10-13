@@ -130,9 +130,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Build Docker support images
-        run: |
-          docker buildx create –use
-          make support-image TAG=$version
+        run: make support-image TAG=$version
 
       - name: Build Docker base image
         run: make base-image TAG=$version
