@@ -62,19 +62,6 @@
           You can't modify your own permissions!
         </div>
         <ng-template #modifyRulesBlock>
-          <div *ngFor="let role of user.roles" class="inline">
-            <div *ngIf="can_assign_roles_rules; else nonDeletableRoleBlock">
-              <button mat-button class="btn btn-delete btn-inline" (click)="removeRole(role)">
-                <mat-icon>remove_circle</mat-icon>
-                <span>{{role.name}}</span>
-              </button>
-            </div>
-            <ng-template #nonDeletableRoleBlock>
-              <button mat-button class="btn btn-link inline">
-                {{role.name}}
-              </button>
-            </ng-template>
-          </div>
           <div class="inline" *ngIf="roles_assignable.length > 0 && can_assign_roles_rules; else noAssignableRolesBlock">
             <div ngbDropdown class="d-inline-block">
               <button class="btn btn-dropdown" id="dropdownRoles" ngbDropdownToggle>
@@ -87,6 +74,19 @@
                 </div>
               </div>
             </div>
+          </div>
+          <div *ngFor="let role of user.roles" class="inline">
+            <div *ngIf="can_assign_roles_rules; else nonDeletableRoleBlock">
+              <button mat-button class="btn btn-delete btn-inline" (click)="removeRole(role)">
+                <mat-icon>remove_circle</mat-icon>
+                <span>{{role.name}}</span>
+              </button>
+            </div>
+            <ng-template #nonDeletableRoleBlock>
+              <button mat-button class="btn btn-link inline">
+                {{role.name}}
+              </button>
+            </ng-template>
           </div>
           <ng-template #noAssignableRolesBlock>
             {{ getTextReasonNoRoles()}}
