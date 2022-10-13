@@ -256,4 +256,14 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
       ? `Edit user '${this.user_orig_name}'`
       : 'Create a new user';
   }
+
+  valuesOk(): boolean {
+    return (
+      this.user.email != '' &&
+      this.user.password !== undefined &&
+      this.user.password !== '' &&
+      this.user.password === this.user.password_repeated &&
+      this.user.username != ''
+    );
+  }
 }

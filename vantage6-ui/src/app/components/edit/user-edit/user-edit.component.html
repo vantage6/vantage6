@@ -6,19 +6,19 @@
       <col span="1" style="width: 80%;"/>
     </colgroup>
     <tr>
-      <td>Username:</td>
+      <td>Username*:</td>
       <td><input [(ngModel)]="user.username"/></td>
     </tr>
     <tr>
-      <td>Email:</td>
+      <td>Email*:</td>
       <td><input [(ngModel)]="user.email"/></td>
     </tr>
     <tr *ngIf="isCreate()">
-      <td>Password:</td>
+      <td>Password*:</td>
       <td><input type="password" [(ngModel)]="user.password"/></td>
     </tr>
     <tr *ngIf="isCreate()">
-      <td>Repeat password:</td>
+      <td>Repeat password*:</td>
       <td>
         <input type="password" [(ngModel)]="user.password_repeated"/>
         <p class="inline text-warning" *ngIf="user.password != user.password_repeated">
@@ -108,7 +108,10 @@
         (addedRulesChangeEvent)="updateAddedRules($event)"
     ></app-permission-table>
   </div>
-  <button mat-button class="btn btn-save" (click)="save()">
+  <div>
+    * This is a required field
+  </div>
+  <button mat-button class="btn btn-save" (click)="save()" [disabled]="!valuesOk()">
     Save
   </button>
   <button mat-button class="btn btn-dflt" (click)="cancel()">
