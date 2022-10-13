@@ -2,7 +2,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Organization } from 'src/app/interfaces/organization';
-import { User } from 'src/app/interfaces/user';
 import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
@@ -103,20 +102,26 @@ export abstract class BaseEditComponent implements OnInit {
       request = this.apiService.update(resource);
     }
 
-    let data = await request.toPromise().catch((error: any) => {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        error.error.msg,
-      ]);
-      return null;
-    });
-
-    if (this.mode === OpsType.CREATE) {
-      resource.id = data.id;
-      this.dataService.save(resource);
-    }
-    if (goToPreviousPage) {
-      this.utilsService.goToPreviousPage();
-    }
-    return data;
+    return request
+      .toPromise()
+      .then((data) => {
+        // save the ID that newly created data had
+        if (this.mode === OpsType.CREATE) {
+          resource.id = data.id;
+          this.dataService.save(resource);
+        }
+        if (goToPreviousPage) {
+          this.utilsService.goToPreviousPage();
+        }
+        return data;
+      })
+      .catch((error) => {
+        let error_msg = 'An unknown error occurred!';
+        if (error.error.msg) {
+          error_msg = error.error.msg;
+        }
+        this.modalService.openMessageModal(ModalMessageComponent, [error_msg]);
+        return null;
+      });
   }
 }
