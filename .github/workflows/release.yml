@@ -147,7 +147,7 @@ jobs:
   infrastructure-images:
     name: Build infrastructure images
     runs-on: ubuntu-latest
-    needs: build-n-release # we need to packages to be released
+    needs: [version, build-n-release] # we need to packages to be released
     env:
       version: ${{ needs.version.outputs.version }}
       minor: ${{ needs.version.outputs.minor }}
@@ -189,7 +189,7 @@ jobs:
   algorithm-base-image:
     name: Build algorithm base image
     runs-on: ubuntu-latest
-    needs: build-n-release # we need to python client to be released
+    needs: [version, build-n-release] # we need to python client to be released
     env:
       version: ${{ needs.version.outputs.version }}
 
