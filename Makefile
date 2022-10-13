@@ -64,6 +64,14 @@ base-image:
 		-f ./docker/infrastructure-base.Dockerfile \
 		--push .
 
+algorithm-base-image:
+	@echo "Building ${REPO}/algorithms/algorithm-base:${TAG}"
+	docker buildx build \
+		--tag ${REPO}/infrastructure/algorithm-base:${TAG} \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/algorithm-base.Dockerfile \
+		--push .
+
 support-image:
 	@echo "Building ${REPO}/infrastructure/alpine:${TAG}"
 	@echo "Building ${REPO}/infrastructure/vpn-client:${TAG}"
