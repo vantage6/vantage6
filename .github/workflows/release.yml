@@ -220,7 +220,7 @@ jobs:
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   deploy:
     runs-on: ubuntu-latest
-    needs: [version, build-n-release]
+    needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
