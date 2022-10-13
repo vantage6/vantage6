@@ -261,7 +261,7 @@ export class OrganizationComponent implements OnInit {
     if (this.current_organization.public_key)
       this.fileService.downloadTxtFile(
         this.current_organization.public_key,
-        `public_key_organization_${this.current_organization.name}.pub`
+        `public_key_organization_${this.current_organization.name}.txt`
       );
   }
 

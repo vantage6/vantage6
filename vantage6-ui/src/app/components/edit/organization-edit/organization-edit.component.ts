@@ -70,11 +70,19 @@ export class OrganizationEditComponent
 
   async save(): Promise<void> {
     const new_public_key = await this.readUploadedFile();
+
+    let old_public_key = this.organization.public_key;
     if (new_public_key) {
       this.organization.public_key = new_public_key;
     }
     let org_json = await super.save(this.organization, false);
-    this.router.navigate([`/organization/${org_json.id}`]);
+
+    // reset public key if saving organization failed
+    if (org_json === null) {
+      this.organization.public_key = old_public_key;
+    } else {
+      this.router.navigate([`/organization/${org_json.id}`]);
+    }
   }
 
   uploadPublicKey($event: any): void {
