@@ -114,25 +114,6 @@ jobs:
         run: |
           make publish
 
-      - # Add support for more platforms with QEMU (optional)
-        # https://github.com/docker/setup-qemu-action
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-        # We need this for building multi-arch images
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-        # vpn images
-      - name: Build Docker support images
-        run: make support-image TAG=$version
-
-      - name: Build Docker base image
-        run: make base-image TAG=$version
-
-      - name: Build Docker image
-        run: make image TAG=$version
-
   support-images:
     name: Build support images
     runs-on: ubuntu-latest
