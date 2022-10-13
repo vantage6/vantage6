@@ -61,7 +61,7 @@ base-image:
 	docker buildx build \
 		--tag ${REPO}/infrastructure/infrastructure-base:${TAG} \
 		--platform linux/arm64,linux/amd64 \
-		-f .\docker\infrastructure-base.Dockerfile \
+		-f ./docker/infrastructure-base.Dockerfile \
 		--push .
 
 support-image:
@@ -74,21 +74,21 @@ support-image:
 		--tag ${REPO}/infrastructure/alpine:${TAG} \
 		--tag ${REPO}/infrastructure/alpine:latest \
 		--platform linux/arm64,linux/amd64 \
-		-f .\docker\alpine.Dockerfile \
+		-f ./docker/alpine.Dockerfile \
 		--push .
 
 	docker buildx build \
 		--tag ${REPO}/infrastructure/vpn-client:${TAG} \
 		--tag ${REPO}/infrastructure/vpn-client:latest \
 		--platform linux/arm64,linux/amd64 \
-		-f .\docker\vpn-client.Dockerfile \
+		-f ./docker/vpn-client.Dockerfile \
 		--push .
 
 	docker buildx build \
 		--tag ${REPO}/infrastructure/vpn-configurator:${TAG} \
 		--tag ${REPO}/infrastructure/vpn-configurator:latest \
 		--platform linux/arm64,linux/amd64 \
-		-f .\docker\vpn-configurator.Dockerfile \
+		-f ./docker/vpn-configurator.Dockerfile \
 		--push .
 
 image:
@@ -98,7 +98,7 @@ image:
 		--tag ${REPO}/infrastructure/node:${TAG} \
 		--tag ${REPO}/infrastructure/server:${TAG} \
 		--platform linux/arm64,linux/amd64 \
-		-f .\docker\node-and-server.Dockerfile \
+		-f ./docker/node-and-server.Dockerfile \
 		--push .
 
 rebuild:
