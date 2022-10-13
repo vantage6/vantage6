@@ -257,7 +257,7 @@ jobs:
   # When the project is built and released the Discord community is notified.
   notify:
     runs-on: ubuntu-latest
-    needs: [version, build-n-release]
+    needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
