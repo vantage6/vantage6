@@ -2,8 +2,8 @@
   <h4>View tasks and results</h4>
   <div class="inline"
   *ngIf="(userPermission.hasPermission('view', 'organization', 'collaboration') ||
-          userPermission.hasPermission('view', 'organization', 'global')) &&
-          userPermission.hasPermission('view', 'collaboration', '*') &&
+          userPermission.hasPermission('view', 'organization', 'global') ||
+          userPermission.hasPermission('view', 'collaboration', '*')) &&
           userPermission.hasPermission('view', 'task', '*')">
     {{getSelectDropdownText()}}
     <div ngbDropdown class="d-inline-block">
@@ -15,7 +15,18 @@
               [routerLink]="['/tasks']">
             All
         </button>
-        <div *ngIf="userPermission.hasPermission('view', 'organization', 'global')">
+        <div *ngIf="userPermission.hasPermission('view', 'collaboration', '*')">
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-subsection">Collaborations</div>
+          <div *ngFor="let col of collaborations">
+            <button ngbDropdownItem
+                [routerLink]="['/tasks/collab', col.id]">
+              {{col.name}}
+            </button>
+          </div>
+        </div>
+        <div *ngIf="userPermission.hasPermission('view', 'organization', 'global') ||
+                    userPermission.hasPermission('view', 'organization', 'collaboration')">
           <div class="dropdown-divider"></div>
           <div class="dropdown-subsection">Organizations</div>
           <div *ngFor="let org of organizations">
@@ -24,16 +35,6 @@
               {{org.name}}
             </button>
           </div>
-        </div>
-        <div class="dropdown-divider"></div>
-        <div *ngIf="userPermission.hasPermission('view', 'organization', 'global')">
-          <div class="dropdown-subsection">Collaborations</div>
-        </div>
-        <div *ngFor="let col of collaborations">
-          <button ngbDropdownItem
-              [routerLink]="['/tasks/collab', col.id]">
-            {{col.name}}
-          </button>
         </div>
       </div>
     </div>
