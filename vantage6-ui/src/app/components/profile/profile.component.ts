@@ -64,7 +64,7 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
       .change_password(this.old_password, this.new_password)
       .subscribe(
         (data: any) => {
-          this.modalService.openMessageModal(ModalMessageComponent, [
+          this.modalService.openMessageModal([
             'Your password was changed successfully!',
           ]);
           this.old_password = '';
@@ -72,9 +72,7 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
           this.new_password_repeated = '';
         },
         (error: any) => {
-          this.modalService.openMessageModal(ModalMessageComponent, [
-            error.error.msg,
-          ]);
+          this.modalService.openErrorModal(error.error.msg);
         }
       );
   }

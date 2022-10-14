@@ -36,7 +36,7 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
     let api_key = await this.nodeApiService.reset_api_key(this.node);
     if (api_key) {
       // TODO properly format the command and api key to make them stand out!
-      this.modalService.openMessageModal(ModalMessageComponent, [
+      this.modalService.openMessageModal([
         'Your new API key is:',
         api_key,
         `Please paste your new API key into your node configuration file. You
@@ -63,10 +63,7 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
     this.nodeApiService.update(this.node).subscribe(
       (data) => {},
       (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          'Error:',
-          error.error.msg,
-        ]);
+        this.modalService.openMessageModal(error.error.msg);
       }
     );
   }

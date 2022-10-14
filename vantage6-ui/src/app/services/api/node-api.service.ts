@@ -28,9 +28,7 @@ export class NodeApiService extends BaseApiService {
         .toPromise();
       return response.api_key;
     } catch (error: any) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        'Error: ' + error.error.msg,
-      ]);
+      this.modalService.openErrorModal(error.error.msg);
       return null;
     }
   }

@@ -157,12 +157,10 @@ export class CollaborationEditComponent
         this.nodeDataService.save(new_node);
         new_nodes.push(new_node);
       } catch (error: any) {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          'Error: ' + error.error.msg,
-        ]);
+        this.modalService.openErrorModal(error.error.msg);
       }
     }
-    this.modalService.openMessageModal(ModalMessageComponent, [
+    this.modalService.openMessageModal([
       'The nodes for your collaboration have been created. They have the following API keys:',
       ...api_keys,
       'Please distribute these API keys to the organizations hosting the nodes.',

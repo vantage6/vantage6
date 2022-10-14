@@ -29,7 +29,7 @@ export class UtilsService {
     // we are editing an organization: get the organization id
     let new_id = parseId(params.get(param_name));
     if (isNaN(new_id)) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
+      this.modalService.openMessageModal([
         'The ' +
           resource +
           " id '" +
