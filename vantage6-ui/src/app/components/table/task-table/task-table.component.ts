@@ -7,13 +7,12 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { deepcopy, parseId } from 'src/app/shared/utils';
 import { TableComponent } from '../base-table/table.component';
 import { DisplayMode } from '../node-table/node-table.component';
-import { EMPTY_TASK, Task } from 'src/app/interfaces/task';
+import { Task } from 'src/app/interfaces/task';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 export enum TaskStatus {
   ALL = 'All',
@@ -174,21 +173,21 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     if (
       this.userPermission.hasPermission(
         OpsType.VIEW,
-        ResType.ORGANIZATION,
-        ScopeType.GLOBAL
-      )
-    ) {
-      entity = 'organization';
-    }
-    if (
-      this.userPermission.hasPermission(
-        OpsType.VIEW,
         ResType.COLLABORATION,
         ScopeType.ANY
       )
     ) {
+      entity = 'collaboration';
+    }
+    if (
+      this.userPermission.hasPermission(
+        OpsType.VIEW,
+        ResType.ORGANIZATION,
+        ScopeType.GLOBAL
+      )
+    ) {
       if (entity) entity += '/';
-      entity += 'collaboration';
+      entity += 'organization';
     }
     return `Select ${entity} to view:`;
   }
