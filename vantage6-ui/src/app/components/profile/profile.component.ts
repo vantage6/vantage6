@@ -7,7 +7,6 @@ import { SignOutService } from 'src/app/services/common/sign-out.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { deepcopy } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../view/base-view/base-view.component';
-import { ModalMessageComponent } from '../modal/modal-message/modal-message.component';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 
 @Component({
@@ -17,9 +16,6 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 })
 export class ProfileComponent extends BaseViewComponent implements OnInit {
   user: User = getEmptyUser();
-  old_password: string = '';
-  new_password: string = '';
-  new_password_repeated: string = '';
 
   constructor(
     public userPermission: UserPermissionService,
@@ -49,31 +45,5 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
 
   signOut() {
     this.signOutService.signOut();
-  }
-
-  hasFilledInPasswords(): boolean {
-    return (
-      this.old_password.length > 0 &&
-      this.new_password.length > 0 &&
-      this.new_password === this.new_password_repeated
-    );
-  }
-
-  async savePassword(): Promise<void> {
-    this.userApiService
-      .change_password(this.old_password, this.new_password)
-      .subscribe(
-        (data: any) => {
-          this.modalService.openMessageModal([
-            'Your password was changed successfully!',
-          ]);
-          this.old_password = '';
-          this.new_password = '';
-          this.new_password_repeated = '';
-        },
-        (error: any) => {
-          this.modalService.openErrorModal(error.error.msg);
-        }
-      );
   }
 }
