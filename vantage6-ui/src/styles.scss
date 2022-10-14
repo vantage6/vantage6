@@ -64,3 +64,9 @@ body {
 .modal.fade {
   z-index: 10000000 !important;
 }
+
+// dropdown maximum height and scrollbar settings
+.dropdown-menu {
+  max-height: 350px;
+  overflow-y: auto;
+}
