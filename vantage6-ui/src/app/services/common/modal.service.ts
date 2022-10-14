@@ -8,6 +8,7 @@ import {
 import { ModalDeleteComponent } from 'src/app/components/modal/modal-delete/modal-delete.component';
 import { ModalEditComponent } from 'src/app/components/modal/modal-edit/modal-edit.component';
 import { ModalLoadingComponent } from 'src/app/components/modal/modal-loading/modal-loading.component';
+import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
 
@@ -20,7 +21,6 @@ export class ModalService {
   constructor(private modalService: NgbModal) {}
 
   openMessageModal(
-    modalComponent: any,
     messages: string[] = [],
     go_back_after_close: boolean = false,
     keepOpen = false
@@ -32,10 +32,25 @@ export class ModalService {
         keyboard: false,
       };
     }
-    const modalRef = this.modalService.open(modalComponent, options);
+    const modalRef = this.modalService.open(ModalMessageComponent, options);
     modalRef.componentInstance.messages = messages;
     modalRef.componentInstance.go_back_after_close = go_back_after_close;
     return modalRef;
+  }
+
+  openErrorModal(
+    error_message: string | undefined,
+    go_back_after_close: boolean = false,
+    keepOpen = false
+  ): NgbModalRef {
+    if (!error_message) {
+      error_message = 'Error: An unknown error occurred!';
+    }
+    return this.openMessageModal(
+      [`Error: ${error_message}`],
+      go_back_after_close,
+      keepOpen
+    );
   }
 
   openLoadingModal(keepOpen = true): void {

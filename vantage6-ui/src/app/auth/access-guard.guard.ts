@@ -89,9 +89,7 @@ export class OrgAccessGuard implements CanActivate {
       );
     }
     if (!permission) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        'You are not allowed to do that!',
-      ]);
+      this.modalService.openErrorModal('You are not allowed to do that!');
     }
     return permission;
   }

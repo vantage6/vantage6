@@ -136,7 +136,7 @@ export class CollaborationViewComponent
     new_node.collaboration_id = this.collaboration.id;
     this.nodeApiService.create(new_node).subscribe(
       (node_json) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
+        this.modalService.openMessageModal([
           `The node '${node_json.name}' has been created! You can now generate a
 configuration file for the node using 'vnode new'.`,
           'Please insert the following API key into your configuration file:',
@@ -155,10 +155,7 @@ configuration file for the node using 'vnode new'.`,
         this.createdNode.emit(org.node);
       },
       (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          'Error:',
-          error.error.msg,
-        ]);
+        this.modalService.openMessageModal(error.error.msg);
       }
     );
   }

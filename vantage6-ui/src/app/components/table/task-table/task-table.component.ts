@@ -229,19 +229,19 @@ export class TaskTableComponent extends TableComponent implements OnInit {
 
   async deleteSelectedTasks(): Promise<void> {
     for (let task of this.selection.selected) {
-      let data = this.taskApiService
+      this.taskApiService
         .delete(task)
         .toPromise()
+        .then((data) => {
+          this.taskDataService.remove(task);
+          // reinitialize table to reflect the deleted tasks
+          this.setup();
+          this.selection.clear();
+        })
         .catch((error) => {
-          this.modalService.openMessageModal(ModalMessageComponent, [
-            error.error.msg,
-          ]);
+          this.modalService.openErrorModal(error.error.msg);
         });
-      this.taskDataService.remove(task);
     }
-    // reinitialize table to reflect the deleted tasks
-    this.setup();
-    this.selection.clear();
   }
 
   askConfirmDelete(): void {

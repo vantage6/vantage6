@@ -116,11 +116,7 @@ export abstract class BaseEditComponent implements OnInit {
         return data;
       })
       .catch((error) => {
-        let error_msg = 'An unknown error occurred!';
-        if (error.error.msg) {
-          error_msg = error.error.msg;
-        }
-        this.modalService.openMessageModal(ModalMessageComponent, [error_msg]);
+        this.modalService.openErrorModal(error.error.msg);
         return null;
       });
   }
