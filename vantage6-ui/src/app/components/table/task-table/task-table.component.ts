@@ -119,8 +119,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     });
   }
 
-  async setup() {
-    await this.setResources();
+  async setup(force_refresh: boolean = false) {
+    await this.setResources(force_refresh);
 
     await this.addCollaborationsToResources();
 
@@ -131,7 +131,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     this.modalService.closeLoadingModal();
   }
 
-  protected async setResources() {
+  protected async setResources(force_refresh: boolean = false) {
     if (this.displayMode === DisplayMode.ORG) {
       // if displaying tasks for a certain organization, display the tasks for
       // each collaboration that the organization is involved in
@@ -139,15 +139,16 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       for (let collab_id of (this.current_organization as Organization)
         .collaboration_ids) {
         this.resources.push(
-          ...(await this.taskDataService.collab_list(collab_id))
+          ...(await this.taskDataService.collab_list(collab_id, force_refresh))
         );
       }
     } else if (this.displayMode === DisplayMode.COL) {
       this.resources = await this.taskDataService.collab_list(
-        this.route_org_id as number
+        this.route_org_id as number,
+        force_refresh
       );
     } else {
-      this.resources = await this.taskDataService.list();
+      this.resources = await this.taskDataService.list(force_refresh);
     }
     // make a copy to prevent that changes in these resources are directly
     // reflected in the resources within dataServices
@@ -300,5 +301,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       return elem.complete === show_complete;
     });
     this.dataSource.data = resources_shown;
+  }
+
+  async refreshTasks() {
+    this.modalService.openLoadingModal();
+    await this.setup(true);
+    this.modalService.closeLoadingModal();
   }
 }
