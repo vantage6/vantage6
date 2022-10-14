@@ -82,10 +82,10 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   protected abstract init(): void;
-  protected abstract setResources(): void;
+  protected abstract setResources(force_refresh: boolean): void;
 
-  async setup() {
-    await this.setResources();
+  async setup(force_refresh: boolean = false) {
+    await this.setResources(force_refresh);
 
     await this.addOrganizationsToResources();
 

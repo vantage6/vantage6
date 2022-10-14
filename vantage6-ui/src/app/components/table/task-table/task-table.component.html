@@ -126,8 +126,13 @@
     </div>
   </ng-template>
 
+  <br/>
+  <button mat-button class="btn btn-save inline" (click)="refreshTasks()">
+    Refresh tasks
+  </button>
+
   <button *ngIf="userPermission.hasPermission('delete', 'task', '*')"
-    mat-button class="btn btn-delete-strong" style="margin-top: 10px;"
+    mat-button class="btn btn-delete-strong inline"
     (click)="askConfirmDelete()" [disabled]="!canDeleteSelection()">
     Delete selected tasks
   </button>
