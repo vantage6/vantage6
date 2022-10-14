@@ -15,8 +15,9 @@
               [routerLink]="['/nodes']">
             All
         </button>
-        <div *ngIf="userPermission.hasPermission('view', 'organization', 'collaboration') ||
-                    userPermission.hasPermission('view', 'organization', 'global')">
+        <div *ngIf="userPermission.hasPermission('view', 'node', 'global') &&
+                    (userPermission.hasPermission('view', 'organization', 'collaboration') ||
+                     userPermission.hasPermission('view', 'organization', 'global'))">
           <div class="dropdown-divider"></div>
           <div class="dropdown-subsection">Organizations</div>
           <div *ngFor="let org of organizations">
@@ -26,7 +27,8 @@
             </button>
           </div>
         </div>
-        <div *ngIf="userPermission.hasPermission('view', 'collaboration', '*')">
+        <div *ngIf="userPermission.hasPermission('view', 'node', 'global') &&
+                    userPermission.hasPermission('view', 'collaboration', '*')">
           <div class="dropdown-divider"></div>
           <div class="dropdown-subsection">Collaborations</div>
           <div *ngFor="let col of collaborations">
