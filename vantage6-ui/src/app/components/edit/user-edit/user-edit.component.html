@@ -117,4 +117,11 @@
   <button mat-button class="btn btn-dflt" (click)="cancel()">
     Cancel
   </button>
+
+  <!-- Reset password, only visible if logged-in user is editing themselves -->
+  <div *ngIf="userPermission.user.id === user.id">
+    <app-change-password
+      [user]="user"
+    ></app-change-password>
+  </div>
 </mat-card>
