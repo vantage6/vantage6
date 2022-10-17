@@ -8,8 +8,9 @@ If you have questions, you can use
 * `Github discussions <https://github.com/vantage6/vantage6/discussions>`_
 * Ask us on `Discord <https://discord.gg/yAyFf6Y>`_
 
-We prefer that you ask questions via these routes rather than creating Github issues.
-The issue tracker is intended to address bugs, feature requests, and code changes.
+We prefer that you ask questions via these routes rather than creating Github
+issues. The issue tracker is intended to address bugs, feature requests, and
+code changes.
 
 Reporting issues
 ----------------
@@ -19,10 +20,12 @@ them to the `UI issue page <https://github.com/vantage6/vantage6-UI/issues>`_.
 
 * Bug report: you encountered broken code
 * Feature request: you want something to be added
-* Change request: there is a something you would like to be different but it is not considered a new feature nor is something broken
-* Security vunerabilities: you found a security issue
+* Change request: there is a something you would like to be different but it
+  is not considered a new feature nor is something broken
+* Security vulnerabilities: you found a security issue
 
-Using these templates makes it easier for us to manage the projects. You can see what we are working on here:
+Using these templates makes it easier for us to manage the projects. You can
+see what we are working on here:
 
 * `Sprints <https://github.com/orgs/vantage6/projects/1>`_
 * `Hotfixes <https://github.com/orgs/vantage6/projects/2>`_
@@ -30,14 +33,14 @@ Using these templates makes it easier for us to manage the projects. You can see
 
 .. warning::
 
-    Security vunerabilities should not be reported in the Github issue tracker
-    for obvious reasons. To see how we deal with security vunerabilities read
+    Security vulnerabilities should not be reported in the Github issue tracker
+    for obvious reasons. To see how we deal with security vulnerabilities read
     our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
 
-    See the :ref:`Security vunerabilities` section on how to release a security
+    See the :ref:`Security vulnerabilities` section on how to release a security
     patch.
 
-Security vunerabilities
+Security vulnerabilities
 -----------------------
 When you have proper access to the Gihub repository you can create an security
 advisory in the `Security <https://github.com/vantage6/vantage6/security/
@@ -62,8 +65,8 @@ advisories>`_ tab. You need to fill a few details, see
        the patch is released.
    * - Severity
      - Determine severity score using `this <https://nvd.nist.gov/vuln-metrics/
-       cvss/v3-calculator>`_ tool. Then use table :numref:`severity` to determine
-       the level from this score.
+       cvss/v3-calculator>`_ tool. Then use table :numref:`severity` to
+       determine the level from this score.
    * - Common weakness enumerator (CWE)
      - Find the CWE (or multiple) on `this <https://cwe.mitre.org/>`_ website.
 
@@ -91,9 +94,31 @@ From the same page you should request a CVE number so we can alert dependant
 software project. Github will review the request (not sure on what), but so
 far approved all requests.
 
-Planning
---------
-We plan to organize meetings periodically to coordinate and plan the development efforts of the vantage6 community. More information on this will follow later.
+Community Planning
+------------------
+We host bi-monthly community meetings intended for aligning development
+efforts. Anyone is welcome to join although they are mainly intended for
+infrastructure and algorithm developers. There is an opportunity to present
+what your team is working on an find collaboration partners.
+
+Upcoming community meetings:
+
+.. list-table:: Community meetings
+   :name: meetings
+   :widths: 50 50
+   :header-rows: 1
+
+    * - Date
+      - Time (CET)
+    * - 17 November 2022
+      - 10:00 - 12:00
+    * - 19 January 2023
+      - 10:00 - 12:00
+    * - 16 March 2022
+      - 10:00 - 12:00
+
+Reach out on Discord if you want to join the community meeting.
+
 
 Submitting patches
 ------------------
@@ -120,7 +145,8 @@ Setup your environment
     git clone https://github.com/vantage6/vantage6
     cd vantage6
 
-* Add your fork as a remote to push your work to. Replace ``{username}`` with your username.
+* Add your fork as a remote to push your work to. Replace ``{username}`` with
+  your username.
 
   ::
 
@@ -133,7 +159,8 @@ Setup your environment
     conda create -n vantage6 python=3.7
     conda activate vantage6
 
-  It is also possible to use ``virtualenv`` if you do not have a conda installation.
+  It is also possible to use ``virtualenv`` if you do not have a conda
+  installation.
 
 * Update pip and setuptools
 
@@ -150,14 +177,16 @@ Setup your environment
 
 Coding
 ^^^^^^
-First, create a branch you can work on. Make sure you branch of the latest ``main`` branch:
+First, create a branch you can work on. Make sure you branch of the latest
+``main`` branch:
 
   ::
 
     git fetch origin
     git checkout -b your-branch-name origin/main
 
-Then you can create your bugfix, change or feature. Make sure to commit frequently. Preferably include tests that cover your changes.
+Then you can create your bugfix, change or feature. Make sure to commit
+frequently. Preferably include tests that cover your changes.
 
 Finally, push your commits to your fork on Github and create a pull request.
 
@@ -165,20 +194,35 @@ Finally, push your commits to your fork on Github and create a pull request.
 
     git push --set-upstream fork your-branch-name
 
-Please apply the `PEP8 <https://peps.python.org/pep-0008/>`_ standards to your code.
+Please apply the `PEP8 <https://peps.python.org/pep-0008/>`_ standards to your
+code.
 
 Local test setup
 ^^^^^^^^^^^^^^^^
-To test your code changes, it may be useful to create a local test setup. There are several ways of doing this.
+To test your code changes, it may be useful to create a local test setup.
+There are several ways of doing this.
 
-1. Use the command ``vserver-local`` and ``vnode-local``. This runs the application in your current activated Python environment.
-2. Use the command ``vserver`` and ``vnode`` in combintation with the options ``--mount-src`` and optionally ``--image``.
-  * The ``--mount-src`` option will run your current code in the docker image. The provided path should point towards the root folder of the `vantage6 repository <https://github.com/vantage6/vantage6>`_.
-  * The ``--image`` can be used to point towards a custom build infrastructure image. Note that when your code update includes dependency upgrades you need to build a custom infrastructure image as the 'old' image does not contain these and the ``--mount-src`` option will only overwrite the source and not re-install dependencies.
+1. Use the command ``vserver-local`` and ``vnode-local``. This runs the
+   application in your current activated Python environment.
+2. Use the command ``vserver`` and ``vnode`` in combination with the options
+   ``--mount-src`` and optionally ``--image``.
+  * The ``--mount-src`` option will run your current code in the docker image.
+    The provided path should point towards the root folder of the `vantage6
+    repository <https://github.com/vantage6/vantage6>`_.
+  * The ``--image`` can be used to point towards a custom build infrastructure
+    image. Note that when your code update includes dependency upgrades you
+    need to build a custom infrastructure image as the 'old' image does not
+    contain these and the ``--mount-src`` option will only overwrite the
+    source and not re-install dependencies.
 
 .. note::
 
-  If you are using Docker Desktop (which is usually the case if you are on Windows or MacOS) and want to setup a test environment, you should use ``http://host.docker.interal`` for the server address in the node configuration file. You should not use ``http://localhost`` in that case as that points to the localhost within the docker container instead of the system-wide localhost.
+  If you are using Docker Desktop (which is usually the case if you are on
+  Windows or MacOS) and want to setup a test environment, you should use
+  ``http://host.docker.interal`` for the server address in the node
+  configuration file. You should not use ``http://localhost`` in that case as
+  that points to the localhost within the docker container instead of the
+  system-wide localhost.
 
 Unit tests & coverage
 ^^^^^^^^^^^^^^^^^^^^^
@@ -188,38 +232,55 @@ You can execute unit tests them using the ``test`` command in the Makefile:
 
     make test
 
-If you want to execute a specific unit test (e.g. the one you just created or one that is failing), you can use a command like:
+If you want to execute a specific unit test (e.g. the one you just created or
+one that is failing), you can use a command like:
 
   ::
 
     python -m unittest tests_folder.test_filename.TestClassName.test_name
 
-Unless you are inside the ``tests_folder``, then you should remove that section.
+Unless you are inside the ``tests_folder``, then you should remove that
+section.
 
 Pull Request
 ^^^^^^^^^^^^
 Before the PR can be merged in the code the following conditions are met:
 
 * At least one approved review of a code owner
-* All `unit tests <https://github.com/vantage6/vantage6/actions/workflows/unit_tests.yml>`_ should pass
-* `CodeQL <https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/about-code-scanning-with-codeql>`_ should pass - Vunerability scanning
+* All `unit tests <https://github.com/vantage6/vantage6/actions/workflows/unit_
+  tests.yml>`_ should pass
+* `CodeQL <https://docs.github.com/en/code-security/code-scanning/automatically
+  -scanning-your-code-for-vulnerabilities-and-errors/about-code-scanning-with-
+  codeql>`_ should pass - Vulnerability scanning
 
 The following conditions are optional, but should be considered before merging:
-* `Codacy <https://app.codacy.com/gh/vantage6/vantage6/dashboard>`_ - Code quality checks
-* `Coveralls <https://coveralls.io/github/vantage6/vantage6>`_ - Code coverage analysis
+* `Codacy <https://app.codacy.com/gh/vantage6/vantage6/dashboard>`_ - Code
+  quality checks
+* `Coveralls <https://coveralls.io/github/vantage6/vantage6>`_ - Code coverage
+  analysis
 
 
 Documentation
 ^^^^^^^^^^^^^
-Depending on the changes you made, you may need to add a little (or a lot) of documentation.
+Depending on the changes you made, you may need to add a little (or a lot) of
+documentation.
 
 * **User documentation.**
   Update it if your change led to a different expierence for the end-user
 * **Technical documentation.**
-  Update it if you added new functionality. Write up your functionality in the :doc:`../server/server` and/or :doc:`../node/node` sections, and check if the docstrings of any functions you added are properly reflected in the :doc:`../api/` section.
+  Update it if you added new functionality. Write up your functionality in the
+  :doc:`../server/server` and/or :doc:`../node/node` sections, and check if
+  the docstrings of any functions you added are properly reflected in the
+  :doc:`../api/` section.
 * **OAS (Open API Specification).**
-  If you changed input/output for any of the API endpoints, make sure to add it to the docstrings in the `OAS3+ format <https://swagger.io/specification/>`_. Also, please verify that when you run the server, the specification on ``http://{localhost}:{port}/apidocs`` is correct.
+  If you changed input/output for any of the API endpoints, make sure to add
+  it to the docstrings in the `OAS3+ format <https://swagger.io/specification/>`_.
+  Also, please verify that when you run the server, the specification on
+  ``http://{localhost}:{port}/apidocs`` is correct.
 
-Functions should always be documented using the `numpy format <https://numpydoc.readthedocs.io/en/latest/format.html>`_ as such docstrings can be used in this technical documentation space.
+Functions should always be documented using the `numpy format
+<https://numpydoc.readthedocs.io/en/latest/format.html>`_ as such docstrings
+can be used in this technical documentation space.
 
-For more information on how and where to edit the documentation, see the section :doc:`documentation`.
+For more information on how and where to edit the documentation, see the
+section :doc:`documentation`.
