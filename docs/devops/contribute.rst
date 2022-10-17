@@ -94,6 +94,9 @@ From the same page you should request a CVE number so we can alert dependant
 software project. Github will review the request (not sure on what), but so
 far approved all requests.
 
+
+
+
 Community Planning
 ------------------
 We host bi-monthly community meetings intended for aligning development
@@ -103,21 +106,25 @@ what your team is working on an find collaboration partners.
 
 Upcoming community meetings:
 
+
 .. list-table:: Community meetings
    :name: meetings
    :widths: 50 50
    :header-rows: 1
 
-    * - Date
-      - Time (CET)
-    * - 17 November 2022
-      - 10:00 - 12:00
-    * - 19 January 2023
-      - 10:00 - 12:00
-    * - 16 March 2022
-      - 10:00 - 12:00
+   * - Date
+     - Time
+   * - 17 November 2022
+     - 10:00 - 12:00
+   * - 19 January 2023
+     - 10:00 - 12:00
+   * - 16 March 2023
+     - 10:00 - 12:00
 
-Reach out on Discord if you want to join the community meeting.
+
+
+Reach out on `Discord <https://discord.gg/yAyFf6Y>`_ if you want to join the
+community meeting.
 
 
 Submitting patches
