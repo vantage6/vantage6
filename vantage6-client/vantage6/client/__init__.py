@@ -568,7 +568,12 @@ class UserClient(ClientBase):
         self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
         self.log.info(" --> Blog: https://vantage6.ai")
-        self.log.info("-" * 45)
+        self.log.info("-" * 60)
+        self.log.info("Cite us!")
+        self.log.info("If you publish your findings obtained using vantage6, ")
+        self.log.info("please cite the proper sources as mentioned in:")
+        self.log.info("https://vantage6.ai/vantage6/references")
+        self.log.info("-" * 60)
 
     class Log:
         """Replaces the default logging meganism by print statements"""
