@@ -5,7 +5,6 @@ This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
 import logging
-import traceback
 import pickle
 import time
 import typing
@@ -13,9 +12,11 @@ import jwt
 import requests
 import pyfiglet
 import json as json_lib
+import itertools
+import sys
 
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
@@ -611,7 +612,7 @@ class UserClient(ClientBase):
         try:
             type_ = "user"
             jwt_payload = jwt.decode(self.token,
-                             options={"verify_signature": False})
+                                     options={"verify_signature": False})
 
             # FIXME: 'identity' is no longer needed in version 4+. So this if
             # statement can be removed
@@ -640,7 +641,53 @@ class UserClient(ClientBase):
                           f"(id={organization_id})")
         except Exception as e:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.debug(traceback.format_exc())
+            self.log.exception(e)
+
+    def wait_for_results(self, task_id: int, sleep: float = 1) -> Dict:
+        """
+        Polls the server to check when results are ready, and returns the
+        results when the task is completed.
+
+        Parameters
+        ----------
+        task_id: int
+            ID of the task that you are waiting for
+        sleep: float
+            Interval in seconds between checks if task is finished. Default 1.
+
+        Returns
+        -------
+        Dict
+            A dictionary with the results of the task, after it has completed.
+        """
+        # Disable logging (additional logging would prevent the 'wait' message
+        # from being printed on a single line)
+        if isinstance(self.log, logging.Logger):
+            prev_level = self.log.level
+            self.log.setLevel(logging.WARN)
+        elif isinstance(self.log, UserClient.Log):
+            prev_level = self.log.enabled
+            self.log.enabled = False
+
+        animation = itertools.cycle(['|', '/', '-', '\\'])
+        t = time.time()
+
+        while not self.task.get(task_id)['complete']:
+            frame = next(animation)
+            sys.stdout.write(
+                f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
+            )
+            sys.stdout.flush()
+            time.sleep(sleep)
+        sys.stdout.write('\rDone!                  ')
+
+        # Re-enable logging
+        if isinstance(self.log, logging.Logger):
+            self.log.setLevel(prev_level)
+        elif isinstance(self.log, UserClient.Log):
+            self.log.enabled = prev_level
+
+        return self.get_results(task_id=task_id)
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
