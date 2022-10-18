@@ -136,6 +136,12 @@ class SparqlDockerWrapper(WrapperBase):
         return pandas.read_csv(io.StringIO(result))
 
 
+class ParquetWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        return pandas.read_parquet(database_uri)
+
+
 def write_output(output_format, output, output_file):
     """
     Write output to output_file using the format from output_format.
