@@ -84,6 +84,11 @@ class AppContext(metaclass=Singleton):
         self.log.info(" --> Docs: https://docs.vantage6.ai")
         self.log.info(" --> Blog: https://vantage6.ai")
         self.log.info("-" * 45)
+        self.log.warn("Cite us!")
+        self.log.warn("If you publish your findings obtained using vantage6, ")
+        self.log.warn("please cite the proper sources as mentioned in:")
+        self.log.warn("https://vantage6.ai/vantage6/references")
+        self.log.info("-" * 45)
         self.log.info(f"Started application {APPNAME} with environment "
                       f"{self.environment}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
