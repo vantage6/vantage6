@@ -35,6 +35,11 @@ def sparql_wrapper(module: str):
     wrapper.wrap_algorithm(module)
 
 
+def parquet_wrapper(module: str):
+    wrapper = ParquetWrapper()
+    wrapper.wrap_algorithm(module)
+
+
 class WrapperBase(ABC):
 
     def wrap_algorithm(self, module):
