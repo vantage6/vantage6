@@ -1,4 +1,11 @@
 User documentation
 ==================
 
-User documentation is going to be moved here. For now you can find them `here <https://docs.vantage6.ai>`_.
+.. toctree::
+    :maxdepth: 3
+
+    welcome/welcome
+    background/architecture
+    background/partners
+    background/release_notes
+    background/contribute

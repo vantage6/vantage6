@@ -6,3 +6,7 @@ dl.class, dl.method{
 .caption-text{
     font-size: .8em;
 }
+
+.block-image {
+    display: inline-block;
+}
