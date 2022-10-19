@@ -20,7 +20,8 @@ help:
 	@echo "  publish-test : publish built python packages to test.pypi.org"
 	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  clean        : clean all built packages"
-	@echo "  community    : Notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
+	@echo "  community    : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
+	@echo "  test         : run all unittests and compute coverage"
 	@echo "Using tag: ${TAG}"
 
 set-version:
