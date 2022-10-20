@@ -37,7 +37,7 @@ setup(
         'cryptography==3.3.2',
         'requests==2.25.1',
         'PyJWT==2.4.0',
-        'pandas',
+        'pandas==1.3.5',
         f'vantage6-common=={version_ns["__version__"]}',
         'pyfiglet==0.8.post1',
         'SPARQLWrapper==1.8.5'
