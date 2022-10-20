@@ -1,14 +1,16 @@
 import logging
 import os
 import inspect as class_inspect
+from typing import List
 from flask.globals import g
 
-from sqlalchemy import Column, Integer, inspect
+from sqlalchemy import Column, Integer, inspect, Table
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.ext.declarative.clsregistry import _ModuleMarker
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, Singleton
@@ -99,6 +101,116 @@ class Database(metaclass=Singleton):
 
         Base.metadata.create_all(bind=self.engine)
         log.info("Database initialized!")
+
+        # add columns that are not yet in the database (they may have been
+        # added in a newer minor version)
+        self.add_missing_columns()
+
+    def add_missing_columns(self) -> None:
+        """
+        Check database tables to see if columns are missing that are described
+        in the SQLAlchemy models, and add the missing columns
+        """
+        self.__iengine = inspect(self.engine)
+        table_names = self.__iengine.get_table_names()
+
+        # go through all SQLAlchemy models
+        for _, table_cls in Base._decl_class_registry.items():
+            if isinstance(table_cls, _ModuleMarker):
+                continue  # skip, not a model
+
+            table_name = table_cls.__tablename__
+            if table_name in table_names:
+                non_existing_cols = \
+                    self.get_non_existing_columns(table_cls, table_name)
+
+                for col in non_existing_cols:
+                    self.add_col_to_table(col, table_cls)
+            else:
+                log.error(
+                    f"Model {table_cls} declares table {table_name} which does"
+                    " not exist in the database."
+                )
+
+    def get_non_existing_columns(self, table_cls: Table,
+                                 table_name: str) -> List[Column]:
+        """
+        Return a list of columns that are defined in the SQLAlchemy model, but
+        are not present in the database
+
+        Parameters
+        ----------
+        table_cls: Table
+            The table that is evaluated
+        table_name: str
+            The name of the table
+
+        Returns
+        -------
+        List[Column]
+            List of SQLAlchemy Column objects that are present in the model,
+            but not in the database
+        """
+        column_names = [
+            c["name"] for c in self.__iengine.get_columns(table_name)
+        ]
+        mapper = inspect(table_cls)
+
+        non_existing_columns = []
+        for property in mapper.attrs:
+            if not isinstance(property, RelationshipProperty):
+                for column in property.columns:
+                    if self.is_column_missing(column, column_names,
+                                              table_name):
+                        non_existing_columns.append(column)
+
+        return non_existing_columns
+
+    def add_col_to_table(self, column: Column, table_cls: Table) -> None:
+        """
+        Database operation to add column to the table
+
+        Parameters
+        ----------
+        column: Column
+            The SQLAlchemy model column that is to be added
+        table_cls: Table
+            The SQLAlchemy table to which the column is to be added
+        """
+        col_name = column.key
+        col_type = column.type.compile(self.engine.dialect)
+        tab_name = table_cls.__tablename__
+        log.warn(f"Adding column {col_name} to table {tab_name} as it did not "
+                 "exist yet")
+        self.engine.execute(
+            'ALTER TABLE %s ADD COLUMN %s %s' % (tab_name, col_name, col_type)
+        )
+
+    @staticmethod
+    def is_column_missing(column: Column, column_names: List[str],
+                          table_name: str) -> bool:
+        """ Check if column is missing in the table
+
+        Parameters
+        ----------
+        column: Column
+            The column that is evaluated
+        column_names: List[str]
+            A list of all column names in the table
+        table_name: str
+            The name of the table the column resides in
+
+        Returns
+        -------
+        boolean
+            True if column is not in the table or a parent table
+        """
+        # the check for table_name is for columns that are actually not in
+        # the current table but in the parent table, e.g. the column
+        # 'status' in the user table is actually in the authenticatable table.
+        return (
+            column.key not in column_names and str(column.table) == table_name
+        )
 
 
 class DatabaseSessionManager:
