@@ -7,8 +7,6 @@ on:
   push:
     tags:
       - "version/**"
-    branches:
-      - feature/deploy-docker-ui
 
 jobs:
   # Check that the tag that is being used starts with `version/`. If
@@ -34,7 +32,6 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/*/}
           VERSION=${TAG#version/*}
-          VERSION=3.3.7a1
           PARTS=(${VERSION//\./ })
           echo "::set-output name=version::${VERSION}"
           PARTS2=( $(grep -Eo '[[:digit:]]+|[^[:digit:]]+' <<< ${PARTS[2]} ) )
