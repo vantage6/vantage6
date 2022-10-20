@@ -96,6 +96,11 @@ jobs:
         run: |
           docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          submodules: "true"
+
       - name: Build docker image
         run: |
           docker build -t harbor2.vantage6.ai/infrastructure/ui:${version} .
