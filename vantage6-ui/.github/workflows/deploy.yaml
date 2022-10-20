@@ -86,7 +86,7 @@ jobs:
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   release-docker:
     runs-on: ubuntu-latest
-    needs: [version, build-n-release]
+    needs: [version, build]
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
