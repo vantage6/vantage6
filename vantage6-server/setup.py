@@ -59,6 +59,7 @@ setup(
         'kombu==5.2.2',
         'Werkzeug==2.0.1',
         'jinja2==3.0.3',
+        'pyotp==2.7.0',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}'
     ],

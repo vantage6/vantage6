@@ -1,6 +1,7 @@
 import bcrypt
 import re
 import datetime as dt
+import pyotp
 
 from typing import Union
 from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
@@ -33,6 +34,7 @@ class User(Authenticatable):
     organization_id = Column(Integer, ForeignKey("organization.id"))
     failed_login_attempts = Column(Integer, default=0)
     last_login_attempt = Column(DateTime)
+    otp_secret = Column(String(32))
 
     # relationships
     organization = relationship("Organization", back_populates="users")
