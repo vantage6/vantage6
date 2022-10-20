@@ -157,9 +157,9 @@ class Database(metaclass=Singleton):
         mapper = inspect(table_cls)
 
         non_existing_columns = []
-        for property in mapper.attrs:
-            if not isinstance(property, RelationshipProperty):
-                for column in property.columns:
+        for prop in mapper.attrs:
+            if not isinstance(prop, RelationshipProperty):
+                for column in prop.columns:
                     if self.is_column_missing(column, column_names,
                                               table_name):
                         non_existing_columns.append(column)
