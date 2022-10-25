@@ -17,6 +17,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
@@ -65,6 +66,7 @@ import { PasswordLostComponent } from './components/login/password-lost/password
 import { PasswordRecoverComponent } from './components/login/password-recover/password-recover.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
 import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
+import { SocketioService } from './services/common/socketio.service';
 
 @NgModule({
   declarations: [
@@ -127,6 +129,7 @@ import { ChangePasswordComponent } from './components/edit/user-edit/change-pass
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
     CommonModule,
     NgbModule,
   ],
@@ -134,6 +137,7 @@ import { ChangePasswordComponent } from './components/edit/user-edit/change-pass
     AccessGuard,
     OrgAccessGuard,
     AccessGuardByOrgId,
+    SocketioService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,

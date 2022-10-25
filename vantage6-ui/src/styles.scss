@@ -70,3 +70,24 @@ body {
   max-height: 350px;
   overflow-y: auto;
 }
+
+.green-snackbar {
+  background: v.$green;
+  color: white;
+}
+.green-snackbar button {
+  background-color: v.$green;
+  color: white;
+  border: white;
+  margin-left: 20px;
+}
+.red-snackbar {
+  background: v.$red;
+  color: white;
+}
+.red-snackbar button {
+  background-color: v.$red;
+  color: white !important;
+  border: none;
+  margin-left: 20px;
+}
