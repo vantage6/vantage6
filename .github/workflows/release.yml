@@ -59,6 +59,7 @@ jobs:
     needs: version
     env:
       version: ${{ needs.version.outputs.version }}
+      stage: ${{ needs.version.outputs.stage }}
     steps:
     - uses: actions/checkout@v3
     - name: Create a Release
@@ -66,7 +67,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "v${{ env.version }}"
-        prerelease: false
+        prerelease: ${{ env.stage != '' }}
         title: "${{ env.version }}"
 
   # Build an release all the vantage6 infrastructure packages. For all
