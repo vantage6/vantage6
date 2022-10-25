@@ -87,13 +87,6 @@ jobs:
 
     steps:
 
-      - name: Login to harbor2.vantage6.ai
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-        run: |
-          docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
-
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
@@ -136,17 +129,113 @@ jobs:
         run: |
           make publish
 
-      - name: Build Docker image
+  support-images:
+    name: Build support images
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      version: ${{ needs.version.outputs.version }}
+
+    steps:
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # We need this for building multi-arch images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build support images
+        run: make support-image TAG=$version
+
+  infrastructure-images:
+    name: Build infrastructure images
+    runs-on: ubuntu-latest
+    needs: [version, build-n-release] # we need to packages to be released
+    env:
+      version: ${{ needs.version.outputs.version }}
+      minor: ${{ needs.version.outputs.minor }}
+      stage: ${{ needs.version.outputs.stage }}
+
+    steps:
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - # We need this for building multi-arch images
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - # vpn images
+        name: Build Docker support images
+        run: make support-image TAG=$version
+
+      - # we only release a new base image if it is a minor and major release
+        name: Build Docker base image
+        if: ${{ env.minor == 0 && env.stage == '' }}
+        run: make base-image TAG=$version
+
+      - # build the actual infrastructure images
+        name: Build Docker image
         run: make image TAG=$version
 
-      - name: Push Docker image
-        run: make docker-push TAG=$version
+  algorithm-base-image:
+    name: Build algorithm base image
+    runs-on: ubuntu-latest
+    needs: [version, build-n-release] # we need to python client to be released
+    env:
+      version: ${{ needs.version.outputs.version }}
+
+    steps:
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # We need this for building multi-arch images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Algorithm base image
+        run: make algorithm-base-image TAG=$version
+
 
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   deploy:
     runs-on: ubuntu-latest
-    needs: [version, build-n-release]
+    needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
@@ -183,7 +272,7 @@ jobs:
   # When the project is built and released the Discord community is notified.
   notify:
     runs-on: ubuntu-latest
-    needs: [version, build-n-release]
+    needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}

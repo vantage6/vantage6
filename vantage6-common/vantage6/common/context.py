@@ -92,7 +92,7 @@ class AppContext(metaclass=Singleton):
         self.log.info(f"Started application {APPNAME} with environment "
                       f"{self.environment}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
-        self.log.info(f"Succesfully loaded configuration from "
+        self.log.info(f"Successfully loaded configuration from "
                       f"'{self.config_file}'")
         self.log.info("Logging to '%s'" % self.log_file)
         self.log.info(f"Common package version '{__version__}'")
