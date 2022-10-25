@@ -8,6 +8,7 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.model.rule import Operation, Scope
 
 
 class DefaultSocketNamespace(Namespace):
@@ -47,7 +48,7 @@ class DefaultSocketNamespace(Namespace):
         except Exception as e:
             self.log.error("Couldn't connect client! No or Invalid JWT token?")
             self.log.exception(e)
-            session.name = "no-sure-yet"
+            session.name = "not-sure-yet"
             self.__join_room_and_notify(request.sid)
 
             # FIXME: expired probably doesn't cover it ...
@@ -63,7 +64,14 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        self.socketio.emit('node-status-changed', namespace='/admin')
+        if auth.type == 'node':
+            self.socketio.emit('node-status-changed', namespace='/admin')
+            self.socketio.emit(
+                'node-online',
+                {'id': auth.id, 'name': auth.name, 'org_id': auth.organization.id},
+                namespace='/tasks',
+                room=f'collaboration_{auth.collaboration_id}'
+            )
 
         # define socket-session variables.
         session.type = auth.type
@@ -77,10 +85,15 @@ class DefaultSocketNamespace(Namespace):
         session.rooms = ['all_connections', 'all_'+session.type+'s']
 
         if session.type == 'node':
-            session.rooms.append('collaboration_' + str(auth.collaboration_id))
+            # session.node = db.Node.get(session.auth_id)
+            session.rooms.append(f'collaboration_{auth.collaboration_id}')
             session.rooms.append('node_' + str(auth.id))
         elif session.type == 'user':
+            session.user = db.User.get(session.auth_id)
             session.rooms.append('user_'+str(auth.id))
+            if session.user.can('node', Scope.GLOBAL, Operation.VIEW):
+                for collab in auth.organization.collaborations:
+                    session.rooms.append(f'collaboration_{collab.id}')
 
         for room in session.rooms:
             self.__join_room_and_notify(room)
