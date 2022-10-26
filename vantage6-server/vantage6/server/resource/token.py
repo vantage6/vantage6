@@ -6,6 +6,8 @@ from __future__ import print_function, unicode_literals
 
 import logging
 import datetime as dt
+from typing import Union
+import pyotp
 
 from flask import request, g
 from flask_jwt_extended import (
@@ -16,8 +18,10 @@ from flask_jwt_extended import (
 )
 from http import HTTPStatus
 
+from vantage6.common.globals import APPNAME
 from vantage6 import server
 from vantage6.server import db
+from vantage6.server.model.user import User
 from vantage6.server.resource import (
     with_node,
     ServicesResources
@@ -75,13 +79,24 @@ class UserToken(ServicesResources):
         """Login user
         ---
         description: >-
-          Allow user to sign in by supplying a username and password.
+          Allow user to sign in by supplying a username and password. When MFA
+          is enabled on the server, a code is also required
 
         requestBody:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                properties:
+                  username:
+                    type: string
+                    description: Username of user that is logging in
+                  password:
+                    type: string
+                    description: User password
+                  mfa_code:
+                    type: string
+                    description: Two-factor authentication code. Only required
+                      if two-factor authentication is mandatory.
 
         responses:
           200:
@@ -89,6 +104,9 @@ class UserToken(ServicesResources):
           400:
             description: Username/password combination unknown, or missing from
               request body.
+          401:
+            description: Password and/or two-factor authentication token
+              incorrect.
 
         tags: ["Authentication"]
         """
@@ -112,6 +130,27 @@ class UserToken(ServicesResources):
             log.error(f"Failed to login for user='{username}'")
             return user, code
 
+        is_mfa_enabled = True  # TODO get from config
+        if is_mfa_enabled:
+            if user.otp_secret is None:
+                # server requires mfa but user hasn't set it up yet. Return
+                # an URI to generate a QR code
+                log.info(f'Redirecting user {username} to setup MFA')
+                return self.create_qr_uri(user), HTTPStatus.OK
+            else:
+                # 2nd authentication factor: check the OTP secret of the user
+                mfa_code = request.json.get('mfa_code')
+                if not mfa_code:
+                    # note: this is not treated as error, but simply guide
+                    # user to also fill in second factor
+                    return {"msg": "Please include your two-factor "
+                            "authentication code"}, HTTPStatus.OK
+                elif not self.validate_2fa_token(user, mfa_code):
+                    return {
+                        "msg": "Your two-factor authentication code is "
+                               "incorrect!"
+                    }, HTTPStatus.UNAUTHORIZED
+
         token = create_access_token(user)
 
         ret = {
@@ -124,6 +163,40 @@ class UserToken(ServicesResources):
 
         log.info(f"Succesfull login from {username}")
         return ret, HTTPStatus.OK, {'jwt-token': token}
+
+    def validate_2fa_token(self, user: User, mfa_code: Union[int, str]):
+        """
+        Check whether the 6-digit two-factor authentication code is valid
+
+        user: User
+            The SQLAlchemy model of the user who is authenticating
+        mfa_code:
+            A six-digit TOTP code from an authenticator app
+        """
+        # the option `valid_window=1` means the code from 1 time window (30s)
+        # ago, is also valid. This prevents that users around the edge of
+        # the time window can still login successfully if server is a bit slow
+        return pyotp.TOTP(user.otp_secret).verify(str(mfa_code),
+                                                  valid_window=1)
+
+    def create_qr_uri(self, user):
+        """
+        Create the URI to generate a QR code for authenticator apps
+        """
+        provisioner = self.config.get("smtp", {})
+        # TODO adapt support email
+        provision_email = provisioner.get("username", "support@vantage6.ai")
+        otp_secret = pyotp.random_base32()
+        qr_uri = pyotp.totp.TOTP(otp_secret).provisioning_uri(
+            name=provision_email, issuer_name=APPNAME
+        )
+        user.otp_secret = otp_secret
+        user.save()
+        return {
+            'qr_uri': qr_uri,
+            'msg': ('Two-factor authentication is obligatory on this server. '
+                    'Please visualize the QR code to set up authentication.')
+        }
 
     def user_login(self, username, password):
         """Returns user a message in case of failed login attempt."""
