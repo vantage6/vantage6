@@ -14,9 +14,11 @@ import pyfiglet
 import json as json_lib
 import itertools
 import sys
+import traceback
+import qrcode
 
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
@@ -280,7 +282,7 @@ class ClientBase(object):
         self.cryptor = cryptor
 
     def authenticate(self, credentials: dict,
-                     path: str = "token/user") -> None:
+                     path: str = "token/user") -> bool:
         """Authenticate to the vantage6-server
 
         It allows users, nodes and containers to sign in. Credentials can
@@ -299,6 +301,12 @@ class ClientBase(object):
         ------
         Exception
             Failed to authenticate
+
+        Returns
+        -------
+        Bool
+            Whether or not user is authenticated. Alternative is that user is
+            redirected to set up two-factor authentication
         """
         if 'username' in credentials:
             self.log.debug(
@@ -318,12 +326,45 @@ class ClientBase(object):
                 raise AuthenticationException("Failed to authenticate")
             else:
                 raise Exception("Failed to authenticate")
+        # another negative response is that two-factor authentication is
+        # required, but that is not an error
+        if 'access_token' not in data:
+            raise Exception(data['msg'])
 
-        # store tokens in object
-        self.log.info("Successfully authenticated")
-        self._access_token = data.get("access_token")
-        self.__refresh_token = data.get("refresh_token")
-        self.__refresh_url = data.get("refresh_url")
+        if 'qr_uri' in data:
+            print("This server has obligatory two-factor authentication. "
+                  "Please scan the QR code below with your favorite "
+                  "authenticator app (we recommend the LastPass or Google "
+                  "Authenticator).")
+            print("After you have authenticated, please log in again.")
+            self._show_qr_code_image(data.get('qr_uri'))
+            return False
+        else:
+            # store tokens in object
+            self.log.info("Successfully authenticated")
+            self._access_token = data.get("access_token")
+            self.__refresh_token = data.get("refresh_token")
+            self.__refresh_url = data.get("refresh_url")
+            return True
+
+    def _show_qr_code_image(self, qr_uri: str) -> None:
+        """
+        Print a QR code image to the user's python enviroment
+
+        Parameters
+        ----------
+        qr_uri: str
+            An OTP-auth URI used to generate the QR code
+        """
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(qr_uri)
+        qr.make(fit=True)
+        qr.print_ascii()
 
     def refresh_token(self) -> None:
         """Refresh an expired token using the refresh token
@@ -595,7 +636,8 @@ class UserClient(ClientBase):
             if self.enabled:
                 print(f'{msg}')
 
-    def authenticate(self, username: str, password: str) -> None:
+    def authenticate(self, username: str, password: str,
+                     mfa_code: Union[int, str] = None) -> None:
         """Authenticate as a user
 
         It also collects some additional info about your user.
@@ -606,11 +648,21 @@ class UserClient(ClientBase):
             Username used to authenticate
         password : str
             Password used to authenticate
+        mfa_token: str or int
+            Six-digit two-factor authentication code
         """
-        super(UserClient, self).authenticate({
+        auth_json = {
             "username": username,
-            "password": password
-        }, path="token/user")
+            "password": password,
+        }
+        if mfa_code:
+            auth_json["mfa_code"] = mfa_code
+        auth = super(UserClient, self).authenticate(auth_json,
+                                                    path="token/user")
+        if not auth:
+            # user is not authenticated. The super function is responsible for
+            # printing useful output
+            return
 
         # identify the user and the organization to which this user
         # belongs. This is usefull for some client side checks
@@ -644,9 +696,9 @@ class UserClient(ClientBase):
             self.log.info(f" --> Name: {name} (id={id_})")
             self.log.info(f" --> Organization: {organization_name} "
                           f"(id={organization_id})")
-        except Exception as e:
+        except Exception:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.exception(e)
+            self.log.error(traceback.format_exc())
 
     def wait_for_results(self, task_id: int, sleep: float = 1) -> Dict:
         """

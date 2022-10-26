@@ -4,4 +4,4 @@ PyJWT==2.4.0
 pyfiglet==0.8.post1
 SPARQLWrapper==1.8.5
 pandas
-
+qrcode==7.3.1
