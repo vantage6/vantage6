@@ -130,7 +130,7 @@ class UserToken(ServicesResources):
             log.error(f"Failed to login for user='{username}'")
             return user, code
 
-        is_mfa_enabled = True  # TODO get from config
+        is_mfa_enabled = self.config.get('two_factor_auth', False)
         if is_mfa_enabled:
             if user.otp_secret is None:
                 # server requires mfa but user hasn't set it up yet. Return
