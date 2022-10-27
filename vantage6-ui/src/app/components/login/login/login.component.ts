@@ -56,6 +56,7 @@ export class LoginComponent implements OnInit {
         if ('qr_uri' in data) {
           // user still has to set up two factor authentication
           this.authService.qr_uri = data['qr_uri'];
+          this.authService.otp_code = data['otp_secret'];
           this.router.navigateByUrl('/setup_mfa');
         } else if (!('access_token' in data)) {
           // if there is no access token, this means user has to also submit

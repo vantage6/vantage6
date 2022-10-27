@@ -6,6 +6,8 @@
     You may use your favorite authentication app. We recommend using Lastpass or
     Google authenticator.
 </p>
+
 <qrcode [qrdata]="qr_url" [width]="256" [errorCorrectionLevel]="'M'"></qrcode>
 
-<button class="btn btn-primary" [routerLink]="['/mfa_code']">I'm done!</button>
+<button class="btn btn-primary inline" [routerLink]="['/mfa_code']">I'm done!</button>
+<button class="btn btn-secondary inline" (click)="showOtpCode()">I need help!</button>

@@ -15,6 +15,7 @@ export class AuthService {
   username: string | undefined;
   password: string | undefined;
   qr_uri: string | undefined;
+  otp_code: string | undefined;
 
   constructor(
     private http: HttpClient,
@@ -49,6 +50,7 @@ export class AuthService {
     this.username = undefined;
     this.password = undefined;
     this.qr_uri = undefined;
+    this.otp_code = undefined;
   }
 
   async onLogin(token: any) {
