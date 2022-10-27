@@ -194,6 +194,7 @@ class UserToken(ServicesResources):
         user.save()
         return {
             'qr_uri': qr_uri,
+            'otp_secret': otp_secret,
             'msg': ('Two-factor authentication is obligatory on this server. '
                     'Please visualize the QR code to set up authentication.')
         }

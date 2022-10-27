@@ -326,10 +326,6 @@ class ClientBase(object):
                 raise AuthenticationException("Failed to authenticate")
             else:
                 raise Exception("Failed to authenticate")
-        # another negative response is that two-factor authentication is
-        # required, but that is not an error
-        if 'access_token' not in data:
-            raise Exception(data['msg'])
 
         if 'qr_uri' in data:
             print("This server has obligatory two-factor authentication. "
@@ -338,8 +334,16 @@ class ClientBase(object):
                   "Authenticator).")
             print("After you have authenticated, please log in again.")
             self._show_qr_code_image(data.get('qr_uri'))
+            print("If you are having trouble scanning the QR code, you can "
+                  "also add the following code manually to your authenticator "
+                  f"app: {data.get('otp_secret')}")
             return False
         else:
+            # If no QR two-factor authentication is
+            # required, but that is not an error
+            if 'access_token' not in data:
+                raise Exception(data['msg'])
+
             # store tokens in object
             self.log.info("Successfully authenticated")
             self._access_token = data.get("access_token")
