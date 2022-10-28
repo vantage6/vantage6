@@ -1,6 +1,61 @@
 Release notes
 =============
 
+**3.4.0**
+
+*25 oktober 2022*
+
+-  **Feature**
+
+   -  Add columns to the SQL database on startup
+      (`PR#365 <https://github.com/vantage6/vantage6/pull/365>`__,
+      `ISSUE#364 <https://github.com/vantage6/vantage6/issues/364>`__).
+      This simpifies the upgrading proces when a new column is added in
+      the new release, as you do no longer need to manually add columns.
+      When downgrading the columns will **not** be deleted.
+   -  Docker wrapper for Parquet files
+      (`PR#361 <https://github.com/vantage6/vantage6/pull/361>`__,
+      `ISSUE#337 <https://github.com/vantage6/vantage6/issues/337>`__).
+      Parquet provides a way to store tabular data with the datatypes
+      included which is an advantage over CSV.
+   -  When the node starts, or when the client is verbose initialized a
+      banner to cite the vantage6 project is added
+      (`PR#359 <https://github.com/vantage6/vantage6/pull/359>`__,
+      `ISSUE#356 <https://github.com/vantage6/vantage6/issues/356>`__).
+   -  In the client a waiting for results method is added
+      (`PR#325 <https://github.com/vantage6/vantage6/pull/325>`__,
+      `ISSUE#8 <https://github.com/vantage6/vantage6/issues/8>`__).
+      Which allows you to automatically poll for results by using
+      ``client.wait_for_results(...)``, for more info see
+      ``help(client.wait_for_results)``.
+   -  Added Github releases
+      (`PR#358 <https://github.com/vantage6/vantage6/pull/358>`__,
+      `ISSUE#357 <https://github.com/vantage6/vantage6/issues/357>`__).
+   -  Added option to filter GET ``/role`` by user id in the Python client
+      (`PR#328 <https://github.com/vantage6/vantage6/pull/328>`__,
+      `ISSUE#213 <https://github.com/vantage6/vantage6/issues/213>`__).
+        E.g.: ``client.role.list(user=...).``
+
+-  **Change**
+
+  -  Unused code removed from the Makefile
+     (`PR#324 <https://github.com/vantage6/vantage6/issues/357>`__,
+     `ISSUE#284 <https://github.com/vantage6/vantage6/issues/284>`__).
+  -  Panda version is frozen to version 1.3.5
+     (`PR#363 <https://github.com/vantage6/vantage6/pull/363>`__ ,
+     `ISSUE#266 <https://github.com/vantage6/vantage6/issues/266>`__).
+
+-  **Bugfix**
+
+  -  Improve checks for non-existing resources in unittests
+     (`PR#320 <https://github.com/vantage6/vantage6/pull/320>`__,
+     `ISSUE#265 <https://github.com/vantage6/vantage6/issues/265>`__).
+     Flask did not support negative ints, so the tests passed due to
+     another 404 response.
+  -  ``client.node.list`` does no longer filter by offline nodes
+     (`PR#321 <https://github.com/vantage6/vantage6/pull/321>`__,
+     `ISSUE#279 <https://github.com/vantage6/vantage6/issues/279>`__).
+
 **3.3.7**
 
 -  **Bugfix**
