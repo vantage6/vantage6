@@ -101,7 +101,8 @@ def make_request(method: str, endpoint: str, json: dict = None,
     """
 
     # Obtain http method from request and map it to the same `requests` method
-    method = get_method(request.method)
+    method = get_method(method)
+    log.debug(f'method: {method}')
 
     # Forward the request to the central server. Retry when an exception is
     # raised (e.g. timeout or connection error) or when the server gives an
@@ -134,41 +135,6 @@ def make_request(method: str, endpoint: str, json: dict = None,
         # if all attemps fail, raise an exception to be handled by its parent
     raise Exception("Proxy request failed")
 
-
-def encrypt_input(organization: dict) -> dict:
-    """
-    Encrypt the input for a specific organization by using its private key.
-    This method is run as background
-
-    Parameters
-    ----------
-    organization : dict
-        Input as specified by the client (algorithm in this case)
-
-    Returns
-    -------
-    dict
-        Modified organization dictionary in which the `input` key is
-        contains encrypted input
-    """
-    input_ = organization.get("input", {})
-    organization_id = organization.get("id")
-
-    # retrieve public key of the organization
-    log.debug(f"Retrieving public key of org: {organization_id}")
-    response = make_request('get', f'organization/{organization_id}')
-    public_key = response.json().get("public_key")
-
-    # Encrypt the input field
-    server_io: NodeClient = app.config.get("SERVER_IO")
-    organization["input"] = server_io.cryptor.encrypt_bytes_to_str(
-        base64s_to_bytes(input_),
-        public_key
-    )
-
-    log.debug("Input succesfully encrypted for organization "
-              f"{organization_id}!")
-    return organization
 
 
 def decrypt_result(result: dict) -> dict:
@@ -247,6 +213,45 @@ def proxy_task():
         return jsonify({"msg": "Organizations missing from input"}), 400
 
     log.debug(f"{len(organizations)} organizations, attemping to encrypt")
+
+    def encrypt_input(organization: dict) -> dict:
+        """
+        Encrypt the input for a specific organization by using its private key.
+        This method is run as background
+
+        Parameters
+        ----------
+        organization : dict
+            Input as specified by the client (algorithm in this case)
+
+        Returns
+        -------
+        dict
+            Modified organization dictionary in which the `input` key is
+            contains encrypted input
+        """
+        input_ = organization.get("input", {})
+        organization_id = organization.get("id")
+
+        # retrieve public key of the organization
+        log.debug(f"Retrieving public key of org: {organization_id}")
+        present = 'Authorization' in request.headers
+        headers = {'Authorization': request.headers['Authorization']} if present \
+            else None
+        response = make_request('get', f'organization/{organization_id}', headers=headers)
+        public_key = response.json().get("public_key")
+
+        # Encrypt the input field
+        server_io: NodeClient = app.config.get("SERVER_IO")
+        organization["input"] = server_io.cryptor.encrypt_bytes_to_str(
+            base64s_to_bytes(input_),
+            public_key
+        )
+
+        log.debug("Input succesfully encrypted for organization "
+                f"{organization_id}!")
+        return organization
+
 
     # For every organization we need to encrypt the input field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
