@@ -253,10 +253,11 @@ def proxy_task():
     # For every organizationn the public key is retrieved an the input is
     # encrypted specifically for them.
     if server_io.is_encrypted_collaboration():
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(encrypt_input, o)
-                       for o in organizations]
-        data["organizations"] = [future.result() for future in futures]
+        data["organizations"] = [encrypt_input(o) for o in organizations]
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     futures = [executor.submit(encrypt_input, o)
+        #                for o in organizations]
+        # data["organizations"] = [future.result() for future in futures]
 
     # Attempt to send the task to the central server
     try:
