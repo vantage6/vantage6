@@ -189,6 +189,7 @@ class RecoverPassword(ServicesResources):
         email_info = self.config.get("smtp", {})
         email_sender = email_info.get("username",
                                       DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        support_email = self.config.get("support_email", email_sender)
 
         self.mail.send_email(
             "password reset",
@@ -198,7 +199,7 @@ class RecoverPassword(ServicesResources):
                                       token=reset_token),
             html_body=render_template("mail/reset_password_token.html",
                                       token=reset_token,
-                                      support_email=email_sender)
+                                      support_email=support_email)
         )
 
         return ret
