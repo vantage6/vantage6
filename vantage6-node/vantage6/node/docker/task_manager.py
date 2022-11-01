@@ -2,6 +2,7 @@
 to be cleaned at some point. """
 import logging
 import os
+import docker.errors
 
 from typing import Dict, List, Union
 from pathlib import Path
@@ -16,6 +17,10 @@ from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.common.docker.addons import pull_if_newer, running_in_docker
+from vantage6.node.docker.exceptions import (
+    UnknownAlgorithmStartFail,
+    PermanentAlgorithmStartFail
+)
 
 
 class DockerTaskManager(DockerBaseManager):
@@ -68,6 +73,9 @@ class DockerTaskManager(DockerBaseManager):
         self.node_name = node_name
         self.alpine_image = ALPINE_IMAGE if alpine_image is None \
             else alpine_image
+
+        # toggle to be set if the task failed to start due to unknown reasons
+        self.failed = False
 
         self.container = None
         self.status_code = None
@@ -248,10 +256,15 @@ class DockerTaskManager(DockerBaseManager):
                 name=container_name,
                 labels=self.labels
             )
+        except docker.errors.ImageNotFound:
+            self.log.error(f'Could not download image: {self.image}')
+            raise PermanentAlgorithmStartFail
+
         except Exception as e:
-            self.log.error('Could not run docker image!?')
-            self.log.error(e)
-            return None
+            self.log.exception('Could not start algorithm...')
+            if self.failed:
+                raise PermanentAlgorithmStartFail
+            raise UnknownAlgorithmStartFail(e)
 
         return vpn_ports
 
