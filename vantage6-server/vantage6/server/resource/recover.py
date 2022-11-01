@@ -15,6 +15,7 @@ import uuid
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.server import db
+from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import (
     create_qr_uri, user_login
@@ -204,17 +205,23 @@ class RecoverPassword(ServicesResources):
             {"id": str(user.id)}, expires_delta=expires
         )
 
+        email_info = self.config.get("smtp", {})
+        email_sender = email_info.get("username",
+                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        support_email = self.config.get("support_email", email_sender)
+
         self.mail.send_email(
             f"Password reset {APPNAME}",
             sender="support@vantage6.ai",
             recipients=[user.email],
             text_body=render_template(
                 "mail/reset_token.txt", token=reset_token,
-                firstname=user.firstname, reset_type="password"
+                firstname=user.firstname, reset_type="password",
             ),
             html_body=render_template(
                 "mail/reset_token.html", token=reset_token,
-                firstname=user.firstname, reset_type="password"
+                firstname=user.firstname, reset_type="password",
+                support_email=support_email
             )
         )
 
@@ -340,19 +347,25 @@ class RecoverTwoFactorSecret(ServicesResources):
             {"id": str(user.id)}, expires_delta=expires
         )
 
+        email_info = self.config.get("smtp", {})
+        email_sender = email_info.get("username",
+                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        support_email = self.config.get("support_email", email_sender)
+
         self.mail.send_email(
             f"Two-factor authentication reset {APPNAME}",
-            sender="support@vantage6.ai",
+            sender=email_sender,
             recipients=[user.email],
             text_body=render_template(
                 "mail/reset_token.txt", token=reset_token,
                 firstname=user.firstname,
-                reset_type="two-factor authentication code"
+                reset_type="two-factor authentication code",
             ),
             html_body=render_template(
                 "mail/reset_token.html", token=reset_token,
                 firstname=user.firstname,
-                reset_type="two-factor authentication code"
+                reset_type="two-factor authentication code",
+                support_email=support_email
             )
         )
 
