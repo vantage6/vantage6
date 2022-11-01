@@ -14,6 +14,7 @@ import uuid
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.server.resource import ServicesResources, with_user
 
 module_name = logger_name(__name__)
@@ -185,14 +186,20 @@ class RecoverPassword(ServicesResources):
             {"id": str(user.id)}, expires_delta=expires
         )
 
+        email_info = self.config.get("smtp", {})
+        email_sender = email_info.get("username",
+                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        support_email = self.config.get("support_email", email_sender)
+
         self.mail.send_email(
             "password reset",
-            sender="support@vantage6.ai",
+            sender=email_sender,
             recipients=[user.email],
             text_body=render_template("mail/reset_password_token.txt",
                                       token=reset_token),
             html_body=render_template("mail/reset_password_token.html",
-                                      token=reset_token)
+                                      token=reset_token,
+                                      support_email=support_email)
         )
 
         return ret
