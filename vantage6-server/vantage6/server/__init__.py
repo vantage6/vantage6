@@ -28,7 +28,7 @@ from flask_socketio import SocketIO
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
-from vantage6.server.resource._schema import HATEOASModelSchema
+from vantage6.server.resource.common._schema import HATEOASModelSchema
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
@@ -39,7 +39,7 @@ from vantage6.server.globals import (
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE
 )
-from vantage6.server.resource.swagger_templates import swagger_template
+from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace

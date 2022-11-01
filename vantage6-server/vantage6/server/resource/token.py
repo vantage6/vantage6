@@ -5,7 +5,6 @@ Resources below '/<api_base>/token'
 from __future__ import print_function, unicode_literals
 
 import logging
-import datetime as dt
 from typing import Union
 import pyotp
 
@@ -18,13 +17,15 @@ from flask_jwt_extended import (
 )
 from http import HTTPStatus
 
-from vantage6.common.globals import APPNAME
 from vantage6 import server
 from vantage6.server import db
 from vantage6.server.model.user import User
 from vantage6.server.resource import (
     with_node,
     ServicesResources
+)
+from vantage6.server.resource.common.auth_helper import (
+  user_login, create_qr_uri
 )
 
 module_name = __name__.split('.')[-1]
@@ -125,7 +126,7 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        user, code = self.user_login(username, password)
+        user, code = user_login(self.config, username, password)
         if code is not HTTPStatus.OK:  # login failed
             log.error(f"Failed to login for user='{username}'")
             return user, code
@@ -136,7 +137,7 @@ class UserToken(ServicesResources):
                 # server requires mfa but user hasn't set it up yet. Return
                 # an URI to generate a QR code
                 log.info(f'Redirecting user {username} to setup MFA')
-                return self.create_qr_uri(user), HTTPStatus.OK
+                return create_qr_uri(self.config, user), HTTPStatus.OK
             else:
                 # 2nd authentication factor: check the OTP secret of the user
                 mfa_code = request.json.get('mfa_code')
@@ -164,71 +165,28 @@ class UserToken(ServicesResources):
         log.info(f"Succesfull login from {username}")
         return ret, HTTPStatus.OK, {'jwt-token': token}
 
-    def validate_2fa_token(self, user: User, mfa_code: Union[int, str]):
+    def validate_2fa_token(
+          self, user: User, mfa_code: Union[int, str]) -> bool:
         """
         Check whether the 6-digit two-factor authentication code is valid
 
+        Parameters
+        ----------
         user: User
             The SQLAlchemy model of the user who is authenticating
         mfa_code:
             A six-digit TOTP code from an authenticator app
+
+        Returns
+        -------
+        bool
+          Whether six-digit code is valid or not
         """
         # the option `valid_window=1` means the code from 1 time window (30s)
         # ago, is also valid. This prevents that users around the edge of
         # the time window can still login successfully if server is a bit slow
         return pyotp.TOTP(user.otp_secret).verify(str(mfa_code),
                                                   valid_window=1)
-
-    def create_qr_uri(self, user):
-        """
-        Create the URI to generate a QR code for authenticator apps
-        """
-        provisioner = self.config.get("smtp", {})
-        # TODO adapt support email
-        provision_email = provisioner.get("username", "support@vantage6.ai")
-        otp_secret = pyotp.random_base32()
-        qr_uri = pyotp.totp.TOTP(otp_secret).provisioning_uri(
-            name=provision_email, issuer_name=APPNAME
-        )
-        user.otp_secret = otp_secret
-        user.save()
-        return {
-            'qr_uri': qr_uri,
-            'otp_secret': otp_secret,
-            'msg': ('Two-factor authentication is obligatory on this server. '
-                    'Please visualize the QR code to set up authentication.')
-        }
-
-    def user_login(self, username, password):
-        """Returns user a message in case of failed login attempt."""
-        log.info(f"Trying to login '{username}'")
-
-        if db.User.username_exists(username):
-            user = db.User.get_by_username(username)
-            pw_policy = self.config.get('password_policy', {})
-            max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
-            inactivation_time = pw_policy.get('inactivation_minutes', 15)
-
-            is_blocked, time_remaining_msg = user.is_blocked(
-              max_failed_attempts, inactivation_time)
-            if is_blocked:
-                return {"msg": time_remaining_msg}, HTTPStatus.UNAUTHORIZED
-            elif user.check_password(password):
-                user.failed_login_attempts = 0
-                user.save()
-                return user, HTTPStatus.OK
-            else:
-                # update the number of failed login attempts
-                user.failed_login_attempts = 1 \
-                    if (
-                        not user.failed_login_attempts or
-                        user.failed_login_attempts >= max_failed_attempts
-                    ) else user.failed_login_attempts + 1
-                user.last_login_attempt = dt.datetime.now()
-                user.save()
-
-        return {"msg": "Invalid username or password!"}, \
-            HTTPStatus.UNAUTHORIZED
 
 
 class NodeToken(ServicesResources):

@@ -1,7 +1,6 @@
 import bcrypt
 import re
 import datetime as dt
-import pyotp
 
 from typing import Union
 from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
