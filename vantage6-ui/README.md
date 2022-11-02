@@ -58,7 +58,7 @@ Alternatively, you can use the Docker image `harbor2.vantage6.ai/infrastructure/
 to deploy your own UI. In that case, run for example
 
 ```
-docker run --env API_URL="<your_own_server_url>" -p 8080:80
+docker run --env API_URL="<your_own_server_url>" -p 8080:80 harbor2.vantage6.ai/infrastructure/ui
 ```
 
 to run a UI on port 8080 that communicates with your own server. For instance,
