@@ -1,25 +1,27 @@
 # `make` is expected to be called from the directory that contains
 # this Makefile
 
-TAG ?= trolltunga
-BUILDNR ?= 1
-BRANCH ?= master
-REPO ?= harbor2.vantage6.ai
+TAG ?= petronas
+REGISTRY ?= harbor2.vantage6.ai
 
 help:
 	@echo "Available commands to 'make':"
-	@echo "  set-version  : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
-	@echo "  uninstall    : uninstall all vantage6 packages"
-	@echo "  install      : do a regular install of all vantage6 packages"
-	@echo "  install-dev  : do an editable install of all vantage6 packages"
-	@echo "  image 		  : build the node/server docker image"
-	@echo "  base-image   : build the infrastructure base image"
-	@echo "  support-image: build the supporing images"
-	@echo "  rebuild      : rebuild all python packages"
-	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
-	@echo "  community    : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
-	@echo "  test         : run all unittests and compute coverage"
-	@echo "Using tag: ${TAG}"
+	@echo "  set-version          : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
+	@echo "  uninstall            : uninstall all vantage6 packages"
+	@echo "  install              : do a regular install of all vantage6 packages"
+	@echo "  install-dev          : do an editable install of all vantage6 packages"
+	@echo "  image                : build the node/server docker image"
+	@echo "  base-image           : build the infrastructure base image"
+	@echo "  algorithm-base-image : build the algorithm base image"
+	@echo "  support-image        : build the supporing images"
+	@echo "  rebuild              : rebuild all python packages"
+	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
+	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
+	@echo "  test                 : run all unittests and compute coverage"
+	@echo ""
+	@echo "Using "
+	@echo "  tag:      ${TAG}"
+	@echo "  registry: ${REGISTRY}"
 
 set-version:
 	# --version --build --spec --post
@@ -52,54 +54,54 @@ install-dev:
 	cd vantage6-server && pip install -e .
 
 base-image:
-	@echo "Building ${REPO}/infrastructure/infrastructure-base:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
 	docker buildx build \
-		--tag ${REPO}/infrastructure/infrastructure-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/infrastructure-base.Dockerfile \
 		--push .
 
 algorithm-base-image:
-	@echo "Building ${REPO}/algorithms/algorithm-base:${TAG}"
+	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
 	docker buildx build \
-		--tag ${REPO}/infrastructure/algorithm-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/algorithm-base.Dockerfile \
 		--push .
 
 support-image:
-	@echo "Building ${REPO}/infrastructure/alpine:${TAG}"
-	@echo "Building ${REPO}/infrastructure/vpn-client:${TAG}"
-	@echo "Building ${REPO}/infrastructure/vpn-configurator:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
 	@echo "All images are also tagged with `latest`"
 
 	docker buildx build \
-		--tag ${REPO}/infrastructure/alpine:${TAG} \
-		--tag ${REPO}/infrastructure/alpine:latest \
+		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
+		--tag ${REGISTRY}/infrastructure/alpine:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/alpine.Dockerfile \
 		--push .
 
 	docker buildx build \
-		--tag ${REPO}/infrastructure/vpn-client:${TAG} \
-		--tag ${REPO}/infrastructure/vpn-client:latest \
+		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
+		--tag ${REGISTRY}/infrastructure/vpn-client:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/vpn-client.Dockerfile \
 		--push .
 
 	docker buildx build \
-		--tag ${REPO}/infrastructure/vpn-configurator:${TAG} \
-		--tag ${REPO}/infrastructure/vpn-configurator:latest \
+		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
+		--tag ${REGISTRY}/infrastructure/vpn-configurator:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/vpn-configurator.Dockerfile \
 		--push .
 
 image:
-	@echo "Building ${REPO}/infrastructure/node:${TAG}"
-	@echo "Building ${REPO}/infrastructure/server:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/node:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/server:${TAG}"
 	docker buildx build \
-		--tag ${REPO}/infrastructure/node:${TAG} \
-		--tag ${REPO}/infrastructure/server:${TAG} \
+		--tag ${REGISTRY}/infrastructure/node:${TAG} \
+		--tag ${REGISTRY}/infrastructure/server:${TAG} \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/node-and-server.Dockerfile \
 		--push .
