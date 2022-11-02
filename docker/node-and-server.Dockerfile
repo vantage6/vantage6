@@ -34,8 +34,16 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
   pip install uwsgi -Iv
 
-# install vantage from source
+
+# copy source
 COPY . /vantage6
+
+# install requirements. We cannot rely on setup.py because of the way
+# python resolves package versions. To control all dependencies we install
+# them from the requirements.txt
+RUN pip install -r /vantage6/requirements.txt
+
+# install individual packages
 RUN pip install -e /vantage6/vantage6-common
 RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6
