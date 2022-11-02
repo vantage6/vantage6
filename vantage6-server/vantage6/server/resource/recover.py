@@ -334,7 +334,8 @@ class RecoverTwoFactorSecret(ServicesResources):
         except NoResultFound:
             # we do not tell them.... But we won't continue either
             return ret
-        # check password, don't alert them if it was wrong
+
+        # check password
         user, code = user_login(self.config, user.username, password)
         if code is not HTTPStatus.OK:
             log.error(f"Failed to reset 2FA for user {username}, wrong "

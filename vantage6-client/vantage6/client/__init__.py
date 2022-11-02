@@ -154,7 +154,8 @@ class ClientBase(object):
         return path
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params: dict = None, first_try: bool = True) -> dict:
+                params: dict = None, first_try: bool = True,
+                retry: bool = True) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -168,7 +169,9 @@ class ClientBase(object):
         params : dict, optional
             URL parameters, by default None
         first_try : bool, optional
-            Whenever this is the first attemt of this request, by default True
+            Whether this is the first attempt of this request. Default True.
+        retry: bool, optional
+            Try request again after refreshing the token. Default True.
 
         Returns
         -------
@@ -210,12 +213,13 @@ class ClientBase(object):
                 self.log.error('Did not find a message from the server')
                 self.log.debug(response.content)
 
-            if first_try:
-                self.refresh_token()
-                return self.request(endpoint, json, method, params,
-                                    first_try=False)
-            else:
-                self.log.error("Nope, refreshing the token didn't fix it.")
+            if retry:
+                if first_try:
+                    self.refresh_token()
+                    return self.request(endpoint, json, method, params,
+                                        first_try=False)
+                else:
+                    self.log.error("Nope, refreshing the token didn't fix it.")
 
         return response.json()
 
@@ -851,7 +855,7 @@ class UserClient(ClientBase):
                     'username': username,
                     'email': email,
                     "password": password
-                })
+                }, retry=False)
             msg = result.get('msg')
             self.parent.log.info(f'--> {msg}')
             return result
@@ -876,7 +880,7 @@ class UserClient(ClientBase):
             result = self.parent.request(
                 'recover/2fa/reset', method='post', json={
                     'reset_token': token,
-                })
+                }, retry=False)
             if 'qr_uri' in result:
                 print_qr_code(result)
             else:
