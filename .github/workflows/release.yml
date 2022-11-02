@@ -84,7 +84,7 @@ jobs:
         run: |
           git config --local user.name github-actions
           git config --local user.email github-actions@github.com
-          git add changelog.md
+          git add *
           git commit -m "Updated the version ${version}"
           git push
 
