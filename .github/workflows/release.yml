@@ -47,19 +47,12 @@ jobs:
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
-      # https://til.cazzulino.com/devops-ci-cd/push-to-protected-branch-from-github-actions
-      - name: GH_token
-        if: env.GH_TOKEN == ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "GH_TOKEN=${GITHUB_TOKEN}" >> $GITHUB_ENV
-
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
           ref: main
-          token: ${{ env.GH_TOKEN }}
+          token: ${{ secrets.COMMIT_PAT }}
 
       - name: Update version in packages
         id: set_versions
