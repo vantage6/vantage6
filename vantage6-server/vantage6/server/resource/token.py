@@ -165,8 +165,8 @@ class UserToken(ServicesResources):
         log.info(f"Succesfull login from {username}")
         return ret, HTTPStatus.OK, {'jwt-token': token}
 
-    def validate_2fa_token(
-          self, user: User, mfa_code: Union[int, str]) -> bool:
+    @staticmethod
+    def validate_2fa_token(user: User, mfa_code: Union[int, str]) -> bool:
         """
         Check whether the 6-digit two-factor authentication code is valid
 
