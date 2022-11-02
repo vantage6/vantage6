@@ -41,7 +41,8 @@ COPY . /vantage6
 # install requirements. We cannot rely on setup.py because of the way
 # python resolves package versions. To control all dependencies we install
 # them from the requirements.txt
-RUN pip install -r /vantage6/requirements.txt
+RUN pip install -r /vantage6/requirements.txt \
+    --extra-index-url https://www.piwheels.org/simple
 
 # install individual packages
 RUN pip install -e /vantage6/vantage6-common
