@@ -28,7 +28,7 @@ flask-marshmallow==0.11.0
 Flask-Principal==0.4.0
 Flask-RESTful==0.3.9
 Flask-SocketIO==5.1.1
-gevent==20.9.0
+gevent==21.8.0
 gevent-websocket==0.10.1
 greenlet==1.1.1
 idna==2.10
