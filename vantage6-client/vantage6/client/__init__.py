@@ -15,10 +15,10 @@ import json as json_lib
 import itertools
 import sys
 import traceback
-import qrcode
 
 from pathlib import Path
 from typing import Dict, Tuple, Union
+from vantage6.client.utils import print_qr_code
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
@@ -328,15 +328,7 @@ class ClientBase(object):
                 raise Exception("Failed to authenticate")
 
         if 'qr_uri' in data:
-            print("This server has obligatory two-factor authentication. "
-                  "Please scan the QR code below with your favorite "
-                  "authenticator app (we recommend the LastPass or Google "
-                  "Authenticator).")
-            print("After you have authenticated, please log in again.")
-            self._show_qr_code_image(data.get('qr_uri'))
-            print("If you are having trouble scanning the QR code, you can "
-                  "also add the following code manually to your authenticator "
-                  f"app: {data.get('otp_secret')}")
+            print_qr_code(data)
             return False
         else:
             # If no QR two-factor authentication is
@@ -350,25 +342,6 @@ class ClientBase(object):
             self.__refresh_token = data.get("refresh_token")
             self.__refresh_url = data.get("refresh_url")
             return True
-
-    def _show_qr_code_image(self, qr_uri: str) -> None:
-        """
-        Print a QR code image to the user's python enviroment
-
-        Parameters
-        ----------
-        qr_uri: str
-            An OTP-auth URI used to generate the QR code
-        """
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(qr_uri)
-        qr.make(fit=True)
-        qr.print_ascii()
 
     def refresh_token(self) -> None:
         """Refresh an expired token using the refresh token
@@ -829,7 +802,7 @@ class UserClient(ClientBase):
         def set_my_password(self, token: str, password: str) -> dict:
             """Set a new password using a recovery token
 
-            Token kan be obtained through `.reset_password(...)`
+            Token can be obtained through `.reset_password(...)`
 
             Parameters
             ----------
@@ -849,6 +822,66 @@ class UserClient(ClientBase):
             })
             msg = result.get('msg')
             self.parent.log.info(f'--> {msg}')
+            return result
+
+        def reset_two_factor_auth(
+            self, password: str, email: str = None, username: str = None
+        ) -> dict:
+            """Start reset procedure for two-factor authentication
+
+            The password and either username of email must be provided.
+
+            Parameters
+            ----------
+            password: str
+                Password of your account
+            email : str, optional
+                Email address of your account, by default None
+            username : str, optional
+                Username of your account, by default None
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            assert email or username, "You need to provide username or email!"
+            result = self.parent.request(
+                'recover/2fa/lost', method='post', json={
+                    'username': username,
+                    'email': email,
+                    "password": password
+                })
+            msg = result.get('msg')
+            self.parent.log.info(f'--> {msg}')
+            return result
+
+        def set_two_factor_auth(self, token: str) -> dict:
+            """
+            Setup two-factor authentication using a recovery token after you
+            have lost access.
+
+            Token can be obtained through `.reset_two_factor_auth(...)`
+
+            Parameters
+            ----------
+            token : str
+                Token obtained from `reset_two_factor_auth`
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            result = self.parent.request(
+                'recover/2fa/reset', method='post', json={
+                    'reset_token': token,
+                })
+            if 'qr_uri' in result:
+                print_qr_code(result)
+            else:
+                msg = result.get('msg')
+                self.parent.log.info(f'--> {msg}')
             return result
 
         def generate_private_key(self, file_: str = None) -> None:

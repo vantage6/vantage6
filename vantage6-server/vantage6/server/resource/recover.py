@@ -56,7 +56,7 @@ def setup(api, api_base, services):
 
     api.add_resource(
         RecoverTwoFactorSecret,
-        api_base+'/2fa/lost',
+        path+'/2fa/lost',
         endpoint='recover_2fa_secret',
         methods=('POST',),
         resource_class_kwargs=services
@@ -217,11 +217,13 @@ class RecoverPassword(ServicesResources):
             text_body=render_template(
                 "mail/reset_token.txt", token=reset_token,
                 firstname=user.firstname, reset_type="password",
+                what_to_do="simply ignore this message"
             ),
             html_body=render_template(
                 "mail/reset_token.html", token=reset_token,
                 firstname=user.firstname, reset_type="password",
-                support_email=support_email
+                support_email=support_email,
+                what_to_do="simply ignore this message"
             )
         )
 
@@ -335,7 +337,7 @@ class RecoverTwoFactorSecret(ServicesResources):
         # check password, don't alert them if it was wrong
         user, code = user_login(self.config, user.username, password)
         if code is not HTTPStatus.OK:
-            log.error(f"Failed to reset 2FA for user {user.username}, wrong "
+            log.error(f"Failed to reset 2FA for user {username}, wrong "
                       "password")
             return user, code
 
@@ -360,12 +362,16 @@ class RecoverTwoFactorSecret(ServicesResources):
                 "mail/reset_token.txt", token=reset_token,
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
+                what_to_do=("please reset your password! It has been "
+                            "compromised")
             ),
             html_body=render_template(
                 "mail/reset_token.html", token=reset_token,
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
-                support_email=support_email
+                support_email=support_email,
+                what_to_do=("please reset your password! It has been "
+                            "compromised")
             )
         )
 
