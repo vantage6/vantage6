@@ -68,6 +68,8 @@ import { LoginPageComponent } from './components/login/login-page/login-page.com
 import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
 import { SetupMfaComponent } from './components/login/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './components/login/mfa-code/mfa-code.component';
+import { MfaLostComponent } from './components/login/mfa-lost/mfa-lost.component';
+import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.component';
 
 @NgModule({
   declarations: [
@@ -109,6 +111,8 @@ import { MfaCodeComponent } from './components/login/mfa-code/mfa-code.component
     ChangePasswordComponent,
     SetupMfaComponent,
     MfaCodeComponent,
+    MfaLostComponent,
+    MfaRecoverComponent,
   ],
   imports: [
     BrowserModule,
