@@ -48,7 +48,7 @@ jobs:
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: main
@@ -259,6 +259,7 @@ jobs:
         run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
       - name: Checkout repository
+        uses: actions/checkout@v3
         with:
           # we just made a version commit, so we need to pull that. Else the
           # commit of the tag is used.
