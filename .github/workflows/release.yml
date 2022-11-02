@@ -20,30 +20,74 @@ jobs:
   # From the tag we split the individual version components:
   # major.minor.patch.stage<N>. Note that post releases are not part
   # of this schema as they are only used for releasing updated docker
-  # images.
+  # images. This job also commits the version number to the git repo
   version:
-    name: Obtain version
+    name: Apply version
     runs-on: ubuntu-latest
     needs: verify
     steps:
-      - id: split
+
+      - name: split
+        id: split
         run: |
           TAG=${GITHUB_REF#refs/*/}
           VERSION=${TAG#version/*}
           PARTS=(${VERSION//\./ })
           MAJOR=${PARTS[0]}
-          echo "::set-output name=version::${VERSION}"
-          echo "::set-output name=major::${MAJOR}"
-          echo "::set-output name=minor::${PARTS[1]}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "major=${MAJOR}" >> $GITHUB_OUTPUT
+          echo "minor=${PARTS[1]}" >> $GITHUB_OUTPUT
           PARTS2=( $(grep -Eo '[[:digit:]]+|[^[:digit:]]+' <<< ${PARTS[2]} ) )
-          echo "::set-output name=patch::${PARTS2[0]}"
-          echo "::set-output name=stage::${PARTS2[1]}"
-          echo "::set-output name=build::${PARTS2[2]}"
+          echo "patch=${PARTS2[0]}" >> $GITHUB_OUTPUT
+          echo "stage=${PARTS2[1]}" >> $GITHUB_OUTPUT
+          echo "build=${PARTS2[2]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
           if [[ $MAJOR == '2' ]]; then MAJOR_NAME="harukas"; fi
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
-          echo "::set-output name=major_name::${MAJOR_NAME}"
+          echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
+
+      # https://til.cazzulino.com/devops-ci-cd/push-to-protected-branch-from-github-actions
+      - name: GH_token
+        if: env.GH_TOKEN == ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "GH_TOKEN=${GITHUB_TOKEN}" >> $GITHUB_ENV
+
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ env.GH_TOKEN }}
+
+      - name: Update version in packages
+        id: set_versions
+        env:
+          build: ${{ steps.split.outputs.build }}
+          stage: ${{ steps.split.outputs.stage }}
+          major: ${{ steps.split.outputs.major }}
+          minor: ${{ steps.split.outputs.minor }}
+          patch: ${{ steps.split.outputs.patch }}
+        run: |
+          BUILD="--build 0"; if [[ -n $build ]]; then BUILD="--build $build"; fi
+          SPEC="--spec final"
+          if [[ $stage == 'a' ]]; then SPEC="--spec alpha"; fi
+          if [[ $stage == 'b' ]]; then SPEC="--spec beta"; fi
+          if [[ $stage == 'rc' ]]; then SPEC="--spec candidate"; fi
+          FLAGS="--version ${major}.${minor}.${patch} $BUILD --post 0 $SPEC"
+          make set-version FLAGS="$FLAGS"
+
+      - name: commit
+        env:
+          version: ${{ steps.split.outputs.version }}
+        run: |
+          git config --local user.name github-actions
+          git config --local user.email github-actions@github.com
+          git add changelog.md
+          git commit -m "Updated the version ${version}"
+          git push
+
     outputs:
       version: ${{ steps.split.outputs.version }}
       major: ${{ steps.split.outputs.major }}
@@ -105,17 +149,6 @@ jobs:
           pip install click
           pip install wheel
           pip install twine
-
-      - name: Update version in packages
-        id: set
-        run: |
-          BUILD="--build 0"; if [[ -n $build ]]; then BUILD="--build $build"; fi
-          SPEC="--spec final"
-          if [[ $stage == 'a' ]]; then SPEC="--spec alpha"; fi
-          if [[ $stage == 'b' ]]; then SPEC="--spec beta"; fi
-          if [[ $stage == 'rc' ]]; then SPEC="--spec candidate"; fi
-          FLAGS="--version ${major}.${minor}.${patch} $BUILD --post 0 $SPEC"
-          make set-version FLAGS="$FLAGS"
 
       - name: Build project
         id: make
