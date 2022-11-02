@@ -300,7 +300,7 @@ class DockerManager(DockerBaseManager):
             self.failed_tasks.append(task)
             return None
 
-        except UnknownAlgorithmStartFail as e:
+        except UnknownAlgorithmStartFail:
             self.log.exception(f'Failed to start result {result_id} due to unknown reason')
             task.failed = True
             vpn_ports = __run()
