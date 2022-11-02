@@ -7,3 +7,4 @@ User documentation
     welcome/welcome
     background/index
     install/index
+    use/index

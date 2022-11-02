@@ -1,10 +1,10 @@
-Install
+Use
 ==========
 
 .. toctree::
     :maxdepth: 4
 
-    ./requirements
+    ./preliminaries
     ./client
     ./node
     ./server
