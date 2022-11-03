@@ -42,7 +42,8 @@ setup(
         'pyfiglet==0.8.post1',
         'SPARQLWrapper==1.8.5',
         'pyarrow==9.0.0',
-        'fastparquet==0.8.1'
+        'fastparquet==0.8.1',
+        'qrcode==7.3.1',
     ],
     tests_require=["pytest"],
     package_data={

@@ -14,9 +14,11 @@ import pyfiglet
 import json as json_lib
 import itertools
 import sys
+import traceback
 
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
+from vantage6.client.utils import print_qr_code
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
@@ -152,7 +154,8 @@ class ClientBase(object):
         return path
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params: dict = None, first_try: bool = True) -> dict:
+                params: dict = None, first_try: bool = True,
+                retry: bool = True) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -166,7 +169,9 @@ class ClientBase(object):
         params : dict, optional
             URL parameters, by default None
         first_try : bool, optional
-            Whenever this is the first attemt of this request, by default True
+            Whether this is the first attempt of this request. Default True.
+        retry: bool, optional
+            Try request again after refreshing the token. Default True.
 
         Returns
         -------
@@ -208,12 +213,13 @@ class ClientBase(object):
                 self.log.error('Did not find a message from the server')
                 self.log.debug(response.content)
 
-            if first_try:
-                self.refresh_token()
-                return self.request(endpoint, json, method, params,
-                                    first_try=False)
-            else:
-                self.log.error("Nope, refreshing the token didn't fix it.")
+            if retry:
+                if first_try:
+                    self.refresh_token()
+                    return self.request(endpoint, json, method, params,
+                                        first_try=False)
+                else:
+                    self.log.error("Nope, refreshing the token didn't fix it.")
 
         return response.json()
 
@@ -280,7 +286,7 @@ class ClientBase(object):
         self.cryptor = cryptor
 
     def authenticate(self, credentials: dict,
-                     path: str = "token/user") -> None:
+                     path: str = "token/user") -> bool:
         """Authenticate to the vantage6-server
 
         It allows users, nodes and containers to sign in. Credentials can
@@ -299,6 +305,12 @@ class ClientBase(object):
         ------
         Exception
             Failed to authenticate
+
+        Returns
+        -------
+        Bool
+            Whether or not user is authenticated. Alternative is that user is
+            redirected to set up two-factor authentication
         """
         if 'username' in credentials:
             self.log.debug(
@@ -319,11 +331,25 @@ class ClientBase(object):
             else:
                 raise Exception("Failed to authenticate")
 
-        # store tokens in object
-        self.log.info("Successfully authenticated")
-        self._access_token = data.get("access_token")
-        self.__refresh_token = data.get("refresh_token")
-        self.__refresh_url = data.get("refresh_url")
+        if 'qr_uri' in data:
+            print_qr_code(data)
+            return False
+        else:
+            # If no QR two-factor authentication is
+            # required, but that is not an error
+            if 'access_token' not in data:
+                if 'msg' in data:
+                    raise Exception(data['msg'])
+                else:
+                    raise Exception(
+                        "No access token in authentication response!")
+
+            # store tokens in object
+            self.log.info("Successfully authenticated")
+            self._access_token = data.get("access_token")
+            self.__refresh_token = data.get("refresh_token")
+            self.__refresh_url = data.get("refresh_url")
+            return True
 
     def refresh_token(self) -> None:
         """Refresh an expired token using the refresh token
@@ -595,7 +621,8 @@ class UserClient(ClientBase):
             if self.enabled:
                 print(f'{msg}')
 
-    def authenticate(self, username: str, password: str) -> None:
+    def authenticate(self, username: str, password: str,
+                     mfa_code: Union[int, str] = None) -> None:
         """Authenticate as a user
 
         It also collects some additional info about your user.
@@ -606,11 +633,21 @@ class UserClient(ClientBase):
             Username used to authenticate
         password : str
             Password used to authenticate
+        mfa_token: str or int
+            Six-digit two-factor authentication code
         """
-        super(UserClient, self).authenticate({
+        auth_json = {
             "username": username,
-            "password": password
-        }, path="token/user")
+            "password": password,
+        }
+        if mfa_code:
+            auth_json["mfa_code"] = mfa_code
+        auth = super(UserClient, self).authenticate(auth_json,
+                                                    path="token/user")
+        if not auth:
+            # user is not authenticated. The super function is responsible for
+            # printing useful output
+            return
 
         # identify the user and the organization to which this user
         # belongs. This is usefull for some client side checks
@@ -644,9 +681,9 @@ class UserClient(ClientBase):
             self.log.info(f" --> Name: {name} (id={id_})")
             self.log.info(f" --> Organization: {organization_name} "
                           f"(id={organization_id})")
-        except Exception as e:
+        except Exception:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.exception(e)
+            self.log.error(traceback.format_exc())
 
     def wait_for_results(self, task_id: int, sleep: float = 1) -> Dict:
         """
@@ -773,7 +810,7 @@ class UserClient(ClientBase):
         def set_my_password(self, token: str, password: str) -> dict:
             """Set a new password using a recovery token
 
-            Token kan be obtained through `.reset_password(...)`
+            Token can be obtained through `.reset_password(...)`
 
             Parameters
             ----------
@@ -793,6 +830,66 @@ class UserClient(ClientBase):
             })
             msg = result.get('msg')
             self.parent.log.info(f'--> {msg}')
+            return result
+
+        def reset_two_factor_auth(
+            self, password: str, email: str = None, username: str = None
+        ) -> dict:
+            """Start reset procedure for two-factor authentication
+
+            The password and either username of email must be provided.
+
+            Parameters
+            ----------
+            password: str
+                Password of your account
+            email : str, optional
+                Email address of your account, by default None
+            username : str, optional
+                Username of your account, by default None
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            assert email or username, "You need to provide username or email!"
+            result = self.parent.request(
+                'recover/2fa/lost', method='post', json={
+                    'username': username,
+                    'email': email,
+                    "password": password
+                }, retry=False)
+            msg = result.get('msg')
+            self.parent.log.info(f'--> {msg}')
+            return result
+
+        def set_two_factor_auth(self, token: str) -> dict:
+            """
+            Setup two-factor authentication using a recovery token after you
+            have lost access.
+
+            Token can be obtained through `.reset_two_factor_auth(...)`
+
+            Parameters
+            ----------
+            token : str
+                Token obtained from `reset_two_factor_auth`
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            result = self.parent.request(
+                'recover/2fa/reset', method='post', json={
+                    'reset_token': token,
+                }, retry=False)
+            if 'qr_uri' in result:
+                print_qr_code(result)
+            else:
+                msg = result.get('msg')
+                self.parent.log.info(f'--> {msg}')
             return result
 
         def generate_private_key(self, file_: str = None) -> None:
