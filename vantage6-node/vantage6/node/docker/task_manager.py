@@ -2,7 +2,9 @@
 to be cleaned at some point. """
 import logging
 import os
+import docker.errors
 
+from enum import Enum
 from typing import Dict, List, Union
 from pathlib import Path
 
@@ -16,7 +18,23 @@ from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.common.docker.addons import pull_if_newer, running_in_docker
+from vantage6.node.docker.exceptions import (
+    UnknownAlgorithmStartFail,
+    PermanentAlgorithmStartFail
+)
 
+class TaskStatus(Enum):
+    # Task constructor is executed
+    INITIALIZED = 0
+    # Container started without exceptions
+    STARTED = 1
+    # Container exited and had zero exit code
+    # COMPLETED = 2
+    # Failed to start the container
+    FAILED = 90
+    PERMANENTLY_FAILED = 91
+    # Container had a non zero exit code
+    # CRASHED = 92
 
 class DockerTaskManager(DockerBaseManager):
     """
@@ -84,6 +102,9 @@ class DockerTaskManager(DockerBaseManager):
         #   in some way.
         self.tmp_folder = "/mnt/tmp"
         self.data_folder = "/mnt/data"
+
+        # keep track of the task status
+        self.status: TaskStatus = TaskStatus.INITIALIZED
 
     def is_finished(self) -> bool:
         """
@@ -248,11 +269,17 @@ class DockerTaskManager(DockerBaseManager):
                 name=container_name,
                 labels=self.labels
             )
-        except Exception as e:
-            self.log.error('Could not run docker image!?')
-            self.log.error(e)
-            return None
 
+        except docker.errors.ImageNotFound:
+            self.log.error(f'Could not find image: {self.image}')
+            self.status = TaskStatus.PERMANENTLY_FAILED
+            raise PermanentAlgorithmStartFail
+
+        except Exception as e:
+            self.status = TaskStatus.FAILED
+            raise UnknownAlgorithmStartFail(e)
+
+        self.status = TaskStatus.STARTED
         return vpn_ports
 
     def _make_task_folders(self) -> None:
