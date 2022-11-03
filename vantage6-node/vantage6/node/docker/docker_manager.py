@@ -293,7 +293,7 @@ class DockerManager(DockerBaseManager):
         # again. If it fails permanently we add it to the failed tasks to be
         # handled by the speaking worker of the node
         attempts = 1
-        while not (task.status == TaskStatus.STARTED) and attempts < 3 :
+        while not (task.status == TaskStatus.STARTED) and attempts < 3:
             try:
                 vpn_ports = task.run(
                     docker_input=docker_input, tmp_vol_name=tmp_vol_name,
@@ -311,9 +311,9 @@ class DockerManager(DockerBaseManager):
 
             attempts += 1
 
-
         # keep track of the active container
-        if task.status == TaskStatus.FAILED:
+        if task.status == TaskStatus.FAILED \
+                or task.status == TaskStatus.PERMANENTLY_FAILED:
             self.failed_tasks.append(task)
             return None
         else:

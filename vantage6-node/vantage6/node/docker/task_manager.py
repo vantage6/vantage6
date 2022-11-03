@@ -32,8 +32,9 @@ class TaskStatus(Enum):
     # COMPLETED = 2
     # Failed to start the container
     FAILED = 90
+    PERMANENTLY_FAILED = 91
     # Container had a non zero exit code
-    # CRASHED = 91
+    # CRASHED = 92
 
 class DockerTaskManager(DockerBaseManager):
     """
@@ -271,10 +272,11 @@ class DockerTaskManager(DockerBaseManager):
 
         except docker.errors.ImageNotFound:
             self.log.error(f'Could not find image: {self.image}')
-            self.status = TaskStatus.FAILED
+            self.status = TaskStatus.PERMANENTLY_FAILED
             raise PermanentAlgorithmStartFail
 
         except Exception as e:
+            self.status = TaskStatus.FAILED
             raise UnknownAlgorithmStartFail(e)
 
         self.status = TaskStatus.STARTED
