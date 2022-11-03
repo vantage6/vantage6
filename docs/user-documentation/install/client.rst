@@ -37,7 +37,10 @@ Then you can install the ``vantage6-client`` with:
 where you add the version you want to install. You may also leave out
 the version to install the most recent version.
 
-**R client library**
+.. _r client install:
+
+R client library
+^^^^^^^^^^^^^^^^
 
 The R client currently only supports creating tasks and retrieving their
 results. It can not (yet) be used to manage resources, such as creating
