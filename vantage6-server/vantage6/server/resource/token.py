@@ -5,9 +5,9 @@ Resources below '/<api_base>/token'
 from __future__ import print_function, unicode_literals
 
 import logging
-from typing import Union
 import pyotp
 
+from typing import Union
 from flask import request, g
 from flask_jwt_extended import (
     jwt_required,
@@ -126,8 +126,9 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        user, code = user_login(self.config, username, password)
-        if code is not HTTPStatus.OK:  # login failed
+        user, code = user_login(self.config.get("password_policy", {}),
+                                username, password)
+        if code != HTTPStatus.OK:  # login failed
             log.error(f"Failed to login for user='{username}'")
             return user, code
 
@@ -137,7 +138,8 @@ class UserToken(ServicesResources):
                 # server requires mfa but user hasn't set it up yet. Return
                 # an URI to generate a QR code
                 log.info(f'Redirecting user {username} to setup MFA')
-                return create_qr_uri(self.config, user), HTTPStatus.OK
+                return create_qr_uri(self.config.get("smtp", {}), user), \
+                    HTTPStatus.OK
             else:
                 # 2nd authentication factor: check the OTP secret of the user
                 mfa_code = request.json.get('mfa_code')

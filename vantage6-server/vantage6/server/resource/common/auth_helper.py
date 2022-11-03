@@ -6,7 +6,7 @@ from http import HTTPStatus
 from typing import Dict, Tuple, Union
 
 from vantage6.common.globals import APPNAME
-from vantage6.common.configuration_manager import ConfigurationManager
+from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.server import db
 from vantage6.server.model.user import User
 
@@ -15,7 +15,7 @@ log = logging.getLogger(module_name)
 
 
 def user_login(
-    config: ConfigurationManager, username: str, password: str
+    password_policy: Dict, username: str, password: str
 ) -> Tuple[Union[User, Dict], HTTPStatus]:
     """
     Returns user a message in case of failed login attempt.
@@ -39,9 +39,8 @@ def user_login(
 
     if db.User.username_exists(username):
         user = db.User.get_by_username(username)
-        pw_policy = config.get('password_policy', {})
-        max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
-        inactivation_time = pw_policy.get('inactivation_minutes', 15)
+        max_failed_attempts = password_policy.get('max_failed_attempts', 5)
+        inactivation_time = password_policy.get('inactivation_minutes', 15)
 
         is_blocked, time_remaining_msg = user.is_blocked(
             max_failed_attempts, inactivation_time)
@@ -65,7 +64,7 @@ def user_login(
         HTTPStatus.UNAUTHORIZED
 
 
-def create_qr_uri(config, user) -> Dict:
+def create_qr_uri(smtp_config, user) -> Dict:
     """
     Create the URI to generate a QR code for authenticator apps
 
@@ -82,9 +81,8 @@ def create_qr_uri(config, user) -> Dict:
         Dictionary with information on the TOTP secret required to generate
         a QR code or to enter it manually in an authenticator app
     """
-    provisioner = config.get("smtp", {})
-    # TODO adapt support email
-    provision_email = provisioner.get("username", "support@vantage6.ai")
+    provision_email = smtp_config.get("username",
+                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
     otp_secret = pyotp.random_base32()
     qr_uri = pyotp.totp.TOTP(otp_secret).provisioning_uri(
         name=provision_email, issuer_name=APPNAME

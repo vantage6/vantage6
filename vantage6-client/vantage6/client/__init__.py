@@ -338,7 +338,11 @@ class ClientBase(object):
             # If no QR two-factor authentication is
             # required, but that is not an error
             if 'access_token' not in data:
-                raise Exception(data['msg'])
+                if 'msg' in data:
+                    raise Exception(data['msg'])
+                else:
+                    raise Exception(
+                        "No access token in authentication response!")
 
             # store tokens in object
             self.log.info("Successfully authenticated")

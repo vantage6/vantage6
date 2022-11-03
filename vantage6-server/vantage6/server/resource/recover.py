@@ -15,7 +15,7 @@ import uuid
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.server import db
-from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
+from vantage6.server.globals import DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import (
     create_qr_uri, user_login
@@ -109,7 +109,7 @@ class ResetPassword(ServicesResources):
           400:
             description: Password or recovery token is missing or invalid
 
-        tags: ["Password recovery"]
+        tags: ["Account recovery"]
         """
         # retrieve user based on email or username
         body = request.get_json()
@@ -173,7 +173,7 @@ class RecoverPassword(ServicesResources):
           400:
             description: No username or email provided
 
-        tags: ["Password recovery"]
+        tags: ["Account recovery"]
         """
         # default return string
         ret = {"msg": "If the username or email is in our database you "
@@ -194,13 +194,21 @@ class RecoverPassword(ServicesResources):
             else:
                 user = db.User.get_by_email(email)
         except NoResultFound:
+            account_name = email if email else username
+            log.info("Someone request 2FA reset for non-existing account"
+                     f" {account_name}")
             # we do not tell them.... But we won't continue either
             return ret
 
         log.info(f"Password reset requested for '{user.username}'")
 
         # generate a token that can reset their password
-        expires = datetime.timedelta(hours=1)
+        smtp_settings = self.config.get("smtp", {})
+        minutes_token_valid = smtp_settings.get(
+            "email_token_validity_minutes",
+            DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
+        )
+        expires = datetime.timedelta(minutes=minutes_token_valid)
         reset_token = create_access_token(
             {"id": str(user.id)}, expires_delta=expires
         )
@@ -255,7 +263,7 @@ class ResetTwoFactorSecret(ServicesResources):
           400:
             description: Recovery token is missing or invalid
 
-        tags: ["Password recovery"]
+        tags: ["Account recovery"]
         """
         # retrieve user based on email or username
         body = request.get_json()
@@ -273,7 +281,7 @@ class ResetTwoFactorSecret(ServicesResources):
         user = db.User.get(user_id)
 
         log.info(f"Resetting two-factor authentication for {user.username}")
-        return create_qr_uri(self.config, user), HTTPStatus.OK
+        return create_qr_uri(self.config.get("smtp", {}), user), HTTPStatus.OK
 
 
 class RecoverTwoFactorSecret(ServicesResources):
@@ -308,7 +316,7 @@ class RecoverTwoFactorSecret(ServicesResources):
           400:
             description: No username or email and password provided
 
-        tags: ["Password recovery"]
+        tags: ["Account recovery"]
         """
         # default return string
         ret = {"msg": "If you sent a correct combination of username/email and"
@@ -332,12 +340,16 @@ class RecoverTwoFactorSecret(ServicesResources):
             else:
                 user = db.User.get_by_email(email)
         except NoResultFound:
+            account_name = email if email else username
+            log.info("Someone request 2FA reset for non-existing account"
+                     f" {account_name}")
             # we do not tell them.... But we won't continue either
             return ret
 
         # check password
-        user, code = user_login(self.config, user.username, password)
-        if code is not HTTPStatus.OK:
+        user, code = user_login(self.config.get("password_policy", {}),
+                                user.username, password)
+        if code != HTTPStatus.OK:
             log.error(f"Failed to reset 2FA for user {username}, wrong "
                       "password")
             return user, code
@@ -345,7 +357,12 @@ class RecoverTwoFactorSecret(ServicesResources):
         log.info(f"2FA reset requested for '{user.username}'")
 
         # generate a token that can reset their password
-        expires = datetime.timedelta(hours=1)
+        smtp_settings = self.config.get("smtp", {})
+        minutes_token_valid = smtp_settings.get(
+            "email_token_validity_minutes",
+            DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
+        )
+        expires = datetime.timedelta(minutes=minutes_token_valid)
         reset_token = create_access_token(
             {"id": str(user.id)}, expires_delta=expires
         )
@@ -414,7 +431,7 @@ class ChangePassword(ServicesResources):
           401:
             description: Current password is incorrect
 
-        tags: ["Password recovery"]
+        tags: ["Account recovery"]
         """
         body = request.get_json()
         old_password = body.get("current_password")
@@ -499,7 +516,7 @@ class ResetAPIKey(ServicesResources):
         security:
             - bearerAuth: []
 
-        tags: ["Password recovery"]
+        tags: ["Account recovery"]
         """
         if not request.is_json:
             log.warning('Authentication failed because no JSON body was '
