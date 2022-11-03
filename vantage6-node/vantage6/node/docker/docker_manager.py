@@ -292,29 +292,28 @@ class DockerManager(DockerBaseManager):
         # attempt to kick of the task. If it fails do to unknown reasons we try
         # again. If it fails permanently we add it to the failed tasks to be
         # handled by the speaking worker of the node
-        tries = 1
-        while not (task.status == TaskStatus.STARTED) and tries >= 3 :
+        attempts = 1
+        while not (task.status == TaskStatus.STARTED) and attempts < 3 :
             try:
                 vpn_ports = task.run(
                     docker_input=docker_input, tmp_vol_name=tmp_vol_name,
                     token=token, algorithm_env=self.algorithm_env,
                     database=database
                 )
-                task.started = True
 
             except UnknownAlgorithmStartFail:
                 self.log.exception(f'Failed to start result {result_id} due '
-                                   'to unknown reason. Trying')
+                                   'to unknown reason. Retrying')
                 time.sleep(1) # add some time before retrying the next attempt
 
             except PermanentAlgorithmStartFail:
                 break
 
-            tries += 1
+            attempts += 1
 
 
         # keep track of the active container
-        if task.failed:
+        if task.status == TaskStatus.FAILED:
             self.failed_tasks.append(task)
             return None
         else:
