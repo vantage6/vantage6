@@ -21,7 +21,7 @@ from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.node.docker.task_manager import DockerTaskManager
+from vantage6.node.docker.task_manager import DockerTaskManager, TaskStatus
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail
@@ -288,28 +288,37 @@ class DockerManager(DockerBaseManager):
         )
         database = database if (database and len(database)) else 'default'
 
-        __run = lambda: task.run(
-            docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
-            algorithm_env=self.algorithm_env, database=database
-        )
 
-        try:
-            vpn_ports = __run()
-        except PermanentAlgorithmStartFail:
-            self.log.debug(f'Marking result {result_id} as failed')
-            self.failed_tasks.append(task)
-            return None
+        # attempt to kick of the task. If it fails do to unknown reasons we try
+        # again. If it fails permanently we add it to the failed tasks to be
+        # handled by the speaking worker of the node
+        attempts = 1
+        while not (task.status == TaskStatus.STARTED) and attempts < 3:
+            try:
+                vpn_ports = task.run(
+                    docker_input=docker_input, tmp_vol_name=tmp_vol_name,
+                    token=token, algorithm_env=self.algorithm_env,
+                    database=database
+                )
 
-        except UnknownAlgorithmStartFail:
-            self.log.exception(f'Failed to start result {result_id} due to unknown reason')
-            task.failed = True
-            vpn_ports = __run()
-            return None
+            except UnknownAlgorithmStartFail:
+                self.log.exception(f'Failed to start result {result_id} due '
+                                   'to unknown reason. Retrying')
+                time.sleep(1) # add some time before retrying the next attempt
+
+            except PermanentAlgorithmStartFail:
+                break
+
+            attempts += 1
 
         # keep track of the active container
-        self.active_tasks.append(task)
-
-        return vpn_ports
+        if task.status == TaskStatus.FAILED \
+                or task.status == TaskStatus.PERMANENTLY_FAILED:
+            self.failed_tasks.append(task)
+            return None
+        else:
+            self.active_tasks.append(task)
+            return vpn_ports
 
     def get_result(self) -> Result:
         """

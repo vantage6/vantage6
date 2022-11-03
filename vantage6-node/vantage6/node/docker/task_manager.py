@@ -4,6 +4,7 @@ import logging
 import os
 import docker.errors
 
+from enum import Enum
 from typing import Dict, List, Union
 from pathlib import Path
 
@@ -22,6 +23,18 @@ from vantage6.node.docker.exceptions import (
     PermanentAlgorithmStartFail
 )
 
+class TaskStatus(Enum):
+    # Task constructor is executed
+    INITIALIZED = 0
+    # Container started without exceptions
+    STARTED = 1
+    # Container exited and had zero exit code
+    # COMPLETED = 2
+    # Failed to start the container
+    FAILED = 90
+    PERMANENTLY_FAILED = 91
+    # Container had a non zero exit code
+    # CRASHED = 92
 
 class DockerTaskManager(DockerBaseManager):
     """
@@ -74,9 +87,6 @@ class DockerTaskManager(DockerBaseManager):
         self.alpine_image = ALPINE_IMAGE if alpine_image is None \
             else alpine_image
 
-        # toggle to be set if the task failed to start due to unknown reasons
-        self.failed = False
-
         self.container = None
         self.status_code = None
 
@@ -92,6 +102,9 @@ class DockerTaskManager(DockerBaseManager):
         #   in some way.
         self.tmp_folder = "/mnt/tmp"
         self.data_folder = "/mnt/data"
+
+        # keep track of the task status
+        self.status: TaskStatus = TaskStatus.INITIALIZED
 
     def is_finished(self) -> bool:
         """
@@ -256,16 +269,17 @@ class DockerTaskManager(DockerBaseManager):
                 name=container_name,
                 labels=self.labels
             )
+
         except docker.errors.ImageNotFound:
-            self.log.error(f'Could not download image: {self.image}')
+            self.log.error(f'Could not find image: {self.image}')
+            self.status = TaskStatus.PERMANENTLY_FAILED
             raise PermanentAlgorithmStartFail
 
         except Exception as e:
-            self.log.exception('Could not start algorithm...')
-            if self.failed:
-                raise PermanentAlgorithmStartFail
+            self.status = TaskStatus.FAILED
             raise UnknownAlgorithmStartFail(e)
 
+        self.status = TaskStatus.STARTED
         return vpn_ports
 
     def _make_task_folders(self) -> None:

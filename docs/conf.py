@@ -22,7 +22,9 @@ sys.path.insert(0, os.path.abspath('../vantage6-common'))
 # -- Project information -----------------------------------------------------
 
 project = 'vantage6'
-copyright = '2022, F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
+copyright = (
+    '2022, F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
+)
 author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 
 
@@ -31,7 +33,8 @@ author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
+              'sphinx_autodoc_typehints', 'sphinx.ext.autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -56,5 +59,17 @@ html_static_path = ['_static']
 
 html_theme_options = {
     'logo': "logo.png",
-    'logo_name': False
+    'logo_name': False,
+    'github_user': 'vantage6',
+    'github_repo': 'vantage6',
+    'fixed_sidebar': True,
 }
+
+# The master toctree document.
+master_doc = 'index'
+
+add_module_names = False
+
+pygments_style = None
+
+numfig = True

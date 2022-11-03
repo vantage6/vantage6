@@ -51,7 +51,7 @@ setup(
         'ipython==7.16.3',
         'requests==2.25.1',
         'psutil==5.7.0',
-        'gevent==20.9.0',
+        'gevent==21.8.0',
         'Flask-Mail==0.9.1',
         'requests-oauthlib==1.3.0',
         'gevent-websocket==0.10.1',

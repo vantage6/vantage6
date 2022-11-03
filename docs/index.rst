@@ -24,13 +24,39 @@ Other possible interesting resources:
 -----------------------------------------------
 
 .. toctree::
+   :numbered:
    :maxdepth: 3
    :caption: Contents:
 
-   intro
-   server/server
-   node
-   devops
+   introduction/index
+   user-documentation/index
+   technical-documentation/index
+   algorithms/index
+   devops/index
+
+.. note:
+
+   1. Introduction
+   2. User documentation
+      - install
+      - use
+   3. Technical documentation
+      - Architecture
+      - Client
+      - Node
+      - Server
+      - API reference
+   4. Algorithms
+      - concepts
+      - designing
+      - implementation
+      - Build & distribute
+   5. DevOps
+      - Contribute
+      - Documentation
+      - Release
+
+
 
 
 
@@ -40,7 +66,3 @@ Other possible interesting resources:
 .. * :ref:`genindex`
 .. * :ref:`modindex`
 .. * :ref:`search`
-
-
-.. .. automodule:: vantage6.cli.node
-..    :members:

@@ -9,18 +9,14 @@ build-dist:
 	# Build the PyPI package
 	python setup.py sdist bdist_wheel
 
-publish-test:
-	# Uploading to test.pypi.org
-	twine upload --repository testpypi dist/*
-
 publish:
 	# Uploading to pypi.org
 	twine upload --repository pypi dist/*
+
+test:
+	coverage run --source=vantage6 --omit="utest.py" ./utest.py
 
 clean:
 	# Cleaning ...
 	-rm -r build
 	-rm dist/*
-
-test:
-	coverage run --source=vantage6 --omit="utest.py" ./utest.py
