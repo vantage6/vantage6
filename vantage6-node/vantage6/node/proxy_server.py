@@ -381,4 +381,4 @@ def proxy(central_server_path: str) -> Response:
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
-    return response.json(), HTTPStatus.OK
+    return response.content, response.status_code, response.headers.items()
