@@ -37,3 +37,9 @@ SUPER_USER_INFO = {
 # Whenever the refresh tokens should expire. Note that setting this to true
 # would mean that nodes will disconnect after some time
 REFRESH_TOKENS_EXPIRE = False
+
+# default support email address
+DEFAULT_SUPPORT_EMAIL_ADDRESS = 'support@vantage6.ai'
+
+# default time that token is valid in minutes
+DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60

@@ -83,6 +83,12 @@ class DefaultSocketNamespace(Namespace):
             f'Client identified as <{session.type}>: <{session.name}>'
         )
 
+        # It appears to be necessary to use the root socketio instance
+        # otherwise events cannot be sent outside the current namespace.
+        # In this case, only events to '/tasks' can be emitted otherwise.
+        if session.type == 'node':
+            self.socketio.emit('node-status-changed', namespace='/admin')
+
         # join appropiate rooms, nodes join a specific collaboration room.
         # users do not belong to specific collaborations.
         session.rooms = ['all_connections', 'all_'+session.type+'s']
@@ -129,8 +135,9 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        self.log.warning('emitting to /admin')
-        self.socketio.emit('node-status-changed', namespace='/admin')
+        if session.type == 'node':
+            self.log.warning('emitting to /admin')
+            self.socketio.emit('node-status-changed', namespace='/admin')
 
         self.log.info(f'{session.name} disconnected')
 
@@ -211,7 +218,7 @@ class DefaultSocketNamespace(Namespace):
             name of the room the client want to join
         """
         join_room(room)
-        msg = f'<{session.name}> joined room <{room}>'
+        msg = f'{session.type.title()} <{session.name}> joined room <{room}>'
         self.log.info(msg)
         emit('message', msg, room=room)
 

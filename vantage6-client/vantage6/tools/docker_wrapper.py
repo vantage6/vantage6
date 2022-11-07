@@ -35,6 +35,11 @@ def sparql_wrapper(module: str):
     wrapper.wrap_algorithm(module)
 
 
+def parquet_wrapper(module: str):
+    wrapper = ParquetWrapper()
+    wrapper.wrap_algorithm(module)
+
+
 class WrapperBase(ABC):
 
     def wrap_algorithm(self, module):
@@ -134,6 +139,12 @@ class SparqlDockerWrapper(WrapperBase):
         result = sparql.query().convert().decode()
 
         return pandas.read_csv(io.StringIO(result))
+
+
+class ParquetWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        return pandas.read_parquet(database_uri)
 
 
 def write_output(output_format, output, output_file):

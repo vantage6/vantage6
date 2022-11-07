@@ -19,7 +19,7 @@ from vantage6.server.resource import (
     ServicesResources
 )
 from vantage6.server.resource.pagination import Pagination
-from vantage6.server.resource._schema import (
+from vantage6.server.resource.common._schema import (
     ResultSchema,
     ResultTaskIncludedSchema
 )
