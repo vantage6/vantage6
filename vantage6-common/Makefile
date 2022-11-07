@@ -12,3 +12,8 @@ build-dist:
 publish:
 	# Uploading to pypi.org
 	twine upload --repository pypi dist/*
+
+clean:
+	# Cleaning ...
+	-rm -r build
+	-rm dist/*

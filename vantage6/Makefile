@@ -15,3 +15,8 @@ publish:
 
 test:
 	coverage run --source=vantage6 --omit="utest.py" ./utest.py
+
+clean:
+	# Cleaning ...
+	-rm -r build
+	-rm dist/*

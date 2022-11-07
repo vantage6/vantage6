@@ -7,13 +7,16 @@ from discord.ext import tasks, commands
 # from vantage6.common import info
 # from dotenv import load_dotenv
 
+
 def info(msg):
     print(msg)
+
 
 # load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.bot.Bot('$')
+
 
 class PostUpdates(commands.Cog):
 
@@ -26,7 +29,7 @@ class PostUpdates(commands.Cog):
     async def update_community(self):
         info("Ready to send message")
         for channel in self.bot.get_all_channels():
-            if channel.name == 'general':
+            if channel.name == 'announcements':
                 await channel.send(embed=self.create_embed(*self.info))
                 exit()
 
@@ -39,9 +42,11 @@ class PostUpdates(commands.Cog):
     def create_embed(version, summary, notes):
 
         description = (
-            ':triangular_flag_on_post: A new **vantage6** release! :triangular_flag_on_post:\n\n'
+            ':triangular_flag_on_post: A new **vantage6** release! '
+            ':triangular_flag_on_post:\n\n'
             f'{summary}'
-            '\nSee the complete release notes [here](https://docs.vantage6.ai/about-background/release-notes)\n\n'
+            '\nSee the complete release notes [here]('
+            'https://docs.vantage6.ai/about-background/release-notes)\n\n'
             'To upgrade:'
             '```'
             f'pip install vantage6=={version}'
@@ -55,9 +60,12 @@ class PostUpdates(commands.Cog):
         )
 
         documentation = (
-            '[Latest release notes](https://docs.vantage6.ai/about-background/release-notes)\n'
-            '[Installation instructions](https://docs.vantage6.ai/installation/what-to-install)\n'
-            '[How to contribute](https://docs.vantage6.ai/v/petronas/how-to-contribute/how-to-contribute)'
+            '[Latest release notes](https://docs.vantage6.ai/about-background/'
+            'release-notes)\n'
+            '[Installation instructions](https://docs.vantage6.ai/installation'
+            '/what-to-install)\n'
+            '[How to contribute](https://docs.vantage6.ai/v/petronas/'
+            'how-to-contribute/how-to-contribute)\n'
             '[Discourse](https://vantage6.discourse.group/)\n'
         )
 
@@ -67,16 +75,30 @@ class PostUpdates(commands.Cog):
             '[Build status](https://github.com/vantage6/vantage6/actions)'
         )
 
-        embed=Embed(title=f"Release {version}", url="https://pypi.org", description=description, color=0x0593ff)
-        embed.set_author(name="vantage6 Team", icon_url="https://nl.gravatar.com/userimage/193840621/ae1b7b037ec1f7f16e15a75d0ae10b0f.png?size=35")
-        embed.set_thumbnail(url="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true")
-        embed.add_field(name="Docker Images", value=f"harbor2.vantage6.ai/infrastructure/node:{version} \n harbor2.vantage6.ai/infrastructure/server:{version}", inline=False)
+        embed = Embed(title=f"Release {version}", url="https://pypi.org",
+                      description=description, color=0x0593ff)
+        embed.set_author(
+            name="vantage6 Team",
+            icon_url=("https://nl.gravatar.com/userimage/193840621/"
+                      "ae1b7b037ec1f7f16e15a75d0ae10b0f.png?size=35")
+        )
+        embed.set_thumbnail(
+            url=("https://github.com/IKNL/guidelines/blob/master/resources"
+                 "/logos/vantage6.png?raw=true")
+        )
+        embed.add_field(
+            name="Docker Images",
+            value=(f"harbor2.vantage6.ai/infrastructure/node:{version} \n"
+                   f" harbor2.vantage6.ai/infrastructure/server:{version}"),
+            inline=False
+        )
         embed.add_field(name="Documentation", value=documentation, inline=True)
         embed.add_field(name="Github", value=repositories, inline=True)
         embed.add_field(name="Usefull links", value=links, inline=True)
         embed.set_footer(text="Running into issues? Let us know!")
 
         return embed
+
 
 @click.command()
 @click.option('--version', default=None, help="major.minor.patch.specBuild")
