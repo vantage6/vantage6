@@ -8,6 +8,7 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.model.authenticable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
 
 
@@ -83,42 +84,47 @@ class DefaultSocketNamespace(Namespace):
             f'Client identified as <{session.type}>: <{session.name}>'
         )
 
-        # It appears to be necessary to use the root socketio instance
-        # otherwise events cannot be sent outside the current namespace.
-        # In this case, only events to '/tasks' can be emitted otherwise.
+        # join appropiate rooms
+        session.rooms = []
         if session.type == 'node':
-            self.socketio.emit('node-status-changed', namespace='/admin')
-
-        # join appropiate rooms, nodes join a specific collaboration room.
-        # users do not belong to specific collaborations.
-        session.rooms = ['all_connections', 'all_'+session.type+'s']
-
-        if session.type == 'node':
-            # session.node = db.Node.get(session.auth_id)
-            session.rooms.append(f'collaboration_{auth.collaboration_id}')
-            session.rooms.append(f'collaboration_{auth.collaboration_id}_'
-                                 f'organization_{auth.organization_id}')
-            session.rooms.append('node_' + str(auth.id))
+            self._add_node_to_rooms(auth)
         elif session.type == 'user':
-            session.user = db.User.get(session.auth_id)
-            user = session.user
-            session.rooms.append('user_'+str(auth.id))
-            if user.can('event', Scope.GLOBAL, Operation.VIEW):
-                collabs = db.Collaboration.get()
-                for collab in collabs:
-                    session.rooms.append(f'collaboration_{collab.id}')
-            elif user.can('event', Scope.COLLABORATION, Operation.VIEW):
-                for collab in auth.organization.collaborations:
-                    session.rooms.append(f'collaboration_{collab.id}')
-            elif user.can('event', Scope.ORGANIZATION, Operation.VIEW):
-                for collab in auth.organization.collaborations:
-                    session.rooms.append(
-                        f'collaboration_{collab.id}_organization_'
-                        f'{auth.organization.id}'
-                    )
+            self._add_user_to_rooms(auth)
 
         for room in session.rooms:
             self.__join_room_and_notify(room)
+
+    def _add_node_to_rooms(self, node: Authenticatable):
+        """ Connect node to appropriate websocket rooms """
+        # node join rooms for all nodes and rooms for their collaboration
+        session.rooms.append('all_nodes')
+        session.rooms.append(f'collaboration_{node.collaboration_id}')
+        session.rooms.append(
+            f'collaboration_{node.collaboration_id}_organization_'
+            f'{node.organization_id}')
+
+    def _add_user_to_rooms(self, user: Authenticatable):
+        # check for which collab rooms the user has permission to enter
+        session.user = db.User.get(session.auth_id)
+        if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
+            # user joins all collaboration rooms
+            collabs = db.Collaboration.get()
+            for collab in collabs:
+                session.rooms.append(f'collaboration_{collab.id}')
+        elif session.user.can(
+                'event', Scope.COLLABORATION, Operation.VIEW):
+            # user joins all collaboration rooms that their organization
+            # participates in
+            for collab in user.organization.collaborations:
+                session.rooms.append(f'collaboration_{collab.id}')
+        elif session.user.can('event', Scope.ORGANIZATION, Operation.VIEW):
+            # user joins collaboration subrooms that include only messages
+            # relevant to their own node
+            for collab in user.organization.collaborations:
+                session.rooms.append(
+                    f'collaboration_{collab.id}_organization_'
+                    f'{user.organization.id}'
+                )
 
     def on_disconnect(self):
         """
