@@ -68,7 +68,10 @@ class DefaultSocketNamespace(Namespace):
             self.socketio.emit('node-status-changed', namespace='/admin')
             self.socketio.emit(
                 'node-online',
-                {'id': auth.id, 'name': auth.name, 'org_id': auth.organization.id},
+                {
+                    'id': auth.id, 'name': auth.name,
+                    'org_id': auth.organization.id
+                },
                 namespace='/tasks',
                 room=f'collaboration_{auth.collaboration_id}'
             )
@@ -87,13 +90,26 @@ class DefaultSocketNamespace(Namespace):
         if session.type == 'node':
             # session.node = db.Node.get(session.auth_id)
             session.rooms.append(f'collaboration_{auth.collaboration_id}')
+            session.rooms.append(f'collaboration_{auth.collaboration_id}_'
+                                 f'organization_{auth.organization_id}')
             session.rooms.append('node_' + str(auth.id))
         elif session.type == 'user':
             session.user = db.User.get(session.auth_id)
+            user = session.user
             session.rooms.append('user_'+str(auth.id))
-            if session.user.can('node', Scope.GLOBAL, Operation.VIEW):
+            if user.can('event', Scope.GLOBAL, Operation.VIEW):
+                collabs = db.Collaboration.get()
+                for collab in collabs:
+                    session.rooms.append(f'collaboration_{collab.id}')
+            elif user.can('event', Scope.COLLABORATION, Operation.VIEW):
                 for collab in auth.organization.collaborations:
                     session.rooms.append(f'collaboration_{collab.id}')
+            elif user.can('event', Scope.ORGANIZATION, Operation.VIEW):
+                for collab in auth.organization.collaborations:
+                    session.rooms.append(
+                        f'collaboration_{collab.id}_organization_'
+                        f'{auth.organization.id}'
+                    )
 
         for room in session.rooms:
             self.__join_room_and_notify(room)
