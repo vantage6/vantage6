@@ -108,12 +108,12 @@ export class CollaborationViewComponent
       ResType.NODE,
       org.id
     );
-    if (org.node || !user_can_view) {
+    if (org.node) {
       online_text += org.node?.is_online ? '(online)' : '(offline)';
     } else if (user_can_view) {
       online_text += '(not registered)';
     } else {
-      online_text += '(unknown status)';
+      online_text += '(unknown - no permission)';
     }
     return org.name + online_text;
   }
