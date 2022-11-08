@@ -67,15 +67,6 @@ class DefaultSocketNamespace(Namespace):
         # In this case, only events to '/tasks' can be emitted otherwise.
         if auth.type == 'node':
             self.socketio.emit('node-status-changed', namespace='/admin')
-            self.socketio.emit(
-                'node-online',
-                {
-                    'id': auth.id, 'name': auth.name,
-                    'org_id': auth.organization.id
-                },
-                namespace='/tasks',
-                room=f'collaboration_{auth.collaboration_id}'
-            )
 
         # define socket-session variables.
         session.type = auth.type
@@ -88,6 +79,7 @@ class DefaultSocketNamespace(Namespace):
         session.rooms = []
         if session.type == 'node':
             self._add_node_to_rooms(auth)
+            self.__alert_node_status(online=True, node=auth)
         elif session.type == 'user':
             self._add_user_to_rooms(auth)
 
@@ -144,6 +136,7 @@ class DefaultSocketNamespace(Namespace):
         if session.type == 'node':
             self.log.warning('emitting to /admin')
             self.socketio.emit('node-status-changed', namespace='/admin')
+            self.__alert_node_status(online=False, node=auth)
 
         self.log.info(f'{session.name} disconnected')
 
@@ -241,3 +234,26 @@ class DefaultSocketNamespace(Namespace):
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
         emit('message', msg, room=room)
+
+    def __alert_node_status(self, online: bool, node: Authenticatable) -> None:
+        """
+        Send status update of nodes when they change on/offline status
+
+        Parameters
+        ----------
+        online: bool
+            Whether node is coming online or not
+        node: Authenticatable
+            The node SQLALchemy object
+        """
+        event = 'node-online' if online else 'node-offline'
+        for room in session.rooms:
+            self.socketio.emit(
+                event,
+                {
+                    'id': node.id, 'name': node.name,
+                    'org_id': node.organization.id
+                },
+                namespace='/tasks',
+                room=room
+            )
