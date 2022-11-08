@@ -12,6 +12,7 @@ export enum ResType {
   NODE = 'node',
   TASK = 'task',
   RESULT = 'result',
+  EVENT = 'event',
   PORT = 'port',
   RULE = 'rule',
   ANY = '*',
@@ -30,5 +31,6 @@ export enum OpsType {
   CREATE = 'create',
   EDIT = 'edit',
   DELETE = 'delete',
+  SEND = 'send',
   ANY = '*',
 }

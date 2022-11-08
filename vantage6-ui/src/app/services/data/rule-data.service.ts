@@ -34,7 +34,7 @@ export class RuleDataService extends BaseDataService {
     }
 
     // set list of all rules
-    await this.list();
+    this.resource_list = await this.list();
 
     this._setRuleGroups();
 
