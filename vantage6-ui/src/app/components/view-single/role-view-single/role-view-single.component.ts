@@ -40,7 +40,9 @@ export class RoleViewSingleComponent
   }
 
   async init() {
-    this.rules = await this.ruleDataService.list();
+    (await this.ruleDataService.list()).subscribe((rules) => {
+      this.rules = rules;
+    });
 
     this.readRoute();
   }

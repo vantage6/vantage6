@@ -69,12 +69,16 @@ export class CollaborationViewSingleComponent
   }
 
   async setOrganizations(update_collabs: boolean = true): Promise<void> {
-    this.organizations = await this.orgDataService.list();
-    if (update_collabs) this.setCollaboration();
+    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
+      this.organizations = orgs;
+      if (update_collabs) this.setCollaboration();
+    });
   }
 
   async setNodes(update_collabs: boolean = true): Promise<void> {
-    this.nodes = await this.nodeDataService.list();
-    if (update_collabs) this.setCollaboration();
+    (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
+      this.nodes = nodes;
+      if (update_collabs) this.setCollaboration();
+    });
   }
 }

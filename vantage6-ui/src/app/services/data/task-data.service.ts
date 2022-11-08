@@ -25,12 +25,12 @@ export class TaskDataService extends BaseDataService {
     )) as Task;
   }
 
-  async list(force_refresh: boolean = false): Promise<Task[]> {
+  async list(force_refresh: boolean = false): Promise<Observable<Task[]>> {
     return (await super.list_base(
       this.convertJsonService.getTask,
       [],
       force_refresh
-    )) as Task[];
+    )) as Observable<Task[]>;
   }
 
   async org_list(

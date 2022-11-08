@@ -72,8 +72,10 @@ export class CollaborationEditComponent
 
   async init(): Promise<void> {
     // first obtain organizations, which are required to get the collaboration
-    this.all_organizations = await this.orgDataService.list();
-    this.organizations_not_in_collab = deepcopy(this.all_organizations);
+    (await this.orgDataService.list()).subscribe((organizations) => {
+      this.all_organizations = organizations;
+      this.organizations_not_in_collab = deepcopy(organizations);
+    });
 
     this.readRoute();
   }

@@ -41,7 +41,9 @@ export class CollaborationTableComponent
 
   async init() {
     // get organizations
-    this.organizations = await this.orgDataService.list();
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+    });
 
     this.readRoute();
   }
@@ -55,10 +57,11 @@ export class CollaborationTableComponent
         this.nodes
       );
     } else {
-      this.resources = await this.collabDataService.list(
-        this.organizations,
-        this.nodes
-      );
+      (
+        await this.collabDataService.list(this.organizations, this.nodes)
+      ).subscribe((collabs: Collaboration[]) => {
+        this.resources = collabs;
+      });
     }
   }
 
@@ -75,7 +78,9 @@ export class CollaborationTableComponent
   }
 
   async setNodes(): Promise<void> {
-    this.nodes = await this.nodeDataService.list();
+    (await this.nodeDataService.list()).subscribe((nodes: any) => {
+      this.nodes = nodes;
+    });
     // TODO now we gather all nodes
     // this.nodes = [];
     // for (let collab of this.resources) {

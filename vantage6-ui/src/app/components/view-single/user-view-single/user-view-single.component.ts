@@ -59,7 +59,9 @@ export class UserViewSingleComponent
   }
 
   async setRules() {
-    this.rules = await this.ruleDataService.list();
+    (await this.ruleDataService.list()).subscribe((rules) => {
+      this.rules = rules;
+    });
   }
 
   async setRoles() {

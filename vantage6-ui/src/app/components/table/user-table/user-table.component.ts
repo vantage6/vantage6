@@ -60,11 +60,18 @@ export class UserTableComponent extends TableComponent implements OnInit {
 
   async init(): Promise<void> {
     // get rules and roles
-    this.rules = await this.ruleDataService.list();
-    this.roles = await this.roleDataService.list(this.rules);
+    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
+      this.rules = rules;
+    });
+
+    (await this.roleDataService.list(this.rules)).subscribe((roles: Role[]) => {
+      this.roles = roles;
+    });
 
     // get organizations
-    this.organizations = await this.orgDataService.list();
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+    });
 
     this.readRoute();
   }
@@ -77,7 +84,11 @@ export class UserTableComponent extends TableComponent implements OnInit {
         this.rules
       );
     } else {
-      this.resources = await this.userDataService.list(this.roles, this.rules);
+      (await this.userDataService.list(this.roles, this.rules)).subscribe(
+        (users: User[]) => {
+          this.resources = users;
+        }
+      );
     }
   }
 }

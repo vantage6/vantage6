@@ -45,13 +45,13 @@ export class CollabDataService extends BaseDataService {
     organizations: Organization[] = [],
     nodes: Node[] = [],
     force_refresh: boolean = false
-  ): Promise<Collaboration[]> {
+  ): Promise<Observable<Collaboration[]>> {
     let collaborations = (await super.list_base(
       this.convertJsonService.getCollaboration,
       [organizations],
       force_refresh
-    )) as Collaboration[];
-    await this.refreshNodes(this.resource_list as Collaboration[], nodes);
+    )) as Observable<Collaboration[]>;
+    await this.refreshNodes(this.resource_list.value as Collaboration[], nodes);
     return collaborations;
   }
 
@@ -82,7 +82,7 @@ export class CollabDataService extends BaseDataService {
     } else {
       // this organization has been queried before: get matches from the saved
       // data
-      for (let resource of this.resource_list as Collaboration[]) {
+      for (let resource of this.resource_list.value as Collaboration[]) {
         if (
           (resource as Collaboration).organization_ids.includes(organization_id)
         ) {

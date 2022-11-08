@@ -3,6 +3,7 @@ import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Node } from 'src/app/interfaces/node';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -24,12 +25,12 @@ export class NodeDataService extends BaseDataService {
     )) as Node;
   }
 
-  async list(force_refresh: boolean = false): Promise<Node[]> {
+  async list(force_refresh: boolean = false): Promise<Observable<Node[]>> {
     return (await super.list_base(
       this.convertJsonService.getNode,
       [],
       force_refresh
-    )) as Node[];
+    )) as Observable<Node[]>;
   }
 
   async org_list(
