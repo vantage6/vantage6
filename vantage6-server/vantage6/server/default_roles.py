@@ -26,6 +26,7 @@ def get_default_roles(db):
         db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('result', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('port', Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.VIEW),
     ]
     VIEWER_ROLE = {
         'name': 'Viewer',
@@ -54,6 +55,7 @@ def get_default_roles(db):
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.EDIT),
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.DELETE),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.EDIT),
+        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.SEND),
     ]
     ORG_ADMIN_ROLE = {
         'name': 'Organization Admin',
@@ -75,6 +77,8 @@ def get_default_roles(db):
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.CREATE),
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.VIEW),
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE),
+        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.VIEW),
+        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.SEND),
     ]
     COLLAB_ADMIN_ROLE = {
         'name': 'Collaboration Admin',
