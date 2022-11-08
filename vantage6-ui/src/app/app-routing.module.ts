@@ -8,7 +8,6 @@ import {
   OrgAccessGuard,
 } from 'src/app/auth/access-guard.guard';
 
-import { LoginComponent } from './components/login/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { UserEditComponent } from './components/edit/user-edit/user-edit.component';

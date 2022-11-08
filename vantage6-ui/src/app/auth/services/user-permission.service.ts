@@ -49,10 +49,12 @@ export class UserPermissionService {
     if (Object.keys(user_info).length !== 0) {
       await this.setUserPermissions(user_info);
     }
-    this.ready.next(true);
+    if (!this.ready.value) {
+      this.ready.next(true);
 
-    // now that user permissions are set, set up the socket connection
-    this.socketService.setupConnection();
+      // now that user permissions are set, set up the socket connection
+      this.socketService.setupConnection();
+    }
   }
 
   public async savePermissions(permissions: any[]): Promise<void> {
