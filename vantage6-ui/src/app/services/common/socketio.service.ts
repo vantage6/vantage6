@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
+import { SnackbarService } from './snackbar.service';
 import { TokenStorageService } from './token-storage.service';
 
 @Injectable({
@@ -16,8 +15,7 @@ export class SocketioService {
 
   constructor(
     private tokenStorage: TokenStorageService,
-    private snackBar: MatSnackBar,
-    private router: Router
+    private snackbarService: SnackbarService
   ) {}
 
   setupConnection() {
@@ -40,17 +38,25 @@ export class SocketioService {
 
   subscribe() {
     // subscribe to various socket events
+    // TODO I don't think we do anything with these messages? Delete?
     this.socket.on('message', (message: string) => {
       this.message$.next(message);
-      console.log(message);
-      // this.socket.emit('message', 'Hi there!');
     });
+
+    // give status messages when node comes online
     this.socket.on('node-online', (data: any) => {
-      console.log(data);
-      // alert(`The node '${data.name}' just came online!`);
-      this.openSuccessSnackBar(
+      this.snackbarService.openNodeStatusSnackBar(
         `The node '${data.name}' just came online!`,
-        data
+        data,
+        true
+      );
+    });
+    // ... and when a node goes offline
+    this.socket.on('node-offline', (data: any) => {
+      this.snackbarService.openNodeStatusSnackBar(
+        `The node '${data.name}' just went offline!`,
+        data,
+        false
       );
     });
   }
@@ -62,46 +68,4 @@ export class SocketioService {
   public getMessages = () => {
     return this.message$.asObservable();
   };
-
-  // Snackbar that opens with success background
-  openSuccessSnackBar(msg: string, data: any) {
-    const sb = this.snackBar.open(msg, 'View node', {
-      verticalPosition: 'top',
-      duration: 10000,
-      panelClass: ['green-snackbar', 'login-snackbar'],
-    });
-    console.log(data);
-
-    // define what happens if users click the button
-    sb.onAction().subscribe(() => {
-      this.router.navigate([`/node/${data.id}/view/${data.org_id}`]);
-      console.log('button clicked!');
-    });
-
-    // // add a progress bar
-    // sb.afterOpened().subscribe(() => {
-    //   const duration = this.snackBar.containerInstance.snackBarConfig.duration;
-    //     this.runProgressBar(duration);
-    // });
-  }
-
-  //Snackbar that opens with failure background
-  openFailureSnackBar() {
-    this.snackBar.open('Invalid Login Credentials', 'Try again!', {
-      duration: 6000,
-      panelClass: ['red-snackbar', 'login-snackbar'],
-    });
-  }
-
-  // runProgressBar(duration: number) {
-  //   let progress = 100;
-  //   const step = 0.005;
-  //   this.cleanProgressBarInterval();
-  //   this.currentIntervalId = setInterval(() => {
-  //     this.progress -= 100 * step;
-  //     if (this.progress < 0) {
-  //       this.cleanProgressBarInterval();
-  //     }
-  //   }, duration * step);
-  // }
 }
