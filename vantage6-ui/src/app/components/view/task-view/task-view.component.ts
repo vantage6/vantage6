@@ -48,7 +48,9 @@ export class TaskViewComponent
 
     for (let r of this.results) {
       if (r.organization_id)
-        r.organization = await this.orgDataService.get(r.organization_id);
+        (await this.orgDataService.get(r.organization_id)).subscribe((org) => {
+          r.organization = org;
+        });
     }
   }
 

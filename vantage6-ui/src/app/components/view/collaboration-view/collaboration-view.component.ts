@@ -68,10 +68,14 @@ export class CollaborationViewComponent
   }
 
   async setTasks(): Promise<void> {
-    this.tasks = await this.taskDataService.collab_list(this.collaboration.id);
-    this.n_completed_tasks = this.tasks.filter(
-      (task) => task.complete === true
-    ).length;
+    (await this.taskDataService.collab_list(this.collaboration.id)).subscribe(
+      (tasks) => {
+        this.tasks = tasks;
+        this.n_completed_tasks = this.tasks.filter(
+          (task) => task.complete === true
+        ).length;
+      }
+    );
   }
 
   encryptedText(): string {

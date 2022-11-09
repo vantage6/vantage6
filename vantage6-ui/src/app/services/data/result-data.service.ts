@@ -22,7 +22,7 @@ export class ResultDataService extends BaseDataService {
     force_refresh: boolean = false
   ): Promise<Result[]> {
     let results: Result[] = [];
-    if (force_refresh || !this.queried_org_ids.includes(task_id)) {
+    if (force_refresh) {
       // TODO add function to API service to get resources by task ID
       results = await this.apiService.getResourcesByTaskId(task_id);
       this.queried_task_ids.push(task_id);

@@ -44,11 +44,9 @@ export class UserPermissionService {
     (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
       this.all_rules = rules;
     });
-    (await this.roleDataService.list(this.all_rules)).subscribe(
-      (roles: Role[]) => {
-        this.roles = roles;
-      }
-    );
+    (await this.roleDataService.list()).subscribe((roles: Role[]) => {
+      this.roles = roles;
+    });
 
     // get user information
     let user_info = this.tokenStorage.getUserInfo();
@@ -168,12 +166,10 @@ export class UserPermissionService {
     }
 
     // request the rules for the current user
-    this.user = await this.userDataService.get(
-      user_id,
-      this.roles,
-      this.all_rules
-    );
-    this.user.is_logged_in = true;
+    (await this.userDataService.get(user_id)).subscribe((user) => {
+      this.user = user;
+      this.user.is_logged_in = true;
+    });
 
     await this._setPermissions(this.user, this.all_rules);
 

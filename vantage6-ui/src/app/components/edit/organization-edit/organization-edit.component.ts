@@ -57,10 +57,11 @@ export class OrganizationEditComponent
   }
 
   async setupEdit(id: number) {
-    let org = await this.orgDataService.get(id);
-    if (org) {
-      this.organization = org;
-    }
+    (await this.orgDataService.get(id)).subscribe((org) => {
+      if (org) {
+        this.organization = org;
+      }
+    });
   }
 
   setupCreate(): void {

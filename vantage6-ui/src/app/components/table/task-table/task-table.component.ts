@@ -4,7 +4,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { deepcopy, parseId } from 'src/app/shared/utils';
+import { deepcopy, filterArrayByProperty, parseId } from 'src/app/shared/utils';
 import { TableComponent } from '../base-table/table.component';
 import { DisplayMode } from '../node-table/node-table.component';
 import { Task } from 'src/app/interfaces/task';
@@ -143,15 +143,27 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       this.resources = [];
       for (let collab_id of (this.current_organization as Organization)
         .collaboration_ids) {
-        this.resources.push(
-          ...(await this.taskDataService.collab_list(collab_id, force_refresh))
-        );
+        (
+          await this.taskDataService.collab_list(collab_id, force_refresh)
+        ).subscribe((tasks) => {
+          this.resources = filterArrayByProperty(
+            this.resources,
+            'collaboration_id',
+            collab_id,
+            false
+          );
+          this.resources.push(...tasks);
+        });
       }
     } else if (this.displayMode === DisplayMode.COL) {
-      this.resources = await this.taskDataService.collab_list(
-        this.route_org_id as number,
-        force_refresh
-      );
+      (
+        await this.taskDataService.collab_list(
+          this.route_org_id as number,
+          force_refresh
+        )
+      ).subscribe((tasks) => {
+        this.resources = tasks;
+      });
     } else {
       (await this.taskDataService.list(force_refresh)).subscribe(
         (tasks: Task[]) => {

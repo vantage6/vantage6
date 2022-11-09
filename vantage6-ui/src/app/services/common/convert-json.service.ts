@@ -104,7 +104,8 @@ export class ConvertJsonService {
   // we don't now how many organizations there may be (could be hundreds)
   getCollaboration(
     coll_json: any,
-    organizations: Organization[]
+    organizations: Organization[],
+    nodes: Node[] = []
   ): Collaboration {
     let orgs: Organization[] = [];
     let org_ids: number[] = [];
@@ -112,7 +113,13 @@ export class ConvertJsonService {
       coll_json.organizations.forEach((org_json: any) => {
         let org = getById(organizations, org_json.id);
         if (org) {
-          orgs.push(deepcopy(org));
+          org = deepcopy(org);
+          for (let node of nodes) {
+            if (node.organization_id === org.id) {
+              org.node = node;
+            }
+          }
+          orgs.push(org);
         }
         org_ids.push(org_json.id);
       });

@@ -93,9 +93,9 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
         this.organizations = orgs;
       });
     } else {
-      this.user.organization = await this.orgDataService.get(
-        this.organization_id
-      );
+      (await this.orgDataService.get(this.organization_id)).subscribe((org) => {
+        this.user.organization = org;
+      });
     }
   }
 
@@ -106,31 +106,31 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   }
 
   async setRoles(): Promise<void> {
-    (await this.roleDataService.list(this.rules_all)).subscribe(
-      (roles: Role[]) => {
-        this.roles_all = roles;
-        this.setAssignableRoles();
-      }
-    );
+    (await this.roleDataService.list()).subscribe((roles: Role[]) => {
+      this.roles_all = roles;
+      this.setAssignableRoles();
+    });
   }
 
   async setupEdit(id: number) {
     // collect roles and rules (which is required to collect users)
-    let user = await this.userDataService.get(
-      id,
-      this.roles_all,
-      this.rules_all
+    (await this.userDataService.get(id)).subscribe((user) => {
+      if (user) {
+        this.user = user;
+        this.user_orig_name = this.user.username;
+        this.organization_id = this.user.organization_id;
+        this.setAssignableRoles();
+        this.setOrganization();
+      }
+    });
+  }
+
+  async setOrganization() {
+    (await this.orgDataService.get(this.user.organization_id)).subscribe(
+      (org) => {
+        this.user.organization = org;
+      }
     );
-    this.organization_id = this.user.organization_id;
-    if (user) {
-      this.user = user;
-      this.user_orig_name = this.user.username;
-      this.organization_id = this.user.organization_id;
-      this.setAssignableRoles();
-      this.user.organization = await this.orgDataService.get(
-        this.user.organization_id
-      );
-    }
   }
 
   async setAssignableRoles(): Promise<void> {
@@ -142,10 +142,7 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     ) {
       // first get all roles assignable for the organization this user is in
       this.roles_assignable_all = deepcopy(
-        await this.roleDataService.org_list(
-          this.organization_id as number,
-          this.rules_all
-        )
+        await this.roleDataService.org_list(this.organization_id as number)
       );
       // if we are creating a new user, and there are no roles to assign, recheck
       // whether there are any roles to assign (they may be lost by page refresh)

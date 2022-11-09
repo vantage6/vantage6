@@ -123,14 +123,20 @@ export class NodeTableComponent
   }
 
   protected async setResources() {
+    // TODO when this.resources is always observable, remove other updates
+    // in this component (but update each time resources are renewed)
     if (this.displayMode === DisplayMode.ORG) {
-      this.resources = await this.nodeDataService.org_list(
-        this.route_org_id as number
-      );
+      (
+        await this.nodeDataService.org_list(this.route_org_id as number)
+      ).subscribe((org_nodes: Node[]) => {
+        this.resources = org_nodes;
+      });
     } else if (this.displayMode === DisplayMode.COL) {
-      this.resources = await this.nodeDataService.collab_list(
-        this.route_org_id as number
-      );
+      (
+        await this.nodeDataService.collab_list(this.route_org_id as number)
+      ).subscribe((nodes) => {
+        this.resources = nodes;
+      });
     } else {
       (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
         this.resources = nodes;

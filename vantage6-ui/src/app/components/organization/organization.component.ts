@@ -14,6 +14,7 @@ import { ResType } from 'src/app/shared/enum';
 import {
   arrayContainsObjWithId,
   deepcopy,
+  filterArrayByProperty,
   getById,
   removeDuplicateIds,
   removeMatchedIdFromArray,
@@ -139,17 +140,12 @@ export class OrganizationComponent implements OnInit {
 
     // first collect roles for current organization. This is done before
     // collecting the users so that the users can possess these roles
-    this.roles = await this.roleDataService.org_list(
-      this.current_organization.id,
-      this.rules
-    );
-    this.roles = await this.sortRoles(this.roles);
-    this.roles_assignable = await this.userPermission.getAssignableRoles(
-      this.roles
-    );
-
-    // collect users for current organization
-    this.setUsers();
+    (
+      await this.roleDataService.org_list(this.current_organization.id)
+    ).subscribe((roles) => {
+      this.roles = roles;
+      this.onRenewalRoles();
+    });
 
     // collect collaborations for current organization
     await this.setCollaborations();
@@ -160,6 +156,15 @@ export class OrganizationComponent implements OnInit {
     this.modalService.closeLoadingModal();
   }
 
+  async onRenewalRoles() {
+    this.roles = await this.sortRoles(this.roles);
+    this.roles_assignable = await this.userPermission.getAssignableRoles(
+      this.roles
+    );
+    // collect users for current organization // TODO can we not set these separately?
+    this.setUsers();
+  }
+
   async sortRoles(roles: Role[]): Promise<Role[]> {
     //sort roles: put roles of current organization first, then generic roles
     roles.sort((a, b) => b.organization_id - a.organization_id);
@@ -167,26 +172,40 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setUsers(): Promise<void> {
-    this.organization_users = await this.userDataService.org_list(
-      this.route_org_id,
-      this.roles,
-      this.rules
-    );
-    for (let user of this.organization_users) {
-      user.is_logged_in = user.id === this.loggedin_user.id;
-    }
+    (
+      await this.userDataService.org_list(
+        this.route_org_id,
+        this.roles,
+        this.rules
+      )
+    ).subscribe((users) => {
+      // TODO users should be automatically updated... it's observable now so remove other references to it
+      this.organization_users = users;
+      for (let user of this.organization_users) {
+        user.is_logged_in = user.id === this.loggedin_user.id;
+      }
+    });
   }
 
   async setNodes(): Promise<void> {
-    this.organization_nodes = await this.nodeDataService.org_list(
-      this.route_org_id
+    (await this.nodeDataService.org_list(this.route_org_id)).subscribe(
+      (org_nodes: Node[]) => {
+        this.organization_nodes = org_nodes;
+      }
     );
 
     // obtain the nodes relevant to the collaborations
     this.nodes = [];
     for (let collab of this.collaborations) {
-      const nodes = await this.nodeDataService.collab_list(collab.id);
-      this.nodes.push(...nodes);
+      (await this.nodeDataService.collab_list(collab.id)).subscribe((nodes) => {
+        this.nodes = filterArrayByProperty(
+          this.nodes,
+          'collaboration_id',
+          collab.id,
+          false
+        );
+        this.nodes.push(...nodes);
+      });
     }
     this.nodes = removeDuplicateIds(this.nodes);
 
@@ -201,16 +220,13 @@ export class OrganizationComponent implements OnInit {
     );
   }
 
-  updateNodeList(node: Node) {
-    this.organization_nodes.push(node);
-  }
-
   async setCollaborations(): Promise<void> {
-    this.collaborations = await this.collabDataService.org_list(
-      this.current_organization.id,
-      this.organizations,
-      this.nodes
-    );
+    (
+      await this.collabDataService.org_list(this.current_organization.id)
+    ).subscribe((collabs) => {
+      this.collaborations = collabs;
+      // TODO do we need to update anything here?
+    });
   }
 
   editOrganization(org: Organization): void {
@@ -226,10 +242,6 @@ export class OrganizationComponent implements OnInit {
 
   deleteNode(node: Node): void {
     this.nodes = removeMatchedIdFromArray(this.nodes, node.id);
-    this.organization_nodes = removeMatchedIdFromArray(
-      this.organization_nodes,
-      node.id
-    );
   }
 
   async deleteRole(role: Role): Promise<void> {

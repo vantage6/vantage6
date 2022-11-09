@@ -81,23 +81,22 @@ export class CollaborationEditComponent
   }
 
   async setupEdit(id: number) {
-    this.collaboration = await this.collabDataService.get(
-      id,
-      this.all_organizations
-    );
-    this.collaboration_orig_name = this.collaboration.name;
-    // remove organizations that are already in collaboration from the
-    // organizations that can be added to it
-    this.organizations_not_in_collab = removeMatchedIdsFromArray(
-      this.organizations_not_in_collab,
-      getIdsFromArray(this.collaboration.organizations)
-    );
-    // set which organizations were in the collaboration at the start of
-    // editing, which allows us to track for which organizations not to create
-    // nodes
-    this.collab_organizations_original = deepcopy(
-      this.collaboration.organizations
-    );
+    (await this.collabDataService.get(id)).subscribe((collab) => {
+      this.collaboration = collab;
+      this.collaboration_orig_name = this.collaboration.name;
+      // remove organizations that are already in collaboration from the
+      // organizations that can be added to it
+      this.organizations_not_in_collab = removeMatchedIdsFromArray(
+        this.organizations_not_in_collab,
+        getIdsFromArray(this.collaboration.organizations)
+      );
+      // set which organizations were in the collaboration at the start of
+      // editing, which allows us to track for which organizations not to create
+      // nodes
+      this.collab_organizations_original = deepcopy(
+        this.collaboration.organizations
+      );
+    });
   }
 
   setupCreate(): void {

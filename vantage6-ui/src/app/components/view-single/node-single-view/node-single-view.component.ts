@@ -43,25 +43,31 @@ export class NodeSingleViewComponent
 
   async setResources(): Promise<void> {
     await this.setNode();
-    await this.setOrganization();
-    await this.setCollaboration();
   }
 
   async setNode(): Promise<void> {
-    this.node = deepcopy(
-      await this.nodeDataService.get(this.route_id as number)
+    // TODO add collab and org after setting this
+    (await this.nodeDataService.get(this.route_id as number)).subscribe(
+      (node) => {
+        this.node = node;
+        this.setOrganization();
+        this.setCollaboration();
+      }
     );
   }
 
   async setOrganization(): Promise<void> {
-    this.node.organization = await this.orgDataService.get(
-      this.node.organization_id
+    (await this.orgDataService.get(this.node.organization_id)).subscribe(
+      (org) => {
+        this.node.organization = org;
+      }
     );
   }
   async setCollaboration(): Promise<void> {
-    this.node.collaboration = await this.collabDataService.get(
-      this.node.collaboration_id,
-      [this.node.organization as Organization]
+    (await this.collabDataService.get(this.node.collaboration_id)).subscribe(
+      (collab) => {
+        this.node.collaboration = collab;
+      }
     );
   }
 }

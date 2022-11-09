@@ -51,11 +51,11 @@ export class CollaborationTableComponent
   async setResources(): Promise<void> {
     await this.setNodes();
     if (this.isShowingSingleOrg()) {
-      this.resources = await this.collabDataService.org_list(
-        this.route_org_id as number,
-        this.organizations,
-        this.nodes
-      );
+      (
+        await this.collabDataService.org_list(this.route_org_id as number)
+      ).subscribe((collabs) => {
+        this.resources = collabs;
+      });
     } else {
       (
         await this.collabDataService.list(this.organizations, this.nodes)

@@ -62,23 +62,29 @@ export class TaskViewSingleComponent
 
   async setResources() {
     await this.setTask();
-
-    await this.setInitiatingOrganization();
-
-    await this.setCollaboration();
   }
 
   async setInitiatingOrganization() {
-    this.task.initiator = await this.orgDataService.get(this.task.initiator_id);
+    (await this.orgDataService.get(this.task.initiator_id)).subscribe((org) => {
+      this.task.initiator = org;
+    });
   }
 
   async setCollaboration() {
-    this.task.collaboration = await this.collabDataService.get(
-      this.task.collaboration_id
+    (await this.collabDataService.get(this.task.collaboration_id)).subscribe(
+      (collab) => {
+        this.task.collaboration = collab;
+      }
     );
   }
 
   async setTask(): Promise<void> {
-    this.task = await this.taskDataService.get(this.route_id as number);
+    (await this.taskDataService.get(this.route_id as number)).subscribe(
+      (task) => {
+        this.task = task;
+        this.setInitiatingOrganization();
+        this.setCollaboration();
+      }
+    );
   }
 }

@@ -67,17 +67,17 @@ export class RoleTableComponent
   }
 
   protected async setResources() {
+    // TODO update other things when resources are updated?
     if (this.isShowingSingleOrg()) {
-      this.resources = await this.roleDataService.org_list(
-        this.route_org_id as number,
-        this.rules
-      );
+      (
+        await this.roleDataService.org_list(this.route_org_id as number)
+      ).subscribe((roles) => {
+        this.resources = roles;
+      });
     } else {
-      (await this.roleDataService.list(this.rules)).subscribe(
-        (roles: Role[]) => {
-          this.resources = roles;
-        }
-      );
+      (await this.roleDataService.list()).subscribe((roles: Role[]) => {
+        this.resources = roles;
+      });
     }
   }
 

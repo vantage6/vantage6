@@ -16,13 +16,16 @@ export class TaskDataService extends BaseDataService {
     super(apiService, convertJsonService);
   }
 
-  async get(id: number, force_refresh: boolean = false): Promise<Task> {
+  async get(
+    id: number,
+    force_refresh: boolean = false
+  ): Promise<Observable<Task>> {
     return (await super.get_base(
       id,
       this.convertJsonService.getTask,
       [],
       force_refresh
-    )) as Task;
+    )) as Observable<Task>;
   }
 
   async list(force_refresh: boolean = false): Promise<Observable<Task[]>> {
@@ -36,24 +39,24 @@ export class TaskDataService extends BaseDataService {
   async org_list(
     organization_id: number,
     force_refresh: boolean = false
-  ): Promise<Task[]> {
+  ): Promise<Observable<Task[]>> {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getTask,
       [],
       force_refresh
-    )) as Task[];
+    )) as Observable<Task[]>;
   }
 
   async collab_list(
     collaboration_id: number,
     force_refresh: boolean = false
-  ): Promise<Task[]> {
+  ): Promise<Observable<Task[]>> {
     return (await super.collab_list_base(
       collaboration_id,
       this.convertJsonService.getTask,
       [],
       force_refresh
-    )) as Task[];
+    )) as Observable<Task[]>;
   }
 }

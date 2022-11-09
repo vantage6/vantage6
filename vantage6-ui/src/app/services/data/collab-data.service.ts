@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import {
   Organization,
@@ -12,33 +12,49 @@ import { BaseDataService } from './base-data.service';
 import { deepcopy } from 'src/app/shared/utils';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
+import { NodeDataService } from './node-data.service';
+import { OrgDataService } from './org-data.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CollabDataService extends BaseDataService {
+  nodes: Node[] = [];
+  organizations: Organization[] = [];
+
   constructor(
     protected collabApiService: CollabApiService,
     protected convertJsonService: ConvertJsonService,
-    private userPermission: UserPermissionService
+    private userPermission: UserPermissionService,
+    private nodeDataService: NodeDataService,
+    private orgDataService: OrgDataService
   ) {
     super(collabApiService, convertJsonService);
+    this.getDependentResources();
+  }
+
+  async getDependentResources() {
+    (await this.nodeDataService.list()).subscribe((nodes) => {
+      this.nodes = nodes;
+      // TODO refresh lists
+    });
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+      // TODO refresh lists
+    });
   }
 
   async get(
     id: number,
-    organizations: Organization[] = [],
-    nodes: Node[] = [],
     force_refresh: boolean = false
-  ): Promise<Collaboration> {
-    let collaboration = (await super.get_base(
+  ): Promise<Observable<Collaboration>> {
+    await this.getDependentResources();
+    return (await super.get_base(
       id,
       this.convertJsonService.getCollaboration,
-      [organizations],
+      [this.organizations, this.nodes],
       force_refresh
-    )) as Collaboration;
-    await this.refreshNodes([collaboration], nodes);
-    return collaboration;
+    )) as Observable<Collaboration>;
   }
 
   async list(
@@ -57,10 +73,9 @@ export class CollabDataService extends BaseDataService {
 
   async org_list(
     organization_id: number,
-    organizations: Organization[] = [],
-    nodes: Node[] = [],
     force_refresh: boolean = false
-  ): Promise<Collaboration[]> {
+  ): Promise<Observable<Collaboration[]>> {
+    // TODO when is following if statement necessary?
     if (
       !this.userPermission.can(
         OpsType.VIEW,
@@ -68,32 +83,18 @@ export class CollabDataService extends BaseDataService {
         organization_id
       )
     ) {
-      return [];
+      return of([]);
     }
-    let org_resources: Collaboration[] = [];
-    if (force_refresh || !this.queried_org_ids.includes(organization_id)) {
-      org_resources = (await this.apiService.getResources(
-        this.convertJsonService.getCollaboration,
-        [organizations],
-        { organization_id: organization_id }
-      )) as Collaboration[];
-      this.queried_org_ids.push(organization_id);
-      this.saveMultiple(org_resources);
-    } else {
-      // this organization has been queried before: get matches from the saved
-      // data
-      for (let resource of this.resource_list.value as Collaboration[]) {
-        if (
-          (resource as Collaboration).organization_ids.includes(organization_id)
-        ) {
-          org_resources.push(resource);
-        }
-      }
-    }
-    await this.refreshNodes(org_resources, nodes);
-    return org_resources;
+    await this.getDependentResources();
+    return (await super.org_list_base(
+      organization_id,
+      this.convertJsonService.getCollaboration,
+      [this.organizations, this.nodes],
+      force_refresh
+    )) as Observable<Collaboration[]>;
   }
 
+  // TODO what to do with this?
   async addOrgsAndNodes(
     collabs: Collaboration[],
     organizations: OrganizationInCollaboration[],

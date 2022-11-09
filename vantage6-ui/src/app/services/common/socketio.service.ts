@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
+import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 
 import { environment } from 'src/environments/environment';
 import { SnackbarService } from './snackbar.service';
@@ -11,6 +12,7 @@ import { TokenStorageService } from './token-storage.service';
 })
 export class SocketioService {
   public message$: BehaviorSubject<string> = new BehaviorSubject('');
+  public nodeStatusUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
   socket: Socket<any>;
 
   constructor(
@@ -50,6 +52,10 @@ export class SocketioService {
         data,
         true
       );
+      this.nodeStatusUpdate$.next({
+        id: data.id,
+        online: true,
+      });
     });
     // ... and when a node goes offline
     this.socket.on('node-offline', (data: any) => {
@@ -58,6 +64,10 @@ export class SocketioService {
         data,
         false
       );
+      this.nodeStatusUpdate$.next({
+        id: data.id,
+        online: false,
+      });
     });
   }
 
@@ -68,4 +78,8 @@ export class SocketioService {
   public getMessages = () => {
     return this.message$.asObservable();
   };
+
+  public getNodeStatusUpdates() {
+    return this.nodeStatusUpdate$.asObservable();
+  }
 }

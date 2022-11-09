@@ -65,23 +65,25 @@ export class UserViewSingleComponent
   }
 
   async setRoles() {
-    this.roles = await this.roleDataService.list_with_params(this.rules, {
+    this.roles = await this.roleDataService.list_with_params({
       user_id: this.route_id,
     });
   }
 
   async setUser() {
-    this.user = await this.userDataService.get(
-      this.route_id as number,
-      this.roles,
-      this.rules
+    (await this.userDataService.get(this.route_id as number)).subscribe(
+      (user) => {
+        this.user = user;
+      }
     );
   }
 
   async setOrganization() {
     if (this.user)
-      this.user.organization = await this.orgDataService.get(
-        this.user.organization_id
+      (await this.orgDataService.get(this.user.organization_id)).subscribe(
+        (org) => {
+          this.user.organization = org;
+        }
       );
   }
 }
