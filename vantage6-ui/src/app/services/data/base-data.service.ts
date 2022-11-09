@@ -26,13 +26,11 @@ export abstract class BaseDataService {
   resources_per_col: { [col_id: number]: BehaviorSubject<Resource[]> } = {};
   resources_by_id: { [id: number]: BehaviorSubject<Resource | null> } = {};
   has_queried_list: boolean = false;
-  queried_collab_ids: number[] = [];
 
   constructor(
     protected apiService: BaseApiService,
     protected convertJsonService: ConvertJsonService
   ) {
-    this.getDependentResources();
     this.resource_list.subscribe((resources) => {
       // When the list of all resources is updated, ensure that sublists of
       // observables are also updated
@@ -51,7 +49,6 @@ export abstract class BaseDataService {
   async getDependentResources() {}
 
   updateObsPerOrg(resources: Resource[]) {
-    // TODO make sure this goes well for roles that have a `null` organization_id
     if (resources.length && !('organization_id' in resources[0])) {
       return;
     }
@@ -87,7 +84,7 @@ export abstract class BaseDataService {
     }
     let col_ids = unique(getIdsFromArray(resources, 'collaboration_id'));
     for (let col_id of col_ids) {
-      if (col_id in this.resources_per_org) {
+      if (col_id in this.resources_per_col) {
         this.resources_per_col[col_id].next(
           filterArrayByProperty(resources, 'collaboration_id', col_id)
         );
@@ -239,7 +236,6 @@ export abstract class BaseDataService {
 
   public clear(): void {
     this.has_queried_list = false;
-    this.queried_collab_ids = [];
     this.resource_list.next([]);
   }
 }

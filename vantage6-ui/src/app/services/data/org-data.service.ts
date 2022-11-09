@@ -37,26 +37,4 @@ export class OrgDataService extends BaseDataService {
       force_refresh
     )) as Observable<Organization[]>;
   }
-
-  async collab_list(collaboration_id: number, force_refresh: boolean = false) {
-    let orgs: Organization[] = [];
-    if (force_refresh || !this.queried_collab_ids.includes(collaboration_id)) {
-      orgs = (await this.apiService.getResources(
-        this.convertJsonService.getOrganization,
-        [],
-        { collaboration_id: collaboration_id }
-      )) as Organization[];
-      this.queried_collab_ids.push(collaboration_id);
-      this.saveMultiple(orgs);
-    } else {
-      // this organization has been queried before: get matches from the saved
-      // data
-      for (let org of this.resource_list.value as Organization[]) {
-        if (org.collaboration_ids.includes(collaboration_id)) {
-          orgs.push(org);
-        }
-      }
-    }
-    return orgs;
-  }
 }

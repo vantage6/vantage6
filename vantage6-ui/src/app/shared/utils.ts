@@ -103,6 +103,10 @@ export function containsObject(obj: any, list: any[]) {
   return false;
 }
 
+export function arrayContains(array: any[], value: any) {
+  return array.includes(value);
+}
+
 export function isSubset(small_array: any[], large_array: any[]) {
   return small_array.every((val) => large_array.includes(val));
 }

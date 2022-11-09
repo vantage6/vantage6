@@ -7,7 +7,12 @@ import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Resource } from 'src/app/shared/types';
-import { unique } from 'src/app/shared/utils';
+import {
+  arrayContains,
+  filterArrayByProperty,
+  getIdsFromArray,
+  unique,
+} from 'src/app/shared/utils';
 import { RuleDataService } from './rule-data.service';
 
 @Injectable({
@@ -15,6 +20,7 @@ import { RuleDataService } from './rule-data.service';
 })
 export class RoleDataService extends BaseDataService {
   rules: Rule[] = [];
+  requested_org_lists: number[] = [];
 
   constructor(
     protected apiService: RoleApiService,
@@ -22,7 +28,6 @@ export class RoleDataService extends BaseDataService {
     private ruleDataService: RuleDataService
   ) {
     super(apiService, convertJsonService);
-    this.getDependentResources();
   }
 
   async getDependentResources() {
@@ -30,6 +35,34 @@ export class RoleDataService extends BaseDataService {
       this.rules = rules;
       // TODO when rules change, update roles as well
     });
+  }
+
+  updateObsPerOrg(resources: Resource[]) {
+    // This overwrites the super() method to ensure that default roles
+    // (with organization_id=null) are also included in each organization
+    if (!this.requested_org_lists) return;
+    for (let org_id of this.requested_org_lists) {
+      if (org_id in this.resources_per_org) {
+        this.resources_per_org[org_id].next(
+          this.getRolesForOrgId(resources as Role[], org_id)
+        );
+      } else {
+        this.resources_per_org[org_id] = new BehaviorSubject<Resource[]>(
+          this.getRolesForOrgId(resources as Role[], org_id)
+        );
+      }
+    }
+  }
+
+  private getRolesForOrgId(roles: Role[], org_id: number): Role[] {
+    let org_resources: Role[] = [];
+    for (let r of roles) {
+      if (r.organization_id === org_id || r.organization_id === null) {
+        org_resources.push(r);
+      }
+    }
+    org_resources = this.remove_non_user_roles(org_resources);
+    return org_resources;
   }
 
   async get(
@@ -67,7 +100,9 @@ export class RoleDataService extends BaseDataService {
     organization_id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Role[]>> {
-    await this.getDependentResources();
+    if (!arrayContains(this.requested_org_lists, organization_id)) {
+      this.requested_org_lists.push(organization_id);
+    }
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getRole,
@@ -75,14 +110,6 @@ export class RoleDataService extends BaseDataService {
       force_refresh,
       { include_root: true }
     )) as Observable<Role[]>;
-  }
-
-  updateObsPerOrg(resources: Resource[]) {
-    super.updateObsPerOrg(resources);
-
-    // TODO add roles with org_id null to all organizations
-    // default_roles = this.resources_per_org.get(null)
-    // roles = this.remove_non_user_roles(roles);
   }
 
   private remove_non_user_roles(roles: Role[]) {

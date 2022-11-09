@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import {
   Organization,
@@ -9,11 +9,12 @@ import { Node } from 'src/app/interfaces/node';
 import { CollabApiService } from '../api/collaboration-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
-import { deepcopy } from 'src/app/shared/utils';
+import { arrayContains, deepcopy } from 'src/app/shared/utils';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
 import { NodeDataService } from './node-data.service';
 import { OrgDataService } from './org-data.service';
+import { Resource } from 'src/app/shared/types';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,7 @@ import { OrgDataService } from './org-data.service';
 export class CollabDataService extends BaseDataService {
   nodes: Node[] = [];
   organizations: Organization[] = [];
+  requested_org_lists: number[] = [];
 
   constructor(
     protected collabApiService: CollabApiService,
@@ -30,7 +32,19 @@ export class CollabDataService extends BaseDataService {
     private orgDataService: OrgDataService
   ) {
     super(collabApiService, convertJsonService);
-    this.getDependentResources();
+    this.resource_list.subscribe((resources) => {
+      // When the list of all resources is updated, ensure that sublists of
+      // observables are also updated
+
+      // update the observables per org
+      this.updateObsPerOrg(resources);
+
+      // update observables that are gotten one by one
+      this.updateObsById(resources);
+
+      // update the observables per collab
+      this.updateObsPerCollab(resources);
+    });
   }
 
   async getDependentResources() {
@@ -42,6 +56,37 @@ export class CollabDataService extends BaseDataService {
       this.organizations = orgs;
       // TODO refresh lists
     });
+  }
+
+  updateObsPerOrg(resources: Resource[]) {
+    // collaborations should be updated in slightly different way from super
+    // function as they contain multiple organizations and also (as consequence)
+    // we could also have incomplete data for specific organizations
+    if (!this.requested_org_lists) return;
+    for (let org_id of this.requested_org_lists) {
+      if (org_id in this.resources_per_org) {
+        this.resources_per_org[org_id].next(
+          this.getCollabsForOrgId(resources as Collaboration[], org_id)
+        );
+      } else {
+        this.resources_per_org[org_id] = new BehaviorSubject<Resource[]>(
+          this.getCollabsForOrgId(resources as Collaboration[], org_id)
+        );
+      }
+    }
+  }
+
+  private getCollabsForOrgId(
+    resources: Collaboration[],
+    org_id: number
+  ): Resource[] {
+    let org_resources: Resource[] = [];
+    for (let r of resources) {
+      if (arrayContains(r.organization_ids, org_id)) {
+        org_resources.push(r);
+      }
+    }
+    return org_resources;
   }
 
   async get(
@@ -75,6 +120,9 @@ export class CollabDataService extends BaseDataService {
     organization_id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration[]>> {
+    if (!arrayContains(this.requested_org_lists, organization_id)) {
+      this.requested_org_lists.push(organization_id);
+    }
     // TODO when is following if statement necessary?
     if (
       !this.userPermission.can(
@@ -85,7 +133,6 @@ export class CollabDataService extends BaseDataService {
     ) {
       return of([]);
     }
-    await this.getDependentResources();
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getCollaboration,

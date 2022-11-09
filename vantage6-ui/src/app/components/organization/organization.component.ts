@@ -23,7 +23,6 @@ import {
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
