@@ -20,7 +20,6 @@ import { RuleDataService } from './rule-data.service';
 })
 export class RoleDataService extends BaseDataService {
   rules: Rule[] = [];
-  requested_org_lists: number[] = [];
 
   constructor(
     protected apiService: RoleApiService,
@@ -100,9 +99,6 @@ export class RoleDataService extends BaseDataService {
     organization_id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Role[]>> {
-    if (!arrayContains(this.requested_org_lists, organization_id)) {
-      this.requested_org_lists.push(organization_id);
-    }
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getRole,

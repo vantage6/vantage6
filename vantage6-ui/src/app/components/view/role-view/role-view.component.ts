@@ -42,8 +42,6 @@ export class RoleViewComponent
 
   async setUsers(): Promise<void> {
     this.users_with_this_role = await this.userDataService.list_with_params(
-      [],
-      [],
       {
         role_id: this.role.id,
       },

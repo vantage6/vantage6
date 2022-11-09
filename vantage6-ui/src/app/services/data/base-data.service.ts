@@ -8,6 +8,7 @@ import {
 } from 'src/app/shared/types';
 import {
   addOrReplace,
+  arrayContains,
   filterArrayByProperty,
   getById,
   getIdsFromArray,
@@ -26,6 +27,7 @@ export abstract class BaseDataService {
   resources_per_col: { [col_id: number]: BehaviorSubject<Resource[]> } = {};
   resources_by_id: { [id: number]: BehaviorSubject<Resource | null> } = {};
   has_queried_list: boolean = false;
+  requested_org_lists: number[] = [];
 
   constructor(
     protected apiService: BaseApiService,
@@ -49,11 +51,11 @@ export abstract class BaseDataService {
   async getDependentResources() {}
 
   updateObsPerOrg(resources: Resource[]) {
+    if (!this.requested_org_lists) return;
     if (resources.length && !('organization_id' in resources[0])) {
       return;
     }
-    let org_ids = unique(getIdsFromArray(resources, 'organization_id'));
-    for (let org_id of org_ids) {
+    for (let org_id of this.requested_org_lists) {
       if (org_id in this.resources_per_org) {
         this.resources_per_org[org_id].next(
           filterArrayByProperty(resources, 'organization_id', org_id)
@@ -79,6 +81,7 @@ export abstract class BaseDataService {
   }
 
   updateObsPerCollab(resources: Resource[]) {
+    // TODO update to include only stuff from requested collabs
     if (resources.length && !('collaboration_id' in resources[0])) {
       return;
     }
@@ -165,6 +168,9 @@ export abstract class BaseDataService {
     force_refresh: boolean = false,
     params: any = {}
   ): Promise<Observable<Resource[]>> {
+    if (!arrayContains(this.requested_org_lists, organization_id)) {
+      this.requested_org_lists.push(organization_id);
+    }
     await this.getDependentResources();
     // check if we need to get resources for the current organization
     if (force_refresh || !(organization_id in this.resources_per_org)) {

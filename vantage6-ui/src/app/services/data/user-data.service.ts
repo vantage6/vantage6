@@ -47,27 +47,21 @@ export class UserDataService extends BaseDataService {
     )) as Observable<User>;
   }
 
-  async list(
-    roles: Role[],
-    rules: Rule[],
-    force_refresh: boolean = false
-  ): Promise<Observable<User[]>> {
+  async list(force_refresh: boolean = false): Promise<Observable<User[]>> {
     return (await super.list_base(
       this.convertJsonService.getUser,
-      [roles, rules],
+      [this.roles, this.rules],
       force_refresh
     )) as Observable<User[]>;
   }
 
   async list_with_params(
-    roles: Role[] = [],
-    rules: Rule[] = [],
     request_params: any = {},
     save: boolean = true
   ): Promise<User[]> {
     return (await super.list_with_params_base(
       this.convertJsonService.getUser,
-      [roles, rules],
+      [this.roles, this.rules],
       request_params,
       save
     )) as User[];
@@ -75,14 +69,12 @@ export class UserDataService extends BaseDataService {
 
   async org_list(
     organization_id: number,
-    roles: Role[],
-    rules: Rule[],
     force_refresh: boolean = false
   ): Promise<Observable<User[]>> {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getUser,
-      [roles, rules],
+      [this.roles, this.rules],
       force_refresh
     )) as Observable<User[]>;
   }

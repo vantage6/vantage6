@@ -22,7 +22,6 @@ import { Resource } from 'src/app/shared/types';
 export class CollabDataService extends BaseDataService {
   nodes: Node[] = [];
   organizations: Organization[] = [];
-  requested_org_lists: number[] = [];
 
   constructor(
     protected collabApiService: CollabApiService,
@@ -120,9 +119,6 @@ export class CollabDataService extends BaseDataService {
     organization_id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration[]>> {
-    if (!arrayContains(this.requested_org_lists, organization_id)) {
-      this.requested_org_lists.push(organization_id);
-    }
     // TODO when is following if statement necessary?
     if (
       !this.userPermission.can(

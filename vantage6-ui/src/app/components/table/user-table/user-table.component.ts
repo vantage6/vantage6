@@ -79,22 +79,16 @@ export class UserTableComponent extends TableComponent implements OnInit {
   protected async setResources() {
     if (this.isShowingSingleOrg()) {
       (
-        await this.userDataService.org_list(
-          this.route_org_id as number,
-          this.roles,
-          this.rules
-        )
+        await this.userDataService.org_list(this.route_org_id as number)
       ).subscribe((users) => {
         this.resources = users;
         this.renewTable();
       });
     } else {
-      (await this.userDataService.list(this.roles, this.rules)).subscribe(
-        (users: User[]) => {
-          this.resources = users;
-          this.renewTable();
-        }
-      );
+      (await this.userDataService.list()).subscribe((users: User[]) => {
+        this.resources = users;
+        this.renewTable();
+      });
     }
   }
 }

@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_NODE, NodeWithOrg } from 'src/app/interfaces/node';
-import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
@@ -49,7 +48,7 @@ export class NodeSingleViewComponent
     // TODO add collab and org after setting this
     (await this.nodeDataService.get(this.route_id as number)).subscribe(
       (node) => {
-        this.node = node;
+        this.node = deepcopy(node);
         this.setOrganization();
         this.setCollaboration();
       }
