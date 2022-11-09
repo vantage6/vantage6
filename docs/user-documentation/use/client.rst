@@ -20,9 +20,6 @@ use cases, we recommend to use the UI and/or the Python client.
     The R client is only suitable for creating tasks and retrieve their results.
     With the Python client it is possible to use the entire API.
 
-Permissions
------------
-
 Note that whenever you interact with the server, you are limited by your
 permissions. For instance, if you try to create another user but do not
 have permission to do so, you will receive an error message. All
@@ -130,7 +127,7 @@ and ``get()`` method attached.
 .. _authentication:
 
 Authentication
---------------
+++++++++++++++
 
 This section and the following sections introduce some minimal examples for
 administrative tasks that you can perform with our Python
@@ -187,7 +184,7 @@ object, and authenticating
 .. _creating-organization:
 
 Creating an organization
-------------------------
+++++++++++++++++++++++++
 
 After you have authenticated, you can start generating resources. The following
 also assumes that you have a login on the Vantage6 server that has the
@@ -244,7 +241,7 @@ now use encryption by running
 after they authenticate.
 
 Creating a collaboration
-------------------------
+++++++++++++++++++++++++
 
 Here, we assume that you have a Python session with an authenticated
 Client object, as created in :ref:`authentication`. We
@@ -285,7 +282,7 @@ organization has access to the private key so that they can run the
 .. _register-node:
 
 Registering a node
-------------------
+++++++++++++++++++
 
 Here, we again assume that you have a Python session with an authenticated
 Client object, as created in :ref:`authentication`, and that you have a login
@@ -321,10 +318,9 @@ node <../../running-the-node/configuration.md>`__.
 .. todo fix ref above
 
 Creating a task
----------------
++++++++++++++++
 
-Preliminaries
-+++++++++++++
+**Preliminaries**
 
 Here we assume that
 
@@ -357,8 +353,7 @@ node <../../running-the-node/configuration.md>`__.
 
 .. todo fix ref above
 
-Determining which collaboration / organizations to create a task for
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+**Determining which collaboration / organizations to create a task for**
 
 First, you'll want to determine which collaboration to submit this task
 to, and which organizations from this collaboration you want to be
@@ -391,8 +386,7 @@ i.e. this collaboration consists of the organizations ``example_org1``
 (with id ``2``), ``example_org2`` (with id ``3``) and ``example_org3``
 (with id ``4``).
 
-Creating a task that runs the master algorithm
-++++++++++++++++++++++++++++++++++++++++++++++
+**Creating a task that runs the master algorithm**
 
 Now, we have two options: create a task that will run the master
 algorithm (which runs on one node and may spawns subtasks on other nodes),
@@ -432,8 +426,7 @@ called ``my_other_database`` instead of the ``default`` database, we
 could have specified an additional ``database = 'my_other_database'``
 argument. Check ``help(client.task.create)`` for more information.
 
-Creating a task that runs the RPC algorithm
-+++++++++++++++++++++++++++++++++++++++++++
+**Creating a task that runs the RPC algorithm**
 
 You might be interested to know output of the RPC algorithm (in this
 example: the averages for the 'age' column for each node). In that case,
@@ -454,8 +447,7 @@ master algorithm will normally do:
                                      input=input_,
                                      data_format='json')
 
-Inspecting the results
-++++++++++++++++++++++
+**Inspecting the results**
 
 Of course, it will take a little while to run your algorithm. You can
 use the following code snippet to run a loop that checks the server
@@ -504,7 +496,7 @@ using
    {'sum': 173, 'count': 4}
 
 R Client
-========
+--------
 
 It is assumed you installed the :ref:`r client install`. The R client can
 create tasks and retrieve their results. If you want to do more
@@ -544,7 +536,7 @@ specific algorithm you are using.
     Python client.
 
 Example
--------
++++++++
 
 This example shows how to run the vantage6 implementation of a federated Cox
 Proportional Hazard regression model. First you need to install the client side
