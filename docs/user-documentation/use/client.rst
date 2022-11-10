@@ -4,12 +4,10 @@ Client
 We provide four ways in which you can interact with the server to manage
 your vantage6 resources:
 
--  `User Interface <user-interface.md>`__ (UI)
--  `Python client <python-client/>`__
--  `R client <r-client.md>`__
--  `Server API <server-api.md>`__
-
-.. todo fix links above
+-  :ref:`use-client-ui`
+-  :ref:`use-python-client`
+-  :ref:`use-R-client`
+-  :ref:`use-server-api`
 
 The UI and the clients make it much easier to interact with the server
 than directly interacting with the server API through HTTP requests,
@@ -31,6 +29,8 @@ inappropriate.
     There are predefined roles such as 'Researcher' and 'Organization Admin'
     that are automatically created by the server. These can be assigned to any
     new user by the administrator that is creating the user.
+
+.. _use-client-ui:
 
 User Interface
 --------------
@@ -312,10 +312,7 @@ with id 1 and collaboration with id 1.
    print(f"Registered a node for collaboration with id {collaboration_id}, organization with id {organization_id}. The API key that was generated for this node was {api_key}")
 
 Remember to save the ``api_key`` that is returned here, since you will
-need it when `configuring the
-node <../../running-the-node/configuration.md>`__.
-
-.. todo fix ref above
+need it when you :ref:`node-configure` the node.
 
 Creating a task
 +++++++++++++++
@@ -347,11 +344,8 @@ comma-separated database, i.e. their config contains something like
 
 so that the third requirement is also met. As an end-user running the
 algorithm, you'll need to align with the node owner about which database
-name is used for the database you are interested in. For more info on
-configuring the nodes, see `configuring the
-node <../../running-the-node/configuration.md>`__.
-
-.. todo fix ref above
+name is used for the database you are interested in. For more details, see
+how to :ref:`node-configure` your node.
 
 **Determining which collaboration / organizations to create a task for**
 
@@ -495,6 +489,8 @@ using
    >>> result_info['data'][1]['result']
    {'sum': 173, 'count': 4}
 
+.. _use-R-client:
+
 R Client
 --------
 
@@ -570,6 +566,7 @@ This is the code to run the coxph:
    # vtg.coxph contains the function `dcoxph`.
    result <- vtg.coxph::dcoxph(client, expl_vars, time_col, censor_col)
 
+.. _use-server-api:
 
 Server API
 ----------

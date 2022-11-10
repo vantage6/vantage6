@@ -36,8 +36,8 @@ End to end encryption
 Encryption in vantage6 is handled at organization level. Whether
 encryption is used or not, is set at collaboration level. All the nodes
 in the collaboration need to agree on this setting. You can enable or
-disable encryption in the node configuration file, see `here <running-the-node/configuration.md#configuration-file-structure>`_.
-.. todo fix link -> goes to use->node->configure
+disable encryption in the node configuration file, see the example in
+:ref:`node-configure-structure`.
 
 .. figure:: /images/encryption.png
 

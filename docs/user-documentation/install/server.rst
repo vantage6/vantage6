@@ -1,3 +1,5 @@
+.. _install-server:
+
 Server
 ======
 
@@ -11,10 +13,7 @@ latest version:
 
 This command will install the vantage6 command line interface (CLI),
 from which you can create new servers (see Use
-`running-the-server <../../usage/running-the-server/>`__).
-
-.. todo
-    Fix the link above!
+:ref:`use-server`).
 
 **Optional components**
 

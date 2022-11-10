@@ -107,6 +107,8 @@ follows:
     flag. However, note that using a different directory requires you to
     specify the ``--config`` flag every time!
 
+.. _node-configure-structure:
+
 Configuration file structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -257,10 +259,7 @@ user-level configuration.
 Local test setup
 ~~~~~~~~~~~~~~~~
 
-.. todo update the link below
-
-Check this
-`here <../running-the-server/server-configuration.md#local-test-setup>`__ if
+Check the section on :ref:`use-server-local` of the server if
 you want to run both the node and server on the same machine.
 
 .. _node-security:
@@ -306,9 +305,8 @@ There are two important steps to be taken to accomplish this:
 Logging
 -------
 
-Logging is enabled by default. To configure the logger look at
-`#configuration-file-structure <../running-the-server/server-configuration.md#configuration-file-structure>`__
-in the ``logging`` section.
+Logging is enabled by default. To configure the logger, look at the logging section
+in the example configuration file in :ref:`node-configure-structure`.
 
 .. todo update link above
 
