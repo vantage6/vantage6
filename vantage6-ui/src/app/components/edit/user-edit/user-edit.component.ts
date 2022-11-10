@@ -7,14 +7,12 @@ import { OpsType } from 'src/app/shared/enum';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { Organization } from 'src/app/interfaces/organization';
 import { UserApiService } from 'src/app/services/api/user-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import {
   deepcopy,
@@ -36,10 +34,10 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   loggedin_user: User = getEmptyUser();
   user: User = getEmptyUser();
   user_orig_name: string = '';
-  rules_all: Rule[] = [];
   roles_all: Role[] = [];
   roles_assignable_all: Role[] = [];
   roles_assignable: Role[] = [];
+  organizations: Organization[] = [];
 
   added_rules: Rule[] = [];
   can_assign_roles_rules: boolean = false;
@@ -53,7 +51,6 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     protected utilsService: UtilsService,
     protected modalService: ModalService,
     private roleDataService: RoleDataService,
-    private ruleDataService: RuleDataService,
     private orgDataService: OrgDataService
   ) {
     super(
@@ -78,7 +75,6 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
 
   async async_init() {
     // collect roles and rules (which is required to collect users)
-    await this.setRules();
     await this.setRoles();
 
     this.readRoute();
@@ -86,7 +82,6 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
 
   async setupCreate() {
     // collect roles and rules (which is required to collect users)
-    await this.setRules();
     await this.setAssignableRoles();
     if (!this.organization_id) {
       (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
@@ -97,12 +92,6 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
         this.user.organization = org;
       });
     }
-  }
-
-  async setRules(): Promise<void> {
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
-      this.rules_all = rules;
-    });
   }
 
   async setRoles(): Promise<void> {
@@ -142,7 +131,11 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     ) {
       // first get all roles assignable for the organization this user is in
       this.roles_assignable_all = deepcopy(
-        await this.roleDataService.org_list(this.organization_id as number)
+        this.roles_all.filter(
+          (val) =>
+            val.organization_id === this.organization_id ||
+            val.organization_id === null
+        )
       );
       // if we are creating a new user, and there are no roles to assign, recheck
       // whether there are any roles to assign (they may be lost by page refresh)
@@ -265,10 +258,11 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   valuesOk(): boolean {
     return (
       this.user.email != '' &&
-      this.user.password !== undefined &&
-      this.user.password !== '' &&
-      this.user.password === this.user.password_repeated &&
-      this.user.username != ''
+      (this.mode === OpsType.EDIT ||
+        (this.user.password !== undefined &&
+          this.user.password !== '' &&
+          this.user.password === this.user.password_repeated &&
+          this.user.username != ''))
     );
   }
 }

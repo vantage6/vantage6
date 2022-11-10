@@ -2,14 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
-  EMPTY_ORGANIZATION,
   getEmptyOrganization,
   Organization,
 } from 'src/app/interfaces/organization';
 
 import { OrganizationApiService } from 'src/app/services/api/organization-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { OpsType, ResType } from 'src/app/shared/enum';
+import { OpsType } from 'src/app/shared/enum';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { BaseEditComponent } from 'src/app/components/edit/base-edit/base-edit.component';

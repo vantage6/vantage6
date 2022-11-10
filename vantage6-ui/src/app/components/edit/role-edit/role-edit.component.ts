@@ -3,12 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { getEmptyRole, Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { OpsType, ResType } from 'src/app/shared/enum';
+import { OpsType } from 'src/app/shared/enum';
 
 import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
@@ -29,6 +28,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
   mode: OpsType = OpsType.EDIT;
   role: Role = getEmptyRole();
   role_orig_name: string = '';
+  organizations: Organization[] = [];
 
   constructor(
     protected router: Router,
