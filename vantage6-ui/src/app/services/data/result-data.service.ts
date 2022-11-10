@@ -37,4 +37,11 @@ export class ResultDataService extends BaseDataService {
     }
     return results;
   }
+
+  save(result: Result) {
+    // don't save organization along with result as this can lead to loop
+    // of saves when then the organization is updated, then result again, etc
+    if (result.organization) result.organization = undefined;
+    super.save(result);
+  }
 }

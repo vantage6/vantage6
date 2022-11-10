@@ -1,16 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 
-import {
-  Resource,
-  ResourceInCollab,
-  ResourceInOrg,
-} from 'src/app/shared/types';
+import { Resource } from 'src/app/shared/types';
 import {
   addOrReplace,
   arrayContains,
   filterArrayByProperty,
-  getById,
   getIdsFromArray,
   removeMatchedIdFromArray,
   unique,
@@ -48,7 +43,10 @@ export abstract class BaseDataService {
     });
   }
 
-  async getDependentResources() {}
+  async getDependentResources(): Promise<Resource[][]> {
+    // to be implemented optionally by children
+    return [];
+  }
 
   updateObsPerOrg(resources: Resource[]) {
     if (!this.requested_org_lists) return;
@@ -102,16 +100,15 @@ export abstract class BaseDataService {
   protected async get_base(
     id: number,
     convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Resource | null>> {
-    await this.getDependentResources();
+    let additional_resources = await this.getDependentResources();
     let resource: Resource | null;
     if (force_refresh || !(id in this.resources_by_id)) {
       resource = await this.apiService.getResource(
         id,
         convertJsonFunc,
-        additionalConvertArgs
+        additional_resources
       );
       if (resource !== null) {
         this.save(resource);
@@ -125,14 +122,13 @@ export abstract class BaseDataService {
 
   protected async list_base(
     convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Resource[]>> {
-    await this.getDependentResources();
     if (force_refresh || !this.has_queried_list) {
+      let additional_resources = await this.getDependentResources();
       const resources = await this.apiService.getResources(
         convertJsonFunc,
-        additionalConvertArgs
+        additional_resources
       );
       this.has_queried_list = true;
       this.saveMultiple(resources);
@@ -144,17 +140,16 @@ export abstract class BaseDataService {
 
   async list_with_params_base(
     convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     request_params: any,
     save: boolean = true
   ): Promise<Resource[]> {
     // TODO we may want to transform this also to a function that yields observables
-    await this.getDependentResources();
+    let additional_resources = await this.getDependentResources();
     // TODO find a way to detect if this query was sent before, now it is
     // always repeated
     const resources = await this.apiService.getResources(
       convertJsonFunc,
-      additionalConvertArgs,
+      additional_resources,
       request_params
     );
     if (save) this.saveMultiple(resources);
@@ -164,14 +159,12 @@ export abstract class BaseDataService {
   async org_list_base(
     organization_id: number,
     convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false,
     params: any = {}
   ): Promise<Observable<Resource[]>> {
     if (!arrayContains(this.requested_org_lists, organization_id)) {
       this.requested_org_lists.push(organization_id);
     }
-    await this.getDependentResources();
     // check if we need to get resources for the current organization
     if (force_refresh || !(organization_id in this.resources_per_org)) {
       if (!(organization_id in this.resources_per_org)) {
@@ -180,10 +173,11 @@ export abstract class BaseDataService {
           Resource[]
         >([]);
       }
+      let additional_resources = await this.getDependentResources();
       params['organization_id'] = organization_id;
       let org_resources = await this.apiService.getResources(
         convertJsonFunc,
-        additionalConvertArgs,
+        additional_resources,
         params
       );
       // save the new resources. This will also update the observables
@@ -196,10 +190,8 @@ export abstract class BaseDataService {
   async collab_list_base(
     collaboration_id: number,
     convertJsonFunc: Function,
-    additionalConvertArgs: Resource[][] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Resource[]>> {
-    await this.getDependentResources();
     if (force_refresh || !(collaboration_id in this.resources_per_col)) {
       if (!(collaboration_id in this.resources_per_col)) {
         // create empty observable as organization had not yet been queried
@@ -207,9 +199,10 @@ export abstract class BaseDataService {
           Resource[]
         >([]);
       }
+      let additional_resources = await this.getDependentResources();
       let resources = await this.apiService.getResources(
         convertJsonFunc,
-        additionalConvertArgs,
+        additional_resources,
         { collaboration_id: collaboration_id }
       );
       // save the new resources. This will also update the observables

@@ -1,13 +1,11 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
-import { Node } from 'src/app/interfaces/node';
+import { Node, NodeWithOrg } from 'src/app/interfaces/node';
 import { SocketioService } from '../common/socketio.service';
-import { Resource, ResourceInOrg } from 'src/app/shared/types';
-import { filterArrayByProperty } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -31,7 +29,6 @@ export class NodeDataService extends BaseDataService {
     return (await super.get_base(
       id,
       this.convertJsonService.getNode,
-      [],
       force_refresh
     )) as Observable<Node>;
   }
@@ -39,7 +36,6 @@ export class NodeDataService extends BaseDataService {
   async list(force_refresh: boolean = false): Promise<Observable<Node[]>> {
     return (await super.list_base(
       this.convertJsonService.getNode,
-      [],
       force_refresh
     )) as Observable<Node[]>;
   }
@@ -51,7 +47,6 @@ export class NodeDataService extends BaseDataService {
     return (await this.org_list_base(
       organization_id,
       this.convertJsonService.getNode,
-      [],
       force_refresh
     )) as Observable<Node[]>;
   }
@@ -63,7 +58,6 @@ export class NodeDataService extends BaseDataService {
     return (await super.collab_list_base(
       collaboration_id,
       this.convertJsonService.getNode,
-      [],
       force_refresh
     )) as Observable<Node[]>;
   }
@@ -76,5 +70,13 @@ export class NodeDataService extends BaseDataService {
       }
     }
     this.resource_list.next(resources);
+  }
+
+  save(node: NodeWithOrg) {
+    // remove organization and collaboration properties - these should be set
+    // within components where needed
+    if (node.organization) node.organization = undefined;
+    if (node.collaboration) node.collaboration = undefined;
+    super.save(node);
   }
 }

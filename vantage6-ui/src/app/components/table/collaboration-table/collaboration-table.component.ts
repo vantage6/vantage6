@@ -57,11 +57,11 @@ export class CollaborationTableComponent
         this.resources = collabs;
       });
     } else {
-      (
-        await this.collabDataService.list(this.organizations, this.nodes)
-      ).subscribe((collabs: Collaboration[]) => {
-        this.resources = collabs;
-      });
+      (await this.collabDataService.list(this.nodes)).subscribe(
+        (collabs: Collaboration[]) => {
+          this.resources = collabs;
+        }
+      );
     }
   }
 

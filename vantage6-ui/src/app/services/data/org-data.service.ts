@@ -23,7 +23,6 @@ export class OrgDataService extends BaseDataService {
     return (await super.get_base(
       id,
       this.convertJsonService.getOrganization,
-      [],
       force_refresh
     )) as Observable<Organization>;
   }
@@ -33,7 +32,6 @@ export class OrgDataService extends BaseDataService {
   ): Promise<Observable<Organization[]>> {
     return (await super.list_base(
       this.convertJsonService.getOrganization,
-      [],
       force_refresh
     )) as Observable<Organization[]>;
   }

@@ -23,7 +23,6 @@ export class RuleDataService extends BaseDataService {
   async list(force_refresh: boolean = false): Promise<Observable<Rule[]>> {
     return (await super.list_base(
       this.convertJsonService.getRule,
-      [],
       force_refresh
     )) as Observable<Rule[]>;
   }

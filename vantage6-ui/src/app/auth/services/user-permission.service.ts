@@ -10,7 +10,6 @@ import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
-import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { SocketioService } from 'src/app/services/common/socketio.service';
 
 const PERMISSION_KEY = 'permissions-user';
@@ -24,13 +23,11 @@ export class UserPermissionService {
   userRules: Rule[] = [];
   userExtraRules: Rule[] = [];
   all_rules: Rule[] = [];
-  roles: Role[] = [];
   ready = new BehaviorSubject<boolean>(false);
 
   constructor(
     private tokenStorage: TokenStorageService,
     private ruleDataService: RuleDataService,
-    private roleDataService: RoleDataService,
     private userDataService: UserDataService,
     private socketService: SocketioService
   ) {
@@ -43,9 +40,6 @@ export class UserPermissionService {
     // request rules and roles
     (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
       this.all_rules = rules;
-    });
-    (await this.roleDataService.list()).subscribe((roles: Role[]) => {
-      this.roles = roles;
     });
 
     // get user information
@@ -171,12 +165,12 @@ export class UserPermissionService {
       this.user.is_logged_in = true;
     });
 
-    await this._setPermissions(this.user, this.all_rules);
+    await this._setPermissions(this.user);
 
     this.userBhs.next(this.user);
   }
 
-  private async _setPermissions(user: User, all_rules: Rule[]) {
+  private async _setPermissions(user: User) {
     // remove any existing rules that may be present
     this.userRules = [];
 
@@ -242,7 +236,6 @@ export class UserPermissionService {
     this.userBhs.next(this.user);
     this.userRules = [];
     this.userExtraRules = [];
-    this.roles = [];
     this.ready.next(false);
   }
 }

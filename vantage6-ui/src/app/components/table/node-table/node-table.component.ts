@@ -52,11 +52,9 @@ export class NodeTableComponent
       this.organizations = orgs;
     });
 
-    (await this.collabDataService.list(this.organizations)).subscribe(
-      (cols) => {
-        this.collaborations = cols;
-      }
-    );
+    (await this.collabDataService.list()).subscribe((cols) => {
+      this.collaborations = cols;
+    });
 
     this.readRoute();
   }

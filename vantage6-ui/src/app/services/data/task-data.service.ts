@@ -23,7 +23,6 @@ export class TaskDataService extends BaseDataService {
     return (await super.get_base(
       id,
       this.convertJsonService.getTask,
-      [],
       force_refresh
     )) as Observable<Task>;
   }
@@ -31,7 +30,6 @@ export class TaskDataService extends BaseDataService {
   async list(force_refresh: boolean = false): Promise<Observable<Task[]>> {
     return (await super.list_base(
       this.convertJsonService.getTask,
-      [],
       force_refresh
     )) as Observable<Task[]>;
   }
@@ -43,7 +41,6 @@ export class TaskDataService extends BaseDataService {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getTask,
-      [],
       force_refresh
     )) as Observable<Task[]>;
   }
@@ -55,8 +52,15 @@ export class TaskDataService extends BaseDataService {
     return (await super.collab_list_base(
       collaboration_id,
       this.convertJsonService.getTask,
-      [],
       force_refresh
     )) as Observable<Task[]>;
+  }
+
+  save(task: Task) {
+    // remove organization and collaboration properties - these should be set
+    // within components where needed to prevent endless loop of updates
+    if (task.initiator) task.initiator = undefined;
+    if (task.collaboration) task.collaboration = undefined;
+    super.save(task);
   }
 }

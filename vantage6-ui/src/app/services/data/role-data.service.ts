@@ -29,11 +29,12 @@ export class RoleDataService extends BaseDataService {
     super(apiService, convertJsonService);
   }
 
-  async getDependentResources() {
+  async getDependentResources(): Promise<Resource[][]> {
     (await this.ruleDataService.list()).subscribe((rules) => {
       this.rules = rules;
       // TODO when rules change, update roles as well
     });
+    return [this.rules];
   }
 
   updateObsPerOrg(resources: Resource[]) {
@@ -68,29 +69,23 @@ export class RoleDataService extends BaseDataService {
     id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Role>> {
-    await this.getDependentResources();
     return (await super.get_base(
       id,
       this.convertJsonService.getRole,
-      [this.rules],
       force_refresh
     )) as Observable<Role>;
   }
 
   async list(force_refresh: boolean = false): Promise<Observable<Role[]>> {
-    await this.getDependentResources();
     return (await super.list_base(
       this.convertJsonService.getRole,
-      [this.rules],
       force_refresh
     )) as Observable<Role[]>;
   }
 
   async list_with_params(request_params: any = {}): Promise<Role[]> {
-    await this.getDependentResources();
     return (await super.list_with_params_base(
       this.convertJsonService.getRole,
-      [this.rules],
       request_params
     )) as Role[];
   }
@@ -102,7 +97,6 @@ export class RoleDataService extends BaseDataService {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getRole,
-      [this.rules],
       force_refresh,
       { include_root: true }
     )) as Observable<Role[]>;

@@ -55,6 +55,7 @@ export class CollabDataService extends BaseDataService {
       this.organizations = orgs;
       // TODO refresh lists
     });
+    return [this.organizations, this.nodes];
   }
 
   updateObsPerOrg(resources: Resource[]) {
@@ -92,25 +93,22 @@ export class CollabDataService extends BaseDataService {
     id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration>> {
-    await this.getDependentResources();
     return (await super.get_base(
       id,
       this.convertJsonService.getCollaboration,
-      [this.organizations, this.nodes],
       force_refresh
     )) as Observable<Collaboration>;
   }
 
   async list(
-    organizations: Organization[] = [],
     nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration[]>> {
     let collaborations = (await super.list_base(
       this.convertJsonService.getCollaboration,
-      [organizations],
       force_refresh
     )) as Observable<Collaboration[]>;
+    // TODO refresh nodes
     await this.refreshNodes(this.resource_list.value as Collaboration[], nodes);
     return collaborations;
   }
@@ -132,7 +130,6 @@ export class CollabDataService extends BaseDataService {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getCollaboration,
-      [this.organizations, this.nodes],
       force_refresh
     )) as Observable<Collaboration[]>;
   }
