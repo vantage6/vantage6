@@ -145,7 +145,8 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   server_url = "https://MY VANTAGE6 SERVER"
+   server_url = "https://MY VANTAGE6 SERVER" # e.g. https://petronas.vantage6.ai or
+                                             # http://localhost for a local dev server
    server_port = 443 # This is specified when you first created the server
    server_api = "" # This is specified when you first created the server
 
