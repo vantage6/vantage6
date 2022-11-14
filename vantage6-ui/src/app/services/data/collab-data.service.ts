@@ -49,11 +49,11 @@ export class CollabDataService extends BaseDataService {
   async getDependentResources() {
     (await this.nodeDataService.list()).subscribe((nodes) => {
       this.nodes = nodes;
-      // TODO refresh lists
+      this.updateNodes();
     });
     (await this.orgDataService.list()).subscribe((orgs) => {
       this.organizations = orgs;
-      // TODO refresh lists
+      this.updateOrganizations();
     });
     return [this.organizations, this.nodes];
   }
@@ -101,15 +101,12 @@ export class CollabDataService extends BaseDataService {
   }
 
   async list(
-    nodes: Node[] = [],
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration[]>> {
     let collaborations = (await super.list_base(
       this.convertJsonService.getCollaboration,
       force_refresh
     )) as Observable<Collaboration[]>;
-    // TODO refresh nodes
-    await this.refreshNodes(this.resource_list.value as Collaboration[], nodes);
     return collaborations;
   }
 
@@ -134,35 +131,18 @@ export class CollabDataService extends BaseDataService {
     )) as Observable<Collaboration[]>;
   }
 
-  // TODO what to do with this?
-  async addOrgsAndNodes(
-    collabs: Collaboration[],
-    organizations: OrganizationInCollaboration[],
-    nodes: Node[]
-  ): Promise<Collaboration[]> {
-    let updated_collabs = [...collabs];
-
-    this.deleteOrgsFromCollaborations(collabs);
-    this.addOrgsToCollaborations(collabs, organizations);
-
+  updateNodes(): void {
+    let collabs = deepcopy(this.resource_list.value);
     this.deleteNodesFromCollaborations(collabs);
-    this.addNodesToCollaborations(collabs, nodes);
-
-    if (JSON.stringify(updated_collabs) !== JSON.stringify(collabs)) {
-      this.saveMultiple(collabs);
-    }
-    return collabs;
+    this.addNodesToCollaborations(collabs, this.nodes);
+    this.resource_list.next(collabs);
   }
 
-  async refreshNodes(collabs: Collaboration[], nodes: Node[]) {
-    // Delete nodes from collabs, then add them back (this updates
-    // nodes that were just deleted)
-    if (nodes.length > 0) {
-      this.deleteNodesFromCollaborations(collabs);
-      this.addNodesToCollaborations(collabs, nodes);
-    }
-    // save the updated collaborations
-    this.saveMultiple(collabs);
+  updateOrganizations(): void {
+    let collabs = deepcopy(this.resource_list.value);
+    this.deleteOrgsFromCollaborations(collabs);
+    this.addOrgsToCollaborations(collabs, this.organizations);
+    this.resource_list.next(collabs);
   }
 
   addOrgsToCollaborations(

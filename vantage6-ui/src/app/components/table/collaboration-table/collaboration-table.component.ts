@@ -49,7 +49,6 @@ export class CollaborationTableComponent
   }
 
   async setResources(): Promise<void> {
-    await this.setNodes();
     if (this.isShowingSingleOrg()) {
       (
         await this.collabDataService.org_list(this.route_org_id as number)
@@ -57,37 +56,12 @@ export class CollaborationTableComponent
         this.resources = collabs;
       });
     } else {
-      (await this.collabDataService.list(this.nodes)).subscribe(
+      (await this.collabDataService.list()).subscribe(
         (collabs: Collaboration[]) => {
           this.resources = collabs;
         }
       );
     }
-  }
-
-  async addNodes() {
-    // set the nodes
-    await this.setNodes();
-
-    // organizations and nodes to collaborations
-    this.resources = await this.collabDataService.addOrgsAndNodes(
-      this.resources as Collaboration[],
-      this.organizations,
-      this.nodes
-    );
-  }
-
-  async setNodes(): Promise<void> {
-    (await this.nodeDataService.list()).subscribe((nodes: any) => {
-      this.nodes = nodes;
-    });
-    // TODO now we gather all nodes
-    // this.nodes = [];
-    // for (let collab of this.resources) {
-    //   const nodes = await this.nodeDataService.collab_list(collab.id);
-    //   this.nodes.push(...nodes);
-    // }
-    // this.nodes = removeDuplicateIds(this.nodes);
   }
 
   isEncryptedText(collab: Collaboration): string {

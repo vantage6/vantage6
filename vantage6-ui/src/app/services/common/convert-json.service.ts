@@ -115,8 +115,12 @@ export class ConvertJsonService {
         if (org) {
           org = deepcopy(org);
           for (let node of nodes) {
-            if (node.organization_id === org.id) {
+            if (
+              node.organization_id === org.id &&
+              node.collaboration_id === coll_json.id
+            ) {
               org.node = node;
+              break;
             }
           }
           orgs.push(org);

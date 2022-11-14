@@ -12,12 +12,13 @@ import {
 } from 'src/app/interfaces/organization';
 import { ResType } from 'src/app/shared/enum';
 import {
+  arrayContains,
   arrayContainsObjWithId,
-  deepcopy,
   filterArrayByProperty,
   getById,
   removeDuplicateIds,
   removeMatchedIdFromArray,
+  removeValueFromArray,
 } from 'src/app/shared/utils';
 
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
@@ -53,6 +54,7 @@ export class OrganizationComponent implements OnInit {
   organization_nodes: Node[] = [];
   collaborations: Collaboration[] = [];
   MAX_ITEMS_DISPLAY: number = 5;
+  expanded_collab_ids: number[] = [];
 
   constructor(
     private router: Router,
@@ -199,16 +201,6 @@ export class OrganizationComponent implements OnInit {
       });
     }
     this.nodes = removeDuplicateIds(this.nodes);
-
-    // add the nodes to the collaborations
-    // NB deepcopy serves to fire ngOnChanges in child component
-    this.collaborations = deepcopy(
-      await this.collabDataService.addOrgsAndNodes(
-        this.collaborations,
-        this.organizations,
-        this.nodes
-      )
-    );
   }
 
   async setCollaborations(): Promise<void> {
@@ -216,7 +208,6 @@ export class OrganizationComponent implements OnInit {
       await this.collabDataService.org_list(this.current_organization.id)
     ).subscribe((collabs) => {
       this.collaborations = collabs;
-      // TODO do we need to update anything here?
     });
   }
 
@@ -274,5 +265,19 @@ export class OrganizationComponent implements OnInit {
     let default_classes = 'mat-button btn-link inline ';
     if (node.is_online) return default_classes + 'btn-online';
     else return default_classes + 'btn-offline';
+  }
+
+  isExpanded(col: Collaboration): boolean {
+    return arrayContains(this.expanded_collab_ids, col.id);
+  }
+
+  openExpansionPanel(col: Collaboration): void {
+    this.expanded_collab_ids.push(col.id);
+  }
+  closeExpansionPanel(col: Collaboration): void {
+    this.expanded_collab_ids = removeValueFromArray(
+      this.expanded_collab_ids,
+      col.id
+    );
   }
 }

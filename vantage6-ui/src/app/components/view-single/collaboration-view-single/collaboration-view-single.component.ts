@@ -5,7 +5,7 @@ import {
   Collaboration,
   EMPTY_COLLABORATION,
 } from 'src/app/interfaces/collaboration';
-import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
+import { Node } from 'src/app/interfaces/node';
 import {
   Organization,
   OrganizationInCollaboration,
