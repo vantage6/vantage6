@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { EMPTY_ROLE, getEmptyRole, Role } from 'src/app/interfaces/role';
+import { EMPTY_ROLE, getEmptyRole, RoleWithOrg } from 'src/app/interfaces/role';
 import { User } from 'src/app/interfaces/user';
 import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
@@ -21,7 +21,7 @@ export class RoleViewComponent
   extends BaseViewComponent
   implements OnInit, OnChanges
 {
-  @Input() role: Role = getEmptyRole();
+  @Input() role: RoleWithOrg = getEmptyRole();
   users_with_this_role: User[] = [];
 
   constructor(

@@ -21,9 +21,6 @@ import { TableComponent } from '../base-table/table.component';
   ],
 })
 export class UserTableComponent extends TableComponent implements OnInit {
-  rules: Rule[] = [];
-  roles: Role[] = [];
-
   displayedColumns: string[] = [
     'id',
     'username',
@@ -59,15 +56,6 @@ export class UserTableComponent extends TableComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    // get rules and roles
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
-      this.rules = rules;
-    });
-
-    (await this.roleDataService.list()).subscribe((roles: Role[]) => {
-      this.roles = roles;
-    });
-
     // get organizations
     (await this.orgDataService.list()).subscribe((orgs) => {
       this.organizations = orgs;

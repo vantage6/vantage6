@@ -2,12 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
-import { Node } from 'src/app/interfaces/node';
 import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
-import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { TableComponent } from '../base-table/table.component';
 
 @Component({
@@ -23,28 +20,18 @@ export class CollaborationTableComponent
   extends TableComponent
   implements OnInit
 {
-  organizations: OrganizationInCollaboration[] = [];
-  nodes: Node[] = [];
-
   displayedColumns: string[] = ['id', 'name', 'organizations', 'encrypted'];
 
   constructor(
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private collabDataService: CollabDataService,
-    private orgDataService: OrgDataService,
-    private nodeDataService: NodeDataService,
     protected modalService: ModalService
   ) {
     super(activatedRoute, userPermission, modalService);
   }
 
   async init() {
-    // get organizations
-    (await this.orgDataService.list()).subscribe((orgs) => {
-      this.organizations = orgs;
-    });
-
     this.readRoute();
   }
 
