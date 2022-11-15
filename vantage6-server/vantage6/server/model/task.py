@@ -24,7 +24,7 @@ class Task(Base):
     run_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
     database = Column(String)
-    init_org_id = Column(Integer, ForeignKey("organization.id"))
+    initiator_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
 
     # relationships
