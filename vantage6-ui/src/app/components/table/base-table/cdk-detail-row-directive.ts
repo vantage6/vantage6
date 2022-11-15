@@ -16,7 +16,7 @@ export class CdkDetailRowDirective {
   private opened: boolean;
 
   @HostBinding('class.expanded')
-  get expended(): boolean {
+  get expanded(): boolean {
     return this.opened;
   }
 

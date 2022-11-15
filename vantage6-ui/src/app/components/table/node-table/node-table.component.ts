@@ -7,7 +7,7 @@ import { TableComponent } from '../base-table/table.component';
 import { Node, NodeWithOrg } from 'src/app/interfaces/node';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
-import { deepcopy, parseId } from 'src/app/shared/utils';
+import { deepcopy, getById, parseId } from 'src/app/shared/utils';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
 
@@ -111,38 +111,43 @@ export class NodeTableComponent
   async setup() {
     await this.setResources();
 
-    await this.addCollaborationsToResources();
+    await this.addHelperResources();
 
-    await this.addOrganizationsToResources();
-
-    this.dataSource.data = this.resources;
-
+    this.renewTable();
     this.modalService.closeLoadingModal();
   }
 
+  async addHelperResources(): Promise<void> {
+    await this.addCollaborationsToResources();
+
+    await this.addOrganizationsToResources();
+  }
+
+  async renewTable(): Promise<void> {
+    this.dataSource.data = this.resources;
+  }
+
   protected async setResources() {
-    // TODO when this.resources is always observable, remove other updates
-    // in this component (but update each time resources are renewed)
     if (this.displayMode === DisplayMode.ORG) {
       (
         await this.nodeDataService.org_list(this.route_org_id as number)
       ).subscribe((org_nodes: Node[]) => {
-        this.resources = org_nodes;
+        this.resources = deepcopy(org_nodes);
+        this.addHelperResources();
       });
     } else if (this.displayMode === DisplayMode.COL) {
       (
         await this.nodeDataService.collab_list(this.route_org_id as number)
       ).subscribe((nodes) => {
-        this.resources = nodes;
+        this.resources = deepcopy(nodes);
+        this.addHelperResources();
       });
     } else {
       (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
-        this.resources = nodes;
+        this.resources = deepcopy(nodes);
+        this.addHelperResources();
       });
     }
-    // make a copy to prevent that changes in these resources are directly
-    // reflected in the resources within dataServices
-    this.resources = deepcopy(this.resources);
   }
 
   protected async addCollaborationsToResources() {
@@ -202,5 +207,13 @@ export class NodeTableComponent
       entity += 'collaboration';
     }
     return `Select ${entity} to view:`;
+  }
+
+  getMatchingNode(old_node: Node) {
+    // the nodes in this.resources are observables and updated automatically,
+    // but the nodes in the table are not automatically updated. Here we pass a
+    // node that is displayed on the datatable to obtain the more recently
+    // updated node for display in the detailed nodeViewComponent
+    return getById(this.resources, old_node.id);
   }
 }
