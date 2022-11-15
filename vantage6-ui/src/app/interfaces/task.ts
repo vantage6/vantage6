@@ -17,7 +17,7 @@ export interface Task {
   parent_id: number | null;
   parent?: Task;
   database: string;
-  init_org_id: number;
+  initiator_id: number;
   init_org?: Organization;
   init_user_id: number;
   init_user?: User;
@@ -35,7 +35,7 @@ export const EMPTY_TASK: Task = {
   image: '',
   database: '',
   collaboration_id: -1,
-  init_org_id: -1,
+  initiator_id: -1,
   init_user_id: -1,
   run_id: -1,
   parent_id: -1,

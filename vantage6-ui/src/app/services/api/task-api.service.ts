@@ -25,7 +25,7 @@ export class TaskApiService extends BaseApiService {
       run_id: task.run_id,
       parent_id: task.parent_id,
       database: task.database,
-      init_org_id: task.init_org_id,
+      initiator_id: task.initiator_id,
       complete: task.complete,
     };
     return data;

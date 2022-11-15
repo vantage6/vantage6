@@ -231,7 +231,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   protected async addInitiatingOrgsToTasks() {
     for (let r of this.resources as Task[]) {
       for (let org of this.organizations) {
-        if (org.id === r.init_org_id) {
+        if (org.id === r.initiator_id) {
           r.init_org = org;
           break;
         }
@@ -312,7 +312,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     // otherwise check if allowed to delete all individual tasks
     for (let task of this.selection.selected as Task[]) {
       if (
-        !this.userPermission.can(OpsType.DELETE, ResType.TASK, task.init_org_id)
+        !this.userPermission.can(
+          OpsType.DELETE,
+          ResType.TASK,
+          task.initiator_id
+        )
       ) {
         return false;
       }
@@ -347,7 +351,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     } else if (initiator === TaskInitator.ORG) {
       let own_org_id = this.userPermission.user.organization_id;
       this.dataSource.data = this.resources.filter(function (elem: any) {
-        return elem.init_org_id === own_org_id;
+        return elem.initiator_id === own_org_id;
       });
     } else {
       // if show tasks initiated by user itself
@@ -362,5 +366,9 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     this.modalService.openLoadingModal();
     await this.setup(true);
     this.modalService.closeLoadingModal();
+  }
+
+  getInitiatingUser(task: Task) {
+    return task.init_user ? task.init_user.username : '<unknown>';
   }
 }

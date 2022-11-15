@@ -117,7 +117,7 @@
 
       <ng-container matColumnDef="init_user">
         <mat-header-cell *matHeaderCellDef mat-sort-header>Initiating user</mat-header-cell>
-        <mat-cell *matCellDef="let elem">{{elem.init_user.username}}</mat-cell>
+        <mat-cell *matCellDef="let elem">{{getInitiatingUser(elem)}}</mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="complete">

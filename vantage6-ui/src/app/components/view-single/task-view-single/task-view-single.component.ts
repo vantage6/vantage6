@@ -81,7 +81,7 @@ export class TaskViewSingleComponent
   }
 
   async setInitiatingOrganization() {
-    this.task.init_org = await this.orgDataService.get(this.task.init_org_id);
+    this.task.init_org = await this.orgDataService.get(this.task.initiator_id);
   }
 
   async setInitiatingUser() {
