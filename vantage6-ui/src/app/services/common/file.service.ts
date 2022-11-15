@@ -26,6 +26,7 @@ export class FileService {
         const content = fileReader.result?.toString();
         resolve(content);
       };
+      fileReader.onerror = reject;
       fileReader.readAsText(file);
     });
   }

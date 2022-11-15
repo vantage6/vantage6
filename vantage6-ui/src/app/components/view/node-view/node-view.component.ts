@@ -1,11 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { getEmptyNode, NodeWithOrg } from 'src/app/interfaces/node';
 import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { ExitMode, ResType } from 'src/app/shared/enum';
+import { ExitMode } from 'src/app/shared/enum';
 import { BaseViewComponent } from '../base-view/base-view.component';
 
 @Component({
@@ -36,7 +35,7 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
     let api_key = await this.nodeApiService.reset_api_key(this.node);
     if (api_key) {
       // TODO properly format the command and api key to make them stand out!
-      this.modalService.openMessageModal(ModalMessageComponent, [
+      this.modalService.openMessageModal([
         'Your new API key is:',
         api_key,
         `Please paste your new API key into your node configuration file. You
@@ -61,12 +60,12 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
   executeEdit(edited_value: string) {
     this.node.name = edited_value;
     this.nodeApiService.update(this.node).subscribe(
-      (data) => {},
+      (data) => {
+        // update node name in stored data
+        this.nodeDataService.save(this.node);
+      },
       (error) => {
-        this.modalService.openMessageModal(ModalMessageComponent, [
-          'Error:',
-          error.error.msg,
-        ]);
+        this.modalService.openMessageModal(error.error.msg);
       }
     );
   }

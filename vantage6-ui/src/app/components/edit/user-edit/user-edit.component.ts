@@ -209,9 +209,9 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
       this.mode === OpsType.CREATE &&
       this.user.password !== this.user.password_repeated
     ) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        'Passwords do not match! Cannot create this user.',
-      ]);
+      this.modalService.openErrorModal(
+        'Passwords do not match! Cannot create this user.'
+      );
       return;
     } else if (
       this.mode === OpsType.EDIT &&
@@ -255,5 +255,15 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     return this.mode === OpsType.EDIT
       ? `Edit user '${this.user_orig_name}'`
       : 'Create a new user';
+  }
+
+  valuesOk(): boolean {
+    return (
+      this.user.email != '' &&
+      this.user.password !== undefined &&
+      this.user.password !== '' &&
+      this.user.password === this.user.password_repeated &&
+      this.user.username != ''
+    );
   }
 }

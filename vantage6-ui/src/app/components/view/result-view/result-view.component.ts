@@ -34,8 +34,8 @@ export class ResultViewComponent extends BaseViewComponent implements OnInit {
       const filename = `logs_result_${this.result.id}.txt`;
       this.fileService.downloadTxtFile(this.result.log, filename);
     } else {
-      this.modalService.openMessageModal(ModalMessageComponent, [
-        'Sorry, there log is empty!',
+      this.modalService.openMessageModal([
+        'Sorry, the log is empty, nothing to download!',
       ]);
     }
   }

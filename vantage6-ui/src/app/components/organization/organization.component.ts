@@ -117,7 +117,7 @@ export class OrganizationComponent implements OnInit {
     // set the current organization
     let current_org_found = this._allowedToSeeOrg(this.route_org_id);
     if (!current_org_found) {
-      this.modalService.openMessageModal(ModalMessageComponent, [
+      this.modalService.openMessageModal([
         "Could not show data on organization with id '" +
           this.route_org_id +
           "'",
@@ -261,7 +261,7 @@ export class OrganizationComponent implements OnInit {
     if (this.current_organization.public_key)
       this.fileService.downloadTxtFile(
         this.current_organization.public_key,
-        `public_key_organization_${this.current_organization.name}.pub`
+        `public_key_organization_${this.current_organization.name}.txt`
       );
   }
 

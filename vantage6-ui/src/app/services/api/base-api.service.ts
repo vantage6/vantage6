@@ -70,11 +70,7 @@ export abstract class BaseApiService {
       );
       return this.resource_single.value;
     } catch (error: any) {
-      this.modalService.openMessageModal(
-        ModalMessageComponent,
-        ['Error: ' + error.error.msg],
-        true
-      );
+      this.modalService.openErrorModal(error.error.msg, true);
       return null;
     }
   }

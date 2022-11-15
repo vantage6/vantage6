@@ -32,9 +32,17 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/*/}
           VERSION=${TAG#version/*}
+          PARTS=(${VERSION//\./ })
           echo "::set-output name=version::${VERSION}"
+          PARTS2=( $(grep -Eo '[[:digit:]]+|[^[:digit:]]+' <<< ${PARTS[2]} ) )
+          echo "::set-output name=stage::${PARTS2[1]}"
+          MAJOR_NAME=''
+          if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
+          echo "::set-output name=major_name::${MAJOR_NAME}"
     outputs:
       version: ${{ steps.split.outputs.version }}
+      stage: ${{ steps.split.outputs.stage }}
+      major_name: ${{ steps.split.outputs.major_name }}
 
   # Build artifact for deployment
   build:
@@ -70,6 +78,48 @@ jobs:
         with:
           name: node-app
           path: release.zip
+
+  # Update the server and node images on harbor2 for this major version,
+  # including the 'live' tag that triggers a redeployment of the IKNL deployment
+  release-docker:
+    runs-on: ubuntu-latest
+    needs: [version, build]
+    env:
+      version: ${{ needs.version.outputs.version }}
+      stage: ${{ needs.version.outputs.stage }}
+      major_name: ${{ needs.version.outputs.major_name }}
+    steps:
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          submodules: "true"
+
+      - name: Build docker image
+        run: |
+          docker build -t harbor2.vantage6.ai/infrastructure/ui:${version} .
+
+      - name: Tag docker images
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        run: |
+          docker tag harbor2.vantage6.ai/infrastructure/ui:${version} harbor2.vantage6.ai/infrastructure/ui:${major_name}
+          docker tag harbor2.vantage6.ai/infrastructure/ui:${version} harbor2.vantage6.ai/infrastructure/ui:latest
+
+      - name: Push version docker image
+        run: |
+          docker push harbor2.vantage6.ai/infrastructure/ui:${version}
+
+      - name: Push docker images with important tags
+        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        run: |
+          docker push harbor2.vantage6.ai/infrastructure/ui:${major_name}
+          docker push harbor2.vantage6.ai/infrastructure/ui:latest
 
   # Deploy to Azure
   deploy:

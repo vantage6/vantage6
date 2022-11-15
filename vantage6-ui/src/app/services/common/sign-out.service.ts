@@ -28,8 +28,9 @@ export class SignOutService {
 
   signOut(): void {
     this.tokenStorage.signOut();
-    this.router.navigateByUrl('/login');
+    this.userPermission.clear();
     this.clearDataServices();
+    this.router.navigateByUrl('/login');
   }
 
   clearDataServices(): void {

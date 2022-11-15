@@ -11,13 +11,16 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Organization } from 'src/app/interfaces/organization';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { Resource, ResourceWithOrg } from 'src/app/shared/types';
-import { parseId, removeMatchedIdFromArray } from 'src/app/shared/utils';
+import {
+  arrayContainsObjWithId,
+  parseId,
+  removeMatchedIdFromArray,
+} from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-table',
@@ -79,10 +82,10 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   protected abstract init(): void;
-  protected abstract setResources(): void;
+  protected abstract setResources(force_refresh: boolean): void;
 
-  async setup() {
-    await this.setResources();
+  async setup(force_refresh: boolean = false) {
+    await this.setResources(force_refresh);
 
     await this.addOrganizationsToResources();
 
@@ -154,10 +157,64 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
     return numSelected === numRows;
   }
 
+  isAllOnPageSelected() {
+    let page_size = this.paginator.pageSize;
+    let start_idx = this.getPageStartIndex();
+    let end_idx = this.getPageEndIndex(start_idx, page_size);
+    return this.allSelectedInRange(start_idx, end_idx);
+  }
+
   /** Selects all rows if they are not all selected; otherwise clear selection. */
   masterToggle() {
-    this.isAllSelected()
-      ? this.selection.clear()
-      : this.dataSource.data.forEach((row) => this.selection.select(row));
+    this.isAllOnPageSelected()
+      ? this.clearPageSelection()
+      : this.selectRowsCurrentPage();
+  }
+
+  private clearPageSelection() {
+    let page_size = this.paginator.pageSize;
+    let start_idx = this.getPageStartIndex();
+    let end_idx = this.getPageEndIndex(start_idx, page_size);
+    // deselect the rows
+    for (let index = start_idx; index < end_idx; index++) {
+      this.selection.deselect(this.dataSource.data[index]);
+    }
+  }
+
+  private selectRowsCurrentPage() {
+    let page_size = this.paginator.pageSize;
+    let start_idx = this.getPageStartIndex();
+    let end_idx = this.getPageEndIndex(start_idx, page_size);
+
+    // select the rows
+    for (let index = start_idx; index < end_idx; index++) {
+      this.selection.select(this.dataSource.data[index]);
+    }
+  }
+
+  private getPageStartIndex(): number {
+    return this.paginator.pageIndex * this.paginator.pageSize;
+  }
+
+  private getPageEndIndex(start_idx: number, page_size: number) {
+    if (this.dataSource.data.length > start_idx + page_size) {
+      return (this.paginator.pageIndex + 1) * this.paginator.pageSize;
+    } else {
+      return this.dataSource.data.length;
+    }
+  }
+
+  private allSelectedInRange(start_idx: number, end_idx: number): boolean {
+    for (let index = start_idx; index < end_idx; index++) {
+      if (
+        !arrayContainsObjWithId(
+          this.dataSource.data[index].id,
+          this.selection.selected
+        )
+      ) {
+        return false;
+      }
+    }
+    return true;
   }
 }

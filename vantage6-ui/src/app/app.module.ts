@@ -64,6 +64,7 @@ import { ModalLoadingComponent } from './components/modal/modal-loading/modal-lo
 import { PasswordLostComponent } from './components/login/password-lost/password-lost.component';
 import { PasswordRecoverComponent } from './components/login/password-recover/password-recover.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
+import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
 
 @NgModule({
   declarations: [
@@ -102,6 +103,7 @@ import { LoginPageComponent } from './components/login/login-page/login-page.com
     PasswordLostComponent,
     PasswordRecoverComponent,
     LoginPageComponent,
+    ChangePasswordComponent,
   ],
   imports: [
     BrowserModule,

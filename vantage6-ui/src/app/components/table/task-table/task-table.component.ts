@@ -7,20 +7,18 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { deepcopy, parseId } from 'src/app/shared/utils';
 import { TableComponent } from '../base-table/table.component';
 import { DisplayMode } from '../node-table/node-table.component';
-import { EMPTY_TASK, Task } from 'src/app/interfaces/task';
+import { Task } from 'src/app/interfaces/task';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { User } from 'src/app/interfaces/user';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { Resource } from 'src/app/shared/types';
 
 export enum TaskStatus {
   ALL = 'All',
@@ -143,8 +141,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     });
   }
 
-  async setup() {
-    await this.setResources();
+  async setup(force_refresh: boolean = false) {
+    await this.setResources(force_refresh);
 
     await this.addCollaborationsToResources();
 
@@ -157,7 +155,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     this.modalService.closeLoadingModal();
   }
 
-  protected async setResources() {
+  protected async setResources(force_refresh: boolean = false) {
     if (this.displayMode === DisplayMode.ORG) {
       // if displaying tasks for a certain organization, display the tasks for
       // each collaboration that the organization is involved in
@@ -165,15 +163,16 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       for (let collab_id of (this.current_organization as Organization)
         .collaboration_ids) {
         this.resources.push(
-          ...(await this.taskDataService.collab_list(collab_id))
+          ...(await this.taskDataService.collab_list(collab_id, force_refresh))
         );
       }
     } else if (this.displayMode === DisplayMode.COL) {
       this.resources = await this.taskDataService.collab_list(
-        this.route_org_id as number
+        this.route_org_id as number,
+        force_refresh
       );
     } else {
-      this.resources = await this.taskDataService.list();
+      this.resources = await this.taskDataService.list(force_refresh);
     }
     // make a copy to prevent that changes in these resources are directly
     // reflected in the resources within dataServices
@@ -199,21 +198,21 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     if (
       this.userPermission.hasPermission(
         OpsType.VIEW,
-        ResType.ORGANIZATION,
-        ScopeType.GLOBAL
-      )
-    ) {
-      entity = 'organization';
-    }
-    if (
-      this.userPermission.hasPermission(
-        OpsType.VIEW,
         ResType.COLLABORATION,
         ScopeType.ANY
       )
     ) {
+      entity = 'collaboration';
+    }
+    if (
+      this.userPermission.hasPermission(
+        OpsType.VIEW,
+        ResType.ORGANIZATION,
+        ScopeType.GLOBAL
+      )
+    ) {
       if (entity) entity += '/';
-      entity += 'collaboration';
+      entity += 'organization';
     }
     return `Select ${entity} to view:`;
   }
@@ -272,19 +271,19 @@ export class TaskTableComponent extends TableComponent implements OnInit {
 
   async deleteSelectedTasks(): Promise<void> {
     for (let task of this.selection.selected) {
-      let data = this.taskApiService
+      this.taskApiService
         .delete(task)
         .toPromise()
+        .then((data) => {
+          this.taskDataService.remove(task);
+          // reinitialize table to reflect the deleted tasks
+          this.setup();
+          this.selection.clear();
+        })
         .catch((error) => {
-          this.modalService.openMessageModal(ModalMessageComponent, [
-            error.error.msg,
-          ]);
+          this.modalService.openErrorModal(error.error.msg);
         });
-      this.taskDataService.remove(task);
     }
-    // reinitialize table to reflect the deleted tasks
-    this.setup();
-    this.selection.clear();
   }
 
   askConfirmDelete(): void {
@@ -357,5 +356,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
         return elem.init_user_id === own_user_id;
       });
     }
+  }
+
+  async refreshTasks() {
+    this.modalService.openLoadingModal();
+    await this.setup(true);
+    this.modalService.closeLoadingModal();
   }
 }
