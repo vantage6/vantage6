@@ -58,11 +58,11 @@ class PermissionManager:
             description="view websocket events of your collaborations")
         add(scope=Scope.GLOBAL, operation=Operation.VIEW,
             description="view websocket events")
-        add(scope=Scope.ORGANIZATION, operation=Operation.SEND,
+        add(scope=Scope.ORGANIZATION, operation=Operation.CREATE,
             description="send websocket events for your organization")
-        add(scope=Scope.COLLABORATION, operation=Operation.SEND,
+        add(scope=Scope.COLLABORATION, operation=Operation.CREATE,
             description="send websocket events for your collaborations")
-        add(scope=Scope.GLOBAL, operation=Operation.SEND,
+        add(scope=Scope.GLOBAL, operation=Operation.CREATE,
             description="send websocket events to all collaborations")
 
     def assign_rule_to_node(self, name: str, scope: Scope,
