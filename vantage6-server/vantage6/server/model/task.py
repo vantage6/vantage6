@@ -12,7 +12,7 @@ class Task(Base):
     A task can assigned in the Result for multiple organizations. The input
     of the task is different for each organization (due to the encryption).
     Therefore the input for the task is encrypted for each organization
-    seperately. The task originates from an organization to which the results
+    separately. The task originates from an organization to which the results
     need to be encrypted, therefore the originating organization is also logged
     """
 
