@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
+import { Collaboration } from 'src/app/interfaces/collaboration';
 
 import { Resource } from 'src/app/shared/types';
 import {
@@ -102,10 +103,9 @@ export abstract class BaseDataService {
     convertJsonFunc: Function,
     force_refresh: boolean = false
   ): Promise<Observable<Resource | null>> {
-    let additional_resources = await this.getDependentResources();
-    let resource: Resource | null;
     if (force_refresh || !(id in this.resources_by_id)) {
-      resource = await this.apiService.getResource(
+      let additional_resources = await this.getDependentResources();
+      let resource = await this.apiService.getResource(
         id,
         convertJsonFunc,
         additional_resources

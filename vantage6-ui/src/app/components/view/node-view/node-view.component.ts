@@ -1,11 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { getEmptyNode, NodeWithOrg } from 'src/app/interfaces/node';
 import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { ExitMode, ResType } from 'src/app/shared/enum';
+import { ExitMode } from 'src/app/shared/enum';
 import { BaseViewComponent } from '../base-view/base-view.component';
 
 @Component({
@@ -63,7 +62,7 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
     this.nodeApiService.update(this.node).subscribe(
       (data) => {},
       (error) => {
-        this.modalService.openMessageModal(error.error.msg);
+        this.modalService.openMessageModal([error.error.msg]);
       }
     );
   }

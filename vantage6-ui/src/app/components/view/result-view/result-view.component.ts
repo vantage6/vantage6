@@ -5,7 +5,6 @@ import { FileService } from 'src/app/services/common/file.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResultDataService } from 'src/app/services/data/result-data.service';
 import { BaseViewComponent } from '../base-view/base-view.component';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-result-view',

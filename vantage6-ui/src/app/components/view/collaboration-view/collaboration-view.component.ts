@@ -25,7 +25,6 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
 import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../base-view/base-view.component';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 
 @Component({
@@ -159,7 +158,7 @@ configuration file for the node using 'vnode new'.`,
         this.createdNode.emit(org.node);
       },
       (error) => {
-        this.modalService.openMessageModal(error.error.msg);
+        this.modalService.openMessageModal([error.error.msg]);
       }
     );
   }

@@ -53,9 +53,9 @@ export class CollaborationViewSingleComponent
     // TODO organize this in a different way: first get the collaboration, then
     // get ONLY the organizations and nodes relevant for that collab, instead
     // of all of them first and then getting single collaboration
-    await this.setNodes(false);
+    await this.setNodes();
 
-    await this.setOrganizations(false);
+    await this.setOrganizations();
 
     await this.setCollaboration();
   }
@@ -68,17 +68,15 @@ export class CollaborationViewSingleComponent
     );
   }
 
-  async setOrganizations(update_collabs: boolean = true): Promise<void> {
+  async setOrganizations(): Promise<void> {
     (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
       this.organizations = orgs;
-      if (update_collabs) this.setCollaboration();
     });
   }
 
-  async setNodes(update_collabs: boolean = true): Promise<void> {
+  async setNodes(): Promise<void> {
     (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
       this.nodes = nodes;
-      if (update_collabs) this.setCollaboration();
     });
   }
 }
