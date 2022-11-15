@@ -83,11 +83,16 @@ class AppContext(metaclass=Singleton):
         self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
         self.log.info(" --> Blog: https://vantage6.ai")
-        self.log.info("-" * 45)
+        self.log.info("-" * 60)
+        self.log.info("Cite us!")
+        self.log.info("If you publish your findings obtained using vantage6, ")
+        self.log.info("please cite the proper sources as mentioned in:")
+        self.log.info("https://vantage6.ai/vantage6/references")
+        self.log.info("-" * 60)
         self.log.info(f"Started application {APPNAME} with environment "
                       f"{self.environment}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
-        self.log.info(f"Succesfully loaded configuration from "
+        self.log.info(f"Successfully loaded configuration from "
                       f"'{self.config_file}'")
         self.log.info("Logging to '%s'" % self.log_file)
         self.log.info(f"Common package version '{__version__}'")
