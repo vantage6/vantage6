@@ -65,6 +65,7 @@ algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/algorithm-base:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/algorithm-base.Dockerfile \
 		--push .
