@@ -50,14 +50,11 @@ export class CollaborationViewSingleComponent
   }
 
   async setResources() {
-    // TODO organize this in a different way: first get the collaboration, then
-    // get ONLY the organizations and nodes relevant for that collab, instead
-    // of all of them first and then getting single collaboration
-    await this.setNodes();
+    this.setNodes();
 
-    await this.setOrganizations();
+    this.setOrganizations();
 
-    await this.setCollaboration();
+    this.setCollaboration();
   }
 
   async setCollaboration(): Promise<void> {
@@ -69,14 +66,17 @@ export class CollaborationViewSingleComponent
   }
 
   async setOrganizations(): Promise<void> {
+    // TODO use a - to-be-implemented - collab_list() function here
     (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
       this.organizations = orgs;
     });
   }
 
   async setNodes(): Promise<void> {
-    (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
-      this.nodes = nodes;
-    });
+    (await this.nodeDataService.collab_list(this.route_id as number)).subscribe(
+      (nodes: Node[]) => {
+        this.nodes = nodes;
+      }
+    );
   }
 }

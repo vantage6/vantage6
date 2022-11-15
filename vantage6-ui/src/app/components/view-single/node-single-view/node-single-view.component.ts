@@ -45,7 +45,6 @@ export class NodeSingleViewComponent
   }
 
   async setNode(): Promise<void> {
-    // TODO add collab and org after setting this
     (await this.nodeDataService.get(this.route_id as number)).subscribe(
       (node) => {
         this.node = deepcopy(node);
