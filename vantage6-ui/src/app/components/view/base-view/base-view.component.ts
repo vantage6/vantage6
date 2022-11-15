@@ -27,7 +27,6 @@ export class BaseViewComponent implements OnInit {
   }
 
   async delete(resource: Resource): Promise<void> {
-    // delete collaboration
     this.apiService
       .delete(resource)
       .toPromise()

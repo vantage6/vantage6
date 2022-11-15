@@ -13,6 +13,7 @@ import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
+import { Resource } from 'src/app/shared/types';
 
 export enum TaskStatus {
   ALL = 'All',
@@ -253,7 +254,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
         .delete(task)
         .toPromise()
         .then((data) => {
-          this.taskDataService.remove(task);
+          this.taskDataService.remove(task as Task);
           // reinitialize table to reflect the deleted tasks
           this.setup();
           this.selection.clear();
@@ -326,5 +327,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     this.modalService.openLoadingModal();
     await this.setup(true);
     this.modalService.closeLoadingModal();
+  }
+
+  deleteResource(resource: Resource) {
+    // table data should be reset because when a task is deleted, also children
+    // and parent tasks are updated to reflect the deleted task
+    this.setup();
   }
 }

@@ -4,6 +4,10 @@ import { BaseDataService } from './base-data.service';
 import { Task } from 'src/app/interfaces/task';
 import { Observable } from 'rxjs';
 import { TaskApiService } from '../api/task-api.service';
+import {
+  removeMatchedIdFromArray,
+  removeValueFromArray,
+} from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -62,5 +66,26 @@ export class TaskDataService extends BaseDataService {
     if (task.initiator) task.initiator = undefined;
     if (task.collaboration) task.collaboration = undefined;
     super.save(task);
+  }
+
+  remove(task: Task): void {
+    // remove the task also from its parent task and/or child tasks
+    if (task.parent_id || task.children_ids.length) {
+      let tasks: Task[] = this.resource_list.value as Task[];
+      for (let t of tasks) {
+        if (t.id === task.parent_id) {
+          t.children_ids = removeValueFromArray(t.children_ids, task.id);
+          if (t.children) {
+            t.children = removeMatchedIdFromArray(t.children, task.id);
+          }
+        } else if (task.children_ids.includes(t.id)) {
+          t.parent_id = null;
+          t.parent = undefined;
+        }
+      }
+      this.resource_list.next(tasks);
+    }
+
+    super.remove(task);
   }
 }
