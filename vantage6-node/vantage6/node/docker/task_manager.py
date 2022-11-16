@@ -2,6 +2,7 @@
 to be cleaned at some point. """
 import logging
 import os
+import pickle
 import docker.errors
 
 from enum import Enum
@@ -89,6 +90,7 @@ class DockerTaskManager(DockerBaseManager):
 
         self.container = None
         self.status_code = None
+        self.docker_input = None
 
         self.labels = {
             f"{APPNAME}-type": "algorithm",
@@ -190,9 +192,8 @@ class DockerTaskManager(DockerBaseManager):
         self._make_task_folders()
 
         # prepare volumes
-        self.volumes = self._prepare_volumes(
-            docker_input, tmp_vol_name, token
-        )
+        self.docker_input = docker_input
+        self.volumes = self._prepare_volumes(tmp_vol_name, token)
         self.log.debug(f"volumes: {self.volumes}")
 
         # setup environment variables
@@ -257,9 +258,21 @@ class DockerTaskManager(DockerBaseManager):
                 algo_image_name=self.image
             )
 
+        # try reading docker input
+        deserialized_input = None
+        if self.docker_input:
+            try:
+                deserialized_input = pickle.loads(self.docker_input)
+            except Exception:
+                pass
+
         # attempt to run the image
         try:
-            self.log.info(f"Run docker image={self.image}")
+            if deserialized_input:
+                self.log.info(f"Run docker image {self.image} with input "
+                              f"{deserialized_input}")
+            else:
+                self.log.info(f"Run docker image {self.image}")
             self.container = self.docker.containers.run(
                 self.image,
                 detach=True,
@@ -303,15 +316,12 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, docker_input: bytes, tmp_vol_name: str,
-                         token: str) -> Dict:
+    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> Dict:
         """
         Generate docker volumes required to run the algorithm
 
         Parameters
         ----------
-        docker_input: bytes
-            Input that can be read by docker container
         tmp_vol_name: str
             Name of temporary docker volume assigned to the algorithm
         token: str
@@ -322,13 +332,13 @@ class DockerTaskManager(DockerBaseManager):
         Dict:
             Volumes to support running the algorithm
         """
-        if isinstance(docker_input, str):
-            docker_input = docker_input.encode('utf8')
+        if isinstance(self.docker_input, str):
+            self.docker_input = self.docker_input.encode('utf8')
 
         # Create I/O files & token for the algorithm container
         self.log.debug("prepare IO files in docker volume")
         io_files = [
-            ('input', docker_input),
+            ('input', self.docker_input),
             ('output', b''),
             ('token', token.encode("ascii")),
         ]
