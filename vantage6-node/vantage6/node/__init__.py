@@ -454,8 +454,8 @@ class Node(object):
                     }
                 )
             except Exception as e:
-                self.log.error('Speaking thread had an exception')
-                self.log.debug(e)
+                self.log.exception('Speaking thread had an exception')
+
 
     def authenticate(self) -> None:
         """

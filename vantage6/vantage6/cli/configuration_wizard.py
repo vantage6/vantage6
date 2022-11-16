@@ -156,6 +156,12 @@ def server_configuration_questionaire(dirs, instance_name):
                    choices=["DEBUG", "INFO", "WARNING", "ERROR",
                             "CRITICAL", "NOTSET"]).ask()
 
+    is_mfa = q.confirm(
+        "Do you want to enforce two-factor authentication?"
+    ).ask()
+    if is_mfa:
+        config['two_factor_auth'] = is_mfa
+
     is_add_vpn = q.confirm(
         "Do you want to add a VPN server?", default=False).ask()
     if is_add_vpn:
