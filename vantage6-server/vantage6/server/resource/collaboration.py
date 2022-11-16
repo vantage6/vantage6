@@ -13,7 +13,7 @@ from vantage6.server.permission import (
     Operation as P,
     PermissionManager
 )
-from vantage6.server.resource._schema import (
+from vantage6.server.resource.common._schema import (
     CollaborationSchema,
     TaskSchema,
     OrganizationSchema,

@@ -15,7 +15,7 @@ from vantage6.server.permission import (
     Operation as P
 )
 from vantage6.server.resource import only_for, ServicesResources, with_user
-from vantage6.server.resource._schema import (
+from vantage6.server.resource.common._schema import (
     TaskSchema,
     TaskIncludedSchema,
     TaskResultSchema

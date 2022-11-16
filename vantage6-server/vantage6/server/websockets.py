@@ -8,6 +8,8 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.rule import Operation, Scope
 
 
 class DefaultSocketNamespace(Namespace):
@@ -47,7 +49,7 @@ class DefaultSocketNamespace(Namespace):
         except Exception as e:
             self.log.error("Couldn't connect client! No or Invalid JWT token?")
             self.log.exception(e)
-            session.name = "no-sure-yet"
+            session.name = "not-sure-yet"
             self.__join_room_and_notify(request.sid)
 
             # FIXME: expired probably doesn't cover it ...
@@ -63,7 +65,8 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        self.socketio.emit('node-status-changed', namespace='/admin')
+        if auth.type == 'node':
+            self.socketio.emit('node-status-changed', namespace='/admin')
 
         # define socket-session variables.
         session.type = auth.type
@@ -72,18 +75,48 @@ class DefaultSocketNamespace(Namespace):
             f'Client identified as <{session.type}>: <{session.name}>'
         )
 
-        # join appropiate rooms, nodes join a specific collaboration room.
-        # users do not belong to specific collaborations.
-        session.rooms = ['all_connections', 'all_'+session.type+'s']
-
+        # join appropiate rooms
+        session.rooms = []
         if session.type == 'node':
-            session.rooms.append('collaboration_' + str(auth.collaboration_id))
-            session.rooms.append('node_' + str(auth.id))
+            self._add_node_to_rooms(auth)
+            self.__alert_node_status(online=True, node=auth)
         elif session.type == 'user':
-            session.rooms.append('user_'+str(auth.id))
+            self._add_user_to_rooms(auth)
 
         for room in session.rooms:
             self.__join_room_and_notify(room)
+
+    def _add_node_to_rooms(self, node: Authenticatable):
+        """ Connect node to appropriate websocket rooms """
+        # node join rooms for all nodes and rooms for their collaboration
+        session.rooms.append('all_nodes')
+        session.rooms.append(f'collaboration_{node.collaboration_id}')
+        session.rooms.append(
+            f'collaboration_{node.collaboration_id}_organization_'
+            f'{node.organization_id}')
+
+    def _add_user_to_rooms(self, user: Authenticatable):
+        # check for which collab rooms the user has permission to enter
+        session.user = db.User.get(session.auth_id)
+        if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
+            # user joins all collaboration rooms
+            collabs = db.Collaboration.get()
+            for collab in collabs:
+                session.rooms.append(f'collaboration_{collab.id}')
+        elif session.user.can(
+                'event', Scope.COLLABORATION, Operation.VIEW):
+            # user joins all collaboration rooms that their organization
+            # participates in
+            for collab in user.organization.collaborations:
+                session.rooms.append(f'collaboration_{collab.id}')
+        elif session.user.can('event', Scope.ORGANIZATION, Operation.VIEW):
+            # user joins collaboration subrooms that include only messages
+            # relevant to their own node
+            for collab in user.organization.collaborations:
+                session.rooms.append(
+                    f'collaboration_{collab.id}_organization_'
+                    f'{user.organization.id}'
+                )
 
     def on_disconnect(self):
         """
@@ -100,8 +133,10 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        self.log.warning('emitting to /admin')
-        self.socketio.emit('node-status-changed', namespace='/admin')
+        if session.type == 'node':
+            self.log.warning('emitting to /admin')
+            self.socketio.emit('node-status-changed', namespace='/admin')
+            self.__alert_node_status(online=False, node=auth)
 
         self.log.info(f'{session.name} disconnected')
 
@@ -182,7 +217,7 @@ class DefaultSocketNamespace(Namespace):
             name of the room the client want to join
         """
         join_room(room)
-        msg = f'<{session.name}> joined room <{room}>'
+        msg = f'{session.type.title()} <{session.name}> joined room <{room}>'
         self.log.info(msg)
         emit('message', msg, room=room)
 
@@ -199,3 +234,26 @@ class DefaultSocketNamespace(Namespace):
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
         emit('message', msg, room=room)
+
+    def __alert_node_status(self, online: bool, node: Authenticatable) -> None:
+        """
+        Send status update of nodes when they change on/offline status
+
+        Parameters
+        ----------
+        online: bool
+            Whether node is coming online or not
+        node: Authenticatable
+            The node SQLALchemy object
+        """
+        event = 'node-online' if online else 'node-offline'
+        for room in session.rooms:
+            self.socketio.emit(
+                event,
+                {
+                    'id': node.id, 'name': node.name,
+                    'org_id': node.organization.id
+                },
+                namespace='/tasks',
+                room=room
+            )

@@ -1,25 +1,27 @@
 # `make` is expected to be called from the directory that contains
 # this Makefile
 
-TAG ?= trolltunga
-BUILDNR ?= 1
-BRANCH ?= master
+TAG ?= petronas
+REGISTRY ?= harbor2.vantage6.ai
 
 help:
 	@echo "Available commands to 'make':"
-	@echo "  set-buildnr  : set buildnr in all vantage6 packages"
-	@echo "  set-version  : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
-	@echo "  uninstall    : uninstall all vantage6 packages"
-	@echo "  install      : do a regular install of all vantage6 packages"
-	@echo "  install-dev  : do an editable install of all vantage6 packages"
-	@echo "  image 		  : build the node/server docker image"
-	@echo "  docker-push  : push the node/server docker image"
-	@echo "  rebuild      : rebuild all python packages"
-	@echo "  publish-test : publish built python packages to test.pypi.org"
-	@echo "  publish      : publish built python packages to pypi.org (BE CAREFUL!)"
-	@echo "  clean        : clean all built packages"
-	@echo "  community    : Notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
-	@echo "Using tag: ${TAG}"
+	@echo "  set-version          : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
+	@echo "  uninstall            : uninstall all vantage6 packages"
+	@echo "  install              : do a regular install of all vantage6 packages"
+	@echo "  install-dev          : do an editable install of all vantage6 packages"
+	@echo "  image                : build the node/server docker image"
+	@echo "  base-image           : build the infrastructure base image"
+	@echo "  algorithm-base-image : build the algorithm base image"
+	@echo "  support-image        : build the supporing images"
+	@echo "  rebuild              : rebuild all python packages"
+	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
+	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
+	@echo "  test                 : run all unittests and compute coverage"
+	@echo ""
+	@echo "Using "
+	@echo "  tag:      ${TAG}"
+	@echo "  registry: ${REGISTRY}"
 
 set-version:
 	# --version --build --spec --post
@@ -29,9 +31,6 @@ set-version:
 community:
 	#  make community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'"
 	cd tools && python update-discord.py ${FLAGS}
-
-set-buildnr:
-	find ./ -name __build__ -exec sh -c "echo ${BUILDNR} > {}" \;
 
 uninstall:
 	pip uninstall -y vantage6
@@ -54,13 +53,58 @@ install-dev:
 	cd vantage6-node && pip install -e .
 	cd vantage6-server && pip install -e .
 
-image:
-	docker build -t harbor2.vantage6.ai/infrastructure/node:${TAG} .
-	docker tag harbor2.vantage6.ai/infrastructure/node:${TAG} harbor2.vantage6.ai/infrastructure/server:${TAG}
+base-image:
+	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/infrastructure-base.Dockerfile \
+		--push .
 
-docker-push:
-	docker push harbor2.vantage6.ai/infrastructure/node:${TAG}
-	docker push harbor2.vantage6.ai/infrastructure/server:${TAG}
+algorithm-base-image:
+	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/algorithm-base.Dockerfile \
+		--push .
+
+support-image:
+	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
+	@echo "All images are also tagged with `latest`"
+
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
+		--tag ${REGISTRY}/infrastructure/alpine:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/alpine.Dockerfile \
+		--push .
+
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
+		--tag ${REGISTRY}/infrastructure/vpn-client:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/vpn-client.Dockerfile \
+		--push .
+
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
+		--tag ${REGISTRY}/infrastructure/vpn-configurator:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/vpn-configurator.Dockerfile \
+		--push .
+
+image:
+	@echo "Building ${REGISTRY}/infrastructure/node:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/server:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/node:${TAG} \
+		--tag ${REGISTRY}/infrastructure/server:${TAG} \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/node-and-server.Dockerfile \
+		--push .
 
 rebuild:
 	@echo "------------------------------------"
@@ -87,29 +131,12 @@ rebuild:
 	@echo "------------------------------------"
 	cd vantage6-server && make rebuild
 
-publish-test:
-	cd vantage6-common && make publish-test
-	cd vantage6-client && make publish-test
-	cd vantage6 && make publish-test
-	cd vantage6-node && make publish-test
-	cd vantage6-server && make publish-test
-
 publish:
 	cd vantage6-common && make publish
 	cd vantage6-client && make publish
 	cd vantage6 && make publish
 	cd vantage6-node && make publish
 	cd vantage6-server && make publish
-
-clean:
-	@echo "------------------------------------"
-	@echo "       CLEANING BUILD FOLDERS       "
-	@echo "------------------------------------"
-	cd vantage6-common && make clean
-	cd vantage6-client && make clean
-	cd vantage6 && make clean
-	cd vantage6-node && make clean
-	cd vantage6-server && make clean
 
 test:
 	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py

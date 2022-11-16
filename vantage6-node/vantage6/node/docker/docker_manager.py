@@ -21,7 +21,11 @@ from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.node.docker.task_manager import DockerTaskManager
+from vantage6.node.docker.task_manager import DockerTaskManager, TaskStatus
+from vantage6.node.docker.exceptions import (
+    UnknownAlgorithmStartFail,
+    PermanentAlgorithmStartFail
+)
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -73,6 +77,9 @@ class DockerManager(DockerBaseManager):
 
         # keep track of the running containers
         self.active_tasks: List[DockerTaskManager] = []
+
+        # keep track of the containers that have failed to start
+        self.failed_tasks: List[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these regex
         self._allowed_images = config.get("allowed_images")
@@ -286,15 +293,38 @@ class DockerManager(DockerBaseManager):
             alpine_image=self.alpine_image
         )
         database = database if (database and len(database)) else 'default'
-        vpn_ports = task.run(
-            docker_input=docker_input, tmp_vol_name=tmp_vol_name, token=token,
-            algorithm_env=self.algorithm_env, database=database
-        )
+
+
+        # attempt to kick of the task. If it fails do to unknown reasons we try
+        # again. If it fails permanently we add it to the failed tasks to be
+        # handled by the speaking worker of the node
+        attempts = 1
+        while not (task.status == TaskStatus.STARTED) and attempts < 3:
+            try:
+                vpn_ports = task.run(
+                    docker_input=docker_input, tmp_vol_name=tmp_vol_name,
+                    token=token, algorithm_env=self.algorithm_env,
+                    database=database
+                )
+
+            except UnknownAlgorithmStartFail:
+                self.log.exception(f'Failed to start result {result_id} due '
+                                   'to unknown reason. Retrying')
+                time.sleep(1) # add some time before retrying the next attempt
+
+            except PermanentAlgorithmStartFail:
+                break
+
+            attempts += 1
 
         # keep track of the active container
-        self.active_tasks.append(task)
-
-        return vpn_ports
+        if task.status == TaskStatus.FAILED \
+                or task.status == TaskStatus.PERMANENTLY_FAILED:
+            self.failed_tasks.append(task)
+            return None
+        else:
+            self.active_tasks.append(task)
+            return vpn_ports
 
     def get_result(self) -> Result:
         """
@@ -313,25 +343,34 @@ class DockerManager(DockerBaseManager):
         # get finished results and get the first one, if no result is available
         # this is blocking
         finished_tasks = []
-        while not finished_tasks:
+        while (not finished_tasks) and (not self.failed_tasks):
             finished_tasks = [t for t in self.active_tasks if t.is_finished()]
             time.sleep(1)
 
-        # at least one task is finished
-        finished_task = finished_tasks.pop()
-        self.log.debug(f"Result id={finished_task.result_id} is finished")
+        if finished_tasks:
+            # at least one task is finished
 
-        # Check exit status and report
-        logs = finished_task.report_status()
+            finished_task = finished_tasks.pop()
+            self.log.debug(f"Result id={finished_task.result_id} is finished")
 
-        # Cleanup containers
-        finished_task.cleanup()
+            # Check exit status and report
+            logs = finished_task.report_status()
 
-        # Retrieve results from file
-        results = finished_task.get_results()
+            # Cleanup containers
+            finished_task.cleanup()
 
-        # remove finished tasks from active task list
-        self.active_tasks.remove(finished_task)
+            # Retrieve results from file
+            results = finished_task.get_results()
+
+            # remove finished tasks from active task list
+            self.active_tasks.remove(finished_task)
+
+        else:
+            # at least one task failed to start
+            finished_task = self.failed_tasks.pop()
+            finished_task.status_code = 9
+            logs = 'Container failed to start'
+            results = b''
 
         return Result(
             result_id=finished_task.result_id,

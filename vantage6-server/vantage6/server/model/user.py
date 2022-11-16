@@ -8,6 +8,7 @@ from sqlalchemy.orm import relationship, validates
 
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.rule import Operation, Rule, Scope
 
 
 class User(Authenticatable):
@@ -33,6 +34,7 @@ class User(Authenticatable):
     organization_id = Column(Integer, ForeignKey("organization.id"))
     failed_login_attempts = Column(Integer, default=0)
     last_login_attempt = Column(DateTime)
+    otp_secret = Column(String(32))
 
     # relationships
     organization = relationship("Organization", back_populates="users")
@@ -162,3 +164,13 @@ class User(Authenticatable):
         session = DatabaseSessionManager.get_session()
         return session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
+
+    def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
+        """
+        Check if user is allowed to execute a certain action
+
+        TODO docstring
+        """
+        rule = Rule.get_by_(resource, scope, operation)
+        return rule in self.rules or \
+            any(rule in role.rules for role in self.roles)

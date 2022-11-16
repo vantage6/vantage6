@@ -1,7 +1,0 @@
-Intro
-=====
-
-Documentation introduction
-
-Components
-----------

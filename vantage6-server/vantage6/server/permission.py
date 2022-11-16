@@ -36,6 +36,7 @@ class PermissionManager:
         self.collections = {}
         log.info("Loading permission system...")
         self.load_rules_from_resources()
+        self.load_additional_rules()
 
     def load_rules_from_resources(self):
         for res in RESOURCES:
@@ -46,6 +47,23 @@ class PermissionManager:
                 module_name = module.__name__.split(".")[-1]
                 log.debug(f"Resource '{module_name}' contains no or invalid "
                           "permissions")
+
+    def load_additional_rules(self) -> None:
+        """ Add rules that are not defined in any of the resources """
+        # Add socket event permissions
+        add = self.appender("event")
+        add(scope=Scope.ORGANIZATION, operation=Operation.VIEW,
+            description="view websocket events of your organization")
+        add(scope=Scope.COLLABORATION, operation=Operation.VIEW,
+            description="view websocket events of your collaborations")
+        add(scope=Scope.GLOBAL, operation=Operation.VIEW,
+            description="view websocket events")
+        add(scope=Scope.ORGANIZATION, operation=Operation.CREATE,
+            description="send websocket events for your organization")
+        add(scope=Scope.COLLABORATION, operation=Operation.CREATE,
+            description="send websocket events for your collaborations")
+        add(scope=Scope.GLOBAL, operation=Operation.CREATE,
+            description="send websocket events to all collaborations")
 
     def assign_rule_to_node(self, name: str, scope: Scope,
                             operation: Operation):

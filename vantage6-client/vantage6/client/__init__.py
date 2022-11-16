@@ -5,7 +5,6 @@ This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
 import logging
-import traceback
 import pickle
 import time
 import typing
@@ -13,9 +12,13 @@ import jwt
 import requests
 import pyfiglet
 import json as json_lib
+import itertools
+import sys
+import traceback
 
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple, Union
+from vantage6.client.utils import print_qr_code
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
@@ -151,7 +154,8 @@ class ClientBase(object):
         return path
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params: dict = None, first_try: bool = True) -> dict:
+                params: dict = None, first_try: bool = True,
+                retry: bool = True) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -165,7 +169,9 @@ class ClientBase(object):
         params : dict, optional
             URL parameters, by default None
         first_try : bool, optional
-            Whenever this is the first attemt of this request, by default True
+            Whether this is the first attempt of this request. Default True.
+        retry: bool, optional
+            Try request again after refreshing the token. Default True.
 
         Returns
         -------
@@ -207,12 +213,13 @@ class ClientBase(object):
                 self.log.error('Did not find a message from the server')
                 self.log.debug(response.content)
 
-            if first_try:
-                self.refresh_token()
-                return self.request(endpoint, json, method, params,
-                                    first_try=False)
-            else:
-                self.log.error("Nope, refreshing the token didn't fix it.")
+            if retry:
+                if first_try:
+                    self.refresh_token()
+                    return self.request(endpoint, json, method, params,
+                                        first_try=False)
+                else:
+                    self.log.error("Nope, refreshing the token didn't fix it.")
 
         return response.json()
 
@@ -279,7 +286,7 @@ class ClientBase(object):
         self.cryptor = cryptor
 
     def authenticate(self, credentials: dict,
-                     path: str = "token/user") -> None:
+                     path: str = "token/user") -> bool:
         """Authenticate to the vantage6-server
 
         It allows users, nodes and containers to sign in. Credentials can
@@ -298,6 +305,12 @@ class ClientBase(object):
         ------
         Exception
             Failed to authenticate
+
+        Returns
+        -------
+        Bool
+            Whether or not user is authenticated. Alternative is that user is
+            redirected to set up two-factor authentication
         """
         if 'username' in credentials:
             self.log.debug(
@@ -318,11 +331,25 @@ class ClientBase(object):
             else:
                 raise Exception("Failed to authenticate")
 
-        # store tokens in object
-        self.log.info("Successfully authenticated")
-        self._access_token = data.get("access_token")
-        self.__refresh_token = data.get("refresh_token")
-        self.__refresh_url = data.get("refresh_url")
+        if 'qr_uri' in data:
+            print_qr_code(data)
+            return False
+        else:
+            # If no QR two-factor authentication is
+            # required, but that is not an error
+            if 'access_token' not in data:
+                if 'msg' in data:
+                    raise Exception(data['msg'])
+                else:
+                    raise Exception(
+                        "No access token in authentication response!")
+
+            # store tokens in object
+            self.log.info("Successfully authenticated")
+            self._access_token = data.get("access_token")
+            self.__refresh_token = data.get("refresh_token")
+            self.__refresh_url = data.get("refresh_url")
+            return True
 
     def refresh_token(self) -> None:
         """Refresh an expired token using the refresh token
@@ -568,7 +595,12 @@ class UserClient(ClientBase):
         self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
         self.log.info(" --> Blog: https://vantage6.ai")
-        self.log.info("-" * 45)
+        self.log.info("-" * 60)
+        self.log.info("Cite us!")
+        self.log.info("If you publish your findings obtained using vantage6, ")
+        self.log.info("please cite the proper sources as mentioned in:")
+        self.log.info("https://vantage6.ai/vantage6/references")
+        self.log.info("-" * 60)
 
     class Log:
         """Replaces the default logging meganism by print statements"""
@@ -589,7 +621,8 @@ class UserClient(ClientBase):
             if self.enabled:
                 print(f'{msg}')
 
-    def authenticate(self, username: str, password: str) -> None:
+    def authenticate(self, username: str, password: str,
+                     mfa_code: Union[int, str] = None) -> None:
         """Authenticate as a user
 
         It also collects some additional info about your user.
@@ -600,18 +633,28 @@ class UserClient(ClientBase):
             Username used to authenticate
         password : str
             Password used to authenticate
+        mfa_token: str or int
+            Six-digit two-factor authentication code
         """
-        super(UserClient, self).authenticate({
+        auth_json = {
             "username": username,
-            "password": password
-        }, path="token/user")
+            "password": password,
+        }
+        if mfa_code:
+            auth_json["mfa_code"] = mfa_code
+        auth = super(UserClient, self).authenticate(auth_json,
+                                                    path="token/user")
+        if not auth:
+            # user is not authenticated. The super function is responsible for
+            # printing useful output
+            return
 
         # identify the user and the organization to which this user
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
             jwt_payload = jwt.decode(self.token,
-                             options={"verify_signature": False})
+                                     options={"verify_signature": False})
 
             # FIXME: 'identity' is no longer needed in version 4+. So this if
             # statement can be removed
@@ -638,9 +681,55 @@ class UserClient(ClientBase):
             self.log.info(f" --> Name: {name} (id={id_})")
             self.log.info(f" --> Organization: {organization_name} "
                           f"(id={organization_id})")
-        except Exception as e:
+        except Exception:
             self.log.info('--> Retrieving additional user info failed!')
-            self.log.debug(traceback.format_exc())
+            self.log.error(traceback.format_exc())
+
+    def wait_for_results(self, task_id: int, sleep: float = 1) -> Dict:
+        """
+        Polls the server to check when results are ready, and returns the
+        results when the task is completed.
+
+        Parameters
+        ----------
+        task_id: int
+            ID of the task that you are waiting for
+        sleep: float
+            Interval in seconds between checks if task is finished. Default 1.
+
+        Returns
+        -------
+        Dict
+            A dictionary with the results of the task, after it has completed.
+        """
+        # Disable logging (additional logging would prevent the 'wait' message
+        # from being printed on a single line)
+        if isinstance(self.log, logging.Logger):
+            prev_level = self.log.level
+            self.log.setLevel(logging.WARN)
+        elif isinstance(self.log, UserClient.Log):
+            prev_level = self.log.enabled
+            self.log.enabled = False
+
+        animation = itertools.cycle(['|', '/', '-', '\\'])
+        t = time.time()
+
+        while not self.task.get(task_id)['complete']:
+            frame = next(animation)
+            sys.stdout.write(
+                f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
+            )
+            sys.stdout.flush()
+            time.sleep(sleep)
+        sys.stdout.write('\rDone!                  ')
+
+        # Re-enable logging
+        if isinstance(self.log, logging.Logger):
+            self.log.setLevel(prev_level)
+        elif isinstance(self.log, UserClient.Log):
+            self.log.enabled = prev_level
+
+        return self.get_results(task_id=task_id)
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
@@ -682,7 +771,7 @@ class UserClient(ClientBase):
                 Message from the server
             """
             result = self.parent.request(
-                'recover/change', method='post', json={
+                'password/change', method='patch', json={
                     'current_password': current_password,
                     'new_password': new_password
                 }
@@ -721,7 +810,7 @@ class UserClient(ClientBase):
         def set_my_password(self, token: str, password: str) -> dict:
             """Set a new password using a recovery token
 
-            Token kan be obtained through `.reset_password(...)`
+            Token can be obtained through `.reset_password(...)`
 
             Parameters
             ----------
@@ -741,6 +830,66 @@ class UserClient(ClientBase):
             })
             msg = result.get('msg')
             self.parent.log.info(f'--> {msg}')
+            return result
+
+        def reset_two_factor_auth(
+            self, password: str, email: str = None, username: str = None
+        ) -> dict:
+            """Start reset procedure for two-factor authentication
+
+            The password and either username of email must be provided.
+
+            Parameters
+            ----------
+            password: str
+                Password of your account
+            email : str, optional
+                Email address of your account, by default None
+            username : str, optional
+                Username of your account, by default None
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            assert email or username, "You need to provide username or email!"
+            result = self.parent.request(
+                'recover/2fa/lost', method='post', json={
+                    'username': username,
+                    'email': email,
+                    "password": password
+                }, retry=False)
+            msg = result.get('msg')
+            self.parent.log.info(f'--> {msg}')
+            return result
+
+        def set_two_factor_auth(self, token: str) -> dict:
+            """
+            Setup two-factor authentication using a recovery token after you
+            have lost access.
+
+            Token can be obtained through `.reset_two_factor_auth(...)`
+
+            Parameters
+            ----------
+            token : str
+                Token obtained from `reset_two_factor_auth`
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            result = self.parent.request(
+                'recover/2fa/reset', method='post', json={
+                    'reset_token': token,
+                }, retry=False)
+            if 'qr_uri' in result:
+                print_qr_code(result)
+            else:
+                msg = result.get('msg')
+                self.parent.log.info(f'--> {msg}')
             return result
 
         def generate_private_key(self, file_: str = None) -> None:
@@ -941,10 +1090,11 @@ class UserClient(ClientBase):
                 'page': page, 'per_page': per_page, 'include': includes,
                 'name': name, 'organization_id': organization,
                 'collaboration_id': collaboration, 'ip': ip,
-                'status': 'online' if is_online else 'offline',
                 'last_seen_from': last_seen_from,
                 'last_seen_till': last_seen_till
             }
+            if is_online is not None:
+                params['status'] = 'online' if is_online else 'offline'
             return self.parent.request('node', params=params)
 
         @post_filtering(iterable=False)
@@ -1351,7 +1501,7 @@ class UserClient(ClientBase):
 
         @post_filtering()
         def list(self, name: str = None, description: str = None,
-                 organization: int = None, rule: int = None,
+                 organization: int = None, rule: int = None, user: int = None,
                  include_root: bool = None, page: int = 1, per_page: int = 20,
                  include_metadata: bool = True) -> list:
             """List of roles
@@ -1366,6 +1516,8 @@ class UserClient(ClientBase):
                 Filter by organization id
             rule: int, optional
                 Only show roles that contain this rule id
+            user: int, optional
+                Only show roles that belong to a particular user id
             include_root: bool, optional
                 Include roles that are not assigned to any particular
                 organization
@@ -1388,7 +1540,7 @@ class UserClient(ClientBase):
                 'page': page, 'per_page': per_page, 'include': includes,
                 'name': name, 'description': description,
                 'organization_id': organization, 'rule_id': rule,
-                'include_root': include_root,
+                'include_root': include_root, 'user_id': user,
             }
             return self.parent.request('role', params=params)
 
