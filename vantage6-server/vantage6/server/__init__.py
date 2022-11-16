@@ -202,15 +202,16 @@ class ServerApp:
 
         # before request
         @self.app.before_request
-        def set_db_session():
-            """Before every flask request method.
+        def do_before_request():
+            """Before every flask request method."""
+            # Add log message before each request
+            log.debug(f"Received request: {request.method} {request.url_rule}")
 
-            This will obtain a (scoped) db session from the session factory
-            that is linked to the flask request global `g`. In every endpoint
-            we then can access the database by using this session. We ensure
-            that the session is removed (and uncommited changes are rolled
-            back) at the end of every request.
-            """
+            # This will obtain a (scoped) db session from the session factory
+            # that is linked to the flask request global `g`. In every endpoint
+            # we then can access the database by using this session. We ensure
+            # that the session is removed (and uncommited changes are rolled
+            # back) at the end of every request.
             DatabaseSessionManager.new_session()
 
         @self.app.after_request
