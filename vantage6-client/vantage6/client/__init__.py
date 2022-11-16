@@ -1661,7 +1661,7 @@ class UserClient(ClientBase):
             return self.parent.request(f'task/{id_}', params=params)
 
         @post_filtering()
-        def list(self, init_org_id: int = None, init_user_id: int = None,
+        def list(self, initiating_org: int = None, initiating_user: int = None,
                  collaboration: int = None, image: str = None,
                  parent: int = None, run: int = None,
                  name: str = None, include_results: bool = False,
@@ -1676,9 +1676,9 @@ class UserClient(ClientBase):
                 Filter by the name of the task. It will match with a
                 Like operator. I.e. E% will search for task names that
                 start with an 'E'.
-            init_org_id: int, optional
+            initiating_org: int, optional
                 Filter by initiating organization
-            init_user_id: int, optional
+            initiating_user: int, optional
                 Filter by initiating user
             collaboration: int, optional
                 Filter by collaboration
@@ -1723,7 +1723,7 @@ class UserClient(ClientBase):
             # if the param is None, it will not be passed on to the
             # request
             params = {
-                'init_org_id': init_org_id, 'init_user_id': init_user_id,
+                'init_org_id': initiating_org, 'init_user_id': initiating_user,
                 'collaboration_id': collaboration,
                 'image': image, 'parent_id': parent, 'run_id': run,
                 'name': name, 'page': page, 'per_page': per_page,
