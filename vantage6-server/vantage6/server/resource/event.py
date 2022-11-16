@@ -5,8 +5,14 @@ from http import HTTPStatus
 from flask import request, g
 
 from vantage6.common import logger_name
+from vantage6.server.permission import PermissionManager
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server import db
+from vantage6.server.permission import (
+    Scope as S,
+    Operation as P,
+    PermissionManager
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -33,6 +39,26 @@ def setup(api, api_base, services):
         resource_class_kwargs=services
     )
 
+
+# -----------------------------------------------------------------------------
+# Permissions
+# -----------------------------------------------------------------------------
+def permissions(permissions: PermissionManager):
+
+    add = permissions.appender(module_name)
+
+    add(scope=S.ORGANIZATION, operation=P.VIEW,
+        description="view websocket events of your organization")
+    add(scope=S.COLLABORATION, operation=P.VIEW,
+        description="view websocket events of your collaborations")
+    add(scope=S.GLOBAL, operation=P.VIEW,
+        description="view websocket events")
+    add(scope=S.ORGANIZATION, operation=P.CREATE,
+        description="send websocket events for your organization")
+    add(scope=S.COLLABORATION, operation=P.CREATE,
+        description="send websocket events for your collaborations")
+    add(scope=S.GLOBAL, operation=P.CREATE,
+        description="send websocket events to all collaborations")
 
 # ------------------------------------------------------------------------------
 # Resources / API's
