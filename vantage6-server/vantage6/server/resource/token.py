@@ -250,6 +250,7 @@ class ContainerToken(ServicesResources):
 
         task_id = data.get("task_id")
         claim_image = data.get("image")
+
         db_task = db.Task.get(task_id)
         if not db_task:
             log.warning(f"Node {g.node.id} attempts to generate key for task "
@@ -260,7 +261,7 @@ class ContainerToken(ServicesResources):
         # verify that task the token is requested for exists
         if claim_image != db_task.image:
             log.warning(
-                f"Node {g.node.id} attemts to generate key for image "
+                f"Node {g.node.id} attempts to generate key for image "
                 f"{claim_image} that does not belong to task {task_id}."
             )
             return {"msg": "Image and task do no match"}, \
@@ -270,7 +271,7 @@ class ContainerToken(ServicesResources):
         # enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
             log.warning(
-                f"Node {g.node.id} attemts to generate key for task {task_id} "
+                f"Node {g.node.id} attempts to generate key for task {task_id} "
                 f"which is outside its collaboration "
                 f"({g.node.collaboration_id}/{db_task.collaboration_id})."
             )
@@ -291,7 +292,8 @@ class ContainerToken(ServicesResources):
             "organization_id": g.node.organization_id,
             "collaboration_id": g.node.collaboration_id,
             "task_id": task_id,
-            "image": claim_image
+            "image": claim_image,
+            "database": db_task.database
         }
         token = create_access_token(container, expires_delta=False)
 
