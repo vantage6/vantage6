@@ -7,6 +7,7 @@ from http import HTTPStatus
 from sqlalchemy import desc
 
 from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.task_status import TaskStatus
 from vantage6.server import db
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
@@ -193,6 +194,14 @@ class Tasks(TaskBase):
               'metadata' to get pagination metadata. Note that this will
               put the actual data in an envelope.
           - in: query
+            name: status
+            schema:
+              type: string
+            description: Filter by task status. Should be one of the following:
+              1) 'active' to get tasks that are being run, 2) 'complete' for
+              tasks that are completed, 3) 'pending' for tasks that are not yet
+              started for all organizations (e.g. because one node is offline)
+          - in: query
             name: page
             schema:
               type: integer
@@ -206,6 +215,8 @@ class Tasks(TaskBase):
         responses:
           200:
             description: Ok
+          400:
+            description: Non-allowed parameter values
           401:
             description: Unauthorized
 
@@ -239,6 +250,20 @@ class Tasks(TaskBase):
                 q = q.filter(getattr(db.Task, param).like(args[param]))
         if 'result_id' in args:
             q = q.join(db.Result).filter(db.Result.id == args['result_id'])
+
+        # # filter by task status
+        # if 'status' in args:
+        #     if args['status'] == 'active':
+        #         q = q.join(db.Result).filter(and_(db.Result.started_at != None, db.Result.finished_at == None))
+        #     elif args['status'] == 'complete':
+        #         pass
+        #     elif args['status'] == 'pending':
+        #         pass
+        #     else:
+        #         return {
+        #             'msg': f"status {args['status']} is not allowed, please "
+        #             "use one of: active, complete, pending."
+        #         }, HTTPStatus.BAD_REQUEST
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
@@ -429,6 +454,7 @@ class Tasks(TaskBase):
                 task=task,
                 organization=organization,
                 input=input_,
+                status=TaskStatus.PENDING.value
             )
             result.save()
 

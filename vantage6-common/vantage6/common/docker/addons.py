@@ -243,6 +243,7 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         pull = True
     elif not local_ and not remote_:
         log.error(f"Cannot locate image {image}")
+        raise
 
     if pull:
         try:

@@ -5,7 +5,6 @@ from http import HTTPStatus
 from flask import request, g
 
 from vantage6.common import logger_name
-from vantage6.server.permission import PermissionManager
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server import db
 from vantage6.server.permission import (
@@ -45,6 +44,8 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 def permissions(permissions: PermissionManager):
 
+    # TODO in v4, change the operations below to 'SEND' and 'RECEIVE' as these
+    # are permissions to do stuff via socket connections
     add = permissions.appender(module_name)
 
     add(scope=S.ORGANIZATION, operation=P.VIEW,
@@ -60,14 +61,12 @@ def permissions(permissions: PermissionManager):
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="send websocket events to all collaborations")
 
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
 class KillTask(ServicesResources):
     """ Provide endpoint to kill all containers executing a certain task """
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, "task")
 
     @with_user
     def post(self):
@@ -80,11 +79,11 @@ class KillTask(ServicesResources):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Task|Global|Delete|❌|❌|Delete any task|\n
-          |Task|Organization|Delete|✅|✅|Delete any task in your organization|
-          \n
+          |Event|Global|Create|❌|❌|Create kill signal for any task|\n
+          |Event|Collaboration|Create|✅|✅|
+          Create kill signal for any task in your collaboration|\n
 
-          Accessible to users with permission to delete tasks.
+          Accessible to users.
 
         requestBody:
           content:
@@ -119,9 +118,9 @@ class KillTask(ServicesResources):
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
-        if not self.r.d_glo.can():
+        if not self.r.c_glo.can():
             orgs = task.collaboration.organizations
-            if not (self.r.d_org.can() and g.user.organization in orgs):
+            if not (self.r.c_org.can() and g.user.organization in orgs):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
@@ -168,11 +167,14 @@ class KillNodeTasks(ServicesResources):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Task|Global|Delete|❌|❌|Delete any task|\n
-          |Task|Organization|Delete|✅|✅|Delete any task in your organization|
-          \n
+          |Event|Global|Create|❌|❌|Create kill signal for all tasks on any
+          node|\n
+          |Event|Collaboration|Delete|✅|✅|Create kill signal for all tasks
+          on any node in collaborations|\n
+          |Event|Organization|Delete|✅|✅|Create kill signal for all tasks on
+          any node of own organization|\n
 
-          Accessible to users with permission to delete tasks.
+          Accessible to users.
 
         requestBody:
           content:
@@ -207,9 +209,13 @@ class KillNodeTasks(ServicesResources):
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
-        if not self.r.d_glo.can():
-            orgs = node.collaboration.organizations
-            if not (self.r.d_org.can() and g.user.organization in orgs):
+        if not self.r.c_glo.can():
+            collab_orgs = node.collaboration.organizations
+            if not (
+                (self.r.c_col.can() and g.user.organization in collab_orgs) or
+                (self.r.c_org.can() and
+                    node.organization_id == g.user.organization_id)
+            ):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 

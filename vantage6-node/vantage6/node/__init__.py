@@ -346,13 +346,19 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        vpn_ports = self.__docker.run(
+        task_status, vpn_ports = self.__docker.run(
             result_id=taskresult["id"],
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
             token=token,
             database=task.get('database', 'default')
+        )
+
+        # save task status to the server
+        self.server_io.patch_results(
+            id=taskresult['id'], init_org_id=taskresult['task']['init_org'],
+            result={'status': task_status.value}
         )
 
         if vpn_ports:
@@ -409,6 +415,7 @@ class Node(object):
                 results = self.__docker.get_result()
 
                 # notify all of a crashed container
+                # TODO why use status_code if status is more informative
                 if results.status_code:
                     self.socketIO.emit(
                         'container_failed',
@@ -454,12 +461,12 @@ class Node(object):
                     result={
                         'result': results.data,
                         'log': results.logs,
+                        'status': results.status.value,
                         'finished_at': datetime.datetime.now().isoformat(),
                     }
                 )
-            except Exception as e:
+            except Exception:
                 self.log.exception('Speaking thread had an exception')
-
 
     def authenticate(self) -> None:
         """
@@ -578,8 +585,8 @@ class Node(object):
             self.__vpn_dir = ctx.vpn_dir
 
     def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
-                             ctx: Union[DockerNodeContext, NodeContext]) \
-                                -> VPNManager:
+                             ctx: Union[DockerNodeContext, NodeContext]
+                             ) -> VPNManager:
         """
         Setup container which has a VPN connection
 
@@ -601,7 +608,7 @@ class Node(object):
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
 
-        #FIXME: remove me in 4+. alpine image has been moved into the `images`
+        # FIXME: remove me in 4+. alpine image has been moved into the `images`
         # key. This is to support older configuration files.
         legacy_alpine = self.config.get('alpine')
 

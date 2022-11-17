@@ -17,11 +17,12 @@ from pathlib import Path
 
 from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
+from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
-from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.node.docker.task_manager import DockerTaskManager, TaskStatus
+from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail
@@ -36,6 +37,7 @@ class Result(NamedTuple):
     logs: str
     data: str
     status_code: int
+    status: str
 
 
 class DockerManager(DockerBaseManager):
@@ -294,7 +296,6 @@ class DockerManager(DockerBaseManager):
         )
         database = database if (database and len(database)) else 'default'
 
-
         # attempt to kick of the task. If it fails do to unknown reasons we try
         # again. If it fails permanently we add it to the failed tasks to be
         # handled by the speaking worker of the node
@@ -310,7 +311,7 @@ class DockerManager(DockerBaseManager):
             except UnknownAlgorithmStartFail:
                 self.log.exception(f'Failed to start result {result_id} due '
                                    'to unknown reason. Retrying')
-                time.sleep(1) # add some time before retrying the next attempt
+                time.sleep(1)  # add some time before retrying the next attempt
 
             except PermanentAlgorithmStartFail:
                 break
@@ -318,13 +319,12 @@ class DockerManager(DockerBaseManager):
             attempts += 1
 
         # keep track of the active container
-        if task.status == TaskStatus.FAILED \
-                or task.status == TaskStatus.PERMANENTLY_FAILED:
+        if has_task_failed(task.status):
             self.failed_tasks.append(task)
-            return None
+            return task.status, None
         else:
             self.active_tasks.append(task)
-            return vpn_ports
+            return task.status, vpn_ports
 
     def get_result(self) -> Result:
         """
@@ -376,7 +376,8 @@ class DockerManager(DockerBaseManager):
             result_id=finished_task.result_id,
             logs=logs,
             data=results,
-            status_code=finished_task.status_code
+            status_code=finished_task.status_code,
+            status=finished_task.status,
         )
 
     def login_to_registries(self, registries: list = []) -> None:
@@ -438,6 +439,7 @@ class DockerManager(DockerBaseManager):
             A list of tasks that should be killed. Each dictionary should
             contain a task_id, a result_id and an organization_id
         """
+        # TODO set status of this task to killed (also in the database)
         for container_to_kill in kill_list:
             if container_to_kill['organization_id'] != org_id:
                 continue  # this result is on another node
@@ -455,7 +457,7 @@ class DockerManager(DockerBaseManager):
                 self.log.warn(
                     "Received instruction to kill result_id="
                     f"{container_to_kill['result_id']}, but it was not "
-                    "found running on this node")
+                    "found running on this node.")
 
     def kill_tasks(self, org_id: int, kill_list: List[Dict] = None):
         """
