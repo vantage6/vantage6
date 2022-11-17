@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Union
 
 
 class TaskStatus(Enum):
@@ -10,6 +11,9 @@ class TaskStatus(Enum):
     STARTED = 'started'
     # Container exited and had zero exit code
     COMPLETED = 'completed'
+
+    # Generic fail status
+    FAILED = 'failed'
     # Failed to start the container on the first attempt
     START_FAILED = 'start failed'
     # Could not start because docker image didn't exist
@@ -20,13 +24,13 @@ class TaskStatus(Enum):
     KILLED = 'killed by user'
 
 
-def has_task_failed(status: TaskStatus) -> bool:
+def has_task_failed(status: Union[TaskStatus, str]) -> bool:
     """
     Check if task has failed to run to completion
 
     Parameters
     ----------
-    status: TaskStatus
+    status: TaskStatus | str
         The status of the task
 
     Returns
@@ -34,5 +38,13 @@ def has_task_failed(status: TaskStatus) -> bool:
     bool
         True if task has failed, False otherwise
     """
-    return status not in \
-        [TaskStatus.INITIALIZING, TaskStatus.STARTED, TaskStatus.COMPLETED]
+    if isinstance(status, TaskStatus):
+        return status not in [
+            TaskStatus.INITIALIZING, TaskStatus.STARTED, TaskStatus.COMPLETED,
+            TaskStatus.PENDING
+        ]
+    else:
+        return status not in [
+            TaskStatus.INITIALIZING.value, TaskStatus.STARTED.value,
+            TaskStatus.COMPLETED.value, TaskStatus.PENDING.value
+        ]
