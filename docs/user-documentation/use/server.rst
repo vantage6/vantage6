@@ -308,7 +308,7 @@ is used). In order for the node to reach this server, set the
 **Linux**
 
 You should bind the server to ``0.0.0.0``. In the node
-configuration files, you can then use ``172.17.0.1``, assuming you use
+configuration files, you can then use ``http://172.17.0.1``, assuming you use
 the default docker network settings.
 
 .. _server-import:
