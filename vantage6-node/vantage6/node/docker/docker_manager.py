@@ -221,15 +221,23 @@ class DockerManager(DockerBaseManager):
         })
         return bool(running_containers)
 
-    def cleanup_tasks(self) -> None:
+    def cleanup_tasks(self) -> List[int]:
         """
         Stop all active tasks
+
+        Returns
+        -------
+        List[int]:
+            List of result ids that have been killed
         """
+        result_ids_killed = []
         if self.active_tasks:
             self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup()
+            result_ids_killed.append(task.result_id)
+        return result_ids_killed
 
     def cleanup(self) -> None:
         """
@@ -238,6 +246,9 @@ class DockerManager(DockerBaseManager):
         Note: the temporary docker volumes are kept as they may still be used
         by a master container
         """
+        # note: the function `cleanup_tasks` returns a list of tasks that were
+        # killed, but we don't register them as killed so they will be run
+        # again when the node is restarted
         self.cleanup_tasks()
         for service in self.linked_services:
             self.isolated_network_mgr.disconnect(service)
@@ -428,18 +439,27 @@ class DockerManager(DockerBaseManager):
         )
         self.linked_services.append(container_name)
 
-    def kill_selected_tasks(self, org_id: int, kill_list: List[Dict] = None):
+    def kill_selected_tasks(
+        self, org_id: int, kill_list: List[Dict] = None
+    ) -> List[int]:
         """
         Kill tasks specified by a kill list, if they are currently running on
         this node
 
+        Parameters
+        ----------
         org_id: int
             The organization id of this node
         kill_list: List[Dict]
             A list of tasks that should be killed. Each dictionary should
             contain a task_id, a result_id and an organization_id
+
+        Returns
+        -------
+        List[int]
+            List of killed result ids
         """
-        # TODO set status of this task to killed (also in the database)
+        killed_list = []
         for container_to_kill in kill_list:
             if container_to_kill['organization_id'] != org_id:
                 continue  # this result is on another node
@@ -453,28 +473,38 @@ class DockerManager(DockerBaseManager):
                     f"Killing containers for result_id={task.result_id}")
                 task.cleanup()
                 self.active_tasks.remove(task)
+                killed_list.append(task.result_id)
             else:
                 self.log.warn(
                     "Received instruction to kill result_id="
                     f"{container_to_kill['result_id']}, but it was not "
                     "found running on this node.")
+        return killed_list
 
-    def kill_tasks(self, org_id: int, kill_list: List[Dict] = None):
+    def kill_tasks(self, org_id: int,
+                   kill_list: List[Dict] = None) -> List[int]:
         """
         Kill tasks currently running on this node.
 
+        Parameters
+        ----------
         org_id: int
             The organization id of this node
         kill_list: List[Dict] (optional)
             A list of tasks that should be killed. Each dictionary should
             contain a task_id, a result_id and an organization_id. If the list
             is not specified, all running algorithm containers will be killed.
+
+        Returns
+        -------
+        List[int]
+            List of killed result ids
         """
         if kill_list:
-            self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
+            return self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
         else:
             # received instruction to kill all tasks on this node
             self.log.warn(
                 "Received instruction from server to kill all algorithms "
                 "running on this node. Executing that now...")
-            self.cleanup_tasks()
+            return self.cleanup_tasks()

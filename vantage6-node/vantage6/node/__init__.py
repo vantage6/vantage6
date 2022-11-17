@@ -45,6 +45,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.exceptions import AuthenticationException
+from vantage6.common.task_status import TaskStatus
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -127,7 +128,12 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_kill_containers(self, kill_info):
         self.log.info(f"Received instruction to kill task: {kill_info}")
-        self.node_worker_ref.kill_containers(kill_info)
+        killed_result_ids = self.node_worker_ref.kill_containers(kill_info)
+        self.log.debug("Set status of killed tasks.")
+        for killed_result_id in killed_result_ids:
+            self.node_worker_ref.server_io.patch_results(
+                killed_result_id, { 'status': TaskStatus.KILLED.value }
+            )
 
 
 # ------------------------------------------------------------------------------
@@ -357,8 +363,7 @@ class Node(object):
 
         # save task status to the server
         self.server_io.patch_results(
-            id=taskresult['id'], init_org_id=taskresult['task']['init_org'],
-            result={'status': task_status.value}
+            id=taskresult['id'], result={'status': task_status.value}
         )
 
         if vpn_ports:
@@ -457,13 +462,13 @@ class Node(object):
 
                 self.server_io.patch_results(
                     id=results.result_id,
-                    init_org_id=init_org_id,
                     result={
                         'result': results.data,
                         'log': results.logs,
                         'status': results.status.value,
                         'finished_at': datetime.datetime.now().isoformat(),
                     }
+                    init_org_id=init_org_id,
                 )
             except Exception:
                 self.log.exception('Speaking thread had an exception')
