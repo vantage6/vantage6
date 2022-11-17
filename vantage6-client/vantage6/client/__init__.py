@@ -1666,8 +1666,8 @@ class UserClient(ClientBase):
                  parent: int = None, run: int = None,
                  name: str = None, include_results: bool = False,
                  description: str = None, database: str = None,
-                 result: int = None, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> dict:
+                 result: int = None, status: str = None, page: int = 1,
+                 per_page: int = 20, include_metadata: bool = True) -> dict:
             """List tasks
 
             Parameters
@@ -1697,6 +1697,9 @@ class UserClient(ClientBase):
                 Filter by database (with LIKE operator)
             result: int, optional
                 Only show task that contains this result id
+            status: str, optional
+                Filter by task status (e.g. 'started', 'pending', 'completed',
+                'crashed')
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1728,7 +1731,7 @@ class UserClient(ClientBase):
                 'image': image, 'parent_id': parent, 'run_id': run,
                 'name': name, 'page': page, 'per_page': per_page,
                 'description': description, 'database': database,
-                'result_id': result
+                'result_id': result, 'status': status,
             }
             includes = []
             if include_results:

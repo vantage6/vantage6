@@ -197,10 +197,8 @@ class Tasks(TaskBase):
             name: status
             schema:
               type: string
-            description: Filter by task status. Should be one of the following:
-              1) 'active' to get tasks that are being run, 2) 'complete' for
-              tasks that are completed, 3) 'pending' for tasks that are not yet
-              started for all organizations (e.g. because one node is offline)
+            description: Filter by task status, e.g. 'started' for active
+              tasks, 'completed' for finished or 'crashed' for crashed tasks.
           - in: query
             name: page
             schema:
@@ -245,25 +243,11 @@ class Tasks(TaskBase):
                       'parent_id', 'run_id']:
             if param in args:
                 q = q.filter(getattr(db.Task, param) == args[param])
-        for param in ['name', 'image', 'description', 'database']:
+        for param in ['name', 'image', 'description', 'database', 'status']:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
         if 'result_id' in args:
             q = q.join(db.Result).filter(db.Result.id == args['result_id'])
-
-        # # filter by task status
-        # if 'status' in args:
-        #     if args['status'] == 'active':
-        #         q = q.join(db.Result).filter(and_(db.Result.started_at != None, db.Result.finished_at == None))
-        #     elif args['status'] == 'complete':
-        #         pass
-        #     elif args['status'] == 'pending':
-        #         pass
-        #     else:
-        #         return {
-        #             'msg': f"status {args['status']} is not allowed, please "
-        #             "use one of: active, complete, pending."
-        #         }, HTTPStatus.BAD_REQUEST
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
