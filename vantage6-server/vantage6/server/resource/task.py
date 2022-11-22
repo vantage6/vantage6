@@ -400,6 +400,16 @@ class Tasks(TaskBase):
         # ok commit session...
         task.save()
 
+        # send socket event that task has been created
+        self.socketio.emit(
+            "task_created", {
+                "task_id": task.id,
+                "run_id": task.run_id,
+                "collaboration_id": collaboration_id,
+                "init_org_id": init_org.id,
+            }, room=f"collaboration_{collaboration_id}", namespace='/tasks'
+        )
+
         # if the 'master'-flag is set to true the (master) task is executed on
         # a node in the collaboration from the organization to which the user
         # belongs. If also organization_ids are supplied, then these are

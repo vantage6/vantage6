@@ -35,7 +35,7 @@ class DockerTaskManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, tasks_dir: Path,
+                 result_id: int, task_id: int, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: Union[str, None] = None):
@@ -67,6 +67,7 @@ class DockerTaskManager(DockerBaseManager):
         self.image = image
         self.__vpn_manager = vpn_manager
         self.result_id = result_id
+        self.task_id = task_id
         self.__tasks_dir = tasks_dir
         self.databases = databases
         self.data_volume_name = docker_volume_name

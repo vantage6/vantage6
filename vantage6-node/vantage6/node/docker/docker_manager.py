@@ -34,9 +34,9 @@ log = logging.getLogger(logger_name(__name__))
 class Result(NamedTuple):
     """ Data class to store the result of the docker image."""
     result_id: int
+    task_id: int
     logs: str
     data: str
-    status_code: int
     status: str
 
 
@@ -221,14 +221,14 @@ class DockerManager(DockerBaseManager):
         })
         return bool(running_containers)
 
-    def cleanup_tasks(self) -> List[int]:
+    def cleanup_tasks(self) -> List[Dict]:
         """
         Stop all active tasks
 
         Returns
         -------
-        List[int]:
-            List of result ids that have been killed
+        List[Dict]:
+            List of result + task ids that have been killed
         """
         result_ids_killed = []
         if self.active_tasks:
@@ -236,7 +236,9 @@ class DockerManager(DockerBaseManager):
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup()
-            result_ids_killed.append(task.result_id)
+            result_ids_killed.append({
+                'result_id': task.result_id, 'task_id': task.task_id
+            })
         return result_ids_killed
 
     def cleanup(self) -> None:
@@ -254,8 +256,8 @@ class DockerManager(DockerBaseManager):
             self.isolated_network_mgr.disconnect(service)
         self.isolated_network_mgr.delete(kill_containers=True)
 
-    def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: str, token: str, database: str
+    def run(self, result_id: int, task_id: int, image: str,
+            docker_input: bytes, tmp_vol_name: str, token: str, database: str
             ) -> Union[List[Dict], None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -265,6 +267,8 @@ class DockerManager(DockerBaseManager):
         ----------
         result_id: int
             Server result identifier
+        task_id: int
+            Server task identifier
         image: str
             Docker image name
         docker_input: bytes
@@ -297,6 +301,7 @@ class DockerManager(DockerBaseManager):
         task = DockerTaskManager(
             image=image,
             result_id=result_id,
+            task_id=task_id,
             vpn_manager=self.vpn_manager,
             node_name=self.node_name,
             tasks_dir=self.__tasks_dir,
@@ -379,15 +384,14 @@ class DockerManager(DockerBaseManager):
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()
-            finished_task.status_code = 9
             logs = 'Container failed to start'
             results = b''
 
         return Result(
             result_id=finished_task.result_id,
+            task_id=finished_task.task_id,
             logs=logs,
             data=results,
-            status_code=finished_task.status_code,
             status=finished_task.status,
         )
 
@@ -441,7 +445,7 @@ class DockerManager(DockerBaseManager):
 
     def kill_selected_tasks(
         self, org_id: int, kill_list: List[Dict] = None
-    ) -> List[int]:
+    ) -> List[Dict]:
         """
         Kill tasks specified by a kill list, if they are currently running on
         this node
@@ -456,8 +460,8 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        List[int]
-            List of killed result ids
+        List[Dict]
+            List of killed result + task ids
         """
         killed_list = []
         for container_to_kill in kill_list:
@@ -473,7 +477,9 @@ class DockerManager(DockerBaseManager):
                     f"Killing containers for result_id={task.result_id}")
                 task.cleanup()
                 self.active_tasks.remove(task)
-                killed_list.append(task.result_id)
+                killed_list.append({
+                    'result_id': task.result_id, 'task_id': task.task_id
+                })
             else:
                 self.log.warn(
                     "Received instruction to kill result_id="

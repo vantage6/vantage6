@@ -45,7 +45,8 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.task_status import TaskStatus, has_task_failed
+
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -104,16 +105,30 @@ class NodeTaskNamespace(ClientNamespace):
                 'Task Master Node reference not set is socket namespace'
             )
 
-    def on_container_failed(self, run_id):
-        """A container in the collaboration has failed event.
-
-        TODO handle run sequence at this node. Maybe terminate all
-            containers with the same run_id?
+    def on_algorithm_status_change(self, data):
         """
-        self.log.critical(
-            f"A container on a node within your collaboration part of "
-            f"run_id={run_id} has exited with a non-zero status_code"
-        )
+        An algorithm container in the collaboration has changed its status.
+
+        Parameters
+        ----------
+        data: Dict
+            Dictionary with relevant data to the status change. Should include:
+            run_id: int
+                run_id of the algorithm container that changed status
+            status: str
+                New status of the algorithm container
+        """
+        # TODO handle run sequence at this node. Maybe terminate all
+        #     containers with the same run_id?
+        status = data.get('status')
+        run_id = data.get('run_id')
+        if has_task_failed(status):
+            self.log.critical(
+                f"A container on a node within your collaboration part of "
+                f"run_id={run_id} has exited with status {status}"
+            )
+        # else: no need to print to node logs that a task has started/
+        # finished/... on another node
 
     def on_expired_token(self, msg):
         self.log.warning("Your token is no longer valid... reconnecting")
@@ -128,11 +143,26 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_kill_containers(self, kill_info):
         self.log.info(f"Received instruction to kill task: {kill_info}")
-        killed_result_ids = self.node_worker_ref.kill_containers(kill_info)
-        for killed_result_id in killed_result_ids:
-            self.log.debug(f"Set status of killed result {killed_result_id}.")
+        killed_ids = self.node_worker_ref.kill_containers(kill_info)
+        for killed in killed_ids:
+            self.log.debug(f"Set status of killed result {killed['result_id']}"
+                           f" (task {killed['task_id']}).")
             self.node_worker_ref.server_io.patch_results(
-                killed_result_id, {'status': TaskStatus.KILLED.value}
+                killed['result_id'], {'status': TaskStatus.KILLED.value}
+            )
+            self.emit(
+                "algorithm_status_change",
+                {
+                    'result_id': killed['result_id'],
+                    'task_id': killed['task_id'],
+                    'collaboration_id':
+                        self.node_worker_ref.server_io.collaboration_id,
+                    'node_id': self.node_worker_ref.server_io.whoami.id_,
+                    'status': TaskStatus.KILLED.value,
+                    'organization_id':
+                        self.node_worker_ref.server_io.whoami.organization_id
+                },
+                namespace='/tasks'
             )
 
 
@@ -354,6 +384,7 @@ class Node(object):
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
             result_id=taskresult["id"],
+            task_id=task['id'],
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
@@ -361,9 +392,21 @@ class Node(object):
             database=task.get('database', 'default')
         )
 
-        # save task status to the server
+        # save task status to the server and send socket event to update others
         self.server_io.patch_results(
             id=taskresult['id'], result={'status': task_status.value}
+        )
+        self.socketIO.emit(
+            'algorithm_status_change',
+            data={
+                'node_id': self.server_io.whoami.id_,
+                'status': task_status.value,
+                'result_id': taskresult['id'],
+                'task_id': task['id'],
+                'collaboration_id': self.server_io.collaboration_id,
+                'organization_id': self.server_io.whoami.organization_id
+            },
+            namespace='/tasks',
         )
 
         if vpn_ports:
@@ -419,19 +462,20 @@ class Node(object):
             try:
                 results = self.__docker.get_result()
 
-                # notify all of a crashed container
-                # TODO why use status_code if status is more informative
-                if results.status_code:
-                    self.socketIO.emit(
-                        'container_failed',
-                        data={
-                            'node_id': self.server_io.whoami.id_,
-                            'status_code': results.status_code,
-                            'result_id': results.result_id,
-                            'collaboration_id': self.server_io.collaboration_id
-                        },
-                        namespace='/tasks'
-                    )
+                # notify socket channel of algorithm status change
+                self.socketIO.emit(
+                    'algorithm_status_change',
+                    data={
+                        'node_id': self.server_io.whoami.id_,
+                        'status': results.status.value,
+                        'result_id': results.result_id,
+                        'task_id': results.task_id,
+                        'collaboration_id': self.server_io.collaboration_id,
+                        'organization_id':
+                            self.server_io.whoami.organization_id,
+                    },
+                    namespace='/tasks',
+                )
 
                 self.log.info(
                     f"Sending result (id={results.result_id}) to the server!")

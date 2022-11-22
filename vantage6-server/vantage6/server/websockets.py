@@ -7,6 +7,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
+from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
 from vantage6.server.model.authenticable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
@@ -173,39 +174,56 @@ class DefaultSocketNamespace(Namespace):
         """
         self.__join_room_and_notify(room)
 
-    def on_container_failed(self, data: Dict):
+    def on_algorithm_status_change(self, data: Dict):
         """
-        An algorithm container has crashed at a node.
+        An algorithm container has changed its status.
 
-        This event notifies all nodes, and users that a container has crashed
-        in their collaboration.
+        This status change may be that the algorithm has finished, crashed,
+        etc. Here we notify the collaboration of the change.
 
         Parameters
         ----------
-        node_id : int
-            node_id where the algorithm container was running
-        status_code : int
-            status code from the container
-        result_id : int
-            result_id for which the container was running
-        collaboration_id : int
-            collaboration for which the task was running
+        data: Dict
+            Dictionary containing parameters on the updated algorithm status.
+            It should contain:
+            node_id : int
+                node_id where the algorithm container was running
+            status : int
+                New status of the algorithm container
+            result_id : int
+                result_id for which the algorithm was running
+            collaboration_id : int
+                collaboration for which the algorithm was running
         """
         result_id = data.get('result_id')
+        task_id = data.get('task_id')
         collaboration_id = data.get('collaboration_id')
-        status_code = data.get('status_code')
+        status = data.get('status')
         node_id = data.get('node_id')
+        organization_id = data.get('organization_id')
 
         run_id = db.Result.get(result_id).task.run_id
 
-        self.log.critical(
-            f"A container in for run_id={run_id} and result_id={result_id}"
-            f" within collaboration_id={collaboration_id} on node_id={node_id}"
-            f" exited with status_code={status_code}."
-        )
+        # log event in server logs
+        msg = (f"A container for run_id={run_id} and result_id={result_id} "
+               f"in collaboration_id={collaboration_id} on node_id={node_id}")
+        if has_task_failed(status):
+            self.log.critical(f"{msg} exited with status={status}.")
+        else:
+            self.log.info(f"{msg} has a new status={status}.")
 
-        room = "collaboration_"+str(collaboration_id)
-        emit("container_failed", run_id, room=room)
+        # emit task status change to other nodes/users in the collaboration
+        emit(
+            "algorithm_status_change", {
+                "status": status,
+                "result_id": result_id,
+                "task_id": task_id,
+                "run_id": run_id,
+                "collaboration_id": collaboration_id,
+                "node_id": node_id,
+                "organization_id": organization_id,
+            }, room=f"collaboration_{collaboration_id}"
+        )
 
     def __join_room_and_notify(self, room: str):
         """
