@@ -8,6 +8,7 @@ import {
   removeMatchedIdFromArray,
   removeValueFromArray,
 } from 'src/app/shared/utils';
+import { SocketioConnectService } from 'src/app/services/common/socketio-connect.service';
 
 @Injectable({
   providedIn: 'root',
@@ -15,9 +16,20 @@ import {
 export class TaskDataService extends BaseDataService {
   constructor(
     protected apiService: TaskApiService,
-    protected convertJsonService: ConvertJsonService
+    protected convertJsonService: ConvertJsonService,
+    private socketConnectService: SocketioConnectService
   ) {
     super(apiService, convertJsonService);
+    // subscribe to task changes
+    this.socketConnectService
+      .getAlgorithmStatusUpdates()
+      .subscribe((update) => {
+        this.updateTaskOnSocketEvent(update);
+      });
+    // subscribe to new tasks
+    this.socketConnectService.getTaskCreatedUpdates().subscribe((update) => {
+      this.addNewTaskOnSocketEvent(update);
+    });
   }
 
   async get(
@@ -87,5 +99,22 @@ export class TaskDataService extends BaseDataService {
     }
 
     super.remove(task);
+  }
+
+  updateTaskOnSocketEvent(data: any): void {
+    console.log(data);
+    let tasks = this.resource_list.value;
+    console.log(tasks);
+    for (let task of tasks as Task[]) {
+      if (task.id === data.task_id) {
+        task.status = data.status;
+        break;
+      }
+    }
+    this.resource_list.next(tasks);
+  }
+
+  addNewTaskOnSocketEvent(data: any): void {
+    if (data.task_id) this.get(data.task_id);
   }
 }

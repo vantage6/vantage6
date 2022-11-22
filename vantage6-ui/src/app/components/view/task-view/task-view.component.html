@@ -39,8 +39,8 @@
       <td>{{getDatabaseName()}}</td>
   </tr>
   <tr>
-      <td>Completed:</td>
-      <td>{{task.complete ? 'Yes': 'No'}}</td>
+      <td>Status:</td>
+      <td>{{task.status | titlecase}}</td>
   </tr>
   <tr>
       <td>Initiator:</td>
@@ -89,7 +89,7 @@
     (click)="askConfirmDelete()">
   Delete
 </button>
-<button *ngIf="userPermission.can('create', 'event', task.initiator_id) && task.status === 'started'"
+<button *ngIf="userPermission.can('create', 'event', task.initiator_id) && task.status === 'active'"
     mat-button class="btn btn-kill inline"
     (click)="askConfirmKill()">
   Kill this task

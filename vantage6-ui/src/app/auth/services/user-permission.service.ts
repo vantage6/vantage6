@@ -10,7 +10,7 @@ import { EMPTY_USER, User } from 'src/app/interfaces/user';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
-import { SocketioService } from 'src/app/services/common/socketio.service';
+import { SocketioConnectService } from 'src/app/services/common/socketio-connect.service';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -29,7 +29,7 @@ export class UserPermissionService {
     private tokenStorage: TokenStorageService,
     private ruleDataService: RuleDataService,
     private userDataService: UserDataService,
-    private socketService: SocketioService
+    private socketService: SocketioConnectService
   ) {
     this.tokenStorage.isLoggedIn().subscribe((loggedIn: boolean) => {
       if (loggedIn) this.setup();

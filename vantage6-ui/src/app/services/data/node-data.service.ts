@@ -5,7 +5,7 @@ import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Node, NodeWithOrg } from 'src/app/interfaces/node';
-import { SocketioService } from '../common/socketio.service';
+import { SocketioConnectService } from '../common/socketio-connect.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,7 +14,7 @@ export class NodeDataService extends BaseDataService {
   constructor(
     protected apiService: NodeApiService,
     protected convertJsonService: ConvertJsonService,
-    private socketService: SocketioService
+    private socketService: SocketioConnectService
   ) {
     super(apiService, convertJsonService);
     this.socketService.getNodeStatusUpdates().subscribe((update) => {

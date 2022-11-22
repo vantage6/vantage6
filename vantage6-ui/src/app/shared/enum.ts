@@ -35,3 +35,21 @@ export enum OpsType {
   SEND = 'send',
   ANY = '*',
 }
+
+export enum Sentiment {
+  POSITIVE = 'positive',
+  NEGATIVE = 'negative',
+  NEUTRAL = 'neutral',
+}
+
+export enum TaskStatus {
+  PENDING = 'pending',
+  INITIALIZING = 'initializing',
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  START_FAILED = 'start failed',
+  NO_DOCKER_IMAGE = 'non-existing Docker image',
+  CRASHED = 'crashed',
+  KILLED = 'killed by user',
+}

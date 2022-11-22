@@ -10,6 +10,7 @@ import { BaseDataService } from './base-data.service';
 export class ResultDataService extends BaseDataService {
   queried_task_ids: number[] = [];
 
+  // TODO update on result updates
   constructor(
     protected apiService: ResultApiService,
     protected convertJsonService: ConvertJsonService

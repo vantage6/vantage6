@@ -66,7 +66,7 @@ import { PasswordLostComponent } from './components/login/password-lost/password
 import { PasswordRecoverComponent } from './components/login/password-recover/password-recover.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
 import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
-import { SocketioService } from './services/common/socketio.service';
+import { SocketioConnectService } from './services/common/socketio-connect.service';
 import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.component';
 
 @NgModule({
@@ -139,7 +139,7 @@ import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.com
     AccessGuard,
     OrgAccessGuard,
     AccessGuardByOrgId,
-    SocketioService,
+    SocketioConnectService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,

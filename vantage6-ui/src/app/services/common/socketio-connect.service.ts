@@ -1,24 +1,21 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
-import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
 
 import { environment } from 'src/environments/environment';
-import { SnackbarService } from './snackbar.service';
 import { TokenStorageService } from './token-storage.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class SocketioService {
+export class SocketioConnectService {
   public message$: BehaviorSubject<string> = new BehaviorSubject('');
   public nodeStatusUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
+  public algoStatusUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
+  public taskCreated$: BehaviorSubject<any> = new BehaviorSubject({});
   socket: Socket<any>;
 
-  constructor(
-    private tokenStorage: TokenStorageService,
-    private snackbarService: SnackbarService
-  ) {}
+  constructor(private tokenStorage: TokenStorageService) {}
 
   setupConnection() {
     const token = this.tokenStorage.getToken();
@@ -45,34 +42,31 @@ export class SocketioService {
       this.message$.next(message);
     });
 
-    // give status messages when node comes online
+    // update observable (generate status messages downstream) when node comes
+    //online
     this.socket.on('node-online', (data: any) => {
-      this.snackbarService.openNodeStatusSnackBar(
-        `The node '${data.name}' just came online!`,
-        data,
-        true
-      );
       this.nodeStatusUpdate$.next({
         id: data.id,
+        name: data.name,
         online: true,
       });
     });
     // ... and when a node goes offline
     this.socket.on('node-offline', (data: any) => {
-      this.snackbarService.openNodeStatusSnackBar(
-        `The node '${data.name}' just went offline!`,
-        data,
-        false
-      );
       this.nodeStatusUpdate$.next({
         id: data.id,
+        name: data.name,
         online: false,
       });
     });
-  }
 
-  public sendMessage(message: string) {
-    this.socket.emit('message', message);
+    // get messages when algorithm changes status
+    this.socket.on('algorithm_status_change', (data: any) => {
+      this.algoStatusUpdate$.next(data);
+    });
+    this.socket.on('task_created', (data: any) => {
+      this.taskCreated$.next(data);
+    });
   }
 
   public getMessages = () => {
@@ -81,5 +75,12 @@ export class SocketioService {
 
   public getNodeStatusUpdates() {
     return this.nodeStatusUpdate$.asObservable();
+  }
+
+  public getAlgorithmStatusUpdates() {
+    return this.algoStatusUpdate$.asObservable();
+  }
+  public getTaskCreatedUpdates() {
+    return this.taskCreated$.asObservable();
   }
 }

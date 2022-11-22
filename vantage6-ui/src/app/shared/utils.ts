@@ -140,3 +140,11 @@ export function getUniquePropertyValues(array: any[], property: any): any[] {
     ),
   ];
 }
+
+export function enumIncludes(an_enum: any, value: any): boolean {
+  return Object.values(an_enum).includes(value);
+}
+
+export function dictEmpty(dict: any): boolean {
+  return dict && Object.keys(dict).length === 0;
+}
