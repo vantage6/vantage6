@@ -377,9 +377,10 @@ class Result(ResultBase):
                 HTTPStatus.BAD_REQUEST
 
         # notify collaboration nodes/users that the task has an update
-        self.socketio.emit("status_update", {'result_id': id},
-                           namespace='/tasks', room='collaboration_' +
-                           str(result.task.collaboration.id))
+        self.socketio.emit(
+            "status_update", {'result_id': id}, namespace='/tasks',
+            room=f'collaboration_{result.task.collaboration.id}'
+        )
 
         result.started_at = parse_datetime(data.get("started_at"),
                                            result.started_at)

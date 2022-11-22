@@ -35,6 +35,8 @@ class Task(Base):
     init_org = relationship("Organization", back_populates="created_tasks")
     init_user = relationship("User", back_populates="created_tasks")
 
+    # TODO remove this property in v4. It is superseded by status but now left
+    # here for backwards compatibility with other v3 versions
     @hybrid_property
     def complete(self):
         return all([r.complete for r in self.results])

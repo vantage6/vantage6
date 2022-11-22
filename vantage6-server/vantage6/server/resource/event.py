@@ -145,7 +145,9 @@ class KillTask(ServicesResources):
             'kill_containers', {
                 'kill_list': kill_list,
                 'collaboration_id': task.collaboration.id
-            }, namespace='/tasks'
+            },
+            namespace='/tasks',
+            room=f"collaboration_{task.collaboration_id}",
         )
 
         return {
@@ -173,9 +175,9 @@ class KillNodeTasks(ServicesResources):
           |--|--|--|--|--|--|\n
           |Event|Global|Create|❌|❌|Create kill signal for all tasks on any
           node|\n
-          |Event|Collaboration|Delete|✅|✅|Create kill signal for all tasks
+          |Event|Collaboration|Create|✅|✅|Create kill signal for all tasks
           on any node in collaborations|\n
-          |Event|Organization|Delete|✅|✅|Create kill signal for all tasks on
+          |Event|Organization|Create|✅|✅|Create kill signal for all tasks on
           any node of own organization|\n
 
           Accessible to users.
@@ -197,7 +199,7 @@ class KillNodeTasks(ServicesResources):
           401:
             description: Unauthorized
           400:
-            description: No task id provided
+            description: No task id provided or node is not online
 
         tags: ["Kill tasks"]
         """
@@ -210,6 +212,11 @@ class KillNodeTasks(ServicesResources):
         node = db.Node.get(id_)
         if not node:
             return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
+
+        if node.status != 'online':
+            return {
+                "msg": f"Node {id_} is not online so cannot kill its tasks!"
+            }, HTTPStatus.BAD_REQUEST
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
@@ -227,7 +234,9 @@ class KillNodeTasks(ServicesResources):
             'kill_containers', {
                 'node_id': node.id,
                 'collaboration_id': node.collaboration_id
-            }, namespace='/tasks'
+            },
+            namespace='/tasks',
+            room=f"collaboration_{node.collaboration_id}",
         )
 
         return {

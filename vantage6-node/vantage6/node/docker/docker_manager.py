@@ -507,4 +507,14 @@ class DockerManager(DockerBaseManager):
             self.log.warn(
                 "Received instruction from server to kill all algorithms "
                 "running on this node. Executing that now...")
-            return self.cleanup_tasks()
+            killed_result_ids = self.cleanup_tasks()
+            if len(killed_result_ids):
+                self.log.warn(
+                    "Killed the following result ids as instructed via socket:"
+                    f" {','.join(killed_result_ids)}"
+                )
+            else:
+                self.log.warn(
+                    "Instructed to kill tasks but none were running"
+                )
+            return killed_result_ids
