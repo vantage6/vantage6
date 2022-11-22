@@ -5,10 +5,12 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { BaseViewComponent } from '../base-view/base-view.component';
 import { Task, getEmptyTask, EMPTY_TASK } from 'src/app/interfaces/task';
-import { ResType } from 'src/app/shared/enum';
+import { ExitMode, ResType } from 'src/app/shared/enum';
 import { Result } from 'src/app/interfaces/result';
 import { ResultDataService } from 'src/app/services/data/result-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-task-view',
@@ -32,7 +34,8 @@ export class TaskViewComponent
     protected taskDataService: TaskDataService,
     protected modalService: ModalService,
     private resultDataService: ResultDataService,
-    private orgDataService: OrgDataService
+    private orgDataService: OrgDataService,
+    private http: HttpClient
   ) {
     super(taskApiService, taskDataService, modalService);
   }
@@ -74,5 +77,31 @@ export class TaskViewComponent
     let title = result.name ? result.name : result.id.toString();
     if (result.organization) title += ` (${result.organization.name})`;
     return title;
+  }
+
+  askConfirmKill() {
+    this.modalService.openKillModal(this.task.id).result.then((exit_mode) => {
+      if (exit_mode === ExitMode.KILL) {
+        this.kill();
+      }
+    });
+  }
+
+  kill() {
+    // send kill request for this task
+    this.http
+      .post<any>(environment.api_url + '/kill/task', {
+        id: this.task.id,
+      })
+      .subscribe(
+        (data: any) => {
+          this.modalService.openMessageModal([
+            'The nodes have been instructed to kill this task!',
+          ]);
+        },
+        (error: any) => {
+          this.modalService.openErrorModal(error.error.msg);
+        }
+      );
   }
 }

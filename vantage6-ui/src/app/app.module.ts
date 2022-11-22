@@ -67,6 +67,7 @@ import { PasswordRecoverComponent } from './components/login/password-recover/pa
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
 import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
 import { SocketioService } from './services/common/socketio.service';
+import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.component';
 
 @NgModule({
   declarations: [
@@ -106,6 +107,7 @@ import { SocketioService } from './services/common/socketio.service';
     PasswordRecoverComponent,
     LoginPageComponent,
     ChangePasswordComponent,
+    ModalKillComponent,
   ],
   imports: [
     BrowserModule,

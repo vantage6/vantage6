@@ -1,0 +1,13 @@
+<div class="modal-body">
+    <p><strong>
+        You are about to send instructions to the node(s) executing
+        this task to stop it.
+    </strong></p>
+    <p>
+        Are you sure you want to kill task {{ id }}?
+    </p>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-kill" (click)="kill()">Kill</button>
+    <button type="button" class="btn btn-dflt" (click)="cancel()" ngbAutofocus >Cancel</button>
+</div>

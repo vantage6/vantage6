@@ -11,6 +11,7 @@ export interface Result {
   result: string;
   log: string | null;
   task_id: number;
+  status: string;
   organization_id: number;
   organization?: Organization;
   ports?: Port[];
@@ -26,6 +27,7 @@ export const EMPTY_RESULT: Result = {
   name: '',
   input: '',
   result: '',
+  status: '',
   log: null,
   task_id: -1,
   organization_id: -1,

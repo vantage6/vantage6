@@ -2,6 +2,7 @@ export enum ExitMode {
   CANCEL = 'CANCEL',
   DELETE = 'DELETE',
   EDIT = 'EDIT',
+  KILL = 'KILL',
 }
 
 export enum ResType {

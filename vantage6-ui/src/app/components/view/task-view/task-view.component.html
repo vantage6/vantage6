@@ -85,12 +85,17 @@
   </tr>
 </table>
 <button *ngIf="userPermission.can('delete', 'task', org_id)"
-    mat-button class="btn btn-delete-strong"
+    mat-button class="btn btn-delete-strong inline"
     (click)="askConfirmDelete()">
   Delete
 </button>
+<button *ngIf="userPermission.can('create', 'event', task.initiator_id) && task.status === 'started'"
+    mat-button class="btn btn-kill inline"
+    (click)="askConfirmKill()">
+  Kill this task
+</button>
 <h5>Results</h5>
-<div *ngIf="results.length !== 1; else singleResultBlock">
+<ng-container *ngIf="results.length > 1; else singleResultBlock">
   <div *ngFor="let result of results">
     <mat-expansion-panel>
       <mat-expansion-panel-header>
@@ -103,9 +108,14 @@
       ></app-result-view>
     </mat-expansion-panel>
   </div>
-</div>
+</ng-container>
 <ng-template #singleResultBlock>
-  <app-result-view
-    [result]="results[0]"
-  ></app-result-view>
+  <ng-container *ngIf="results.length === 1; else noResultBlock">
+    <app-result-view
+      [result]="results[0]"
+    ></app-result-view>
+  </ng-container>
+</ng-template>
+<ng-template #noResultBlock>
+    There are no results available for this task!
 </ng-template>

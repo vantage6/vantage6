@@ -165,12 +165,13 @@ export class ConvertJsonService {
       description: json.description,
       image: json.image,
       collaboration_id: json.collaboration.id,
-      initiator_id: json.initiator,
+      initiator_id: json.init_org,
       run_id: json.run_id,
       parent_id: json.parent ? json.parent.id : null,
       database: json.database,
       complete: json.complete,
       children_ids: child_ids,
+      status: json.status,
     };
   }
 
@@ -194,6 +195,7 @@ export class ConvertJsonService {
       started_at: json.started_at,
       assigned_at: json.assigned_at,
       finished_at: json.finished_at,
+      status: json.status,
     };
   }
 }

@@ -129,3 +129,14 @@ export function arrayIdsEqual(arr1: any[], arr2: any[]): boolean {
 export function unique(array: any[]): any[] {
   return array.filter((val, idx, arr) => arr.indexOf(val) === idx);
 }
+
+export function getUniquePropertyValues(array: any[], property: any): any[] {
+  // return all unique values of a specific property
+  return [
+    ...new Set(
+      array.map((item) => {
+        return item[property];
+      })
+    ),
+  ];
+}

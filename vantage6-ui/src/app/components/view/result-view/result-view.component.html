@@ -11,6 +11,10 @@
     <td>Name:</td>
     <td>{{result.name}}</td>
   </tr>
+  <tr *ngIf="result.status">
+    <td>Status:</td>
+    <td>{{result.status | titlecase}}</td>
+  </tr>
   <tr>
     <td>Received:</td>
     <td *ngIf="result.assigned_at !== null">{{result.assigned_at | date: "MMMM d, y, HH:mm:ss"}}</td>

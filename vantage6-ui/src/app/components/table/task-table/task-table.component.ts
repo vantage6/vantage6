@@ -4,7 +4,12 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { deepcopy, filterArrayByProperty, parseId } from 'src/app/shared/utils';
+import {
+  deepcopy,
+  filterArrayByProperty,
+  getUniquePropertyValues,
+  parseId,
+} from 'src/app/shared/utils';
 import { TableComponent } from '../base-table/table.component';
 import { DisplayMode } from '../node-table/node-table.component';
 import { Task } from 'src/app/interfaces/task';
@@ -14,12 +19,6 @@ import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { Resource } from 'src/app/shared/types';
-
-export enum TaskStatus {
-  ALL = 'All',
-  COMPLETE = 'Completed',
-  INCOMPLETE = 'Not completed',
-}
 
 // TODO this contains a lot of duplication from NodeTableComponent, fix that
 @Component({
@@ -35,8 +34,10 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   collaborations: Collaboration[] = [];
   current_collaboration: Collaboration | null;
   displayMode = DisplayMode.ALL;
-  task_statuses = TaskStatus;
-  task_status_selected = TaskStatus.ALL as string;
+
+  TASK_STATUS_ALL: string = 'All';
+  available_task_statues: string[] = [];
+  selected_task_status: string = this.TASK_STATUS_ALL;
 
   displayedColumns: string[] = [
     'select',
@@ -46,7 +47,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     'image',
     'collaboration',
     'initiator',
-    'complete',
+    'status',
   ];
 
   constructor(
@@ -125,6 +126,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
 
   async setup(force_refresh: boolean = false) {
     await this.setResources(force_refresh);
+
+    this.setAvailableTaskStatuses();
 
     await this.addCollaborationsToResources();
 
@@ -213,6 +216,10 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     return `Select ${entity} to view:`;
   }
 
+  getSelectedTaskStatus(): string {
+    return this.selected_task_status;
+  }
+
   protected async addCollaborationsToResources() {
     for (let r of this.resources as Task[]) {
       for (let col of this.collaborations) {
@@ -244,8 +251,12 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     }
   }
 
-  getCompletedText(task: Task) {
-    return task.complete ? 'Yes' : 'No';
+  getStatus(task: Task): string {
+    if (task.status) {
+      return task.status;
+    } else {
+      return task.complete ? 'Completed' : 'Unknown';
+    }
   }
 
   async deleteSelectedTasks(): Promise<void> {
@@ -307,20 +318,17 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     return this.selection.selected.length > 0 && !this.canDeleteSelection();
   }
 
-  filterTaskStatus(selected_status: string): void {
-    // if showing all, set to all and return
-    this.task_status_selected = selected_status;
-    if (selected_status === TaskStatus.ALL) {
+  filterTaskStatus(selected_status: string = this.TASK_STATUS_ALL): void {
+    this.selected_task_status = selected_status;
+    if (selected_status === this.TASK_STATUS_ALL) {
       this.dataSource.data = this.resources;
-      return;
+    } else {
+      this.dataSource.data = filterArrayByProperty(
+        this.resources,
+        'status',
+        selected_status
+      );
     }
-
-    // else, filter resources by 'complete' or 'incomplete' tasks
-    let show_complete = selected_status === TaskStatus.COMPLETE ? true : false;
-    let resources_shown = this.resources.filter(function (elem: any) {
-      return elem.complete === show_complete;
-    });
-    this.dataSource.data = resources_shown;
   }
 
   async refreshTasks() {
@@ -333,5 +341,12 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     // table data should be reset because when a task is deleted, also children
     // and parent tasks are updated to reflect the deleted task
     this.setup();
+  }
+
+  setAvailableTaskStatuses() {
+    this.available_task_statues = getUniquePropertyValues(
+      this.resources,
+      'status'
+    );
   }
 }
