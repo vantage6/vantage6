@@ -91,3 +91,13 @@ body {
   border: none;
   margin-left: 20px;
 }
+.blue-snackbar {
+  background: v.$vtg-blue;
+  color: white;
+}
+.blue-snackbar button {
+  background-color: v.$vtg-blue;
+  color: white;
+  border: white;
+  margin-left: 20px;
+}
