@@ -35,7 +35,7 @@ import json
 
 from pathlib import Path
 from threading import Thread
-from typing import Union
+from typing import Dict, List, Union
 from socketio import ClientNamespace, Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
@@ -129,10 +129,10 @@ class NodeTaskNamespace(ClientNamespace):
     def on_kill_containers(self, kill_info):
         self.log.info(f"Received instruction to kill task: {kill_info}")
         killed_result_ids = self.node_worker_ref.kill_containers(kill_info)
-        self.log.debug("Set status of killed tasks.")
         for killed_result_id in killed_result_ids:
+            self.log.debug(f"Set status of killed result {killed_result_id}.")
             self.node_worker_ref.server_io.patch_results(
-                killed_result_id, { 'status': TaskStatus.KILLED.value }
+                killed_result_id, {'status': TaskStatus.KILLED.value}
             )
 
 
@@ -467,7 +467,7 @@ class Node(object):
                         'log': results.logs,
                         'status': results.status.value,
                         'finished_at': datetime.datetime.now().isoformat(),
-                    }
+                    },
                     init_org_id=init_org_id,
                 )
             except Exception:
@@ -814,22 +814,36 @@ class Node(object):
             self.cleanup()
             sys.exit()
 
-    def kill_containers(self, kill_info):
+    def kill_containers(self, kill_info: Dict) -> List[int]:
+        """
+        Kill containers on instruction from socket event
+
+        Parameters
+        ----------
+        kill_info: Dict
+            Dictionary received over websocket with instructions for which
+            tasks to kill
+
+        Returns
+        -------
+        List[int]:
+            List of result ids that have been killed on this node
+        """
         if kill_info['collaboration_id'] != self.server_io.collaboration_id:
             self.log.debug(
                 "Not killing tasks as this node is in another collaboration."
             )
-            return
+            return []
         elif 'node_id' in kill_info and \
                 kill_info['node_id'] != self.server_io.whoami.id_:
             self.log.debug(
                 "Not killing tasks as instructions to kill tasks were directed"
                 " at another node in this collaboration.")
-            return
+            return []
 
         # kill specific task if specified, else kill all algorithms
         kill_list = kill_info.get('kill_list', None)
-        self.__docker.kill_tasks(
+        return self.__docker.kill_tasks(
             org_id=self.server_io.whoami.organization_id, kill_list=kill_list
         )
 

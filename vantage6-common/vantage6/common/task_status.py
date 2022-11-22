@@ -8,7 +8,7 @@ class TaskStatus(Enum):
     # Task is being started
     INITIALIZING = 'initializing'
     # Container started without exceptions
-    STARTED = 'started'
+    ACTIVE = 'active'
     # Container exited and had zero exit code
     COMPLETED = 'completed'
 
@@ -40,11 +40,11 @@ def has_task_failed(status: Union[TaskStatus, str]) -> bool:
     """
     if isinstance(status, TaskStatus):
         return status not in [
-            TaskStatus.INITIALIZING, TaskStatus.STARTED, TaskStatus.COMPLETED,
+            TaskStatus.INITIALIZING, TaskStatus.ACTIVE, TaskStatus.COMPLETED,
             TaskStatus.PENDING
         ]
     else:
         return status not in [
-            TaskStatus.INITIALIZING.value, TaskStatus.STARTED.value,
+            TaskStatus.INITIALIZING.value, TaskStatus.ACTIVE.value,
             TaskStatus.COMPLETED.value, TaskStatus.PENDING.value
         ]

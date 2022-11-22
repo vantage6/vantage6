@@ -266,7 +266,7 @@ class DockerTaskManager(DockerBaseManager):
             self.status = TaskStatus.START_FAILED
             raise UnknownAlgorithmStartFail(e)
 
-        self.status = TaskStatus.STARTED
+        self.status = TaskStatus.ACTIVE
         return vpn_ports
 
     def _make_task_folders(self) -> None:

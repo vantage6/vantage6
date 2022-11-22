@@ -24,7 +24,7 @@ def setup(api, api_base, services):
 
     api.add_resource(
         KillTask,
-        path+'/task',
+        api_base+'/kill/task',
         endpoint='kill_task',
         methods=('POST',),
         resource_class_kwargs=services
@@ -32,7 +32,7 @@ def setup(api, api_base, services):
 
     api.add_resource(
         KillNodeTasks,
-        path+'/node/tasks',
+        api_base+'/kill/node/tasks',
         endpoint='kill_node_tasks',
         methods=('POST',),
         resource_class_kwargs=services
@@ -67,6 +67,10 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 class KillTask(ServicesResources):
     """ Provide endpoint to kill all containers executing a certain task """
+
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
+        self.r = getattr(self.permissions, module_name)
 
     @with_user
     def post(self):
