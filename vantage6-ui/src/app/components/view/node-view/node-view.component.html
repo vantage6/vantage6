@@ -44,6 +44,11 @@
     (click)="editNodeName()">
   Change node name
 </button>
+<button *ngIf="userPermission.can('create', 'event', node.organization_id) && node.is_online"
+    mat-button class="btn btn-kill inline"
+    (click)="askConfirmKill()">
+  Kill tasks
+</button>
 <br/>
 <div *ngIf="userPermission.can('edit', 'node', node.organization_id)"
       style="margin-top: 15px;">

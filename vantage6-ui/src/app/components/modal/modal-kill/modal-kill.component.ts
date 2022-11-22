@@ -11,7 +11,8 @@ import { ExitMode } from 'src/app/shared/enum';
   ],
 })
 export class ModalKillComponent implements OnInit {
-  @Input() id: number;
+  @Input() warning_message: string;
+  @Input() id_info: string;
 
   constructor(public activeModal: NgbActiveModal) {}
 

@@ -89,9 +89,10 @@ export class ModalService {
     return modalRef;
   }
 
-  openKillModal(task_id: number): NgbModalRef {
+  openKillModal(warning_message: string, id_info: string): NgbModalRef {
     const modalRef = this.modalService.open(ModalKillComponent, {});
-    modalRef.componentInstance.id = task_id;
+    modalRef.componentInstance.warning_message = warning_message;
+    modalRef.componentInstance.id_info = id_info;
     return modalRef;
   }
 }

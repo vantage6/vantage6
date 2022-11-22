@@ -80,11 +80,16 @@ export class TaskViewComponent
   }
 
   askConfirmKill() {
-    this.modalService.openKillModal(this.task.id).result.then((exit_mode) => {
-      if (exit_mode === ExitMode.KILL) {
-        this.kill();
-      }
-    });
+    this.modalService
+      .openKillModal(
+        `You are about to send instructions to the node(s) executing this task to stop it.`,
+        `task ${this.task.id}`
+      )
+      .result.then((exit_mode) => {
+        if (exit_mode === ExitMode.KILL) {
+          this.kill();
+        }
+      });
   }
 
   kill() {
