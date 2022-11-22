@@ -148,7 +148,10 @@ class NodeTaskNamespace(ClientNamespace):
             self.log.debug(f"Set status of killed result {killed['result_id']}"
                            f" (task {killed['task_id']}).")
             self.node_worker_ref.server_io.patch_results(
-                killed['result_id'], {'status': TaskStatus.KILLED.value}
+                killed['result_id'], {
+                    'status': TaskStatus.KILLED.value,
+                    'finished_at': datetime.datetime.now().isoformat()
+                }
             )
             self.emit(
                 "algorithm_status_change",
