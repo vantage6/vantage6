@@ -40,6 +40,10 @@ To create a new release, one should go through the following steps:
     $ git checkout main
     $ git pull
 
+  *Make sure the branch is up-to-date*. **Patches** are usually directly
+  merged into main, but for **minor** or **major** releases you usually need
+  to execute a pull request from a development branch.
+
 * Create a tag for the release. See :ref:`format` for more details on version names:
 
   ::
