@@ -1,34 +1,7 @@
 Welcome
-====
+=======
 
-What is vantage6?
------------------
 
-Vantage6 stands for pri\ **va**\ cy preservi\ **n**\ g
-federa\ **t**\ ed le\ **a**\ rnin\ **g**\ infrastructur\ **e** for
-\ **s**\ ecure \ **i**\ nsight e\ **x**\ change. Watch this
-`video <https://youtu.be/HVHvlkAeuD0>`_ for a quick introduction.
-
-The project is inspired by the `Personal Health Train <https://pht.health-ri.nl/>`_
-(PHT) concept. In this analogy vantage6 is the *tracks* and *stations*.
-Compatible algorithms are the *trains*, and computation tasks are the *journey*.
-
-vantage6 is here for:
-
-* delivering algorithms to data stations and collecting their results
-* managing users, organizations, collaborations, computation tasks and their results
-* providing control (security) at the data-stations to their owners
-
-vantage6 is *not* (yet):
-
-* formatting the data at the data station
-* aligning data across the data stations
-
-vantage6 is designed with three fundamental functional aspects of Federated learning.
-
-1. **Autonomy**. All involved parties should remain independent and autonomous.
-2. **Heterogeneity**. Parties should be allowed to have differences in hardware and operating systems.
-3. **Flexibility**. Related to the latter, a federated learning infrastructure should not limit the use of relevant data.
 
 Resources
 ---------
