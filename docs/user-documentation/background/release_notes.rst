@@ -41,7 +41,7 @@ Release notes
   -  Unused code removed from the Makefile
      (`PR#324 <https://github.com/vantage6/vantage6/issues/357>`__,
      `ISSUE#284 <https://github.com/vantage6/vantage6/issues/284>`__).
-  -  Panda version is frozen to version 1.3.5
+  -  Pandas version is frozen to version 1.3.5
      (`PR#363 <https://github.com/vantage6/vantage6/pull/363>`__ ,
      `ISSUE#266 <https://github.com/vantage6/vantage6/issues/266>`__).
 

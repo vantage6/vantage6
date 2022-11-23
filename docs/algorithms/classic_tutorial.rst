@@ -28,7 +28,6 @@ The mean of :math:`Q = [q_1, q_2 ...  q_n]` is computed as:
 
 .. math::
 
-
    Q_{mean} = \frac{1}{n} \sum \limits_{i=1}^{n} {q_i} = \frac{q_1 + q_2 + ... + q_n}{n}
 
 When dataset :math:`Q` is **horizontally partitioned** in dataset :math:`A` and
@@ -43,7 +42,6 @@ We would like to compute :math:`Q_{mean}` from dataset A and B. This could be
 computed as:
 
 .. math::
-
 
    Q_{mean} = \frac{(a_1+a_2+...+a_j) + (b_1+b_2+...+b_k)}{j+k} = \frac{\sum A
       + \sum B }{j+k}

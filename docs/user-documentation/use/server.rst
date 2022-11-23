@@ -220,6 +220,14 @@ specify any environment, you should only specify the key ``application``
          username: your-username
          password: super-secret-password
 
+       # Set an email address you want to direct your users to for support
+       # (defaults to the address you set above in the SMTP server or otherwise
+       # to support@vantage6.ai)
+       support_email: your-support@email.com
+
+       # set how long reset token provided via email are valid (default 1 hour)
+       email_token_validity_minutes: 60
+
        # If algorithm containers need direct communication between each other
        # the server also requires a VPN server. (!) This must be a EduVPN
        # instance as vantage6 makes use of their API (!)
