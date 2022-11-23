@@ -24,7 +24,7 @@ Other possible interesting resources:
 -----------------------------------------------
 
 .. toctree::
-   :numbered:
+   :numbered: 3
    :maxdepth: 3
    :caption: Contents:
 
@@ -35,36 +35,3 @@ Other possible interesting resources:
    devops/index
    release_notes
    glossary
-
-.. note:
-
-   1. Introduction
-   2. User documentation
-      - install
-      - use
-   3. Technical documentation
-      - Architecture
-      - Client
-      - Node
-      - Server
-      - API reference
-   4. Algorithms
-      - concepts
-      - designing
-      - implementation
-      - Build & distribute
-   5. DevOps
-      - Contribute
-      - Documentation
-      - Release
-
-
-
-
-
-.. Indices and tables
-.. ==================
-
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
