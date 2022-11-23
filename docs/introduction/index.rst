@@ -1,6 +1,6 @@
-.. _introduction:
 
 .. include:: <isonum.txt>
+.. _introduction:
 
 Introduction
 ============
@@ -62,6 +62,8 @@ Watch this `video <https://youtu.be/HVHvlkAeuD0>`_ for a quick introduction.
 The project is inspired by the `Personal Health Train <https://pht.health-ri.nl/>`_
 (PHT) concept. In this analogy vantage6 is the *tracks* and *stations*.
 Compatible algorithms are the *trains*, and computation tasks are the *journey*.
+Vantage6 is completely open source under the
+`Apache License <https://github.com/IKNL/vantage6/blob/master/LICENSE>`_.
 
 vantage6 is here for:
 
@@ -113,4 +115,44 @@ Conceptually, vantage6 consists of the following parts:
 * **Organizations** that are interested in collaborating;
 * **Users** (i.e. researchers or other applications) that request computations
   from the nodes
-* A **Docker registry** that functions as database of algorithms;
+* A **Docker registry** that functions as database of algorithms
+
+
+Partners
+--------
+
+Contact us via the `Discourse <https://vantage6.discourse.group/>`_ forum!
+
+.. container:: block-image
+
+    .. image:: /images/iknl-logo.jpg
+        :alt: IKNL logo
+        :align: left
+
+* Anja van Gestel
+* Bart van Beusekom
+* Frank Martin
+* Hasan Alradhi
+* Melle Sieswerda
+* Gijs Geleijnse
+
+.. container:: block-image
+
+    .. image:: /images/escience-center-logo.png
+        :alt: eScience center logo
+        :align: center
+
+* Djura Smits
+* Lourens Veen
+
+.. container:: block-image
+
+    .. image:: /images/maastro-logo.png
+        :alt: eScience center logo
+        :align: center
+
+* Johan van Soest
+
+**Would you like to contribute?** Check out
+:ref:`how to contribute! <Contribute>`
+
