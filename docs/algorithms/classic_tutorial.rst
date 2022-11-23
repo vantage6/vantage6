@@ -1,3 +1,5 @@
+.. _algo-tutorial:
+
 Classic Tutorial
 ================
 

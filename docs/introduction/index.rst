@@ -1,3 +1,5 @@
+.. _introduction:
+
 .. include:: <isonum.txt>
 
 Introduction
