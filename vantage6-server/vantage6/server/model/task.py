@@ -25,12 +25,14 @@ class Task(Base):
     parent_id = Column(Integer, ForeignKey("task.id"))
     database = Column(String)
     initiator_id = Column(Integer, ForeignKey("organization.id"))
+    init_user_id = Column(Integer, ForeignKey("user.id"))
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
     results = relationship("Result", back_populates="task")
-    initiator = relationship("Organization", back_populates="created_tasks")
+    init_org = relationship("Organization", back_populates="created_tasks")
+    init_user = relationship("User", back_populates="created_tasks")
 
     @hybrid_property
     def complete(self):

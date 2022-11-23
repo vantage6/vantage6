@@ -134,14 +134,14 @@ class NodeClient(ClientBase):
             "started_at": datetime.datetime.now().isoformat()
         })
 
-    def patch_results(self, id: int, initiator_id: int, result: dict):
+    def patch_results(self, id: int, init_org_id: int, result: dict):
         """ Update the results at the central server.
 
             Typically used when to algorithm container is finished or
             when a status-update is posted (started, finished)
 
             :param id: id of the task to patch
-            :param initiator_id: organization id of the origin of the
+            :param init_org_id: organization id of the origin of the
                 task. This is required because we want to encrypt the
                 results specifically for him
 
@@ -150,10 +150,10 @@ class NodeClient(ClientBase):
             FIXME: public keys should be cached
         """
         if "result" in result:
-            msg = f"Retrieving public key from organization={initiator_id}"
+            msg = f"Retrieving public key from organization={init_org_id}"
             self.log.debug(msg)
 
-            org = self.request(f"organization/{initiator_id}")
+            org = self.request(f"organization/{init_org_id}")
             public_key = None
             try:
                 public_key = org["public_key"]

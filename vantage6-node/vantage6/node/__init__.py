@@ -436,17 +436,17 @@ class Node(object):
                     return
 
                 response = self.server_io.request(f"task/{task_id}")
-                initiator_id = response.get("initiator")
+                init_org_id = response.get("init_org")
 
-                if not initiator_id:
+                if not init_org_id:
                     self.log.error(
-                        f"Initiator id from task (id={task_id})could not be "
-                        f"retrieved"
+                        f"Initiator organization from task (id={task_id})could"
+                        " not be retrieved!"
                     )
 
                 self.server_io.patch_results(
                     id=results.result_id,
-                    initiator_id=initiator_id,
+                    init_org_id=init_org_id,
                     result={
                         'result': results.data,
                         'log': results.logs,
