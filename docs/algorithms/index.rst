@@ -6,4 +6,5 @@ Algorithms
    :caption: Contents:
 
    concepts
+   classic_tutorial
 ..    Tutorial
