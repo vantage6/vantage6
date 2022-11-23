@@ -6,5 +6,4 @@ Background
 
     ./architecture
     ./partners
-    ./release_notes
     ./contribute

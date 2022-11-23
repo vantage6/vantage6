@@ -33,6 +33,7 @@ Other possible interesting resources:
    technical-documentation/index
    algorithms/index
    devops/index
+   release_notes
    glossary
 
 .. note:
