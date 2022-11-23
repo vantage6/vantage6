@@ -1,4 +1,6 @@
-Algorithms
+.. _algorithm-docs:
+
+Algorithm
 ==========
 
 .. toctree::

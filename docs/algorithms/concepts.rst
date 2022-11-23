@@ -1,3 +1,5 @@
+.. _algo-concepts:
+
 Concepts
 ========
 

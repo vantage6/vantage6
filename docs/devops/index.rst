@@ -1,3 +1,5 @@
+.. _dev-docs:
+
 Developer community
 ======
 

@@ -3,22 +3,24 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Technical documentation pages
+Vantage6 documentation pages
 ====================================
 
-Welcome to the technical documentation of the vantage6 project. The following information should be here:
+Welcome to the documentation of the vantage6 project. These pages should help
+you to find information on:
 
-- Design of vantage6
-- Internal function documentation
-- DevOps
+- A general :ref:`introduction` to vantage6
+- :ref:`user-docs`, including how to :ref:`install_vantage6` and :ref:`use_vantage6` vantage6
+- :ref:`algorithm-docs` documentation that explains the :ref:`algo-concepts` and provides a :ref:`algo-tutorial`
+- :ref:`tech-docs` that detail how the code is structured and how features have been implemented.
+- :ref:`dev-docs` documentation that explains how you can contribute
+- and more...
 
-These pages do not include any user documentation, therefore you need to be at our user `documentation <https://docs.vantage6.ai>`_.
+Other possibly interesting resources for you:
 
-Other possible interesting resources:
-
-* `vantage6 <https://vantage6.ai>`_ - our main project site
-* `Github <https://github.com/vantage6/vantage6>`_ - source code of the project, including this documentation
-* `Discord <https://discord.gg/yAyFf6Y>`_ - Chat with us!
+* `vantage6 <https://vantage6.ai>`_ - Our main project site
+* `Github <https://github.com/vantage6/vantage6>`_ - Source code of the project, including this documentation
+* `Discord <https://discord.gg/yAyFf6Y>`_ - Chat with vantage6 users and developers!
 
 
 -----------------------------------------------
@@ -30,8 +32,8 @@ Other possible interesting resources:
 
    introduction/index
    user-documentation/index
-   technical-documentation/index
    algorithms/index
+   technical-documentation/index
    devops/index
    release_notes
    glossary

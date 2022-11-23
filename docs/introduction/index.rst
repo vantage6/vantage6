@@ -1,3 +1,5 @@
+.. _introduction:
+
 Introduction
 ============
 This introduction will describe the overal achitecture of the vantage6

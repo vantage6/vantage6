@@ -1,3 +1,5 @@
+.. _user-docs:
+
 User documentation
 ==================
 
