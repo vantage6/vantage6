@@ -95,8 +95,6 @@ software project. Github will review the request (not sure on what), but so
 far approved all requests.
 
 
-
-
 Community Planning
 ------------------
 We host bi-monthly community meetings intended for aligning development
