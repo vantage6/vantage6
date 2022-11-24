@@ -62,7 +62,7 @@ html_theme_options = {
     'logo_name': False,
     'github_user': 'vantage6',
     'github_repo': 'vantage6',
-    'fixed_sidebar': True,
+    'fixed_sidebar': False,
 }
 
 # The master toctree document.
