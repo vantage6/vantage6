@@ -8,8 +8,8 @@ This section will describe the community, the overall architecture of the
 platform and explains how this documentation space is organized.
 
 
-Index
------
+Overview
+--------
 This documentation space consists of 7 main sections:
 
 * **Introduction** |rarr| *You are here now*

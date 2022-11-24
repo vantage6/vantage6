@@ -34,9 +34,9 @@ Index
    self
    introduction/index
    user-documentation/index
-   algorithms/index
    technical-documentation/index
    devops/index
+   algorithms/index
    glossary
 
 .. toctree::
