@@ -20,6 +20,7 @@ help:
 	@echo "  clean        : clean all built packages"
 	@echo "  community    : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test         : run all unittests and compute coverage"
+	@echo "  devdocs      : run a documentation development server"
 	@echo "Using tag: ${TAG}"
 
 set-version:
@@ -114,3 +115,6 @@ clean:
 
 test:
 	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
+
+devdocs:
+	sphinx-autobuild docs docs/_build/html --watch .
