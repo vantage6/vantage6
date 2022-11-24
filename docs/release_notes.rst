@@ -1,7 +1,8 @@
 Release notes
 =============
 
-**3.4.2**
+3.4.2
+-----
 
 *3 november 2022*
 
@@ -14,7 +15,8 @@ Release notes
      task (`PR#375 <https://github.com/vantage6/vantage6/pull/375>`_).
 
 
-**3.4.0 & 3.4.1**
+3.4.0 & 3.4.1
+-------------
 
 *25 oktober 2022*
 
@@ -75,14 +77,16 @@ Release notes
    3.4.1 is a rebuild from 3.4.0 in which the all dependencies are fixed, as
    the build led to a broken server image.
 
-**3.3.7**
+3.3.7
+-----
 
 -  **Bugfix**
 
   -  The function ``client.util.change_my_password()`` was updated
      (`Issue #333 <https://github.com/vantage6/vantage6/issues/333>`__)
 
-**3.3.6**
+3.3.6
+-----
 
 -  **Bugfix**
 
@@ -96,7 +100,8 @@ Release notes
     in the right version. From this point onwards, the user interface changes
     will also be part of the release notes.
 
-**3.3.5**
+3.3.5
+-----
 
 -  **Feature**
 
@@ -114,7 +119,8 @@ Release notes
     to 3.3.5. That version was otherwise skipped due to a temporary mistake
     in the release pipeline.
 
-**3.3.3**
+3.3.3
+-----
 
 -  **Bugfix**
 
@@ -126,7 +132,8 @@ Release notes
      (`Issue#305 <https://github.com/vantage6/vantage6/issues/305>`__,
      `PR#308 <https://github.com/vantage6/vantage6/pull/308>`__)
 
-**3.3.2**
+3.3.2
+-----
 
 -  **Bugfix**
 
@@ -144,7 +151,8 @@ Release notes
      (`PR#299 <https://github.com/vantage6/vantage6/pull/299>`__,
      `Issue#297 <https://github.com/vantage6/vantage6/issues/297>`__)
 
-**3.3.1**
+3.3.1
+-----
 
 -  **Bugfix**
 
@@ -167,7 +175,8 @@ Release notes
   -  Fixed some issues that made ``3.3.0`` incompatible with ``3.3.1``
      (`Issue#285 <https://github.com/vantage6/vantage6/issues/285>`__).
 
-**3.3.0**
+3.3.0
+-----
 
 -  **Feature**
 
@@ -228,7 +237,8 @@ Release notes
   -  GET ``/role/<id>`` didn’t give an error if a role didn’t exist.
      Now it does.
 
-**3.2.0**
+3.2.0
+-----
 
 -  **Feature**
 
@@ -268,7 +278,8 @@ Release notes
   -  Fix error with multiple-database feature, where default is now
      used if specific database is not found
 
-**3.1.0**
+3.1.0
+-----
 
 -  **Feature**
 
@@ -305,7 +316,8 @@ Release notes
      create roles only for their own organization - this has been
      corrected.
 
-**3.0.0**
+3.0.0
+-----
 
 -  **Feature**
 
@@ -345,7 +357,8 @@ Release notes
   -  Check if node names are allowed docker names
 
 
-**2.3.0 - 2.3.4**
+2.3.0 - 2.3.4
+-------------
 
 -  **Feature**
 
@@ -357,7 +370,8 @@ Release notes
 
   -  Performance improvements on the ``/organization`` endpoint
 
-**2.2.0**
+2.2.0
+-----
 
 -  **Feature**
 
@@ -376,7 +390,8 @@ Release notes
   -  Some http error messages have improved
   -  Organization fields can now be set to an empty string
 
-**2.1.2 and 2.1.3**
+2.1.2 & 2.1.3
+-------------
 
 -  **Bugfix**
 
@@ -384,7 +399,8 @@ Release notes
      Solves the issue of unexpected disconnects from the DB and thereby
      freezing the application.
 
-**2.1.1**
+2.1.1
+-----
 
 -  **Bugfix**
 
@@ -392,7 +408,8 @@ Release notes
   -  The ``client.result.list(...)`` broke when it was not able to
      deserialize one of the in- or outputs.
 
-**2.1.0**
+2.1.0
+-----
 
 -  **Feature**
 
@@ -423,14 +440,16 @@ Release notes
      startup. `See this Github
      issue <https://github.com/IKNL/vantage6/issues/67>`__.
 
-**2.0.0.post1**
+2.0.0.post1
+-----------
 
 -  **Bugfix**
 
   -  Fixed a bug that prevented the usage of secured registry
      algorithms
 
-**2.0.0**
+2.0.0
+-----
 
 -  **Feature**
 
@@ -460,14 +479,16 @@ Release notes
      endpoint ``/health/fix`` . This will be patched in a newer
      version.
 
-**1.2.3**
+1.2.3
+-----
 
 -  **Feature**
 
   -  The node is now compatible with the Harbor v2.0 API
 
 
-**1.2.2**
+1.2.2
+-----
 
 -  **Bug fixes**
 
@@ -478,7 +499,8 @@ Release notes
   -  Fixed config folder mounting point when the option ``--config``
      option is used in ``vnode start``
 
-**1.2.1**
+1.2.1
+-----
 
 -  **Bug fixes**
 
@@ -487,7 +509,8 @@ Release notes
   -  Algorithm containers could still access the internet through their
      host. This has been patched.
 
-**1.2.0**
+1.2.0
+-----
 
 -  **Features**
 
@@ -525,7 +548,8 @@ Release notes
   -  ``vantage6-toolkit`` repository has been merged with the
      ``vantage6-client`` as they were very tight coupled.
 
-**1.1.0**
+1.1.0
+-----
 
 -  **Features**
 
@@ -546,7 +570,8 @@ Release notes
   -  Removed defective websocket watchdog. There still might be
      disconnection issues from time to time.
 
-**1.0.0**
+1.0.0
+-----
 
 -  **Updated Command Line Interface (CLI)**
 

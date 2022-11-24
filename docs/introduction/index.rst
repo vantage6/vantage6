@@ -21,7 +21,7 @@ This documentation space consists of 7 main sections:
   vantage6 infrastructure*
 * :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
   vantage6*
-* :doc:`/release-notes/index`
+* :doc:`/release_notes` |rarr| changelog to the source code
 * :doc:`/glossary`
 
 
