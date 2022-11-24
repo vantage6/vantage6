@@ -87,6 +87,9 @@ learning.
 3. **Flexibility**. Related to the latter, a federated learning infrastructure
    should not limit the use of relevant data.
 
+
+.. _architectureoverview:
+
 Architecture
 ------------
 

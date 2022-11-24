@@ -18,9 +18,9 @@ The following is a list of definitions used in vantage6.
 -  **Distributed learning**: see *Federated Learning*
 -  **Docker:** a platform that uses operating system virtualization to
    deliver software in packages called containers. It is worth noting
-   that although they are often confused, `Docker containers are not
-   virtual
-   machines <https://www.docker.com/blog/containers-are-not-vms/>`__.
+   that although they are often confused, `Docker containers are not virtual machines <https://www.docker.com/blog/containers-are-not-vms/>`__.
+- **Data Station**: Virtual Machine containing the vantage6-node application
+  and a database.
 
 **F**
 
@@ -41,7 +41,7 @@ The following is a list of definitions used in vantage6.
 
 **H**
 
--  **Heterogeneity:** the condition in which in a federated learning
+-  **Heterogeneity**: the condition in which in a federated learning
    scenario, parties are allowed to have differences in hardware and
    software (i.e., operating systems).
 -  **Horizontally-partitioned data**: data spread across different
@@ -53,6 +53,11 @@ The following is a list of definitions used in vantage6.
    :align: center
 
    Horizontally-partitioned data
+
+**N**
+
+-  **Node**: vantage6 node application that runs at a **Data Station** which
+   has access to the local data.
 
 **M**
 
@@ -69,6 +74,12 @@ The following is a list of definitions used in vantage6.
 **S**
 
 -  **Secure multi-party computation**: see *Multi-party computation*
+-  **Server**: Public access point of the vantage6 infrastructure. Contains at
+   least the **vantage6-server** application but can also host the optional
+   components: Docker registry, VPN server and RabbitMQ. In this documentation
+   space we try to be explicit when we talk about _server_ and
+   _vantage6-server_, however you might encounter _server_ where
+   _vantage6-server_ should have been.
 
 **V**
 

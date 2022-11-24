@@ -1,7 +1,7 @@
 .. _tech-docs:
 
-Technical Documentation
-=======================
+Technical Docs
+==============
 
 .. toctree::
    :maxdepth: 3
