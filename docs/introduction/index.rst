@@ -100,11 +100,11 @@ communicate directly with other algorithms that run on other nodes if required.
    :alt: Architecture overview
    :align: center
 
-   Vantage6 has a client-server architecture. The Researcher interacts with
-   the server to create computation requests and to manage user accounts,
-   organizations and collaborations. The Server contains users, organizations,
-   collaborations, tasks and their results. The Node has access to data and
-   handles computation requests from the server.
+   Vantage6 has a client server architecture. (A) The Client is used by the
+   researcher to create computation requests. It is also used to manage users,
+   organizations and collaborations. (B) The Server contains users,
+   organizations, collaborations, tasks and their results. (C) The Node has
+   access to data and handles computation requests from the server.
 
 The server is in charge of processing the tasks as well as of handling
 administrative functions such as authentication and authorization.
@@ -120,8 +120,8 @@ Conceptually, vantage6 consists of the following parts:
 
 Partners
 --------
-
-Contact us via the `Discourse <https://vantage6.discourse.group/>`_ forum!
+Our community is open to everyone. The following people and organizations made
+a significant contribution to the design and implementation of vantage6.
 
 .. container:: block-image
 
@@ -154,5 +154,6 @@ Contact us via the `Discourse <https://vantage6.discourse.group/>`_ forum!
 * Johan van Soest
 
 **Would you like to contribute?** Check out
-:ref:`how to contribute! <Contribute>`
+:ref:`how to contribute! <Contribute>` Find and chat with us via the
+`Discord <https://discord.gg/yAyFf6Y>`_ chat!
 
