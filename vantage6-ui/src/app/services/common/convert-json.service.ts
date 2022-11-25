@@ -182,15 +182,28 @@ export class ConvertJsonService {
         port_ids.push(port.id);
       }
     }
+    // task id can be in different places depending on which result endpoint
+    // is called in which manner
+    let task_id: number;
+    if (json.task_id) {
+      task_id = json.task_id;
+    } else if (json.task.id) {
+      task_id = json.task.id;
+    } else {
+      task_id = json.task;
+    }
+    let organization_id: number = json.organization.id
+      ? json.organization.id
+      : json.organization;
+
     return {
       id: json.id,
       type: ResType.RESULT,
-      name: json.name,
       input: json.input,
       result: json.result,
       log: json.log,
-      task_id: json.task_id,
-      organization_id: json.organization,
+      task_id: task_id,
+      organization_id: organization_id,
       port_ids: port_ids,
       started_at: json.started_at,
       assigned_at: json.assigned_at,

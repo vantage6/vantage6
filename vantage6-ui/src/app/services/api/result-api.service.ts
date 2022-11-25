@@ -27,7 +27,6 @@ export class ResultApiService extends BaseApiService {
   // for a result it is never used I think (?)
   get_data(result: Result): any {
     let data: any = {
-      name: result.name,
       input: result.input,
       result: result.result,
       log: result.log,

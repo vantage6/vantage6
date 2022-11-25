@@ -47,8 +47,15 @@ export class TaskViewComponent
   }
 
   async setResults(): Promise<void> {
-    this.results = await this.resultDataService.get_by_task_id(this.task.id);
+    (await this.resultDataService.get_by_task_id(this.task.id)).subscribe(
+      (results) => {
+        this.results = results;
+        this.setResultOrganizations();
+      }
+    );
+  }
 
+  async setResultOrganizations(): Promise<void> {
     for (let r of this.results) {
       if (r.organization_id)
         (await this.orgDataService.get(r.organization_id)).subscribe((org) => {
@@ -74,7 +81,7 @@ export class TaskViewComponent
   }
 
   getResultPanelTitle(result: Result): string {
-    let title = result.name ? result.name : result.id.toString();
+    let title = result.id.toString();
     if (result.organization) title += ` (${result.organization.name})`;
     return title;
   }

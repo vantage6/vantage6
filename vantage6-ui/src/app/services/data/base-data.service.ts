@@ -52,6 +52,8 @@ export abstract class BaseDataService {
   updateObsPerOrg(resources: Resource[]) {
     if (!this.requested_org_lists) return;
     if (resources.length && !('organization_id' in resources[0])) {
+      // ignore resources that do not have organization ids -> we can not
+      // divide them in resources per organization
       return;
     }
     for (let org_id of this.requested_org_lists) {

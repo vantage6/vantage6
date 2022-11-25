@@ -102,9 +102,7 @@ export class TaskDataService extends BaseDataService {
   }
 
   updateTaskOnSocketEvent(data: any): void {
-    console.log(data);
     let tasks = this.resource_list.value;
-    console.log(tasks);
     for (let task of tasks as Task[]) {
       if (task.id === data.task_id) {
         task.status = data.status;
