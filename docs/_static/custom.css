@@ -14,4 +14,11 @@ dl.class, dl.method{
 div.sphinxsidebar {
     max-height: 100%;
     overflow-y: auto;
+    width: 260px;
+    line-height: 26px;
+    border-right: 1px lightgray solid;
+}
+
+div.bodywrapper {
+    margin-left: 260px;
 }

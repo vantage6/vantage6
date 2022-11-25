@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('../vantage6-common'))
 
 project = 'vantage6'
 
-copyright = ('2022, vantage6')
+copyright = ('2022 vantage6')
 author = (
     'A. van Gestel, '
     'B. van Beusekom, '
@@ -65,7 +65,7 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 html_theme_options = {
-    'logo': "logo.png",
+    'logo': "logo-240x80.png",
     'logo_name': False,
     'github_user': 'vantage6',
     'github_repo': 'vantage6',
