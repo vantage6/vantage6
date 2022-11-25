@@ -28,18 +28,19 @@ Index
 
 .. toctree::
    :numbered: 3
-   :maxdepth: 3
+   :maxdepth: 4
    :caption: Contents:
 
-   self
    introduction/index
    user-documentation/index
+   algorithms/index
    technical-documentation/index
    devops/index
-   algorithms/index
    glossary
 
 .. toctree::
    :maxdepth: 2
 
+   self
    release_notes
+   partners

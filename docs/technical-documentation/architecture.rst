@@ -19,8 +19,8 @@ components are explained in `Components`_.
    :alt: Architecture overview
    :align: center
 
-   General diagram of the basic components of vantage6. More detailed
-   schematics of the server and nodes are shown in Fig. 3 and 5, respectively.
+   General diagram of the basic components of vantage6. (A) the client, also
+   called User, Reseacher or Application, (B)
 
 .. todo:: update fig 3 and fig 5 reference
 

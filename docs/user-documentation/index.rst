@@ -6,6 +6,5 @@ User Docs
 .. toctree::
     :maxdepth: 3
 
-    background/index
-    install/index
-    use/index
+    installation
+    use

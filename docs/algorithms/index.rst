@@ -1,7 +1,7 @@
 .. _algorithm-docs:
 
-Algorithm
-==========
+Algorithm Dev
+=============
 
 .. toctree::
    :maxdepth: 3

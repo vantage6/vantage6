@@ -10,3 +10,8 @@ dl.class, dl.method{
 .block-image {
     display: inline-block;
 }
+
+div.sphinxsidebar {
+    max-height: 100%;
+    overflow-y: auto;
+}

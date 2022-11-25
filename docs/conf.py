@@ -22,11 +22,17 @@ sys.path.insert(0, os.path.abspath('../vantage6-common'))
 # -- Project information -----------------------------------------------------
 
 project = 'vantage6'
-copyright = (
-    '2022, F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
-)
-author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 
+copyright = ('2022, vantage6')
+author = (
+    'A. van Gestel, '
+    'B. van Beusekom, '
+    'D. Smits, '
+    'F. Martin, '
+    'J. van Soest, '
+    'H. Alradhi, '
+    'M. Sieswerda'
+)
 
 # -- General configuration ---------------------------------------------------
 
@@ -63,7 +69,7 @@ html_theme_options = {
     'logo_name': False,
     'github_user': 'vantage6',
     'github_repo': 'vantage6',
-    'fixed_sidebar': False,
+    'fixed_sidebar': True,
 }
 
 # The master toctree document.

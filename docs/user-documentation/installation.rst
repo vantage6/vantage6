@@ -1,11 +1,196 @@
+.. _install_vantage6:
+
+Installation
+============
+
+**vantage6** consists of several :ref:`components <Components>` that
+can be installed. Which component(s) you need depends on your use case.
+Also the requirements differ per component.
+
+.. _requirements:
+
+Requirements
+------------
+
+Client
+^^^^^^
+
+You can interact with the server via the API. You can explore the server
+API on ``https://<serverdomain>/apidocs``
+(e.g. https://petronas.vantage6.ai/apidocs for our Petronas server).
+
+You can use any language to interact with the server as long as it
+supports HTTP requests. For Python and R we have written wrappers to
+simplify the interaction with the server: see the :ref:`client install`
+for more details on how to install these.
+
+.. warning::
+    Depending on your algorithm it *may* be
+    required to use a specific language to retrieve the results. This could
+    happen when the output of an algorithm contains a language specific
+    datatype and or serialization.
+
+    E.g. when the algorithm is written in R and the output is written back
+    in RDS (=specific to R) you would also need R to read the final input.
+
+    **Please consult the developer of your algorithm if this is the case.**
+
+Node & Server
+^^^^^^^^^^^^^
+
+The (minimal) requirements of the node and server are similar. Note that
+not all of these are hard requirements: it could well be that it also
+works on other hardware, operating systems, versions of Python etc.
+
+**Hardware**
+
+-  x86 CPU architecture + virtualization enabled
+-  1 GB memory
+-  50GB+ storage
+-  Stable and fast (1 Mbps+ internet connection)
+-  Public IP address
+
+**Software**
+
+-  Operating system
+
+   -  Ubuntu 18.04+ or
+   -  MacOS Big Sur+
+   -  Windows 10
+
+-  :ref:`python`
+-  :ref:`docker`
+
+.. warning::
+    The hardware requirements of the node also depend on the algorithms that
+    the node will run. For example, you need much less compute power for a
+    descriptive statistical algorithm than for a machine learning model.
+
+.. _python:
+
+Python
+""""""
+
+Installation of any of the **vantage6** packages requires Python 3.7.
+For installation instructions, see `python.org <https://python.org>`__,
+`anaconda.com <https://anaconda.com>`__ or use the package manager
+native to your OS and/or distribution.
+
+.. note::
+    We recommend you install **vantage6** in a new, clean Python environment.
+
+.. note::
+    Other version of Python >= 3.6 will most likely also work, but may give
+    issues with installing dependencies. For now, we test vantage6 on
+    version 3.7, so that is a safe choice.
+
+.. _docker:
+
+Docker
+""""""
+
+Docker facilitates encapsulation of applications and their dependencies
+in packages that can be easily distributed to diverse systems.
+Algorithms are stored in Docker images which nodes can download and
+execute. Besides the algorithms, both the node and server are also
+running from a docker container themselves.
+
+Please refer to `this page <https://docs.docker.com/engine/install/>`__
+on how to install Docker. To verify that Docker is installed and running
+you can run the ``hello-world`` example from Docker.
+
+.. code:: bash
+
+   docker run hello-world
+
+.. note::
+    🐳 Always make sure that Docker is running while
+    using vantage6!
+
+    🐳 We recommend to always use the latest version of Docker. {% endhint %}
+
+..  warning::
+    Note that for Linux, some `post-installation
+    steps <https://docs.docker.com/engine/install/linux-postinstall/>`__ may
+    be required. Vantage6 needs to be able to run docker without ``sudo``,
+    and these steps ensure just that.
+
+.. _client install:
+
+Client
+------
+
+We provide four ways in which you can interact with the server to manage
+your vantage6 resources: the user interface (UI), the Python client, the
+R client, and the server API.
+
+What you need to install depends on which interface you choose. In order
+to use the UI or the server API, you usually don’t need to install
+anything: the UI is a website, and the API can be called via HTTP
+requests from a programming language of your choice. For the UI, you
+only need to set it up in case you are setting up your own server (see
+:ref:`UI` for instructions).
+
+Installation instructions for the Python client and R client are below.
+For most use cases, we recommend to use the UI (for anything except
+creating tasks) and/or the Python Client (which covers server API
+functionality completely).
+
+Python client library
+^^^^^^^^^^^^^^^^^^^^^
+
+Before you install the Python client, we recommended to check the
+version of the server you are going to interact with first. The easiest
+way of doing that is checking the ``/version`` endpoint of the server
+you are going to use on ``https://<server_url>/version`` (e.g.
+`https://petronas.vantage6.ai/version` or `http://localhost:5000/api/version`).
+
+Then you can install the ``vantage6-client`` with:
+
+::
+
+   pip install vantage6==<version>
+
+where you add the version you want to install. You may also leave out
+the version to install the most recent version.
+
+.. _r client install:
+
+R client library
+^^^^^^^^^^^^^^^^
+
+The R client currently only supports creating tasks and retrieving their
+results. It can not (yet) be used to manage resources, such as creating
+and deleting users and organizations.
+
+You can install the R client by running:
+
+.. code:: r
+
+   devtools::install_github('IKNL/vtg', subdir='src')
+
+
+.. _install-node:
+
+Node
+----
+
+To install the **vantage6-node** make sure you have met the
+`requirements <what-to-install/#node-and-server>`__. Then install the
+latest version:
+
+::
+
+   pip install vantage6
+
+
 .. _install-server:
 
 Server
-======
+------
 
 To install the **vantage6-server** make sure you have met the
-:ref:`requirements`. Then install the
-latest version:
+:ref:`requirements`. Then install the latest version:
 
 ::
 
