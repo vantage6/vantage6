@@ -79,6 +79,9 @@ export abstract class BaseDataService {
         );
       }
     }
+    // for (let num in this.resources_by_id) {
+    //   console.log(num, this.resources_by_id[num].value);
+    // }
   }
 
   updateObsPerCollab(resources: Resource[]) {

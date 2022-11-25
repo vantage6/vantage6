@@ -81,6 +81,13 @@ export class TaskViewSingleComponent
   async setTask(): Promise<void> {
     (await this.taskDataService.get(this.route_id as number)).subscribe(
       (task) => {
+        // TODO the check below shouldn't be necessary but is added because
+        // when switching back and forth between task pages 1, then 2, then 1,
+        // and the observables of 2 are updated when we're back on page for task
+        // 1, the values of 2 are showing (while we want to show 1)
+        // The observables by task_id in the taskDataService however are fine...
+        // I think it has to do with component loading, which is cached partially?
+        if (this.route_id !== task.id) return;
         this.task = task;
         this.setInitiatingOrganization();
         this.setCollaboration();
