@@ -1171,6 +1171,24 @@ class UserClient(ClientBase):
             """
             return self.parent.request(f'node/{id_}', method='delete')
 
+        def kill_tasks(self, id_: int) -> dict:
+            """
+            Kill all tasks currently running on a node
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the node of which you want to kill the tasks
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            return self.parent.request(
+                'kill/node/tasks', method='post', json={'id': id_}
+            )
+
     class Organization(ClientBase.SubClient):
         """Collection of organization requests"""
 
@@ -1794,6 +1812,27 @@ class UserClient(ClientBase):
                 Message from the server
             """
             msg = self.parent.request(f'task/{id_}', method='delete')
+            self.parent.log.info(f'--> {msg}')
+
+        def kill(self, id_: int) -> dict:
+            """Kill a task running on one or more nodes
+
+            Note that this does not remove the task from the database, but
+            merely halts its execution (and prevents it from being restarted).
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the task to be killed
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            msg = self.parent.request('/kill/task', method='post', json={
+                'id': id_
+            })
             self.parent.log.info(f'--> {msg}')
 
     class Result(ClientBase.SubClient):
