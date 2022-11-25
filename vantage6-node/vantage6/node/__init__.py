@@ -55,7 +55,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import logger_name
+from vantage6.node.util import logger_name, get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -163,7 +163,8 @@ class NodeTaskNamespace(ClientNamespace):
                     'node_id': self.node_worker_ref.server_io.whoami.id_,
                     'status': TaskStatus.KILLED.value,
                     'organization_id':
-                        self.node_worker_ref.server_io.whoami.organization_id
+                        self.node_worker_ref.server_io.whoami.organization_id,
+                    'is_subtask': killed['is_subtask'],
                 },
                 namespace='/tasks'
             )
@@ -387,7 +388,7 @@ class Node(object):
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
             result_id=taskresult["id"],
-            task_id=task['id'],
+            task_info=task,
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
@@ -407,7 +408,8 @@ class Node(object):
                 'result_id': taskresult['id'],
                 'task_id': task['id'],
                 'collaboration_id': self.server_io.collaboration_id,
-                'organization_id': self.server_io.whoami.organization_id
+                'organization_id': self.server_io.whoami.organization_id,
+                'parent_id': get_parent_id(task),
             },
             namespace='/tasks',
         )
@@ -476,6 +478,7 @@ class Node(object):
                         'collaboration_id': self.server_io.collaboration_id,
                         'organization_id':
                             self.server_io.whoami.organization_id,
+                        'parent_id': results.parent_id,
                     },
                     namespace='/tasks',
                 )
@@ -861,7 +864,7 @@ class Node(object):
             self.cleanup()
             sys.exit()
 
-    def kill_containers(self, kill_info: Dict) -> List[int]:
+    def kill_containers(self, kill_info: Dict) -> List[Dict]:
         """
         Kill containers on instruction from socket event
 
@@ -873,8 +876,9 @@ class Node(object):
 
         Returns
         -------
-        List[int]:
-            List of result ids that have been killed on this node
+        List[Dict]:
+            List of dictionaries with information on killed task (keys:
+            result_id, task_id and parent_id)
         """
         if kill_info['collaboration_id'] != self.server_io.collaboration_id:
             self.log.debug(

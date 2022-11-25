@@ -13,7 +13,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
-from vantage6.node.util import logger_name
+from vantage6.node.util import logger_name, get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -35,7 +35,7 @@ class DockerTaskManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, task_id: int, tasks_dir: Path,
+                 result_id: int, task_info: Dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: Union[str, None] = None):
@@ -52,6 +52,8 @@ class DockerTaskManager(DockerBaseManager):
             Name of the node, to track running algorithms
         result_id: int
             Server result identifier
+        task_info: Dict
+            Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
         isolated_network_mgr: NetworkManager
@@ -67,7 +69,8 @@ class DockerTaskManager(DockerBaseManager):
         self.image = image
         self.__vpn_manager = vpn_manager
         self.result_id = result_id
-        self.task_id = task_id
+        self.task_id = task_info['id']
+        self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
         self.databases = databases
         self.data_volume_name = docker_volume_name

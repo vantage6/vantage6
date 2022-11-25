@@ -201,6 +201,7 @@ class DefaultSocketNamespace(Namespace):
         status = data.get('status')
         node_id = data.get('node_id')
         organization_id = data.get('organization_id')
+        parent_id = data.get('parent_id')
 
         run_id = db.Result.get(result_id).task.run_id
 
@@ -222,6 +223,7 @@ class DefaultSocketNamespace(Namespace):
                 "collaboration_id": collaboration_id,
                 "node_id": node_id,
                 "organization_id": organization_id,
+                "parent_id": parent_id,
             }, room=f"collaboration_{collaboration_id}"
         )
 

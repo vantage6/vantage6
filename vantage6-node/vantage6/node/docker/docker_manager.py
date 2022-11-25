@@ -38,6 +38,7 @@ class Result(NamedTuple):
     logs: str
     data: str
     status: str
+    parent_id: Union[int, None]
 
 
 class DockerManager(DockerBaseManager):
@@ -237,7 +238,8 @@ class DockerManager(DockerBaseManager):
             task = self.active_tasks.pop()
             task.cleanup()
             result_ids_killed.append({
-                'result_id': task.result_id, 'task_id': task.task_id
+                'result_id': task.result_id, 'task_id': task.task_id,
+                'parent_id': task.parent_id,
             })
         return result_ids_killed
 
@@ -256,7 +258,7 @@ class DockerManager(DockerBaseManager):
             self.isolated_network_mgr.disconnect(service)
         self.isolated_network_mgr.delete(kill_containers=True)
 
-    def run(self, result_id: int, task_id: int, image: str,
+    def run(self, result_id: int, task_info: Dict, image: str,
             docker_input: bytes, tmp_vol_name: str, token: str, database: str
             ) -> Union[List[Dict], None]:
         """
@@ -267,8 +269,8 @@ class DockerManager(DockerBaseManager):
         ----------
         result_id: int
             Server result identifier
-        task_id: int
-            Server task identifier
+        task_info: Dict
+            Dictionary with task information
         image: str
             Docker image name
         docker_input: bytes
@@ -301,7 +303,7 @@ class DockerManager(DockerBaseManager):
         task = DockerTaskManager(
             image=image,
             result_id=result_id,
-            task_id=task_id,
+            task_info=task_info,
             vpn_manager=self.vpn_manager,
             node_name=self.node_name,
             tasks_dir=self.__tasks_dir,
@@ -393,6 +395,7 @@ class DockerManager(DockerBaseManager):
             logs=logs,
             data=results,
             status=finished_task.status,
+            parent_id=finished_task.parent_id,
         )
 
     def login_to_registries(self, registries: list = []) -> None:
@@ -461,7 +464,8 @@ class DockerManager(DockerBaseManager):
         Returns
         -------
         List[Dict]
-            List of killed result + task ids
+            List of dictionaries with information on killed task (keys:
+            result_id, task_id and parent_id)
         """
         killed_list = []
         for container_to_kill in kill_list:
@@ -478,7 +482,8 @@ class DockerManager(DockerBaseManager):
                 task.cleanup()
                 self.active_tasks.remove(task)
                 killed_list.append({
-                    'result_id': task.result_id, 'task_id': task.task_id
+                    'result_id': task.result_id, 'task_id': task.task_id,
+                    'parent_id': task.parent_id,
                 })
             else:
                 self.log.warn(
@@ -488,7 +493,7 @@ class DockerManager(DockerBaseManager):
         return killed_list
 
     def kill_tasks(self, org_id: int,
-                   kill_list: List[Dict] = None) -> List[int]:
+                   kill_list: List[Dict] = None) -> List[Dict]:
         """
         Kill tasks currently running on this node.
 
@@ -503,8 +508,9 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        List[int]
-            List of killed result ids
+        List[Dict]
+            List of dictionaries with information on killed task (keys:
+            result_id, task_id and parent_id)
         """
         if kill_list:
             return self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
