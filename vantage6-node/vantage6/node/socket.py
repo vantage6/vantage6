@@ -104,7 +104,7 @@ class NodeTaskNamespace(ClientNamespace):
                     'status': TaskStatus.KILLED.value,
                     'organization_id':
                         self.node_worker_ref.server_io.whoami.organization_id,
-                    'is_subtask': killed['is_subtask'],
+                    'parent_id': killed['parent_id'],
                 },
                 namespace='/tasks'
             )
