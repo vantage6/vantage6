@@ -64,7 +64,7 @@
   </div>
 
   <div class="mat-elevation-z8">
-    <mat-table #table [dataSource]="dataSource" matSort>
+    <mat-table #table [dataSource]="dataSource" matSort matSortActive="id" matSortDirection="desc" >
       <!-- Checkbox Column -->
       <ng-container matColumnDef="select">
         <mat-header-cell *matHeaderCellDef>
