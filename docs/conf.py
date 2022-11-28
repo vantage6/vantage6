@@ -72,6 +72,7 @@ html_theme_options = {
     'fixed_sidebar': True,
 }
 
+
 # The master toctree document.
 master_doc = 'index'
 
