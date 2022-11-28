@@ -1,3 +1,4 @@
+import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
 
 import { dictEmpty } from 'src/app/shared/utils';
@@ -14,6 +15,7 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
   providedIn: 'root',
 })
 export class SocketioMessageService {
+  socket_messages = new BehaviorSubject<string[]>([]);
   organizations: Organization[] = [];
   collaborations: Collaboration[] = [];
 
@@ -45,6 +47,9 @@ export class SocketioMessageService {
     this.socketioConnectService.getTaskCreatedUpdates().subscribe((update) => {
       this.onCreatedTask(update);
     });
+    this.socketioConnectService.getMessages().subscribe((update) => {
+      this.addMessage(update);
+    });
   }
 
   async setupResources() {
@@ -54,6 +59,10 @@ export class SocketioMessageService {
     (await this.collabDataService.list()).subscribe((collabs) => {
       this.collaborations = collabs;
     });
+  }
+
+  getSocketMessages() {
+    return this.socket_messages.asObservable();
   }
 
   createNodeMessage(update_dict: any) {
@@ -67,19 +76,15 @@ export class SocketioMessageService {
   }
 
   private onNodeOnline(data: any) {
-    this.snackbarService.openNodeStatusSnackBar(
-      `The node '${data.name}' just came online!`,
-      data,
-      true
-    );
+    let msg = `The node '${data.name}' just came online!`;
+    this.snackbarService.openNodeStatusSnackBar(msg, data, true);
+    this.addMessage(msg);
   }
 
   private onNodeOffline(data: any) {
-    this.snackbarService.openNodeStatusSnackBar(
-      `The node '${data.name}' just went offline!`,
-      data,
-      false
-    );
+    let msg = `The node '${data.name}' just went offline!`;
+    this.snackbarService.openNodeStatusSnackBar(msg, data, false);
+    this.addMessage(msg);
   }
 
   isPositiveStatus(status: string): boolean {
@@ -147,6 +152,7 @@ export class SocketioMessageService {
         data.task_id,
         this.userPermission.user.organization_id
       );
+      this.addMessage(message);
     }
   }
 
@@ -154,12 +160,22 @@ export class SocketioMessageService {
     if (dictEmpty(data)) return; // ignore initialization values;
     let org_name = this.getOrgName(data.init_org_id);
     let collab_name = this.getCollabName(data.collaboration_id);
-    this.snackbarService.openTaskMessageSnackBar(
+    let msg =
       `A new task (id=${data.task_id}) has just been created in ` +
-        `collaboration ${collab_name} by organization ${org_name}`,
+      `collaboration ${collab_name} by organization ${org_name}`;
+    this.snackbarService.openTaskMessageSnackBar(
+      msg,
       Sentiment.NEUTRAL,
       data.task_id,
       this.userPermission.user.organization_id
     );
+    this.addMessage(msg);
+  }
+
+  addMessage(message: string): void {
+    if (!message) return;
+    // add message to front of array so latest messages are shown first
+    let messages = [message, ...this.socket_messages.value];
+    this.socket_messages.next(messages);
   }
 }

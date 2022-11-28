@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
+import { MatListModule } from '@angular/material/list';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -68,6 +69,7 @@ import { LoginPageComponent } from './components/login/login-page/login-page.com
 import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
 import { SocketioConnectService } from './services/common/socketio-connect.service';
 import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.component';
+import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
 
 @NgModule({
   declarations: [
@@ -108,6 +110,7 @@ import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.com
     LoginPageComponent,
     ChangePasswordComponent,
     ModalKillComponent,
+    SocketMessagesComponent,
   ],
   imports: [
     BrowserModule,
@@ -132,6 +135,7 @@ import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.com
     MatInputModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatListModule,
     CommonModule,
     NgbModule,
   ],
