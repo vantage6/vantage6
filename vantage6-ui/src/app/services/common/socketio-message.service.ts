@@ -10,6 +10,8 @@ import { SnackbarService } from './snackbar.service';
 import { SocketioConnectService } from './socketio-connect.service';
 import { Sentiment, TaskStatus } from 'src/app/shared/enum';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
+import { TaskDataService } from '../data/task-data.service';
+import { take } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +26,8 @@ export class SocketioMessageService {
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
     private snackbarService: SnackbarService,
-    private userPermission: UserPermissionService
+    private userPermission: UserPermissionService,
+    private taskDataService: TaskDataService
   ) {
     this.userPermission.isInitialized().subscribe((ready) => {
       if (ready) {
@@ -139,19 +142,33 @@ export class SocketioMessageService {
     return '';
   }
 
-  private onAlgorithmStatusChange(data: any) {
+  private async onAlgorithmStatusChange(data: any) {
     if (dictEmpty(data)) return; // ignore initialization values;
     let sentiment = this.isPositiveStatus(data.status)
       ? Sentiment.POSITIVE
       : Sentiment.NEGATIVE;
     let message = this.getAlgorithmStatusMessage(data.status, data);
     if (message) {
-      this.snackbarService.openTaskMessageSnackBar(
-        message,
-        sentiment,
-        data.task_id,
-        this.userPermission.user.organization_id
-      );
+      (await this.taskDataService.get(data.task_id))
+        .pipe(take(1))
+        .subscribe((task) => {
+          // only send message if task of currently logged-in user 1) has
+          // started/finished and is not a subtask or 2) has crashed
+          if (
+            task.initiator_id === this.userPermission.user.id &&
+            ((!task.parent_id &&
+              (task.status === TaskStatus.COMPLETED ||
+                task.status === TaskStatus.ACTIVE)) ||
+              !this.isPositiveStatus(task.status))
+          ) {
+            this.snackbarService.openTaskMessageSnackBar(
+              message,
+              sentiment,
+              data.task_id,
+              this.userPermission.user.organization_id
+            );
+          }
+        });
       this.addMessage(message);
     }
   }
@@ -163,12 +180,12 @@ export class SocketioMessageService {
     let msg =
       `A new task (id=${data.task_id}) has just been created in ` +
       `collaboration ${collab_name} by organization ${org_name}`;
-    this.snackbarService.openTaskMessageSnackBar(
-      msg,
-      Sentiment.NEUTRAL,
-      data.task_id,
-      this.userPermission.user.organization_id
-    );
+    // this.snackbarService.openTaskMessageSnackBar(
+    //   msg,
+    //   Sentiment.NEUTRAL,
+    //   data.task_id,
+    //   this.userPermission.user.organization_id
+    // );
     this.addMessage(msg);
   }
 
