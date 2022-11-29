@@ -6,7 +6,8 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${TAG}
+ARG BASE=3
+FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
