@@ -1,46 +1,144 @@
-.. vantage6 documentation master file, created by
-   sphinx-quickstart on Wed Mar 16 11:32:56 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+
+.. include:: <isonum.txt>
+.. _introduction:
+
+Introduction
+============
+This section will describe the community, the overall architecture of the
+platform and explains how this documentation space is organized.
+
+
+Overview
+--------
+This documentation space consists of 7 main sections:
+
+* **Introduction** |rarr| *You are here now*
+* :doc:`/user-documentation/index` |rarr| *Install and use vantage6-servers,
+  -nodes or -clients*
+* :doc:`/technical-documentation/index` |rarr| Implementation details of the
+  vantage6 platform*
+* :doc:`/devops/index` |rarr| *How to collaborate on the development of the
+  vantage6 infrastructure*
+* :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
+  vantage6*
+* :doc:`/release_notes` |rarr| changelog to the source code
+* :doc:`/glossary`
+
+
+Resources
+---------
+
+**Documentation**
+
+* `docs.vantage6.ai <https://docs.vantage6.ai>`_ |rarr| *this documentation.*
+* `vantage6.ai <https://vantage6.ai>`_ |rarr| *vantage6 project website*
+* `academic papers <https://distributedlearning.ai/vantage6/>`_ |rarr|
+  *technical insights into vantage6*
+
+**Source code**
+
+* `vantage6 <https://github.com/vantage6/vantage6>`_ |rarr| *contains all*
+  *components (and the python-client).*
+* `Planning <https://github.com/orgs/vantage6/projects>`_ |rarr| contains all
+  features, bugfixes and feature request we are working on. To submit one
+  yourself, you can create a `new issue <https://github.com/vantage6/vantage6/issues>`_.
+
+**Community**
+
+* `Discord <https://discord.gg/yAyFf6Y>`_  |rarr| chat with the vantage6
+  community
+* :ref:`Community meetings <Community Planning>` |rarr| bi-monthly developer
+  community meeting
+
+
+What is vantage6?
+-----------------
+Vantage6 stands for pri\ **va**\ cy preservi\ **n**\ g
+federa\ **t**\ ed le\ **a**\ rnin\ **g**\ infrastructur\ **e** for
+\ **s**\ ecure \ **i**\ nsight e\ **x**\ change.  A more technical explanation
+would be: *a container orchastration tool for privacy preserving analysis*.
+Watch this `video <https://youtu.be/HVHvlkAeuD0>`_ for a quick introduction.
+
+The project is inspired by the `Personal Health Train <https://pht.health-ri.nl/>`_
+(PHT) concept. In this analogy vantage6 is the *tracks* and *stations*.
+Compatible algorithms are the *trains*, and computation tasks are the *journey*.
+Vantage6 is completely open source under the
+`Apache License <https://github.com/IKNL/vantage6/blob/master/LICENSE>`_.
+
+vantage6 is here for:
+
+* delivering algorithms to data stations and collecting their results
+* managing users, organizations, collaborations, computation tasks and their
+  results
+* providing control (security) at the data-stations to their owners
+
+vantage6 is *not* (yet):
+
+* formatting the data at the data station
+* aligning data across the data stations (for the vertical partitioned use
+  case)
+
+vantage6 is designed with three fundamental functional aspects of Federated
+learning.
+
+1. **Autonomy**. All involved parties should remain independent and autonomous.
+2. **Heterogeneity**. Parties should be allowed to have differences in hardware
+   and operating systems.
+3. **Flexibility**. Related to the latter, a federated learning infrastructure
+   should not limit the use of relevant data.
+
+
+.. _architectureoverview:
+
+Architecture
+------------
+
+Vantage6 uses both a client-server and peer-to-peer model. In the figure below
+the **client** can pose a question to the **server**, the question is then
+delivered as an algorithm to the node. When the algorithm completes, the
+results are sent back to the client via the server. An algorithm can
+communicate directly with other algorithms that run on other nodes if required.
+
+.. figure:: /images/architecture-overview.png
+   :alt: Architecture overview
+   :align: center
+
+   Vantage6 has a client server architecture. (A) The Client is used by the
+   researcher to create computation requests. It is also used to manage users,
+   organizations and collaborations. (B) The Server contains users,
+   organizations, collaborations, tasks and their results. (C) The Node has
+   access to data and handles computation requests from the server.
+
+The server is in charge of processing the tasks as well as of handling
+administrative functions such as authentication and authorization.
+Conceptually, vantage6 consists of the following parts:
+
+* A (central) **server** that coordinates communication with clients and nodes
+* One or more **node(s)** that have access to data and execute algorithms
+* **Organizations** that are interested in collaborating;
+* **Users** (i.e. researchers or other applications) that request computations
+  from the nodes
+* A **Docker registry** that functions as database of algorithms
+
+-------------------------------------------------------------------------------
 
 Index
 =====
-
-..
-    Welcome to the documentation of the vantage6 project. These pages should help
-    you to find information on:
-
-    - A general :ref:`introduction` to vantage6
-    - :ref:`user-docs`, including how to :ref:`install_vantage6` and :ref:`use_vantage6` vantage6
-    - :ref:`algorithm-docs` documentation that explains the :ref:`algo-concepts` and provides a :ref:`algo-tutorial`
-    - :ref:`tech-docs` that detail how the code is structured and how features have been implemented.
-    - :ref:`dev-docs` documentation that explains how you can contribute
-    - and more...
-
-    Other possibly interesting resources for you:
-
-    * `vantage6 <https://vantage6.ai>`_ - Our main project site
-    * `Github <https://github.com/vantage6/vantage6>`_ - Source code of the project, including this documentation
-    * `Discord <https://discord.gg/yAyFf6Y>`_ - Chat with vantage6 users and developers!
-
-
-    -----------------------------------------------
 
 .. toctree::
    :numbered: 3
    :maxdepth: 4
    :caption: Contents:
 
-   introduction/index
+   self
    user-documentation/index
    algorithms/index
-   technical-documentation/index
    devops/index
    glossary
+..    technical-documentation/index
 
 .. toctree::
    :maxdepth: 2
 
-   self
    release_notes
    partners

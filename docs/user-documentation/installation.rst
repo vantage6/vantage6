@@ -1,3 +1,5 @@
+.. include:: <isonum.txt>
+
 .. _install_vantage6:
 
 Installation
@@ -25,15 +27,16 @@ simplify the interaction with the server: see the :ref:`client install`
 for more details on how to install these.
 
 .. warning::
-    Depending on your algorithm it *may* be
-    required to use a specific language to retrieve the results. This could
-    happen when the output of an algorithm contains a language specific
-    datatype and or serialization.
+    Depending on your algorithm it *may* be required to use a specific
+    language to post a task and retrieve the results. This could happen when
+    the output of an algorithm contains a language specific datatype and or
+    serialization.
 
     E.g. when the algorithm is written in R and the output is written back
     in RDS (=specific to R) you would also need R to read the final input.
 
-    **Please consult the developer of your algorithm if this is the case.**
+    **Please consult the documentation of the algorithm you want to use if
+    this is the case.**
 
 Node & Server
 ^^^^^^^^^^^^^
@@ -55,8 +58,8 @@ works on other hardware, operating systems, versions of Python etc.
 -  Operating system
 
    -  Ubuntu 18.04+ or
-   -  MacOS Big Sur+
-   -  Windows 10
+   -  MacOS Big Sur+ or
+   -  Windows 10+
 
 -  :ref:`python`
 -  :ref:`docker`
@@ -77,9 +80,9 @@ For installation instructions, see `python.org <https://python.org>`__,
 native to your OS and/or distribution.
 
 .. note::
-    We recommend you install **vantage6** in a new, clean Python environment.
+    We recommend you install **vantage6** in a new, clean Python (Conda)
+    environment.
 
-.. note::
     Other version of Python >= 3.6 will most likely also work, but may give
     issues with installing dependencies. For now, we test vantage6 on
     version 3.7, so that is a safe choice.
@@ -88,6 +91,13 @@ native to your OS and/or distribution.
 
 Docker
 """"""
+
+..  warning::
+
+    Note that for **Linux**, some `post-installation
+    steps <https://docs.docker.com/engine/install/linux-postinstall/>`__ may
+    be required. Vantage6 needs to be able to run docker without ``sudo``,
+    and these steps ensure just that.
 
 Docker facilitates encapsulation of applications and their dependencies
 in packages that can be easily distributed to diverse systems.
@@ -104,16 +114,9 @@ you can run the ``hello-world`` example from Docker.
    docker run hello-world
 
 .. note::
-    🐳 Always make sure that Docker is running while
-    using vantage6!
 
-    🐳 We recommend to always use the latest version of Docker. {% endhint %}
-
-..  warning::
-    Note that for Linux, some `post-installation
-    steps <https://docs.docker.com/engine/install/linux-postinstall/>`__ may
-    be required. Vantage6 needs to be able to run docker without ``sudo``,
-    and these steps ensure just that.
+    * Always make sure that Docker is running while using vantage6!
+    * We recommend to always use the latest version of Docker.
 
 .. _client install:
 
@@ -121,8 +124,9 @@ Client
 ------
 
 We provide four ways in which you can interact with the server to manage
-your vantage6 resources: the user interface (UI), the Python client, the
-R client, and the server API.
+your vantage6 resources: the user interface (UI), the
+:ref:`Python client <python client library>`, the
+:ref:`R client <r client library>`, and the server API.
 
 What you need to install depends on which interface you choose. In order
 to use the UI or the server API, you usually don’t need to install
@@ -139,11 +143,11 @@ functionality completely).
 Python client library
 ^^^^^^^^^^^^^^^^^^^^^
 
-Before you install the Python client, we recommended to check the
-version of the server you are going to interact with first. The easiest
-way of doing that is checking the ``/version`` endpoint of the server
-you are going to use on ``https://<server_url>/version`` (e.g.
-`https://petronas.vantage6.ai/version` or `http://localhost:5000/api/version`).
+Before you install the Python client, we check the version of the server you
+are going to interact with first. The easiest way of doing that is checking
+the ``/version`` endpoint of the server you are going to use on
+``https://<server_url>/version`` (e.g. `https://petronas.vantage6.ai/version`
+or `http://localhost:5000/api/version`).
 
 Then you can install the ``vantage6-client`` with:
 
@@ -176,12 +180,15 @@ Node
 ----
 
 To install the **vantage6-node** make sure you have met the
-`requirements <what-to-install/#node-and-server>`__. Then install the
-latest version:
+:ref:`requirements <requirements>`. Then install the latest version:
 
 ::
 
    pip install vantage6
+
+This will install the CLI in order to configure, start and stop the node. The
+node software itself will be downloaded when you start the node for the first
+time.
 
 
 .. _install-server:
@@ -189,46 +196,71 @@ latest version:
 Server
 ------
 
-To install the **vantage6-server** make sure you have met the
-:ref:`requirements`. Then install the latest version:
+Local Installation
+^^^^^^^^^^^^^^^^^^
+This installs the *vantage6-server* at an VM or your local machine. To install
+the *vantage6-server* make sure you have met the :ref:`requirements`. Then
+install the latest version:
 
 ::
 
    pip install vantage6
 
 This command will install the vantage6 command line interface (CLI),
-from which you can create new servers (see Use
-:ref:`use-server`).
+from which you can create new servers (see :ref:`Use Server <use-server>`).
 
-**Optional components**
+Cloud Service Provider
+^^^^^^^^^^^^^^^^^^^^^^
+To install vantage6 at a cloud service provider you can use a Docker Image
+(This is the same image used by ``vserver COMMAND``). If you are using a VM,
+you can follow the instructions for :ref:`local installation` and check
+our :ref:`server-deployment`.
 
+Depending on the ``VERSION``, you can use
+
+::
+
+    harbor2.vantage6.ai/infrastructure/server:VERSION
+
+
+See our :ref:`Release Strategy <release-strategy>` for selecting the right
+``VERSION``. E.g.:
+
+* ``petronas`` |rarr| version 3.x.x, is updated on reboot and will contain the
+  latest security updates
+* ``2.3.4`` |rarr| exact version, will not be changed on reboot
+
+
+Optional components
+^^^^^^^^^^^^^^^^^^^
 There are several optional components that you can set up apart from the
 vantage6-server itself.
 
-- You can set up a :ref:`UI`, which is a
-  web application that will allow your users to communicate more easily
-  with your vantage6 server.
+:ref:`UI`
+  A web application that will allow your users to interact more easily with
+  your vantage6 server.
 
-- If you want to enable algorithm containers that are running on different
+:ref:`eduvpn`
+  If you want to enable algorithm containers that are running on different
   nodes, to directly communicate with one another, you require a VPN
-  server. Refer to :ref:`eduvpn` on how to install the VPN
-  server.
+  server. Refer to on how to install the VPN server.
 
-- If you have a server with a high workload whose performance you want to
-  improve, you may want to set up a RabbitMQ service which enables
-  horizontal scaling of the Vantage6 server.
-  See :ref:`rabbitmq` on how to set this up.
+:ref:`rabbitmq`
+  If you have a server with a high workload whose performance you want to
+  improve, you may want to set up a RabbitMQ service which enables horizontal
+  scaling of the Vantage6 server.
 
-- A docker registry can be used to store algorithms but it is also
-  possible to use `Docker hub <https://hub.docker.com/>`__ for this. For
-  instructions on how to install your own Docker registry see
-  :ref:`docker-registry`.
+:ref:`docker-registry`
+  A docker registry can be used to store algorithms but it is also
+  possible to use `Docker hub <https://hub.docker.com/>`__ for this.
 
 
 .. _UI:
 
 User Interface
-^^^^^^^^^^^^^^
+""""""""""""""
+
+.. todo:: I think we also have a Docker container for this now?
 
 The User Interface (UI) is a web application that aims to make it easy
 to interact with the server. It allows you to manage all your resources
@@ -258,7 +290,7 @@ https://portal.petronas.vantage6.ai and login with your user account.
 .. _eduvpn:
 
 EduVPN
-^^^^^^
+""""""
 
 *Please note that EduVPN is an* \ **optional**\  *component. It enables
 the use of advanced algorithms that require node-to-node communication.*
@@ -458,7 +490,7 @@ vantage6-server configuration file.
 .. _rabbitmq:
 
 RabbitMQ
-^^^^^^^^
+""""""""
 
 
 *Please note that RabbitMQ is an* \ **optional**\  *component. It enables
@@ -483,7 +515,7 @@ console <https://www.cloudamqp.com/blog/part3-rabbitmq-for-beginners_the-managem
 .. _docker-registry:
 
 Docker registry
-^^^^^^^^^^^^^^^
+"""""""""""""""
 
 A Docker registry or repository provides storage and versioning for Docker
 images. Installing a private Docker registry can be useful if you want
@@ -503,3 +535,77 @@ Harbor
 registry. Harbor provides access control, a user interface and automated
 scanning on vulnerabilities.
 
+
+.. _server-deployment:
+
+Deployment
+^^^^^^^^^^
+
+The *vantage6-server* uses Flask as backbone, together with
+`python-socketio <https://python-socketio.readthedocs.io>`_ for websocket
+support. The server runs as a standalone process (listening on its own ip
+address/port).
+
+.. info::
+    From version 3.2+ it is possible to horizontally scale the server (This
+    upgrade is also made available to version 2.3.4)
+
+    Documentation on how to deploy it will be shared here. Reach out to us
+    on Discord for now.
+
+There are many deployment options, so these examples are not complete
+and exhaustive.
+
+-  :ref:`deploy-nginx`
+-  :ref:`deploy-azure`
+-  …
+
+.. _deploy-nginx:
+
+NGINX
+"""""
+
+A basic setup is shown below. Note that SSL is not configured in this example.
+
+.. code:: nginx
+
+   server {
+
+       # Public port
+       listen 80;
+       server_name _;
+
+       # vantage6-server. In the case you use a sub-path here, make sure
+       # to foward also it to the proxy_pass
+       location /subpath {
+           include proxy_params;
+
+           # internal ip and port
+           proxy_pass http://127.0.0.1:5000/subpath;
+       }
+
+       # Allow the websocket traffic
+       location /socket.io {
+           include proxy_params;
+           proxy_http_version 1.1;
+           proxy_buffering off;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection "Upgrade";
+           proxy_pass http://127.0.0.1:5000/socket.io;
+       }
+   }
+
+.. note::
+    When you :ref:`server-configure` the server, make
+    sure to include the ``/subpath`` that has been set in the NGINX
+    configuration into the ``api_path`` setting
+    (e.g. ``api_path: /subpath/api``)
+
+.. _deploy-azure:
+
+Azure app service
+"""""""""""""""""
+
+TODO
+
+.. _server-logging:

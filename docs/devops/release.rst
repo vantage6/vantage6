@@ -114,6 +114,8 @@ The release pipeline executes the following steps:
     * - Token to post a message to the Discord community when a new release is
         published.
 
+.. _release-strategy:
+
 Distribute release
 ------------------
 Nodes and servers that are already running will automatically be upgraded to
