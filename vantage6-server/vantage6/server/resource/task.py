@@ -15,7 +15,7 @@ from vantage6.server.permission import (
     Operation as P
 )
 from vantage6.server.resource import only_for, ServicesResources, with_user
-from vantage6.server.resource._schema import (
+from vantage6.server.resource.common._schema import (
     TaskSchema,
     TaskIncludedSchema,
     TaskResultSchema
@@ -122,6 +122,11 @@ class Tasks(TaskBase):
               type: int
             description: The organization id of the origin of the request
           - in: query
+            name: init_user_id
+            schema:
+              type: int
+            description: The user id of the user that started the task
+          - in: query
             name: collaboration_id
             schema:
               type: int
@@ -225,8 +230,8 @@ class Tasks(TaskBase):
                     HTTPStatus.UNAUTHORIZED
 
         # filter based on arguments
-        for param in ['initiator_id', 'collaboration_id', 'parent_id',
-                      'run_id']:
+        for param in ['initiator_id', 'init_user_id', 'collaboration_id',
+                      'parent_id', 'run_id']:
             if param in args:
                 q = q.filter(getattr(db.Task, param) == args[param])
         for param in ['name', 'image', 'description', 'database']:
@@ -332,14 +337,14 @@ class Tasks(TaskBase):
                 f" for the following organization(s): {', '.join(missing)}."
             )}, HTTPStatus.BAD_REQUEST
 
-        # figure out the initiator organization of the task
+        # figure out the initiating organization of the task
         if g.user:
-            initiator = g.user.organization
+            init_org = g.user.organization
         else:  # g.container:
-            initiator = db.Node.get(g.container["node_id"]).organization
+            init_org = db.Node.get(g.container["node_id"]).organization
 
-        # check if the initiator is part of the collaboration
-        if initiator not in collaboration.organizations:
+        # check if the initiating organization is part of the collaboration
+        if init_org not in collaboration.organizations:
             return {
                 "msg": "You can only create tasks for collaborations "
                        "you are participating in!"
@@ -366,17 +371,21 @@ class Tasks(TaskBase):
         # permissions ok, create record
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
-                       database=data.get('database', ''), initiator=initiator)
+                       database=data.get('database', ''),
+                       init_org=init_org)
 
         # create run_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new run_id. Tasks created
         # by containers are always sub-tasks
         if g.user:
             task.run_id = task.next_run_id()
+            task.init_user_id = g.user.id
             log.debug(f"New run_id {task.run_id}")
         elif g.container:
             task.parent_id = g.container["task_id"]
-            task.run_id = db.Task.get(g.container["task_id"]).run_id
+            parent = db.Task.get(g.container["task_id"])
+            task.run_id = parent.run_id
+            task.init_user_id = parent.init_user_id
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
         # ok commit session...

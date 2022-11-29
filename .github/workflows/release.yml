@@ -20,30 +20,67 @@ jobs:
   # From the tag we split the individual version components:
   # major.minor.patch.stage<N>. Note that post releases are not part
   # of this schema as they are only used for releasing updated docker
-  # images.
+  # images. This job also commits the version number to the git repo
   version:
-    name: Obtain version
+    name: Apply version
     runs-on: ubuntu-latest
     needs: verify
     steps:
-      - id: split
+
+      - name: split
+        id: split
         run: |
           TAG=${GITHUB_REF#refs/*/}
           VERSION=${TAG#version/*}
           PARTS=(${VERSION//\./ })
           MAJOR=${PARTS[0]}
-          echo "::set-output name=version::${VERSION}"
-          echo "::set-output name=major::${MAJOR}"
-          echo "::set-output name=minor::${PARTS[1]}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "major=${MAJOR}" >> $GITHUB_OUTPUT
+          echo "minor=${PARTS[1]}" >> $GITHUB_OUTPUT
           PARTS2=( $(grep -Eo '[[:digit:]]+|[^[:digit:]]+' <<< ${PARTS[2]} ) )
-          echo "::set-output name=patch::${PARTS2[0]}"
-          echo "::set-output name=stage::${PARTS2[1]}"
-          echo "::set-output name=build::${PARTS2[2]}"
+          echo "patch=${PARTS2[0]}" >> $GITHUB_OUTPUT
+          echo "stage=${PARTS2[1]}" >> $GITHUB_OUTPUT
+          echo "build=${PARTS2[2]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
           if [[ $MAJOR == '2' ]]; then MAJOR_NAME="harukas"; fi
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
-          echo "::set-output name=major_name::${MAJOR_NAME}"
+          echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.COMMIT_PAT }}
+
+      - name: Update version in packages
+        id: set_versions
+        env:
+          build: ${{ steps.split.outputs.build }}
+          stage: ${{ steps.split.outputs.stage }}
+          major: ${{ steps.split.outputs.major }}
+          minor: ${{ steps.split.outputs.minor }}
+          patch: ${{ steps.split.outputs.patch }}
+        run: |
+          BUILD="--build 0"; if [[ -n $build ]]; then BUILD="--build $build"; fi
+          SPEC="--spec final"
+          if [[ $stage == 'a' ]]; then SPEC="--spec alpha"; fi
+          if [[ $stage == 'b' ]]; then SPEC="--spec beta"; fi
+          if [[ $stage == 'rc' ]]; then SPEC="--spec candidate"; fi
+          FLAGS="--version ${major}.${minor}.${patch} $BUILD --post 0 $SPEC"
+          make set-version FLAGS="$FLAGS"
+
+      - name: commit
+        env:
+          version: ${{ steps.split.outputs.version }}
+        run: |
+          git config --local user.name github-actions
+          git config --local user.email github-actions@github.com
+          git add *
+          git commit -m "Updated the version ${version}"
+          git push
+
     outputs:
       version: ${{ steps.split.outputs.version }}
       major: ${{ steps.split.outputs.major }}
@@ -53,7 +90,29 @@ jobs:
       build: ${{ steps.split.outputs.build }}
       major_name: ${{ steps.split.outputs.major_name }}
 
-  # Build an release all the vantage6 infrastructure packakes. For all
+  # Create Github release which can be used DOI generation
+  github-release:
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      version: ${{ needs.version.outputs.version }}
+      stage: ${{ needs.version.outputs.stage }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        # we just made a version commit, so we need to pull that. Else the
+        # commit of the tag is used.
+        ref: 'main'
+
+    - name: Create a Release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "v${{ env.version }}"
+        prerelease: ${{ env.stage != '' }}
+        title: "${{ env.version }}"
+
+  # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,
   # (2) build the package, (3) upload it to pypi, and (4) build and push
   # the Docker image
@@ -72,17 +131,12 @@ jobs:
 
     steps:
 
-      - name: Login to harbor2.vantage6.ai
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-        run: |
-          docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
-
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          submodules: 'true'
+          # we just made a version commit, so we need to pull that. Else the
+          # commit of the tag is used.
+          ref: 'main'
 
       - name: Set up Python 3.7
         uses: actions/setup-python@v2
@@ -95,17 +149,6 @@ jobs:
           pip install click
           pip install wheel
           pip install twine
-
-      - name: Update version in packages
-        id: set
-        run: |
-          BUILD="--build 0"; if [[ -n $build ]]; then BUILD="--build $build"; fi
-          SPEC="--spec final"
-          if [[ $stage == 'a' ]]; then SPEC="--spec alpha"; fi
-          if [[ $stage == 'b' ]]; then SPEC="--spec beta"; fi
-          if [[ $stage == 'rc' ]]; then SPEC="--spec candidate"; fi
-          FLAGS="--version ${major}.${minor}.${patch} $BUILD --post 0 $SPEC"
-          make set-version FLAGS="$FLAGS"
 
       - name: Build project
         id: make
@@ -121,17 +164,126 @@ jobs:
         run: |
           make publish
 
-      - name: Build Docker image
+  support-images:
+    name: Build support images
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      version: ${{ needs.version.outputs.version }}
+
+    steps:
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # we just made a version commit, so we need to pull that. Else the
+          # commit of the tag is used.
+          ref: 'main'
+
+      - # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # We need this for building multi-arch images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build support images
+        run: make support-image TAG=$version
+
+  infrastructure-images:
+    name: Build infrastructure images
+    runs-on: ubuntu-latest
+    needs: [version, build-n-release] # we need to packages to be released
+    env:
+      version: ${{ needs.version.outputs.version }}
+      minor: ${{ needs.version.outputs.minor }}
+      stage: ${{ needs.version.outputs.stage }}
+
+    steps:
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # we just made a version commit, so we need to pull that. Else the
+          # commit of the tag is used.
+          ref: 'main'
+
+      - # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - # We need this for building multi-arch images
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - # vpn images
+        name: Build Docker support images
+        run: make support-image TAG=$version
+
+      - # we only release a new base image if it is a minor and major release
+        name: Build Docker base image
+        if: ${{ env.minor == 0 && env.stage == '' }}
+        run: make base-image TAG=$version
+
+      - # build the actual infrastructure images
+        name: Build Docker image
         run: make image TAG=$version
 
-      - name: Push Docker image
-        run: make docker-push TAG=$version
+  algorithm-base-image:
+    name: Build algorithm base image
+    runs-on: ubuntu-latest
+    needs: [version, build-n-release] # we need to python client to be released
+    env:
+      version: ${{ needs.version.outputs.version }}
+
+    steps:
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # we just made a version commit, so we need to pull that. Else the
+          # commit of the tag is used.
+          ref: 'main'
+
+
+      - # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # We need this for building multi-arch images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Algorithm base image
+        run: make algorithm-base-image TAG=$version
+
 
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   deploy:
     runs-on: ubuntu-latest
-    needs: [version, build-n-release]
+    needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
@@ -168,14 +320,18 @@ jobs:
   # When the project is built and released the Discord community is notified.
   notify:
     runs-on: ubuntu-latest
-    needs: [version, build-n-release]
+    needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          # we just made a version commit, so we need to pull that. Else the
+          # commit of the tag is used.
+          ref: 'main'
 
       - name: Install dependencies
         run: |

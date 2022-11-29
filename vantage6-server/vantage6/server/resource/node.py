@@ -14,7 +14,7 @@ from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server import db
-from vantage6.server.resource._schema import NodeSchema
+from vantage6.server.resource.common._schema import NodeSchema
 
 
 module_name = __name__.split('.')[-1]

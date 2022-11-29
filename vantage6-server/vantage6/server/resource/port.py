@@ -17,7 +17,7 @@ from vantage6.server.resource import (
     ServicesResources
 )
 from vantage6.server.resource.pagination import Pagination
-from vantage6.server.resource._schema import PortSchema
+from vantage6.server.resource.common._schema import PortSchema
 from vantage6.server.model import (
     Result,
     AlgorithmPort,

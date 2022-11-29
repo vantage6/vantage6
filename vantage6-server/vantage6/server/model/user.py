@@ -33,6 +33,7 @@ class User(Authenticatable):
     organization_id = Column(Integer, ForeignKey("organization.id"))
     failed_login_attempts = Column(Integer, default=0)
     last_login_attempt = Column(DateTime)
+    otp_secret = Column(String(32))
 
     # relationships
     organization = relationship("Organization", back_populates="users")
@@ -40,6 +41,7 @@ class User(Authenticatable):
                          secondary="Permission")
     rules = relationship("Rule", back_populates="users",
                          secondary="UserPermission")
+    created_tasks = relationship("Task", back_populates="init_user")
 
     def __repr__(self):
         organization = self.organization.name if self.organization else "None"

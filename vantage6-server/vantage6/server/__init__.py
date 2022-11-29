@@ -28,7 +28,7 @@ from flask_socketio import SocketIO
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
-from vantage6.server.resource._schema import HATEOASModelSchema
+from vantage6.server.resource.common._schema import HATEOASModelSchema
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
@@ -37,9 +37,10 @@ from vantage6.server.globals import (
     JWT_TEST_ACCESS_TOKEN_EXPIRES,
     RESOURCES,
     SUPER_USER_INFO,
-    REFRESH_TOKENS_EXPIRE
+    REFRESH_TOKENS_EXPIRE,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS
 )
-from vantage6.server.resource.swagger_templates import swagger_template
+from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
@@ -191,7 +192,7 @@ class ServerApp:
         self.app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
         self.app.config["MAIL_USERNAME"] = mail_config.get(
             "username",
-            "support@vantage6.ai"
+            DEFAULT_SUPPORT_EMAIL_ADDRESS
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
         self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS",
@@ -201,15 +202,16 @@ class ServerApp:
 
         # before request
         @self.app.before_request
-        def set_db_session():
-            """Before every flask request method.
+        def do_before_request():
+            """Before every flask request method."""
+            # Add log message before each request
+            log.debug(f"Received request: {request.method} {request.url_rule}")
 
-            This will obtain a (scoped) db session from the session factory
-            that is linked to the flask request global `g`. In every endpoint
-            we then can access the database by using this session. We ensure
-            that the session is removed (and uncommited changes are rolled
-            back) at the end of every request.
-            """
+            # This will obtain a (scoped) db session from the session factory
+            # that is linked to the flask request global `g`. In every endpoint
+            # we then can access the database by using this session. We ensure
+            # that the session is removed (and uncommited changes are rolled
+            # back) at the end of every request.
             DatabaseSessionManager.new_session()
 
         @self.app.after_request
