@@ -32,7 +32,6 @@ gevent==21.8.0
 gevent-websocket==0.10.1
 greenlet==1.1.1
 idna==2.10
-iknl-flasgger==0.9.2.post1
 importlib-metadata==4.6.4
 ipython==7.16.3
 ipython-genutils==0.2.0
