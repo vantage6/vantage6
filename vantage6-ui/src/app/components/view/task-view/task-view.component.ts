@@ -47,7 +47,7 @@ export class TaskViewComponent
   }
 
   async setResults(): Promise<void> {
-    (await this.resultDataService.get_by_task_id(this.task.id)).subscribe(
+    (await this.resultDataService.get_by_task_id(this.task.id, true)).subscribe(
       (results) => {
         // TODO the check below shouldn't be necessary but is added because
         // when switching back and forth between task pages 1, then 2, then 1,
@@ -133,10 +133,17 @@ export class TaskViewComponent
           this.modalService.openMessageModal([
             'The nodes have been instructed to kill this task!',
           ]);
+          this.updateTaskAfterKill();
         },
         (error: any) => {
           this.modalService.openErrorModal(error.error.msg);
         }
       );
+  }
+
+  updateTaskAfterKill(): void {
+    // update task after it has been killed by collecting it again from the
+    // server
+    this.taskDataService.get(this.task.id, true);
   }
 }

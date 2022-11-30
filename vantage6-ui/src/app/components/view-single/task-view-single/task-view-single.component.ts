@@ -9,8 +9,6 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { ResType } from 'src/app/shared/enum';
@@ -39,8 +37,6 @@ export class TaskViewSingleComponent
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
     private userDataService: UserDataService,
-    private ruleDataService: RuleDataService,
-    private roleDataService: RoleDataService,
     protected modalService: ModalService
   ) {
     super(
@@ -73,11 +69,15 @@ export class TaskViewSingleComponent
   async setResources() {
     await this.setTask();
 
-    await this.setInitiatingOrganization();
+    this.setSubResources();
+  }
 
-    await this.setInitiatingUser();
+  setSubResources() {
+    this.setInitiatingOrganization();
 
-    await this.setCollaboration();
+    this.setInitiatingUser();
+
+    this.setCollaboration();
   }
 
   async setInitiatingOrganization() {
@@ -113,8 +113,7 @@ export class TaskViewSingleComponent
         // I think it has to do with component loading, which is cached partially?
         if (this.route_id !== task.id) return;
         this.task = task;
-        this.setInitiatingOrganization();
-        this.setCollaboration();
+        this.setSubResources();
       }
     );
   }
