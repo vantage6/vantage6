@@ -10,6 +10,18 @@
       <div *ngIf="router.url === '/password_recover'">
         <app-password-recover></app-password-recover>
       </div>
+      <div *ngIf="router.url === '/setup_mfa'">
+        <app-setup-mfa></app-setup-mfa>
+      </div>
+      <div *ngIf="router.url === '/mfa_code'">
+        <app-mfa-code></app-mfa-code>
+      </div>
+      <div *ngIf="router.url === '/mfa_lost'">
+        <app-mfa-lost></app-mfa-lost>
+      </div>
+      <div *ngIf="router.url === '/mfa_recover'">
+        <app-mfa-recover></app-mfa-recover>
+      </div>
     </div>
   </div>
 </div>

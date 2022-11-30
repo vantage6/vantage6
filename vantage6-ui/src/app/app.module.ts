@@ -20,6 +20,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
+import { QRCodeModule } from 'angularx-qrcode';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -65,6 +66,10 @@ import { PasswordLostComponent } from './components/login/password-lost/password
 import { PasswordRecoverComponent } from './components/login/password-recover/password-recover.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
 import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
+import { SetupMfaComponent } from './components/login/setup-mfa/setup-mfa.component';
+import { MfaCodeComponent } from './components/login/mfa-code/mfa-code.component';
+import { MfaLostComponent } from './components/login/mfa-lost/mfa-lost.component';
+import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.component';
 
 @NgModule({
   declarations: [
@@ -104,6 +109,10 @@ import { ChangePasswordComponent } from './components/edit/user-edit/change-pass
     PasswordRecoverComponent,
     LoginPageComponent,
     ChangePasswordComponent,
+    SetupMfaComponent,
+    MfaCodeComponent,
+    MfaLostComponent,
+    MfaRecoverComponent,
   ],
   imports: [
     BrowserModule,
@@ -129,6 +138,7 @@ import { ChangePasswordComponent } from './components/edit/user-edit/change-pass
     MatProgressSpinnerModule,
     CommonModule,
     NgbModule,
+    QRCodeModule,
   ],
   providers: [
     AccessGuard,

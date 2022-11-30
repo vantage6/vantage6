@@ -3,6 +3,7 @@ import { ResType } from '../shared/enum';
 import { deepcopy } from '../shared/utils';
 import { Collaboration } from './collaboration';
 import { Organization } from './organization';
+import { User } from './user';
 
 export interface Task {
   id: number;
@@ -17,7 +18,9 @@ export interface Task {
   parent?: Task;
   database: string;
   initiator_id: number;
-  initiator?: Organization;
+  init_org?: Organization;
+  init_user_id: number;
+  init_user?: User;
   children_ids: number[];
   children?: Task[];
   results?: Result[];
@@ -33,6 +36,7 @@ export const EMPTY_TASK: Task = {
   database: '',
   collaboration_id: -1,
   initiator_id: -1,
+  init_user_id: -1,
   run_id: -1,
   parent_id: -1,
   children_ids: [],
