@@ -60,7 +60,7 @@ install-dev:
 
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:lastest"
+	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:latest \
