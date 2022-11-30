@@ -10,30 +10,35 @@ mat-header-cell:nth-child(1)
     flex: 0 0 4%;
 }
 mat-cell:nth-child(2),
-mat-header-cell:nth-child(2),
-mat-cell:nth-child(7),
-mat-header-cell:nth-child(7)
+mat-header-cell:nth-child(2)
 {
-    flex: 0 0 8%;
+    flex: 0 0 5%;
 }
 
 mat-cell:nth-child(3),
 mat-header-cell:nth-child(3) {
-    flex: 0 0 20%;
+    flex: 0 0 19%;
 }
 
 mat-cell:nth-child(4),
 mat-header-cell:nth-child(4)
 {
-    flex: 0 0 34%;
+    flex: 0 0 31%;
 }
 
 mat-cell:nth-child(5),
 mat-header-cell:nth-child(5),
 mat-cell:nth-child(6),
-mat-header-cell:nth-child(6)
+mat-header-cell:nth-child(6),
+mat-cell:nth-child(7),
+mat-header-cell:nth-child(7)
 {
-    flex: 0 0 13%;
+    flex: 0 0 11%;
+}
+mat-cell:nth-child(8),
+mat-header-cell:nth-child(8)
+{
+    flex: 0 0 8%;
 }
 
 .mat-radio-button ~ .mat-radio-button {
