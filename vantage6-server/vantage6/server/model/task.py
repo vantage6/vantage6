@@ -31,7 +31,9 @@ class Task(Base):
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
     results = relationship("Result", back_populates="task")
-    init_org = relationship("Organization", back_populates="created_tasks")
+    # TODO in v4, rename the 'initiator' column so that there is a clear
+    # distinction between initiating organization and user
+    initiator = relationship("Organization", back_populates="created_tasks")
     init_user = relationship("User", back_populates="created_tasks")
 
     @hybrid_property
