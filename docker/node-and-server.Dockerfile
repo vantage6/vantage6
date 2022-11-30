@@ -27,15 +27,6 @@ RUN mkdir /run/sshd
 RUN apt install python-psycopg2 -y
 RUN pip install psycopg2-binary
 
-# Install uWSGI from source (for RabbitMQ)
-RUN apt-get install --no-install-recommends --no-install-suggests -y \
-  libssl-dev python3-setuptools
-RUN CFLAGS="-I/usr/local/opt/openssl/include" \
-  LDFLAGS="-L/usr/local/opt/openssl/lib" \
-  UWSGI_PROFILE_OVERRIDE=ssl=true \
-  pip install uwsgi -Iv
-
-
 # copy source
 COPY . /vantage6
 
@@ -53,6 +44,15 @@ RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6
 RUN pip install -e /vantage6/vantage6-node
 RUN pip install -e /vantage6/vantage6-server
+
+# Overwrite uWSGI installation from the requirements.txt
+# Install uWSGI from source (for RabbitMQ)
+RUN apt-get install --no-install-recommends --no-install-suggests -y \
+  libssl-dev python3-setuptools
+RUN CFLAGS="-I/usr/local/opt/openssl/include" \
+  LDFLAGS="-L/usr/local/opt/openssl/lib" \
+  UWSGI_PROFILE_OVERRIDE=ssl=true \
+  pip install uwsgi -Iv
 
 RUN chmod +x /vantage6/configs/server.sh
 
