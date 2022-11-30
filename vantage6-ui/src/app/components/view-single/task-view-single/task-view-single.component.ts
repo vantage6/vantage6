@@ -2,12 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_ORGANIZATION } from 'src/app/interfaces/organization';
+import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
 import { EMPTY_TASK, getEmptyTask, Task } from 'src/app/interfaces/task';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
+import { UserDataService } from 'src/app/services/data/user-data.service';
 import { ResType } from 'src/app/shared/enum';
 import { BaseSingleViewComponent } from '../base-single-view/base-single-view.component';
 
@@ -22,6 +27,8 @@ export class TaskViewSingleComponent
 {
   route_id: number | null = null;
   task: Task = getEmptyTask();
+  rules: Rule[] = [];
+  roles: Role[] = [];
   organization_id: number = -1;
 
   constructor(
@@ -31,6 +38,9 @@ export class TaskViewSingleComponent
     private taskDataService: TaskDataService,
     private orgDataService: OrgDataService,
     private collabDataService: CollabDataService,
+    private userDataService: UserDataService,
+    private ruleDataService: RuleDataService,
+    private roleDataService: RoleDataService,
     protected modalService: ModalService
   ) {
     super(
@@ -62,12 +72,26 @@ export class TaskViewSingleComponent
 
   async setResources() {
     await this.setTask();
+
+    await this.setInitiatingOrganization();
+
+    await this.setInitiatingUser();
+
+    await this.setCollaboration();
   }
 
   async setInitiatingOrganization() {
     (await this.orgDataService.get(this.task.initiator_id)).subscribe((org) => {
-      this.task.initiator = org;
+      this.task.init_org = org;
     });
+  }
+
+  async setInitiatingUser() {
+    (await this.userDataService.get(this.task.init_user_id)).subscribe(
+      (user) => {
+        this.task.init_user = user;
+      }
+    );
   }
 
   async setCollaboration() {

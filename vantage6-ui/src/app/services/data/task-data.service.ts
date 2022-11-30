@@ -75,7 +75,8 @@ export class TaskDataService extends BaseDataService {
   save(task: Task) {
     // remove organization and collaboration properties - these should be set
     // within components where needed to prevent endless loop of updates
-    if (task.initiator) task.initiator = undefined;
+    if (task.init_org) task.init_org = undefined;
+    if (task.init_user) task.init_user = undefined;
     if (task.collaboration) task.collaboration = undefined;
     super.save(task);
   }

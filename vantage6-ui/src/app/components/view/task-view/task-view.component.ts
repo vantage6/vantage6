@@ -79,8 +79,18 @@ export class TaskViewComponent
     return this.task.collaboration ? this.task.collaboration.name : '';
   }
 
-  getInitiatorName(): string {
-    return this.task.initiator ? this.task.initiator.name : '';
+  getInitOrgName(): string {
+    return this.task.init_org ? this.task.init_org.name : '';
+  }
+
+  getInitUserName(): string {
+    return this.task.init_user ? this.task.init_user.username : '';
+  }
+
+  getUserViewRouterLink(): string {
+    return this.task.init_user
+      ? `/user/view/${this.task.init_user_id}/${this.task.init_user.organization_id}`
+      : '';
   }
 
   getDatabaseName(): string {

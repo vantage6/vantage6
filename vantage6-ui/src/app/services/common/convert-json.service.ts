@@ -166,6 +166,7 @@ export class ConvertJsonService {
       image: json.image,
       collaboration_id: json.collaboration.id,
       initiator_id: json.init_org,
+      init_user_id: json.init_user,
       run_id: json.run_id,
       parent_id: json.parent ? json.parent.id : null,
       database: json.database,

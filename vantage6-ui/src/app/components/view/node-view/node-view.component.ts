@@ -63,7 +63,10 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
   executeEdit(edited_value: string) {
     this.node.name = edited_value;
     this.nodeApiService.update(this.node).subscribe(
-      (data) => {},
+      (data) => {
+        // update node name in stored data
+        this.nodeDataService.save(this.node);
+      },
       (error) => {
         this.modalService.openMessageModal([error.error.msg]);
       }

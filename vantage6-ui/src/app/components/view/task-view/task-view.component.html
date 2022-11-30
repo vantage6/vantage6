@@ -43,16 +43,26 @@
       <td>{{task.status | titlecase}}</td>
   </tr>
   <tr>
-      <td>Initiator:</td>
+      <td>Initiating organization:</td>
       <td>
         <button mat-button
             class="btn btn-link inline"
             [routerLink]="['/organization/', task.initiator_id]">
-          {{getInitiatorName()}}
+          {{getInitOrgName()}}
         </button>
       </td>
   </tr>
-  <!-- TODO links to parents/children -->
+  <tr>
+      <td>Initiating user:</td>
+      <td>
+        <button mat-button
+            class="btn btn-link inline"
+            [routerLink]="getUserViewRouterLink()"
+            >
+          {{getInitUserName()}}
+        </button>
+      </td>
+  </tr>
   <tr>
     <td>Parent:</td>
     <td>

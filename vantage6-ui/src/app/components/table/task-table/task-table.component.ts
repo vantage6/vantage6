@@ -19,6 +19,18 @@ import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { Resource } from 'src/app/shared/types';
+import { UserDataService } from 'src/app/services/data/user-data.service';
+import { User } from 'src/app/interfaces/user';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { Role } from 'src/app/interfaces/role';
+import { Rule } from 'src/app/interfaces/rule';
+
+export enum TaskInitator {
+  ALL = 'All',
+  ORG = 'My organization',
+  USER = 'Myself',
+}
 
 // TODO this contains a lot of duplication from NodeTableComponent, fix that
 @Component({
@@ -32,12 +44,17 @@ import { Resource } from 'src/app/shared/types';
 })
 export class TaskTableComponent extends TableComponent implements OnInit {
   collaborations: Collaboration[] = [];
+  users: User[] = [];
+  rules: Rule[] = [];
+  roles: Role[] = [];
   current_collaboration: Collaboration | null;
   displayMode = DisplayMode.ALL;
 
   TASK_STATUS_ALL: string = 'All';
   available_task_statues: string[] = [];
   selected_task_status: string = this.TASK_STATUS_ALL;
+  task_initiators = TaskInitator;
+  task_initiator_selected = TaskInitator.ALL as string;
 
   displayedColumns: string[] = [
     'select',
@@ -46,7 +63,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     // 'description',
     'image',
     'collaboration',
-    'initiator',
+    'init_org',
+    'init_user',
     'status',
   ];
 
@@ -58,6 +76,9 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     private collabDataService: CollabDataService,
     private taskDataService: TaskDataService,
     private taskApiService: TaskApiService,
+    private userDataService: UserDataService,
+    private ruleDataService: RuleDataService,
+    private roleDataService: RoleDataService,
     protected modalService: ModalService
   ) {
     super(activatedRoute, userPermission, modalService);
@@ -79,8 +100,10 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     super.ngAfterViewInit();
     this.dataSource.sortingDataAccessor = (item: any, property: any) => {
       let sorter: any;
-      if (property === 'initiator') {
-        sorter = item.initiator.name;
+      if (property === 'init_org') {
+        sorter = item.init_org.name;
+      } else if (property === 'init_user') {
+        sorter = item.init_user.name;
       } else if (property === 'collaboration') {
         sorter = item.collaboration.name;
       } else {
@@ -131,7 +154,9 @@ export class TaskTableComponent extends TableComponent implements OnInit {
 
     await this.addCollaborationsToResources();
 
-    await this.addInitiatorsToTasks();
+    await this.addInitiatingOrgsToTasks();
+
+    await this.addInitiatingUsersToTasks();
 
     this.dataSource.data = this.resources;
 
@@ -231,15 +256,30 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     }
   }
 
-  protected async addInitiatorsToTasks() {
+  protected async addInitiatingOrgsToTasks() {
     for (let r of this.resources as Task[]) {
       for (let org of this.organizations) {
         if (org.id === r.initiator_id) {
-          r.initiator = org;
+          r.init_org = org;
           break;
         }
       }
     }
+  }
+
+  protected async addInitiatingUsersToTasks() {
+    (await this.userDataService.list()).subscribe((users) => {
+      this.users = users;
+      // add users to tasks
+      for (let r of this.resources as Task[]) {
+        for (let user of this.users) {
+          if (user.id === r.init_user_id) {
+            r.init_user = user;
+            break;
+          }
+        }
+      }
+    });
   }
 
   setCurrentCollaboration(): void {
@@ -331,6 +371,24 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     }
   }
 
+  filterTasksByInitiator(initiator: TaskInitator) {
+    this.task_initiator_selected = initiator;
+    if (initiator === TaskInitator.ALL) {
+      this.dataSource.data = this.resources;
+    } else if (initiator === TaskInitator.ORG) {
+      let own_org_id = this.userPermission.user.organization_id;
+      this.dataSource.data = this.resources.filter(function (elem: any) {
+        return elem.initiator_id === own_org_id;
+      });
+    } else {
+      // if show tasks initiated by user itself
+      let own_user_id = this.userPermission.user.id;
+      this.dataSource.data = this.resources.filter(function (elem: any) {
+        return elem.init_user_id === own_user_id;
+      });
+    }
+  }
+
   async refreshTasks() {
     this.modalService.openLoadingModal();
     await this.setup(true);
@@ -348,5 +406,9 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       this.resources,
       'status'
     );
+  }
+
+  getInitiatingUser(task: Task) {
+    return task.init_user ? task.init_user.username : '<unknown>';
   }
 }
