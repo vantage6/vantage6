@@ -7,7 +7,7 @@ REGISTRY ?= harbor2.vantage6.ai
 help:
 	@echo "Available commands to 'make':"
 	@echo "  set-version          : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
-	@echo "  uninstall            : uninstall all vantage6 packages"
+  @echo "  uninstall            : uninstall all vantage6 packages"
 	@echo "  install              : do a regular install of all vantage6 packages"
 	@echo "  install-dev          : do an editable install of all vantage6 packages"
 	@echo "  image                : build the node/server docker image"
@@ -18,6 +18,7 @@ help:
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
+  @echo "  devdocs              : run a documentation development server"
 	@echo ""
 	@echo "Using "
 	@echo "  tag:      ${TAG}"
@@ -141,3 +142,6 @@ publish:
 
 test:
 	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
+
+devdocs:
+	sphinx-autobuild docs docs/_build/html --watch .

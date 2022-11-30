@@ -1,25 +1,36 @@
-Introduction
+Architecture
 ============
-This introduction will describe the overal achitecture of the vantage6
-platform. Implementation details are given in the :doc:`/node/node`,
-:doc:`/server/server`, and :doc:`/api` sections of the documentation.
+*An overview of the vantage6 infrastructure and its components*
 
-.. Note:: The following sections are based on our publications:
+Overview
+--------
 
-  * `VANTAGE6: an open source priVAcy preserviNg federaTed leArninG
-    infrastructurE for Secure Insight eXchange <https://vantage6.ai/documents/
-    7/moncada-torres2020vantage6_57GU4Gt.pdf>`_
-  * `An Improved Infrastructure for Privacy-Preserving Analysis of Patient
-    Data <https://vantage6.ai/documents/14/smits2022improved.pdf>`_
+See the :ref:`Introduction on architecture <architectureoverview>` and
+:numref:`architecture-overview` for a high-level overview of the
+infrastructure. In the next sections we first explain the
+`Three Design Principles`_. Then the actors within a privacy preserving
+network are explained in `Network Actors`_. Finally the vantage6 software
+components are explained in `Components`_.
 
 
-3 Design principles
--------------------
-Before describing the architecture of VANTAGE6, we need to outline a few
+.. _architecture-overview:
+
+.. figure:: /images/architecture-overview.png
+   :alt: Architecture overview
+   :align: center
+
+   General diagram of the basic components of vantage6. (A) the client, also
+   called User, Reseacher or Application, (B)
+
+.. todo:: update fig 3 and fig 5 reference
+
+Three Design principles
+-----------------------
+Before describing the architecture of vantage6, we need to outline a few
 concepts. We define a party as an entity that takes part in one (or more)
 collaborations. We define a collaboration as an agreement between two or more
 parties to participate in a study (i.e., to answer a research question).
-Moreover, there are a three fundamental functional aspects of FL
+Moreover, there are a three fundamental functional aspects of FL and MPC
 infrastructures that are worth describing (and that are often overlooked8):
 
 **Autonomy**
@@ -33,18 +44,126 @@ infrastructures that are worth describing (and that are often overlooked8):
 
 **Heterogeneity**
   Parties should be allowed to have differences in hardware and operating
-  systems. FL systems should also enable collaborations among parties of
+  systems. The system should also enable collaborations among parties of
   different nature (e.g., between a registry and a biobank or between
   hospitals of different countries). Not only does this diversity have the
   potential to enrich the data to answer the question at hand, but also allows
   posing and answering more distinct, interesting research questions.
 
 **Flexibility**
-  Related to the latter, a FL infrastructure should not limit the use of
-  relevant data. The research question might need either `horizontally- or v
-  ertically-partitioned <https://en.wikipedia.org/wiki/Partition_(database)#Par
-  titioning_methods>`_ data to be answered. The supporting FL system should be
-  able to handle these two (very different) scenarios
+  Related to the latter, such an infrastructure should not limit the use of
+  relevant data. The research question might need either
+  `horizontally- or vertically-partitioned <https://en.wikipedia.org/wiki/Partition_(database)#Partitioning_methods>`_
+  data to be answered. The supporting system should be able to handle these two
+  (very different) scenarios.
+
+
+Network Actors
+--------------
+
+Server
+++++++
+
+.. note::
+    When we refer to the server, this is not just the *vantage6-server*, but
+    also other infrastructure components that the vantage6 server relies on.
+
+The server is responsible for coordinating all communication in the vantage6
+network. It consists of several components:
+
+**vantage6 server**
+    Contains the users, organizations, collaborations, tasks and their results.
+    It handles authentication and authorization to the system and is the
+    central point of contact for clients and nodes. For more details see
+    `vantage6-server`_.
+
+**Docker registry**
+    Contains algorithms stored in `Images <https://en.wikipedia.org/wiki/OS-level_virtualization>`_
+    which can be used by clients to request a computation. The node will
+    retrieve the algorithm from this registry and execute it. It is possible to
+    use `Docker hub <https://hub.docker.com/>`_ for this, however some (minor)
+    features will not work.
+
+    An optional additional feature of the Docker registry would be Docker
+    Notary. This is a service allows verification of the algorithm author.
+
+**VPN server (optionally)**
+    Is required if algorithms need to be able to engage in peer-to-peer
+    communication. This is usually the case when working with MPC but can also
+    be useful for other use cases.
+
+**RabbitMQ message queue (optionally)**
+    The *vantage6-server* uses the web-sockets protocol to communicate between
+    server, nodes and clients it is impossible to horizontally scale the number
+    of vantage6-server instances. RabbitMQ is used to synchronize the messages
+    between multiple *vantage6-server* instances.
+
+
+Data Station
+++++++++++++
+
+**vantage6-node**
+    The data station hosts the node (vantage6-node) and a database. The database
+    could be in any format, but not all algorithms support all database types.
+    There is tooling available for CSV, `Parquet <https://parquet.apache.org/>`_
+    and `SPARQL <https://en.wikipedia.org/wiki/SPARQL>`_. There are other
+    data-adapters (e.g. `OMOP <https://www.ohdsi.org/data-standardization/>`_ and
+    `FHIR <https://hl7.org/fhir/>`_) in development. For more details see
+    `vantage6-node`_.
+
+**database**
+    The node is responsible for executing the algorithms on the **local data**.
+    It protects the data by allowing only specified algorithms to be executed after
+    verifying their origin. The **vantage6-node** is responsible for picking up the
+    task, executing the algorithm and sending the results back to the server. The
+    node needs access to local data. This data can either be a file (e.g. csv) or a
+    service (e.g. a database).
+
+User or Application
++++++++++++++++++++
+
+A user or application interacts with the *vantage6-server*. They can create
+tasks and retrieve their results, or manage entities at the server (i.e.
+creating or editing users, organizations and collaborations). This can be done
+using clients or the user-interface. For more details see `vantage6-clients`_
+and `vantage6-UI`_.
+
+.. todo::
+
+    insert internal references to clients and user-interface.
+
+
+Components
+----------
+
+vantage6-server
++++++++++++++++
+
+vantage6-node
++++++++++++++
+
+vantage6-clients
+++++++++++++++++
+
+vantage6-UI
++++++++++++
+
+
+----------------------------
+
+
+
+Implementation details are given in the :doc:`/node/node`,
+:doc:`/server/server`, and :doc:`/api` sections of the documentation.
+
+.. Note:: The following sections are based on our publications:
+
+  * `VANTAGE6: an open source priVAcy preserviNg federaTed leArninG
+    infrastructurE for Secure Insight eXchange <https://vantage6.ai/documents/
+    7/moncada-torres2020vantage6_57GU4Gt.pdf>`_
+  * `An Improved Infrastructure for Privacy-Preserving Analysis of Patient
+    Data <https://vantage6.ai/documents/14/smits2022improved.pdf>`_
+
 
 Architecture
 ------------
@@ -59,16 +178,6 @@ access to their own (local) data. When the algorithm has reached a solution,
 it is transmitted via the server to the researcher. A more detailed
 explanation of these components is given as follows.
 
-.. _architecture-overview:
-
-.. figure:: /images/architecture-overview.png
-   :alt: Architecture overview
-   :align: center
-
-   General diagram of the basic components of vantage6. More detailed
-   schematics of the server and nodes are shown in Fig. 3 and 5, respectively.
-
-.. todo:: update fig 3 and fig 5 reference
 
 Researcher
 ^^^^^^^^^^
@@ -178,17 +287,7 @@ provide a feature rich interface.
 
 Docker registry
 """""""""""""""
-The server is also a good place for hosting a private registry of Docker
-images (although any Docker registry can be used) together with its
-corresponding RESTful API. The Docker images correspond to the algorithms’
-implementations, which are delivered to the nodes, where they are executed.
-vantage6 also allows the researcher to upload its own Docker images (i.e.,
-algorithms) to the registry. However, in order to be executed, all Docker
-images must be approved by the involved nodes (i.e., parties). This way,
-parties can autonomously decide which algorithms are allowed to have access
-to their data. Additionally, in order to verify that the pulled container
-corresponds to an approved image, vantage6 uses Docker Notary (a digital seal
-for publishing and managing trusted collections of content).
+
 
 
 Node
@@ -229,3 +328,5 @@ end-to-end-encrypted, adding an extra layer of security. It is also worth
 mentioning that the parties hosting the nodes are allowed to be heterogeneous:
 as long as they comply with the minimal system requirements, they can have
 their own hardware and operating system.
+
+
