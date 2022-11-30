@@ -153,12 +153,10 @@ export class SocketioMessageService {
         .pipe(take(1))
         .subscribe((task) => {
           // only send message if task of currently logged-in user 1) has
-          // started/finished and is not a subtask or 2) has crashed
+          // finished and is not a subtask or 2) has crashed
           if (
-            task.initiator_id === this.userPermission.user.id &&
-            ((!task.parent_id &&
-              (task.status === TaskStatus.COMPLETED ||
-                task.status === TaskStatus.ACTIVE)) ||
+            task.init_user_id === this.userPermission.user.id &&
+            ((!task.parent_id && task.status === TaskStatus.COMPLETED) ||
               !this.isPositiveStatus(task.status))
           ) {
             this.snackbarService.openTaskMessageSnackBar(
@@ -173,20 +171,35 @@ export class SocketioMessageService {
     }
   }
 
-  private onCreatedTask(data: any) {
+  private async onCreatedTask(data: any) {
     if (dictEmpty(data)) return; // ignore initialization values;
     let org_name = this.getOrgName(data.init_org_id);
     let collab_name = this.getCollabName(data.collaboration_id);
     let msg =
       `A new task (id=${data.task_id}) has just been created in ` +
       `collaboration ${collab_name} by organization ${org_name}`;
-    // this.snackbarService.openTaskMessageSnackBar(
-    //   msg,
-    //   Sentiment.NEUTRAL,
-    //   data.task_id,
-    //   this.userPermission.user.organization_id
-    // );
     this.addMessage(msg);
+
+    // create snackbar if logged-in user has created a task so they can view it
+    if (data.task_id) {
+      (await this.taskDataService.get(data.task_id))
+        .pipe(take(1))
+        .subscribe((task) => {
+          // only send message if task of currently logged-in user 1) has
+          // finished and is not a subtask or 2) has crashed
+          if (
+            task.init_user_id === this.userPermission.user.id &&
+            !task.parent_id
+          ) {
+            this.snackbarService.openTaskMessageSnackBar(
+              'View the task you just created here!',
+              Sentiment.NEUTRAL,
+              data.task_id,
+              this.userPermission.user.organization_id
+            );
+          }
+        });
+    }
   }
 
   addMessage(message: string): void {

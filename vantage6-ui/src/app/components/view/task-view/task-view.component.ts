@@ -104,10 +104,16 @@ export class TaskViewComponent
   }
 
   askConfirmKill() {
+    let task_kill_message = `task ${this.task.id}`;
+    if (this.task.children_ids) {
+      task_kill_message =
+        task_kill_message +
+        ` (and its ${this.task.children_ids.length} subtasks)`;
+    }
     this.modalService
       .openKillModal(
         `You are about to send instructions to the node(s) executing this task to stop it.`,
-        `task ${this.task.id}`
+        task_kill_message
       )
       .result.then((exit_mode) => {
         if (exit_mode === ExitMode.KILL) {
