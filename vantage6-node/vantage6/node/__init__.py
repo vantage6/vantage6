@@ -436,7 +436,12 @@ class Node(object):
                     return
 
                 response = self.server_io.request(f"task/{task_id}")
+
                 init_org_id = response.get("init_org")
+                # TODO this check is to be compatible between 3.5+ and 3.0-3.4
+                # Remove it in v4
+                if not init_org_id:
+                    init_org_id = response.get("initiator")
 
                 if not init_org_id:
                     self.log.error(
