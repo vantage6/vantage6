@@ -29,8 +29,6 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   background_img = '';
 
-  // TODO if user is logged in, force that it redirects to HomeComponent
-
   constructor(
     private authService: AuthService,
     private tokenStorage: TokenStorageService,
@@ -41,6 +39,7 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     if (this.tokenStorage.getToken()) {
       this.isLoggedIn = true;
+      this.router.navigateByUrl('/home');
     }
     this.background_img = this._pickBackgroundImage();
   }
@@ -54,17 +53,27 @@ export class LoginComponent implements OnInit {
   login(username: string, password: string): void {
     this.authService.login(username, password).subscribe(
       (data) => {
-        // on successfull login
-        this._onSuccessfulLogin(data);
-
-        // after login, go to home
-        this.router.navigateByUrl('/home');
+        if ('qr_uri' in data) {
+          // user still has to set up two factor authentication
+          this.authService.qr_uri = data['qr_uri'];
+          this.authService.otp_code = data['otp_secret'];
+          this.router.navigateByUrl('/setup_mfa');
+        } else if (!('access_token' in data)) {
+          // if there is no access token, this means user has to also submit
+          // an MFA code
+          this.router.navigateByUrl('/mfa_code');
+        } else {
+          // logged in successfully!
+          this._onSuccessfulLogin(data);
+        }
       },
       (err) => {
         if (err.status === 0) {
           this.errorMessage = `Cannot connect to server! Server URL is ${environment.api_url}.`;
-        } else {
+        } else if (err.error.msg) {
           this.errorMessage = err.error.msg;
+        } else {
+          this.errorMessage = 'An unknown error occurred!';
         }
         this.isLoginFailed = true;
         this.isLoggedIn = false;
@@ -73,14 +82,9 @@ export class LoginComponent implements OnInit {
   }
 
   private async _onSuccessfulLogin(data: any): Promise<void> {
-    // TODO ensure await is functional
-    await this.tokenStorage.setLoginData(data);
-
     this.isLoginFailed = false;
     this.isLoggedIn = true;
-
-    // set user permissions
-    this.userPermission.setup();
+    this.authService.onLogin(data);
   }
 
   reloadPage(): void {

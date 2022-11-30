@@ -1,0 +1,26 @@
+<form
+  name="form"
+  (ngSubmit)="f.form.valid && onSubmit()"
+  #f="ngForm"
+  novalidate>
+  <p>
+      In order to reset your two-factor authentication code, you need to get a
+      reset token. You will receive this at your registered email address.
+  </p>
+  <div class="form-group">
+    <button class="btn btn-primary">
+        Request reset token
+    </button>
+  </div>
+  <div class="form-group" *ngIf="executed_request">
+    <div class="alert alert-success" role="alert">
+      {{request_msg}}
+      <button class="btn btn-link" [routerLink]="['/mfa_recover']">
+        Enter your reset token
+      </button>
+    </div>
+  </div>
+  <button class="btn btn-link" [routerLink]="['/mfa_recover']">
+      I already have a reset token
+  </button>
+</form>
