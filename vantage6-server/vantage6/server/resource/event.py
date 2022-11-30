@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
+import datetime as dt
 
 from http import HTTPStatus
 from flask import request, g
 
 from vantage6.common import logger_name
+from vantage6.common.task_status import has_task_finished, TaskStatus
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server import db
 from vantage6.server.permission import (
@@ -102,7 +104,7 @@ class KillTask(ServicesResources):
           200:
             description: Ok
           404:
-            description: Task not found
+            description: Task not found or already completed
           401:
             description: Unauthorized
           400:
@@ -119,6 +121,12 @@ class KillTask(ServicesResources):
         task = db.Task.get(id_)
         if not task:
             return {"msg": f"Task id={id_} not found"}, HTTPStatus.NOT_FOUND
+
+        if has_task_finished(task.status):
+            return {
+                "msg": f"Task {id_} already finished with status "
+                       f"'{task.status}', so cannot kill it!"
+            }, HTTPStatus.BAD_REQUEST
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
@@ -149,6 +157,17 @@ class KillTask(ServicesResources):
             namespace='/tasks',
             room=f"collaboration_{task.collaboration_id}",
         )
+
+        # set tasks and subtasks status to killed
+        def set_killed(task: db.Task):
+            for result in task.results:
+                result.status = TaskStatus.KILLED.value
+                result.finished_at = dt.datetime.now()
+                result.save()
+
+        set_killed(task)
+        for subtask in task.children:
+            set_killed(subtask)
 
         return {
             "msg": "Nodes have been instructed to kill any containers running "

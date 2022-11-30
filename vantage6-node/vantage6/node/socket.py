@@ -1,5 +1,4 @@
 import logging
-import datetime as dt
 
 from socketio import ClientNamespace
 
@@ -58,17 +57,17 @@ class NodeTaskNamespace(ClientNamespace):
             status: str
                 New status of the algorithm container
         """
-        # TODO handle run sequence at this node. Maybe terminate all
-        #     containers with the same run_id?
         status = data.get('status')
         run_id = data.get('run_id')
         if has_task_failed(status):
+            # TODO handle run sequence at this node. Maybe terminate all
+            #     containers with the same run_id?
             self.log.critical(
                 f"A container on a node within your collaboration part of "
                 f"run_id={run_id} has exited with status {status}"
             )
-        # else: no need to print to node logs that a task has started/
-        # finished/... on another node
+        # else: no need to do anything when a task has started/finished/... on
+        # another node
 
     def on_expired_token(self, msg):
         self.log.warning("Your token is no longer valid... reconnecting")
@@ -85,14 +84,6 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.info(f"Received instruction to kill task: {kill_info}")
         killed_ids = self.node_worker_ref.kill_containers(kill_info)
         for killed in killed_ids:
-            self.log.debug(f"Set status of killed result {killed['result_id']}"
-                           f" (task {killed['task_id']}).")
-            self.node_worker_ref.server_io.patch_results(
-                killed['result_id'], {
-                    'status': TaskStatus.KILLED.value,
-                    'finished_at': dt.datetime.now().isoformat()
-                }
-            )
             self.emit(
                 "algorithm_status_change",
                 {

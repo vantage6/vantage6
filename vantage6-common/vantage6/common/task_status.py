@@ -48,3 +48,23 @@ def has_task_failed(status: Union[TaskStatus, str]) -> bool:
             TaskStatus.INITIALIZING.value, TaskStatus.ACTIVE.value,
             TaskStatus.COMPLETED.value, TaskStatus.PENDING.value
         ]
+
+
+def has_task_finished(status: Union[TaskStatus, str]) -> bool:
+    """
+    Check if task has finished or crashed
+
+    Parameters
+    ----------
+    status: TaskStatus | str
+        The status of the task
+
+    Returns
+    -------
+    bool
+        True if task has finished or failed, False otherwise
+    """
+    if isinstance(status, TaskStatus):
+        return has_task_failed(status) or status == TaskStatus.COMPLETED
+    else:
+        return has_task_failed(status) or status == TaskStatus.COMPLETED.value
