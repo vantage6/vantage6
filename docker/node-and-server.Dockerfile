@@ -6,7 +6,8 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${TAG}
+ARG BASE=3
+FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
@@ -38,9 +39,11 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
 # copy source
 COPY . /vantage6
 
-# install requirements. We cannot rely on setup.py because of the way
+# Install requirements. We cannot rely on setup.py because of the way
 # python resolves package versions. To control all dependencies we install
 # them from the requirements.txt
+# This is also done in the base-image to safe build time. We redo it here
+# to allow for dependency upgrades in minor and patch versions.
 RUN pip install -r /vantage6/requirements.txt \
     --extra-index-url https://www.piwheels.org/simple
 
