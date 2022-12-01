@@ -3,6 +3,7 @@ import logging
 import datetime as dt
 
 from http import HTTPStatus
+from socket import SocketIO
 from flask import request, g
 
 from vantage6.common import logger_name
@@ -136,38 +137,9 @@ class KillTask(ServicesResources):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        # Gather results and task ids of current task and child tasks
-        child_results = [r for child in task.children for r in child.results]
-        all_results = task.results + child_results
-        child_task_ids = [child.id for child in task.children]
-        all_task_ids = [id_] + child_task_ids
-
-        kill_list = [{
-            'task_id': task_id,
-            'result_id': result.id,
-            'organization_id': result.organization_id
-        } for result, task_id in zip(all_results, all_task_ids)]
-
-        # emit socket event to the node to execute the container kills
-        self.socketio.emit(
-            'kill_containers', {
-                'kill_list': kill_list,
-                'collaboration_id': task.collaboration.id
-            },
-            namespace='/tasks',
-            room=f"collaboration_{task.collaboration_id}",
-        )
-
-        # set tasks and subtasks status to killed
-        def set_killed(task: db.Task):
-            for result in task.results:
-                result.status = TaskStatus.KILLED.value
-                result.finished_at = dt.datetime.now()
-                result.save()
-
-        set_killed(task)
-        for subtask in task.children:
-            set_killed(subtask)
+        # call function to kill the task. This function is outside of the
+        # endpoint as it is also used in other endpoints
+        kill_task(task, self.socketio)
 
         return {
             "msg": "Nodes have been instructed to kill any containers running "
@@ -262,3 +234,48 @@ class KillNodeTasks(ServicesResources):
             "msg": f"Node {node.id} has been instructed to kill all containers"
                    " running on it."
         }, HTTPStatus.OK
+
+
+def kill_task(task: db.Task, socket: SocketIO) -> None:
+    """
+    Send instructions to node(s) to kill a certain task
+
+    Parameters
+    ----------
+    task: Task
+        Task that should be killed
+    socket: SocketIO
+        SocketIO connection object to communicate kill instructions to node
+    """
+    # Gather results and task ids of current task and child tasks
+    child_results = [r for child in task.children for r in child.results]
+    all_results = task.results + child_results
+    child_task_ids = [child.id for child in task.children]
+    all_task_ids = [task.id] + child_task_ids
+
+    kill_list = [{
+        'task_id': task_id,
+        'result_id': result.id,
+        'organization_id': result.organization_id
+    } for result, task_id in zip(all_results, all_task_ids)]
+
+    # emit socket event to the node to execute the container kills
+    socket.emit(
+        'kill_containers', {
+            'kill_list': kill_list,
+            'collaboration_id': task.collaboration.id
+        },
+        namespace='/tasks',
+        room=f"collaboration_{task.collaboration_id}",
+    )
+
+    # set tasks and subtasks status to killed
+    def set_killed(task: db.Task):
+        for result in task.results:
+            result.status = TaskStatus.KILLED.value
+            result.finished_at = dt.datetime.now()
+            result.save()
+
+    set_killed(task)
+    for subtask in task.children:
+        set_killed(subtask)

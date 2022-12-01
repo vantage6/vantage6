@@ -7,7 +7,7 @@ from http import HTTPStatus
 from sqlalchemy import desc
 
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.server import db
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
@@ -22,6 +22,7 @@ from vantage6.server.resource.common._schema import (
     TaskResultSchema
 )
 from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.event import kill_task
 
 
 module_name = __name__.split('.')[-1]
@@ -621,6 +622,10 @@ class Task(TaskBase):
             if not (self.r.d_org.can() and g.user.organization in orgs):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
+
+        # kill the task if it is still running
+        if not has_task_finished(task.status):
+            kill_task(task, self.socketio)
 
         # retrieve results that belong to this task
         log.info(f'Removing task id={task.id}')
