@@ -358,35 +358,46 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     return this.selection.selected.length > 0 && !this.canDeleteSelection();
   }
 
-  filterTaskStatus(selected_status: string = this.TASK_STATUS_ALL): void {
-    this.selected_task_status = selected_status;
-    if (selected_status === this.TASK_STATUS_ALL) {
-      this.dataSource.data = this.resources;
+  filterTasks() {
+    // filter tasks by current value of selected status and initiator
+    let selection = [];
+    // first filter by task status
+    if (this.selected_task_status === this.TASK_STATUS_ALL) {
+      selection = this.resources;
     } else {
-      this.dataSource.data = filterArrayByProperty(
+      selection = filterArrayByProperty(
         this.resources,
         'status',
-        selected_status
+        this.selected_task_status
       );
     }
-  }
-
-  filterTasksByInitiator(initiator: TaskInitator) {
-    this.task_initiator_selected = initiator;
-    if (initiator === TaskInitator.ALL) {
-      this.dataSource.data = this.resources;
-    } else if (initiator === TaskInitator.ORG) {
+    // now filter by initiator
+    if (this.task_initiator_selected === TaskInitator.ALL) {
+      // pass: don't shrink selection further
+    } else if (this.task_initiator_selected === TaskInitator.ORG) {
       let own_org_id = this.userPermission.user.organization_id;
-      this.dataSource.data = this.resources.filter(function (elem: any) {
+      selection = selection.filter(function (elem: any) {
         return elem.initiator_id === own_org_id;
       });
     } else {
       // if show tasks initiated by user itself
       let own_user_id = this.userPermission.user.id;
-      this.dataSource.data = this.resources.filter(function (elem: any) {
+      selection = selection.filter(function (elem: any) {
         return elem.init_user_id === own_user_id;
       });
     }
+    // set new data selection
+    this.dataSource.data = selection;
+  }
+
+  filterTaskStatus(selected_status: string = this.TASK_STATUS_ALL): void {
+    this.selected_task_status = selected_status;
+    this.filterTasks();
+  }
+
+  filterTasksByInitiator(initiator: TaskInitator) {
+    this.task_initiator_selected = initiator;
+    this.filterTasks();
   }
 
   async refreshTasks() {
