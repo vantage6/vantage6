@@ -42,6 +42,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.client import Client
 from vantage6.client.encryption import RSACryptor
+from vantage6.cli.configuration_manager import NodeConfigurationManager
 
 
 from vantage6.cli.context import NodeContext
@@ -787,6 +788,44 @@ def cli_node_version(name, system_folders):
             {"node": version.output.decode('utf-8'), "cli": __version__})
     else:
         error(f"Node {name} is not running! Cannot provide version...")
+
+
+#
+#   set-api-key
+#
+@cli_node.command(name='set-api-key')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("--api-key", default=None, help="New API key")
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_set_api_key(name, api_key, environment, system_folders):
+    """
+    Put a new API key into the node configuration file
+    """
+    # select name and environment
+    name, environment = select_node(name, environment, system_folders)
+
+    # Check that we can write in the config folder
+    if not check_config_write_permissions(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        exit(1)
+
+    if not api_key:
+        api_key = q.text("Please enter your new API key:").ask()
+
+    # get configuration manager
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+    conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
+
+    # set new api key, and save the file
+    ctx.config['api_key'] = api_key
+    conf_mgr.put(environment, ctx.config)
+    conf_mgr.save(ctx.config_file)
+    info("Your new API key has been uploaded to the config file "
+         f"{ctx.config_file}.")
 
 
 def print_log_worker(logs_stream):
