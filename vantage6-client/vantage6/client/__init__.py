@@ -1716,7 +1716,7 @@ class UserClient(ClientBase):
             result: int, optional
                 Only show task that contains this result id
             status: str, optional
-                Filter by task status (e.g. 'started', 'pending', 'completed',
+                Filter by task status (e.g. 'active', 'pending', 'completed',
                 'crashed')
             page: int, optional
                 Pagination page, by default 1

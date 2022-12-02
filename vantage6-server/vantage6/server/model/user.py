@@ -169,7 +169,20 @@ class User(Authenticatable):
         """
         Check if user is allowed to execute a certain action
 
-        TODO docstring
+        Parameters
+        ---------
+        resource: str
+            The resource type on which the action is to be performed
+        scope: Scope
+            The scope within which the user wants to perform an action
+        operation: Operation
+            The operation a user wants to execute
+
+        Returns
+        -------
+        bool
+            Whether or not user is allowed to execute the requested operation
+            on the resource
         """
         rule = Rule.get_by_(resource, scope, operation)
         return rule in self.rules or \

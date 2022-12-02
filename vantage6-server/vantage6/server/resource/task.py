@@ -198,8 +198,8 @@ class Tasks(TaskBase):
             name: status
             schema:
               type: string
-            description: Filter by task status, e.g. 'started' for active
-              tasks, 'completed' for finished or 'crashed' for crashed tasks.
+            description: Filter by task status, e.g. 'active' for active
+              tasks, 'completed' for finished or 'crashed' for failed tasks.
           - in: query
             name: page
             schema:
