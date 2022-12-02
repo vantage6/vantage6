@@ -204,7 +204,9 @@ jobs:
     needs: [version, build-n-release] # we need to packages to be released
     env:
       version: ${{ needs.version.outputs.version }}
+      major: ${{ needs.version.outputs.major }}
       minor: ${{ needs.version.outputs.minor }}
+      patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
 
     steps:
@@ -235,14 +237,14 @@ jobs:
         name: Build Docker support images
         run: make support-image TAG=$version
 
-      - # we only release a new base image if it is a minor and major release
+      - # we only release a new base image if it is a major release
         name: Build Docker base image
-        if: ${{ env.minor == 0 && env.stage == '' }}
-        run: make base-image TAG=$version
+        if: ${{ env.minor == 0 && env.patch == 0 && env.stage == '' }}
+        run: make base-image TAG=$major
 
       - # build the actual infrastructure images
         name: Build Docker image
-        run: make image TAG=$version
+        run: make image TAG=$version BASE=$major
 
   algorithm-base-image:
     name: Build algorithm base image
