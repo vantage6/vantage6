@@ -15,7 +15,7 @@ from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
 from flask import (
-    Flask, make_response, current_app, request, send_from_directory
+    Flask, make_response, current_app, request, send_from_directory, Request
 )
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -200,17 +200,36 @@ class ServerApp:
         self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL",
                                                           False)
 
+        def _get_request_path(request: Request) -> str:
+            """
+            Return request extension of request URL, e.g.
+            http://localhost:5000/api/task/1 -> api/task/1
+
+            Parameters
+            ----------
+            request: Request
+                Flask request object
+
+            Returns
+            -------
+            string:
+                The endpoint path of the request
+            """
+            return request.url.replace(request.url_root, '')
+
         # before request
         @self.app.before_request
-        def set_db_session():
-            """Before every flask request method.
+        def do_before_request():
+            """Before every flask request method."""
+            # Add log message before each request
+            log.debug(f"Received request: {request.method} "
+                      f"{_get_request_path(request)}")
 
-            This will obtain a (scoped) db session from the session factory
-            that is linked to the flask request global `g`. In every endpoint
-            we then can access the database by using this session. We ensure
-            that the session is removed (and uncommited changes are rolled
-            back) at the end of every request.
-            """
+            # This will obtain a (scoped) db session from the session factory
+            # that is linked to the flask request global `g`. In every endpoint
+            # we then can access the database by using this session. We ensure
+            # that the session is removed (and uncommited changes are rolled
+            # back) at the end of every request.
             DatabaseSessionManager.new_session()
 
         @self.app.after_request

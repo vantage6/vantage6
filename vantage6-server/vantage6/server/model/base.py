@@ -183,7 +183,8 @@ class Database(metaclass=Singleton):
         log.warn(f"Adding column {col_name} to table {tab_name} as it did not "
                  "exist yet")
         self.engine.execute(
-            'ALTER TABLE %s ADD COLUMN %s %s' % (tab_name, col_name, col_type)
+            'ALTER TABLE "%s" ADD COLUMN %s %s' % (tab_name, col_name,
+                                                   col_type)
         )
 
     @staticmethod

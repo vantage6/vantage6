@@ -1,8 +1,12 @@
 # `make` is expected to be called from the directory that contains
 # this Makefile
 
+# docker image tag
 TAG ?= petronas
 REGISTRY ?= harbor2.vantage6.ai
+
+# infrastructure base image version
+BASE ?= 3
 
 help:
 	@echo "Available commands to 'make':"
@@ -22,6 +26,7 @@ help:
 	@echo "Using "
 	@echo "  tag:      ${TAG}"
 	@echo "  registry: ${REGISTRY}"
+	@echo "  base:     ${BASE}"
 
 set-version:
 	# --version --build --spec --post
@@ -55,8 +60,10 @@ install-dev:
 
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/infrastructure-base:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/infrastructure-base.Dockerfile \
 		--push .
@@ -65,6 +72,7 @@ algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/algorithm-base:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/algorithm-base.Dockerfile \
 		--push .
@@ -102,6 +110,8 @@ image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/node:${TAG} \
 		--tag ${REGISTRY}/infrastructure/server:${TAG} \
+		--build-arg TAG=${TAG} \
+		--build-arg BASE=${BASE} \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/node-and-server.Dockerfile \
 		--push .

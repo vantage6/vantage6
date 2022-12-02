@@ -382,7 +382,7 @@ class Tasks(TaskBase):
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
                        database=data.get('database', ''),
-                       init_org=init_org)
+                       initiator=init_org)
 
         # create run_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new run_id. Tasks created

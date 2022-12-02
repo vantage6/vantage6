@@ -58,7 +58,8 @@ def load(fixtures, drop_all=False):
     for col in fixtures.get("collaborations", {}):
 
         # create collaboration
-        collaboration = db.Collaboration(name=col.get("name"), encrypted=col.get("encrypted", True))
+        collaboration = db.Collaboration(
+            name=col.get("name"), encrypted=col.get("encrypted", True))
         log.debug(f"processed collaboration={collaboration.name}")
 
         # append organizations to the collaboration
@@ -105,7 +106,7 @@ def load(fixtures, drop_all=False):
                 image=image,
                 collaboration=collaboration,
                 run_id=db.Task.next_run_id(),
-                init_org=init_org
+                initiator=init_org
             )
 
             for organization in collaboration.organizations:
