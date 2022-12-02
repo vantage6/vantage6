@@ -3,6 +3,7 @@ import base64
 import click
 import appdirs
 import ipaddress
+import typing
 
 from colorama import init, Fore, Style
 
@@ -18,6 +19,23 @@ def logger_name(special__name__):
     if len(log_name) > 14:
         log_name = log_name[:11] + ".."
     return log_name
+
+
+class WhoAmI(typing.NamedTuple):
+    """ Data-class to store Authenticatable information in."""
+    type_: str
+    id_: int
+    name: str
+    organization_name: str
+    organization_id: int
+
+    def __repr__(self) -> str:
+        return (f"<WhoAmI "
+                f"name={self.name}, "
+                f"type={self.type_}, "
+                f"organization={self.organization_name}, "
+                f"(id={self.organization_id})"
+                ">")
 
 
 class Singleton(type):

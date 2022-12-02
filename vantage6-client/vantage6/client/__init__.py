@@ -23,9 +23,10 @@ from vantage6.client.utils import print_qr_code
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
+from vantage6.common.encryption import RSACryptor, DummyCryptor
+from vantage6.common import WhoAmI
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
-from vantage6.client.encryption import RSACryptor, DummyCryptor
 
 
 module_name = __name__.split('.')[1]
@@ -38,23 +39,6 @@ class ServerInfo(typing.NamedTuple):
     host: str
     port: int
     path: str
-
-
-class WhoAmI(typing.NamedTuple):
-    """ Data-class to store Authenticable information in."""
-    type_: str
-    id_: int
-    name: str
-    organization_name: str
-    organization_id: int
-
-    def __repr__(self) -> str:
-        return (f"<WhoAmI "
-                f"name={self.name}, "
-                f"type={self.type_}, "
-                f"organization={self.organization_name}, "
-                f"(id={self.organization_id})"
-                ">")
 
 
 class ClientBase(object):
