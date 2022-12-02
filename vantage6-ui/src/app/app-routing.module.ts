@@ -42,6 +42,22 @@ const routes: Routes = [
     component: LoginPageComponent,
   },
   {
+    path: 'setup_mfa',
+    component: LoginPageComponent,
+  },
+  {
+    path: 'mfa_code',
+    component: LoginPageComponent,
+  },
+  {
+    path: 'mfa_lost',
+    component: LoginPageComponent,
+  },
+  {
+    path: 'mfa_recover',
+    component: LoginPageComponent,
+  },
+  {
     path: 'home',
     component: HomeComponent,
     data: { requiresLogin: true },

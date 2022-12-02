@@ -22,6 +22,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
+import { QRCodeModule } from 'angularx-qrcode';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -70,6 +71,10 @@ import { ChangePasswordComponent } from './components/edit/user-edit/change-pass
 import { SocketioConnectService } from './services/common/socketio-connect.service';
 import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.component';
 import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
+import { SetupMfaComponent } from './components/login/setup-mfa/setup-mfa.component';
+import { MfaCodeComponent } from './components/login/mfa-code/mfa-code.component';
+import { MfaLostComponent } from './components/login/mfa-lost/mfa-lost.component';
+import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.component';
 
 @NgModule({
   declarations: [
@@ -111,6 +116,10 @@ import { SocketMessagesComponent } from './components/table/socket-messages/sock
     ChangePasswordComponent,
     ModalKillComponent,
     SocketMessagesComponent,
+    SetupMfaComponent,
+    MfaCodeComponent,
+    MfaLostComponent,
+    MfaRecoverComponent,
   ],
   imports: [
     BrowserModule,
@@ -138,6 +147,7 @@ import { SocketMessagesComponent } from './components/table/socket-messages/sock
     MatListModule,
     CommonModule,
     NgbModule,
+    QRCodeModule,
   ],
   providers: [
     AccessGuard,
