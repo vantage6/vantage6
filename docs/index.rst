@@ -133,9 +133,9 @@ Index
    self
    user-documentation/index
    algorithms/index
+   technical-documentation/index
    devops/index
    glossary
-..    technical-documentation/index
 
 .. toctree::
    :maxdepth: 2
