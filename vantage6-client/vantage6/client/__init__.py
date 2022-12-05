@@ -335,8 +335,8 @@ class ClientBase(object):
             print_qr_code(data)
             return False
         else:
-            # If no QR two-factor authentication is
-            # required, but that is not an error
+            # Check if there is an access token. If not, there is a problem
+            # with authenticating
             if 'access_token' not in data:
                 if 'msg' in data:
                     raise Exception(data['msg'])

@@ -404,14 +404,18 @@ class DockerTaskManager(DockerBaseManager):
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data-sources at the
         # same time
+        db_env_vars = []
         for label in self.databases:
             db = self.databases[label]
             var_name = f'{label.upper()}_DATABASE_URI'
             environment_variables[var_name] = \
                 f"{self.data_folder}/{os.path.basename(db['uri'])}" \
                 if db['is_file'] else db['uri']
+            db_env_vars.append(var_name)
+        environment_variables['ALL_DATABASE_ENVVARS'] = db_env_vars
 
         # Support legacy algorithms
+        # TODO remove in v4+
         try:
             environment_variables["DATABASE_URI"] = (
                 f"{self.data_folder}/"
