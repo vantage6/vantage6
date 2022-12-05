@@ -87,7 +87,8 @@ class DefaultSocketNamespace(Namespace):
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
-    def _add_node_to_rooms(self, node: Authenticatable):
+    @staticmethod
+    def _add_node_to_rooms(node: Authenticatable):
         """ Connect node to appropriate websocket rooms """
         # node join rooms for all nodes and rooms for their collaboration
         session.rooms.append('all_nodes')
@@ -96,7 +97,8 @@ class DefaultSocketNamespace(Namespace):
             f'collaboration_{node.collaboration_id}_organization_'
             f'{node.organization_id}')
 
-    def _add_user_to_rooms(self, user: Authenticatable):
+    @staticmethod
+    def _add_user_to_rooms(user: Authenticatable):
         # check for which collab rooms the user has permission to enter
         session.user = db.User.get(session.auth_id)
         if session.user.can('event', Scope.GLOBAL, Operation.VIEW):

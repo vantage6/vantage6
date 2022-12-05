@@ -11,8 +11,8 @@ from vantage6.common.task_status import has_task_finished, TaskStatus
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server import db
 from vantage6.server.permission import (
-    Scope as S,
-    Operation as P,
+    Scope,
+    Operation,
     PermissionManager
 )
 
@@ -51,17 +51,17 @@ def permissions(permissions: PermissionManager):
     # are permissions to do stuff via socket connections
     add = permissions.appender(module_name)
 
-    add(scope=S.ORGANIZATION, operation=P.VIEW,
+    add(scope=Scope.ORGANIZATION, operation=Operation.VIEW,
         description="view websocket events of your organization")
-    add(scope=S.COLLABORATION, operation=P.VIEW,
+    add(scope=Scope.COLLABORATION, operation=Operation.VIEW,
         description="view websocket events of your collaborations")
-    add(scope=S.GLOBAL, operation=P.VIEW,
+    add(scope=Scope.GLOBAL, operation=Operation.VIEW,
         description="view websocket events")
-    add(scope=S.ORGANIZATION, operation=P.CREATE,
+    add(scope=Scope.ORGANIZATION, operation=Operation.CREATE,
         description="send websocket events for your organization")
-    add(scope=S.COLLABORATION, operation=P.CREATE,
+    add(scope=Scope.COLLABORATION, operation=Operation.CREATE,
         description="send websocket events for your collaborations")
-    add(scope=S.GLOBAL, operation=P.CREATE,
+    add(scope=Scope.GLOBAL, operation=Operation.CREATE,
         description="send websocket events to all collaborations")
 
 
