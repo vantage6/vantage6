@@ -39,6 +39,15 @@
       </div>
     </div>
   </div>
+
+  <div *ngIf="userPermission.hasPermission('create', 'task', '*')" class="inline">
+    <button mat-button class="btn btn-dflt btn-right"
+        [routerLink]="['/task/create', userPermission.user.organization_id]">
+      <mat-icon>add_circle</mat-icon>
+      <span>New task</span>
+    </button>
+  </div>
+
   <mat-form-field appearance="standard">
     <mat-label>Filter columns</mat-label>
     <input matInput (keyup)="applyFilter($event)" placeholder="Search columns" #input/>

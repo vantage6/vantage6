@@ -25,6 +25,21 @@ export interface Task {
   children?: Task[];
   results?: Result[];
   complete: boolean;
+  // data_format?: string;
+  input?: TaskInput;
+  organizations?: Organization[];
+}
+
+export interface KeyValuePairs {
+  key: string;
+  value: string;
+}
+
+export interface TaskInput {
+  master: boolean;
+  method: string;
+  args: string[];
+  kwargs: KeyValuePairs[];
 }
 
 export const EMPTY_TASK: Task = {
@@ -45,4 +60,15 @@ export const EMPTY_TASK: Task = {
 
 export function getEmptyTask(): Task {
   return deepcopy(EMPTY_TASK);
+}
+
+export const EMPTY_TASK_INPUT: TaskInput = {
+  master: true,
+  method: '',
+  args: [],
+  kwargs: [],
+};
+
+export function getEmptyTaskInput(): TaskInput {
+  return deepcopy(EMPTY_TASK_INPUT);
 }

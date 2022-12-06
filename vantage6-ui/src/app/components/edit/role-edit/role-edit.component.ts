@@ -8,13 +8,11 @@ import { OpsType, ResType } from 'src/app/shared/enum';
 import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { Organization } from 'src/app/interfaces/organization';
 
 @Component({
   selector: 'app-role-edit',

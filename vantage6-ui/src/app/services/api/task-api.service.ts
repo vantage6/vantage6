@@ -4,6 +4,7 @@ import { BaseApiService } from './base-api.service';
 import { Task } from 'src/app/interfaces/task';
 import { HttpClient } from '@angular/common/http';
 import { ModalService } from '../common/modal.service';
+import { getIdsFromArray } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -17,17 +18,46 @@ export class TaskApiService extends BaseApiService {
   }
 
   get_data(task: Task): any {
+    if (!task.input || !task.organizations) {
+      return; // this is only for creating tasks, which requires input
+    }
+    let collab_id = task.collaboration
+      ? task.collaboration.id
+      : task.collaboration_id;
+    let input: any = {
+      master: task.input.master,
+      method: task.input.method,
+    };
+    if (task.input.args.length) {
+      input['args'] = task.input.args;
+    }
+    if (task.input.kwargs.length) {
+      let kwargs: any = {};
+      for (let kwarg of task.input.kwargs) {
+        kwargs[kwarg.key] = kwarg.value;
+      }
+      input['kwargs'] = kwargs;
+    }
+
+    let org_input: any[] = [];
+    for (let org of task.organizations) {
+      org_input.push({
+        id: org.id,
+        input: btoa('json.' + JSON.stringify(input)),
+      });
+    }
+
+    // TODO add encryption option
     let data: any = {
       name: task.name,
       description: task.description,
       image: task.image,
-      collaboration_id: task.collaboration_id,
-      run_id: task.run_id,
-      parent_id: task.parent_id,
+      organizations: org_input,
+      collaboration_id: collab_id,
       database: task.database,
-      initiator_id: task.initiator_id,
-      complete: task.complete,
+      input: input,
     };
+    console.log(data);
     return data;
   }
 }
