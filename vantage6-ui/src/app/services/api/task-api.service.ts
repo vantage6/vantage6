@@ -27,6 +27,7 @@ export class TaskApiService extends BaseApiService {
     let input: any = {
       master: task.input.master,
       method: task.input.method,
+      output_format: task.input.output_format,
     };
     if (task.input.args.length) {
       input['args'] = task.input.args;

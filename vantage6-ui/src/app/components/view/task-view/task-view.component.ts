@@ -47,12 +47,21 @@ export class TaskViewComponent
     this.results = await this.resultDataService.get_by_task_id(this.task.id);
 
     for (let r of this.results) {
-      if (r.organization_id)
+      if (r.organization_id) {
         r.organization = await this.orgDataService.get(r.organization_id);
+      }
+      // try to decrypt the result
+      try {
+        let decrypted_result = atob(r.result);
+        console.log(decrypted_result);
+        if (decrypted_result.startsWith('json.')) {
+          r.decrypted_result = decrypted_result.slice(5);
+          console.log(r.decrypted_result);
+        }
+      } catch {
+        // ignore: could not read result
+      }
     }
-
-    // TODO read the actual result and display it
-    // console.log(atob(results[0].result));
   }
 
   askConfirmDelete(): void {

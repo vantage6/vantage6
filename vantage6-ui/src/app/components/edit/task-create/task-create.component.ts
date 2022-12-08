@@ -116,6 +116,9 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.task_input = getEmptyTaskInput();
     this.task_input.args = [''];
     this.task_input.kwargs = [{ key: '', value: '' }];
+    // TODO UI task now always have JSON output format. Should we create option
+    // to change this?
+    this.task_input.output_format = 'json';
   }
 
   async setupCreate() {}

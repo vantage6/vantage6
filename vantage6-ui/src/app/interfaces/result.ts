@@ -18,6 +18,7 @@ export interface Result {
   started_at: Date | null;
   assigned_at: Date | null;
   finished_at: Date | null;
+  decrypted_result?: string;
 }
 
 export const EMPTY_RESULT: Result = {

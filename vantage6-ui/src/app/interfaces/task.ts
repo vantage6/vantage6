@@ -40,6 +40,7 @@ export interface TaskInput {
   method: string;
   args: string[];
   kwargs: KeyValuePairs[];
+  output_format: string;
 }
 
 export const EMPTY_TASK: Task = {
@@ -67,6 +68,7 @@ export const EMPTY_TASK_INPUT: TaskInput = {
   method: '',
   args: [],
   kwargs: [],
+  output_format: 'json',
 };
 
 export function getEmptyTaskInput(): TaskInput {

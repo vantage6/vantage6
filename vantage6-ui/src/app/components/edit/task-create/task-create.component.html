@@ -119,6 +119,15 @@
       <td>Database:</td>
       <td><input [(ngModel)]="task.database"/></td>
     </tr>
+    <!-- <tr>
+      <td>Output format:</td>
+      <td>
+        <mat-radio-group class="serialize-radio-group" [(ngModel)]="task_input.output_format">
+          <mat-radio-button class="serialize-radio-button1" value="json" name="json">JSON</mat-radio-button>
+          <mat-radio-button class="serialize-radio-button2" value="pickle" name="pickle">Pickle</mat-radio-button>
+        </mat-radio-group>
+      </td>
+    </tr> -->
     <!-- TODO enable serialization choice here? Cannot serialize (at least to pickle as that requires python) -->
     <!-- <tr>
       <td>Data serialization:</td>
