@@ -7,7 +7,7 @@ bcrypt==3.1.7
 bidict==0.21.2
 blinker==1.4
 cached-property==1.5.2
-certifi==2020.4.5.1
+certifi==2022.12.7
 cffi==1.14.6
 chardet==3.0.4
 charset-normalizer==2.0.4
