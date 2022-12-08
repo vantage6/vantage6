@@ -1,5 +1,25 @@
 <mat-card>
   <h4>Create a new task</h4>
+  <div *ngIf="repeatable_tasks.length > 0">
+    <div class="inline">
+      Optionally, select a task you created earlier to prefill the form:
+    </div>
+    <div ngbDropdown class="d-inline-block">
+      <button class="btn btn-dropdown" id="dropdownPrevTasks" ngbDropdownToggle>
+        <span class="align-top">{{getNamePrevTaskDropdown()}}</span>
+      </button>
+      <div ngbDropdownMenu aria-labelledby="dropdownPrevTasks">
+        <div *ngFor="let t of repeatable_tasks">
+          <button ngbDropdownItem (click)="selectPreviousTask(t)">{{t.id}} - {{t.name}}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <br/>
+  <p>
+    Fill out the form below to create a task:
+  </p>
   <table style="width: 100%">
     <colgroup>
       <col span="1" style="width: 20%;"/>
@@ -34,7 +54,7 @@
     </tr>
     <tr>
       <td>Organizations:</td>
-      <td *ngIf="selected_collab !== null; else noSelectedCollabBlock">
+      <td *ngIf="this.task.collaboration !== undefined; else noSelectedCollabBlock">
         <div *ngFor="let org of selected_orgs" class="inline">
           <button mat-button class="btn btn-delete btn-inline"
               (click)="removeOrg(org)">

@@ -8,16 +8,19 @@ import {
   getEmptyTask,
   TaskInput,
   getEmptyTaskInput,
+  KeyValuePairs,
 } from 'src/app/interfaces/task';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { ResultDataService } from 'src/app/services/data/result-data.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import {
-  containsObject,
   deepcopy,
+  filterArrayByProperty,
+  getById,
   removeMatchedIdFromArray,
   removeValueFromArray,
 } from 'src/app/shared/utils';
@@ -33,10 +36,11 @@ import { BaseEditComponent } from '../base-edit/base-edit.component';
 })
 export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   task: Task = getEmptyTask();
+  repeatable_tasks: Task[] = [];
+  has_selected_previous_task: boolean = false;
   task_input: TaskInput = getEmptyTaskInput();
   collaborations: Collaboration[] = [];
   organizations: Organization[] = [];
-  selected_collab: Collaboration | null = null;
   selected_orgs: Organization[] = [];
   deselected_orgs: Organization[] = [];
   warning_message: string = '';
@@ -50,7 +54,8 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     protected modalService: ModalService,
     protected utilsService: UtilsService,
     private collabDataService: CollabDataService,
-    private orgDataService: OrgDataService
+    private orgDataService: OrgDataService,
+    private resultDataService: ResultDataService
   ) {
     super(
       router,
@@ -63,15 +68,41 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     );
   }
 
-  // TODO clear empty args, kwargs
+  ngOnInit(): void {
+    this.userPermission.isInitialized().subscribe((ready) => {
+      if (ready) {
+        super.ngOnInit();
+      }
+    });
+  }
 
   async init(): Promise<void> {
     // subscribe to id parameter in route to change edited role if required
     this.readRoute();
 
+    // set previous tasks, so user can create tasks they have done before.
+    // Only include task for the logged-in user, and no subtasks
+    let repeatable_tasks = await this.taskDataService.list();
+    repeatable_tasks = filterArrayByProperty(
+      repeatable_tasks,
+      'init_user_id',
+      this.userPermission.user.id
+    );
+    repeatable_tasks = filterArrayByProperty(
+      repeatable_tasks,
+      'parent_id',
+      null
+    );
+    this.repeatable_tasks = repeatable_tasks;
+
     // set defaults
     // this.task.data_format = 'legacy';
     this.task.database = 'default';
+    this.initializeTaskInput();
+  }
+
+  initializeTaskInput() {
+    this.task_input = getEmptyTaskInput();
     this.task_input.args = [''];
     this.task_input.kwargs = [{ key: '', value: '' }];
   }
@@ -86,17 +117,56 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   }
 
   public getNameCollabDropdown(): string {
-    return this.selected_collab === null
+    return this.task.collaboration === undefined
       ? 'Select collaboration'
-      : this.selected_collab.name;
+      : this.task.collaboration.name;
+  }
+
+  public getNamePrevTaskDropdown(): string {
+    return this.has_selected_previous_task
+      ? `${this.task.id} - ${this.task.name}`
+      : 'Select task';
   }
 
   public selectCollab(collab: Collaboration): void {
-    this.selected_collab = collab;
     this.task.collaboration = collab;
     this.selected_orgs = [];
     this.deselected_orgs = collab.organizations;
     this.checkMasterMultiOrg();
+  }
+
+  async selectPreviousTask(task: Task): Promise<void> {
+    this.has_selected_previous_task = true;
+    this.task = task;
+    this.selectCollab(getById(this.collaborations, task.collaboration_id));
+
+    // Get also the task results as this includes the input and the organization
+    let results = await this.resultDataService.get_by_task_id(this.task.id);
+    // set organizations
+    for (let r of results) {
+      this.addOrg(getById(this.organizations, r.organization_id));
+    }
+    // set input
+    let first_result = results[0];
+    let decoded_input = atob(first_result.input);
+    if (decoded_input.startsWith('json.')) {
+      let input = JSON.parse(decoded_input.slice(5));
+      this.task_input.master = input.master;
+      this.task_input.method = input.method;
+      if (input.args) {
+        this.task_input.args = input.args;
+      }
+      if (input.kwargs) {
+        this.task_input.kwargs = [];
+        for (let key in input.kwargs) {
+          this.task_input.kwargs.push({ key: key, value: input.kwargs[key] });
+        }
+      }
+    } else {
+      // input was not encoded in JSON, so we don't know how to read it...
+      // we should still reset the input though
+      this.initializeTaskInput();
+    }
   }
 
   public addOrg(org: Organization): void {
@@ -128,7 +198,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
         'Some kwargs have an undefined key. Cannot create task!'
       );
       return;
-    } else if (this.selected_collab === null) {
+    } else if (this.task.collaboration === undefined) {
       this.modalService.openErrorModal(
         'You have not selected a collaboration to create the task for!'
       );
@@ -152,8 +222,6 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
 
     // set selected organizations
     this.task.organizations = this.selected_orgs;
-    console.log(task);
-    console.log(task.input);
 
     // create tasks
     super.save(task);

@@ -46,6 +46,17 @@ export function filterArray(array: any[], to_remove: any[]): any[] {
   return array.filter((el) => !to_remove.includes(el));
 }
 
+export function filterArrayByProperty(
+  arr: any[],
+  property: string,
+  value: any,
+  has_property: boolean = true
+) {
+  return has_property
+    ? arr.filter((el) => el[property] === value)
+    : arr.filter((el) => el[property] !== value);
+}
+
 export function removeValueFromArray(array: any[], value: any): any[] {
   return array.filter((el) => el !== value);
 }

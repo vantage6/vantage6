@@ -50,6 +50,9 @@ export class TaskViewComponent
       if (r.organization_id)
         r.organization = await this.orgDataService.get(r.organization_id);
     }
+
+    // TODO read the actual result and display it
+    // console.log(atob(results[0].result));
   }
 
   askConfirmDelete(): void {
