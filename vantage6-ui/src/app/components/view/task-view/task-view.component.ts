@@ -5,7 +5,7 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { BaseViewComponent } from '../base-view/base-view.component';
 import { Task, getEmptyTask, EMPTY_TASK } from 'src/app/interfaces/task';
-import { ResType } from 'src/app/shared/enum';
+import { OpsType, ResType } from 'src/app/shared/enum';
 import { Result } from 'src/app/interfaces/result';
 import { ResultDataService } from 'src/app/services/data/result-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
@@ -85,5 +85,12 @@ export class TaskViewComponent
     let title = result.name ? result.name : result.id.toString();
     if (result.organization) title += ` (${result.organization.name})`;
     return title;
+  }
+
+  canRepeatTask(): boolean {
+    return (
+      this.userPermission.can(OpsType.CREATE, ResType.TASK, this.org_id) &&
+      this.task.parent_id === null
+    );
   }
 }

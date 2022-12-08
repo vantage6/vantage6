@@ -347,6 +347,16 @@ const routes: Routes = [
     canActivate: [AccessGuard],
   },
   {
+    path: 'task/create/:org_id/repeat/:id',
+    component: TaskCreateComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
     path: 'role/view/:id/:org_id',
     component: RoleViewSingleComponent,
     data: {

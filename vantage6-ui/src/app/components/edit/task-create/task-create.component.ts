@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { Organization } from 'src/app/interfaces/organization';
@@ -8,7 +8,6 @@ import {
   getEmptyTask,
   TaskInput,
   getEmptyTaskInput,
-  KeyValuePairs,
 } from 'src/app/interfaces/task';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
@@ -77,6 +76,9 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   }
 
   async init(): Promise<void> {
+    this.organizations = await this.orgDataService.list();
+    this.collaborations = await this.collabDataService.list(this.organizations);
+
     // subscribe to id parameter in route to change edited role if required
     this.readRoute();
 
@@ -101,16 +103,22 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.initializeTaskInput();
   }
 
+  async setup(params: ParamMap) {
+    if (this.router.url.includes('repeat')) {
+      let id = Number(params.get('id'));
+      let task = await this.taskDataService.get(id);
+      this.selectPreviousTask(task);
+    }
+    super.setup(params);
+  }
+
   initializeTaskInput() {
     this.task_input = getEmptyTaskInput();
     this.task_input.args = [''];
     this.task_input.kwargs = [{ key: '', value: '' }];
   }
 
-  async setupCreate() {
-    this.organizations = await this.orgDataService.list();
-    this.collaborations = await this.collabDataService.list(this.organizations);
-  }
+  async setupCreate() {}
 
   async setupEdit(id: number): Promise<void> {
     // edit tasks is not possible: this is a dummy implementation of super func
