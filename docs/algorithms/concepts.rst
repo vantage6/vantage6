@@ -285,6 +285,15 @@ updating the ``CMD`` directive in the dockerfile.
    ...
    CMD python -c "from vantage6.tools.docker_wrapper import sparql_wrapper; sparql_wrapper('${PKG_NAME}')"
 
+*Parquet wrapper (Python)*
+
+.. code:: docker
+
+    ...
+    CMD python -c "from vantage6.tools.docker_wrapper import parquet_wrapper; parquet_wrapper('${PKG_NAME}')"
+
+
+
 Data serialization
 ^^^^^^^^^^^^^^^^^^
 
