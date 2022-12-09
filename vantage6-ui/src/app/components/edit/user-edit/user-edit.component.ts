@@ -220,6 +220,7 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
       // if the logged-in user edits themselves, update the user also in the
       // userPermission service
       this.userPermission.user = this.user;
+      this.userPermission.user.is_logged_in = true;
     }
 
     super.save(this.user);
@@ -260,10 +261,11 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   valuesOk(): boolean {
     return (
       this.user.email != '' &&
-      this.user.password !== undefined &&
-      this.user.password !== '' &&
-      this.user.password === this.user.password_repeated &&
-      this.user.username != ''
+      this.user.username != '' &&
+      (this.mode === OpsType.EDIT ||
+        (this.user.password !== undefined &&
+          this.user.password !== '' &&
+          this.user.password === this.user.password_repeated))
     );
   }
 }
