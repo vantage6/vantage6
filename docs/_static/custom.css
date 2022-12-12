@@ -1,4 +1,4 @@
-dl.class, dl.method{
+/* dl.class, dl.method{
     margin-bottom: 1em;
     margin-top:1em;
 }
@@ -33,7 +33,6 @@ div.admonition{
 div.admonition.warning {
     background-color: #B7C7D5;
     color:#144175;
-    /* font-family:'Trebuchet MS', 'Lucida  Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; */
     border-color: #144175;
 }
 
@@ -41,3 +40,4 @@ div.admonition p.admonition-title{
     font-weight: 600;
     font-size: 1.2em;
 }
+*/
