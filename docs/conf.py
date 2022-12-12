@@ -70,6 +70,7 @@ html_theme_options = {
     'github_user': 'vantage6',
     'github_repo': 'vantage6',
     'fixed_sidebar': True,
+    'show_relbars': True,
 }
 
 
