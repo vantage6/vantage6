@@ -37,8 +37,8 @@ To create a new release, one should go through the following steps:
 
   ::
 
-    $ git checkout main
-    $ git pull
+    git checkout main
+    git pull
 
   *Make sure the branch is up-to-date*. **Patches** are usually directly
   merged into main, but for **minor** or **major** releases you usually need
@@ -48,13 +48,13 @@ To create a new release, one should go through the following steps:
 
   ::
 
-    $ git tag version/x.y.z
+    git tag version/x.y.z
 
 * Push the tag to the remote. This will trigger the release pipeline on Github:
 
   ::
 
-    $ git push origin version/x.y.z
+    git push origin version/x.y.z
 
 .. note::
 
@@ -81,38 +81,36 @@ The release pipeline executes the following steps:
     If you specify a tag with a version that already exists, the build pipeline
     will fail as the upload to PyPi is rejected.
 
+The release pipeline uses a number of environment variables to, for instance,
+authenticate to PyPi and Discord. These variables are listed and explained
+in the table below.
+
 .. list-table:: Environment variables
-   :widths: 30 70
    :header-rows: 1
+   :widths: 30 70
 
-    * - Secret
-      - Description
-
-    * - ``COMMIT_PAT``
-      - Github Personal Access Token with commit privileges. This is linked to
-        an individual user with admin right as the commit on the ``main`` needs
-        to bypass the protections. There is unfortunately not -yet- a good
-        solution for this.
-
-    * - ``ADD_TO_PROJECT_PAT``
-      - Github Personal Access Token with project management privileges. This
-        token is used to add new issues to project boards.
-
-    * - ``COVERALLS_TOKEN``
-      - Token from coveralls to post the test coverage stats.
-
-    * - ``DOCKER_TOKEN``
-      - Token used together ``DOCKER_USERNAME`` to upload the container images
-        to our `<https://harbor2.vantage6.ai>`_.
-    * - ``DOCKER_USERNAME``
-      - See ``DOCKER_TOKEN``.
-
-    * - ``PYPI_TOKEN``
-      - Token used to upload the Python packages to PyPi.
-
-    * - ``DISCORD_RELEASE_TOKEN``
-    * - Token to post a message to the Discord community when a new release is
-        published.
+   * - Secret
+     - Description
+   * - ``COMMIT_PAT``
+     - Github Personal Access Token with commit privileges. This is linked to
+       an individual user with admin right as the commit on the ``main`` needs
+       to bypass the protections. There is unfortunately not -yet- a good
+       solution for this.
+   * - ``ADD_TO_PROJECT_PAT``
+     - Github Personal Access Token with project management privileges. This
+       token is used to add new issues to project boards.
+   * - ``COVERALLS_TOKEN``
+     - Token from coveralls to post the test coverage stats.
+   * - ``DOCKER_TOKEN``
+     - Token used together ``DOCKER_USERNAME`` to upload the container images
+       to our `<https://harbor2.vantage6.ai>`_.
+   * - ``DOCKER_USERNAME``
+     - See ``DOCKER_TOKEN``.
+   * - ``PYPI_TOKEN``
+     - Token used to upload the Python packages to PyPi.
+   * - ``DISCORD_RELEASE_TOKEN``
+     - Token to post a message to the Discord community when a new release is
+       published.
 
 .. _release-strategy:
 
@@ -140,8 +138,8 @@ Docker images can be pulled manually with e.g.
 
 ::
 
-  $ docker pull harbor2.vantage6.ai/infrastructure/server:petronas
-  $ docker pull harbor2.vantage6.ai/infrastructure/node:3.1.0
+  docker pull harbor2.vantage6.ai/infrastructure/server:petronas
+  docker pull harbor2.vantage6.ai/infrastructure/node:3.1.0
 
 User Interface release
 ----------------------
@@ -149,13 +147,17 @@ The release process for the user interface (UI) is very similar to the release
 of the infrastructure detailed above. The same versioning format is used, and
 when you push a version tag, the automated release process is triggered.
 
-We have synchronized the version of the UI with that of the infrastructure. In
-case we create a new release of the UI without updating the infrastructure, we
-do so via a post release, i.e. `version/x.y.z-post1` for the first post release.
+We have semi-synchronized the version of the UI with that of the infrastructure.
+That is, we try to release major and minor versions at the same time. For
+example, if we are currently at version 3.5 and release version 3.6, we release
+it both for the infrastructure and for the UI. However, there may be different
+patch versions for both: the latest version for the infrastructure may then be
+3.6.2 while the UI may still be at 3.6.
 
 The release pipeline for the UI executes the following steps:
 
-1. Version tag is verified (same as infrastructure)
-2. Version is updated in the code (same as infrastructure)
-3. Application is built
-4. Application is pushed to our UI deployment slot (an Azure app service)
+1. Version tag is verified (same as infrastructure).
+2. Version is updated in the code (same as infrastructure).
+3. Application is built.
+4. Docker images are built and released to harbor2.
+5. Application is pushed to our UI deployment slot (an Azure app service).

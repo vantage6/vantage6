@@ -1,6 +1,74 @@
 Release notes
 =============
 
+3.5.2
+-----
+
+*30 november 2022*
+
+**Bugfix**
+
+-  Fix for automatic addition of column. This failed in some SQL
+   dialects because reserved keywords (i.e. 'user' for PostgresQL) were
+   not escaped
+   (`PR#415 <https://github.com/vantage6/vantage6/pull/415>`__)
+-  Correct installation order for uWSGI in node and server docker file
+   (`PR#414 <https://github.com/vantage6/vantage6/pull/414>`__)
+
+.. _section-1:
+
+3.5.1
+-----
+
+*30 november 2022*
+
+**Bugfix**
+
+-  Backwards compatibility for which organization initiated a task
+   between v3.0-3.4 and v3.5
+   (`PR#412 <https://github.com/vantage6/vantage6/pull/413>`__)
+-  Fixed VPN client container. Entry script was not executable in Github
+   pipelines
+   (`PR#413 <https://github.com/vantage6/vantage6/pull/413>`__)
+
+3.5.0
+-----
+
+*30 november 2022*
+
+.. warning::
+   When upgrading to 3.5.0, you might need to add the **otp_secret** column to
+   the **user** table manually in the database. This may be avoided by upgrading
+   to 3.5.2.
+
+-  **Feature**
+
+   -  Multi-factor authentication via TOTP has been added. Admins can enforce
+      that all users enable MFA
+      (`PR#376 <https://github.com/vantage6/vantage6/pull/376>`__,
+      `Issue#355 <https://github.com/vantage6/vantage6/issues/355>`__).
+   -  You can now request all tasks assigned by a given user
+      (`PR#326 <https://github.com/vantage6/vantage6/pull/326>`__,
+      `Issue#43 <https://github.com/vantage6/vantage6/issues/43>`__).
+   -  The server support email is now settable in the configuration
+      file, used to be fixed at ``support@vantage6.ai``
+      (`PR#330 <https://github.com/vantage6/vantage6/pull/330>`__,
+      `Issue#319 <https://github.com/vantage6/vantage6/issues/319>`__).
+   -  When pickles are used, more task info is shown in the node logs
+      (`PR#366 <https://github.com/vantage6/vantage6/pull/366>`__,
+      `Issue#171 <https://github.com/vantage6/vantage6/issues/171>`__).
+
+-  **Change**
+
+   -  The ``harbor2.vantag6.ai/infrastructure/algorithm-base:[TAG]`` is
+      tagged with the vantage6-client version that is already in the
+      image (`PR#389 <https://github.com/vantage6/vantage6/pull/389>`__,
+      `Issue#233 <https://github.com/vantage6/vantage6/issues/233>`__).
+   -  The infrastructure base image has been updated to improve build
+      time (`PR#406 <https://github.com/vantage6/vantage6/pull/406>`__,
+      `Issue#250 <https://github.com/vantage6/vantage6/issues/250>`__).
+
+
 3.4.2
 -----
 
