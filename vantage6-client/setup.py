@@ -34,7 +34,6 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
-        'cryptography==3.3.2',
         'requests==2.25.1',
         'PyJWT==2.4.0',
         'pandas==1.3.5',

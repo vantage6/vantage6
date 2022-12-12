@@ -40,8 +40,8 @@ from vantage6.common.docker.addons import (
   remove_container_if_exists,
   check_docker_running
 )
+from vantage6.common.encryption import RSACryptor
 from vantage6.client import Client
-from vantage6.client.encryption import RSACryptor
 
 
 from vantage6.cli.context import NodeContext

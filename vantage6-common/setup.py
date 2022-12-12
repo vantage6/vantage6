@@ -41,7 +41,8 @@ setup(
         'PyYAML==5.4',
         'python-dateutil==2.8.1',
         'docker==4.2.0',
-        'pyfiglet==0.8.post1'
+        'cryptography==3.3.2',
+        'pyfiglet==0.8.post1',
     ],
     package_data={
         'vantage6.common': [
