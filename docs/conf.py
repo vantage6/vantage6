@@ -22,11 +22,17 @@ sys.path.insert(0, os.path.abspath('../vantage6-common'))
 # -- Project information -----------------------------------------------------
 
 project = 'vantage6'
-copyright = (
-    '2022, F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
-)
-author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 
+copyright = ('2022 vantage6')
+author = (
+    'A. van Gestel, '
+    'B. van Beusekom, '
+    'D. Smits, '
+    'F. Martin, '
+    'J. van Soest, '
+    'H. Alradhi, '
+    'M. Sieswerda'
+)
 
 # -- General configuration ---------------------------------------------------
 
@@ -34,7 +40,8 @@ author = 'F. Martin, B. van Beusekom, D. Smits, M. Sieswerda, J. van Soest'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
-              'sphinx_autodoc_typehints', 'sphinx.ext.autosectionlabel']
+              'sphinx_autodoc_typehints', 'sphinx.ext.autosectionlabel',
+              'sphinx.ext.intersphinx']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,7 +57,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'furo'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -58,12 +65,16 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 html_theme_options = {
-    'logo': "logo.png",
-    'logo_name': False,
-    'github_user': 'vantage6',
-    'github_repo': 'vantage6',
-    'fixed_sidebar': True,
+    "sidebar_hide_name": True,
+    "navigation_with_keys": True,
+    "light_logo": "logo-240x80.png",
+    "dark_logo": "logo-240x80-white.png",
+
+    # 'github_user': 'vantage6',
+    # 'github_repo': 'vantage6',
+    # 'fixed_sidebar': True,
 }
+
 
 # The master toctree document.
 master_doc = 'index'

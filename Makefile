@@ -22,6 +22,7 @@ help:
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
+	@echo "  devdocs              : run a documentation development server"
 	@echo ""
 	@echo "Using "
 	@echo "  tag:      ${TAG}"
@@ -150,3 +151,6 @@ publish:
 
 test:
 	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
+
+devdocs:
+	sphinx-autobuild docs docs/_build/html --watch .

@@ -40,9 +40,8 @@ from vantage6.common.docker.addons import (
   remove_container_if_exists,
   check_docker_running
 )
+from vantage6.common.encryption import RSACryptor
 from vantage6.client import Client
-from vantage6.client.encryption import RSACryptor
-from vantage6.cli.configuration_manager import NodeConfigurationManager
 
 
 from vantage6.cli.context import NodeContext
@@ -380,10 +379,12 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             env[f'{LABEL}_DATABASE_URI'] = uri
         else:
             debug('  - file-based database added')
-            env[f'{LABEL}_DATABASE_URI'] = f'{label}.csv'
-            mounts.append((f'/mnt/{label}.csv', str(uri)))
+            suffix = Path(uri).suffix
+            env[f'{LABEL}_DATABASE_URI'] = f'{label}{suffix}'
+            mounts.append((f'/mnt/{label}{suffix}', str(uri)))
 
         # FIXME legacy to support < 2.1.3 can be removed from 3+
+        # FIXME this is still required in v3+ but should be removed in v4
         if label == 'default':
             env['DATABASE_URI'] = '/mnt/default.csv'
 
@@ -442,7 +443,8 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--all', 'all_nodes', flag_value=True)
-@click.option('--force', 'force', flag_value=True, help="kills containers instantly")
+@click.option('--force', 'force', flag_value=True,
+              help="kills containers instantly")
 def cli_node_stop(name, system_folders, all_nodes, force):
     """Stop a running container. """
 
@@ -459,7 +461,6 @@ def cli_node_stop(name, system_folders, all_nodes, force):
         warning('Forcing the node to stop will not terminate helper '
                 'containers, neither will it remove routing rules made on the '
                 'host!')
-
 
     if all_nodes:
         for name in running_node_names:
@@ -633,6 +634,8 @@ def cli_node_create_private_key(name, config, environment, system_folders,
         if 'client' not in locals():
             client = create_client_and_authenticate(ctx)
 
+        # TODO what happens if the user doesn't have permission to upload key?
+        # Does that lead to an exception or not?
         try:
             client.request(
                 f"/organization/{client.whoami.organization_id}",
