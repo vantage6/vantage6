@@ -227,7 +227,7 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
 
     local_ = inspect_local_image_timestamp(docker_client, image, log=log)
     remote_ = inspect_remote_image_timestamp(docker_client, image, log=log)
-    pull = True
+    pull = False
     if local_ and remote_:
         if remote_ > local_:
             log.debug(f"Remote image is newer: {image}")
@@ -238,11 +238,13 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
             log.warn(f"Local image is newer! Are you testing? {image}")
     elif local_:
         log.warn(f"Only a local image has been found! {image}")
-        pull = False
     elif remote_:
         log.debug("No local image found, pulling from remote!")
+        pull = True
     elif not local_ and not remote_:
-        log.error(f"Cannot locate image {image}")
+        log.warn(f"Cannot locate image {image} locally or remotely")
+        # we will try to pull it from the docker hub
+        pull = True
 
     if pull:
         try:
@@ -250,6 +252,7 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         except docker.errors.APIError as e:
             log.error(f"Failed to pull image! {image}")
             log.debug(e)
+            raise
 
 
 def get_container(docker_client: DockerClient, **filters) -> Container:
