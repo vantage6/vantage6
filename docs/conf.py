@@ -57,7 +57,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'furo'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -65,11 +65,14 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 html_theme_options = {
-    'logo': "logo-240x80.png",
-    'logo_name': False,
-    'github_user': 'vantage6',
-    'github_repo': 'vantage6',
-    'fixed_sidebar': True,
+    "sidebar_hide_name": True,
+    "navigation_with_keys": True,
+    "light_logo": "logo-240x80.png",
+    "dark_logo": "logo-240x80-white.png",
+
+    # 'github_user': 'vantage6',
+    # 'github_repo': 'vantage6',
+    # 'fixed_sidebar': True,
 }
 
 

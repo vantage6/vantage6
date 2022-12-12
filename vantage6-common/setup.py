@@ -36,7 +36,7 @@ setup(
         'appdirs==1.4.3',
         'schema==0.7.1',
         'termcolor==1.1.0',
-        'colorama==0.4.3',
+        'colorama==0.4.5',
         'click==8.0.3',
         'PyYAML==5.4',
         'python-dateutil==2.8.1',
