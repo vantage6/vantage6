@@ -53,10 +53,8 @@ export class TaskViewComponent
       // try to decrypt the result
       try {
         let decrypted_result = atob(r.result);
-        console.log(decrypted_result);
         if (decrypted_result.startsWith('json.')) {
           r.decrypted_result = decrypted_result.slice(5);
-          console.log(r.decrypted_result);
         }
       } catch {
         // ignore: could not read result
