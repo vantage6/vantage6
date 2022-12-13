@@ -153,7 +153,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   /** Whether the number of selected elements matches the total number of rows. */
   isAllSelected() {
     const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.length;
+    const numRows = this.dataSource.filteredData.length;
     return numSelected === numRows;
   }
 
@@ -177,7 +177,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
     let end_idx = this.getPageEndIndex(start_idx, page_size);
     // deselect the rows
     for (let index = start_idx; index < end_idx; index++) {
-      this.selection.deselect(this.dataSource.data[index]);
+      this.selection.deselect(this.dataSource.filteredData[index]);
     }
   }
 
@@ -188,7 +188,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
 
     // select the rows
     for (let index = start_idx; index < end_idx; index++) {
-      this.selection.select(this.dataSource.data[index]);
+      this.selection.select(this.dataSource.filteredData[index]);
     }
   }
 
@@ -197,10 +197,10 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   private getPageEndIndex(start_idx: number, page_size: number) {
-    if (this.dataSource.data.length > start_idx + page_size) {
+    if (this.dataSource.filteredData.length > start_idx + page_size) {
       return (this.paginator.pageIndex + 1) * this.paginator.pageSize;
     } else {
-      return this.dataSource.data.length;
+      return this.dataSource.filteredData.length;
     }
   }
 
@@ -208,7 +208,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
     for (let index = start_idx; index < end_idx; index++) {
       if (
         !arrayContainsObjWithId(
-          this.dataSource.data[index].id,
+          this.dataSource.filteredData[index].id,
           this.selection.selected
         )
       ) {
