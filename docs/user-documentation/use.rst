@@ -107,7 +107,7 @@ Note that whenever you interact with the server, you are limited by your
 permissions. For instance, if you try to create another user but do not
 have permission to do so, you will receive an error message. All
 permissions are described by rules, which can be aggregated in roles.
-Contact your administrator if you find your permissions are
+Contact your server administrator if you find your permissions are
 inappropriate.
 
 .. note::
@@ -215,7 +215,7 @@ Authentication
 """"""""""""""
 
 This section and the following sections introduce some minimal examples for
-administrative tasks that you can perform with our Python
+administrative tasks that you can perform with our
 :ref:`use-python-client`. We start by authenticating.
 
 To authenticate, we create a config file to store our login information.
@@ -288,7 +288,7 @@ set up and if they have access to the private key.
 .. code:: python
 
    from vantage6.common import (warning, error, info, debug, bytes_to_base64s, check_config_write_permissions)
-   from vantage6.client.encryption import RSACryptor
+   from vantage6.common.encryption import RSACryptor
    from pathlib import Path
 
    # Generated a new private key
@@ -311,11 +311,8 @@ Now, we can create an organization
        zipcode = '3472',
        country = 'New Zealand',
        domain = 'the_shire.org',
-       public_key = public_key
+       public_key = public_key   # use None if you haven't set up encryption
    )
-
-.. note::
-    You can use ``public_key = None`` if you haven't set up encryption
 
 Users can now be created for this organization. Any users that are
 created and who have access to the private key we generated above can
@@ -324,6 +321,9 @@ now use encryption by running
 .. code:: python
 
    client.setup_encryption('/path/to/private/key')
+
+   # or, if you don't use encryption
+   client.setup_encryption(None)
 
 after they authenticate.
 
@@ -667,6 +667,7 @@ endpoints exist and how you can use them. All endpoints communicate via
 HTTP requests, so you can communicate with them using any platform or
 programming language that supports HTTP requests.
 
+.. _use-node:
 
 Node
 ----
@@ -729,8 +730,8 @@ i.e. ``vnode start --help`` .
 +---------------------+------------------------------------------------+
 | ``vnode list``      | List all available nodes                       |
 +---------------------+------------------------------------------------+
-| ``vnode c           | Create and upload a new public key for your    |
-| reate-private-key`` | organization                                   |
+| ``vnode             | Create and upload a new public key for your    |
+| create-private-key``| organization                                   |
 +---------------------+------------------------------------------------+
 
 See the following sections on how to configure and maintain a
@@ -761,14 +762,14 @@ follows:
 | ting     |                         |                                |
 | System** |                         |                                |
 +==========+=========================+================================+
-| Windows  | ``C:\Pro                | ``C:\Users\<user               |
-|          | gramData\vantage\node`` | >\AppData\Local\vantage\node`` |
+| Windows  | ``C:\ProgramData        | ``C:\Users\<user>              |
+|          | \vantage\node``         | \AppData\Local\vantage\node``  |
 +----------+-------------------------+--------------------------------+
 | MacOS    | ``/Library/Application  | ``/Users/<user>/Library/Appli  |
 |          | Support/vantage6/node`` | cation Support/vantage6/node`` |
 +----------+-------------------------+--------------------------------+
-| Linux    | ``/etc/vantage6/node``  | ``/home/                       |
-|          |                         | <user>/.config/vantage6/node`` |
+| Linux    | ``/etc/vantage6/node``  | ``/home/<user>                 |
+|          |                         | /.config/vantage6/node``       |
 +----------+-------------------------+--------------------------------+
 
 .. warning::
@@ -1099,8 +1100,8 @@ follows:
 +---------+----------------------------+------------------------------------+
 | **OS**  | **System**                 | **User**                           |
 +=========+============================+====================================+
-| Windows | ``C:\ProgramData           | ``C:\Users\<user                   |
-|         | \vantage6\server``         | >\AppData\Local\vantage6\server\`` |
+| Windows | ``C:\ProgramData           | ``C:\Users\<user>                  |
+|         | \vantage6\server``         | \AppData\Local\vantage6\server\``  |
 +---------+----------------------------+------------------------------------+
 | Macos   | ``/Library/Application     | ``/Users/<user>/Library/Appl       |
 |         | Support/vantage6/server/`` | ication Support/vantage6/server/`` |
@@ -1418,6 +1419,9 @@ provided here:
 .. raw:: html
 
    </details>
+
+
+.. _server-logging:
 
 Logging
 ^^^^^^^

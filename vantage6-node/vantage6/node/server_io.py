@@ -13,9 +13,8 @@ import jwt
 import datetime
 from typing import Dict, Tuple
 
-# from vantage6.node.encryption import Cryptor, NoCryptor
+from vantage6.common import WhoAmI
 from vantage6.client import ClientBase
-from vantage6.client import WhoAmI
 
 
 class NodeClient(ClientBase):

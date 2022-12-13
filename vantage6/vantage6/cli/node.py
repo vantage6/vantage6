@@ -40,8 +40,8 @@ from vantage6.common.docker.addons import (
   remove_container_if_exists,
   check_docker_running
 )
+from vantage6.common.encryption import RSACryptor
 from vantage6.client import Client
-from vantage6.client.encryption import RSACryptor
 
 
 from vantage6.cli.context import NodeContext
@@ -384,6 +384,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             mounts.append((f'/mnt/{label}{suffix}', str(uri)))
 
         # FIXME legacy to support < 2.1.3 can be removed from 3+
+        # FIXME this is still required in v3+ but should be removed in v4
         if label == 'default':
             env['DATABASE_URI'] = '/mnt/default.csv'
 
@@ -633,6 +634,8 @@ def cli_node_create_private_key(name, config, environment, system_folders,
         if 'client' not in locals():
             client = create_client_and_authenticate(ctx)
 
+        # TODO what happens if the user doesn't have permission to upload key?
+        # Does that lead to an exception or not?
         try:
             client.request(
                 f"/organization/{client.whoami.organization_id}",
