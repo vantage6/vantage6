@@ -95,8 +95,6 @@ software project. Github will review the request (not sure on what), but so
 far approved all requests.
 
 
-
-
 Community Planning
 ------------------
 We host bi-monthly community meetings intended for aligning development
@@ -251,16 +249,20 @@ section.
 
 Pull Request
 ^^^^^^^^^^^^
-Before the PR can be merged in the code the following conditions are met:
+
+Please consider first which branch you want to merge your contribution into.
+**Patches** are usually directly merged into ``main``, but **features** are
+usually merged into a development branch (e.g. ``dev3`` for version 3) before
+being merged into the ``main`` branch.
+
+Before the PR is merged, the following conditions should be met:
 
 * At least one approved review of a code owner
 * All `unit tests <https://github.com/vantage6/vantage6/actions/workflows/unit_
   tests.yml>`_ should pass
 * `CodeQL <https://docs.github.com/en/code-security/code-scanning/automatically
   -scanning-your-code-for-vulnerabilities-and-errors/about-code-scanning-with-
-  codeql>`_ should pass - Vulnerability scanning
-
-The following conditions are optional, but should be considered before merging:
+  codeql>`_ should pass (vulnerability scanning)
 * `Codacy <https://app.codacy.com/gh/vantage6/vantage6/dashboard>`_ - Code
   quality checks
 * `Coveralls <https://coveralls.io/github/vantage6/vantage6>`_ - Code coverage

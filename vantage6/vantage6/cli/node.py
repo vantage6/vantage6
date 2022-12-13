@@ -379,8 +379,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             env[f'{LABEL}_DATABASE_URI'] = uri
         else:
             debug('  - file-based database added')
-            env[f'{LABEL}_DATABASE_URI'] = f'{label}.csv'
-            mounts.append((f'/mnt/{label}.csv', str(uri)))
+            suffix = Path(uri).suffix
+            env[f'{LABEL}_DATABASE_URI'] = f'{label}{suffix}'
+            mounts.append((f'/mnt/{label}{suffix}', str(uri)))
 
         # FIXME legacy to support < 2.1.3 can be removed from 3+
         if label == 'default':
@@ -441,7 +442,8 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--all', 'all_nodes', flag_value=True)
-@click.option('--force', 'force', flag_value=True, help="kills containers instantly")
+@click.option('--force', 'force', flag_value=True,
+              help="kills containers instantly")
 def cli_node_stop(name, system_folders, all_nodes, force):
     """Stop a running container. """
 
@@ -458,7 +460,6 @@ def cli_node_stop(name, system_folders, all_nodes, force):
         warning('Forcing the node to stop will not terminate helper '
                 'containers, neither will it remove routing rules made on the '
                 'host!')
-
 
     if all_nodes:
         for name in running_node_names:
