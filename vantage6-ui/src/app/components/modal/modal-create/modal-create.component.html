@@ -1,0 +1,9 @@
+<div class="modal-body">
+    <p *ngFor="let message of messages">
+        {{message}}
+    </p>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-edit" (click)="create()">Create</button>
+    <button type="button" class="btn btn-dflt" (click)="cancel()">Cancel</button>
+</div>

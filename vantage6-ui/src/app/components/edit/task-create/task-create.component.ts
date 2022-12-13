@@ -3,6 +3,7 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { Organization } from 'src/app/interfaces/organization';
+import { Node } from 'src/app/interfaces/node';
 import {
   Task,
   getEmptyTask,
@@ -20,10 +21,13 @@ import {
   deepcopy,
   filterArrayByProperty,
   getById,
+  getIdsFromArray,
   removeMatchedIdFromArray,
   removeValueFromArray,
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
+import { NodeDataService } from 'src/app/services/data/node-data.service';
+import { ExitMode } from 'src/app/shared/enum';
 
 @Component({
   selector: 'app-task-create',
@@ -40,6 +44,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   task_input: TaskInput = getEmptyTaskInput();
   collaborations: Collaboration[] = [];
   organizations: Organization[] = [];
+  nodes: Node[] = [];
   selected_orgs: Organization[] = [];
   deselected_orgs: Organization[] = [];
   warning_message: string = '';
@@ -55,7 +60,8 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     protected utilsService: UtilsService,
     private collabDataService: CollabDataService,
     private orgDataService: OrgDataService,
-    private resultDataService: ResultDataService
+    private resultDataService: ResultDataService,
+    private nodeDataService: NodeDataService
   ) {
     super(
       router,
@@ -78,10 +84,12 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   }
 
   async init(): Promise<void> {
+    this.nodes = await this.nodeDataService.list();
     this.organizations = await this.orgDataService.list();
     this.collaborations = await this.collabDataService.org_list(
       this.logged_in_org_id,
-      this.organizations
+      this.organizations,
+      this.nodes
     );
 
     // subscribe to id parameter in route to change edited role if required
@@ -200,7 +208,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.checkMasterMultiOrg();
   }
 
-  async save(task: Task) {
+  async check_and_create() {
     // set input, then remove empty args and kwargs
     this.task.input = deepcopy(this.task_input) as TaskInput;
     this.task.input.args = removeValueFromArray(this.task.input.args, '');
@@ -239,11 +247,66 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     // set selected organizations
     this.task.organizations = this.selected_orgs;
 
-    // create tasks
-    await super.save(task, false);
+    // check if all nodes are online. If they are, create the task. If not,
+    // alert the user that they aren't
+    if (this.relevantNodesOnline()) {
+      this.createTask();
+    } else {
+      this.alertNodesOffline();
+    }
+  }
+
+  async createTask() {
+    // create task
+    await this.save(this.task, false);
 
     // go to the page for the task we just created
-    this.router.navigateByUrl(`/task/view/${task.id}/${this.logged_in_org_id}`);
+    this.router.navigateByUrl(
+      `/task/view/${this.task.id}/${this.logged_in_org_id}`
+    );
+  }
+
+  relevantNodesOnline(): boolean {
+    // check first which nodes should be online to complete the task
+    let org_ids_to_be_online = [];
+    if (this.task_input.master) {
+      // master method: all nodes should be online
+      org_ids_to_be_online = getIdsFromArray(
+        (this.task.collaboration as Collaboration).organizations
+      );
+    } else {
+      // non-master method: only selected nodes need to be online
+      org_ids_to_be_online = getIdsFromArray(this.selected_orgs);
+    }
+    // check if nodes are online. NB: the current user may not be allowed to
+    // view all nodes. We do not warn the user in such cases
+    // TODO more sophisticated check based on user permissions to check if the
+    // nodes they are allowed to see have been registered and are online
+    for (let org of (this.task.collaboration as Collaboration).organizations) {
+      if (
+        org_ids_to_be_online.includes(org.id) &&
+        org.node &&
+        !org.node.is_online
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  alertNodesOffline(): void {
+    this.modalService
+      .openCreateModal([
+        'Some of the nodes responsible for handling this task are not online.' +
+          ' The task you are about to create will therefore probably not be ' +
+          'executed smoothly.',
+        'Are you sure you want to create this task now?',
+      ])
+      .result.then((data) => {
+        if (data.exitMode === ExitMode.CREATE) {
+          this.createTask();
+        }
+      });
   }
 
   trackArgsFunc(index: any, item: any) {

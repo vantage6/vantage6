@@ -71,6 +71,7 @@ import { MfaCodeComponent } from './components/login/mfa-code/mfa-code.component
 import { MfaLostComponent } from './components/login/mfa-lost/mfa-lost.component';
 import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.component';
 import { TaskCreateComponent } from './components/edit/task-create/task-create.component';
+import { ModalCreateComponent } from './components/modal/modal-create/modal-create.component';
 
 @NgModule({
   declarations: [
@@ -115,6 +116,7 @@ import { TaskCreateComponent } from './components/edit/task-create/task-create.c
     MfaLostComponent,
     MfaRecoverComponent,
     TaskCreateComponent,
+    ModalCreateComponent,
   ],
   imports: [
     BrowserModule,
