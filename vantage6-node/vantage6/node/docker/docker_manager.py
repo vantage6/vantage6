@@ -17,11 +17,12 @@ from pathlib import Path
 
 from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
+from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
-from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.node.docker.task_manager import DockerTaskManager, TaskStatus
+from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail
@@ -33,9 +34,25 @@ log = logging.getLogger(logger_name(__name__))
 class Result(NamedTuple):
     """ Data class to store the result of the docker image."""
     result_id: int
+    task_id: int
     logs: str
     data: str
-    status_code: int
+    status: str
+    parent_id: Union[int, None]
+
+
+class ToBeKilled(NamedTuple):
+    """ Data class to store which tasks should be killed """
+    task_id: int
+    result_id: int
+    organization_id: int
+
+
+class KilledResult(NamedTuple):
+    """ Data class to store which algorithms have been killed """
+    result_id: int
+    task_id: int
+    parent_id: int
 
 
 class DockerManager(DockerBaseManager):
@@ -219,6 +236,28 @@ class DockerManager(DockerBaseManager):
         })
         return bool(running_containers)
 
+    def cleanup_tasks(self) -> List[Dict]:
+        """
+        Stop all active tasks
+
+        Returns
+        -------
+        List[KilledResult]:
+            List of information on tasks that have been killed
+        """
+        result_ids_killed = []
+        if self.active_tasks:
+            self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
+        while self.active_tasks:
+            task = self.active_tasks.pop()
+            task.cleanup()
+            result_ids_killed.append(KilledResult(
+                result_id=task.result_id,
+                task_id=task.task_id,
+                parent_id=task.parent_id
+            ))
+        return result_ids_killed
+
     def cleanup(self) -> None:
         """
         Stop all active tasks and delete the isolated network
@@ -226,17 +265,16 @@ class DockerManager(DockerBaseManager):
         Note: the temporary docker volumes are kept as they may still be used
         by a master container
         """
-        if self.active_tasks:
-            self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
-        while self.active_tasks:
-            task = self.active_tasks.pop()
-            task.cleanup()
+        # note: the function `cleanup_tasks` returns a list of tasks that were
+        # killed, but we don't register them as killed so they will be run
+        # again when the node is restarted
+        self.cleanup_tasks()
         for service in self.linked_services:
             self.isolated_network_mgr.disconnect(service)
         self.isolated_network_mgr.delete(kill_containers=True)
 
-    def run(self, result_id: int,  image: str, docker_input: bytes,
-            tmp_vol_name: str, token: str, database: str
+    def run(self, result_id: int, task_info: Dict, image: str,
+            docker_input: bytes, tmp_vol_name: str, token: str, database: str
             ) -> Union[List[Dict], None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -246,6 +284,8 @@ class DockerManager(DockerBaseManager):
         ----------
         result_id: int
             Server result identifier
+        task_info: Dict
+            Dictionary with task information
         image: str
             Docker image name
         docker_input: bytes
@@ -278,6 +318,7 @@ class DockerManager(DockerBaseManager):
         task = DockerTaskManager(
             image=image,
             result_id=result_id,
+            task_info=task_info,
             vpn_manager=self.vpn_manager,
             node_name=self.node_name,
             tasks_dir=self.__tasks_dir,
@@ -288,12 +329,11 @@ class DockerManager(DockerBaseManager):
         )
         database = database if (database and len(database)) else 'default'
 
-
         # attempt to kick of the task. If it fails do to unknown reasons we try
         # again. If it fails permanently we add it to the failed tasks to be
         # handled by the speaking worker of the node
         attempts = 1
-        while not (task.status == TaskStatus.STARTED) and attempts < 3:
+        while not (task.status == TaskStatus.ACTIVE) and attempts < 3:
             try:
                 vpn_ports = task.run(
                     docker_input=docker_input, tmp_vol_name=tmp_vol_name,
@@ -304,7 +344,7 @@ class DockerManager(DockerBaseManager):
             except UnknownAlgorithmStartFail:
                 self.log.exception(f'Failed to start result {result_id} due '
                                    'to unknown reason. Retrying')
-                time.sleep(1) # add some time before retrying the next attempt
+                time.sleep(1)  # add some time before retrying the next attempt
 
             except PermanentAlgorithmStartFail:
                 break
@@ -312,13 +352,12 @@ class DockerManager(DockerBaseManager):
             attempts += 1
 
         # keep track of the active container
-        if task.status == TaskStatus.FAILED \
-                or task.status == TaskStatus.PERMANENTLY_FAILED:
+        if has_task_failed(task.status):
             self.failed_tasks.append(task)
-            return None
+            return task.status, None
         else:
             self.active_tasks.append(task)
-            return vpn_ports
+            return task.status, vpn_ports
 
     def get_result(self) -> Result:
         """
@@ -362,15 +401,16 @@ class DockerManager(DockerBaseManager):
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()
-            finished_task.status_code = 9
             logs = 'Container failed to start'
             results = b''
 
         return Result(
             result_id=finished_task.result_id,
+            task_id=finished_task.task_id,
             logs=logs,
             data=results,
-            status_code=finished_task.status_code
+            status=finished_task.status,
+            parent_id=finished_task.parent_id,
         )
 
     def login_to_registries(self, registries: list = []) -> None:
@@ -420,3 +460,85 @@ class DockerManager(DockerBaseManager):
             aliases=[config_alias]
         )
         self.linked_services.append(container_name)
+
+    def kill_selected_tasks(
+        self, org_id: int, kill_list: List[ToBeKilled] = None
+    ) -> List[Dict]:
+        """
+        Kill tasks specified by a kill list, if they are currently running on
+        this node
+
+        Parameters
+        ----------
+        org_id: int
+            The organization id of this node
+        kill_list: List[ToBeKilled]
+            A list of info about tasks that should be killed.
+
+        Returns
+        -------
+        List[KilledResult]
+            List with information on killed tasks
+        """
+        killed_list = []
+        for container_to_kill in kill_list:
+            if container_to_kill['organization_id'] != org_id:
+                continue  # this result is on another node
+            # find the task
+            task = next((
+                t for t in self.active_tasks
+                if t.result_id == container_to_kill['result_id']
+            ), None)
+            if task:
+                self.log.info(
+                    f"Killing containers for result_id={task.result_id}")
+                task.cleanup()
+                self.active_tasks.remove(task)
+                killed_list.append(KilledResult(
+                    result_id=task.result_id,
+                    task_id=task.task_id,
+                    parent_id=task.parent_id,
+                ))
+            else:
+                self.log.warn(
+                    "Received instruction to kill result_id="
+                    f"{container_to_kill['result_id']}, but it was not "
+                    "found running on this node.")
+        return killed_list
+
+    def kill_tasks(self, org_id: int,
+                   kill_list: List[ToBeKilled] = None) -> List[Dict]:
+        """
+        Kill tasks currently running on this node.
+
+        Parameters
+        ----------
+        org_id: int
+            The organization id of this node
+        kill_list: List[ToBeKilled] (optional)
+            A list of info on tasks that should be killed. If the list
+            is not specified, all running algorithm containers will be killed.
+
+        Returns
+        -------
+        List[KilledResult]
+            List of dictionaries with information on killed tasks
+        """
+        if kill_list:
+            return self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
+        else:
+            # received instruction to kill all tasks on this node
+            self.log.warn(
+                "Received instruction from server to kill all algorithms "
+                "running on this node. Executing that now...")
+            killed_result_ids = self.cleanup_tasks()
+            if len(killed_result_ids):
+                self.log.warn(
+                    "Killed the following result ids as instructed via socket:"
+                    f" {','.join(killed_result_ids)}"
+                )
+            else:
+                self.log.warn(
+                    "Instructed to kill tasks but none were running"
+                )
+            return killed_result_ids

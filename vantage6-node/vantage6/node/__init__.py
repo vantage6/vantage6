@@ -35,8 +35,8 @@ import json
 
 from pathlib import Path
 from threading import Thread
-from typing import Union
-from socketio import ClientNamespace, Client as SocketIO
+from typing import Dict, List, Union
+from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
@@ -45,6 +45,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.exceptions import AuthenticationException
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -53,77 +54,16 @@ from vantage6.node.globals import (
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import logger_name
+from vantage6.node.util import logger_name, get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
-from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.socket import NodeTaskNamespace
 
 
 class VPNConnectMode(Enum):
     FIRST_TRY = 1
     REFRESH_KEYPAIR = 2
     REFRESH_COMPLETE = 3
-
-
-class NodeTaskNamespace(ClientNamespace):
-    """Class that handles incoming websocket events."""
-
-    # reference to the node objects, so a callback can edit the
-    # node instance.
-    node_worker_ref = None
-
-    def __init__(self, *args, **kwargs):
-        """ Handler for a websocket namespace.
-        """
-        super().__init__(*args, **kwargs)
-        self.log = logging.getLogger(logger_name(__name__))
-
-    def on_message(self, data):
-        self.log.info(data)
-
-    def on_connect(self):
-        """On connect or reconnect"""
-        self.log.info('(Re)Connected to the /tasks namespace')
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
-
-    def on_disconnect(self):
-        """ Server disconnects event."""
-        # self.node_worker_ref.socketIO.disconnect()
-        self.log.info('Disconnected from the server')
-
-    def on_new_task(self, task_id):
-        """ New task event."""
-        if self.node_worker_ref:
-            self.node_worker_ref.get_task_and_add_to_queue(task_id)
-            self.log.info(f'New task has been added task_id={task_id}')
-
-        else:
-            self.log.critical(
-                'Task Master Node reference not set is socket namespace'
-            )
-
-    def on_container_failed(self, run_id):
-        """A container in the collaboration has failed event.
-
-        TODO handle run sequence at this node. Maybe terminate all
-            containers with the same run_id?
-        """
-        self.log.critical(
-            f"A container on a node within your collaboration part of "
-            f"run_id={run_id} has exited with a non-zero status_code"
-        )
-
-    def on_expired_token(self, msg):
-        self.log.warning("Your token is no longer valid... reconnecting")
-        self.node_worker_ref.socketIO.disconnect()
-        self.log.debug("Old socket connection terminated")
-        self.node_worker_ref.server_io.refresh_token()
-        self.log.debug("Token refreshed")
-        self.node_worker_ref.connect_to_socket()
-        self.log.debug("Connected to socket")
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
 
 
 # ------------------------------------------------------------------------------
@@ -342,13 +282,32 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        vpn_ports = self.__docker.run(
+        task_status, vpn_ports = self.__docker.run(
             result_id=taskresult["id"],
+            task_info=task,
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
             token=token,
             database=task.get('database', 'default')
+        )
+
+        # save task status to the server and send socket event to update others
+        self.server_io.patch_results(
+            id=taskresult['id'], result={'status': task_status}
+        )
+        self.socketIO.emit(
+            'algorithm_status_change',
+            data={
+                'node_id': self.server_io.whoami.id_,
+                'status': task_status,
+                'result_id': taskresult['id'],
+                'task_id': task['id'],
+                'collaboration_id': self.server_io.collaboration_id,
+                'organization_id': self.server_io.whoami.organization_id,
+                'parent_id': get_parent_id(task),
+            },
+            namespace='/tasks',
         )
 
         if vpn_ports:
@@ -404,18 +363,21 @@ class Node(object):
             try:
                 results = self.__docker.get_result()
 
-                # notify all of a crashed container
-                if results.status_code:
-                    self.socketIO.emit(
-                        'container_failed',
-                        data={
-                            'node_id': self.server_io.whoami.id_,
-                            'status_code': results.status_code,
-                            'result_id': results.result_id,
-                            'collaboration_id': self.server_io.collaboration_id
-                        },
-                        namespace='/tasks'
-                    )
+                # notify socket channel of algorithm status change
+                self.socketIO.emit(
+                    'algorithm_status_change',
+                    data={
+                        'node_id': self.server_io.whoami.id_,
+                        'status': results.status,
+                        'result_id': results.result_id,
+                        'task_id': results.task_id,
+                        'collaboration_id': self.server_io.collaboration_id,
+                        'organization_id':
+                            self.server_io.whoami.organization_id,
+                        'parent_id': results.parent_id,
+                    },
+                    namespace='/tasks',
+                )
 
                 self.log.info(
                     f"Sending result (id={results.result_id}) to the server!")
@@ -446,16 +408,16 @@ class Node(object):
 
                 self.server_io.patch_results(
                     id=results.result_id,
-                    init_org_id=init_org_id,
                     result={
                         'result': results.data,
                         'log': results.logs,
+                        'status': results.status,
                         'finished_at': datetime.datetime.now().isoformat(),
-                    }
+                    },
+                    init_org_id=init_org_id,
                 )
-            except Exception as e:
+            except Exception:
                 self.log.exception('Speaking thread had an exception')
-
 
     def authenticate(self) -> None:
         """
@@ -574,8 +536,8 @@ class Node(object):
             self.__vpn_dir = ctx.vpn_dir
 
     def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
-                             ctx: Union[DockerNodeContext, NodeContext]) \
-                                -> VPNManager:
+                             ctx: Union[DockerNodeContext, NodeContext]
+                             ) -> VPNManager:
         """
         Setup container which has a VPN connection
 
@@ -597,7 +559,7 @@ class Node(object):
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
 
-        #FIXME: remove me in 4+. alpine image has been moved into the `images`
+        # FIXME: remove me in 4+. alpine image has been moved into the `images`
         # key. This is to support older configuration files.
         legacy_alpine = self.config.get('alpine')
 
@@ -797,6 +759,40 @@ class Node(object):
             self.log.info("Vnode is interrupted, shutting down...")
             self.cleanup()
             sys.exit()
+
+    def kill_containers(self, kill_info: Dict) -> List[Dict]:
+        """
+        Kill containers on instruction from socket event
+
+        Parameters
+        ----------
+        kill_info: Dict
+            Dictionary received over websocket with instructions for which
+            tasks to kill
+
+        Returns
+        -------
+        List[Dict]:
+            List of dictionaries with information on killed task (keys:
+            result_id, task_id and parent_id)
+        """
+        if kill_info['collaboration_id'] != self.server_io.collaboration_id:
+            self.log.debug(
+                "Not killing tasks as this node is in another collaboration."
+            )
+            return []
+        elif 'node_id' in kill_info and \
+                kill_info['node_id'] != self.server_io.whoami.id_:
+            self.log.debug(
+                "Not killing tasks as instructions to kill tasks were directed"
+                " at another node in this collaboration.")
+            return []
+
+        # kill specific task if specified, else kill all algorithms
+        kill_list = kill_info.get('kill_list')
+        return self.__docker.kill_tasks(
+            org_id=self.server_io.whoami.organization_id, kill_list=kill_list
+        )
 
     def cleanup(self) -> None:
         if hasattr(self, 'socketIO') and self.socketIO:

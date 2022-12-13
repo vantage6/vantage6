@@ -7,6 +7,7 @@ from http import HTTPStatus
 from sqlalchemy import desc
 
 from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.server import db
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
@@ -21,6 +22,7 @@ from vantage6.server.resource.common._schema import (
     TaskResultSchema
 )
 from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.event import kill_task
 
 
 module_name = __name__.split('.')[-1]
@@ -193,6 +195,12 @@ class Tasks(TaskBase):
               'metadata' to get pagination metadata. Note that this will
               put the actual data in an envelope.
           - in: query
+            name: status
+            schema:
+              type: string
+            description: Filter by task status, e.g. 'active' for active
+              tasks, 'completed' for finished or 'crashed' for failed tasks.
+          - in: query
             name: page
             schema:
               type: integer
@@ -206,6 +214,8 @@ class Tasks(TaskBase):
         responses:
           200:
             description: Ok
+          400:
+            description: Non-allowed parameter values
           401:
             description: Unauthorized
 
@@ -234,7 +244,7 @@ class Tasks(TaskBase):
                       'parent_id', 'run_id']:
             if param in args:
                 q = q.filter(getattr(db.Task, param) == args[param])
-        for param in ['name', 'image', 'description', 'database']:
+        for param in ['name', 'image', 'description', 'database', 'status']:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
         if 'result_id' in args:
@@ -391,6 +401,16 @@ class Tasks(TaskBase):
         # ok commit session...
         task.save()
 
+        # send socket event that task has been created
+        self.socketio.emit(
+            "task_created", {
+                "task_id": task.id,
+                "run_id": task.run_id,
+                "collaboration_id": collaboration_id,
+                "init_org_id": init_org.id,
+            }, room=f"collaboration_{collaboration_id}", namespace='/tasks'
+        )
+
         # if the 'master'-flag is set to true the (master) task is executed on
         # a node in the collaboration from the organization to which the user
         # belongs. If also organization_ids are supplied, then these are
@@ -429,6 +449,7 @@ class Tasks(TaskBase):
                 task=task,
                 organization=organization,
                 input=input_,
+                status=TaskStatus.PENDING
             )
             result.save()
 
@@ -602,6 +623,10 @@ class Task(TaskBase):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
+        # kill the task if it is still running
+        if not has_task_finished(task.status):
+            kill_task(task, self.socketio)
+
         # retrieve results that belong to this task
         log.info(f'Removing task id={task.id}')
         for result in task.results:
@@ -678,8 +703,7 @@ class TaskResult(ServicesResources):
         """
         task = db.Task.get(id)
         if not task:
-            return {"msg": f"task id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # obtain organization model
         org = self.obtain_auth_organization()
