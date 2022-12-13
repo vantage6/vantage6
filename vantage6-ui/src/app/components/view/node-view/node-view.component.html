@@ -4,6 +4,10 @@
     <col span="1" style="width: 80%;"/>
   </colgroup>
   <tr>
+    <td>ID:</td>
+    <td>{{node.id}}</td>
+  </tr>
+  <tr>
     <td>Name:</td>
     <td>{{node.name}}</td>
   </tr>
@@ -43,6 +47,11 @@
     mat-button class="btn btn-edit inline"
     (click)="editNodeName()">
   Change node name
+</button>
+<button *ngIf="userPermission.can('create', 'event', node.organization_id) && node.is_online"
+    mat-button class="btn btn-kill inline"
+    (click)="askConfirmKill()">
+  Kill tasks
 </button>
 <br/>
 <div *ngIf="userPermission.can('edit', 'node', node.organization_id)"

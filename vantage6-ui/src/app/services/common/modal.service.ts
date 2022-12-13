@@ -7,6 +7,7 @@ import {
 
 import { ModalDeleteComponent } from 'src/app/components/modal/modal-delete/modal-delete.component';
 import { ModalEditComponent } from 'src/app/components/modal/modal-edit/modal-edit.component';
+import { ModalKillComponent } from 'src/app/components/modal/modal-kill/modal-kill.component';
 import { ModalLoadingComponent } from 'src/app/components/modal/modal-loading/modal-loading.component';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { ResType } from 'src/app/shared/enum';
@@ -85,6 +86,13 @@ export class ModalService {
     modalRef.componentInstance.to_delete = to_delete;
     modalRef.componentInstance.obj_type = obj_type;
     modalRef.componentInstance.extra_message = extra_message;
+    return modalRef;
+  }
+
+  openKillModal(warning_message: string, id_info: string): NgbModalRef {
+    const modalRef = this.modalService.open(ModalKillComponent, {});
+    modalRef.componentInstance.warning_message = warning_message;
+    modalRef.componentInstance.id_info = id_info;
     return modalRef;
   }
 }

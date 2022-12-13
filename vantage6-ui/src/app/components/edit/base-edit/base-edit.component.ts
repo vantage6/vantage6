@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Organization } from 'src/app/interfaces/organization';
@@ -9,7 +9,6 @@ import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
 import { parseId } from 'src/app/shared/utils';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-base-edit',
@@ -20,7 +19,6 @@ export abstract class BaseEditComponent implements OnInit {
   mode = OpsType.EDIT;
 
   organization_id: number | null = null;
-  organizations: Organization[] = [];
   selected_org: Organization | null = null;
   route_id: number | null = null;
 

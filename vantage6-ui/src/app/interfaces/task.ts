@@ -25,6 +25,7 @@ export interface Task {
   children?: Task[];
   results?: Result[];
   complete: boolean;
+  status: string;
 }
 
 export const EMPTY_TASK: Task = {
@@ -41,6 +42,7 @@ export const EMPTY_TASK: Task = {
   parent_id: -1,
   children_ids: [],
   complete: false,
+  status: '',
 };
 
 export function getEmptyTask(): Task {

@@ -4,7 +4,12 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { deepcopy, parseId } from 'src/app/shared/utils';
+import {
+  deepcopy,
+  filterArrayByProperty,
+  getUniquePropertyValues,
+  parseId,
+} from 'src/app/shared/utils';
 import { TableComponent } from '../base-table/table.component';
 import { DisplayMode } from '../node-table/node-table.component';
 import { Task } from 'src/app/interfaces/task';
@@ -13,18 +18,13 @@ import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskApiService } from 'src/app/services/api/task-api.service';
+import { Resource } from 'src/app/shared/types';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { User } from 'src/app/interfaces/user';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-
-export enum TaskStatus {
-  ALL = 'All',
-  COMPLETE = 'Completed',
-  INCOMPLETE = 'Not completed',
-}
 
 export enum TaskInitator {
   ALL = 'All',
@@ -49,8 +49,10 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   roles: Role[] = [];
   current_collaboration: Collaboration | null;
   displayMode = DisplayMode.ALL;
-  task_statuses = TaskStatus;
-  task_status_selected = TaskStatus.ALL as string;
+
+  TASK_STATUS_ALL: string = 'All';
+  available_task_statues: string[] = [];
+  selected_task_status: string = this.TASK_STATUS_ALL;
   task_initiators = TaskInitator;
   task_initiator_selected = TaskInitator.ALL as string;
 
@@ -63,7 +65,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     'collaboration',
     'init_org',
     'init_user',
-    'complete',
+    'status',
   ];
 
   constructor(
@@ -83,9 +85,13 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    this.organizations = await this.orgDataService.list();
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+    });
 
-    this.collaborations = await this.collabDataService.list(this.organizations);
+    (await this.collabDataService.list()).subscribe((cols) => {
+      this.collaborations = cols;
+    });
 
     this.readRoute();
   }
@@ -144,6 +150,8 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   async setup(force_refresh: boolean = false) {
     await this.setResources(force_refresh);
 
+    this.setAvailableTaskStatuses();
+
     await this.addCollaborationsToResources();
 
     await this.addInitiatingOrgsToTasks();
@@ -162,17 +170,33 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       this.resources = [];
       for (let collab_id of (this.current_organization as Organization)
         .collaboration_ids) {
-        this.resources.push(
-          ...(await this.taskDataService.collab_list(collab_id, force_refresh))
-        );
+        (
+          await this.taskDataService.collab_list(collab_id, force_refresh)
+        ).subscribe((tasks) => {
+          this.resources = filterArrayByProperty(
+            this.resources,
+            'collaboration_id',
+            collab_id,
+            false
+          );
+          this.resources.push(...tasks);
+        });
       }
     } else if (this.displayMode === DisplayMode.COL) {
-      this.resources = await this.taskDataService.collab_list(
-        this.route_org_id as number,
-        force_refresh
-      );
+      (
+        await this.taskDataService.collab_list(
+          this.route_org_id as number,
+          force_refresh
+        )
+      ).subscribe((tasks) => {
+        this.resources = tasks;
+      });
     } else {
-      this.resources = await this.taskDataService.list(force_refresh);
+      (await this.taskDataService.list(force_refresh)).subscribe(
+        (tasks: Task[]) => {
+          this.resources = tasks;
+        }
+      );
     }
     // make a copy to prevent that changes in these resources are directly
     // reflected in the resources within dataServices
@@ -217,6 +241,10 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     return `Select ${entity} to view:`;
   }
 
+  getSelectedTaskStatus(): string {
+    return this.selected_task_status;
+  }
+
   protected async addCollaborationsToResources() {
     for (let r of this.resources as Task[]) {
       for (let col of this.collaborations) {
@@ -240,20 +268,18 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   }
 
   protected async addInitiatingUsersToTasks() {
-    // TODO it would be nice if we can simply get the users without needing
-    // to get rules/roles first (this is currently done so users are stored
-    // properly in the dataServices)
-    this.rules = await this.ruleDataService.list();
-    this.roles = await this.roleDataService.list(this.rules);
-    this.users = await this.userDataService.list(this.roles, this.rules);
-    for (let r of this.resources as Task[]) {
-      for (let user of this.users) {
-        if (user.id === r.init_user_id) {
-          r.init_user = user;
-          break;
+    (await this.userDataService.list()).subscribe((users) => {
+      this.users = users;
+      // add users to tasks
+      for (let r of this.resources as Task[]) {
+        for (let user of this.users) {
+          if (user.id === r.init_user_id) {
+            r.init_user = user;
+            break;
+          }
         }
       }
-    }
+    });
   }
 
   setCurrentCollaboration(): void {
@@ -265,8 +291,12 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     }
   }
 
-  getCompletedText(task: Task) {
-    return task.complete ? 'Yes' : 'No';
+  getStatus(task: Task): string {
+    if (task.status) {
+      return task.status;
+    } else {
+      return task.complete ? 'Completed' : 'Unknown';
+    }
   }
 
   async deleteSelectedTasks(): Promise<void> {
@@ -275,7 +305,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
         .delete(task)
         .toPromise()
         .then((data) => {
-          this.taskDataService.remove(task);
+          this.taskDataService.remove(task as Task);
           // reinitialize table to reflect the deleted tasks
           this.setup();
           this.selection.clear();
@@ -328,44 +358,65 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     return this.selection.selected.length > 0 && !this.canDeleteSelection();
   }
 
-  filterTaskStatus(selected_status: string): void {
-    // if showing all, set to all and return
-    this.task_status_selected = selected_status;
-    if (selected_status === TaskStatus.ALL) {
-      this.dataSource.data = this.resources;
-      return;
+  filterTasks() {
+    // filter tasks by current value of selected status and initiator
+    let selection = [];
+    // first filter by task status
+    if (this.selected_task_status === this.TASK_STATUS_ALL) {
+      selection = this.resources;
+    } else {
+      selection = filterArrayByProperty(
+        this.resources,
+        'status',
+        this.selected_task_status
+      );
     }
-
-    // else, filter resources by 'complete' or 'incomplete' tasks
-    let show_complete = selected_status === TaskStatus.COMPLETE ? true : false;
-    let resources_shown = this.resources.filter(function (elem: any) {
-      return elem.complete === show_complete;
-    });
-    this.dataSource.data = resources_shown;
-  }
-
-  filterTasksByInitiator(initiator: TaskInitator) {
-    this.task_initiator_selected = initiator;
-    if (initiator === TaskInitator.ALL) {
-      this.dataSource.data = this.resources;
-    } else if (initiator === TaskInitator.ORG) {
+    // now filter by initiator
+    if (this.task_initiator_selected === TaskInitator.ALL) {
+      // pass: don't shrink selection further
+    } else if (this.task_initiator_selected === TaskInitator.ORG) {
       let own_org_id = this.userPermission.user.organization_id;
-      this.dataSource.data = this.resources.filter(function (elem: any) {
+      selection = selection.filter(function (elem: any) {
         return elem.initiator_id === own_org_id;
       });
     } else {
       // if show tasks initiated by user itself
       let own_user_id = this.userPermission.user.id;
-      this.dataSource.data = this.resources.filter(function (elem: any) {
+      selection = selection.filter(function (elem: any) {
         return elem.init_user_id === own_user_id;
       });
     }
+    // set new data selection
+    this.dataSource.data = selection;
+  }
+
+  filterTaskStatus(selected_status: string = this.TASK_STATUS_ALL): void {
+    this.selected_task_status = selected_status;
+    this.filterTasks();
+  }
+
+  filterTasksByInitiator(initiator: TaskInitator) {
+    this.task_initiator_selected = initiator;
+    this.filterTasks();
   }
 
   async refreshTasks() {
     this.modalService.openLoadingModal();
     await this.setup(true);
     this.modalService.closeLoadingModal();
+  }
+
+  deleteResource(resource: Resource) {
+    // table data should be reset because when a task is deleted, also children
+    // and parent tasks are updated to reflect the deleted task
+    this.setup();
+  }
+
+  setAvailableTaskStatuses() {
+    this.available_task_statues = getUniquePropertyValues(
+      this.resources,
+      'status'
+    );
   }
 
   getInitiatingUser(task: Task) {

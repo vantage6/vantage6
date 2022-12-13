@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, Input, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { getEmptyNode, NodeWithOrg } from 'src/app/interfaces/node';
@@ -5,6 +6,7 @@ import { NodeApiService } from 'src/app/services/api/node-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { ExitMode } from 'src/app/shared/enum';
+import { environment } from 'src/environments/environment';
 import { BaseViewComponent } from '../base-view/base-view.component';
 
 @Component({
@@ -22,7 +24,8 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
     protected nodeApiService: NodeApiService,
     protected nodeDataService: NodeDataService,
     public userPermission: UserPermissionService,
-    protected modalService: ModalService
+    protected modalService: ModalService,
+    private http: HttpClient
   ) {
     super(nodeApiService, nodeDataService, modalService);
   }
@@ -65,8 +68,38 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
         this.nodeDataService.save(this.node);
       },
       (error) => {
-        this.modalService.openMessageModal(error.error.msg);
+        this.modalService.openMessageModal([error.error.msg]);
       }
     );
+  }
+
+  askConfirmKill() {
+    this.modalService
+      .openKillModal(
+        `You are about to send instructions to stop all tasks running on this node`,
+        `all tasks on this node`
+      )
+      .result.then((exit_mode) => {
+        if (exit_mode === ExitMode.KILL) {
+          this.kill();
+        }
+      });
+  }
+
+  kill() {
+    this.http
+      .post<any>(environment.api_url + '/kill/node/tasks', {
+        id: this.node.id,
+      })
+      .subscribe(
+        (data: any) => {
+          this.modalService.openMessageModal([
+            'The node has been instructed to kill its tasks!',
+          ]);
+        },
+        (error: any) => {
+          this.modalService.openErrorModal(error.error.msg);
+        }
+      );
   }
 }

@@ -2,10 +2,8 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Role, RoleWithOrg } from 'src/app/interfaces/role';
-import { Rule } from 'src/app/interfaces/rule';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { TableComponent } from 'src/app/components/table/base-table/table.component';
 import { ModalService } from 'src/app/services/common/modal.service';
 
@@ -22,9 +20,8 @@ export class RoleTableComponent
   extends TableComponent
   implements OnInit, AfterViewInit
 {
-  rules: Rule[] = [];
   show_default_roles: boolean = true;
-  roles_without_defaults: Role[] = [];
+  roles_without_defaults: RoleWithOrg[] = [];
 
   displayedColumns: string[] = ['id', 'name', 'organization', 'description'];
 
@@ -32,7 +29,6 @@ export class RoleTableComponent
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
     private roleDataService: RoleDataService,
-    private ruleDataService: RuleDataService,
     private orgDataService: OrgDataService,
     protected modalService: ModalService
   ) {
@@ -53,23 +49,27 @@ export class RoleTableComponent
   }
 
   async init(): Promise<void> {
-    // get rules
-    this.rules = await this.ruleDataService.list();
-
     // get organizations
-    this.organizations = await this.orgDataService.list();
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+      this.addOrgsToRoles();
+    });
 
     this.readRoute();
   }
 
   protected async setResources() {
+    // TODO update other things when resources are updated?
     if (this.isShowingSingleOrg()) {
-      this.resources = await this.roleDataService.org_list(
-        this.route_org_id as number,
-        this.rules
-      );
+      (
+        await this.roleDataService.org_list(this.route_org_id as number)
+      ).subscribe((roles) => {
+        this.resources = roles;
+      });
     } else {
-      this.resources = await this.roleDataService.list(this.rules);
+      (await this.roleDataService.list()).subscribe((roles: Role[]) => {
+        this.resources = roles;
+      });
     }
   }
 
@@ -82,6 +82,16 @@ export class RoleTableComponent
         return elem.organization_id !== null;
       }) as Role[];
       this.dataSource.data = this.roles_without_defaults;
+    }
+  }
+
+  addOrgsToRoles(): void {
+    for (let role of this.roles_without_defaults) {
+      for (let org of this.organizations) {
+        if (role.organization_id === org.id) {
+          role.organization = org;
+        }
+      }
     }
   }
 }

@@ -2,6 +2,7 @@ export enum ExitMode {
   CANCEL = 'CANCEL',
   DELETE = 'DELETE',
   EDIT = 'EDIT',
+  KILL = 'KILL',
 }
 
 export enum ResType {
@@ -12,6 +13,7 @@ export enum ResType {
   NODE = 'node',
   TASK = 'task',
   RESULT = 'result',
+  EVENT = 'event',
   PORT = 'port',
   RULE = 'rule',
   ANY = '*',
@@ -30,5 +32,24 @@ export enum OpsType {
   CREATE = 'create',
   EDIT = 'edit',
   DELETE = 'delete',
+  SEND = 'send',
   ANY = '*',
+}
+
+export enum Sentiment {
+  POSITIVE = 'positive',
+  NEGATIVE = 'negative',
+  NEUTRAL = 'neutral',
+}
+
+export enum TaskStatus {
+  PENDING = 'pending',
+  INITIALIZING = 'initializing',
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  START_FAILED = 'start failed',
+  NO_DOCKER_IMAGE = 'non-existing Docker image',
+  CRASHED = 'crashed',
+  KILLED = 'killed by user',
 }

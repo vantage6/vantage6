@@ -54,14 +54,15 @@ Angular production servers can be deployed in many ways. Angular's
 [deployment documentation](https://angular.io/guide/deployment) offers a number
 of options.
 
-Alternatively, you can use the Docker image `harbor2.vantage6.ai/infrastructure/ui`
-to deploy your own UI. In that case, run for example
+Alternatively, we provide the Docker image `harbor2.vantage6.ai/infrastructure/ui`
+to help you deploy your own UI. In that case, run
 
 ```
-docker run --env API_URL="<your_own_server_url>" -p 8080:80 harbor2.vantage6.ai/infrastructure/ui
+docker run --env SERVER_URL="<your_url>" API_PATH="<your_path>" -p 8080:80
 ```
 
 to run a UI on port 8080 that communicates with your own server. For instance,
 you can point to a local server with default settings if you set
-`http://localhost:5000/api` for the server URL. If you don't enter a server URL,
-the UI points to `https://petronas.vantage6.ai` by default.
+SERVER_URL=`http://localhost:5000` and API_PATH=`/api`.
+If you don't enter environment variables, the UI points to
+`https://petronas.vantage6.ai` by default.
