@@ -251,7 +251,7 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         except docker.errors.APIError as e:
             log.error(f"Failed to pull image! {image}")
             log.debug(e)
-            raise docker.errors.APIError("Image not found") from e
+            raise docker.errors.APIError("Failed to pull image") from e
 
 
 def get_container(docker_client: DockerClient, **filters) -> Container:
