@@ -235,7 +235,12 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.task.organizations = this.selected_orgs;
 
     // create tasks
-    super.save(task);
+    await super.save(task, false);
+
+    // go to the page for the task we just created
+    this.router.navigateByUrl(
+      `/task/view/${task.id}/${this.userPermission.user.organization_id}`
+    );
   }
 
   trackArgsFunc(index: any, item: any) {

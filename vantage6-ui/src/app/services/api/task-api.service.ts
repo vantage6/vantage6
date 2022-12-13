@@ -58,7 +58,6 @@ export class TaskApiService extends BaseApiService {
       database: task.database,
       input: input,
     };
-    console.log(data);
     return data;
   }
 }
