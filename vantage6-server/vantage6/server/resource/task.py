@@ -449,7 +449,7 @@ class Tasks(TaskBase):
                 task=task,
                 organization=organization,
                 input=input_,
-                status=TaskStatus.PENDING.value
+                status=TaskStatus.PENDING
             )
             result.save()
 

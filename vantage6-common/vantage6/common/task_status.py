@@ -1,8 +1,7 @@
 from enum import Enum
-from typing import Union
 
 
-class TaskStatus(Enum):
+class TaskStatus(str, Enum):
     # Task has not yet been started (usually, node is offline)
     PENDING = 'pending'
     # Task is being started
@@ -24,7 +23,7 @@ class TaskStatus(Enum):
     KILLED = 'killed by user'
 
 
-def has_task_failed(status: Union[TaskStatus, str]) -> bool:
+def has_task_failed(status: TaskStatus) -> bool:
     """
     Check if task has failed to run to completion
 
@@ -38,19 +37,13 @@ def has_task_failed(status: Union[TaskStatus, str]) -> bool:
     bool
         True if task has failed, False otherwise
     """
-    if isinstance(status, TaskStatus):
-        return status not in [
-            TaskStatus.INITIALIZING, TaskStatus.ACTIVE, TaskStatus.COMPLETED,
-            TaskStatus.PENDING
-        ]
-    else:
-        return status not in [
-            TaskStatus.INITIALIZING.value, TaskStatus.ACTIVE.value,
-            TaskStatus.COMPLETED.value, TaskStatus.PENDING.value
-        ]
+    return status not in [
+        TaskStatus.INITIALIZING, TaskStatus.ACTIVE, TaskStatus.COMPLETED,
+        TaskStatus.PENDING
+    ]
 
 
-def has_task_finished(status: Union[TaskStatus, str]) -> bool:
+def has_task_finished(status: TaskStatus) -> bool:
     """
     Check if task has finished or crashed
 
@@ -64,7 +57,4 @@ def has_task_finished(status: Union[TaskStatus, str]) -> bool:
     bool
         True if task has finished or failed, False otherwise
     """
-    if isinstance(status, TaskStatus):
-        return has_task_failed(status) or status == TaskStatus.COMPLETED
-    else:
-        return has_task_failed(status) or status == TaskStatus.COMPLETED.value
+    return has_task_failed(status) or status == TaskStatus.COMPLETED

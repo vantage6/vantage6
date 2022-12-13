@@ -3,6 +3,7 @@ to be cleaned at some point. """
 import logging
 import os
 import pickle
+import docker
 
 from typing import Dict, List, Union
 from pathlib import Path
@@ -153,10 +154,15 @@ class DockerTaskManager(DockerBaseManager):
             self.log.info(f"Retrieving latest image: '{self.image}'")
             pull_if_newer(self.docker, self.image, self.log)
 
+        except docker.errors.APIError as e:
+            self.log.debug('Failed to pull image: could not find image')
+            self.log.exception(e)
+            self.status = TaskStatus.NO_DOCKER_IMAGE
+            raise PermanentAlgorithmStartFail
         except Exception as e:
             self.log.debug('Failed to pull image')
-            self.log.error(e)
-            self.status = TaskStatus.NO_DOCKER_IMAGE
+            self.log.exception(e)
+            self.status = TaskStatus.FAILED
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,

@@ -44,7 +44,7 @@ class DefaultSocketNamespace(Namespace):
 
         except jwt.exceptions.ExpiredSignatureError:
             self.log.error("JWT has expired")
-            emit("expired_token", "", room=request.sid)
+            emit("expired_token", room=request.sid)
             return
 
         except Exception as e:
@@ -54,7 +54,7 @@ class DefaultSocketNamespace(Namespace):
             self.__join_room_and_notify(request.sid)
 
             # FIXME: expired probably doesn't cover it ...
-            emit("expired_token", "", room=request.sid)
+            emit("expired_token", room=request.sid)
             return
 
         # get identity from token.

@@ -41,6 +41,20 @@ class Result(NamedTuple):
     parent_id: Union[int, None]
 
 
+class ToBeKilled(NamedTuple):
+    """ Data class to store which tasks should be killed """
+    task_id: int
+    result_id: int
+    organization_id: int
+
+
+class KilledResult(NamedTuple):
+    """ Data class to store which algorithms have been killed """
+    result_id: int
+    task_id: int
+    parent_id: int
+
+
 class DockerManager(DockerBaseManager):
     """ Wrapper for the docker module, to be used specifically for vantage6.
 
@@ -228,8 +242,8 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict]:
-            List of result + task ids that have been killed
+        List[KilledResult]:
+            List of information on tasks that have been killed
         """
         result_ids_killed = []
         if self.active_tasks:
@@ -237,10 +251,11 @@ class DockerManager(DockerBaseManager):
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup()
-            result_ids_killed.append({
-                'result_id': task.result_id, 'task_id': task.task_id,
-                'parent_id': task.parent_id,
-            })
+            result_ids_killed.append(KilledResult(
+                result_id=task.result_id,
+                task_id=task.task_id,
+                parent_id=task.parent_id
+            ))
         return result_ids_killed
 
     def cleanup(self) -> None:
@@ -447,7 +462,7 @@ class DockerManager(DockerBaseManager):
         self.linked_services.append(container_name)
 
     def kill_selected_tasks(
-        self, org_id: int, kill_list: List[Dict] = None
+        self, org_id: int, kill_list: List[ToBeKilled] = None
     ) -> List[Dict]:
         """
         Kill tasks specified by a kill list, if they are currently running on
@@ -457,15 +472,13 @@ class DockerManager(DockerBaseManager):
         ----------
         org_id: int
             The organization id of this node
-        kill_list: List[Dict]
-            A list of tasks that should be killed. Each dictionary should
-            contain a task_id, a result_id and an organization_id
+        kill_list: List[ToBeKilled]
+            A list of info about tasks that should be killed.
 
         Returns
         -------
-        List[Dict]
-            List of dictionaries with information on killed task (keys:
-            result_id, task_id and parent_id)
+        List[KilledResult]
+            List with information on killed tasks
         """
         killed_list = []
         for container_to_kill in kill_list:
@@ -481,10 +494,11 @@ class DockerManager(DockerBaseManager):
                     f"Killing containers for result_id={task.result_id}")
                 task.cleanup()
                 self.active_tasks.remove(task)
-                killed_list.append({
-                    'result_id': task.result_id, 'task_id': task.task_id,
-                    'parent_id': task.parent_id,
-                })
+                killed_list.append(KilledResult(
+                    result_id=task.result_id,
+                    task_id=task.task_id,
+                    parent_id=task.parent_id,
+                ))
             else:
                 self.log.warn(
                     "Received instruction to kill result_id="
@@ -493,7 +507,7 @@ class DockerManager(DockerBaseManager):
         return killed_list
 
     def kill_tasks(self, org_id: int,
-                   kill_list: List[Dict] = None) -> List[Dict]:
+                   kill_list: List[ToBeKilled] = None) -> List[Dict]:
         """
         Kill tasks currently running on this node.
 
@@ -501,16 +515,14 @@ class DockerManager(DockerBaseManager):
         ----------
         org_id: int
             The organization id of this node
-        kill_list: List[Dict] (optional)
-            A list of tasks that should be killed. Each dictionary should
-            contain a task_id, a result_id and an organization_id. If the list
+        kill_list: List[ToBeKilled] (optional)
+            A list of info on tasks that should be killed. If the list
             is not specified, all running algorithm containers will be killed.
 
         Returns
         -------
-        List[Dict]
-            List of dictionaries with information on killed task (keys:
-            result_id, task_id and parent_id)
+        List[KilledResult]
+            List of dictionaries with information on killed tasks
         """
         if kill_list:
             return self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)

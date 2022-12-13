@@ -61,11 +61,11 @@ class Task(Base):
             return 'unknown'
         elif any([has_task_failed(status) for status in result_statuses]):
             return TaskStatus.FAILED.value
-        elif TaskStatus.ACTIVE.value in result_statuses:
+        elif TaskStatus.ACTIVE in result_statuses:
             return TaskStatus.ACTIVE.value
-        elif TaskStatus.INITIALIZING.value in result_statuses:
+        elif TaskStatus.INITIALIZING in result_statuses:
             return TaskStatus.INITIALIZING.value
-        elif TaskStatus.PENDING.value in result_statuses:
+        elif TaskStatus.PENDING in result_statuses:
             return TaskStatus.PENDING.value
         else:
             return TaskStatus.COMPLETED.value

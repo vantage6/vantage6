@@ -1,6 +1,7 @@
 import logging
 
 from socketio import ClientNamespace
+from typing import Dict
 
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.node.util import logger_name
@@ -14,27 +15,41 @@ class NodeTaskNamespace(ClientNamespace):
     node_worker_ref = None
 
     def __init__(self, *args, **kwargs):
-        """ Handler for a websocket namespace.
-        """
+        """ Handler for a websocket namespace. """
         super().__init__(*args, **kwargs)
         self.log = logging.getLogger(logger_name(__name__))
 
-    def on_message(self, data):
-        self.log.info(data)
+    def on_message(self, msg):
+        """
+        Receive messages over socket connection
+
+        Parameters
+        ---------
+        msg: any
+            A message that will be printed to the node logs. Usually a str.
+        """
+        self.log.info(msg)
 
     def on_connect(self):
-        """On connect or reconnect"""
+        """ Actions to be taken on socket connect (or reconnect) event """
         self.log.info('(Re)Connected to the /tasks namespace')
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
 
     def on_disconnect(self):
-        """ Server disconnects event."""
+        """ Actions to be taken on socket disconnect event. """
         # self.node_worker_ref.socketIO.disconnect()
         self.log.info('Disconnected from the server')
 
-    def on_new_task(self, task_id):
-        """ New task event."""
+    def on_new_task(self, task_id: int):
+        """
+        Actions to be taken when node is notified of new task by server
+
+        Parameters
+        ----------
+        task_id: int
+            ID of the new task
+        """
         if self.node_worker_ref:
             self.node_worker_ref.get_task_and_add_to_queue(task_id)
             self.log.info(f'New task has been added task_id={task_id}')
@@ -46,7 +61,8 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_algorithm_status_change(self, data):
         """
-        An algorithm container in the collaboration has changed its status.
+        Actions to be taken when an algorithm container in the collaboration
+        has changed its status.
 
         Parameters
         ----------
@@ -69,7 +85,11 @@ class NodeTaskNamespace(ClientNamespace):
         # else: no need to do anything when a task has started/finished/... on
         # another node
 
-    def on_expired_token(self, msg):
+    def on_expired_token(self):
+        """
+        Action to be taken when node is notified by server that its token
+        has expired.
+        """
         self.log.warning("Your token is no longer valid... reconnecting")
         self.node_worker_ref.socketIO.disconnect()
         self.log.debug("Old socket connection terminated")
@@ -80,7 +100,16 @@ class NodeTaskNamespace(ClientNamespace):
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
 
-    def on_kill_containers(self, kill_info):
+    def on_kill_containers(self, kill_info: Dict):
+        """
+        Action to be taken when nodes are instructed by server to kill one or
+        more tasks
+
+        kill_info: Dict
+            A dictionary that contains information on which tasks should be
+            killed. This information may instruct a node to kill all its tasks
+            or include a list of which tasks should be killed.
+        """
         self.log.info(f"Received instruction to kill task: {kill_info}")
         killed_ids = self.node_worker_ref.kill_containers(kill_info)
         for killed in killed_ids:
@@ -92,7 +121,7 @@ class NodeTaskNamespace(ClientNamespace):
                     'collaboration_id':
                         self.node_worker_ref.server_io.collaboration_id,
                     'node_id': self.node_worker_ref.server_io.whoami.id_,
-                    'status': TaskStatus.KILLED.value,
+                    'status': TaskStatus.KILLED,
                     'organization_id':
                         self.node_worker_ref.server_io.whoami.organization_id,
                     'parent_id': killed['parent_id'],

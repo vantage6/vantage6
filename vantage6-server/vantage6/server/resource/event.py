@@ -87,7 +87,7 @@ class KillTask(ServicesResources):
           Description|\n
           |--|--|--|--|--|--|\n
           |Event|Global|Create|❌|❌|Create kill signal for any task|\n
-          |Event|Collaboration|Create|✅|✅|
+          |Event|Collaboration|Create|❌|❌|
           Create kill signal for any task in your collaboration|\n
 
           Accessible to users.
@@ -111,7 +111,7 @@ class KillTask(ServicesResources):
           400:
             description: No task id provided
 
-        tags: ["Kill tasks"]
+        tags: ["Task"]
         """
         # obtain task id or node id from request
         body = request.get_json()
@@ -166,9 +166,9 @@ class KillNodeTasks(ServicesResources):
           |--|--|--|--|--|--|\n
           |Event|Global|Create|❌|❌|Create kill signal for all tasks on any
           node|\n
-          |Event|Collaboration|Create|✅|✅|Create kill signal for all tasks
+          |Event|Collaboration|Create|❌|❌|Create kill signal for all tasks
           on any node in collaborations|\n
-          |Event|Organization|Create|✅|✅|Create kill signal for all tasks on
+          |Event|Organization|Create|❌|❌|Create kill signal for all tasks on
           any node of own organization|\n
 
           Accessible to users.
@@ -192,7 +192,7 @@ class KillNodeTasks(ServicesResources):
           400:
             description: No task id provided or node is not online
 
-        tags: ["Kill tasks"]
+        tags: ["Task"]
         """
         # obtain task id or node id from request
         body = request.get_json()
@@ -272,7 +272,7 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
     # set tasks and subtasks status to killed
     def set_killed(task: db.Task):
         for result in task.results:
-            result.status = TaskStatus.KILLED.value
+            result.status = TaskStatus.KILLED
             result.finished_at = dt.datetime.now()
             result.save()
 

@@ -294,13 +294,13 @@ class Node(object):
 
         # save task status to the server and send socket event to update others
         self.server_io.patch_results(
-            id=taskresult['id'], result={'status': task_status.value}
+            id=taskresult['id'], result={'status': task_status}
         )
         self.socketIO.emit(
             'algorithm_status_change',
             data={
                 'node_id': self.server_io.whoami.id_,
-                'status': task_status.value,
+                'status': task_status,
                 'result_id': taskresult['id'],
                 'task_id': task['id'],
                 'collaboration_id': self.server_io.collaboration_id,
@@ -368,7 +368,7 @@ class Node(object):
                     'algorithm_status_change',
                     data={
                         'node_id': self.server_io.whoami.id_,
-                        'status': results.status.value,
+                        'status': results.status,
                         'result_id': results.result_id,
                         'task_id': results.task_id,
                         'collaboration_id': self.server_io.collaboration_id,
@@ -411,7 +411,7 @@ class Node(object):
                     result={
                         'result': results.data,
                         'log': results.logs,
-                        'status': results.status.value,
+                        'status': results.status,
                         'finished_at': datetime.datetime.now().isoformat(),
                     },
                     init_org_id=init_org_id,
@@ -789,7 +789,7 @@ class Node(object):
             return []
 
         # kill specific task if specified, else kill all algorithms
-        kill_list = kill_info.get('kill_list', None)
+        kill_list = kill_info.get('kill_list')
         return self.__docker.kill_tasks(
             org_id=self.server_io.whoami.organization_id, kill_list=kill_list
         )
