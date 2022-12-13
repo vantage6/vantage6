@@ -37,9 +37,9 @@
       <td>Image:</td>
       <td><input [(ngModel)]="task.image"/></td>
     </tr>
-    <tr *ngIf="collaborations.length !== 1">
+    <tr>
       <td>Collaboration:</td>
-      <td>
+      <td *ngIf="collaborations.length > 0; else noCollabsBlock">
         <div ngbDropdown class="d-inline-block">
           <button class="btn btn-dropdown" id="dropdownCollabs" ngbDropdownToggle>
             <span class="align-top">{{getNameCollabDropdown()}}</span>
@@ -51,6 +51,12 @@
           </div>
         </div>
       </td>
+      <ng-template #noCollabsBlock>
+        <td>
+          Your organization is not involved in any collaborations!
+          Get involved in collaborations before creating tasks.
+        </td>
+      </ng-template>
     </tr>
     <tr>
       <td>Organizations:</td>
