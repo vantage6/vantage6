@@ -43,6 +43,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   selected_orgs: Organization[] = [];
   deselected_orgs: Organization[] = [];
   warning_message: string = '';
+  logged_in_org_id: number = -1;
 
   constructor(
     protected router: Router,
@@ -71,13 +72,17 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.userPermission.isInitialized().subscribe((ready) => {
       if (ready) {
         super.ngOnInit();
+        this.logged_in_org_id = this.userPermission.user.organization_id;
       }
     });
   }
 
   async init(): Promise<void> {
     this.organizations = await this.orgDataService.list();
-    this.collaborations = await this.collabDataService.list(this.organizations);
+    this.collaborations = await this.collabDataService.org_list(
+      this.logged_in_org_id,
+      this.organizations
+    );
 
     // subscribe to id parameter in route to change edited role if required
     this.readRoute();
@@ -238,9 +243,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     await super.save(task, false);
 
     // go to the page for the task we just created
-    this.router.navigateByUrl(
-      `/task/view/${task.id}/${this.userPermission.user.organization_id}`
-    );
+    this.router.navigateByUrl(`/task/view/${task.id}/${this.logged_in_org_id}`);
   }
 
   trackArgsFunc(index: any, item: any) {
