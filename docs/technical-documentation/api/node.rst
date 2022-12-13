@@ -34,10 +34,10 @@ vantage6-node
 .. autoclass:: vantage6.node.docker.docker_manager.Result
    :members:
 
-``DockerTaskManager`` class
----------------------------
-.. autoclass:: vantage6.node.docker.network_manager
-   :members:
+.. ``DockerTaskManager`` class
+.. ---------------------------
+.. .. autoclass:: vantage6.node.docker.network_manager
+..    :members:
 
 ``VPNManager`` class
 --------------------

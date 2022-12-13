@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import docker.errors
+import json
 
 from enum import Enum
 from typing import Dict, List, Union
@@ -404,14 +405,18 @@ class DockerTaskManager(DockerBaseManager):
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data-sources at the
         # same time
+        db_labels = []
         for label in self.databases:
             db = self.databases[label]
             var_name = f'{label.upper()}_DATABASE_URI'
             environment_variables[var_name] = \
                 f"{self.data_folder}/{os.path.basename(db['uri'])}" \
                 if db['is_file'] else db['uri']
+            db_labels.append(label)
+        environment_variables['DB_LABELS'] = json.dumps(db_labels)
 
         # Support legacy algorithms
+        # TODO remove in v4+
         try:
             environment_variables["DATABASE_URI"] = (
                 f"{self.data_folder}/"

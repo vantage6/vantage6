@@ -5,45 +5,25 @@
 Installation
 ============
 
-**vantage6** consists of several :ref:`components <Components>` that
-can be installed. Which component(s) you need depends on your use case.
-Also the requirements differ per component.
+The vantage6 framework consists of several components that
+should be installed. Which component(s) you need depends on your use case. For
+example, if you only need to communicate to an existing vantage6 server, you
+don't have to install a server.
+
+We will first detail the requirements for installing a node and/or server, and
+then explain the installation process per component.
 
 .. _requirements:
 
 Requirements
 ------------
 
-Client
-^^^^^^
-
-You can interact with the server via the API. You can explore the server
-API on ``https://<serverdomain>/apidocs``
-(e.g. https://petronas.vantage6.ai/apidocs for our Petronas server).
-
-You can use any language to interact with the server as long as it
-supports HTTP requests. For Python and R we have written wrappers to
-simplify the interaction with the server: see the :ref:`client install`
-for more details on how to install these.
-
-.. warning::
-    Depending on your algorithm it *may* be required to use a specific
-    language to post a task and retrieve the results. This could happen when
-    the output of an algorithm contains a language specific datatype and or
-    serialization.
-
-    E.g. when the algorithm is written in R and the output is written back
-    in RDS (=specific to R) you would also need R to read the final input.
-
-    **Please consult the documentation of the algorithm you want to use if
-    this is the case.**
-
 Node & Server
 ^^^^^^^^^^^^^
 
 The (minimal) requirements of the node and server are similar. Note that
-not all of these are hard requirements: it could well be that it also
-works on other hardware, operating systems, versions of Python etc.
+these are recommendations: it may also work on other hardware, operating systems,
+versions of Python etc. (but they are not tested as much).
 
 **Hardware**
 
@@ -74,13 +54,13 @@ works on other hardware, operating systems, versions of Python etc.
 Python
 """"""
 
-Installation of any of the **vantage6** packages requires Python 3.7.
+Installation of any of the vantage6 packages requires Python 3.7.
 For installation instructions, see `python.org <https://python.org>`__,
 `anaconda.com <https://anaconda.com>`__ or use the package manager
 native to your OS and/or distribution.
 
 .. note::
-    We recommend you install **vantage6** in a new, clean Python (Conda)
+    We recommend you install vantage6 in a new, clean Python (Conda)
     environment.
 
     Other version of Python >= 3.6 will most likely also work, but may give
@@ -91,13 +71,6 @@ native to your OS and/or distribution.
 
 Docker
 """"""
-
-..  warning::
-
-    Note that for **Linux**, some `post-installation
-    steps <https://docs.docker.com/engine/install/linux-postinstall/>`__ may
-    be required. Vantage6 needs to be able to run docker without ``sudo``,
-    and these steps ensure just that.
 
 Docker facilitates encapsulation of applications and their dependencies
 in packages that can be easily distributed to diverse systems.
@@ -113,6 +86,13 @@ you can run the ``hello-world`` example from Docker.
 
    docker run hello-world
 
+..  warning::
+
+    Note that for **Linux**, some `post-installation
+    steps <https://docs.docker.com/engine/install/linux-postinstall/>`__ may
+    be required. Vantage6 needs to be able to run docker without ``sudo``,
+    and these steps ensure just that.
+
 .. note::
 
     * Always make sure that Docker is running while using vantage6!
@@ -124,30 +104,40 @@ Client
 ------
 
 We provide four ways in which you can interact with the server to manage
-your vantage6 resources: the user interface (UI), the
+your vantage6 resources: the :ref:`install_ui` (UI), the
 :ref:`Python client <python client library>`, the
-:ref:`R client <r client library>`, and the server API.
+:ref:`R client <r client library>`, and the server API. Below are installation
+instructions for each of them.
 
-What you need to install depends on which interface you choose. In order
-to use the UI or the server API, you usually don’t need to install
-anything: the UI is a website, and the API can be called via HTTP
-requests from a programming language of your choice. For the UI, you
-only need to set it up in case you are setting up your own server (see
-:ref:`UI` for instructions).
-
-Installation instructions for the Python client and R client are below.
 For most use cases, we recommend to use the UI (for anything except
-creating tasks) and/or the Python Client (which covers server API
-functionality completely).
+creating tasks - this is coming soon) and/or the Python Client. The latter
+covers the server functionality completely, but is more convenient for most
+users than sending HTTP requests directly to the API.
+
+.. warning::
+    Depending on your algorithm it *may* be required to use a specific
+    language to post a task and retrieve the results. This could happen when
+    the output of an algorithm contains a language specific datatype and or
+    serialization.
+
+.. _install_ui:
+
+User interface
+^^^^^^^^^^^^^^
+
+The UI is available as a website, so you don't have to install anything! Just
+go to the webpage and login with your user account. If you are using the
+Petronas server, simply go to https://portal.petronas.vantage6.ai.
+
+If you are a server admin and want to set up a user interface, see :ref:`UI`.
 
 Python client library
 ^^^^^^^^^^^^^^^^^^^^^
 
 Before you install the Python client, we check the version of the server you
-are going to interact with first. The easiest way of doing that is checking
-the ``/version`` endpoint of the server you are going to use on
+are going to interact with first. If you are using an existing server, check
 ``https://<server_url>/version`` (e.g. `https://petronas.vantage6.ai/version`
-or `http://localhost:5000/api/version`).
+or `http://localhost:5000/api/version`) to find its version.
 
 Then you can install the ``vantage6-client`` with:
 
@@ -174,6 +164,15 @@ You can install the R client by running:
    devtools::install_github('IKNL/vtg', subdir='src')
 
 
+Server API
+^^^^^^^^^^
+
+The API can be called via HTTP requests from a programming language of your
+choice. Hence, what you need to install, depends on you!
+
+You can explore how to use the server API on ``https://<serverdomain>/apidocs``
+(e.g. https://petronas.vantage6.ai/apidocs for our Petronas server).
+
 .. _install-node:
 
 Node
@@ -188,8 +187,7 @@ To install the **vantage6-node** make sure you have met the
 
 This will install the CLI in order to configure, start and stop the node. The
 node software itself will be downloaded when you start the node for the first
-time.
-
+time. See :ref:`here <use-node>` for more details on how to do that.
 
 .. _install-server:
 
@@ -198,9 +196,8 @@ Server
 
 Local Installation
 ^^^^^^^^^^^^^^^^^^
-This installs the *vantage6-server* at an VM or your local machine. To install
-the *vantage6-server* make sure you have met the :ref:`requirements`. Then
-install the latest version:
+This installs the vantage6 server at a VM or your local machine. First, make
+sure you have met the :ref:`requirements`. Then install the latest version:
 
 ::
 
@@ -211,30 +208,24 @@ from which you can create new servers (see :ref:`Use Server <use-server>`).
 
 Cloud Service Provider
 ^^^^^^^^^^^^^^^^^^^^^^
-To install vantage6 at a cloud service provider you can use a Docker Image
-(This is the same image used by ``vserver COMMAND``). If you are using a VM,
-you can follow the instructions for :ref:`local installation` and check
-our :ref:`server-deployment`.
 
-Depending on the ``VERSION``, you can use
+To use vantage6 at a cloud service provider, you can use the Docker image we
+provide. Check the :ref:`server-deployment` section for deployment examples.
 
-::
+.. note::
 
-    harbor2.vantage6.ai/infrastructure/server:VERSION
+    We recommend to provide the latest version. Should you have reasons to
+    deploy an older ``VERSION``, use the image
+    ``harbor2.vantage6.ai/infrastructure/server:<VERSION>``.
 
-
-See our :ref:`Release Strategy <release-strategy>` for selecting the right
-``VERSION``. E.g.:
-
-* ``petronas`` |rarr| version 3.x.x, is updated on reboot and will contain the
-  latest security updates
-* ``2.3.4`` |rarr| exact version, will not be changed on reboot
+    If you deploy an older version, it is also recommended that the nodes match
+    that version.
 
 
 Optional components
 ^^^^^^^^^^^^^^^^^^^
 There are several optional components that you can set up apart from the
-vantage6-server itself.
+vantage6 server itself:
 
 :ref:`UI`
   A web application that will allow your users to interact more easily with
@@ -260,25 +251,18 @@ vantage6-server itself.
 User Interface
 """"""""""""""
 
-.. todo:: I think we also have a Docker container for this now?
-
-The User Interface (UI) is a web application that aims to make it easy
-to interact with the server. It allows you to manage all your resources
+The User Interface (UI) is a web application that will make it easier for your
+users to interact with the server. It allows you to manage all your resources
 (such as creating collaborations, editing users, or viewing tasks),
 except for creating new tasks. We aim to incorporate this functionality
 in the near future.
 
-If you plan on deploying your own server and want to use the UI, follow
-the installation instructions on the UI `Github
-page <https://github.com/vantage6/vantage6-UI>`__. The UI is an Angular
-application and as such, you may be required to install *Node.js.* Once
-you have deployed the UI to the internet, any user that is registered on
-your vantage6 server will be able to use it.
+If you plan on creating your own server and want to use interact with it via the
+UI, follow the instructions on the `UI Github
+page <https://github.com/vantage6/vantage6-UI>`__. We also provide a Docker
+image that runs the UI.
 
 The UI is not compatible with older versions (<3.3) of vantage6.
-
-If you plan on using the existing Petronas server, you can simply go to
-https://portal.petronas.vantage6.ai and login with your user account.
 
 .. figure:: /images/screenshot_ui.png
     :alt: UI screenshot
@@ -286,22 +270,17 @@ https://portal.petronas.vantage6.ai and login with your user account.
 
     Screenshot of the vantage6 UI
 
-
 .. _eduvpn:
 
 EduVPN
 """"""
 
-*Please note that EduVPN is an* \ **optional**\  *component. It enables
-the use of advanced algorithms that require node-to-node communication.*
+EduVPN is an optional server component that enables the use of algorithms
+that require node-to-node communication.
 
 `EduVPN <https://www.eduvpn.org/>`_ provides an API for the OpenVPN
 server, which is required for automated certificate retrieval by the
 nodes. Like vantage6, it is an open source platform.
-
-.. note::
-    We are considering to eliminate the need for an EduVPN server by
-    implementing a vantage6 API for OpenVPN.
 
 The following documentation shows you how to install EduVPN:
 
@@ -327,7 +306,7 @@ After the installation is done, you need to configure the server to:
 4. Create an application account.
 
 .. warning::
-    EduVPN allows to listen to multiple protocols (UDP/TCP) and ports at the
+    EduVPN enables listening to multiple protocols (UDP/TCP) and ports at the
     same time. Be aware that all nodes need to be connected using the same
     protocol and port in order to communicate with each other.
 
@@ -493,9 +472,8 @@ RabbitMQ
 """"""""
 
 
-*Please note that RabbitMQ is an* \ **optional**\  *component. It enables
-the server to handle multiple requests at the same time. This is
-important if a server has a high workload.*
+RabbitMQ is an optional component that enables the server to handle more
+requests at the same time. This is important if a server has a high workload.
 
 There are several options to host your own RabbitMQ server. You can run
 `RabbitMQ in Docker <https://hub.docker.com/_/rabbitmq>`__ or host
@@ -518,8 +496,8 @@ Docker registry
 """""""""""""""
 
 A Docker registry or repository provides storage and versioning for Docker
-images. Installing a private Docker registry can be useful if you want
-to securely host your own algorithms.
+images. Installing a private Docker registry is useful if you want
+don't want to share your algorithms.
 
 Docker Hub
 ~~~~~~~~~~
@@ -535,30 +513,28 @@ Harbor
 registry. Harbor provides access control, a user interface and automated
 scanning on vulnerabilities.
 
-
 .. _server-deployment:
 
 Deployment
 ^^^^^^^^^^
 
-The *vantage6-server* uses Flask as backbone, together with
+The vantage6 server is a Flask application, together with
 `python-socketio <https://python-socketio.readthedocs.io>`_ for websocket
 support. The server runs as a standalone process (listening on its own ip
 address/port).
 
-.. info::
-    From version 3.2+ it is possible to horizontally scale the server (This
-    upgrade is also made available to version 2.3.4)
-
-    Documentation on how to deploy it will be shared here. Reach out to us
-    on Discord for now.
-
-There are many deployment options, so these examples are not complete
-and exhaustive.
+There are many deployment options. We simply provide a few examples.
 
 -  :ref:`deploy-nginx`
 -  :ref:`deploy-azure`
 -  …
+
+.. note::
+    From version 3.2+ it is possible to horizontally scale the server (This
+    upgrade is also made available to version 2.3.4)
+
+    Documentation on how to deploy it will be shared here soon. Reach out to us
+    on Discord for now.
 
 .. _deploy-nginx:
 
@@ -606,6 +582,7 @@ A basic setup is shown below. Note that SSL is not configured in this example.
 Azure app service
 """""""""""""""""
 
-TODO
+.. note::
+    We still have to document this. Reach out to us on Discord for now.
 
-.. _server-logging:
+.. TODO
