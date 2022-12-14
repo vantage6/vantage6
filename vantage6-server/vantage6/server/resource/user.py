@@ -556,18 +556,18 @@ class User(UserBase):
             return {"msg": "You cannot change your password here!"}, \
                 HTTPStatus.BAD_REQUEST
 
-        if data["username"]:
+        if data["username"] is not None:
             if (user.username != data["username"] and
                     db.User.exists("username", data["username"])):
                 return {
                     "msg": "User with that username already exists"
                 }, HTTPStatus.BAD_REQUEST
             user.username = data["username"]
-        if data["firstname"]:
+        if data["firstname"] is not None:
             user.firstname = data["firstname"]
-        if data["lastname"]:
+        if data["lastname"] is not None:
             user.lastname = data["lastname"]
-        if data["email"]:
+        if data["email"] is not None:
             if (user.email != data["email"] and
                     db.User.exists("email", data["email"])):
                 return {
