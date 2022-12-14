@@ -1,13 +1,17 @@
 # `make` is expected to be called from the directory that contains
 # this Makefile
 
+# docker image tag
 TAG ?= petronas
 REGISTRY ?= harbor2.vantage6.ai
+
+# infrastructure base image version
+BASE ?= 3
 
 help:
 	@echo "Available commands to 'make':"
 	@echo "  set-version          : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
-  @echo "  uninstall            : uninstall all vantage6 packages"
+	@echo "  uninstall            : uninstall all vantage6 packages"
 	@echo "  install              : do a regular install of all vantage6 packages"
 	@echo "  install-dev          : do an editable install of all vantage6 packages"
 	@echo "  image                : build the node/server docker image"
@@ -18,11 +22,12 @@ help:
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
-  @echo "  devdocs              : run a documentation development server"
+	@echo "  devdocs              : run a documentation development server"
 	@echo ""
 	@echo "Using "
 	@echo "  tag:      ${TAG}"
 	@echo "  registry: ${REGISTRY}"
+	@echo "  base:     ${BASE}"
 
 set-version:
 	# --version --build --spec --post
@@ -56,8 +61,10 @@ install-dev:
 
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/infrastructure-base:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/infrastructure-base.Dockerfile \
 		--push .
@@ -104,6 +111,8 @@ image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/node:${TAG} \
 		--tag ${REGISTRY}/infrastructure/server:${TAG} \
+		--build-arg TAG=${TAG} \
+		--build-arg BASE=${BASE} \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/node-and-server.Dockerfile \
 		--push .

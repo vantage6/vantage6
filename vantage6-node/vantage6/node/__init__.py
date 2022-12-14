@@ -436,8 +436,8 @@ class Node(object):
                     return
 
                 response = self.server_io.request(f"task/{task_id}")
-                init_org_id = response.get("init_org")
 
+                init_org_id = response.get("initiator")
                 if not init_org_id:
                     self.log.error(
                         f"Initiator organization from task (id={task_id})could"

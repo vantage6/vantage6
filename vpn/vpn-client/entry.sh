@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "entrypoint.sh"
+
 # Forward all traffic via VPN
 iptables -F FORWARD
 iptables -P FORWARD DROP
