@@ -54,8 +54,10 @@ Overview of this documentation
 This documentation space consists of the following main sections:
 
 * **Introduction** |rarr| *You are here now*
-* :doc:`/user-documentation/index` |rarr| *Install and use vantage6-servers,
-  -nodes or -clients*
+* :doc:`/install/index` |rarr| *How to install vantage6 servers,
+  nodes and clients*
+* :doc:`/use/index` |rarr| *How to use vantage6 servers,
+  nodes and clients*
 * :doc:`/technical-documentation/index` (Under construction) |rarr|
   *Implementation details of the vantage6 platform*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
