@@ -557,7 +557,11 @@ class User(UserBase):
                 HTTPStatus.BAD_REQUEST
 
         if data["username"] is not None:
-            if (user.username != data["username"] and
+            if data["username"] == '':
+                return {
+                    "msg": "Empty username is not allowed!"
+                }, HTTPStatus.BAD_REQUEST
+            elif (user.username != data["username"] and
                     db.User.exists("username", data["username"])):
                 return {
                     "msg": "User with that username already exists"
@@ -568,7 +572,11 @@ class User(UserBase):
         if data["lastname"] is not None:
             user.lastname = data["lastname"]
         if data["email"] is not None:
-            if (user.email != data["email"] and
+            if data["username"] == '':
+                return {
+                    "msg": "Empty username is not allowed!"
+                }, HTTPStatus.BAD_REQUEST
+            elif (user.email != data["email"] and
                     db.User.exists("email", data["email"])):
                 return {
                     "msg": "User with that email already exists."
