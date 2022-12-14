@@ -1,5 +1,5 @@
-
 .. include:: <isonum.txt>
+
 .. _introduction:
 
 Introduction
@@ -11,9 +11,13 @@ Vantage6 stands for pri\ **va**\ cy preservi\ **n**\ g
 federa\ **t**\ ed le\ **a**\ rnin\ **g** infrastructur\ **e** for
 \ **s**\ ecure \ **i**\ nsight e\ **x**\ change.
 
-Watch this `video <https://youtu.be/HVHvlkAeuD0>`_ for a quick introduction.
+.. raw:: html
 
-.. todo insert the video above directly into docs (requires sphinx extension)
+   <iframe width="750" height="420" src="https://youtube.com/embed/HVHvlkAeuD0"
+     frameborder="0"
+     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+     allowfullscreen>
+   </iframe>
 
 The project is inspired by the `Personal Health Train <https://pht.health-ri.nl/>`_
 (PHT) concept. In this analogy vantage6 is the *tracks* and *stations*.
@@ -45,7 +49,7 @@ aspects of federated learning.
 
 
 Overview of this documentation
---------
+------------------------------
 
 This documentation space consists of the following main sections:
 
@@ -63,7 +67,7 @@ This documentation space consists of the following main sections:
 
 
 Vantage6 resources
----------
+------------------
 
 This is a - non-exhaustive - list of vantage6 resources.
 
