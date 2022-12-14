@@ -123,6 +123,8 @@ variables, which we will explain now.
 Wrappers
 --------
 
+.. todo update the link below
+
 The algorithm wrapper simplifies and standardizes the interaction
 between algorithm and node. The `client
 libraries <../../usage/running-analyses/#client-libraries>`__ and the
@@ -383,6 +385,8 @@ Cross language
 Because algorithms are exchanged through Docker images they can be
 written in any language. This is an advantage as developers can use
 their preferred language for the problem they need to solve.
+
+.. todo update link below
 
 .. warning::
     The `wrappers <wrappers.md>`_ are only available for R and Python, so when

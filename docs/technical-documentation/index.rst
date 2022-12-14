@@ -7,6 +7,7 @@ Technical Docs
    :maxdepth: 3
    :caption: Contents:
 
+   features/index
    architecture
    node/node
    server/server
