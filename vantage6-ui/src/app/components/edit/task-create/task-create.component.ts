@@ -18,6 +18,7 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { ResultDataService } from 'src/app/services/data/result-data.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import {
+  addOrReplace,
   deepcopy,
   filterArrayByProperty,
   getById,
@@ -26,7 +27,6 @@ import {
   removeValueFromArray,
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
-import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { ExitMode } from 'src/app/shared/enum';
 import { Result } from 'src/app/interfaces/result';
 
@@ -61,8 +61,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     protected utilsService: UtilsService,
     private collabDataService: CollabDataService,
     private orgDataService: OrgDataService,
-    private resultDataService: ResultDataService,
-    private nodeDataService: NodeDataService
+    private resultDataService: ResultDataService
   ) {
     super(
       router,
@@ -97,6 +96,11 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     // subscribe to id parameter in route to change edited role if required
     this.readRoute();
 
+    // set defaults
+    // this.task.data_format = 'legacy';
+    this.task.database = 'default';
+    this.initializeTaskInput();
+
     // set previous tasks, so user can create tasks they have done before.
     // Only include task for the logged-in user, and no subtasks
     (await this.taskDataService.list()).subscribe((tasks) => {
@@ -108,11 +112,6 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
       tasks = filterArrayByProperty(tasks, 'parent_id', null);
       this.repeatable_tasks = tasks;
     });
-
-    // set defaults
-    // this.task.data_format = 'legacy';
-    this.task.database = 'default';
-    this.initializeTaskInput();
   }
 
   async setup(params: ParamMap) {
@@ -167,7 +166,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     // Get also the task results as this includes the input and the organization
     (await this.resultDataService.get_by_task_id(this.task.id)).subscribe(
       (results) => {
-        this.addPreviousTaskFields(results);
+        if (results.length > 0) this.addPreviousTaskFields(results);
       }
     );
   }
@@ -186,12 +185,15 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
       this.task_input.method = input.method;
       if (input.args) {
         this.task_input.args = input.args;
+        this.task_input.args.push('');
       }
       if (input.kwargs) {
         this.task_input.kwargs = [];
         for (let key in input.kwargs) {
           this.task_input.kwargs.push({ key: key, value: input.kwargs[key] });
         }
+        // create empty kwarg if user wants to add more
+        this.task_input.kwargs.push({ key: '', value: '' });
       }
     } else {
       // input was not encoded in JSON, so we don't know how to read it...
@@ -201,7 +203,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   }
 
   public addOrg(org: Organization): void {
-    this.selected_orgs.push(org);
+    this.selected_orgs = addOrReplace(this.selected_orgs, org);
     this.deselected_orgs = removeMatchedIdFromArray(
       this.deselected_orgs,
       org.id
@@ -264,6 +266,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   }
 
   async createTask() {
+    this.task.created_via_ui = true;
     // create task
     await this.save(this.task, false);
 

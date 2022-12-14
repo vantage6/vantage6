@@ -185,11 +185,13 @@ export class SocketioMessageService {
       (await this.taskDataService.get(data.task_id))
         .pipe(take(1))
         .subscribe((task) => {
-          // only send message if task of currently logged-in user 1) has
-          // finished and is not a subtask or 2) has crashed
+          // only send message if task of currently logged-in user is created
+          // and they have not been doing so via the UI (otherwise they would
+          // already be on the relevant page)
           if (
             task.init_user_id === this.userPermission.user.id &&
-            !task.parent_id
+            !task.parent_id &&
+            !task.created_via_ui
           ) {
             this.snackbarService.openTaskMessageSnackBar(
               'View the task you just created here!',

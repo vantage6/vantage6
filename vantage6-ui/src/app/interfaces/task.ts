@@ -29,6 +29,7 @@ export interface Task {
   input?: TaskInput;
   organizations?: Organization[];
   status: string;
+  created_via_ui?: boolean;
 }
 
 export interface KeyValuePairs {

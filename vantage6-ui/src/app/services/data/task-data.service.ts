@@ -78,6 +78,16 @@ export class TaskDataService extends BaseDataService {
     if (task.init_org) task.init_org = undefined;
     if (task.init_user) task.init_user = undefined;
     if (task.collaboration) task.collaboration = undefined;
+
+    // check if task has been created via UI. Then keep storing that
+    if (task.id in this.resources_by_id) {
+      let current_val: Task = this.resources_by_id[task.id].value as Task;
+      if (current_val.created_via_ui) {
+        task.created_via_ui = current_val.created_via_ui;
+      }
+    }
+
+    // save the task
     super.save(task);
   }
 
