@@ -1,3 +1,5 @@
+.. _use-client:
+
 Client
 ------
 
