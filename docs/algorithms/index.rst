@@ -1,7 +1,7 @@
 .. _algorithm-docs:
 
-Algorithm Dev
-=============
+Algorithm Development
+=====================
 
 This section helps you to develop MPC and FL algorithms that are compatible
 with vantage6. You are **not** going to find a list of algorithms here or help
