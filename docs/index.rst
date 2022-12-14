@@ -110,7 +110,8 @@ Index
    :numbered: 3
    :maxdepth: 4
 
-   user-documentation/index
+   install/index
+   use/index
    algorithms/index
    devops/index
    glossary
