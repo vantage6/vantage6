@@ -37,8 +37,10 @@ export class ProfileComponent extends BaseViewComponent implements OnInit {
 
   async init(): Promise<void> {
     this.user = deepcopy(this.userPermission.user);
-    this.user.organization = await this.orgDataService.get(
-      this.user.organization_id
+    (await this.orgDataService.get(this.user.organization_id)).subscribe(
+      (org) => {
+        this.user.organization = org;
+      }
     );
     this.modalService.closeLoadingModal();
   }

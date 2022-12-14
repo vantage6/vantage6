@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import {
   Collaboration,
   getEmptyCollaboration,
@@ -72,30 +71,31 @@ export class CollaborationEditComponent
 
   async init(): Promise<void> {
     // first obtain organizations, which are required to get the collaboration
-    this.all_organizations = await this.orgDataService.list();
-    this.organizations_not_in_collab = deepcopy(this.all_organizations);
+    (await this.orgDataService.list()).subscribe((organizations) => {
+      this.all_organizations = organizations;
+      this.organizations_not_in_collab = deepcopy(organizations);
+    });
 
     this.readRoute();
   }
 
   async setupEdit(id: number) {
-    this.collaboration = await this.collabDataService.get(
-      id,
-      this.all_organizations
-    );
-    this.collaboration_orig_name = this.collaboration.name;
-    // remove organizations that are already in collaboration from the
-    // organizations that can be added to it
-    this.organizations_not_in_collab = removeMatchedIdsFromArray(
-      this.organizations_not_in_collab,
-      getIdsFromArray(this.collaboration.organizations)
-    );
-    // set which organizations were in the collaboration at the start of
-    // editing, which allows us to track for which organizations not to create
-    // nodes
-    this.collab_organizations_original = deepcopy(
-      this.collaboration.organizations
-    );
+    (await this.collabDataService.get(id)).subscribe((collab) => {
+      this.collaboration = collab;
+      this.collaboration_orig_name = this.collaboration.name;
+      // remove organizations that are already in collaboration from the
+      // organizations that can be added to it
+      this.organizations_not_in_collab = removeMatchedIdsFromArray(
+        this.organizations_not_in_collab,
+        getIdsFromArray(this.collaboration.organizations)
+      );
+      // set which organizations were in the collaboration at the start of
+      // editing, which allows us to track for which organizations not to create
+      // nodes
+      this.collab_organizations_original = deepcopy(
+        this.collaboration.organizations
+      );
+    });
   }
 
   setupCreate(): void {
@@ -118,10 +118,10 @@ export class CollaborationEditComponent
       new_collab_json,
       this.all_organizations
     );
-    this.collabDataService.save(this.collaboration);
     // create the nodes for the new collaboration, and add them to it
     let nodes = await this.createNodes(this.collaboration.organizations);
     this.collabDataService.addNodesToCollaboration(this.collaboration, nodes);
+    this.collabDataService.save(this.collaboration);
   }
 
   async addNewNodes(): Promise<void> {
@@ -136,6 +136,7 @@ export class CollaborationEditComponent
       this.collaboration,
       new_nodes
     );
+    this.collabDataService.save(this.collaboration);
   }
 
   async createNodes(orgs: OrganizationInCollaboration[]): Promise<Node[]> {

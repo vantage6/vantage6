@@ -8,7 +8,6 @@ import {
   OrgAccessGuard,
 } from 'src/app/auth/access-guard.guard';
 
-import { LoginComponent } from './components/login/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { UserEditComponent } from './components/edit/user-edit/user-edit.component';
@@ -28,6 +27,7 @@ import { UserViewSingleComponent } from './components/view-single/user-view-sing
 import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
 import { TaskCreateComponent } from './components/edit/task-create/task-create.component';
+import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
 
 const routes: Routes = [
   {
@@ -375,6 +375,15 @@ const routes: Routes = [
       permissionResource: ResType.USER,
     },
     canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'status-messages',
+    component: SocketMessagesComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.EVENT,
+    },
   },
 ];
 //TODO add * path with 404 not found page

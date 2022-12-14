@@ -19,7 +19,6 @@ export abstract class BaseEditComponent implements OnInit {
   mode = OpsType.EDIT;
 
   organization_id: number | null = null;
-  organizations: Organization[] = [];
   selected_org: Organization | null = null;
   route_id: number | null = null;
 

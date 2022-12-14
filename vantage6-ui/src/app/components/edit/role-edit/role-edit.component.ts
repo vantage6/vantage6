@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { getEmptyRole, Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { OpsType, ResType } from 'src/app/shared/enum';
+import { OpsType } from 'src/app/shared/enum';
 
 import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
@@ -13,6 +13,7 @@ import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { Organization } from 'src/app/interfaces/organization';
 
 @Component({
   selector: 'app-role-edit',
@@ -27,6 +28,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
   mode: OpsType = OpsType.EDIT;
   role: Role = getEmptyRole();
   role_orig_name: string = '';
+  organizations: Organization[] = [];
 
   constructor(
     protected router: Router,
@@ -60,20 +62,25 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
 
   async setupCreate() {
     if (!this.organization_id) {
-      this.organizations = await this.orgDataService.list();
+      (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
+        this.organizations = orgs;
+      });
     }
   }
 
   async setupEdit(id: number): Promise<void> {
-    let role = await this.roleDataService.get(id, this.rules);
-    if (role) {
-      this.role = role;
-      this.role_orig_name = this.role.name;
-    }
+    (await this.roleDataService.get(id)).subscribe((role) => {
+      if (role) {
+        this.role = role;
+        this.role_orig_name = this.role.name;
+      }
+    });
   }
 
   async setRules(): Promise<void> {
-    this.rules = await this.ruleDataService.list();
+    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
+      this.rules = rules;
+    });
   }
 
   async save(): Promise<void> {

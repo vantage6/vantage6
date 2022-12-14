@@ -104,7 +104,8 @@ export class ConvertJsonService {
   // we don't now how many organizations there may be (could be hundreds)
   getCollaboration(
     coll_json: any,
-    organizations: Organization[]
+    organizations: Organization[],
+    nodes: Node[] = []
   ): Collaboration {
     let orgs: Organization[] = [];
     let org_ids: number[] = [];
@@ -112,7 +113,17 @@ export class ConvertJsonService {
       coll_json.organizations.forEach((org_json: any) => {
         let org = getById(organizations, org_json.id);
         if (org) {
-          orgs.push(deepcopy(org));
+          org = deepcopy(org);
+          for (let node of nodes) {
+            if (
+              node.organization_id === org.id &&
+              node.collaboration_id === coll_json.id
+            ) {
+              org.node = node;
+              break;
+            }
+          }
+          orgs.push(org);
         }
         org_ids.push(org_json.id);
       });
@@ -161,6 +172,7 @@ export class ConvertJsonService {
       database: json.database,
       complete: json.complete,
       children_ids: child_ids,
+      status: json.status,
     };
   }
 
@@ -171,19 +183,33 @@ export class ConvertJsonService {
         port_ids.push(port.id);
       }
     }
+    // task id can be in different places depending on which result endpoint
+    // is called in which manner
+    let task_id: number;
+    if (json.task_id) {
+      task_id = json.task_id;
+    } else if (json.task.id) {
+      task_id = json.task.id;
+    } else {
+      task_id = json.task;
+    }
+    let organization_id: number = json.organization.id
+      ? json.organization.id
+      : json.organization;
+
     return {
       id: json.id,
       type: ResType.RESULT,
-      name: json.name,
       input: json.input,
       result: json.result,
       log: json.log,
-      task_id: json.task_id,
-      organization_id: json.organization,
+      task_id: task_id,
+      organization_id: organization_id,
       port_ids: port_ids,
       started_at: json.started_at,
       assigned_at: json.assigned_at,
       finished_at: json.finished_at,
+      status: json.status,
     };
   }
 }

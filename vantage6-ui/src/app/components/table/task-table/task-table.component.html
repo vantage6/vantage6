@@ -52,14 +52,25 @@
     <mat-label>Filter columns</mat-label>
     <input matInput (keyup)="applyFilter($event)" placeholder="Search columns" #input/>
   </mat-form-field>
-  <label id="rg-task-completed-label" style="margin-right: 12px;">Task status:</label>
-  <mat-radio-group aria-labelledby="rg-task-completed-label">
-    <mat-radio-button *ngFor="let status of task_statuses | keyvalue"
-        (click)="filterTaskStatus(status.value)" [value]="status.value"
-        [checked]="status.value === task_status_selected">
-      {{status.value}}
-    </mat-radio-button>
-  </mat-radio-group>
+
+  <div class="inline">
+    Task status:
+    <div ngbDropdown class="d-inline-block">
+      <button class="btn btn-dropdown" id="dropdownStatus" ngbDropdownToggle>
+        {{getSelectedTaskStatus() | titlecase}}
+      </button>
+      <div ngbDropdownMenu aria-labelledby="dropdownStatus">
+        <button ngbDropdownItem (click)="filterTaskStatus()">
+            {{TASK_STATUS_ALL}}
+        </button>
+        <div *ngFor="let status of available_task_statues">
+          <button ngbDropdownItem (click)="filterTaskStatus(status)">
+            {{status | titlecase}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <br/>
   <div class="inline">
@@ -77,7 +88,7 @@
   </div>
 
   <div class="mat-elevation-z8">
-    <mat-table #table [dataSource]="dataSource" matSort>
+    <mat-table #table [dataSource]="dataSource" matSort matSortActive="id" matSortDirection="desc" >
       <!-- Checkbox Column -->
       <ng-container matColumnDef="select">
         <mat-header-cell *matHeaderCellDef>
@@ -129,9 +140,9 @@
         <mat-cell *matCellDef="let elem">{{getInitiatingUser(elem)}}</mat-cell>
       </ng-container>
 
-      <ng-container matColumnDef="complete">
-        <mat-header-cell *matHeaderCellDef mat-sort-header>Completed?</mat-header-cell>
-        <mat-cell *matCellDef="let elem">{{getCompletedText(elem)}}</mat-cell>
+      <ng-container matColumnDef="status">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Status</mat-header-cell>
+        <mat-cell *matCellDef="let elem">{{getStatus(elem) | titlecase }}</mat-cell>
       </ng-container>
 
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>

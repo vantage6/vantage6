@@ -9,6 +9,7 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
+import { SocketioConnectService } from './socketio-connect.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +24,7 @@ export class SignOutService {
     private roleDataService: RoleDataService,
     private userDataService: UserDataService,
     private ruleDataService: RuleDataService,
+    private socketService: SocketioConnectService,
     private router: Router
   ) {}
 
@@ -31,6 +33,7 @@ export class SignOutService {
     this.userPermission.clear();
     this.clearDataServices();
     this.router.navigateByUrl('/login');
+    this.socketService.disconnect();
   }
 
   clearDataServices(): void {

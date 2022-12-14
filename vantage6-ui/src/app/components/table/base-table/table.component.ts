@@ -87,6 +87,11 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   async setup(force_refresh: boolean = false) {
     await this.setResources(force_refresh);
 
+    // TODO remove call when all setResources() subfunctions call this
+    this.renewTable();
+  }
+
+  async renewTable(): Promise<void> {
     await this.addOrganizationsToResources();
 
     this.dataSource.data = this.resources;
@@ -140,7 +145,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
     return this.route_org_id !== null;
   }
 
-  deleteResource(resource: ResourceWithOrg) {
+  deleteResource(resource: Resource) {
     this.resources = removeMatchedIdFromArray(this.resources, resource.id);
     this.dataSource.data = this.resources;
   }

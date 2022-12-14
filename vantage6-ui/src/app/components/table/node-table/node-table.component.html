@@ -82,7 +82,7 @@
 <ng-template #tpl let-element>
 	<div class="mat-row detail-row" [@detailExpand] style="overflow: hidden; margin: 15px;">
     <app-node-view
-      [node]="element"
+      [node]="getMatchingNode(element)"
       (deletingResource)="deleteResource(element)"
     ></app-node-view>
 	</div>

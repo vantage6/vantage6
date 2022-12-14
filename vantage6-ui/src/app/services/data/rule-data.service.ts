@@ -20,12 +20,11 @@ export class RuleDataService extends BaseDataService {
     super(apiService, convertJsonService);
   }
 
-  async list(force_refresh: boolean = false): Promise<Rule[]> {
+  async list(force_refresh: boolean = false): Promise<Observable<Rule[]>> {
     return (await super.list_base(
       this.convertJsonService.getRule,
-      [],
       force_refresh
-    )) as Rule[];
+    )) as Observable<Rule[]>;
   }
 
   async ruleGroups(): Promise<Observable<RuleGroup[]>> {
@@ -43,9 +42,9 @@ export class RuleDataService extends BaseDataService {
 
   _setRuleGroups(): void {
     // sort rules by resource, then scope, then operation
-    this.resource_list = this._sortRules(
-      this.resource_list as Rule[]
-    ) as Rule[];
+    this.resource_list.next(
+      this._sortRules(this.resource_list.value as Rule[]) as Rule[]
+    );
 
     // divide sorted rules in groups
     let rule_groups = this._makeRuleGroups();
@@ -76,7 +75,7 @@ export class RuleDataService extends BaseDataService {
   _makeRuleGroups(): RuleGroup[] {
     let rule_groups: RuleGroup[] = [];
     let current_rule_group: RuleGroup | undefined = undefined;
-    for (let rule of this.resource_list as Rule[]) {
+    for (let rule of this.resource_list.value as Rule[]) {
       if (current_rule_group === undefined) {
         // first rule: make new rule group
         current_rule_group = this._newRuleGroup(rule);

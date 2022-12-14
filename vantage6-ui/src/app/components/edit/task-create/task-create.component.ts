@@ -28,6 +28,7 @@ import {
 import { BaseEditComponent } from '../base-edit/base-edit.component';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { ExitMode } from 'src/app/shared/enum';
+import { Result } from 'src/app/interfaces/result';
 
 @Component({
   selector: 'app-task-create',
@@ -84,12 +85,13 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    this.nodes = await this.nodeDataService.list();
-    this.organizations = await this.orgDataService.list();
-    this.collaborations = await this.collabDataService.org_list(
-      this.logged_in_org_id,
-      this.organizations,
-      this.nodes
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+    });
+    (await this.collabDataService.org_list(this.logged_in_org_id)).subscribe(
+      (collabs) => {
+        this.collaborations = collabs;
+      }
     );
 
     // subscribe to id parameter in route to change edited role if required
@@ -97,18 +99,15 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
 
     // set previous tasks, so user can create tasks they have done before.
     // Only include task for the logged-in user, and no subtasks
-    let repeatable_tasks = await this.taskDataService.list();
-    repeatable_tasks = filterArrayByProperty(
-      repeatable_tasks,
-      'init_user_id',
-      this.userPermission.user.id
-    );
-    repeatable_tasks = filterArrayByProperty(
-      repeatable_tasks,
-      'parent_id',
-      null
-    );
-    this.repeatable_tasks = repeatable_tasks;
+    (await this.taskDataService.list()).subscribe((tasks) => {
+      tasks = filterArrayByProperty(
+        tasks,
+        'init_user_id',
+        this.userPermission.user.id
+      );
+      tasks = filterArrayByProperty(tasks, 'parent_id', null);
+      this.repeatable_tasks = tasks;
+    });
 
     // set defaults
     // this.task.data_format = 'legacy';
@@ -119,8 +118,9 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   async setup(params: ParamMap) {
     if (this.router.url.includes('repeat')) {
       let id = Number(params.get('id'));
-      let task = await this.taskDataService.get(id);
-      this.selectPreviousTask(task);
+      (await this.taskDataService.get(id)).subscribe((task) => {
+        this.selectPreviousTask(task);
+      });
     }
     super.setup(params);
   }
@@ -165,7 +165,14 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.selectCollab(getById(this.collaborations, task.collaboration_id));
 
     // Get also the task results as this includes the input and the organization
-    let results = await this.resultDataService.get_by_task_id(this.task.id);
+    (await this.resultDataService.get_by_task_id(this.task.id)).subscribe(
+      (results) => {
+        this.addPreviousTaskFields(results);
+      }
+    );
+  }
+
+  addPreviousTaskFields(results: Result[]) {
     // set organizations
     for (let r of results) {
       this.addOrg(getById(this.organizations, r.organization_id));

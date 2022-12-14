@@ -6,6 +6,7 @@ import { delay } from 'rxjs/operators';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { getEmptyUser, User } from 'src/app/interfaces/user';
 import { SignOutService } from 'src/app/services/common/sign-out.service';
+import { SocketioMessageService } from 'src/app/services/common/socketio-message.service';
 
 @Component({
   selector: 'app-navbar',
@@ -21,7 +22,10 @@ export class NavbarComponent implements OnInit {
   constructor(
     private observer: BreakpointObserver,
     public userPermission: UserPermissionService,
-    private signOutService: SignOutService
+    private signOutService: SignOutService,
+    // NB: we register socket messages here so that they are shown in the
+    // component, so KEEP IT (even though not doing anything else with it here)
+    private socketioMessageService: SocketioMessageService
   ) {
     this.userPermission.isInitialized().subscribe((ready) => {
       if (ready) {

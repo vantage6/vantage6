@@ -28,6 +28,7 @@ export interface Task {
   // data_format?: string;
   input?: TaskInput;
   organizations?: Organization[];
+  status: string;
 }
 
 export interface KeyValuePairs {
@@ -57,6 +58,7 @@ export const EMPTY_TASK: Task = {
   parent_id: -1,
   children_ids: [],
   complete: false,
+  status: '',
 };
 
 export function getEmptyTask(): Task {

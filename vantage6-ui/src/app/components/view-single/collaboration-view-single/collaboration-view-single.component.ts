@@ -5,7 +5,7 @@ import {
   Collaboration,
   EMPTY_COLLABORATION,
 } from 'src/app/interfaces/collaboration';
-import { EMPTY_NODE, Node } from 'src/app/interfaces/node';
+import { Node } from 'src/app/interfaces/node';
 import {
   Organization,
   OrganizationInCollaboration,
@@ -50,31 +50,33 @@ export class CollaborationViewSingleComponent
   }
 
   async setResources() {
-    // TODO organize this in a different way: first get the collaboration, then
-    // get ONLY the organizations and nodes relevant for that collab, instead
-    // of all of them first and then getting single collaboration
-    await this.setNodes(false);
+    this.setNodes();
 
-    await this.setOrganizations(false);
+    this.setOrganizations();
 
-    await this.setCollaboration();
+    this.setCollaboration();
   }
 
   async setCollaboration(): Promise<void> {
-    this.collaboration = await this.collabDataService.get(
-      this.route_id as number,
-      this.organizations,
-      this.nodes
+    (await this.collabDataService.get(this.route_id as number)).subscribe(
+      (collab) => {
+        this.collaboration = collab;
+      }
     );
   }
 
-  async setOrganizations(update_collabs: boolean = true): Promise<void> {
-    this.organizations = await this.orgDataService.list();
-    if (update_collabs) this.setCollaboration();
+  async setOrganizations(): Promise<void> {
+    // TODO use a - to-be-implemented - collab_list() function here
+    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
+      this.organizations = orgs;
+    });
   }
 
-  async setNodes(update_collabs: boolean = true): Promise<void> {
-    this.nodes = await this.nodeDataService.list();
-    if (update_collabs) this.setCollaboration();
+  async setNodes(): Promise<void> {
+    (await this.nodeDataService.collab_list(this.route_id as number)).subscribe(
+      (nodes: Node[]) => {
+        this.nodes = nodes;
+      }
+    );
   }
 }

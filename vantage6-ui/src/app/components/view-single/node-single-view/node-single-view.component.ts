@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_NODE, NodeWithOrg } from 'src/app/interfaces/node';
-import { Organization } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
@@ -43,25 +42,30 @@ export class NodeSingleViewComponent
 
   async setResources(): Promise<void> {
     await this.setNode();
-    await this.setOrganization();
-    await this.setCollaboration();
   }
 
   async setNode(): Promise<void> {
-    this.node = deepcopy(
-      await this.nodeDataService.get(this.route_id as number)
+    (await this.nodeDataService.get(this.route_id as number)).subscribe(
+      (node) => {
+        this.node = deepcopy(node);
+        this.setOrganization();
+        this.setCollaboration();
+      }
     );
   }
 
   async setOrganization(): Promise<void> {
-    this.node.organization = await this.orgDataService.get(
-      this.node.organization_id
+    (await this.orgDataService.get(this.node.organization_id)).subscribe(
+      (org) => {
+        this.node.organization = org;
+      }
     );
   }
   async setCollaboration(): Promise<void> {
-    this.node.collaboration = await this.collabDataService.get(
-      this.node.collaboration_id,
-      [this.node.organization as Organization]
+    (await this.collabDataService.get(this.node.collaboration_id)).subscribe(
+      (collab) => {
+        this.node.collaboration = collab;
+      }
     );
   }
 }
