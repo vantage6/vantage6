@@ -75,6 +75,7 @@ html_theme_options = {
     # 'fixed_sidebar': True,
 }
 
+html_favicon = '_static/logo.png'
 
 # The master toctree document.
 master_doc = 'index'

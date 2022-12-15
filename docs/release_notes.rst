@@ -6,14 +6,14 @@ Release notes
 
 *30 november 2022*
 
-**Bugfix**
+-  **Bugfix**
 
--  Fix for automatic addition of column. This failed in some SQL
-   dialects because reserved keywords (i.e. 'user' for PostgresQL) were
-   not escaped
-   (`PR#415 <https://github.com/vantage6/vantage6/pull/415>`__)
--  Correct installation order for uWSGI in node and server docker file
-   (`PR#414 <https://github.com/vantage6/vantage6/pull/414>`__)
+  -  Fix for automatic addition of column. This failed in some SQL
+     dialects because reserved keywords (i.e. 'user' for PostgresQL) were
+     not escaped
+     (`PR#415 <https://github.com/vantage6/vantage6/pull/415>`__)
+  -  Correct installation order for uWSGI in node and server docker file
+     (`PR#414 <https://github.com/vantage6/vantage6/pull/414>`__)
 
 .. _section-1:
 
@@ -22,14 +22,14 @@ Release notes
 
 *30 november 2022*
 
-**Bugfix**
+-  **Bugfix**
 
--  Backwards compatibility for which organization initiated a task
-   between v3.0-3.4 and v3.5
-   (`PR#412 <https://github.com/vantage6/vantage6/pull/413>`__)
--  Fixed VPN client container. Entry script was not executable in Github
-   pipelines
-   (`PR#413 <https://github.com/vantage6/vantage6/pull/413>`__)
+ -  Backwards compatibility for which organization initiated a task
+    between v3.0-3.4 and v3.5
+    (`PR#412 <https://github.com/vantage6/vantage6/pull/413>`__)
+ -  Fixed VPN client container. Entry script was not executable in Github
+    pipelines
+    (`PR#413 <https://github.com/vantage6/vantage6/pull/413>`__)
 
 3.5.0
 -----
@@ -43,30 +43,30 @@ Release notes
 
 -  **Feature**
 
-   -  Multi-factor authentication via TOTP has been added. Admins can enforce
-      that all users enable MFA
-      (`PR#376 <https://github.com/vantage6/vantage6/pull/376>`__,
-      `Issue#355 <https://github.com/vantage6/vantage6/issues/355>`__).
-   -  You can now request all tasks assigned by a given user
-      (`PR#326 <https://github.com/vantage6/vantage6/pull/326>`__,
-      `Issue#43 <https://github.com/vantage6/vantage6/issues/43>`__).
-   -  The server support email is now settable in the configuration
-      file, used to be fixed at ``support@vantage6.ai``
-      (`PR#330 <https://github.com/vantage6/vantage6/pull/330>`__,
-      `Issue#319 <https://github.com/vantage6/vantage6/issues/319>`__).
-   -  When pickles are used, more task info is shown in the node logs
-      (`PR#366 <https://github.com/vantage6/vantage6/pull/366>`__,
-      `Issue#171 <https://github.com/vantage6/vantage6/issues/171>`__).
+  -  Multi-factor authentication via TOTP has been added. Admins can enforce
+     that all users enable MFA
+     (`PR#376 <https://github.com/vantage6/vantage6/pull/376>`__,
+     `Issue#355 <https://github.com/vantage6/vantage6/issues/355>`__).
+  -  You can now request all tasks assigned by a given user
+     (`PR#326 <https://github.com/vantage6/vantage6/pull/326>`__,
+     `Issue#43 <https://github.com/vantage6/vantage6/issues/43>`__).
+  -  The server support email is now settable in the configuration
+     file, used to be fixed at ``support@vantage6.ai``
+     (`PR#330 <https://github.com/vantage6/vantage6/pull/330>`__,
+     `Issue#319 <https://github.com/vantage6/vantage6/issues/319>`__).
+  -  When pickles are used, more task info is shown in the node logs
+     (`PR#366 <https://github.com/vantage6/vantage6/pull/366>`__,
+     `Issue#171 <https://github.com/vantage6/vantage6/issues/171>`__).
 
 -  **Change**
 
-   -  The ``harbor2.vantag6.ai/infrastructure/algorithm-base:[TAG]`` is
-      tagged with the vantage6-client version that is already in the
-      image (`PR#389 <https://github.com/vantage6/vantage6/pull/389>`__,
-      `Issue#233 <https://github.com/vantage6/vantage6/issues/233>`__).
-   -  The infrastructure base image has been updated to improve build
-      time (`PR#406 <https://github.com/vantage6/vantage6/pull/406>`__,
-      `Issue#250 <https://github.com/vantage6/vantage6/issues/250>`__).
+  -  The ``harbor2.vantag6.ai/infrastructure/algorithm-base:[TAG]`` is
+     tagged with the vantage6-client version that is already in the
+     image (`PR#389 <https://github.com/vantage6/vantage6/pull/389>`__,
+     `Issue#233 <https://github.com/vantage6/vantage6/issues/233>`__).
+  -  The infrastructure base image has been updated to improve build
+     time (`PR#406 <https://github.com/vantage6/vantage6/pull/406>`__,
+     `Issue#250 <https://github.com/vantage6/vantage6/issues/250>`__).
 
 
 3.4.2
@@ -117,7 +117,7 @@ Release notes
   -  Added option to filter GET ``/role`` by user id in the Python client
      (`PR#328 <https://github.com/vantage6/vantage6/pull/328>`__,
      `ISSUE#213 <https://github.com/vantage6/vantage6/issues/213>`__).
-       E.g.: ``client.role.list(user=...).``
+     E.g.: ``client.role.list(user=...).``
   - In release process, build and release images for both ARM and x86
     architecture.
 
@@ -522,6 +522,7 @@ Release notes
 -  **Feature**
 
   -  Role/rule based access control
+
      -  Roles consist of a bundle of rules. Rules profided access to
         certain API endpoints at the server.
      -  By default 3 roles are created: 1) Container, 2) Node, 3) Root.
@@ -662,8 +663,8 @@ Release notes
 
 -  **New database model**
 
-  -  Improved relations between models. Thereby updating the Python
-     API, see `here <../usage/running-the-server/shell.md>`__.
+  -  Improved relations between models, and with that, an update of the Python
+     API.
   -  Input for the tasks is now stored in the result table. This was
      required as the input is encrypted individually for each
      organization (end-to-end encryption (E2EE) between organizations).
@@ -736,10 +737,11 @@ Release notes
   -  Algorithm containers no longer receive an internet connection.
      They can only communicate with the central server through a local
      proxy service.
-  -  It handles encryption for certain endpoints (i.e. ``/task``, the
+  -  It handles encryption for certain endpoints (i.e. ``/task``, the
      input or ``/result`` the results)
 
 -  **Dockerized the Node**
+
   -  All node code is run from a Docker container. Build versions can
      be found at our Docker repository:
      ``harbor.distributedlearning.ai/infrastructure/node`` . Specific
