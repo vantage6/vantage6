@@ -5,6 +5,7 @@ import json
 import base64
 import hashlib
 import re
+from typing import Dict, Tuple
 import urllib.parse as urlparse
 
 from http import HTTPStatus
@@ -166,7 +167,7 @@ class VPNConfig(ServicesResources):
 
 class EduVPNConnector:
 
-    def __init__(self, vpn_config):
+    def __init__(self, vpn_config) -> None:
         """
         Provides API access to the VPN server
 
@@ -215,6 +216,12 @@ class EduVPNConnector:
         that the configuration file can be used to connect the VPN server
         again.
 
+        Parameters
+        ----------
+        ovpn_config: str
+            Current OpenVPN configuration from which the keypair will be
+            refreshed
+
         Returns
         -------
         str (ovpn format)
@@ -233,10 +240,15 @@ class EduVPNConnector:
         """
         Obtain a keypair from the VPN server and add it to the configuration
 
+        Parameters
+        ----------
+        ovpn_config: str
+            OpenVPN configuration without a keypair
+
         Returns
         -------
         str (ovpn format)
-            Open-vpn configuration file
+            Open-vpn configuration file content
         """
         # get a key and certificate for the client
         log.debug("Obtaining OpenVPN key-pair")
@@ -247,7 +259,7 @@ class EduVPNConnector:
         ovpn_config = self._insert_keypair_into_config(ovpn_config, cert, key)
         return ovpn_config
 
-    def set_access_token(self):
+    def set_access_token(self) -> None:
         """ Obtain an access token to enable access to EduVPN API """
         if self.session.token:
             log.debug("Acquiring EduVPN access token")
@@ -265,7 +277,7 @@ class EduVPNConnector:
         log.debug("Obtaining token from EduVPN portal")
         self.session.token = self._get_token()
 
-    def _set_pkce(self):
+    def _set_pkce(self) -> None:
         """ Generate PKCE code verifier and challenge """
         # set PKCE verifier
         self.code_verifier = \
@@ -279,7 +291,7 @@ class EduVPNConnector:
             base64.urlsafe_b64encode(self.code_challenge).decode('utf-8')
         self.code_challenge = self.code_challenge.replace('=', '')
 
-    def _login(self):
+    def _login(self) -> None:
         """ Login to the EduVPN user portal in the requests session """
         post_data = {
             'userName': self.config['portal_username'],
@@ -290,7 +302,7 @@ class EduVPNConnector:
             f'{self.PORTAL_URL}/_form/auth/verify', data=post_data
         )
 
-    def _authorize(self):
+    def _authorize(self) -> None:
         """ Call authorization route of EduVPN to get authorization code """
         params = {
             'client_id': self.config['client_id'],
@@ -317,8 +329,15 @@ class EduVPNConnector:
         parsed_url = urlparse.urlparse(redirected_uri)
         self.code = urlparse.parse_qs(parsed_url.query)['code']
 
-    def _get_token(self):
-        """ Use authorization code to obtain a token from the EduVPN portal """
+    def _get_token(self) -> Dict:
+        """
+        Use authorization code to obtain a token from the EduVPN portal
+
+        Returns
+        -------
+        Dict:
+            EduVPN portal token
+        """
         data = {
             'code': self.code,
             'grant_type': 'authorization_code',
@@ -336,14 +355,14 @@ class EduVPNConnector:
         return json.loads(r.content.decode('utf-8'))
 
     def _insert_keypair_into_config(self, ovpn_config: str, cert: str,
-                                    key: str):
+                                    key: str) -> str:
         """
         Insert the client's key pair into the correct place into the OVPN file
         (i.e. before the <tls-crypt> field)
 
         Parameters
         ----------
-        config : str
+        ovpn_config : str
             The OVPN configuration information without client keys
         cert : str
             The client's certificate
@@ -367,6 +386,11 @@ class EduVPNConnector:
         """
         Remove the keypair from the configuration
 
+        Parameters
+        ----------
+        ovpn_config : str
+            The OVPN configuration information with the key pair
+
         Returns
         -------
         str (ovpn format)
@@ -381,18 +405,30 @@ class EduVPNConnector:
             ovpn_config[end_remove_pos+len(end_key):]
         )
 
-    def get_profile(self):
-        """ Call the profile_list route of EduVPN API """
+    def get_profile(self) -> Dict:
+        """
+        Call the profile_list route of EduVPN API
+
+        Returns
+        -------
+        Dict
+            Response content of the EduVPN /profile_list route
+        """
         response = self.session.get(f'{self.API_URL}/profile_list')
         return json.loads(response.content.decode('utf-8'))
 
-    def get_config(self, profile_id):
+    def get_config(self, profile_id) -> str:
         """ Call the profile_config route of EduVPN API
 
         Parameters
         ----------
         profile_id: str
             An EduVPN user's profile_id obtained from the /profile_list route
+
+        Returns
+        -------
+        str
+            OpenVPN configuration file content (without key pair)
         """
         params = {
             'profile_id': profile_id
@@ -402,8 +438,15 @@ class EduVPNConnector:
         )
         return response_config.content.decode('utf-8')
 
-    def get_key_pair(self):
-        """ Call the create_keypair route of EduVPN API """
+    def get_key_pair(self) -> Tuple(str, str):
+        """
+        Call the create_keypair route of EduVPN API
+
+        Returns
+        -------
+        Tuple(str, str):
+            The certificate and the private key that together form the key pair
+        """
         response_keypair = self.session.post(f'{self.API_URL}/create_keypair')
         ovpn_keypair = json.loads(response_keypair.content.decode('utf-8'))
         cert = ovpn_keypair['create_keypair']['data']['certificate']
