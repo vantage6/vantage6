@@ -16,6 +16,9 @@ from requests_oauthlib import OAuth2Session
 
 from vantage6.common import logger_name
 from vantage6.server.resource import with_node, ServicesResources
+from vantage6.server.exceptions import (
+    VPNConfigException, VPNPortalAuthException
+)
 
 
 module_name = logger_name(__name__)
@@ -62,6 +65,9 @@ class VPNConfig(ServicesResources):
         responses:
           200:
             description: Ok
+          500:
+            description: Error in server VPN configuration, or in authorizing
+              to VPN portal to obtain VPN configuration file
           501:
             description: This server has no VPN service
           503:
@@ -79,10 +85,24 @@ class VPNConfig(ServicesResources):
                 HTTPStatus.NOT_IMPLEMENTED
 
         # obtain VPN config by calling EduVPN API
-        vpn_connector = EduVPNConnector(self.config['vpn_server'])
-
         try:
+            vpn_connector = EduVPNConnector(self.config['vpn_server'])
             ovpn_config = vpn_connector.get_ovpn_config()
+        except VPNPortalAuthException as e:
+            log.error("Could not obtain VPN configuration file")
+            log.error(e)
+            return {
+                'msg': 'Could not obtain VPN configuration because the ' +
+                       'vantage6 server could not authorize to the VPN portal.'
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
+        except VPNConfigException as e:
+            log.error("Could not obtain VPN configuration file")
+            log.error(e)
+            return {
+                'msg': ('Could not obtain VPN configuration because the '
+                        'vantage6 server is not properly configured for VPN. '
+                        'Please contact your server administrator.')
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
         except requests.ConnectionError as e:
             log.critical(f'Node <{g.node.id}> tries to obtain a vpn config. '
                          'However the VPN server is unreachable!')
@@ -119,6 +139,9 @@ class VPNConfig(ServicesResources):
             description: Ok
           400:
             description: No VPN configuration found in request body
+          500:
+            description: Error in server VPN configuration, or in authorizing
+              to VPN portal to obtain VPN configuration file
           501:
             description: This server has no VPN service
           503:
@@ -142,13 +165,27 @@ class VPNConfig(ServicesResources):
             return {"msg": "vpn_config is missing!"}, \
                 HTTPStatus.BAD_REQUEST
 
-        # obtain VPN config by calling EduVPN API
-        vpn_connector = EduVPNConnector(self.config['vpn_server'])
-
+        # refresh keypair by calling EduVPN API
         try:
+            vpn_connector = EduVPNConnector(self.config['vpn_server'])
             ovpn_config = vpn_connector.refresh_keypair(vpn_config)
+        except VPNPortalAuthException as e:
+            log.error("Could not obtain VPN configuration file")
+            log.error(e)
+            return {
+                'msg': 'Could not obtain VPN configuration because the ' +
+                       'vantage6 server could not authorize to the VPN portal.'
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
+        except VPNConfigException as e:
+            log.error("Could not obtain VPN configuration file")
+            log.error(e)
+            return {
+                'msg': ('Could not obtain VPN configuration because the '
+                        'vantage6 server is not properly configured for VPN. '
+                        'Please contact your server administrator.')
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
         except requests.ConnectionError as e:
-            log.critical(f'Node <{g.node.id}> tries to obtain a vpn config. '
+            log.critical(f'Node <{g.node.id}> tries to obtain a VPN config. '
                          'However the VPN server is unreachable!')
             log.debug(e)
             return {'msg': 'VPN server unreachable'}, \
@@ -179,10 +216,28 @@ class EduVPNConnector:
         self.config = vpn_config
         self.session = OAuth2Session(vpn_config['client_id'])
 
+        self.check_config()
+
         self.PORTAL_URL = self.config['url'][:-1] \
             if self.config['url'].endswith('/') \
             else self.config['url']
         self.API_URL = f'{self.PORTAL_URL}/api.php'
+
+    def check_config(self) -> None:
+        """
+        Check if any keys that have to be present in the VPN configuration
+        are missing. Raises an error if keys are missing.
+        """
+        for key in [
+            'url', 'portal_username', 'portal_userpass', 'client_id',
+            'client_secret', 'redirect_url'
+        ]:
+            if not self.config.get(key):
+                raise VPNConfigException(
+                    f"The '{key}' parameter has not been defined in your "
+                    "vpn_server settings. Please adjust your configuration "
+                    "file."
+                )
 
     def get_ovpn_config(self) -> str:
         """
@@ -262,7 +317,7 @@ class EduVPNConnector:
     def set_access_token(self) -> None:
         """ Obtain an access token to enable access to EduVPN API """
         if self.session.token:
-            log.debug("Acquiring EduVPN access token")
+            log.debug("EduVPN access token already acquired")
             return
         # set PKCE data (code challenge and code verifier)
         log.debug("Setting PKCE challenge")
@@ -298,9 +353,17 @@ class EduVPNConnector:
             'userPass': self.config['portal_userpass'],
             '_form_auth_redirect_to': self.config['url']
         }
-        self.session.post(
+        response = self.session.post(
             f'{self.PORTAL_URL}/_form/auth/verify', data=post_data
         )
+        # Note: if we give the wrong vpn portal password/username, this request
+        # succeeds but authorization fails at next step. Only passing the wrong
+        # portal url leads to an erroneous status immediately
+        if not (200 <= response.status_code < 300):
+            raise VPNPortalAuthException(
+                "Authenticating to EduVPN failed. Please check the 'url' of "
+                "your VPN server in the server your configuration file."
+            )
 
     def _authorize(self) -> None:
         """ Call authorization route of EduVPN to get authorization code """
@@ -323,6 +386,18 @@ class EduVPNConnector:
             params=params,
             allow_redirects=False
         )
+        if not (200 <= response.status_code < 400):
+            raise VPNPortalAuthException(
+                "Authenticating to EduVPN failed. Please check the "
+                "'client_id' and 'redirect_url' settings in your server "
+                "configuration file."
+            )
+        elif not response.headers.get('Location'):
+            raise VPNPortalAuthException(
+                "Authenticating to EduVPN failed. Please check the following "
+                "settings of your configuration file: portal_username and "
+                "portal_userpass."
+            )
 
         # get the authorization token from the request headers
         redirected_uri = response.headers['Location']
@@ -352,6 +427,11 @@ class EduVPNConnector:
             data=data,
             auth=(self.config['client_id'], self.config['client_secret'])
         )
+        if not (200 <= r.status_code < 400):
+            raise VPNPortalAuthException(
+                "Authenticating to EduVPN failed. Please check the "
+                "'client_secret' setting in your server configuration file."
+            )
         return json.loads(r.content.decode('utf-8'))
 
     def _insert_keypair_into_config(self, ovpn_config: str, cert: str,
@@ -438,7 +518,7 @@ class EduVPNConnector:
         )
         return response_config.content.decode('utf-8')
 
-    def get_key_pair(self) -> Tuple(str, str):
+    def get_key_pair(self) -> Tuple[str, str]:
         """
         Call the create_keypair route of EduVPN API
 
