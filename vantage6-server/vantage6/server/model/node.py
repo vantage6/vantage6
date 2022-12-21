@@ -55,6 +55,20 @@ class Node(Authenticatable):
         return None
 
     @classmethod
+    def get_online_nodes(cls):
+        """
+        Return nodes that currently have status 'online'
+
+        Returns
+        -------
+        List[Node]
+            List of node models that are currently online
+        """
+        session = DatabaseSessionManager.get_session()
+
+        return session.query(cls).filter_by(status='online').all()
+
+    @classmethod
     def exists(cls, organization_id, collaboration_id):
         session = DatabaseSessionManager.get_session()
         return session.query(cls).filter_by(

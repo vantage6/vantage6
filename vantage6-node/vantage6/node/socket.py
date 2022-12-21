@@ -41,6 +41,17 @@ class NodeTaskNamespace(ClientNamespace):
         # self.node_worker_ref.socketIO.disconnect()
         self.log.info('Disconnected from the server')
 
+    def on_ping(self) -> int:
+        """
+        Actions to be taken when server pings the nodes
+
+        Returns
+        -------
+        int
+            The id of this node so that server knows it is online
+        """
+        return self.node_worker_ref.server_io.whoami.id_
+
     def on_new_task(self, task_id: int):
         """
         Actions to be taken when node is notified of new task by server

@@ -9,6 +9,8 @@ import logging
 import os
 import uuid
 import json
+import time
+import datetime as dt
 import traceback
 
 from http import HTTPStatus
@@ -24,6 +26,7 @@ from flask_restful import Api
 from flask_mail import Mail
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
+from threading import Thread
 
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
@@ -97,8 +100,15 @@ class ServerApp:
         # make specific log settings (muting etc)
         self.configure_logging()
 
-        # set the serv
+        # set the server version
         self.__version__ = __version__
+
+        # set up socket ping/pong
+        log.debug(
+            "Starting thread for socket ping/pong between server and nodes")
+        t = Thread(target=self.__socket_pingpong_worker, daemon=True)
+        t.start()
+
         log.info("Initialization done")
 
     def setup_socket_connection(self):
@@ -453,16 +463,57 @@ class ServerApp:
                            failed_login_attempts=0,
                            last_login_attempt=None)
             user.save()
-
-        # set all nodes to offline
-        # TODO: this is *not* the way
-        nodes = db.Node.get()
-        for node in nodes:
-            node.status = 'offline'
-            node.save()
-        # session.commit()
-
         return self
+
+    def __socket_pingpong_worker(self) -> None:
+        """
+        Send ping messages periodically to nodes over the socketIO connection
+        and set node status online/offline depending on whether they respond
+        or not.
+        """
+        PING_SLEEP = 60
+
+        # when starting up the server, wait a few seconds to allow nodes that
+        # are already online to connect back to the server (otherwise they
+        # would be incorrectly set to offline for one period)
+        time.sleep(5)
+
+        # start periodic check if nodes are responsive
+        while True:
+            # Send ping event
+            try:
+                self.__pong_node_ids = []
+                latest_ping = dt.datetime.utcnow()
+                self.socketio.emit(
+                    'ping', namespace='/tasks', room='all_nodes',
+                    callback=self.__pong_response
+                )
+
+                # Wait a while to give nodes opportunity to pong
+                time.sleep(PING_SLEEP)
+
+                # Check for each node that is online if they have responded.
+                # Otherwise set them to offline.
+                online_status_nodes = db.Node.get_online_nodes()
+                for node in online_status_nodes:
+                    if node.id not in self.__pong_node_ids:
+                        node.status = 'offline'
+                        node.save()
+
+                # we need to sleep here for a bit to make sure that there is a
+                # delay between setting nodes offline and pinging again - this
+                # prevents a racing condition in setting status
+                time.sleep(5)
+            except Exception:
+                log.exception('Pingpong thread had an exception')
+                time.sleep(PING_SLEEP)
+
+    def __pong_response(self, node_id) -> None:
+        node = db.Node.get(node_id)
+        node.status = 'online'
+        node.last_seen = dt.datetime.utcnow()
+        node.save()
+        self.__pong_node_ids.append(node_id)
 
 
 def run_server(config: str, environment: str = 'prod',
