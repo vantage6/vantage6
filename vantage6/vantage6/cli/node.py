@@ -43,7 +43,6 @@ from vantage6.common.docker.addons import (
 from vantage6.common.encryption import RSACryptor
 from vantage6.client import Client
 
-
 from vantage6.cli.context import NodeContext
 from vantage6.cli.globals import (
     DEFAULT_NODE_ENVIRONMENT as N_ENV,
@@ -51,7 +50,8 @@ from vantage6.cli.globals import (
 )
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
-    select_configuration_questionaire
+    select_configuration_questionaire,
+    NodeConfigurationManager
 )
 from vantage6.cli.utils import (
     check_config_name_allowed, check_if_docker_deamon_is_running
