@@ -249,8 +249,12 @@ class ServerApp:
             It is important to close the db session to avoid having dangling
             sessions.
             """
-            log.warn('HTTP Exception occured during request')
-            log.debug(traceback.format_exc())
+            if error.code == 404:
+                log.debug(
+                    f"404 error for route '{_get_request_path(request)}'")
+            else:
+                log.warn('HTTP Exception occured during request')
+                log.debug(traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
 
