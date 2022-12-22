@@ -15,10 +15,10 @@ import json as json_lib
 import itertools
 import sys
 import traceback
+import logging
 
 from pathlib import Path
 from typing import Dict, Tuple, Union
-from vantage6.client.utils import print_qr_code
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
@@ -27,6 +27,7 @@ from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common import WhoAmI
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
+from vantage6.client.utils import print_qr_code, LogLevel
 
 
 module_name = __name__.split('.')[1]
@@ -546,7 +547,7 @@ class ClientBase(object):
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, verbose=False, **kwargs):
+    def __init__(self, *args, verbose=False, log_level='debug', **kwargs):
         """Create user client
 
         All paramters from `ClientBase` can be used here.
@@ -559,7 +560,8 @@ class UserClient(ClientBase):
         super(UserClient, self).__init__(*args, **kwargs)
 
         # Replace logger by print logger
-        self.log = self.Log(verbose)
+        # TODO in v4+, remove the verbose option and only keep log_level
+        self.log = self.get_logger(verbose, log_level)
 
         # attach sub-clients
         self.util = self.Util(self)
@@ -586,24 +588,41 @@ class UserClient(ClientBase):
         self.log.info("https://vantage6.ai/vantage6/references")
         self.log.info("-" * 60)
 
-    class Log:
-        """Replaces the default logging meganism by print statements"""
-        def __init__(self, enabled: bool):
-            """Create print-logger
+    def get_logger(self, enabled: bool, level: str) -> logging.Logger:
+        """
+        Create print-logger
 
-            Parameters
-            ----------
-            enabled : bool
-                Whenever to enable logging
-            """
-            self.enabled = enabled
-            for level in ['debug', 'info', 'warn', 'warning', 'error',
-                          'critical']:
-                self.__setattr__(level, self.print)
+        Parameters
+        ----------
+        enabled: bool
+            If true, logging at most detailed level
+        level: str
+            Desired logging level
 
-        def print(self, msg: str) -> None:
-            if self.enabled:
-                print(f'{msg}')
+        Returns
+        -------
+        logging.Logger
+            Logger object
+        """
+        # get logger that prints to console
+        logger = logging.getLogger()
+        logger.handlers.clear()
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+
+        # set log level
+        level = level.upper()
+        if enabled:
+            logger.setLevel(LogLevel.DEBUG.value)
+        elif level not in [lvl.value for lvl in LogLevel]:
+            default_lvl = LogLevel.DEBUG.value
+            logger.setLevel(default_lvl)
+            logger.warn(
+                f"You set unknown log level {level}. Available levels are: "
+                f"{', '.join([lvl.value for lvl in LogLevel])}. ")
+            logger.warn(f"Log level now set to {default_lvl}.")
+        else:
+            logger.setLevel(level)
+        return logger
 
     def authenticate(self, username: str, password: str,
                      mfa_code: Union[int, str] = None) -> None:
