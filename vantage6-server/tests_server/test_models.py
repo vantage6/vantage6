@@ -4,13 +4,12 @@ import yaml
 import datetime
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
 
-from vantage6.server import db
+from vantage6.server import session
 from vantage6.server.model import (
     User,
     Organization,
@@ -104,7 +103,7 @@ class TestUserModel(TestBaseModel):
         user2 = User(username="duplicate-user", email="something-else@org.org")
         self.assertRaises(IntegrityError, user2.save)
 
-        db.session.remove()
+        session.session.remove()
 
 
 class TestCollaborationModel(TestBaseModel):
