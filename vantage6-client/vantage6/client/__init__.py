@@ -15,7 +15,6 @@ import json as json_lib
 import itertools
 import sys
 import traceback
-import logging
 
 from pathlib import Path
 from typing import Dict, Tuple, Union
@@ -588,7 +587,8 @@ class UserClient(ClientBase):
         self.log.info("https://vantage6.ai/vantage6/references")
         self.log.info("-" * 60)
 
-    def get_logger(self, enabled: bool, level: str) -> logging.Logger:
+    @staticmethod
+    def get_logger(enabled: bool, level: str) -> logging.Logger:
         """
         Create print-logger
 
