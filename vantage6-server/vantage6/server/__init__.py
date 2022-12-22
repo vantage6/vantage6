@@ -483,7 +483,6 @@ class ServerApp:
             # Send ping event
             try:
                 self.__pong_node_ids = []
-                latest_ping = dt.datetime.utcnow()
                 self.socketio.emit(
                     'ping', namespace='/tasks', room='all_nodes',
                     callback=self.__pong_response
