@@ -48,7 +48,8 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   nodes: Node[] = [];
   selected_orgs: Organization[] = [];
   deselected_orgs: Organization[] = [];
-  warning_message: string = '';
+  warning_message_master: string = '';
+  warning_message_encryption: string = '';
   logged_in_org_id: number = -1;
 
   constructor(
@@ -156,6 +157,11 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.selected_orgs = [];
     this.deselected_orgs = collab.organizations;
     this.checkMasterMultiOrg();
+    if (this.task.collaboration.encrypted) {
+      this.warning_message_encryption =
+        'This collaboration is encrypted. Unfortunately, the UI does not ' +
+        'support creating encrypted tasks at present.';
+    }
   }
 
   async selectPreviousTask(task: Task): Promise<void> {
@@ -215,6 +221,14 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.deselected_orgs.push(org);
     this.selected_orgs = removeMatchedIdFromArray(this.selected_orgs, org.id);
     this.checkMasterMultiOrg();
+  }
+
+  canBeCreated(): boolean {
+    return (
+      this.task.collaboration !== undefined &&
+      this.selected_orgs.length !== 0 &&
+      !this.task.collaboration.encrypted
+    );
   }
 
   async check_and_create() {
@@ -341,12 +355,12 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
 
   checkMasterMultiOrg(): void {
     if (this.task_input.master && this.selected_orgs.length > 1) {
-      this.warning_message =
+      this.warning_message_master =
         'You have selected a master task for multiple organizations. ' +
         'Usually master tasks are run on one organzation and then ' +
         'it creates subtasks for others. Are you sure?';
     } else {
-      this.warning_message = '';
+      this.warning_message_master = '';
     }
   }
 }

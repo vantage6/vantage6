@@ -146,9 +146,12 @@
     </tr> -->
   </table>
   <div class="warning">
-    {{ warning_message }}
+    {{ warning_message_master }}
   </div>
-  <button mat-button class="btn btn-save" (click)="check_and_create()">
+  <div class="warning">
+    {{ warning_message_encryption }}
+  </div>
+  <button mat-button class="btn btn-save" (click)="check_and_create()" [disabled]="!canBeCreated()">
     Create
   </button>
   <button mat-button class="btn btn-dflt" (click)="cancel()">
