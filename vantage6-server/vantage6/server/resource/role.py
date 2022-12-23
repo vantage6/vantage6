@@ -304,7 +304,7 @@ class Roles(RoleBase):
         data = parser.parse_args()
 
         # check if role name is allowed (i.e. not a default role name)
-        if data['name'] in [role for role in DefaultRole]:
+        if 'name' in data and data['name'] in [role for role in DefaultRole]:
             return {
                 "msg": f"Cannot create role '{data['name']}' as it is a "
                        "reserved role name."
@@ -472,7 +472,7 @@ class Role(RoleBase):
                 HTTPStatus.NOT_FOUND
 
         # check if role name is allowed (i.e. not a default role name)
-        if data['name'] in [role for role in DefaultRole]:
+        if 'name' in data and data['name'] in [role for role in DefaultRole]:
             return {
                 "msg": f"Cannot change role name into '{data['name']}' as that"
                        " is a reserved role name."
