@@ -453,7 +453,7 @@ class Role(RoleBase):
           200:
             description: Ok
           400:
-            description: Non-allowed role name
+            description: Non-allowed role name change
           401:
             description: Unauthorized
           404:
@@ -476,6 +476,11 @@ class Role(RoleBase):
             return {
                 "msg": f"Cannot change role name into '{data['name']}' as that"
                        " is a reserved role name."
+            }, HTTPStatus.BAD_REQUEST
+        elif role.name in [role for role in DefaultRole]:
+            return {
+                "msg": f"This role ('{role.name}') is a default role. Its name"
+                       " cannot be changed."
             }, HTTPStatus.BAD_REQUEST
 
         # check permission of the user
