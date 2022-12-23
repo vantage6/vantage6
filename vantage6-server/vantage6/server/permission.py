@@ -4,7 +4,9 @@ import importlib
 from collections import namedtuple
 from flask_principal import Permission, PermissionDenied
 
-from vantage6.server.globals import RESOURCES
+from vantage6.server.globals import (
+    CONTAINER_ROLE, NODE_ROLE, RESOURCES, ROOT_ROLE
+)
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
@@ -50,12 +52,17 @@ class PermissionManager:
     def assign_rule_to_node(self, name: str, scope: Scope,
                             operation: Operation):
         """Assign a rule to the Node role."""
-        self.assign_rule_to_fixed_role("node", name, scope, operation)
+        self.assign_rule_to_fixed_role(NODE_ROLE, name, scope, operation)
 
     def assign_rule_to_container(self, name: str, scope: Scope,
                                  operation: Operation):
         """Assign a rule to the container role."""
-        self.assign_rule_to_fixed_role("container", name, scope, operation)
+        self.assign_rule_to_fixed_role(CONTAINER_ROLE, name, scope, operation)
+
+    def assign_rule_to_root(self, name: str, scope: Scope,
+                            operation: Operation):
+        """Assign a rule to the container role."""
+        self.assign_rule_to_fixed_role(ROOT_ROLE, name, scope, operation)
 
     @staticmethod
     def assign_rule_to_fixed_role(fixedrole: str, name: str, scope: Scope,
@@ -117,6 +124,9 @@ class PermissionManager:
 
         if assign_to_node:
             self.assign_rule_to_node(collection, scope, operation)
+
+        # assign all new rules to root user
+        self.assign_rule_to_root(collection, scope, operation)
 
         self.collection(collection).add(rule.scope, rule.operation)
 

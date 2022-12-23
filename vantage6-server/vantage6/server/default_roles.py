@@ -1,15 +1,17 @@
 from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.globals import ROOT_ROLE
 
 
 # TODO BvB 22-06-07: we now have to pass this 'db' module as argument to a
 # function because that module has a connection to the database. This should
 # not be necessary. Fix that after fixing the circular imports described in
 # https://github.com/vantage6/vantage6/issues/53
+# Then simply do: import vantage6.server.db
 def get_default_roles(db):
     # Define default roles
     # 1. Root user
     SUPER_ROLE = {
-        'name': 'Root',
+        'name': ROOT_ROLE,
         'description': "Super role",
         'rules': db.Rule.get()
     }

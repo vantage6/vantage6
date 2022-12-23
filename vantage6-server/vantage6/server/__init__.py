@@ -33,8 +33,10 @@ from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
+    CONTAINER_ROLE,
     JWT_ACCESS_TOKEN_EXPIRES,
     JWT_TEST_ACCESS_TOKEN_EXPIRES,
+    NODE_ROLE,
     RESOURCES,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE,
@@ -341,7 +343,7 @@ class ServerApp:
 
                 if isinstance(auth, db.Node):
 
-                    for rule in db.Role.get_by_name("node").rules:
+                    for rule in db.Role.get_by_name(NODE_ROLE).rules:
                         auth_identity.provides.add(
                                 RuleNeed(
                                     name=rule.name,
@@ -379,7 +381,7 @@ class ServerApp:
                 return auth
             else:
 
-                for rule in db.Role.get_by_name("container").rules:
+                for rule in db.Role.get_by_name(CONTAINER_ROLE).rules:
                     auth_identity.provides.add(
                         RuleNeed(
                             name=rule.name,
