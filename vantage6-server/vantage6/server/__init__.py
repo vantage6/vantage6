@@ -33,10 +33,8 @@ from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
-    CONTAINER_ROLE,
     JWT_ACCESS_TOKEN_EXPIRES,
     JWT_TEST_ACCESS_TOKEN_EXPIRES,
-    NODE_ROLE,
     RESOURCES,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE,
@@ -46,7 +44,7 @@ from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
-from vantage6.server.default_roles import get_default_roles
+from vantage6.server.default_roles import get_default_roles, DefaultRole
 
 
 module_name = logger_name(__name__)
@@ -343,7 +341,7 @@ class ServerApp:
 
                 if isinstance(auth, db.Node):
 
-                    for rule in db.Role.get_by_name(NODE_ROLE).rules:
+                    for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
                         auth_identity.provides.add(
                                 RuleNeed(
                                     name=rule.name,
@@ -381,7 +379,7 @@ class ServerApp:
                 return auth
             else:
 
-                for rule in db.Role.get_by_name(CONTAINER_ROLE).rules:
+                for rule in db.Role.get_by_name(DefaultRole.CONTAINER).rules:
                     auth_identity.provides.add(
                         RuleNeed(
                             name=rule.name,

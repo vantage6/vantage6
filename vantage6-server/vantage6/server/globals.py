@@ -33,10 +33,6 @@ SUPER_USER_INFO = {
     "username": "root",
     "password": "root"
 }
-# Name of the default roles
-ROOT_ROLE = "Root"
-CONTAINER_ROLE = "container"
-NODE_ROLE = "node"
 
 # Whenever the refresh tokens should expire. Note that setting this to true
 # would mean that nodes will disconnect after some time
