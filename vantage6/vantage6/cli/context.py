@@ -1,3 +1,25 @@
+"""
+The context module in the CLI package contains the definition of the
+ServerContext and NodeContext classes. These contexts are related to the host
+system and therefore part of the CLI package.
+
+Both classes are derived from the abstract AppContext class. And provide the
+node and server with naming conventions, standard file locations, and in the
+case of the node with a local database URIs.
+
+*Server Context*
+    In case the server is run in development mode, the context will also used
+    the server package. Normally the server uses the
+    `vantage6.server.context.DockerServerContext` which provides the same
+    functionality but is tailored to the Docker environment.
+
+*Node Context*
+    In case the node is run in development mode, the context will also used by
+    the node package. Normally the node uses the
+    `vantage6.node.context.DockerNodeContext` which provides the same
+    functionality but is tailored to the Docker environment.
+-------------------------------------------------------------------------------
+"""
 from __future__ import annotations
 
 import os.path
