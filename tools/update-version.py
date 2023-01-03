@@ -37,7 +37,7 @@ def update_version(version: str) -> None:
         major, minor, patch = version.split(".")
         with open(file, 'r') as f:
             content = f.read()
-            new_content = re.sub(pattern, r"\1 {}, {}, {},\3\4\5\6\7\8".format(major, minor, patch), content)
+            new_content = re.sub(pattern, r"\1{}, {}, {},\3\4\5\6\7\8".format(major, minor, patch), content)
 
         info(f'Writing to file')
         with open(file, 'w') as f:
