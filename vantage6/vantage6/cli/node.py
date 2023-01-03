@@ -135,7 +135,7 @@ def cli_node_list() -> None:
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 def cli_node_new_configuration(name: str, environment: str,
-        system_folders: bool) -> None:
+                               system_folders: bool) -> None:
     """
     Create a new configuration file.
 
@@ -417,15 +417,15 @@ def cli_node_start(name: str, config: str, environment: str,
 
         uri = ctx.databases[label]
         info(f"  Processing database '{label}:{uri}'")
-        LABEL = label.upper()
+        label_capitals = label.upper()
 
         file_based = Path(uri).exists()
         if not file_based and not force_db_mount:
             debug('  - non file-based database added')
-            env[f'{LABEL}_DATABASE_URI'] = uri
+            env[f'{label_capitals}_DATABASE_URI'] = uri
         else:
             debug('  - file-based database added')
-            env[f'{LABEL}_DATABASE_URI'] = f'{label}.csv'
+            env[f'{label_capitals}_DATABASE_URI'] = f'{label}.csv'
             mounts.append((f'/mnt/{label}.csv', str(uri)))
 
         # FIXME legacy to support < 2.1.3 can be removed from 3+
@@ -487,7 +487,8 @@ def cli_node_start(name: str, config: str, environment: str,
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--all', 'all_nodes', flag_value=True)
-@click.option('--force', 'force', flag_value=True, help="kills containers instantly")
+@click.option('--force', 'force', flag_value=True, help="kills containers "
+                                                        "instantly")
 def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
                   force: bool) -> None:
     """
@@ -517,7 +518,6 @@ def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
         warning('Forcing the node to stop will not terminate helper '
                 'containers, neither will it remove routing rules made on the '
                 'host!')
-
 
     if all_nodes:
         for name in running_node_names:
@@ -895,6 +895,7 @@ def cli_node_version(name: str, system_folders: bool) -> None:
             {"node": version.output.decode('utf-8'), "cli": __version__})
     else:
         error(f"Node {name} is not running! Cannot provide version...")
+
 
 #
 #  helper functions
