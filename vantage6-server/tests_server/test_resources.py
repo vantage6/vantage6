@@ -15,7 +15,7 @@ from werkzeug.utils import cached_property
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
-from vantage6.server.globals import PACAKAGE_FOLDER
+from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp, db
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
                                    Collaboration, Task, Result)
@@ -57,7 +57,7 @@ class TestResources(unittest.TestCase):
         server = ServerApp(ctx)
         cls.server = server
 
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+        file_ = str(PACKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
             cls.entities = yaml.safe_load(f.read())
