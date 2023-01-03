@@ -208,7 +208,6 @@ def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
     if mount_src:
         mount_src = os.path.abspath(mount_src)
         mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
-
     # FIXME: code duplication with cli_server_import()
     # try to mount database
     uri = ctx.config['uri']
