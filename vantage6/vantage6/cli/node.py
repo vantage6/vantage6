@@ -58,7 +58,7 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire
 )
 from vantage6.cli.utils import (
-    check_config_name_allowed, check_if_docker_deamon_is_running
+    check_config_name_allowed, check_if_docker_daemon_is_running
 )
 from vantage6.cli import __version__
 
@@ -804,7 +804,7 @@ def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
     name, environment = select_node(name, environment, system_folders)
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_if_docker_daemon_is_running(client)
 
     # check if node is still running, otherwise don't allow deleting it
     running_node_names = find_running_node_names(client)
