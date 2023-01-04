@@ -1,9 +1,9 @@
-""" Docker manager
+"""
+Docker manager
 
-The docker manager is responsible for communicating with the docker-
-daemon and is a wrapper arround the docker module. It has methods
-for creating docker networks, docker volumes, start containers
-and retreive results from finished containers
+The docker manager is responsible for communicating with the docker-daemon and is a wrapper around the docker module. It has methods
+for creating docker networks, docker volumes, start containers and retrieve
+results from finished containers.
 """
 import os
 import time

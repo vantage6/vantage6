@@ -1,4 +1,7 @@
 """
+Node
+----
+
 A node in its simplest would retrieve a task from the central server by
 an API call, run this task and finally return the results to the central
 server again.
@@ -6,10 +9,11 @@ server again.
 The node application is runs 4 (Python-)threads:
 
 *Main thread*
-    Waits for new tasks to be added to the queue and run the tasks
+    Initialization of the node and the 3 other threads, then waits for new
+    tasks to be added to the queue and run the tasks
 *Listening thread*
-    Listens for incommin websocket messages. Which are handled by
-    NodeTaskNamespace.
+    Listens for incoming websocket messages. Which are handled by
+    `NodeTaskNamespace`.
 *Speaking thread*
     Waits for results from docker to return and posts them at the central
     server
@@ -35,7 +39,7 @@ import json
 
 from pathlib import Path
 from threading import Thread
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Type
 from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
@@ -58,6 +62,7 @@ from vantage6.node.util import logger_name, get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
+from vantage6.node.docker.ssh_tunnel import SSHTunnel
 
 
 class VPNConnectMode(Enum):
@@ -69,14 +74,14 @@ class VPNConnectMode(Enum):
 # ------------------------------------------------------------------------------
 class Node(object):
     """
-    Authenticates to the central server, setup encrpytion, a
+    Authenticates to the central server, setup encryption, a
     websocket connection, retrieving task that were posted while
     offline, preparing dataset for usage and finally setup a
     local proxy server..
 
     Parameters
     ----------
-    ctx:
+    ctx: Union[NodeContext, DockerNodeContext]
         Application context object.
 
     """
@@ -145,6 +150,9 @@ class Node(object):
         # Setup VPN connection
         self.vpn_manager = self.setup_vpn_connection(
             isolated_network_mgr, self.ctx)
+
+        # Create SSH tunnel according to the node configuration
+        self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
 
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
@@ -269,7 +277,6 @@ class Node(object):
         token = token["container_token"]
 
         # create a temporary volume for each run_id
-        # FIXME: why is docker_temporary_volume_name() in ctx???
         vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
         self.__docker.create_volume(vol_name)
 
@@ -534,6 +541,33 @@ class Node(object):
         else:
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
+
+    def setup_ssh_tunnels(self, isolated_network_mgr: Type[NetworkManager]) \
+            -> List[SSHTunnel]:
+        """
+        Setup SSH tunnels
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Manager for the isolated network
+        """
+        if 'ssh-tunnels' not in self.config:
+            self.log.info("No SSH tunnels configured")
+            return
+
+        volume = self.ctx.docker_configs_volume_name
+        self.log.debug(f"SSH tunnel volume: {volume}")
+
+        configs = self.config['ssh-tunnels']
+        self.log.info(f"Setting up {len(configs)} SSH tunnels")
+
+        tunnels: List[SSHTunnel] = []
+        for config in configs:
+            self.log.debug(f"SSH tunnel config: {config}")
+            tunnels.append(SSHTunnel(isolated_network_mgr, config, volume))
+
+        return tunnels
 
     def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
                              ctx: Union[DockerNodeContext, NodeContext]
