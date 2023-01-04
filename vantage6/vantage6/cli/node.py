@@ -1,16 +1,19 @@
-""" Node Manager Command Line Interface
+"""
+The node module contains the CLI commands for the node manager. The following
+commands are available:
 
-    The node manager is responsible for:
-    1) Creating, updating and deleting configurations (=nodes).
-    2) Starting, Stopping nodes
+    * vnode new
+    * vnode list
+    * vnode files
+    * vnode start
+    * vnode stop
+    * vnode attach
+    * vnode clean
+    * vnode remove
+    * vnode version
+    * vnode create-private-key
 
-    Configuration Commands
-    * node new
-    * node list
-    * node files
-    * node start
-    * node stop
-    * node attach
+
 """
 import click
 import sys
@@ -70,7 +73,9 @@ def cli_node():
 #
 @cli_node.command(name="list")
 def cli_node_list():
-    """Lists all nodes in the default configuration directory."""
+    """
+    Lists all nodes in the default configuration directories.
+    """
 
     client = docker.from_env()
     check_docker_running()
@@ -128,11 +133,22 @@ def cli_node_list():
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_new_configuration(name, environment, system_folders):
-    """Create a new configuration file.
+def cli_node_new_configuration(name: str, environment: str,
+        system_folders: bool) -> None:
+    """
+    Create a new configuration file.
 
     Checks if the configuration already exists. If this is not the case
-    a questionaire is invoked to create a new configuration file.
+    a questionnaire is invoked to create a new configuration file.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Store this configuration in the system folders or in the user folders.
     """
     # select configuration name if none supplied
     if not name:
@@ -183,11 +199,21 @@ def cli_node_new_configuration(name, environment, system_folders):
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_files(name, environment, system_folders):
-    """ Prints location important files.
+def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
+    """
+    Prints location important files.
 
-        If the specified configuration cannot be found, it exits. Otherwise
-        it returns the absolute path to the output.
+    If the specified configuration cannot be found, it exits. Otherwise
+    it returns the absolute path to the output.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Is this configuration stored in the system or in the user folders.
     """
     name, environment = select_node(name, environment, system_folders)
 
@@ -225,18 +251,37 @@ def cli_node_files(name, environment, system_folders):
               help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
               help="mount vantage6-master package source")
-def cli_node_start(name, config, environment, system_folders, image, keep,
-                   mount_src, attach, force_db_mount):
-    """Start the node instance.
+def cli_node_start(name: str, config: str, environment: str,
+                   system_folders: bool, image: str, keep: bool,
+                   mount_src: str, attach: bool, force_db_mount: bool):
+    """
+    Start the node instance inside a Docker container.
 
-        If no name or config is specified the default.yaml configuation is
-        used. In case the configuration file not excists, a questionaire is
-        invoked to create one. Note that in this case it is not possible to
-        specify specific environments for the configuration (e.g. test,
-        prod, acc).
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    config : str
+        Absolute path to configuration-file; overrides NAME
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Is this configuration stored in the system or in the user folders.
+    image : str
+        Node Docker image to use.
+    keep : bool
+        Keep container when finished or in the event of a crash. This is useful
+        for debugging.
+    mount_src : str
+        Mount vantage6 package source that replaces the source inside the
+        container. This is useful for debugging.
+    attach : bool
+        Attach node logs to the console after start.
+    force_db_mount : bool
+        Skip the check of the existence of the DB (always try to mount).
     """
     info("Starting node...")
-    info("Finding Docker deamon")
+    info("Finding Docker daemon")
     docker_client = docker.from_env()
     check_docker_running()
 
