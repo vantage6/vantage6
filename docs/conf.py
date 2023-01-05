@@ -41,7 +41,7 @@ author = (
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
               'sphinx_autodoc_typehints', 'sphinx.ext.autosectionlabel',
-              'sphinx.ext.intersphinx']
+              'sphinx.ext.intersphinx', 'sphinx_click.ext']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

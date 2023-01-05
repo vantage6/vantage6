@@ -115,9 +115,9 @@ Index
    install/index
    use/index
    algorithms/index
+   technical-documentation/index
    devops/index
    glossary
-..  technical-documentation/index
 
 .. toctree::
    :maxdepth: 2
