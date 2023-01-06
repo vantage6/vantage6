@@ -141,7 +141,7 @@ class NodeContext(AppContext):
     def docker_configs_volume_name(self):
         return os.environ.get(
             'TUNNEL_VOLUME_NAME',
-            f"{self.docker_container_name}-tunnel-vol"
+            f"{self.docker_container_name}-configs-vol"
         )
 
     def docker_temporary_volume_name(self, run_id):

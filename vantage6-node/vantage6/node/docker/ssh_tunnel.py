@@ -109,11 +109,6 @@ class SSHTunnel(DockerBaseManager):
         config: dict
             Dictionary containing the SSH configuration
 
-        Raises
-        ------
-        ValueError
-            The configuration is not complete
-
         Returns
         -------
         SSHConfig
