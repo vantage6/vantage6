@@ -136,15 +136,35 @@ class SSHTunnel(DockerBaseManager):
         -------
         SSHConfig
             SSH configuration
+
+        Notes
+        -----
+        The SSH configuration is stored in the following format:
+
+        ```yaml
+        ssh-tunnels:
+          - hostname: "my-ssh-host"
+              ssh:
+              host: "my-ssh-host"
+              port: 22
+              fingerprint: "my-ssh-host-fingerprint"
+              identity:
+                  username: "my-ssh-username"
+                  key: "/path/to/my/ssh/key"
+              tunnel:
+              bind:
+                  ip: x.x.x.x
+                  port: 1234
+              dest:
+                  port: 5678
+        ```
         """
         log.debug("Reading SSH tunnel configuration")
         bind = config['tunnel']['bind']
         ssh = config['ssh']
-        identity = config['ssh']['identity']
+        identity = ssh['identity']
 
         # SSH config to connect to the remote server
-        # TODO check if the identity file exists, and is at the location
-        # i feel its not now
         ssh_tunnel_config = SSHTunnelConfig(
             username=identity['username'],
             hostname=ssh['host'],
@@ -175,13 +195,13 @@ class SSHTunnel(DockerBaseManager):
 
         # FIXME: This should not be a hard coded path
         environment = Environment(
-            loader=FileSystemLoader("vantage6-node/vantage6/node/template/"),
+            loader=FileSystemLoader("/vantage6/vantage6-node/vantage6/node/template/"),
             autoescape=True
         )
         template = environment.get_template("ssh_config.j2")
 
         # inject template with vars
-        ssh_config = template.render(**config)
+        ssh_config = template.render(**config._asdict())
 
         with open(self.config_folder / "ssh_config", "w") as f:
             f.write(ssh_config)
@@ -205,12 +225,13 @@ class SSHTunnel(DockerBaseManager):
         """
         Start an SSH tunnel container
         """
-        assert self.config, "SSH config not set"
+        assert self.ssh_tunnel_config, "SSH config not set"
+        assert self.known_hosts_config, "Known hosts config not set"
 
         mounts = {
-            '/mnt/config/ssh_config':
+            self.config_folder / 'ssh_config':
                 {'bind': '/root/.ssh/config', 'mode': 'ro'},
-            '/mnt/config/known_hosts':
+            self.config_folder / 'known_hosts':
                 {'bind': '/root/.ssh/known_hosts', 'mode': 'ro'},
         }
 
@@ -228,7 +249,8 @@ class SSHTunnel(DockerBaseManager):
 
         # Connect to both the internal network and make an alias (=hostname).
         # This alias can be used by the algorithm containers.
-        self.isolated_network_mgr.connect(self.container, alias=self.hostname)
+        self.isolated_network_mgr.connect(self.container,
+                                          aliases=[self.hostname])
 
     def stop(self) -> None:
         """
