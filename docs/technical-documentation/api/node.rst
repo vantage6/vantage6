@@ -21,6 +21,8 @@ comprise the node. A few that we would like to highlight:
   runs an algorithm and manage its lifecycle.
 * :ref:`VPNManager <vpn-manager-class>`: Sets up the VPN connection (if it is
   configured) and manages it.
+* :ref:`vnode-local commands <vnode-local-module>`: commands to run
+  non-dockerized (development) instances of your nodes.
 
 -------------------------
 
@@ -77,6 +79,19 @@ comprise the node. A few that we would like to highlight:
 .. autoclass:: vantage6.node.docker.vpn_manager.VPNManager
    :members:
    :show-inheritance:
+
+
+Algorithm execution exceptions
+-----------------
+.. automodule:: vantage6.node.docker.exceptions
+    :members:
+
+
+Proxy server
+------------
+
+.. automodule:: vantage6.node.proxy_server
+    :members:
 
 .. _vnode-local-module:
 
