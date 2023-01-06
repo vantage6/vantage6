@@ -619,8 +619,7 @@ class Node(object):
         )
 
         if not self.config.get('vpn_subnet'):
-            self.log.warn("VPN subnet is not defined!")
-            self.log.info("Not trying to establish VPN connection.")
+            self.log.warn("VPN subnet is not defined! VPN disabled.")
         elif not os.path.isfile(ovpn_file):
             # if vpn config doesn't exist, get it and write to disk
             self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE,
