@@ -24,6 +24,7 @@ from vantage6.node.docker.exceptions import (
     PermanentAlgorithmStartFail
 )
 
+
 class TaskStatus(Enum):
     # Task constructor is executed
     INITIALIZED = 0
@@ -37,9 +38,10 @@ class TaskStatus(Enum):
     # Container had a non zero exit code
     # CRASHED = 92
 
+
 class DockerTaskManager(DockerBaseManager):
     """
-    Manager for running a Vantage6 algorithm container within docker.
+    Manager for running a vantage6 algorithm container within docker.
 
     Ensures that the environment is properly set up (docker volumes,
     directories, environment variables, etc). Then runs the algorithm as a
