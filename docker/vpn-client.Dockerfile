@@ -7,7 +7,7 @@ RUN apk add --no-cache \
 
 RUN mkdir /app
 
-COPY networking/vpn-client/ /app/
+COPY services/vpn-client/ /app/
 RUN chmod +x /app/entry.sh
 
 ENTRYPOINT ["/app/entry.sh"]
