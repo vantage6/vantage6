@@ -242,7 +242,9 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         log.debug("No local image found, pulling from remote!")
         pull = True
     elif not local_ and not remote_:
-        log.error(f"Cannot locate image {image}")
+        log.warn(f"Cannot locate image {image} locally or remotely")
+        # we will try to pull it from the docker hub
+        pull = True
 
     if pull:
         try:
@@ -250,6 +252,7 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         except docker.errors.APIError as e:
             log.error(f"Failed to pull image! {image}")
             log.debug(e)
+            raise
 
 
 def get_container(docker_client: DockerClient, **filters) -> Container:
