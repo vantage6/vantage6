@@ -40,8 +40,8 @@ class AppContext(metaclass=Singleton):
                 OS specific folder will be used to find the configuration file
                 specified by `instance_name`.
         """
-        self.scope = "system" if system_folders else "user"
-        self.name = instance_name
+        self.scope: str = "system" if system_folders else "user"
+        self.name: str = instance_name
 
         # configuration environment, load a single configuration from
         # entire confiration file (which can contain multiple environments)
@@ -58,7 +58,7 @@ class AppContext(metaclass=Singleton):
 
         # will load a specific environment in the config_file, this
         # triggers to set the logging as this is env dependant
-        self.environment = environment
+        self.environment: str = environment
 
         # lookup system / user directories, this needs to be done after
         # the environment is been set. This way we can check if the
@@ -229,7 +229,7 @@ class AppContext(metaclass=Singleton):
         assert env in self.config_manager.available_environments, \
             f"Requested environment {env} is not found in the configuration"
         self.__environment = env
-        self.config = self.config_manager.get(env)
+        self.config: dict = self.config_manager.get(env)
 
     @classmethod
     def find_config_file(cls, instance_type, instance_name, system_folders,

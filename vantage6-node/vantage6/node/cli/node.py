@@ -1,3 +1,11 @@
+"""
+This contains the ``vnode-local`` commands. These commands are similar
+to the ``vnode`` CLI commands, but they start up the node outside of a Docker
+container, and are mostly intended for development purposes.
+
+Some commands, such as ``vnode-local start``, are used within the Docker
+container when ``vnode start`` is used.
+"""
 import click
 import os
 import sys
@@ -50,17 +58,21 @@ def cli_node_list():
     click.echo("-"*70)
     warning(f"Number of failed imports: "
             f"{Fore.YELLOW}{len(f1)+len(f2)}{Style.RESET_ALL}")
+
+
 #
 #   new
 #
 @cli_node.command(name="new")
-@click.option("-n", "--name", default=None)
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option('-e', '--environment',
               default=None,
-              help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
+              help='Configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Use configuration from system folders (default)")
 @click.option('--user', 'system_folders', flag_value=False,
-              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS)
+              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
+              help="Use configuration from user folders")
 def cli_node_new_configuration(name, environment, system_folders):
     """Create a new configation file.
 
@@ -95,17 +107,20 @@ def cli_node_new_configuration(name, environment, system_folders):
     cfg_file = configuration_wizard("node", name, environment, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
+
 #
 #   files
 #
 @cli_node.command(name="files")
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option('-e', '--environment',
               default=constants.DEFAULT_NODE_ENVIRONMENT,
-              help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
+              help='Configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Use configuration from system folders (default)")
 @click.option('--user', 'system_folders', flag_value=False,
-              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS)
+              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
+              help="Use configuration from user folders")
 def cli_node_files(name, environment, system_folders):
     """Print out the paths of important files.
 
@@ -128,24 +143,29 @@ def cli_node_files(name, environment, system_folders):
     click.echo(f"Configuration file = {ctx.config_file}")
     click.echo(f"Log file           = {ctx.log_file}")
     click.echo(f"data folders       = {ctx.data_dir}")
-    click.echo(f"Database labels and files")
+    click.echo("Database labels and files:")
     for label, path in ctx.databases.items():
         click.echo(f" - {label:15} = {path}")
+
 
 #
 #   start
 #
 @cli_node.command(name='start')
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("-c", "--config", default=None,
-              help='absolute path to configuration-file; overrides NAME')
+              help='Absolute path to configuration-file; overrides "name"')
 @click.option('-e', '--environment',
               default=constants.DEFAULT_NODE_ENVIRONMENT,
-              help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
+              help='Configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Use configuration from system folders (default)")
 @click.option('--user', 'system_folders', flag_value=False,
-              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS)
-@click.option('--dockerized/-non-dockerized', default=False)
+              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
+              help="Use configuration from user folders")
+@click.option('--dockerized/-non-dockerized', default=False,
+              help=("Whether to use DockerNodeContext or regular NodeContext "
+                    "(default)"))
 def cli_node_start(name, config, environment, system_folders, dockerized):
     """Start the node instance.
 
@@ -174,9 +194,10 @@ def cli_node_start(name, config, environment, system_folders, dockerized):
         # check that config exists in the APP, if not a questionaire will
         # be invoked
         if not ContextClass.config_exists(name, environment, system_folders):
-            question = f"Configuration '{name}' using environment"
-            question += f" '{environment}' does not exist.\n  Do you want to"
-            question += f" create this config now?"
+            question = (
+                f"Configuration '{name}' using environment '{environment}' "
+                "does not exist.\n  Do you want to create this config now?"
+            )
 
             if q.confirm(question).ask():
                 configuration_wizard("node", name, environment, system_folders)

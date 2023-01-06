@@ -19,10 +19,14 @@ from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.cli.context import NodeContext
+from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
-from vantage6.node.util import logger_name
 from vantage6.node.docker.task_manager import DockerTaskManager
+from vantage6.node.util import logger_name
+
+
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail
@@ -32,7 +36,21 @@ log = logging.getLogger(logger_name(__name__))
 
 
 class Result(NamedTuple):
-    """ Data class to store the result of the docker image."""
+    # """ Data class to store the result of the docker image."""
+    """
+    Data class to store the result of the docker image.
+
+    Attributes
+    ----------
+    result_id: int
+        ID of the current algorithm run
+    logs: str
+        Logs attached to current algorithm run
+    data: str
+        Output data of the algorithm
+    status_code: int
+        Status code of the algorithm run
+    """
     result_id: int
     task_id: int
     logs: str
@@ -56,31 +74,35 @@ class KilledResult(NamedTuple):
 
 
 class DockerManager(DockerBaseManager):
-    """ Wrapper for the docker module, to be used specifically for vantage6.
+    """
+    Wrapper for the docker-py module.
 
-        It handles docker images names to results `run(image)`. It manages
-        docker images, files (input, output, token, logs). Docker images run
-        in detached mode, which allows to run multiple docker containers at
-        the same time. Results (async) can be retrieved through
-        `get_result()` which returns the first available result.
+    This classes manages tasks related to Docker, such as logging in to
+    docker registries, managing input/output files, logs etc. Results
+    can be retrieved through `get_result()` which returns the first available
+    algorithm result.
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, ctx, isolated_network_mgr: NetworkManager,
-                 vpn_manager: VPNManager, tasks_dir: Path) -> None:
-        """ Initialization of DockerManager creates docker connection and
-            sets some default values.
+    def __init__(
+        self, ctx: Union[DockerNodeContext, NodeContext],
+        isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
+        tasks_dir: Path
+    ) -> None:
+        """
+        Initialization of DockerManager creates docker connection and
+        sets some default values.
 
-            Parameters
-            ----------
-            ctx: DockerNodeContext or NodeContext
-                Context object from which some settings are obtained
-            isolated_network_mgr: NetworkManager
-                Manager for the isolated network
-            vpn_manager: VPNManager
-                VPN Manager object
-            tasks_dir: Path
-                Directory in which this task's data are stored
+        Parameters
+        ----------
+        ctx: DockerNodeContext or NodeContext
+            Context object from which settings are obtained
+        isolated_network_mgr: NetworkManager
+            Manager for the isolated network
+        vpn_manager: VPNManager
+            VPN Manager object
+        tasks_dir: Path
+            Directory in which this task's data are stored
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)

@@ -561,11 +561,15 @@ class User(UserBase):
                 return {
                     "msg": "Empty username is not allowed!"
                 }, HTTPStatus.BAD_REQUEST
-            elif (user.username != data["username"] and
-                    db.User.exists("username", data["username"])):
-                return {
-                    "msg": "User with that username already exists"
-                }, HTTPStatus.BAD_REQUEST
+            elif user.username != data["username"]:
+                if db.User.exists("username", data["username"]):
+                    return {
+                        "msg": "User with that username already exists"
+                    }, HTTPStatus.BAD_REQUEST
+                elif user.id != g.user.id:
+                    return {
+                        "msg": "You cannot change the username of another user"
+                    }, HTTPStatus.BAD_REQUEST
             user.username = data["username"]
         if data["firstname"] is not None:
             user.firstname = data["firstname"]
