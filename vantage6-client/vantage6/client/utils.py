@@ -1,5 +1,6 @@
 import qrcode
 
+from enum import Enum
 from typing import Dict
 
 
@@ -43,3 +44,11 @@ def show_qr_code_image(qr_uri: str) -> None:
     qr.add_data(qr_uri)
     qr.make(fit=True)
     qr.print_ascii()
+
+
+class LogLevel(Enum):
+    DEBUG = 'DEBUG'
+    INFO = 'INFO'
+    WARN = 'WARN'
+    ERROR = 'ERROR'
+    CRITICAL = 'CRITICAL'
