@@ -26,24 +26,46 @@ log = logging.getLogger(logger_name(__name__))
 
 
 class SSHTunnelConfig(NamedTuple):
-    # username of the remote server
+    """
+    Data class to store the configuration of the SSH tunnel.
+
+    Attributes
+    ----------
+    username : str
+        Username of the remote server
+    hostname : str
+        Hostname of the remote server
+    port : int
+        SSH port of the remote server
+    identity_file : str
+        Identity file of the user to connect to the remote server
+    local_port : int
+        Port of the app you want to tunnel on the remote machine
+    bind_ip : str
+        IP where you want to bind the remote app to in the tunnel container
+    bind_port : int
+        Port where you want to bind the remote app to in the tunnel container
+    """
     username: str
-    # hostname of the remote server
     hostname: str
-    # ssh port of the remote server
     port: int
-    # identity file of the user to connect to the remote server
     identity_file: str
-    # port of the app you want to tunnel on the remote machine
     local_port: int
-    # ip where you want to bind the remote app to in the tunnel container
     bind_ip: str
-    # port where you want to bind the remote app to in the tunnel container
     bind_port: int
 
 
 class KnownHostsConfig(NamedTuple):
-    # fingerprint of the remote server
+    """
+    Data class to store the configuration of the known_hosts file.
+
+    Attributes
+    ----------
+    hostname : str
+        Hostname of the remote server
+    fingerprint : str
+        Fingerprint of the remote server
+    """
     hostname: str
     fingerprint: str
 
