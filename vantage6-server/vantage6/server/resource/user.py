@@ -572,9 +572,9 @@ class User(UserBase):
         if data["lastname"] is not None:
             user.lastname = data["lastname"]
         if data["email"] is not None:
-            if data["username"] == '':
+            if data["email"] == '':
                 return {
-                    "msg": "Empty username is not allowed!"
+                    "msg": "Empty email is not allowed!"
                 }, HTTPStatus.BAD_REQUEST
             elif (user.email != data["email"] and
                     db.User.exists("email", data["email"])):
