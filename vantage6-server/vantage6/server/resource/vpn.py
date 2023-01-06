@@ -392,7 +392,7 @@ class EduVPNConnector:
                 "'client_id' and 'redirect_url' settings in your server "
                 "configuration file."
             )
-        elif not response.headers.get('Location'):
+        elif 'Location' not in response.headers:
             raise VPNPortalAuthException(
                 "Authenticating to EduVPN failed. Please check the following "
                 "settings of your configuration file: portal_username and "
@@ -497,7 +497,7 @@ class EduVPNConnector:
         response = self.session.get(f'{self.API_URL}/profile_list')
         return json.loads(response.content.decode('utf-8'))
 
-    def get_config(self, profile_id) -> str:
+    def get_config(self, profile_id: str) -> str:
         """ Call the profile_config route of EduVPN API
 
         Parameters
