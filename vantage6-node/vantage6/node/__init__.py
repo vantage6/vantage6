@@ -556,8 +556,8 @@ class Node(object):
             self.log.info("No SSH tunnels configured")
             return
 
-        volume = self.ctx.docker_configs_volume_name
-        self.log.debug(f"SSH tunnel volume: {volume}")
+        custom_tunnel_image = self.config['images'].get('ssh-tunnel') \
+            if 'images' in self.config else None
 
         configs = self.config['ssh-tunnels']
         self.log.info(f"Setting up {len(configs)} SSH tunnels")
@@ -565,7 +565,15 @@ class Node(object):
         tunnels: List[SSHTunnel] = []
         for config in configs:
             self.log.debug(f"SSH tunnel config: {config}")
-            tunnels.append(SSHTunnel(isolated_network_mgr, config, volume))
+            try:
+                # TODO add the tunnel image
+                new_tunnel = SSHTunnel(isolated_network_mgr, config,
+                                       self.ctx.name, custom_tunnel_image)
+            except Exception as e:
+                self.log.error(f"Error setting up SSH tunnel: {e}")
+                self.log.error(f"Skipping tunnel: {config}")
+
+            tunnels.append(new_tunnel)
 
         return tunnels
 
