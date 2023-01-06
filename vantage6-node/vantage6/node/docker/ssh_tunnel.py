@@ -121,7 +121,8 @@ class SSHTunnel(DockerBaseManager):
         self.start()
         log.info(f"SSH tunnel {self.hostname} started")
 
-    def read_config(self, config: dict) \
+    @staticmethod
+    def read_config(config: dict) \
             -> Tuple[SSHTunnelConfig, KnownHostsConfig]:
         """
         Read the SSH configuration from the config
@@ -174,7 +175,8 @@ class SSHTunnel(DockerBaseManager):
 
         # FIXME: This should not be a hard coded path
         environment = Environment(
-            loader=FileSystemLoader("vantage6-node/vantage6/node/template/")
+            loader=FileSystemLoader("vantage6-node/vantage6/node/template/"),
+            autoescape=True
         )
         template = environment.get_template("ssh_config.j2")
 
