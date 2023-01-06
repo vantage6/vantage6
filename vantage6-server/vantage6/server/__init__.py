@@ -41,7 +41,8 @@ from vantage6.server.globals import (
     RESOURCES,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    MAX_RESPONSE_TIME_PING
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
@@ -471,8 +472,6 @@ class ServerApp:
         and set node status online/offline depending on whether they respond
         or not.
         """
-        PING_SLEEP = 60
-
         # when starting up the server, wait a few seconds to allow nodes that
         # are already online to connect back to the server (otherwise they
         # would be incorrectly set to offline for one period)
@@ -489,7 +488,7 @@ class ServerApp:
                 )
 
                 # Wait a while to give nodes opportunity to pong
-                time.sleep(PING_SLEEP)
+                time.sleep(MAX_RESPONSE_TIME_PING)
 
                 # Check for each node that is online if they have responded.
                 # Otherwise set them to offline.
@@ -505,7 +504,7 @@ class ServerApp:
                 time.sleep(5)
             except Exception:
                 log.exception('Pingpong thread had an exception')
-                time.sleep(PING_SLEEP)
+                time.sleep(MAX_RESPONSE_TIME_PING)
 
     def __pong_response(self, node_id) -> None:
         node = db.Node.get(node_id)
