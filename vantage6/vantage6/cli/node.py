@@ -26,7 +26,7 @@ from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_config_write_permissions
+    bytes_to_base64s, check_config_writeable
 )
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -162,8 +162,8 @@ def cli_node_new_configuration(name, environment, system_folders):
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_write_permissions(system_folders):
-        error("Your user does not have write access to all folders. Exiting")
+    if not check_config_writeable(system_folders):
+        error("Cannot write configuration file. Exiting...")
         exit(1)
 
     # create config in ctx location

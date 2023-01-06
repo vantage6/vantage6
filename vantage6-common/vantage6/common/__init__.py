@@ -107,7 +107,7 @@ class ClickLogger:
         debug(msg)
 
 
-def check_config_write_permissions(system_folders=False):
+def check_config_writeable(system_folders=False):
     dirs = appdirs.AppDirs()
     if system_folders:
         dirs_to_check = [
@@ -119,8 +119,12 @@ def check_config_write_permissions(system_folders=False):
         ]
     w_ok = True
     for dir_ in dirs_to_check:
-        if not os.access(dir_, os.W_OK):
-            warning(f"No write permissions at '{dir_}'")
+        if not os.path.isdir(dir_):
+            warning(f"Target directory '{dir_}' for configuration file does "
+                    "not exist.")
+            w_ok = False
+        elif not os.access(dir_, os.W_OK):
+            warning(f"No write permissions at '{dir_}'.")
             w_ok = False
 
     return w_ok
