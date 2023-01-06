@@ -856,7 +856,7 @@ def cli_node_set_api_key(name, api_key, environment, system_folders):
     name, environment = select_node(name, environment, system_folders)
 
     # Check that we can write in the config folder
-    if not check_config_write_permissions(system_folders):
+    if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         exit(1)
 
