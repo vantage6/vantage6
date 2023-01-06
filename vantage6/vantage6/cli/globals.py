@@ -2,10 +2,7 @@
 This module contains global variables that are used throughout the CLI.
 """
 from pathlib import Path
-from vantage6.common.globals import (  # noqa: F401
-    APPNAME,
-    STRING_ENCODING
-)
+from vantage6.common.globals import APPNAME
 
 #
 #   SERVER SETTINGS
