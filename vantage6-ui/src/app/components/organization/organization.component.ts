@@ -275,4 +275,10 @@ export class OrganizationComponent implements OnInit {
     if (node.is_online) return default_classes + 'btn-online';
     else return default_classes + 'btn-offline';
   }
+
+  getUserTitle(user: User): string {
+    return user.first_name || user.last_name
+      ? `${user.first_name} ${user.last_name}`
+      : user.username;
+  }
 }

@@ -146,7 +146,7 @@
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
-                {{user.first_name}} {{user.last_name}}
+                {{getUserTitle(user)}}
               </mat-panel-title>
               <mat-panel-description>
                 <div *ngIf="user.is_logged_in">
