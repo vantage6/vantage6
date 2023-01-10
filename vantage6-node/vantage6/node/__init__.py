@@ -6,27 +6,24 @@ A node in its simplest would retrieve a task from the central server by
 an API call, run this task and finally return the results to the central
 server again.
 
-The node application is runs 4 (Python-)threads:
+The node application runs four threads:
 
 *Main thread*
-    Initialization of the node and the 3 other threads, then waits for new
-    tasks to be added to the queue and run the tasks
+    Checks the task queue and run the next task if there is one available.
 *Listening thread*
-    Listens for incoming websocket messages. Which are handled by
-    `NodeTaskNamespace`.
+    Listens for incoming websocket messages. Among other functionality, it adds
+    new tasks to the task queue.
 *Speaking thread*
-    Waits for results from docker to return and posts them at the central
-    server
+    Waits for tasks to finish. When they do, return the results to the central
+    server.
 *Proxy server thread*
-    Algorithm containers are isolated from the internet because of obvious
-    security reasons. The local-proxy-server provides an interface for
-    *master* containers to post tasks and retrieve their results.
+    Algorithm containers are isolated from the internet for security reasons.
+    The local proxy server provides an interface to the central server for
+    *master* containers to create subtasks and retrieve their results.
 
 The node connects to the server using a websocket connection. This connection
 is mainly used for sharing status updates. This avoids the need for polling to
 see if there are new tasks available.
-
--------------------------------------------------------------------------------
 """
 import sys
 import os
@@ -190,10 +187,11 @@ class Node(object):
         self.log.info('Init complete')
 
     def __proxy_server_worker(self) -> None:
-        """ Proxy algorithm container communcation.
+        """
+        Proxy algorithm container communcation.
 
-            A proxy for communication between algorithms and central
-            server.
+        A proxy for communication between algorithms and central
+        server.
         """
         if self.ctx.running_in_docker:
             # NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
@@ -263,7 +261,7 @@ class Node(object):
         Parameters
         ----------
         taskresult : dict
-            an 'empty' taskresult
+            A dictionary with information required to run the algorithm
         """
         task = taskresult['task']
         self.log.info("Starting task {id} - {name}".format(**task))
@@ -337,10 +335,11 @@ class Node(object):
             )
 
     def __listening_worker(self) -> None:
-        """ Listen for incoming (websocket) messages from the server.
+        """
+        Listen for incoming (websocket) messages from the server.
 
-            Runs in a separate thread. Received events are dispatched
-            through the appropriate action_handler for a channel.
+        Runs in a separate thread. Received events are handled by the
+        appropriate action handler.
         """
         self.log.debug("Listening for incoming messages")
 
@@ -357,14 +356,14 @@ class Node(object):
                 self.log.debug(e)
 
     def __speaking_worker(self) -> None:
-        """ Sending messages to central server.
-
-            Routine that is in a seperate thread sending results
-            to the server when they come available.
-
-            TODO change to a single request, might need to reconsider
-                the flow
         """
+        Sending messages to central server.
+
+        Routine that is in a seperate thread sending results
+        to the server when they come available.
+        """
+        # TODO change to a single request, might need to reconsider
+        #     the flow
         self.log.debug("Waiting for results to send to the server")
 
         while True:
@@ -485,7 +484,7 @@ class Node(object):
         return fullpath
 
     def setup_encryption(self) -> None:
-        """Setup encryption ... or don't."""
+        """ Setup encryption if the node is part of encrypted collaboration """
         encrypted_collaboration = self.server_io.is_encrypted_collaboration()
         encrypted_node = self.config['encryption']["enabled"]
 
@@ -607,7 +606,7 @@ class Node(object):
         Parameters
         ----------
         isolated_network_mgr: NetworkManager
-            Manager for the isolated network
+            Manager for the isolated Docker network
         ctx: NodeContext
             Context object for the node
 
@@ -645,8 +644,7 @@ class Node(object):
         )
 
         if not self.config.get('vpn_subnet'):
-            self.log.warn("VPN subnet is not defined!")
-            self.log.info("Not trying to establish VPN connection.")
+            self.log.warn("VPN subnet is not defined! VPN disabled.")
         elif not os.path.isfile(ovpn_file):
             # if vpn config doesn't exist, get it and write to disk
             self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE,
@@ -773,7 +771,7 @@ class Node(object):
         Parameters
         ----------
         task_id : int
-            Task identifyer
+            Task identifier
         """
         # fetch (open) result for the node with the task_id
         tasks = self.server_io.get_results(
@@ -788,7 +786,7 @@ class Node(object):
             self.queue.put(task)
 
     def run_forever(self) -> None:
-        """Forever check self.queue for incoming tasks (and execute them)."""
+        """Keep checking queue for incoming tasks (and execute them)."""
         kill_listener = ContainerKillListener()
         try:
             while True:

@@ -1,16 +1,19 @@
-""" Node Manager Command Line Interface
+"""
+The node module contains the CLI commands for the node manager. The following
+commands are available:
 
-    The node manager is responsible for:
-    1) Creating, updating and deleting configurations (=nodes).
-    2) Starting, Stopping nodes
+    * vnode new
+    * vnode list
+    * vnode files
+    * vnode start
+    * vnode stop
+    * vnode attach
+    * vnode clean
+    * vnode remove
+    * vnode version
+    * vnode create-private-key
 
-    Configuration Commands
-    * node new
-    * node list
-    * node files
-    * node start
-    * node stop
-    * node attach
+
 """
 import click
 import sys
@@ -26,7 +29,7 @@ from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_config_write_permissions
+    bytes_to_base64s, check_config_writeable
 )
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -43,7 +46,6 @@ from vantage6.common.docker.addons import (
 from vantage6.common.encryption import RSACryptor
 from vantage6.client import Client
 
-
 from vantage6.cli.context import NodeContext
 from vantage6.cli.globals import (
     DEFAULT_NODE_ENVIRONMENT as N_ENV,
@@ -51,7 +53,8 @@ from vantage6.cli.globals import (
 )
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
-    select_configuration_questionaire
+    select_configuration_questionaire,
+    NodeConfigurationManager
 )
 from vantage6.cli.utils import (
     check_config_name_allowed, check_if_docker_deamon_is_running
@@ -70,7 +73,9 @@ def cli_node():
 #
 @cli_node.command(name="list")
 def cli_node_list():
-    """Lists all nodes in the default configuration directory."""
+    """
+    Lists all nodes in the default configuration directories.
+    """
 
     client = docker.from_env()
     check_docker_running()
@@ -128,11 +133,22 @@ def cli_node_list():
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_new_configuration(name, environment, system_folders):
-    """Create a new configuration file.
+def cli_node_new_configuration(name: str, environment: str,
+        system_folders: bool) -> None:
+    """
+    Create a new configuration file.
 
     Checks if the configuration already exists. If this is not the case
-    a questionaire is invoked to create a new configuration file.
+    a questionnaire is invoked to create a new configuration file.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Store this configuration in the system folders or in the user folders.
     """
     # select configuration name if none supplied
     if not name:
@@ -162,8 +178,8 @@ def cli_node_new_configuration(name, environment, system_folders):
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_write_permissions(system_folders):
-        error("Your user does not have write access to all folders. Exiting")
+    if not check_config_writeable(system_folders):
+        error("Cannot write configuration file. Exiting...")
         exit(1)
 
     # create config in ctx location
@@ -183,11 +199,21 @@ def cli_node_new_configuration(name, environment, system_folders):
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_files(name, environment, system_folders):
-    """ Prints location important files.
+def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
+    """
+    Prints location important files.
 
-        If the specified configuration cannot be found, it exits. Otherwise
-        it returns the absolute path to the output.
+    If the specified configuration cannot be found, it exits. Otherwise
+    it returns the absolute path to the output.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Is this configuration stored in the system or in the user folders.
     """
     name, environment = select_node(name, environment, system_folders)
 
@@ -225,18 +251,37 @@ def cli_node_files(name, environment, system_folders):
               help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
               help="mount vantage6-master package source")
-def cli_node_start(name, config, environment, system_folders, image, keep,
-                   mount_src, attach, force_db_mount):
-    """Start the node instance.
+def cli_node_start(name: str, config: str, environment: str,
+                   system_folders: bool, image: str, keep: bool,
+                   mount_src: str, attach: bool, force_db_mount: bool):
+    """
+    Start the node instance inside a Docker container.
 
-        If no name or config is specified the default.yaml configuation is
-        used. In case the configuration file not excists, a questionaire is
-        invoked to create one. Note that in this case it is not possible to
-        specify specific environments for the configuration (e.g. test,
-        prod, acc).
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    config : str
+        Absolute path to configuration-file; overrides NAME
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Is this configuration stored in the system or in the user folders.
+    image : str
+        Node Docker image to use.
+    keep : bool
+        Keep container when finished or in the event of a crash. This is useful
+        for debugging.
+    mount_src : str
+        Mount vantage6 package source that replaces the source inside the
+        container. This is useful for debugging.
+    attach : bool
+        Attach node logs to the console after start.
+    force_db_mount : bool
+        Skip the check of the existence of the DB (always try to mount).
     """
     info("Starting node...")
-    info("Finding Docker deamon")
+    info("Finding Docker daemon")
     docker_client = docker.from_env()
     check_docker_running()
 
@@ -814,6 +859,44 @@ def cli_node_version(name, system_folders):
             {"node": version.output.decode('utf-8'), "cli": __version__})
     else:
         error(f"Node {name} is not running! Cannot provide version...")
+
+
+#
+#   set-api-key
+#
+@cli_node.command(name='set-api-key')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("--api-key", default=None, help="New API key")
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_set_api_key(name, api_key, environment, system_folders):
+    """
+    Put a new API key into the node configuration file
+    """
+    # select name and environment
+    name, environment = select_node(name, environment, system_folders)
+
+    # Check that we can write in the config folder
+    if not check_config_writeable(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        exit(1)
+
+    if not api_key:
+        api_key = q.text("Please enter your new API key:").ask()
+
+    # get configuration manager
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+    conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
+
+    # set new api key, and save the file
+    ctx.config['api_key'] = api_key
+    conf_mgr.put(environment, ctx.config)
+    conf_mgr.save(ctx.config_file)
+    info("Your new API key has been uploaded to the config file "
+         f"{ctx.config_file}.")
 
 
 def print_log_worker(logs_stream):

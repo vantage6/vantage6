@@ -28,7 +28,7 @@ from vantage6.node.docker.exceptions import (
 
 class DockerTaskManager(DockerBaseManager):
     """
-    Manager for running a Vantage6 algorithm container within docker.
+    Manager for running a vantage6 algorithm container within docker.
 
     Ensures that the environment is properly set up (docker volumes,
     directories, environment variables, etc). Then runs the algorithm as a

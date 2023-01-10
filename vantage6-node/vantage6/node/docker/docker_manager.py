@@ -1,7 +1,8 @@
 """
 Docker manager
 
-The docker manager is responsible for communicating with the docker-daemon and is a wrapper around the docker module. It has methods
+The docker manager is responsible for communicating with the docker-daemon and
+is a wrapper around the docker module. It has methods
 for creating docker networks, docker volumes, start containers and retrieve
 results from finished containers.
 """
@@ -23,8 +24,10 @@ from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
-from vantage6.node.util import logger_name
 from vantage6.node.docker.task_manager import DockerTaskManager
+from vantage6.node.util import logger_name
+
+
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail
@@ -34,7 +37,21 @@ log = logging.getLogger(logger_name(__name__))
 
 
 class Result(NamedTuple):
-    """ Data class to store the result of the docker image."""
+    # """ Data class to store the result of the docker image."""
+    """
+    Data class to store the result of the docker image.
+
+    Attributes
+    ----------
+    result_id: int
+        ID of the current algorithm run
+    logs: str
+        Logs attached to current algorithm run
+    data: str
+        Output data of the algorithm
+    status_code: int
+        Status code of the algorithm run
+    """
     result_id: int
     task_id: int
     logs: str
@@ -58,13 +75,13 @@ class KilledResult(NamedTuple):
 
 
 class DockerManager(DockerBaseManager):
-    """ Wrapper for the docker module, to be used specifically for vantage6.
+    """
+    Wrapper for the docker-py module.
 
-        It handles docker images names to results `run(image)`. It manages
-        docker images, files (input, output, token, logs). Docker images run
-        in detached mode, which allows to run multiple docker containers at
-        the same time. Results (async) can be retrieved through
-        `get_result()` which returns the first available result.
+    This classes manages tasks related to Docker, such as logging in to
+    docker registries, managing input/output files, logs etc. Results
+    can be retrieved through `get_result()` which returns the first available
+    algorithm result.
     """
     log = logging.getLogger(logger_name(__name__))
 

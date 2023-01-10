@@ -12,7 +12,7 @@ from sqlalchemy.engine.url import make_url
 from docker.client import DockerClient
 
 from vantage6.common import (info, warning, error, debug as debug_msg,
-                             check_config_write_permissions)
+                             check_config_writeable)
 from vantage6.common.docker.addons import (
     pull_if_newer, check_docker_running, remove_container,
     get_server_config_name, get_container, get_num_nonempty_networks,
@@ -394,7 +394,7 @@ def cli_server_new(name, environment, system_folders):
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_write_permissions(system_folders):
+    if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(f"Create a new server using '{Fore.GREEN}vserver new "
              "--user{Style.RESET_ALL}' instead!")

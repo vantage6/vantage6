@@ -32,24 +32,25 @@ us to manage them.
 .. warning::
 
     Security vulnerabilities should not be reported in the Github issue tracker
-    for obvious reasons. To see how we deal with security vulnerabilities read
-    our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
+    as they should not be publically visible. To see how we deal with security
+    vulnerabilities read our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
 
-    See the :ref:`Security vulnerabilities` section on how to release a security
-    patch.
+    See the :ref:`Security vulnerabilities` section when you want to release a
+    security patch yourself.
 
-We distibute the open issues in sprints, hotfixes and feature requests.
+We distibute the open issues in sprints and hotfixes.
 You can check out these boards here:
 
 * `Sprints <https://github.com/orgs/vantage6/projects/1>`_
 * `Hotfixes <https://github.com/orgs/vantage6/projects/2>`_
-* `Feature requests <https://github.com/orgs/vantage6/projects/3>`_
 
-When a bug report is submitted, it is automatically added to the hotfixes. For
-high impact errors, we will create a patch release as soon as possible. Other
-bugs may be rescheduled into a sprint. The sprint board tracks which issues
-we plan to fix in which upcoming release. Finally, we periodically check the
-open feature requests, and will then usually assign them to a particular sprint.
+When a high impact bug is reported, we will put it on the hotfix board and
+create a patch release as soon as possible.
+
+The sprint board tracks which issues we plan to fix in which upcoming release.
+Low-impact bugs, new features and changes will be scheduled into a sprint
+periodically. We automatically assign the label 'new' to all newly reported
+issues to track which issues should still be scheduled.
 
 If you would like to fix an existing bug or create a new feature, check
 :ref:`submit-patch` for more details on e.g. how to set up a local development

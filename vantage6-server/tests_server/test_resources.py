@@ -16,7 +16,7 @@ from werkzeug.utils import cached_property
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.server.globals import PACAKAGE_FOLDER
-from vantage6.server import ServerApp, db
+from vantage6.server import ServerApp, session
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
                                    Collaboration, Task, Result)
 from vantage6.server.model.rule import Scope, Operation
@@ -91,12 +91,12 @@ class TestResources(unittest.TestCase):
 
     @classmethod
     def setUp(cls):
-        # set db.session
+        # set session.session
         DatabaseSessionManager.get_session()
 
     @classmethod
     def tearDown(cls):
-        # unset db.session
+        # unset session.session
         DatabaseSessionManager.clear_session()
 
     def login(self, type_='root'):
@@ -567,7 +567,7 @@ class TestResources(unittest.TestCase):
             "new_password": "A_new_password1"
         })
         self.assertEqual(result.status_code, 200)
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertTrue(user.check_password("A_new_password1"))
 
     def test_view_rules(self):
@@ -694,7 +694,7 @@ class TestResources(unittest.TestCase):
             "description": "some description of this role..."
         })
 
-        db.session.refresh(role)
+        session.session.refresh(role)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(role.name, "a-different-role-name")
         self.assertEqual(role.description, "some description of this role...")
@@ -1092,7 +1092,7 @@ class TestResources(unittest.TestCase):
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'yeah'
         })
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("yeah", user.firstname)
 
@@ -1103,7 +1103,7 @@ class TestResources(unittest.TestCase):
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'whatever'
         })
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("whatever", user.firstname)
 
@@ -1120,7 +1120,7 @@ class TestResources(unittest.TestCase):
             'firstname': 'again',
             'lastname': 'and again',
         })
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("again", user.firstname)
         self.assertEqual("and again", user.lastname)
