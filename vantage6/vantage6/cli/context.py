@@ -138,10 +138,10 @@ class NodeContext(AppContext):
         )
 
     @property
-    def docker_configs_volume_name(self):
+    def docker_ssh_volume_name(self):
         return os.environ.get(
-            'TUNNEL_VOLUME_NAME',
-            f"{self.docker_container_name}-configs-vol"
+            'SSH_TUNNEL_VOLUME_NAME',
+            f"{self.docker_container_name}-ssh-vol"
         )
 
     def docker_temporary_volume_name(self, run_id):

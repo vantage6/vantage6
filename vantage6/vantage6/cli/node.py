@@ -317,8 +317,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
-    config_volume = docker_client.volumes.create(
-        ctx.docker_configs_volume_name)
+    ssh_volume = docker_client.volumes.create(ctx.docker_ssh_volume_name)
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
@@ -327,7 +326,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         ("/mnt/log", str(ctx.log_dir)),
         ("/mnt/data", data_volume.name),
         ("/mnt/vpn", vpn_volume.name),
-        ("/mnt/configs", config_volume.name),
+        ("/mnt/ssh", ssh_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
@@ -374,7 +373,11 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
         info(f"  Mounting private key for {hostname} at {key_path}")
 
-        mounts.append((f"/mnt/tunnel_keys/{hostname}.pem", str(key_path)))
+        # we remove the .tmp in the container, this is because the file is
+        # mounted in a volume mount point. Somehow the file is than empty in
+        # the volume but not for the node instance. By removing the .tmp we
+        # make sure that the file is not empty in the volume.
+        mounts.append((f"/mnt/ssh/{hostname}.pem.tmp", str(key_path)))
 
     # Be careful not to use 'environment' as it would override the function
     # argument ;-).

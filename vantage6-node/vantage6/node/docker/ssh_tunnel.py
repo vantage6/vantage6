@@ -94,7 +94,7 @@ class SSHTunnel(DockerBaseManager):
         # Place where we can store the SSH configuration file and the
         # known_hosts file.
         self.config_volume = config_volume
-        self.config_folder = Path("/mnt/configs")
+        self.config_folder = Path("/mnt/ssh")
 
         # Reference to isolated network, as we need to attach the SSH tunnel
         # container to this network
@@ -138,8 +138,8 @@ class SSHTunnel(DockerBaseManager):
 
         Returns
         -------
-        SSHConfig
-            SSH configuration
+        SSHTunnelConfig, KnownHostsConfig
+            SSH configuration files for the SSH tunnel container
 
         Notes
         -----
@@ -195,7 +195,7 @@ class SSHTunnel(DockerBaseManager):
 
         Parameters
         ----------
-        config: SSHConfig
+        config: SSHTunnelConfig
             Contains the SSH tunnel configuration
         """
         log.debug("Creating SSH config file")
@@ -219,7 +219,7 @@ class SSHTunnel(DockerBaseManager):
 
         Parameters
         ----------
-        config : KnownHostsConfig
+        config: KnownHostsConfig
             Contains the fingerprint and hostname of the remote server
         """
         log.debug("Creating known_hosts file")
