@@ -819,8 +819,8 @@ specify any environment, you should only specify the key ``application``
       # OPTIONAL
       algorithm_env:
 
-      # In this example the environment variable 'player' has
-      # the value 'Alice' inside the algorithm container
+      # In this example the environment variable 'player' has the value 'Alice'
+      # inside the algorithm container.
       player: Alice
 
       # Specify custom Docker images to use for starting the different
@@ -838,7 +838,7 @@ specify any environment, you should only specify the key ``application``
       databases:
         default: D:\data\datafile.csv
 
-      # end-to-end encryption settings
+      # end-to-end encryption settings.
       encryption:
 
         # whenever encryption is enabled or not. This should be the same
@@ -864,9 +864,9 @@ specify any environment, you should only specify the key ``application``
           password: docker-registry-password
 
       # Create SSH Tunnel to connect algorithms to external data-sources. The
-      # `hostname` and `tunnel:bind:port` can be used by the algorithm container
-      # to connect to the external data-source. This is the address you need to
-      # use in the `databases` section of the configuration file!
+      # `hostname` and `tunnel:bind:port` can be used by the algorithm
+      # container to connect to the external data-source. This is the address
+      # you need to use in the `databases` section of the configuration file!
       ssh-tunnels:
 
         # Hostname to be used within the internal network. I.e. this is the
@@ -877,6 +877,11 @@ specify any environment, you should only specify the key ``application``
 
           # SSH configuration of the remote machine
           ssh:
+
+            # Hostname or ip of the remote machine, in case it is the docker
+            # host you can use `host.docker.internal` for Windows and MacOS.
+            # In the case of Linux you can use `172.17.0.1` (the ip of the
+            # docker bridge on the host)
             host: host.docker.internal
             port: 22
 
