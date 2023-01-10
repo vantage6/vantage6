@@ -3,11 +3,30 @@
 echo "entrypoint.sh"
 
 # ls /root
+chmod 700 /root/.ssh
+chmod 600 /root/.ssh/*
 
+#!/bin/bash
 
-ssh -fN $@
+if [ -z "$1" ]; then
+  echo '' && echo 'Please also provide server name as in config file...' &&
+  exit 1
+fi
 
-echo "sleeping"
-sleep infinity
+retries=0
+repeat=true
+today=$(date)
 
-echo "Done"
+while "$repeat"; do
+  ((retries+=1)) &&
+  echo "Try number $retries..." &&
+  today=$(date) &&
+  ssh -N "$@" &&
+  repeat=false
+  if "$repeat"; then
+    sleep 5
+  fi
+done
+
+echo "Total number of tries: $retries"
+echo "Exiting"

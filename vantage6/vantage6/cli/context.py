@@ -138,7 +138,7 @@ class NodeContext(AppContext):
         )
 
     @property
-    def docker_ssh_volume_name(self):
+    def docker_ssh_volume_name(self) -> str:
         return os.environ.get(
             'SSH_TUNNEL_VOLUME_NAME',
             f"{self.docker_container_name}-ssh-vol"

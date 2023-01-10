@@ -570,14 +570,24 @@ class Node(object):
             # copy (rename) the ssh key to the correct name, this is done so
             # that the file is in the volume (somehow we can not file mount
             # within a volume)
-            ssh_key = f"/mnt/ssh/{config['hostname']}.pem.tmp"
-            shutil.copy(ssh_key, f"/mnt/ssh/{config['hostname']}.pem")
-            os.chmod(f"/mnt/ssh/{config['hostname']}.pem", 0o600)
+            if self.ctx.running_in_docker:
+                ssh_key = f"/mnt/ssh/{config['hostname']}.pem.tmp"
+                key_path = shutil.copy(ssh_key,
+                                       f"/mnt/ssh/{config['hostname']}.pem")
+                volume = self.ctx.docker_ssh_volume_name
+
+            else:
+                ssh_key = config['ssh']['identity']['key']
+
+                volume = str(Path(ssh_key).parent)
+                key_path = shutil.copy(ssh_key,
+                                       f"{volume}/{config['hostname']}.pem")
+
+            os.chmod(key_path, 0o600)
 
             try:
                 new_tunnel = SSHTunnel(isolated_network_mgr, config,
-                                       self.ctx.name,
-                                       self.ctx.docker_ssh_volume_name,
+                                       self.ctx.name, volume,
                                        custom_tunnel_image)
             except Exception as e:
                 self.log.error("Error setting up SSH tunnel")

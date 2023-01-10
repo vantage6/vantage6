@@ -10,6 +10,7 @@ by the algorithm containers to access the data-source. Multiple SSH tunnels
 can be created, each with a different configuration.
 """
 import logging
+import os
 
 from typing import Union, NamedTuple, Tuple
 from enum import Enum
@@ -18,10 +19,14 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
-from vantage6.common.docker.addons import remove_container
+from vantage6.common.docker.addons import (
+    remove_container,
+    running_in_docker,
+    remove_container_if_exists
+)
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
-from vantage6.node.globals import SSH_TUNNEL_IMAGE
+from vantage6.node.globals import SSH_TUNNEL_IMAGE, PACAKAGE_FOLDER
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -94,7 +99,9 @@ class SSHTunnel(DockerBaseManager):
         # Place where we can store the SSH configuration file and the
         # known_hosts file.
         self.config_volume = config_volume
-        self.config_folder = Path("/mnt/ssh")
+
+        self.config_folder = Path("/mnt/ssh") if running_in_docker() else \
+            Path(self.config_volume)
 
         # Reference to isolated network, as we need to attach the SSH tunnel
         # container to this network
@@ -201,8 +208,11 @@ class SSHTunnel(DockerBaseManager):
         log.debug("Creating SSH config file")
 
         # FIXME: This should not be a hard coded path
+
         environment = Environment(
-            loader=FileSystemLoader("/vantage6/vantage6-node/vantage6/node/template/"),
+            loader=FileSystemLoader(
+                PACAKAGE_FOLDER / APPNAME / "node" / "template"
+            ),
             autoescape=True
         )
         template = environment.get_template("ssh_config.j2")
@@ -212,6 +222,10 @@ class SSHTunnel(DockerBaseManager):
 
         with open(self.config_folder / "config", "w") as f:
             f.write(ssh_config)
+
+        # vnode-local breaks if we dont do this
+        os.chmod(self.config_folder / "config", 0o600)
+        log.info('chmodded the crap out of the config')
 
     def create_known_hosts_file(self, config: KnownHostsConfig) -> None:
         """
@@ -243,6 +257,9 @@ class SSHTunnel(DockerBaseManager):
         # Start the SSH tunnel container. We can do this prior connecting it
         # to the isolated network as the tunnel is not reliant on the network.
         log.debug("Starting SSH tunnel container")
+        remove_container_if_exists(
+            docker_client=self.docker, name=self.container_name
+        )
         self.container = self.docker.containers.run(
             image=self.image,
             volumes=mounts,
