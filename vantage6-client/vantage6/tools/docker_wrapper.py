@@ -25,9 +25,9 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
-def docker_wrapper(module: str):
+def docker_wrapper(module: str, load_data=True):
     wrapper = DockerWrapper()
-    wrapper.wrap_algorithm(module)
+    wrapper.wrap_algorithm(module, load_data)
 
 
 def sparql_wrapper(module: str):
@@ -42,7 +42,7 @@ def parquet_wrapper(module: str):
 
 class WrapperBase(ABC):
 
-    def wrap_algorithm(self, module):
+    def wrap_algorithm(self, module, load_data=True):
         """
             Wrap an algorithm module to provide input and output handling for the
             vantage6 infrastructure.
@@ -78,6 +78,7 @@ class WrapperBase(ABC):
             - pandas DataFrames
 
             :param module: module that contains the vantage6 algorithms
+            :param load_data: attempt to load the data or execute the query
             :return:
             """
         info(f"wrapper for {module}")
@@ -99,7 +100,11 @@ class WrapperBase(ABC):
         database_uri = os.environ["DATABASE_URI"]
         info(f"Using '{database_uri}' as database")
         # with open(data_file, "r") as fp:
-        data = self.load_data(database_uri, input_data)
+
+        if load_data:
+            data = self.load_data(database_uri, input_data)
+        else:
+            data = None
 
         # make the actual call to the method/function
         info("Dispatching ...")
@@ -124,6 +129,7 @@ class DockerWrapper(WrapperBase):
     def load_data(database_uri, input_data):
         return pandas.read_csv(database_uri)
 
+CsvWrapper = DockerWrapper
 
 class SparqlDockerWrapper(WrapperBase):
     @staticmethod
