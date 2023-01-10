@@ -11,13 +11,14 @@ can be created, each with a different configuration.
 """
 import logging
 
-from typing import Union, Type, NamedTuple, Tuple
+from typing import Union, NamedTuple, Tuple
 from enum import Enum
-from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.common.docker.addons import remove_container
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
 from vantage6.node.globals import SSH_TUNNEL_IMAGE
@@ -39,6 +40,8 @@ class SSHTunnelConfig(NamedTuple):
         SSH port of the remote server
     identity_file : str
         Identity file of the user to connect to the remote server
+    local_ip : str
+        IP of the app you want to tunnel on the remote machine
     local_port : int
         Port of the app you want to tunnel on the remote machine
     bind_ip : str
@@ -50,6 +53,7 @@ class SSHTunnelConfig(NamedTuple):
     hostname: str
     port: int
     identity_file: str
+    local_ip: str
     local_port: int
     bind_ip: str
     bind_port: int
@@ -77,7 +81,8 @@ class SHHTunnelStatus(Enum):
 class SSHTunnel(DockerBaseManager):
 
     def __init__(self, isolated_network_mgr: NetworkManager, config: dict,
-                 node_name: str, tunnel_image: Union[str, None]) -> None:
+                 node_name: str, config_volume: str,
+                 tunnel_image: Union[str, None] = None) -> None:
 
         super().__init__(isolated_network_mgr)
 
@@ -88,8 +93,7 @@ class SSHTunnel(DockerBaseManager):
 
         # Place where we can store the SSH configuration file and the
         # known_hosts file.
-        # FIXME: I think this should be a global setting, as this is mounted
-        # by vantage6-CLI in the volume
+        self.config_volume = config_volume
         self.config_folder = Path("/mnt/configs")
 
         # Reference to isolated network, as we need to attach the SSH tunnel
@@ -144,23 +148,25 @@ class SSHTunnel(DockerBaseManager):
         ```yaml
         ssh-tunnels:
           - hostname: "my-ssh-host"
-              ssh:
+            ssh:
               host: "my-ssh-host"
               port: 22
               fingerprint: "my-ssh-host-fingerprint"
               identity:
-                  username: "my-ssh-username"
-                  key: "/path/to/my/ssh/key"
-              tunnel:
+                username: "my-ssh-username"
+                key: "/path/to/my/ssh/key"
+            tunnel:
               bind:
-                  ip: x.x.x.x
-                  port: 1234
+                ip: x.x.x.x
+                port: 1234
               dest:
-                  port: 5678
+                ip: 127.0.0.1
+                port: 5678
         ```
         """
         log.debug("Reading SSH tunnel configuration")
         bind = config['tunnel']['bind']
+        dest = config['tunnel']['dest']
         ssh = config['ssh']
         identity = ssh['identity']
 
@@ -169,10 +175,11 @@ class SSHTunnel(DockerBaseManager):
             username=identity['username'],
             hostname=ssh['host'],
             port=ssh['port'],
-            identity_file=identity['key'],
-            local_port=config['tunnel']['dest']['port'],
+            identity_file=f"/root/.ssh/{config['hostname']}.pem",
             bind_ip=bind['ip'],
-            bind_port=bind['port']
+            bind_port=bind['port'],
+            local_ip=dest['ip'],
+            local_port=dest['port'],
         )
 
         known_hosts_config = KnownHostsConfig(
@@ -182,7 +189,7 @@ class SSHTunnel(DockerBaseManager):
 
         return ssh_tunnel_config, known_hosts_config
 
-    def create_ssh_config_file(self, config: Type[SSHTunnelConfig]) -> None:
+    def create_ssh_config_file(self, config: SSHTunnelConfig) -> None:
         """
         Create an SSH configuration file
 
@@ -203,16 +210,16 @@ class SSHTunnel(DockerBaseManager):
         # inject template with vars
         ssh_config = template.render(**config._asdict())
 
-        with open(self.config_folder / "ssh_config", "w") as f:
+        with open(self.config_folder / "config", "w") as f:
             f.write(ssh_config)
 
-    def create_known_hosts_file(self, config: Type[KnownHostsConfig]) -> None:
+    def create_known_hosts_file(self, config: KnownHostsConfig) -> None:
         """
         Create a known_hosts file
 
         Parameters
         ----------
-        config : Type[KnownHostsConfig]
+        config : KnownHostsConfig
             Contains the fingerprint and hostname of the remote server
         """
         log.debug("Creating known_hosts file")
@@ -228,11 +235,9 @@ class SSHTunnel(DockerBaseManager):
         assert self.ssh_tunnel_config, "SSH config not set"
         assert self.known_hosts_config, "Known hosts config not set"
 
+        # Contains the (ssh) config and known_hosts file
         mounts = {
-            self.config_folder / 'ssh_config':
-                {'bind': '/root/.ssh/config', 'mode': 'ro'},
-            self.config_folder / 'known_hosts':
-                {'bind': '/root/.ssh/known_hosts', 'mode': 'ro'},
+            self.config_volume: {'bind': '/root/.ssh', 'mode': 'rw'},
         }
 
         # Start the SSH tunnel container. We can do this prior connecting it
@@ -242,9 +247,9 @@ class SSHTunnel(DockerBaseManager):
             image=self.image,
             volumes=mounts,
             detach=True,
-            restart_policy={"Name": "always"},
             name=self.container_name,
-            command=self.ssh_tunnel_config.hostname
+            command=self.ssh_tunnel_config.hostname,
+            auto_remove=False
         )
 
         # Connect to both the internal network and make an alias (=hostname).
@@ -256,7 +261,9 @@ class SSHTunnel(DockerBaseManager):
         """
         Stop the SSH tunnel container
         """
-        assert self.container, "No container to stop"
-        log.debug("Trying to stop SSH tunnel container")
-        self.container.stop()
+        if not self.container:
+            log.debug("SSH tunnel container not running")
+            return
+
+        remove_container(self.container, kill=True)
         log.info(f"SSH tunnel {self.hostname} stopped")

@@ -36,6 +36,7 @@ import datetime
 import logging
 import queue
 import json
+import shutil
 
 from pathlib import Path
 from threading import Thread
@@ -565,13 +566,22 @@ class Node(object):
         tunnels: List[SSHTunnel] = []
         for config in configs:
             self.log.debug(f"SSH tunnel config: {config}")
+
+            # copy the ssh key in the correct directory
+            ssh_key = f"/mnt/tunnel_keys/{config['hostname']}.pem"
+            # copy ssh_key to /mnt/configs
+            shutil.copy(ssh_key, f"/mnt/configs/{config['hostname']}.pem")
+            os.chmod(f"/mnt/configs/{config['hostname']}.pem", 0o600)
+
             try:
-                # TODO add the tunnel image
                 new_tunnel = SSHTunnel(isolated_network_mgr, config,
-                                       self.ctx.name, custom_tunnel_image)
+                                       self.ctx.name,
+                                       self.ctx.docker_configs_volume_name,
+                                       custom_tunnel_image)
             except Exception as e:
-                self.log.error(f"Error setting up SSH tunnel: {e}")
-                self.log.error(f"Skipping tunnel: {config}")
+                self.log.error("Error setting up SSH tunnel")
+                self.log.debug(e, exc_info=True)
+                continue
 
             tunnels.append(new_tunnel)
 
@@ -837,12 +847,18 @@ class Node(object):
         )
 
     def cleanup(self) -> None:
+
         if hasattr(self, 'socketIO') and self.socketIO:
             self.socketIO.disconnect()
         if hasattr(self, 'vpn_manager') and self.vpn_manager:
             self.vpn_manager.exit_vpn()
+        if hasattr(self, 'ssh_tunnels') and self.ssh_tunnels:
+            for tunnel in self.ssh_tunnels:
+                tunnel.stop()
         if hasattr(self, '_Node__docker') and self.__docker:
             self.__docker.cleanup()
+
+        self.log.info("Bye!")
 
 
 # ------------------------------------------------------------------------------

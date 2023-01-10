@@ -19,6 +19,8 @@ from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.cli.context import NodeContext
+from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.util import logger_name
@@ -66,8 +68,9 @@ class DockerManager(DockerBaseManager):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, ctx, isolated_network_mgr: NetworkManager,
-                 vpn_manager: VPNManager, tasks_dir: Path) -> None:
+    def __init__(self, ctx: Union[DockerNodeContext, NodeContext],
+                 isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
+                 tasks_dir: Path) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -108,6 +111,9 @@ class DockerManager(DockerBaseManager):
         # could be duplicate result_id's running at the node at the same
         # time.
         self.node_name = ctx.name
+
+        # name of the container that is running the node
+        self.node_container_name = ctx.docker_container_name
 
         # login to the registries
         docker_registries = ctx.config.get("docker_registries", [])
@@ -271,6 +277,12 @@ class DockerManager(DockerBaseManager):
         self.cleanup_tasks()
         for service in self.linked_services:
             self.isolated_network_mgr.disconnect(service)
+
+        # remove the node container from the network, it runs this code.. so
+        # it does not make sense to delete it just yet
+        self.isolated_network_mgr.disconnect(self.node_container_name)
+
+        # remove the connected containers and the network
         self.isolated_network_mgr.delete(kill_containers=True)
 
     def run(self, result_id: int, task_info: Dict, image: str,

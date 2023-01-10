@@ -2,7 +2,12 @@
 
 echo "entrypoint.sh"
 
-# create ssh tunnel using the ssh config created by the node
-ssh $@
+# ls /root
+
+
+ssh -fN $@
+
+echo "sleeping"
+sleep infinity
 
 echo "Done"

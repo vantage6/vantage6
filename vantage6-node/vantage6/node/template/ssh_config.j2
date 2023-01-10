@@ -22,10 +22,11 @@ Host {{ hostname }}
     {# local port is the port on the remote machine, the bind ip and port is
        the address of the tunnel container. Usually the BINDIP is 0.0.0.0 as we
        want to allow algorithms to connect to the tunnel container. #}
-    LocalForward {{ local_port }} {{ bind_ip }}:{{ bind_port }}
+    LocalForward {{ bind_ip }}:{{ bind_port }} {{ local_ip }}:{{ local_port }}
 
     {# We only want to connect if the fingerprint matches #}
     StrictHostKeyChecking yes
+    AddressFamily inet {#ipv4#}
 
     ExitOnForwardFailure yes
     ServerAliveInterval 10

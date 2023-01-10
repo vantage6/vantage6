@@ -4,6 +4,7 @@ RUN apt update
 RUN apt upgrade -y
 
 RUN apt install -y openssh-server
+RUN apt install -y curl
 
 RUN mkdir /app
 

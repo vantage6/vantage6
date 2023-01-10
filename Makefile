@@ -86,7 +86,7 @@ support-image:
 	make support-vpn-configurator-image
 	make support-ssh-tunnel-image
 
-make support-alpine-image:
+support-alpine-image:
 	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
@@ -95,7 +95,7 @@ make support-alpine-image:
 		-f ./docker/alpine.Dockerfile \
 		--push .
 
-make support-vpn-client-image:
+support-vpn-client-image:
 	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
@@ -104,7 +104,7 @@ make support-vpn-client-image:
 		-f ./docker/vpn-client.Dockerfile \
 		--push .
 
-make support-vpn-configurator-image:
+support-vpn-configurator-image:
 	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
@@ -113,7 +113,7 @@ make support-vpn-configurator-image:
 		-f ./docker/vpn-configurator.Dockerfile \
 		--push .
 
-make support-ssh-tunnel-image:
+support-ssh-tunnel-image:
 	@echo "Building ${REGISTRY}/infrastructure/ssh-tunnel:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/ssh-tunnel:${TAG} \

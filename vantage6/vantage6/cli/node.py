@@ -359,6 +359,23 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             warning(f"private key file provided {fullpath}, "
                     "but does not exists")
 
+    # Mount private keys for ssh tunnels
+    ssh_tunnels = ctx.config.get("ssh-tunnels", [])
+    for ssh_tunnel in ssh_tunnels:
+        hostname = ssh_tunnel.get("hostname")
+        key_path = ssh_tunnel.get("ssh", {}).get("identity", {}).get("key")
+        if not key_path:
+            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                  "key not provided")
+        key_path = Path(key_path)
+        if not key_path.exists():
+            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                  "key does not exist")
+
+        info(f"  Mounting private key for {hostname} at {key_path}")
+
+        mounts.append((f"/mnt/tunnel_keys/{hostname}.pem", str(key_path)))
+
     # Be careful not to use 'environment' as it would override the function
     # argument ;-).
     env = {
