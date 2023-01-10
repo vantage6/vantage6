@@ -26,6 +26,11 @@ Host {{ hostname }}
 
     {# We only want to connect if the fingerprint matches #}
     StrictHostKeyChecking yes
+
+    {# We do not need to check if the ip-changed, we do not connect in case
+       the keys does not match #}
+    CheckHostIP no
+
     AddressFamily inet {#ipv4#}
 
     ExitOnForwardFailure yes
