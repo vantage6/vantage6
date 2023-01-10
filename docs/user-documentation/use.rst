@@ -796,70 +796,115 @@ specify any environment, you should only specify the key ``application``
 
 .. code:: yaml
 
-   application:
+    application:
 
-     # API key used to authenticate at the server.
-     api_key: ***
+      # API key used to authenticate at the server.
+      api_key: ***
 
-     # URL of the vantage6 server
-     server_url: https://petronas.vantage6.ai
+      # URL of the vantage6 server
+      server_url: https://petronas.vantage6.ai
 
-     # port the server listens to
-     port: 443
+      # Port the server listens to
+      port: 443
 
-     # API path prefix that the server uses. Usually '/api' or an empty string
-     api_path: ''
+      # API path prefix that the server uses. Usually '/api' or an empty string
+      api_path: ''
 
-     # subnet of the VPN server
-     vpn_subnet: 10.76.0.0/16
+      # Subnet of the VPN server
+      vpn_subnet: 10.76.0.0/16
 
-     # add additional environment variables to the algorithm containers.
-     # this could be usefull for passwords or other things that algorithms
-     # need to know about the node it is running on
-     # OPTIONAL
-     algorithm_env:
+      # Add additional environment variables to the algorithm containers.
+      # this could be usefull for passwords or other things that algorithms
+      # need to know about the node it is running on
+      # OPTIONAL
+      algorithm_env:
 
-       # in this example the environment variable 'player' has
-       # the value 'Alice' inside the algorithm container
-       player: Alice
+      # In this example the environment variable 'player' has
+      # the value 'Alice' inside the algorithm container
+      player: Alice
 
-     # specify custom Docker images to use for starting the different
-     # components.
-     # OPTIONAL
-     images:
-       node: harbor2.vantage6.ai/infrastructure/node:petronas
-       alpine: harbor2.vantage6.ai/infrastructure/alpine
-       vpn_client: harbor2.vantage6.ai/infrastructure/vpn_client
-       network_config: harbor2.vantage6.ai/infrastructure/vpn_network
+      # Specify custom Docker images to use for starting the different
+      # components.
+      # OPTIONAL
+      images:
+        node: harbor2.vantage6.ai/infrastructure/node:petronas
+        alpine: harbor2.vantage6.ai/infrastructure/alpine
+        vpn_client: harbor2.vantage6.ai/infrastructure/vpn_client
+        network_config: harbor2.vantage6.ai/infrastructure/vpn_network
 
-     # path or endpoint to the local data source. The client can request a
-     # certain database to be used if it is specified here. They are
-     # specified as label:local_path pairs.
-     databases:
-       default: D:\data\datafile.csv
+      # Path or endpoint to the local data source. The client can request a
+      # certain database to be used if it is specified here. They are
+      # specified as label:local_path pairs.
+      databases:
+        default: D:\data\datafile.csv
 
-     # end-to-end encryption settings
-     encryption:
+      # end-to-end encryption settings
+      encryption:
 
-       # whenever encryption is enabled or not. This should be the same
-       # as the `encrypted` setting of the collaboration to which this
-       # node belongs.
-       enabled: false
+        # whenever encryption is enabled or not. This should be the same
+        # as the `encrypted` setting of the collaboration to which this
+        # node belongs.
+        enabled: false
 
-       # location to the private key file
-       private_key: /path/to/private_key.pem
+        # location to the private key file, the public key file will be
+        # derived and uploaded to the server automatically. Note that this will
+        # overwrite the public key on the server if it already exists.
+        private_key: /path/to/private_key.pem
 
-     # To control which algorithms are allowed at the node you can set
-     # the allowed_images key. This is expected to be a valid regular
-     # expression
-     allowed_images:
-       - ^harbor.vantage6.ai/[a-zA-Z]+/[a-zA-Z]+
+      # To control which algorithms are allowed at the node you can set
+      # the allowed_images key. This is expected to be a valid regular
+      # expression
+      allowed_images:
+        - ^harbor2.vantage6.ai/[a-zA-Z]+/[a-zA-Z]+
 
-     # credentials used to login to private Docker registries
-     docker_registries:
-       - registry: docker-registry.org
-         username: docker-registry-user
-         password: docker-registry-password
+      # Credentials used to login to private Docker registries
+      docker_registries:
+        - registry: docker-registry.org
+          username: docker-registry-user
+          password: docker-registry-password
+
+      # Create SSH Tunnel to connect algorithms to external data-sources. The
+      # `hostname` and `tunnel:bind:port` can be used by the algorithm container
+      # to connect to the external data-source. This is the address you need to
+      # use in the `databases` section of the configuration file!
+      ssh-tunnels:
+
+        # Hostname to be used within the internal network. I.e. this is the
+        # hostname that the algorithm uses to connect to the data source. Make
+        # sure this is unique and the same as what you specified in the
+        # `databases` section of the configuration file.
+        - hostname: my-data-source
+
+          # SSH configuration of the remote machine
+          ssh:
+            host: host.docker.internal
+            port: 22
+
+            # fingerprint of the remote machine. This is used to verify the
+            # authenticity of the remote machine.
+            fingerprint: "ssh-rsa ..."
+
+            # Username and private key to use for authentication on the remote
+            # machine
+            identity:
+              username: username
+              key: /path/to/private_key.pem
+
+          # Once the SSH connection is established, a tunnel is created to
+          # forward traffic from the local machine to the remote machine.
+          tunnel:
+
+            # The port and ip on the tunnel container. The ip is always
+            # 0.0.0.0 as we want the algorithm container to be able to connect.
+            bind:
+              ip: 0.0.0.0
+              port: 8000
+
+            # The port and ip on the remote machine. If the data source runs on
+            # this machine, the ip most likely is 127.0.0.1.
+            dest:
+              ip: 127.0.0.1
+              port: 8000
 
      # Settings for the logger
      logging:
