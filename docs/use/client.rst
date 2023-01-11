@@ -207,7 +207,7 @@ set up and if they have access to the private key.
 
 .. code:: python
 
-   from vantage6.common import (warning, error, info, debug, bytes_to_base64s, check_config_write_permissions)
+   from vantage6.common import warning, error, info, debug, bytes_to_base64s
    from vantage6.client.encryption import RSACryptor
    from pathlib import Path
 

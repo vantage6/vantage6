@@ -30,7 +30,7 @@ from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_config_write_permissions
+    bytes_to_base64s, check_config_writeable
 )
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -44,9 +44,8 @@ from vantage6.common.docker.addons import (
   remove_container_if_exists,
   check_docker_running
 )
+from vantage6.common.encryption import RSACryptor
 from vantage6.client import Client
-from vantage6.client.encryption import RSACryptor
-
 
 from vantage6.cli.context import NodeContext
 from vantage6.cli.globals import (
@@ -55,7 +54,8 @@ from vantage6.cli.globals import (
 )
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
-    select_configuration_questionaire
+    select_configuration_questionaire,
+    NodeConfigurationManager
 )
 from vantage6.cli.utils import (
     check_config_name_allowed, check_if_docker_daemon_is_running
@@ -179,8 +179,8 @@ def cli_node_new_configuration(name: str, environment: str,
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_write_permissions(system_folders):
-        error("Your user does not have write access to all folders. Exiting")
+    if not check_config_writeable(system_folders):
+        error("Cannot write configuration file. Exiting...")
         exit(1)
 
     # create config in ctx location
@@ -425,10 +425,12 @@ def cli_node_start(name: str, config: str, environment: str,
             env[f'{label_capitals}_DATABASE_URI'] = uri
         else:
             debug('  - file-based database added')
-            env[f'{label_capitals}_DATABASE_URI'] = f'{label}.csv'
-            mounts.append((f'/mnt/{label}.csv', str(uri)))
+            suffix = Path(uri).suffix
+            env[f'{label_capitals}_DATABASE_URI'] = f'{label}{suffix}'
+            mounts.append((f'/mnt/{label}{suffix}', str(uri)))
 
         # FIXME legacy to support < 2.1.3 can be removed from 3+
+        # FIXME this is still required in v3+ but should be removed in v4
         if label == 'default':
             env['DATABASE_URI'] = '/mnt/default.csv'
 
@@ -719,6 +721,8 @@ def cli_node_create_private_key(
         if 'client' not in locals():
             client = create_client_and_authenticate(ctx)
 
+        # TODO what happens if the user doesn't have permission to upload key?
+        # Does that lead to an exception or not?
         try:
             client.request(
                 f"/organization/{client.whoami.organization_id}",
@@ -898,8 +902,44 @@ def cli_node_version(name: str, system_folders: bool) -> None:
 
 
 #
-#  helper functions
+#   set-api-key
 #
+@cli_node.command(name='set-api-key')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("--api-key", default=None, help="New API key")
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_set_api_key(name, api_key, environment, system_folders):
+    """
+    Put a new API key into the node configuration file
+    """
+    # select name and environment
+    name, environment = select_node(name, environment, system_folders)
+
+    # Check that we can write in the config folder
+    if not check_config_writeable(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        exit(1)
+
+    if not api_key:
+        api_key = q.text("Please enter your new API key:").ask()
+
+    # get configuration manager
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+    conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
+
+    # set new api key, and save the file
+    ctx.config['api_key'] = api_key
+    conf_mgr.put(environment, ctx.config)
+    conf_mgr.save(ctx.config_file)
+    info("Your new API key has been uploaded to the config file "
+         f"{ctx.config_file}.")
+
+
+#  helper functions
 def print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     Print the logs from the logs stream.
@@ -909,6 +949,7 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
     logs_stream : Iterable[bytes]
         Output of the container.attach() method
     """
+
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
 
