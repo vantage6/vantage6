@@ -258,7 +258,7 @@ class DockerManager(DockerBaseManager):
         })
         return bool(running_containers)
 
-    def cleanup_tasks(self) -> List[Dict]:
+    def cleanup_tasks(self) -> List[KilledResult]:
         """
         Stop all active tasks
 
@@ -485,7 +485,7 @@ class DockerManager(DockerBaseManager):
 
     def kill_selected_tasks(
         self, org_id: int, kill_list: List[ToBeKilled] = None
-    ) -> List[Dict]:
+    ) -> List[KilledResult]:
         """
         Kill tasks specified by a kill list, if they are currently running on
         this node
@@ -529,7 +529,7 @@ class DockerManager(DockerBaseManager):
         return killed_list
 
     def kill_tasks(self, org_id: int,
-                   kill_list: List[ToBeKilled] = None) -> List[Dict]:
+                   kill_list: List[ToBeKilled] = None) -> List[KilledResult]:
         """
         Kill tasks currently running on this node.
 
