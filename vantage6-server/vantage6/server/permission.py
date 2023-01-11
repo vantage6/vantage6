@@ -17,27 +17,51 @@ RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
 
 
 class RuleCollection:
-    """Ordering things in collections helps us in the API endpoints."""
+    """
+    Class that tracks a set of all rules for a certain resource name
 
-    def __init__(self, name):
+    Parameters
+    ----------
+    name: str
+        Name of the resource endpoint (e.g. node, organization, user)
+    """
+
+    def __init__(self, name) -> None:
         self.name = name
 
-    def add(self, scope: Scope, operation: Operation):
+    def add(self, scope: Scope, operation: Operation) -> None:
+        """
+        Add a rule to the rule collection
+
+        scope: Scope
+            Scope within which to apply the rule
+        operation: Operation
+            What operation the rule applies to
+        """
         permission = Permission(RuleNeed(self.name, scope, operation))
         self.__setattr__(f'{operation.value}_{scope.value}', permission)
 
+    # TODO BvB 23-01-10 I don't think this function is ever used. Should we
+    # delete it?
     def get(self, scope: Scope, operation: Operation):
         return self.__getattribute__(f'{scope}_{operation}')
 
 
 class PermissionManager:
+    """
+    Loads the permissions and syncs rules in database with rules defined in
+    the code
+    """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.collections = {}
         log.info("Loading permission system...")
         self.load_rules_from_resources()
 
-    def load_rules_from_resources(self):
+    def load_rules_from_resources(self) -> None:
+        """
+        At server startup, load rules from all resources
+        """
         for res in RESOURCES:
             module = importlib.import_module('vantage6.server.resource.' + res)
             try:
@@ -48,18 +72,19 @@ class PermissionManager:
                           "permissions")
 
     def assign_rule_to_node(self, name: str, scope: Scope,
-                            operation: Operation):
-        """Assign a rule to the Node role."""
+                            operation: Operation) -> None:
+        """
+        Assign a rule to the Node role."""
         self.assign_rule_to_fixed_role("node", name, scope, operation)
 
     def assign_rule_to_container(self, name: str, scope: Scope,
-                                 operation: Operation):
+                                 operation: Operation) -> None:
         """Assign a rule to the container role."""
         self.assign_rule_to_fixed_role("container", name, scope, operation)
 
     @staticmethod
     def assign_rule_to_fixed_role(fixedrole: str, name: str, scope: Scope,
-                                  operation: Operation):
+                                  operation: Operation) -> None:
         """Attach a rule to a fixed role (not adjustable by users)."""
         role = Role.get_by_name(fixedrole)
         if not role:
@@ -77,7 +102,7 @@ class PermissionManager:
 
     def register_rule(self, collection: str, scope: Scope,
                       operation: Operation, description=None,
-                      assign_to_node=False, assign_to_container=False):
+                      assign_to_node=False, assign_to_container=False) -> None:
         """Register a rule in the database.
 
         If a rule already exists, nothing is done. This rule can be used in API
@@ -126,17 +151,17 @@ class PermissionManager:
         return lambda *args, **kwargs: self.register_rule(name, *args,
                                                           **kwargs)
 
-    def collection(self, name):
+    def collection(self, name) -> RuleCollection:
         if self._collection_exists(name):
             return self.collections[name]
         else:
             self.collections[name] = RuleCollection(name)
             return self.collections[name]
 
-    def _collection_exists(self, name):
+    def _collection_exists(self, name) -> bool:
         return name in self.collections
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> RuleCollection:
         # __getattr__ is called when it is not found in the usual places
         try:
             collection = self.collections[name]
@@ -146,7 +171,7 @@ class PermissionManager:
             raise e
 
     @staticmethod
-    def rule_exists_in_db(name, scope, operation):
+    def rule_exists_in_db(name, scope, operation) -> bool:
         """Check if the rule exists in the DB.
 
         Parameters
@@ -160,7 +185,7 @@ class PermissionManager:
 
         Returns
         -------
-        Boolean
+        bool
             Whenever this rule exists in the database or not
         """
         session = DatabaseSessionManager.get_session()
@@ -170,7 +195,7 @@ class PermissionManager:
             scope=scope
         ).scalar()
 
-    def verify_user_rules(self, rules):
+    def verify_user_rules(self, rules) -> bool:
         for rule in rules:
             requires = RuleNeed(rule.name, rule.scope, rule.operation)
             try:
