@@ -78,12 +78,12 @@ class ServerContext(AppContext):
             string representation of the database uri
         """
         uri = os.environ.get("VANTAGE6_DB_URI") or self.config['uri']
-        URL = make_url(uri)
+        url = make_url(uri)
 
-        if (URL.host is None) and (not os.path.isabs(URL.database)):
+        if (url.host is None) and (not os.path.isabs(url.database)):
             # We're dealing with a relative path here.
-            URL.database = str(self.data_dir / URL.database)
-            uri = str(URL)
+            url.database = str(self.data_dir / url.database)
+            uri = str(url)
 
         return uri
 

@@ -7,9 +7,9 @@ from vantage6.common.globals import APPNAME
 #
 #   INSTALLATION SETTINGS
 #
-PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
+PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "server" / "_data"
+DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "server" / "_data"
 
 #
 #   RUNTIME SETTINGS

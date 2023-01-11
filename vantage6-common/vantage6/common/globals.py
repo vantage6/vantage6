@@ -19,6 +19,6 @@ DEFAULT_SERVER_IMAGE = "infrastructure/server:petronas"
 #
 #   COMMON GLOBALS
 #
-PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
+PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 VPN_CONFIG_FILE = 'vpn-config.ovpn.conf'
