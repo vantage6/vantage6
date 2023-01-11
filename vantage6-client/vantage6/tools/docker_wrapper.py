@@ -44,43 +44,44 @@ class WrapperBase(ABC):
 
     def wrap_algorithm(self, module, load_data=True):
         """
-            Wrap an algorithm module to provide input and output handling for the
-            vantage6 infrastructure.
+        Wrap an algorithm module to provide input and output handling for the
+        vantage6 infrastructure.
 
-            Data is received in the form of files, whose location should be specified
-            in the following environment variables:
-            - `INPUT_FILE`: input arguments for the algorithm
-            - `OUTPUT_FILE`: location where the results of the algorithm should be
-              stored
-            - `TOKEN_FILE`: access token for the vantage6 server REST api
-            - `DATABASE_URI`: either a database endpoint or path to a csv file.
+        Data is received in the form of files, whose location should be
+        specified in the following environment variables:
+        - `INPUT_FILE`: input arguments for the algorithm
+        - `OUTPUT_FILE`: location where the results of the algorithm should be
+            stored
+        - `TOKEN_FILE`: access token for the vantage6 server REST api
+        - `DATABASE_URI`: either a database endpoint or path to a csv file.
 
-            The wrapper is able to parse a number of input file formats. The available
-            formats can be found in `vantage6.tools.data_format.DataFormat`. When the
-            input is not pickle (legacy), the format should be specified in the first
-            bytes of the input file, followed by a '.'.
+        The wrapper is able to parse a number of input file formats. The
+        available formats can be found in
+        `vantage6.tools.data_format.DataFormat`. When the input is not pickle
+        (legacy), the format should be specified in the first bytes of the
+        input file, followed by a '.'.
 
-            It is also possible to specify the desired output format. This is done by
-            including the parameter 'output_format' in the input parameters. Again, the
-            list of possible output formats can be found in
-            `vantage6.tools.data_format.DataFormat`.
+        It is also possible to specify the desired output format. This is done
+        by including the parameter 'output_format' in the input parameters.
+        Again, the list of possible output formats can be found in
+        `vantage6.tools.data_format.DataFormat`.
 
-            It is still possible that output serialization will fail even if the
-            specified format is listed in the DataFormat enum. Algorithms can in
-            principle return any python object, but not every serialization format will
-            support arbitrary python objects. When dealing with unsupported algorithm
-            output, the user should use 'pickle' as output format, which is the
-            default.
+        It is still possible that output serialization will fail even if the
+        specified format is listed in the DataFormat enum. Algorithms can in
+        principle return any python object, but not every serialization format
+        will support arbitrary python objects. When dealing with unsupported
+        algorithm output, the user should use 'pickle' as output format, which
+        is the default.
 
-            The other serialization formats support the following algorithm output:
-            - built-in primitives (int, float, str, etc.)
-            - built-in collections (list, dict, tuple, etc.)
-            - pandas DataFrames
+        The other serialization formats support the following algorithm output:
+        - built-in primitives (int, float, str, etc.)
+        - built-in collections (list, dict, tuple, etc.)
+        - pandas DataFrames
 
-            :param module: module that contains the vantage6 algorithms
-            :param load_data: attempt to load the data or execute the query
-            :return:
-            """
+        :param module: module that contains the vantage6 algorithms
+        :param load_data: attempt to load the data or execute the query
+        :return:
+        """
         info(f"wrapper for {module}")
 
         # read input from the mounted inputfile.
@@ -111,7 +112,7 @@ class WrapperBase(ABC):
         output = dispatch_rpc(data, input_data, module, token)
 
         # write output from the method to mounted output file. Which will be
-        # transfered back to the server by the node-instance.
+        # transferred back to the server by the node-instance.
         output_file = os.environ["OUTPUT_FILE"]
         info(f"Writing output to {output_file}")
 
@@ -129,7 +130,9 @@ class DockerWrapper(WrapperBase):
     def load_data(database_uri, input_data):
         return pandas.read_csv(database_uri)
 
+
 CsvWrapper = DockerWrapper
+
 
 class SparqlDockerWrapper(WrapperBase):
     @staticmethod
@@ -157,7 +160,8 @@ def write_output(output_format, output, output_file):
     """
     Write output to output_file using the format from output_format.
 
-    If output_format == None, write output as pickle without indicating format (legacy method)
+    If output_format == None, write output as pickle without indicating format
+    (legacy method)
 
     :param output_format:
     :param output:
