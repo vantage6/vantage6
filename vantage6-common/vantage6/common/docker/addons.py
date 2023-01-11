@@ -131,7 +131,7 @@ def inspect_remote_image_timestamp(docker_client, image: str, log=ClickLogger):
         log.warn("Could not construct remote URL, "
                  "are you using a local image?")
         log.warn("Or an image from docker hub?")
-        log.warn("We'll make an final attempt when running the image to pull"
+        log.warn("We'll make a final attempt when running the image to pull"
                  " it without any checks...")
         return
 
