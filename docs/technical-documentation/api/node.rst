@@ -64,6 +64,8 @@ comprise the node. A few that we would like to highlight:
 
 .. autoclass:: vantage6.node.docker.docker_manager.Result
 
+.. todo add the members of the class
+
 .. _task-manager-class:
 
 ``DockerTaskManager`` class
