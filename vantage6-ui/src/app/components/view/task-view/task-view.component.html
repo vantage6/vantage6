@@ -94,6 +94,11 @@
     </td>
   </tr>
 </table>
+<button *ngIf="canRepeatTask()"
+    mat-button class="btn btn-save"
+    [routerLink]="['/task/create', userPermission.user.organization_id, 'repeat', task.id]">
+  Repeat
+</button>
 <button *ngIf="userPermission.can('delete', 'task', org_id)"
     mat-button class="btn btn-delete-strong inline"
     (click)="askConfirmDelete()">
@@ -101,8 +106,8 @@
 </button>
 <button *ngIf="userPermission.can('create', 'event', task.initiator_id) &&
                ['active', 'pending', 'initializing'].includes(task.status)"
-mat-button class="btn btn-kill inline"
-(click)="askConfirmKill()">
+        mat-button class="btn btn-kill inline"
+        (click)="askConfirmKill()">
   Kill this task
 </button>
 <h5>Results</h5>

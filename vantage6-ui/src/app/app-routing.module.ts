@@ -26,6 +26,7 @@ import { RoleViewSingleComponent } from './components/view-single/role-view-sing
 import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
 import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
+import { TaskCreateComponent } from './components/edit/task-create/task-create.component';
 import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
 
 const routes: Routes = [
@@ -334,6 +335,26 @@ const routes: Routes = [
       permissionResource: ResType.TASK,
     },
     canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'task/create/:org_id',
+    component: TaskCreateComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'task/create/:org_id/repeat/:id',
+    component: TaskCreateComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuard],
   },
   {
     path: 'role/view/:id/:org_id',

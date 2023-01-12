@@ -4,6 +4,7 @@ import {
   NgbModalOptions,
   NgbModalRef,
 } from '@ng-bootstrap/ng-bootstrap';
+import { ModalCreateComponent } from 'src/app/components/modal/modal-create/modal-create.component';
 
 import { ModalDeleteComponent } from 'src/app/components/modal/modal-delete/modal-delete.component';
 import { ModalEditComponent } from 'src/app/components/modal/modal-edit/modal-edit.component';
@@ -74,6 +75,12 @@ export class ModalService {
     const modalRef = this.modalService.open(ModalEditComponent, {});
     modalRef.componentInstance.param_name = param_name;
     modalRef.componentInstance.current_value = current_value;
+    return modalRef;
+  }
+
+  openCreateModal(messages: string[]): NgbModalRef {
+    const modalRef = this.modalService.open(ModalCreateComponent, {});
+    modalRef.componentInstance.messages = messages;
     return modalRef;
   }
 

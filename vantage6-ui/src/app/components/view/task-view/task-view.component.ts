@@ -5,7 +5,7 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { BaseViewComponent } from '../base-view/base-view.component';
 import { Task, getEmptyTask, EMPTY_TASK } from 'src/app/interfaces/task';
-import { ExitMode, ResType } from 'src/app/shared/enum';
+import { ResType, OpsType, ExitMode } from 'src/app/shared/enum';
 import { Result } from 'src/app/interfaces/result';
 import { ResultDataService } from 'src/app/services/data/result-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
@@ -64,10 +64,20 @@ export class TaskViewComponent
 
   async setResultOrganizations(): Promise<void> {
     for (let r of this.results) {
-      if (r.organization_id)
+      if (r.organization_id) {
         (await this.orgDataService.get(r.organization_id)).subscribe((org) => {
           r.organization = org;
         });
+      }
+      // try to decrypt the result
+      try {
+        let decrypted_result = atob(r.result);
+        if (decrypted_result.startsWith('json.')) {
+          r.decrypted_result = decrypted_result.slice(5);
+        }
+      } catch {
+        // ignore: could not read result
+      }
     }
   }
 
@@ -101,6 +111,13 @@ export class TaskViewComponent
     let title = result.id.toString();
     if (result.organization) title += ` (${result.organization.name})`;
     return title;
+  }
+
+  canRepeatTask(): boolean {
+    return (
+      this.userPermission.can(OpsType.CREATE, ResType.TASK, this.org_id) &&
+      this.task.parent_id === null
+    );
   }
 
   askConfirmKill() {
