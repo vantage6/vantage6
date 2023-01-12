@@ -33,12 +33,14 @@ jobs:
           TAG=${GITHUB_REF#refs/*/}
           VERSION=${TAG#version/*}
           PARTS=(${VERSION//\./ })
-          echo "::set-output name=version::${VERSION}"
+          MAJOR=${PARTS[0]}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
           PARTS2=( $(grep -Eo '[[:digit:]]+|[^[:digit:]]+' <<< ${PARTS[2]} ) )
-          echo "::set-output name=stage::${PARTS2[1]}"
+          echo "stage=${PARTS2[1]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
-          echo "::set-output name=major_name::${MAJOR_NAME}"
+          echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
+
     outputs:
       version: ${{ steps.split.outputs.version }}
       stage: ${{ steps.split.outputs.stage }}
