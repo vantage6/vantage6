@@ -7,6 +7,16 @@
     <td>Description:</td>
     <td>{{role.description}}</td>
   </tr>
+  <tr *ngIf="role.organization">
+    <td>Organization:</td>
+    <td>
+      <button mat-button
+          class="btn btn-link inline"
+          [routerLink]="['/organization/', role.organization.id]">
+        {{role.organization.name}}
+      </button>
+    </td>
+  </tr>
   <tr *ngIf="users_with_this_role.length > 0 &&
               (userPermission.hasPermission('view', 'user', 'organization') ||
                userPermission.hasPermission('view', 'user', 'global'))">

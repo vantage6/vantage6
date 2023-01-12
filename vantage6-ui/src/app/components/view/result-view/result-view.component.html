@@ -7,9 +7,26 @@
     <td>ID:</td>
     <td>{{result.id}}</td>
   </tr>
+  <tr *ngIf="result.status">
+    <td>Status:</td>
+    <td>{{result.status | titlecase}}</td>
+  </tr>
+  <tr *ngIf="result.decrypted_result">
+    <td>Result:</td>
+    <td>{{getResultDisplay()}}</td>
+  </tr>
   <tr>
-    <td>Name:</td>
-    <td>{{result.name}}</td>
+    <td *ngIf="result.decrypted_result"></td>
+    <td *ngIf="!result.decrypted_result">Result:</td>
+    <td>
+      <button *ngIf="result.result; else noResultBlock" mat-button class="btn btn-dflt"
+          (click)="downloadResult()">
+        Download results
+      </button>
+      <ng-template #noResultBlock>
+        No results available
+      </ng-template>
+    </td>
   </tr>
   <tr>
     <td>Received:</td>

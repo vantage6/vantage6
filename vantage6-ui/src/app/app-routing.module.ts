@@ -8,7 +8,6 @@ import {
   OrgAccessGuard,
 } from 'src/app/auth/access-guard.guard';
 
-import { LoginComponent } from './components/login/login/login.component';
 import { HomeComponent } from './components/home/home.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { UserEditComponent } from './components/edit/user-edit/user-edit.component';
@@ -27,6 +26,8 @@ import { RoleViewSingleComponent } from './components/view-single/role-view-sing
 import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
 import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
+import { TaskCreateComponent } from './components/edit/task-create/task-create.component';
+import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
 
 const routes: Routes = [
   {
@@ -336,6 +337,26 @@ const routes: Routes = [
     canActivate: [AccessGuardByOrgId],
   },
   {
+    path: 'task/create/:org_id',
+    component: TaskCreateComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
+    path: 'task/create/:org_id/repeat/:id',
+    component: TaskCreateComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.CREATE,
+      permissionResource: ResType.TASK,
+    },
+    canActivate: [AccessGuard],
+  },
+  {
     path: 'role/view/:id/:org_id',
     component: RoleViewSingleComponent,
     data: {
@@ -354,6 +375,15 @@ const routes: Routes = [
       permissionResource: ResType.USER,
     },
     canActivate: [AccessGuardByOrgId],
+  },
+  {
+    path: 'status-messages',
+    component: SocketMessagesComponent,
+    data: {
+      requiresLogin: true,
+      permissionType: OpsType.VIEW,
+      permissionResource: ResType.EVENT,
+    },
   },
 ];
 //TODO add * path with 404 not found page

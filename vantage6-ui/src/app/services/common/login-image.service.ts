@@ -19,7 +19,6 @@ export class LoginImageService {
   }
 
   private set(): void {
-    console.log(this.background_img);
     if (this.background_img === '') {
       // pick random background image
       this.background_img =

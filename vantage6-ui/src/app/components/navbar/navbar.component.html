@@ -137,9 +137,19 @@
     </div>
   </ng-template>
 
-  <!-- TODO add help pages -->
-  <!-- <mat-divider></mat-divider>
+  <mat-divider></mat-divider>
 
+  <div *ngIf="userPermission.hasPermission('view', 'event', '*')">
+    <button mat-button class="menu-button"
+            [routerLink]="['/status-messages']"
+            routerLinkActive="menu-is-active">
+      <mat-icon>message</mat-icon>
+      <span>Status updates</span>
+    </button>
+  </div>
+
+  <!-- TODO add help pages -->
+  <!--
   <button mat-button class="menu-button">
     <mat-icon>help</mat-icon>
     <span>Help</span>

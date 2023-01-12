@@ -61,7 +61,7 @@
         </div>
         <ng-template #showCollabsBlock>
           <div *ngFor="let col of collaborations | slice:0:MAX_ITEMS_DISPLAY">
-            <mat-expansion-panel>
+            <mat-expansion-panel [expanded]="isExpanded(col)" (opened)="openExpansionPanel(col)" (closed)="closeExpansionPanel(col)">
               <mat-expansion-panel-header>
                 <mat-panel-title>
                   {{col.name}}
@@ -70,7 +70,6 @@
               <app-collaboration-view
                 [collaboration]="col"
                 (deletingResource)="deleteCollaboration(col)"
-                (createdNode)="updateNodeList($event)"
               ></app-collaboration-view>
             </mat-expansion-panel>
           </div>
@@ -134,7 +133,7 @@
             <span>New user</span>
           </button>
         </div>
-        <div *ngIf="organization_users.length===0">
+        <div *ngIf="users.length===0">
           <div *ngIf="!userPermission.can('view', 'user', current_organization.id); else noUsersBlock">
             You do not have permission to view the users!
           </div>
@@ -142,7 +141,7 @@
             This organization has no users!
           </ng-template>
         </div>
-        <div *ngFor="let user of organization_users | slice:0:MAX_ITEMS_DISPLAY">
+        <div *ngFor="let user of users | slice:0:MAX_ITEMS_DISPLAY">
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>
@@ -168,7 +167,7 @@
           </mat-expansion-panel>
         </div>
         <button mat-button class="btn btn-dflt btn-top-margin"
-          *ngIf="organization_users.length > MAX_ITEMS_DISPLAY"
+          *ngIf="users.length > MAX_ITEMS_DISPLAY"
           [routerLink]="['/users', current_organization.id]"
           >
             View all users

@@ -1,0 +1,160 @@
+<mat-card>
+  <h4>Create a new task</h4>
+  <div *ngIf="repeatable_tasks.length > 0">
+    <div class="inline">
+      Optionally, select a task you created earlier to prefill the form:
+    </div>
+    <div ngbDropdown class="d-inline-block">
+      <button class="btn btn-dropdown" id="dropdownPrevTasks" ngbDropdownToggle>
+        <span class="align-top">{{getNamePrevTaskDropdown()}}</span>
+      </button>
+      <div ngbDropdownMenu aria-labelledby="dropdownPrevTasks">
+        <div *ngFor="let t of repeatable_tasks">
+          <button ngbDropdownItem (click)="selectPreviousTask(t)">{{t.id}} - {{t.name}}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <br/>
+  <p>
+    Fill out the form below to create a task:
+  </p>
+  <table style="width: 100%">
+    <colgroup>
+      <col span="1" style="width: 20%;"/>
+      <col span="1" style="width: 80%;"/>
+    </colgroup>
+    <tr>
+      <td>Name:</td>
+      <td><input [(ngModel)]="task.name"/></td>
+    </tr>
+    <tr>
+      <td>Description:</td>
+      <td><input [(ngModel)]="task.description"/></td>
+    </tr>
+    <tr>
+      <td>Image:</td>
+      <td><input [(ngModel)]="task.image"/></td>
+    </tr>
+    <tr>
+      <td>Collaboration:</td>
+      <td *ngIf="collaborations.length > 0; else noCollabsBlock">
+        <div ngbDropdown class="d-inline-block">
+          <button class="btn btn-dropdown" id="dropdownCollabs" ngbDropdownToggle>
+            <span class="align-top">{{getNameCollabDropdown()}}</span>
+          </button>
+          <div ngbDropdownMenu aria-labelledby="dropdownCollabs">
+            <div *ngFor="let collab of collaborations">
+              <button ngbDropdownItem (click)="selectCollab(collab)">{{collab.name}}</button>
+            </div>
+          </div>
+        </div>
+      </td>
+      <ng-template #noCollabsBlock>
+        <td>
+          Your organization is not involved in any collaborations!
+          Get involved in collaborations before creating tasks.
+        </td>
+      </ng-template>
+    </tr>
+    <tr>
+      <td>Organizations:</td>
+      <td *ngIf="this.task.collaboration !== undefined; else noSelectedCollabBlock">
+        <div *ngFor="let org of selected_orgs" class="inline">
+          <button mat-button class="btn btn-delete btn-inline"
+              (click)="removeOrg(org)">
+            <mat-icon>remove_circle</mat-icon>
+            <span>{{org.name}}</span>
+          </button>
+        </div>
+        <div class="inline" *ngIf="deselected_orgs.length > 0">
+          <div ngbDropdown class="d-inline-block">
+            <button class="btn btn-dropdown" id="dropdownOrgs" ngbDropdownToggle>
+              <mat-icon>add_circle</mat-icon>
+              <span class="align-top">Add organization</span>
+            </button>
+            <div ngbDropdownMenu aria-labelledby="dropdownOrgs">
+                <div *ngFor="let org of deselected_orgs">
+                <button ngbDropdownItem (click)="addOrg(org)">
+                  {{org.name}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+      <ng-template #noSelectedCollabBlock>
+        <td>Please select a collaboration before selecting organizations</td>
+      </ng-template>
+    </tr>
+    <tr>
+      <td>Use master method:</td>
+      <td>
+        <mat-radio-group class="master-method-radio-group" [(ngModel)]="task_input.master" (change)="checkMasterMultiOrg()">
+          <mat-radio-button class="master-method-radio-button1" [value]="true">Yes</mat-radio-button>
+          <mat-radio-button class="master-method-radio-button2" [value]="false">No</mat-radio-button>
+        </mat-radio-group>
+      </td>
+    </tr>
+    <tr>
+      <td>Method:</td>
+      <td><input [(ngModel)]="task_input.method"/></td>
+    </tr>
+    <tr *ngFor="let arg of task_input.args; let idx = index; trackBy: trackArgsFunc">
+      <td>
+        <div *ngIf="idx===0">Args:</div>
+      </td>
+      <td>
+        <input type="text" [(ngModel)]="task_input.args[idx]"
+          (ngModelChange)="checkAddArgsBox()"/>
+      </td>
+    </tr>
+    <tr *ngFor="let kwarg of task_input.kwargs; let idx = index; trackBy: trackArgsFunc">
+      <td>
+        <div *ngIf="idx===0">Kwargs:</div>
+      </td>
+      <td>
+        Key:
+        <input type="text" [(ngModel)]="kwarg.key" (ngModelChange)="checkAddKwargsBox()"/>
+        Value:
+        <input type="text" [(ngModel)]="kwarg.value" (ngModelChange)="checkAddKwargsBox()"/>
+      </td>
+    </tr>
+    <tr>
+      <td>Database:</td>
+      <td><input [(ngModel)]="task.database"/></td>
+    </tr>
+    <!-- <tr>
+      <td>Output format:</td>
+      <td>
+        <mat-radio-group class="serialize-radio-group" [(ngModel)]="task_input.output_format">
+          <mat-radio-button class="serialize-radio-button1" value="json" name="json">JSON</mat-radio-button>
+          <mat-radio-button class="serialize-radio-button2" value="pickle" name="pickle">Pickle</mat-radio-button>
+        </mat-radio-group>
+      </td>
+    </tr> -->
+    <!-- TODO enable serialization choice here? Cannot serialize (at least to pickle as that requires python) -->
+    <!-- <tr>
+      <td>Data serialization:</td>
+      <td>
+        <mat-radio-group class="serialize-radio-group" [(ngModel)]="task.data_format">
+          <mat-radio-button class="serialize-radio-button1" value="legacy" name="legacy">Pickle (default)</mat-radio-button>
+          <mat-radio-button class="serialize-radio-button2" value="json" name="json">JSON</mat-radio-button>
+        </mat-radio-group>
+      </td>
+    </tr> -->
+  </table>
+  <div class="warning">
+    {{ warning_message_master }}
+  </div>
+  <div class="warning">
+    {{ warning_message_encryption }}
+  </div>
+  <button mat-button class="btn btn-save" (click)="check_and_create()" [disabled]="!canBeCreated()">
+    Create
+  </button>
+  <button mat-button class="btn btn-dflt" (click)="cancel()">
+    Cancel
+  </button>
+</mat-card>

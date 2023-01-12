@@ -46,6 +46,17 @@ export function filterArray(array: any[], to_remove: any[]): any[] {
   return array.filter((el) => !to_remove.includes(el));
 }
 
+export function filterArrayByProperty(
+  arr: any[],
+  property: string,
+  value: any,
+  has_property: boolean = true
+) {
+  return has_property
+    ? arr.filter((el) => el[property] === value)
+    : arr.filter((el) => el[property] !== value);
+}
+
 export function removeValueFromArray(array: any[], value: any): any[] {
   return array.filter((el) => el !== value);
 }
@@ -54,9 +65,12 @@ export function getById(array: any[], id: number): any | undefined {
   return array.find((x) => x.id === id);
 }
 
-export function getIdsFromArray(array: any[]): number[] {
+export function getIdsFromArray(
+  array: any[],
+  id_field: string = 'id'
+): number[] {
   return array.map((a) => {
-    return a.id;
+    return a[id_field];
   });
 }
 
@@ -89,6 +103,10 @@ export function containsObject(obj: any, list: any[]) {
   return false;
 }
 
+export function arrayContains(array: any[], value: any) {
+  return array.includes(value);
+}
+
 export function isSubset(small_array: any[], large_array: any[]) {
   return small_array.every((val) => large_array.includes(val));
 }
@@ -106,4 +124,27 @@ export function arrayIdsEqual(arr1: any[], arr2: any[]): boolean {
     if (arr1[i].id !== arr2[i].id) return false;
   }
   return true;
+}
+
+export function unique(array: any[]): any[] {
+  return array.filter((val, idx, arr) => arr.indexOf(val) === idx);
+}
+
+export function getUniquePropertyValues(array: any[], property: any): any[] {
+  // return all unique values of a specific property
+  return [
+    ...new Set(
+      array.map((item) => {
+        return item[property];
+      })
+    ),
+  ];
+}
+
+export function enumIncludes(an_enum: any, value: any): boolean {
+  return Object.values(an_enum).includes(value);
+}
+
+export function dictEmpty(dict: any): boolean {
+  return dict && Object.keys(dict).length === 0;
 }

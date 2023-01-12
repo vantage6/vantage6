@@ -25,7 +25,6 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
 import { removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../base-view/base-view.component';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 
 @Component({
@@ -68,10 +67,14 @@ export class CollaborationViewComponent
   }
 
   async setTasks(): Promise<void> {
-    this.tasks = await this.taskDataService.collab_list(this.collaboration.id);
-    this.n_completed_tasks = this.tasks.filter(
-      (task) => task.complete === true
-    ).length;
+    (await this.taskDataService.collab_list(this.collaboration.id)).subscribe(
+      (tasks) => {
+        this.tasks = tasks;
+        this.n_completed_tasks = this.tasks.filter(
+          (task) => task.complete === true
+        ).length;
+      }
+    );
   }
 
   encryptedText(): string {
@@ -155,7 +158,7 @@ configuration file for the node using 'vnode new'.`,
         this.createdNode.emit(org.node);
       },
       (error) => {
-        this.modalService.openMessageModal(error.error.msg);
+        this.modalService.openMessageModal([error.error.msg]);
       }
     );
   }

@@ -3,5 +3,7 @@
     window["env"] = window["env"] || {};
 
     // Environment variables
+    window["env"]["server_url"] = "https://petronas.vantage6.ai";
+    window["env"]["api_path"] = "";
     window["env"]["api_url"] = "https://petronas.vantage6.ai";
 })(this);

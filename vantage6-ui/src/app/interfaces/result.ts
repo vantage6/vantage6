@@ -6,11 +6,11 @@ import { Organization } from './organization';
 export interface Result {
   id: number;
   type: string;
-  name: string;
   input: string;
   result: string;
   log: string | null;
   task_id: number;
+  status: string;
   organization_id: number;
   organization?: Organization;
   ports?: Port[];
@@ -18,14 +18,15 @@ export interface Result {
   started_at: Date | null;
   assigned_at: Date | null;
   finished_at: Date | null;
+  decrypted_result?: string;
 }
 
 export const EMPTY_RESULT: Result = {
   id: -1,
   type: ResType.RESULT,
-  name: '',
   input: '',
   result: '',
+  status: '',
   log: null,
   task_id: -1,
   organization_id: -1,

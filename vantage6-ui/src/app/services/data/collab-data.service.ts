@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import {
   Organization,
@@ -9,58 +9,112 @@ import { Node } from 'src/app/interfaces/node';
 import { CollabApiService } from '../api/collaboration-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
-import { deepcopy } from 'src/app/shared/utils';
+import { arrayContains, deepcopy } from 'src/app/shared/utils';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
+import { NodeDataService } from './node-data.service';
+import { OrgDataService } from './org-data.service';
+import { Resource } from 'src/app/shared/types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CollabDataService extends BaseDataService {
+  nodes: Node[] = [];
+  organizations: Organization[] = [];
+
   constructor(
     protected collabApiService: CollabApiService,
     protected convertJsonService: ConvertJsonService,
-    private userPermission: UserPermissionService
+    private userPermission: UserPermissionService,
+    private nodeDataService: NodeDataService,
+    private orgDataService: OrgDataService
   ) {
     super(collabApiService, convertJsonService);
+    this.resource_list.subscribe((resources) => {
+      // When the list of all resources is updated, ensure that sublists of
+      // observables are also updated
+
+      // update the observables per org
+      this.updateObsPerOrg(resources);
+
+      // update observables that are gotten one by one
+      this.updateObsById(resources);
+
+      // update the observables per collab
+      this.updateObsPerCollab(resources);
+    });
+  }
+
+  async getDependentResources() {
+    (await this.nodeDataService.list()).subscribe((nodes) => {
+      this.nodes = nodes;
+      this.updateNodes();
+    });
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+      this.updateOrganizations();
+    });
+    return [this.organizations, this.nodes];
+  }
+
+  updateObsPerOrg(resources: Resource[]) {
+    // collaborations should be updated in slightly different way from super
+    // function as they contain multiple organizations and also (as consequence)
+    // we could also have incomplete data for specific organizations
+    if (!this.requested_org_lists) return;
+    for (let org_id of this.requested_org_lists) {
+      if (org_id in this.resources_per_org) {
+        this.resources_per_org[org_id].next(
+          this.getCollabsForOrgId(resources as Collaboration[], org_id)
+        );
+      } else {
+        this.resources_per_org[org_id] = new BehaviorSubject<Resource[]>(
+          this.getCollabsForOrgId(resources as Collaboration[], org_id)
+        );
+      }
+    }
+  }
+
+  private getCollabsForOrgId(
+    resources: Collaboration[],
+    org_id: number
+  ): Resource[] {
+    let org_resources: Resource[] = [];
+    for (let r of resources) {
+      if (arrayContains(r.organization_ids, org_id)) {
+        org_resources.push(r);
+      }
+    }
+    return org_resources;
   }
 
   async get(
     id: number,
-    organizations: Organization[] = [],
-    nodes: Node[] = [],
     force_refresh: boolean = false
-  ): Promise<Collaboration> {
-    let collaboration = (await super.get_base(
+  ): Promise<Observable<Collaboration>> {
+    return (await super.get_base(
       id,
       this.convertJsonService.getCollaboration,
-      [organizations],
       force_refresh
-    )) as Collaboration;
-    await this.refreshNodes([collaboration], nodes);
-    return collaboration;
+    )) as Observable<Collaboration>;
   }
 
   async list(
-    organizations: Organization[] = [],
-    nodes: Node[] = [],
     force_refresh: boolean = false
-  ): Promise<Collaboration[]> {
+  ): Promise<Observable<Collaboration[]>> {
     let collaborations = (await super.list_base(
       this.convertJsonService.getCollaboration,
-      [organizations],
       force_refresh
-    )) as Collaboration[];
-    await this.refreshNodes(this.resource_list as Collaboration[], nodes);
+    )) as Observable<Collaboration[]>;
     return collaborations;
   }
 
   async org_list(
     organization_id: number,
-    organizations: Organization[] = [],
-    nodes: Node[] = [],
     force_refresh: boolean = false
-  ): Promise<Collaboration[]> {
+  ): Promise<Observable<Collaboration[]>> {
+    // TODO when is following if statement necessary?
     if (
       !this.userPermission.can(
         OpsType.VIEW,
@@ -68,60 +122,27 @@ export class CollabDataService extends BaseDataService {
         organization_id
       )
     ) {
-      return [];
+      return of([]);
     }
-    let org_resources: Collaboration[] = [];
-    if (force_refresh || !this.queried_org_ids.includes(organization_id)) {
-      org_resources = (await this.apiService.getResources(
-        this.convertJsonService.getCollaboration,
-        [organizations],
-        { organization_id: organization_id }
-      )) as Collaboration[];
-      this.queried_org_ids.push(organization_id);
-      this.saveMultiple(org_resources);
-    } else {
-      // this organization has been queried before: get matches from the saved
-      // data
-      for (let resource of this.resource_list as Collaboration[]) {
-        if (
-          (resource as Collaboration).organization_ids.includes(organization_id)
-        ) {
-          org_resources.push(resource);
-        }
-      }
-    }
-    await this.refreshNodes(org_resources, nodes);
-    return org_resources;
+    return (await super.org_list_base(
+      organization_id,
+      this.convertJsonService.getCollaboration,
+      force_refresh
+    )) as Observable<Collaboration[]>;
   }
 
-  async addOrgsAndNodes(
-    collabs: Collaboration[],
-    organizations: OrganizationInCollaboration[],
-    nodes: Node[]
-  ): Promise<Collaboration[]> {
-    let updated_collabs = [...collabs];
-
-    this.deleteOrgsFromCollaborations(collabs);
-    this.addOrgsToCollaborations(collabs, organizations);
-
+  updateNodes(): void {
+    let collabs = deepcopy(this.resource_list.value);
     this.deleteNodesFromCollaborations(collabs);
-    this.addNodesToCollaborations(collabs, nodes);
-
-    if (JSON.stringify(updated_collabs) !== JSON.stringify(collabs)) {
-      this.saveMultiple(collabs);
-    }
-    return collabs;
+    this.addNodesToCollaborations(collabs, this.nodes);
+    this.resource_list.next(collabs);
   }
 
-  async refreshNodes(collabs: Collaboration[], nodes: Node[]) {
-    // Delete nodes from collabs, then add them back (this updates
-    // nodes that were just deleted)
-    if (nodes.length > 0) {
-      this.deleteNodesFromCollaborations(collabs);
-      this.addNodesToCollaborations(collabs, nodes);
-    }
-    // save the updated collaborations
-    this.saveMultiple(collabs);
+  updateOrganizations(): void {
+    let collabs = deepcopy(this.resource_list.value);
+    this.deleteOrgsFromCollaborations(collabs);
+    this.addOrgsToCollaborations(collabs, this.organizations);
+    this.resource_list.next(collabs);
   }
 
   addOrgsToCollaborations(

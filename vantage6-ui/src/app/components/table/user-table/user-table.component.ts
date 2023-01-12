@@ -21,9 +21,6 @@ import { TableComponent } from '../base-table/table.component';
   ],
 })
 export class UserTableComponent extends TableComponent implements OnInit {
-  rules: Rule[] = [];
-  roles: Role[] = [];
-
   displayedColumns: string[] = [
     'id',
     'username',
@@ -59,25 +56,27 @@ export class UserTableComponent extends TableComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    // get rules and roles
-    this.rules = await this.ruleDataService.list();
-    this.roles = await this.roleDataService.list(this.rules);
-
     // get organizations
-    this.organizations = await this.orgDataService.list();
+    (await this.orgDataService.list()).subscribe((orgs) => {
+      this.organizations = orgs;
+    });
 
     this.readRoute();
   }
 
   protected async setResources() {
     if (this.isShowingSingleOrg()) {
-      this.resources = await this.userDataService.org_list(
-        this.route_org_id as number,
-        this.roles,
-        this.rules
-      );
+      (
+        await this.userDataService.org_list(this.route_org_id as number)
+      ).subscribe((users) => {
+        this.resources = users;
+        this.renewTable();
+      });
     } else {
-      this.resources = await this.userDataService.list(this.roles, this.rules);
+      (await this.userDataService.list()).subscribe((users: User[]) => {
+        this.resources = users;
+        this.renewTable();
+      });
     }
   }
 }

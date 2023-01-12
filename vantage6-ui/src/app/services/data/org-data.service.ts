@@ -16,42 +16,23 @@ export class OrgDataService extends BaseDataService {
     super(apiService, convertJsonService);
   }
 
-  async get(id: number, force_refresh: boolean = false): Promise<Organization> {
+  async get(
+    id: number,
+    force_refresh: boolean = false
+  ): Promise<Observable<Organization>> {
     return (await super.get_base(
       id,
       this.convertJsonService.getOrganization,
-      [],
       force_refresh
-    )) as Organization;
+    )) as Observable<Organization>;
   }
 
-  async list(force_refresh: boolean = false): Promise<Organization[]> {
+  async list(
+    force_refresh: boolean = false
+  ): Promise<Observable<Organization[]>> {
     return (await super.list_base(
       this.convertJsonService.getOrganization,
-      [],
       force_refresh
-    )) as Organization[];
-  }
-
-  async collab_list(collaboration_id: number, force_refresh: boolean = false) {
-    let orgs: Organization[] = [];
-    if (force_refresh || !this.queried_collab_ids.includes(collaboration_id)) {
-      orgs = (await this.apiService.getResources(
-        this.convertJsonService.getOrganization,
-        [],
-        { collaboration_id: collaboration_id }
-      )) as Organization[];
-      this.queried_collab_ids.push(collaboration_id);
-      this.saveMultiple(orgs);
-    } else {
-      // this organization has been queried before: get matches from the saved
-      // data
-      for (let org of this.resource_list as Organization[]) {
-        if (org.collaboration_ids.includes(collaboration_id)) {
-          orgs.push(org);
-        }
-      }
-    }
-    return orgs;
+    )) as Observable<Organization[]>;
   }
 }

@@ -11,12 +11,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
+import { MatListModule } from '@angular/material/list';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
@@ -66,10 +68,15 @@ import { PasswordLostComponent } from './components/login/password-lost/password
 import { PasswordRecoverComponent } from './components/login/password-recover/password-recover.component';
 import { LoginPageComponent } from './components/login/login-page/login-page.component';
 import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
+import { SocketioConnectService } from './services/common/socketio-connect.service';
+import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.component';
+import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
 import { SetupMfaComponent } from './components/login/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './components/login/mfa-code/mfa-code.component';
 import { MfaLostComponent } from './components/login/mfa-lost/mfa-lost.component';
 import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.component';
+import { TaskCreateComponent } from './components/edit/task-create/task-create.component';
+import { ModalCreateComponent } from './components/modal/modal-create/modal-create.component';
 
 @NgModule({
   declarations: [
@@ -109,10 +116,14 @@ import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.
     PasswordRecoverComponent,
     LoginPageComponent,
     ChangePasswordComponent,
+    ModalKillComponent,
+    SocketMessagesComponent,
     SetupMfaComponent,
     MfaCodeComponent,
     MfaLostComponent,
     MfaRecoverComponent,
+    TaskCreateComponent,
+    ModalCreateComponent,
   ],
   imports: [
     BrowserModule,
@@ -136,6 +147,8 @@ import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatListModule,
     CommonModule,
     NgbModule,
     QRCodeModule,
@@ -144,6 +157,7 @@ import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.
     AccessGuard,
     OrgAccessGuard,
     AccessGuardByOrgId,
+    SocketioConnectService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
