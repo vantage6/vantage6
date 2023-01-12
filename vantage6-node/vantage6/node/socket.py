@@ -91,7 +91,7 @@ class NodeTaskNamespace(ClientNamespace):
             #     containers with the same run_id?
             self.log.critical(
                 f"A container on a node within your collaboration part of "
-                f"run_id={run_id} has exited with status {status}"
+                f"run_id={run_id} has exited with status '{status}'"
             )
         # else: no need to do anything when a task has started/finished/... on
         # another node
@@ -127,15 +127,15 @@ class NodeTaskNamespace(ClientNamespace):
             self.emit(
                 "algorithm_status_change",
                 {
-                    'result_id': killed['result_id'],
-                    'task_id': killed['task_id'],
+                    'result_id': killed.result_id,
+                    'task_id': killed.task_id,
                     'collaboration_id':
                         self.node_worker_ref.server_io.collaboration_id,
                     'node_id': self.node_worker_ref.server_io.whoami.id_,
                     'status': TaskStatus.KILLED,
                     'organization_id':
                         self.node_worker_ref.server_io.whoami.organization_id,
-                    'parent_id': killed['parent_id'],
+                    'parent_id': killed.parent_id,
                 },
                 namespace='/tasks'
             )
