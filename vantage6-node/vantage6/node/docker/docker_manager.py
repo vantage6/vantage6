@@ -514,8 +514,8 @@ class DockerManager(DockerBaseManager):
             if task:
                 self.log.info(
                     f"Killing containers for result_id={task.result_id}")
-                task.cleanup()
                 self.active_tasks.remove(task)
+                task.cleanup()
                 killed_list.append(KilledResult(
                     result_id=task.result_id,
                     task_id=task.task_id,
@@ -547,20 +547,21 @@ class DockerManager(DockerBaseManager):
             List of dictionaries with information on killed tasks
         """
         if kill_list:
-            return self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
+            killed_results = self.kill_selected_tasks(org_id=org_id,
+                                                      kill_list=kill_list)
         else:
             # received instruction to kill all tasks on this node
             self.log.warn(
                 "Received instruction from server to kill all algorithms "
                 "running on this node. Executing that now...")
-            killed_result_ids = self.cleanup_tasks()
-            if len(killed_result_ids):
+            killed_results = self.cleanup_tasks()
+            if len(killed_results):
                 self.log.warn(
                     "Killed the following result ids as instructed via socket:"
-                    f" {','.join(killed_result_ids)}"
+                    f" {', '.join([str(r.result_id) for r in killed_results])}"
                 )
             else:
                 self.log.warn(
                     "Instructed to kill tasks but none were running"
                 )
-            return killed_result_ids
+        return killed_results
