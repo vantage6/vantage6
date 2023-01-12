@@ -43,6 +43,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.common.task_status import TaskStatus
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -789,9 +790,15 @@ class Node(object):
 
         # kill specific task if specified, else kill all algorithms
         kill_list = kill_info.get('kill_list')
-        return self.__docker.kill_tasks(
+        killed_algos = self.__docker.kill_tasks(
             org_id=self.server_io.whoami.organization_id, kill_list=kill_list
         )
+        # update status of killed tasks
+        for killed_algo in killed_algos:
+            self.server_io.patch_results(
+                id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+            )
+        return killed_algos
 
     def cleanup(self) -> None:
         if hasattr(self, 'socketIO') and self.socketIO:
