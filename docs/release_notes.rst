@@ -25,7 +25,12 @@ Release notes
  -  It is now possible to create tasks in the UI (UI version >3.6.0). Note that
     all tasks are then JSON serialized and you will not be able to run tasks
     in an encrypted collaboration (as that would require uploading a private
-    key to a browser) (`PR90 <#https://github.com/vantage6/vantage6-UI/pull/90>`_).
+    key to a browser) (`PR#90 <#https://github.com/vantage6/vantage6-UI/pull/90>`_).
+
+    .. warning::
+        If you want to run the UI Docker image, note that from this version
+        onwards, you have to define the ``SERVER_URL`` and ``API_PATH``
+        environment variables (compared to just a ``API_URL`` before).
  -  There is a new multi-database wrapper that will forward a dictionary of all
     node databases and their paths to the algorithm. This allows you to use
     multiple databases in a single algorithm easily.
