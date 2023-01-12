@@ -22,6 +22,10 @@ Release notes
     are also new permissions for socket events on the server to authorize users
     to see events from their (or all) collaborations
     (`PR#417 <https://github.com/vantage6/vantage6/pull/417>`_).
+ -  It is now possible to create tasks in the UI (UI version >3.6.0). Note that
+    all tasks are then JSON serialized and you will not be able to run tasks
+    in an encrypted collaboration (as that would require uploading a private
+    key to a browser) (`PR90 <#https://github.com/vantage6/vantage6-UI/pull/90>`_).
  -  There is a new multi-database wrapper that will forward a dictionary of all
     node databases and their paths to the algorithm. This allows you to use
     multiple databases in a single algorithm easily.
