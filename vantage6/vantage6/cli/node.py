@@ -354,8 +354,9 @@ def cli_node_start(name: str, config: str, environment: str,
         # docker_client.images.pull(image)
         pull_if_newer(docker.from_env(), image)
 
-    except Exception:
-        warning(' ... alas, no dice!')
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
     else:
         info(" ... success!")
 
