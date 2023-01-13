@@ -112,58 +112,6 @@ jobs:
         prerelease: ${{ env.stage != '' }}
         title: "${{ env.version }}"
 
-  # Build an release all the vantage6 infrastructure packages. For all
-  # the packages it will (1) update the version as specified in the tag,
-  # (2) build the package, (3) upload it to pypi, and (4) build and push
-  # the Docker image
-  build-n-release:
-
-    name: Build and release the project
-    runs-on: ubuntu-latest
-    needs: version
-    env:
-      version: ${{ needs.version.outputs.version }}
-      major: ${{ needs.version.outputs.major }}
-      minor: ${{ needs.version.outputs.minor }}
-      patch: ${{ needs.version.outputs.patch }}
-      stage: ${{ needs.version.outputs.stage }}
-      build: ${{ needs.version.outputs.build }}
-
-    steps:
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
-
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install click
-          pip install wheel
-          pip install twine
-
-      - name: Build project
-        id: make
-        run: |
-          make rebuild
-
-      - name: Publish project to PyPi
-        id: publish
-        if: ${{ !env.ACT }}
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          make publish
-
   support-images:
     name: Build support images
     runs-on: ubuntu-latest
@@ -201,7 +149,7 @@ jobs:
   infrastructure-images:
     name: Build infrastructure images
     runs-on: ubuntu-latest
-    needs: [version, build-n-release] # we need to packages to be released
+    needs: version
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
@@ -249,7 +197,7 @@ jobs:
   algorithm-base-image:
     name: Build algorithm base image
     runs-on: ubuntu-latest
-    needs: [version, build-n-release] # we need to python client to be released
+    needs: version
     env:
       version: ${{ needs.version.outputs.version }}
 
@@ -318,6 +266,58 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
+
+  # Build an release all the vantage6 infrastructure packages. For all
+  # the packages it will (1) update the version as specified in the tag,
+  # (2) build the package, (3) upload it to pypi, and (4) build and push
+  # the Docker image
+  build-n-release:
+
+    name: Build and release the project
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      version: ${{ needs.version.outputs.version }}
+      major: ${{ needs.version.outputs.major }}
+      minor: ${{ needs.version.outputs.minor }}
+      patch: ${{ needs.version.outputs.patch }}
+      stage: ${{ needs.version.outputs.stage }}
+      build: ${{ needs.version.outputs.build }}
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # we just made a version commit, so we need to pull that. Else the
+          # commit of the tag is used.
+          ref: 'main'
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install click
+          pip install wheel
+          pip install twine
+
+      - name: Build project
+        id: make
+        run: |
+          make rebuild
+
+      - name: Publish project to PyPi
+        id: publish
+        if: ${{ !env.ACT }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          make publish
 
   # When the project is built and released the Discord community is notified.
   notify:
