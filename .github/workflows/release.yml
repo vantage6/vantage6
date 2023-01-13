@@ -71,6 +71,9 @@ jobs:
           git checkout -b release/${version}
           git commit -m "Updated the version ${version}"
           git push
+          git checkout main
+          git merge release/${version}
+          git push
 
     outputs:
       version: ${{ steps.split.outputs.version }}
