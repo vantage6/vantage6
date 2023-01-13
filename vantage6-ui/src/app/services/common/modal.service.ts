@@ -13,6 +13,7 @@ import { ModalLoadingComponent } from 'src/app/components/modal/modal-loading/mo
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
+import { Node } from 'src/app/interfaces/node';
 
 @Injectable({
   providedIn: 'root',
@@ -78,9 +79,10 @@ export class ModalService {
     return modalRef;
   }
 
-  openCreateModal(messages: string[]): NgbModalRef {
+  openTaskCreateModal(messages: string[], offline_nodes: Node[]): NgbModalRef {
     const modalRef = this.modalService.open(ModalCreateComponent, {});
     modalRef.componentInstance.messages = messages;
+    modalRef.componentInstance.offline_nodes = offline_nodes;
     return modalRef;
   }
 
