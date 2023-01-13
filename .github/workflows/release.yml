@@ -3,19 +3,9 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'version/**'
+      - 'version/*.*.*'
 
 jobs:
-
-  # Check that the tag that is being used starts with `version/`. If
-  # this is not the case, this tag is not intended for release.
-  verify:
-    name: Verify version tag
-    runs-on: ubuntu-latest
-    steps:
-      - id: verify
-        if: startsWith(github.ref, 'refs/tags/version') != true
-        uses: andymckay/cancel-action@0.2
 
   # From the tag we split the individual version components:
   # major.minor.patch.stage<N>. Note that post releases are not part
