@@ -11,7 +11,7 @@ from dateutil.parser import parse
 from docker.client import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
-from typing import Dict
+from typing import Dict, Union
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
@@ -215,16 +215,20 @@ def inspect_local_image_timestamp(docker_client, image: str, log=ClickLogger):
     return timestamp
 
 
-def pull_if_newer(docker_client, image: str, log=ClickLogger):
+def pull_if_newer(docker_client: DockerClient, image: str,
+                  log: Union[logging.Logger, ClickLogger] = ClickLogger):
     """
     Docker pull only if the remote image is newer.
 
     Parameters
     ----------
-    image : str
-        image to be pulled
+    docker_client: DockerClient
+        A Docker client instance
+    image: str
+        Image to be pulled
+    log: logger.Logger or ClickLogger
+        Logger class
     """
-
     local_ = inspect_local_image_timestamp(docker_client, image, log=log)
     remote_ = inspect_remote_image_timestamp(docker_client, image, log=log)
     pull = False
@@ -242,13 +246,15 @@ def pull_if_newer(docker_client, image: str, log=ClickLogger):
         log.debug("No local image found, pulling from remote!")
         pull = True
     elif not local_ and not remote_:
-        log.warn(f"Cannot locate image {image} locally or remotely")
+        log.warn(f"Cannot locate image {image} locally or remotely. Will try "
+                 "to pull it from Docker Hub...")
         # we will try to pull it from the docker hub
         pull = True
 
     if pull:
         try:
             docker_client.images.pull(image)
+            log.debug(f"Succeeded to pull image: {image}")
         except docker.errors.APIError as e:
             log.error(f"Failed to pull image! {image}")
             log.debug(e)
