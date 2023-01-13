@@ -60,12 +60,12 @@ class PostUpdates(commands.Cog):
         )
 
         documentation = (
-            '[Latest release notes](https://docs.vantage6.ai/about-background/'
-            'release-notes)\n'
-            '[Installation instructions](https://docs.vantage6.ai/installation'
-            '/what-to-install)\n'
-            '[How to contribute](https://docs.vantage6.ai/v/petronas/'
-            'how-to-contribute/how-to-contribute)\n'
+            '[Latest release notes](https://docs.vantage6.ai/en/main/'
+            'release_notes.html)\n'
+            '[Installation instructions](https://docs.vantage6.ai/en/main/'
+            'install/index.html)\n'
+            '[How to contribute](https://docs.vantage6.ai/en/main/devops/'
+            'contribute.html)\n'
             '[Discourse](https://vantage6.discourse.group/)\n'
         )
 
@@ -94,7 +94,7 @@ class PostUpdates(commands.Cog):
         )
         embed.add_field(name="Documentation", value=documentation, inline=True)
         embed.add_field(name="Github", value=repositories, inline=True)
-        embed.add_field(name="Usefull links", value=links, inline=True)
+        embed.add_field(name="Useful links", value=links, inline=True)
         embed.set_footer(text="Running into issues? Let us know!")
 
         return embed
