@@ -241,7 +241,11 @@ class DefaultSocketNamespace(Namespace):
         join_room(room)
         msg = f'{session.type.title()} <{session.name}> joined room <{room}>'
         self.log.info(msg)
-        emit('message', msg, room=room)
+        # share message with other users and nodes, except for all_nodes. That
+        # room contains nodes from outside your collaboration that shouldn't
+        # know about you.
+        if room != 'all_nodes':
+            emit('message', msg, room=room)
 
     def __leave_room_and_notify(self, room: str):
         """
@@ -255,7 +259,11 @@ class DefaultSocketNamespace(Namespace):
         leave_room(room)
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
-        emit('message', msg, room=room)
+        # share message with other users and nodes, except for all_nodes. That
+        # room contains nodes from outside your collaboration that shouldn't
+        # know about you.
+        if room != 'all_nodes':
+            emit('message', msg, room=room)
 
     def __alert_node_status(self, online: bool, node: Authenticatable) -> None:
         """
