@@ -18,14 +18,15 @@ import traceback
 
 from pathlib import Path
 from typing import Dict, Tuple, Union
-from vantage6.client.utils import print_qr_code
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
+from vantage6.common.encryption import RSACryptor, DummyCryptor
+from vantage6.common import WhoAmI
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
-from vantage6.client.encryption import RSACryptor, DummyCryptor
+from vantage6.client.utils import print_qr_code, LogLevel
 
 
 module_name = __name__.split('.')[1]
@@ -38,23 +39,6 @@ class ServerInfo(typing.NamedTuple):
     host: str
     port: int
     path: str
-
-
-class WhoAmI(typing.NamedTuple):
-    """ Data-class to store Authenticable information in."""
-    type_: str
-    id_: int
-    name: str
-    organization_name: str
-    organization_id: int
-
-    def __repr__(self) -> str:
-        return (f"<WhoAmI "
-                f"name={self.name}, "
-                f"type={self.type_}, "
-                f"organization={self.organization_name}, "
-                f"(id={self.organization_id})"
-                ">")
 
 
 class ClientBase(object):
@@ -335,8 +319,8 @@ class ClientBase(object):
             print_qr_code(data)
             return False
         else:
-            # If no QR two-factor authentication is
-            # required, but that is not an error
+            # Check if there is an access token. If not, there is a problem
+            # with authenticating
             if 'access_token' not in data:
                 if 'msg' in data:
                     raise Exception(data['msg'])
@@ -562,7 +546,7 @@ class ClientBase(object):
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, verbose=False, **kwargs):
+    def __init__(self, *args, verbose=False, log_level='debug', **kwargs):
         """Create user client
 
         All paramters from `ClientBase` can be used here.
@@ -575,7 +559,8 @@ class UserClient(ClientBase):
         super(UserClient, self).__init__(*args, **kwargs)
 
         # Replace logger by print logger
-        self.log = self.Log(verbose)
+        # TODO in v4+, remove the verbose option and only keep log_level
+        self.log = self.get_logger(verbose, log_level)
 
         # attach sub-clients
         self.util = self.Util(self)
@@ -602,24 +587,42 @@ class UserClient(ClientBase):
         self.log.info("https://vantage6.ai/vantage6/references")
         self.log.info("-" * 60)
 
-    class Log:
-        """Replaces the default logging meganism by print statements"""
-        def __init__(self, enabled: bool):
-            """Create print-logger
+    @staticmethod
+    def get_logger(enabled: bool, level: str) -> logging.Logger:
+        """
+        Create print-logger
 
-            Parameters
-            ----------
-            enabled : bool
-                Whenever to enable logging
-            """
-            self.enabled = enabled
-            for level in ['debug', 'info', 'warn', 'warning', 'error',
-                          'critical']:
-                self.__setattr__(level, self.print)
+        Parameters
+        ----------
+        enabled: bool
+            If true, logging at most detailed level
+        level: str
+            Desired logging level
 
-        def print(self, msg: str) -> None:
-            if self.enabled:
-                print(f'{msg}')
+        Returns
+        -------
+        logging.Logger
+            Logger object
+        """
+        # get logger that prints to console
+        logger = logging.getLogger()
+        logger.handlers.clear()
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+
+        # set log level
+        level = level.upper()
+        if enabled:
+            logger.setLevel(LogLevel.DEBUG.value)
+        elif level not in [lvl.value for lvl in LogLevel]:
+            default_lvl = LogLevel.DEBUG.value
+            logger.setLevel(default_lvl)
+            logger.warn(
+                f"You set unknown log level {level}. Available levels are: "
+                f"{', '.join([lvl.value for lvl in LogLevel])}. ")
+            logger.warn(f"Log level now set to {default_lvl}.")
+        else:
+            logger.setLevel(level)
+        return logger
 
     def authenticate(self, username: str, password: str,
                      mfa_code: Union[int, str] = None) -> None:
@@ -1171,6 +1174,24 @@ class UserClient(ClientBase):
             """
             return self.parent.request(f'node/{id_}', method='delete')
 
+        def kill_tasks(self, id_: int) -> dict:
+            """
+            Kill all tasks currently running on a node
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the node of which you want to kill the tasks
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            return self.parent.request(
+                'kill/node/tasks', method='post', json={'id': id_}
+            )
+
     class Organization(ClientBase.SubClient):
         """Collection of organization requests"""
 
@@ -1666,8 +1687,8 @@ class UserClient(ClientBase):
                  parent: int = None, run: int = None,
                  name: str = None, include_results: bool = False,
                  description: str = None, database: str = None,
-                 result: int = None, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> dict:
+                 result: int = None, status: str = None, page: int = 1,
+                 per_page: int = 20, include_metadata: bool = True) -> dict:
             """List tasks
 
             Parameters
@@ -1697,6 +1718,9 @@ class UserClient(ClientBase):
                 Filter by database (with LIKE operator)
             result: int, optional
                 Only show task that contains this result id
+            status: str, optional
+                Filter by task status (e.g. 'active', 'pending', 'completed',
+                'crashed')
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1731,7 +1755,7 @@ class UserClient(ClientBase):
                 'image': image, 'parent_id': parent, 'run_id': run,
                 'name': name, 'page': page, 'per_page': per_page,
                 'description': description, 'database': database,
-                'result_id': result
+                'result_id': result, 'status': status,
             }
             includes = []
             if include_results:
@@ -1794,6 +1818,27 @@ class UserClient(ClientBase):
                 Message from the server
             """
             msg = self.parent.request(f'task/{id_}', method='delete')
+            self.parent.log.info(f'--> {msg}')
+
+        def kill(self, id_: int) -> dict:
+            """Kill a task running on one or more nodes
+
+            Note that this does not remove the task from the database, but
+            merely halts its execution (and prevents it from being restarted).
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the task to be killed
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            msg = self.parent.request('/kill/task', method='post', json={
+                'id': id_
+            })
             self.parent.log.info(f'--> {msg}')
 
     class Result(ClientBase.SubClient):

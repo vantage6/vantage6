@@ -4,13 +4,12 @@ import yaml
 import datetime
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.server.globals import PACAKAGE_FOLDER, APPNAME
+from vantage6.server.globals import PACKAGE_FOLDER, APPNAME
 
-from vantage6.server import db
+from vantage6.server import session
 from vantage6.server.model import (
     User,
     Organization,
@@ -36,7 +35,7 @@ class TestBaseModel(unittest.TestCase):
         Database().connect("sqlite://", allow_drop_all=True)
 
         # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+        file_ = str(PACKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
             cls.entities = yaml.safe_load(f.read())
@@ -104,7 +103,7 @@ class TestUserModel(TestBaseModel):
         user2 = User(username="duplicate-user", email="something-else@org.org")
         self.assertRaises(IntegrityError, user2.save)
 
-        db.session.remove()
+        session.session.remove()
 
 
 class TestCollaborationModel(TestBaseModel):

@@ -10,6 +10,7 @@ import pickle
 import io
 from abc import ABC, abstractmethod
 import pandas
+import json
 
 from vantage6.tools.dispatch_rpc import dispatch_rpc
 from vantage6.tools.util import info
@@ -37,6 +38,11 @@ def sparql_wrapper(module: str):
 
 def parquet_wrapper(module: str):
     wrapper = ParquetWrapper()
+    wrapper.wrap_algorithm(module)
+
+
+def multidb_wrapper(module: str):
+    wrapper = MultiDBWrapper()
     wrapper.wrap_algorithm(module)
 
 
@@ -98,9 +104,10 @@ class WrapperBase(ABC):
         with open(token_file) as fp:
             token = fp.read().strip()
 
+        # TODO in v4+, we should work with multiple databases instead of this
+        # default one
         database_uri = os.environ["DATABASE_URI"]
         info(f"Using '{database_uri}' as database")
-        # with open(data_file, "r") as fp:
 
         if load_data:
             data = self.load_data(database_uri, input_data)
@@ -154,6 +161,17 @@ class ParquetWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri, input_data):
         return pandas.read_parquet(database_uri)
+
+
+class MultiDBWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        db_labels = json.loads(os.environ.get("DB_LABELS"))
+        databases = {}
+        for db_label in db_labels:
+            db_env_var = f'{db_label.upper()}_DATABASE_URI'
+            databases[db_label] = os.environ.get(db_env_var)
+        return databases
 
 
 def write_output(output_format, output, output_file):

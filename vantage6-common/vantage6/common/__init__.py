@@ -3,6 +3,7 @@ import base64
 import click
 import appdirs
 import ipaddress
+import typing
 
 from colorama import init, Fore, Style
 
@@ -18,6 +19,23 @@ def logger_name(special__name__):
     if len(log_name) > 14:
         log_name = log_name[:11] + ".."
     return log_name
+
+
+class WhoAmI(typing.NamedTuple):
+    """ Data-class to store Authenticatable information in."""
+    type_: str
+    id_: int
+    name: str
+    organization_name: str
+    organization_id: int
+
+    def __repr__(self) -> str:
+        return (f"<WhoAmI "
+                f"name={self.name}, "
+                f"type={self.type_}, "
+                f"organization={self.organization_name}, "
+                f"(id={self.organization_id})"
+                ">")
 
 
 class Singleton(type):
@@ -89,7 +107,7 @@ class ClickLogger:
         debug(msg)
 
 
-def check_config_write_permissions(system_folders=False):
+def check_config_writeable(system_folders=False):
     dirs = appdirs.AppDirs()
     if system_folders:
         dirs_to_check = [
@@ -101,8 +119,12 @@ def check_config_write_permissions(system_folders=False):
         ]
     w_ok = True
     for dir_ in dirs_to_check:
-        if not os.access(dir_, os.W_OK):
-            warning(f"No write permissions at '{dir_}'")
+        if not os.path.isdir(dir_):
+            warning(f"Target directory '{dir_}' for configuration file does "
+                    "not exist.")
+            w_ok = False
+        elif not os.access(dir_, os.W_OK):
+            warning(f"No write permissions at '{dir_}'.")
             w_ok = False
 
     return w_ok
