@@ -29,6 +29,7 @@ import datetime
 import logging
 import queue
 import json
+import requests.exceptions
 
 from pathlib import Path
 from threading import Thread
@@ -419,6 +420,22 @@ class Node(object):
             except Exception:
                 self.log.exception('Speaking thread had an exception')
 
+    def __print_connection_error_logs(self):
+        """ Print error message when node cannot find the server """
+        self.log.warning(
+            "Could not connect to the server. Retrying in 10 seconds")
+        if self.server_io.host == 'http://localhost' and running_in_docker():
+            self.log.warn(
+                f"You are trying to reach the server at {self.server_io.host}."
+                " As your node is running inside a Docker container, it cannot"
+                " reach localhost on your host system. Probably, you have to "
+                "change your serverl URL to http://host.docker.internal "
+                "(Windows/MacOS) or http://172.17.0.1 (Linux)."
+            )
+        else:
+            self.log.debug("Are you sure the server can be reached at "
+                           f"{self.server_io.base_path}?")
+
     def authenticate(self) -> None:
         """
         Authenticate with the server using the api-key from the configuration
@@ -440,8 +457,12 @@ class Node(object):
                 self.log.warning(msg)
                 self.log.debug(e)
                 break
+            except requests.exceptions.ConnectionError:
+                self.__print_connection_error_logs()
+                time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
             except Exception as e:
-                msg = 'Authentication failed. Retrying in 10 seconds!'
+                msg = ('Authentication failed. Retrying in '
+                       f'{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!')
                 self.log.warning(msg)
                 self.log.debug(e)
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
