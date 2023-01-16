@@ -15,7 +15,9 @@ import uuid
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.server import db
-from vantage6.server.globals import DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES, DEFAULT_SUPPORT_EMAIL_ADDRESS
+from vantage6.server.globals import (
+    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES, DEFAULT_SUPPORT_EMAIL_ADDRESS
+)
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import (
     create_qr_uri, user_login
@@ -281,7 +283,7 @@ class ResetTwoFactorSecret(ServicesResources):
         user = db.User.get(user_id)
 
         log.info(f"Resetting two-factor authentication for {user.username}")
-        return create_qr_uri(self.config.get("smtp", {}), user), HTTPStatus.OK
+        return create_qr_uri(user), HTTPStatus.OK
 
 
 class RecoverTwoFactorSecret(ServicesResources):

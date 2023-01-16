@@ -39,3 +39,8 @@ ALPINE_IMAGE = 'harbor2.vantage6.ai/infrastructure/alpine'
 MAX_CHECK_VPN_ATTEMPTS = 60   # max attempts to obtain VPN IP (1 second apart)
 FREE_PORT_RANGE = range(49152, 65535)
 DEFAULT_ALGO_VPN_PORT = '8888'  # default VPN port for algorithm container
+
+#
+#   SSH TUNNEL RELATED CONSTANTS
+#
+SSH_TUNNEL_IMAGE = "harbor2.vantage6.ai/infrastructure/ssh-tunnel"
