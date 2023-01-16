@@ -68,6 +68,7 @@ def get_default_roles(db):
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.CREATE),
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.EDIT),
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.DELETE),
+        db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.CREATE),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.EDIT),
         db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.CREATE),
     ]

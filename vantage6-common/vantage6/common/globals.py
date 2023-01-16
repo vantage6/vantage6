@@ -9,11 +9,13 @@ DEFAULT_ENVIRONMENT = "application"
 
 APPNAME = "vantage6"
 
+MAIN_VERSION_NAME = "petronas"
+
 DEFAULT_DOCKER_REGISTRY = "harbor2.vantage6.ai"
 
-DEFAULT_NODE_IMAGE = "infrastructure/node:petronas"
+DEFAULT_NODE_IMAGE = f"infrastructure/node:{MAIN_VERSION_NAME}"
 
-DEFAULT_SERVER_IMAGE = "infrastructure/server:petronas"
+DEFAULT_SERVER_IMAGE = f"infrastructure/server:{MAIN_VERSION_NAME}"
 
 
 #
