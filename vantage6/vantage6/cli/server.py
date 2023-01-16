@@ -192,8 +192,9 @@ def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
     try:
         pull_if_newer(docker.from_env(), image)
         # docker_client.images.pull(image)
-    except Exception:
-        warning("... alas, no dice!")
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
     else:
         info(" ... success!")
 
@@ -493,8 +494,9 @@ def cli_server_import(ctx: Type[ServerContext], file_: str, drop_all: bool,
     info(f"Pulling latest server image '{image}'.")
     try:
         docker_client.images.pull(image)
-    except Exception:
-        warning("... alas, no dice!")
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
     else:
         info(" ... success!")
 

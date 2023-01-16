@@ -173,7 +173,7 @@ def inspect_remote_image_timestamp(docker_client, image: str, log=ClickLogger):
     if v1:
         timestamp = parse(result.json().get("created"))
     else:
-        timestamp = parse(result.json().get("extra_attrs").get("created"))
+        timestamp = parse(result.json().get("push_time"))
     return timestamp
 
 
