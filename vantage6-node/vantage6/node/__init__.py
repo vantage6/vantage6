@@ -1,6 +1,7 @@
 """
-A node retrieves tasks from the central server by an API call, runs these tasks
-and returns the results to the central server.
+A node in its simplest would retrieve a task from the central server by
+an API call, run this task and finally return the results to the central
+server again.
 
 The node application runs four threads:
 
@@ -29,11 +30,12 @@ import datetime
 import logging
 import queue
 import json
+import shutil
 import requests.exceptions
 
 from pathlib import Path
 from threading import Thread
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Type
 from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
@@ -57,6 +59,7 @@ from vantage6.node.util import logger_name, get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
+from vantage6.node.docker.ssh_tunnel import SSHTunnel
 
 
 class VPNConnectMode(Enum):
@@ -68,14 +71,14 @@ class VPNConnectMode(Enum):
 # ------------------------------------------------------------------------------
 class Node(object):
     """
-    Authenticates to the central server, setup encrpytion, a
+    Authenticates to the central server, setup encryption, a
     websocket connection, retrieving task that were posted while
     offline, preparing dataset for usage and finally setup a
     local proxy server..
 
     Parameters
     ----------
-    ctx:
+    ctx: Union[NodeContext, DockerNodeContext]
         Application context object.
 
     """
@@ -144,6 +147,9 @@ class Node(object):
         # Setup VPN connection
         self.vpn_manager = self.setup_vpn_connection(
             isolated_network_mgr, self.ctx)
+
+        # Create SSH tunnel according to the node configuration
+        self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
 
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
@@ -269,7 +275,6 @@ class Node(object):
         token = token["container_token"]
 
         # create a temporary volume for each run_id
-        # FIXME: why is docker_temporary_volume_name() in ctx???
         vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
         self.__docker.create_volume(vol_name)
 
@@ -556,10 +561,67 @@ class Node(object):
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_vpn_connection(
-        self, isolated_network_mgr: NetworkManager,
-        ctx: Union[DockerNodeContext, NodeContext]
-    ) -> VPNManager:
+    def setup_ssh_tunnels(self, isolated_network_mgr: Type[NetworkManager]) \
+            -> List[SSHTunnel]:
+        """
+        Create a SSH tunnels when they are defined in the configuration file.
+        For each tunnel a new container is created. The image used can be
+        specified in the configuration file as `ssh-tunnel` in the `images`
+        section, else the default image is used.
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Manager for the isolated network
+        """
+        if 'ssh-tunnels' not in self.config:
+            self.log.info("No SSH tunnels configured")
+            return
+
+        custom_tunnel_image = self.config.get('images', {}).get('ssh-tunnel') \
+            if 'images' in self.config else None
+
+        configs = self.config['ssh-tunnels']
+        self.log.info(f"Setting up {len(configs)} SSH tunnels")
+
+        tunnels: List[SSHTunnel] = []
+        for config in configs:
+            self.log.debug(f"SSH tunnel config: {config}")
+
+            # copy (rename) the ssh key to the correct name, this is done so
+            # that the file is in the volume (somehow we can not file mount
+            # within a volume)
+            if self.ctx.running_in_docker:
+                ssh_key = f"/mnt/ssh/{config['hostname']}.pem.tmp"
+                key_path = shutil.copy(ssh_key,
+                                       f"/mnt/ssh/{config['hostname']}.pem")
+                volume = self.ctx.docker_ssh_volume_name
+
+            else:
+                ssh_key = config['ssh']['identity']['key']
+
+                volume = str(Path(ssh_key).parent)
+                key_path = shutil.copy(ssh_key,
+                                       f"{volume}/{config['hostname']}.pem")
+
+            os.chmod(key_path, 0o600)
+
+            try:
+                new_tunnel = SSHTunnel(isolated_network_mgr, config,
+                                       self.ctx.name, volume,
+                                       custom_tunnel_image)
+            except Exception as e:
+                self.log.error("Error setting up SSH tunnel")
+                self.log.debug(e, exc_info=True)
+                continue
+
+            tunnels.append(new_tunnel)
+
+        return tunnels
+
+    def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
+                             ctx: Union[DockerNodeContext, NodeContext]
+                             ) -> VPNManager:
         """
         Setup container which has a VPN connection
 
@@ -822,12 +884,18 @@ class Node(object):
         return killed_algos
 
     def cleanup(self) -> None:
+
         if hasattr(self, 'socketIO') and self.socketIO:
             self.socketIO.disconnect()
         if hasattr(self, 'vpn_manager') and self.vpn_manager:
             self.vpn_manager.exit_vpn()
+        if hasattr(self, 'ssh_tunnels') and self.ssh_tunnels:
+            for tunnel in self.ssh_tunnels:
+                tunnel.stop()
         if hasattr(self, '_Node__docker') and self.__docker:
             self.__docker.cleanup()
+
+        self.log.info("Bye!")
 
 
 # ------------------------------------------------------------------------------

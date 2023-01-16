@@ -364,6 +364,7 @@ def cli_node_start(name: str, config: str, environment: str,
 
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
+    ssh_volume = docker_client.volumes.create(ctx.docker_ssh_volume_name)
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
@@ -372,6 +373,7 @@ def cli_node_start(name: str, config: str, environment: str,
         ("/mnt/log", str(ctx.log_dir)),
         ("/mnt/data", data_volume.name),
         ("/mnt/vpn", vpn_volume.name),
+        ("/mnt/ssh", ssh_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
@@ -402,6 +404,29 @@ def cli_node_start(name: str, config: str, environment: str,
         else:
             warning(f"private key file provided {fullpath}, "
                     "but does not exists")
+
+    # Mount private keys for ssh tunnels
+    ssh_tunnels = ctx.config.get("ssh-tunnels", [])
+    for ssh_tunnel in ssh_tunnels:
+        hostname = ssh_tunnel.get("hostname")
+        key_path = ssh_tunnel.get("ssh", {}).get("identity", {}).get("key")
+        if not key_path:
+            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                  "key not provided. Continuing to start without this tunnel.")
+            info()
+        key_path = Path(key_path)
+        if not key_path.exists():
+            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                  "key does not exist. Continuing to start without this "
+                  "tunnel.")
+
+        info(f"  Mounting private key for {hostname} at {key_path}")
+
+        # we remove the .tmp in the container, this is because the file is
+        # mounted in a volume mount point. Somehow the file is than empty in
+        # the volume but not for the node instance. By removing the .tmp we
+        # make sure that the file is not empty in the volume.
+        mounts.append((f"/mnt/ssh/{hostname}.pem.tmp", str(key_path)))
 
     # Be careful not to use 'environment' as it would override the function
     # argument ;-).

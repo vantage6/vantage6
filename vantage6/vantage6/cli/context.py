@@ -364,6 +364,21 @@ class NodeContext(AppContext):
             f"{self.docker_container_name}-vpn-vol"
         )
 
+    @property
+    def docker_ssh_volume_name(self) -> str:
+        """
+        Docker volume in which the SSH configuration is stored.
+
+        Returns
+        -------
+        str
+            Docker voluem name
+        """
+        return os.environ.get(
+            'SSH_TUNNEL_VOLUME_NAME',
+            f"{self.docker_container_name}-ssh-vol"
+        )
+
     def docker_temporary_volume_name(self, run_id: int) -> str:
         """
         Docker volume in which temporary data is stored. Temporary data is

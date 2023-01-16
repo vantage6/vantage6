@@ -79,11 +79,15 @@ algorithm-base-image:
 		--push .
 
 support-image:
-	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
-	@echo "All images are also tagged with `latest`"
+	@echo "Building support images"
+	@echo "All support images are also tagged with `latest`"
+	make support-alpine-image
+	make support-vpn-client-image
+	make support-vpn-configurator-image
+	make support-ssh-tunnel-image
 
+support-alpine-image:
+	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
 		--tag ${REGISTRY}/infrastructure/alpine:latest \
@@ -91,6 +95,8 @@ support-image:
 		-f ./docker/alpine.Dockerfile \
 		--push .
 
+support-vpn-client-image:
+	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
 		--tag ${REGISTRY}/infrastructure/vpn-client:latest \
@@ -98,11 +104,22 @@ support-image:
 		-f ./docker/vpn-client.Dockerfile \
 		--push .
 
+support-vpn-configurator-image:
+	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
 		--tag ${REGISTRY}/infrastructure/vpn-configurator:latest \
 		--platform linux/arm64,linux/amd64 \
 		-f ./docker/vpn-configurator.Dockerfile \
+		--push .
+
+support-ssh-tunnel-image:
+	@echo "Building ${REGISTRY}/infrastructure/ssh-tunnel:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/ssh-tunnel:${TAG} \
+		--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/ssh-tunnel.Dockerfile \
 		--push .
 
 image:

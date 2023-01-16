@@ -1,9 +1,10 @@
-""" Docker manager
+"""
+Docker manager
 
-The docker manager is responsible for communicating with the docker-
-daemon and is a wrapper arround the docker module. It has methods
-for creating docker networks, docker volumes, start containers
-and retreive results from finished containers
+The docker manager is responsible for communicating with the docker-daemon and
+is a wrapper around the docker module. It has methods
+for creating docker networks, docker volumes, start containers and retrieve
+results from finished containers.
 """
 import os
 import time
@@ -84,25 +85,22 @@ class DockerManager(DockerBaseManager):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(
-        self, ctx: Union[DockerNodeContext, NodeContext],
-        isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
-        tasks_dir: Path
-    ) -> None:
-        """
-        Initialization of DockerManager creates docker connection and
-        sets some default values.
+    def __init__(self, ctx: Union[DockerNodeContext, NodeContext],
+                 isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
+                 tasks_dir: Path) -> None:
+        """ Initialization of DockerManager creates docker connection and
+            sets some default values.
 
-        Parameters
-        ----------
-        ctx: DockerNodeContext or NodeContext
-            Context object from which settings are obtained
-        isolated_network_mgr: NetworkManager
-            Manager for the isolated network
-        vpn_manager: VPNManager
-            VPN Manager object
-        tasks_dir: Path
-            Directory in which this task's data are stored
+            Parameters
+            ----------
+            ctx: DockerNodeContext or NodeContext
+                Context object from which some settings are obtained
+            isolated_network_mgr: NetworkManager
+                Manager for the isolated network
+            vpn_manager: VPNManager
+                VPN Manager object
+            tasks_dir: Path
+                Directory in which this task's data are stored
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)
@@ -130,6 +128,9 @@ class DockerManager(DockerBaseManager):
         # could be duplicate result_id's running at the node at the same
         # time.
         self.node_name = ctx.name
+
+        # name of the container that is running the node
+        self.node_container_name = ctx.docker_container_name
 
         # login to the registries
         docker_registries = ctx.config.get("docker_registries", [])
@@ -293,6 +294,12 @@ class DockerManager(DockerBaseManager):
         self.cleanup_tasks()
         for service in self.linked_services:
             self.isolated_network_mgr.disconnect(service)
+
+        # remove the node container from the network, it runs this code.. so
+        # it does not make sense to delete it just yet
+        self.isolated_network_mgr.disconnect(self.node_container_name)
+
+        # remove the connected containers and the network
         self.isolated_network_mgr.delete(kill_containers=True)
 
     def run(self, result_id: int, task_info: Dict, image: str,
