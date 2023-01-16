@@ -126,7 +126,9 @@ After the installation is done, you need to configure the server to:
 
     Additionally, you may want to explicitly allow *only* VPN traffic between
     nodes, and not between a node and the VPN server. You can achieve that by
-    executing the following ``iptables`` commands.
+    updating the firewall rules on your machine. 
+    
+    On Debian machines, these rules can be found in `/etc/iptables/rules.v4` and `/etc/iptables/rules.v6`, on CentOS, Red Hat Enterprise Linux and Fedora they can be found in `/etc/sysconfig/iptables` and `/etc/sysconfig/ip6tables`.  You will have to do the following:
 
     .. raw:: html
 
