@@ -1,19 +1,16 @@
 """
-SSH Tunnel
-
 This module contains the SSH tunnel class. It is responsible for creating
 an SSH configuration file and starting an SSH tunnel container.
 
 The SSH tunnel container is used to create a secure connection between the
-private network of the node and an external data-source. This can then be used
-by the algorithm containers to access the data-source. Multiple SSH tunnels
+private network of the node and an external data source. This can then be used
+by the algorithm containers to access the data source. Multiple SSH tunnels
 can be created, each with a different configuration.
 """
 import logging
 import os
 
 from typing import Union, NamedTuple, Tuple
-from enum import Enum
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -26,7 +23,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
-from vantage6.node.globals import SSH_TUNNEL_IMAGE, PACAKAGE_FOLDER
+from vantage6.node.globals import SSH_TUNNEL_IMAGE, PACKAGE_FOLDER
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -79,15 +76,34 @@ class KnownHostsConfig(NamedTuple):
     fingerprint: str
 
 
-class SHHTunnelStatus(Enum):
-    pass
-
-
 class SSHTunnel(DockerBaseManager):
 
     def __init__(self, isolated_network_mgr: NetworkManager, config: dict,
                  node_name: str, config_volume: str,
                  tunnel_image: Union[str, None] = None) -> None:
+        """
+        Create a tunnel from the isolated network to a remote machine and
+        bind the remote port to a local ssh-tunnel container to be used by
+        an algorithm.
+
+        Parameters
+        ----------
+        isolated_network_mgr : NetworkManager
+            Isolated network manager
+        config : dict
+            ssh tunnel configuration
+        node_name : str
+            Node name to derive the ssh tunnel container name
+        config_volume : str
+            Name of the ssh config volume (or local path)
+        tunnel_image : Union[str, None], optional
+            User defined image to use for the tunnel, by default None
+
+        Raises
+        ------
+        KeyError
+            Missing key in the configuration
+        """
 
         super().__init__(isolated_network_mgr)
 
@@ -102,10 +118,6 @@ class SSHTunnel(DockerBaseManager):
 
         self.config_folder = Path("/mnt/ssh") if running_in_docker() else \
             Path(self.config_volume)
-
-        # Reference to isolated network, as we need to attach the SSH tunnel
-        # container to this network
-        self.isolated_network = isolated_network_mgr
 
         try:
             # hostname of the tunnel which can be used by the algorithm
@@ -211,7 +223,7 @@ class SSHTunnel(DockerBaseManager):
 
         environment = Environment(
             loader=FileSystemLoader(
-                PACAKAGE_FOLDER / APPNAME / "node" / "template"
+                PACKAGE_FOLDER / APPNAME / "node" / "template"
             ),
             autoescape=True
         )
@@ -223,9 +235,9 @@ class SSHTunnel(DockerBaseManager):
         with open(self.config_folder / "config", "w") as f:
             f.write(ssh_config)
 
-        # vnode-local breaks if we dont do this
+        # This is done also in the container, however vnode-local breaks
+        # if we dont do it here
         os.chmod(self.config_folder / "config", 0o600)
-        log.info('chmodded the crap out of the config')
 
     def create_known_hosts_file(self, config: KnownHostsConfig) -> None:
         """

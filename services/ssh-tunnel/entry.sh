@@ -2,31 +2,20 @@
 
 echo "entrypoint.sh"
 
-# ls /root
+# set ssh file permissions
 chmod 700 /root/.ssh
-chmod 600 /root/.ssh/*
-
-#!/bin/bash
+chmod 600 /root/.ssh/*.pem
+chmod 600 /root/.ssh/config
+chmod 600 /root/.ssh/known_hosts
 
 if [ -z "$1" ]; then
   echo '' && echo 'Please also provide server name as in config file...' &&
   exit 1
 fi
 
-retries=0
-repeat=true
-today=$(date)
-
-while "$repeat"; do
-  ((retries+=1)) &&
-  echo "Try number $retries..." &&
-  today=$(date) &&
-  ssh -N "$@" &&
-  repeat=false
-  if "$repeat"; then
-    sleep 5
-  fi
+# keep the ssh tunnel alive
+while true; do
+  ssh -N "$@"
 done
 
-echo "Total number of tries: $retries"
 echo "Exiting"

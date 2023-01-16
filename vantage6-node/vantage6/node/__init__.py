@@ -1,7 +1,4 @@
 """
-Node
-----
-
 A node in its simplest would retrieve a task from the central server by
 an API call, run this task and finally return the results to the central
 server again.
@@ -546,7 +543,10 @@ class Node(object):
     def setup_ssh_tunnels(self, isolated_network_mgr: Type[NetworkManager]) \
             -> List[SSHTunnel]:
         """
-        Setup SSH tunnels
+        Create a SSH tunnels when they are defined in the configuration file.
+        For each tunnel a new container is created. The image used can be
+        specified in the configuration file as `ssh-tunnel` in the `images`
+        section, else the default image is used.
 
         Parameters
         ----------
@@ -557,7 +557,7 @@ class Node(object):
             self.log.info("No SSH tunnels configured")
             return
 
-        custom_tunnel_image = self.config['images'].get('ssh-tunnel') \
+        custom_tunnel_image = self.config.get('images', {}).get('ssh-tunnel') \
             if 'images' in self.config else None
 
         configs = self.config['ssh-tunnels']

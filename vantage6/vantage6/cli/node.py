@@ -411,11 +411,13 @@ def cli_node_start(name: str, config: str, environment: str,
         key_path = ssh_tunnel.get("ssh", {}).get("identity", {}).get("key")
         if not key_path:
             error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
-                  "key not provided")
+                  "key not provided. Continuing to start without this tunnel.")
+            info()
         key_path = Path(key_path)
         if not key_path.exists():
             error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
-                  "key does not exist")
+                  "key does not exist. Continuing to start without this "
+                  "tunnel.")
 
         info(f"  Mounting private key for {hostname} at {key_path}")
 
