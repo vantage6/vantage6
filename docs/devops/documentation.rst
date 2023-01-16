@@ -13,16 +13,20 @@ The source of the documentation you are currently reading is located
 `here <https://github.com/vantage6/vantage6/tree/main/docs/>`_, in the ``docs``
 folder of the *vantage6* repository itself.
 
-To build the documentation locally you can use the ``Makefile`` located in the
-``docs`` folder. The command ``make html`` will generate these pages in HTML.
-To automatically rebuild the documentation whenever you make a change, you can
-use `sphinx-autobuild <https://pypi.org/project/sphinx-autobuild/>`_. Assuming
-you are in the main directory of the repository, run the following command:
+To build the documentation locally, there are two options. To build a static
+version, you can do ``make html`` when you are in the ``docs`` directory.
+If you want to automatically refresh the documentation whenever you make a
+change, you can use `sphinx-autobuild <https://pypi.org/project/sphinx-autobuild/>`_.
+Assuming you are in the main directory of the repository, run the following
+commands:
 
 ::
 
-    pip install sphinx-autobuild
+    pip install -r docs/requirements.txt
     sphinx-autobuild docs docs/_build/html --watch .
+
+Of course, you only have to install the requirements if you had not done so
+before.
 
 Then you can access the documentation on ``http://127.0.0.1:8000``. The
 ``--watch`` option makes sure that if you make changes to either the
