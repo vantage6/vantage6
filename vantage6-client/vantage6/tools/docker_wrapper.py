@@ -26,9 +26,9 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
-def docker_wrapper(module: str):
+def docker_wrapper(module: str, load_data=True):
     wrapper = DockerWrapper()
-    wrapper.wrap_algorithm(module)
+    wrapper.wrap_algorithm(module, load_data)
 
 
 def sparql_wrapper(module: str):
@@ -48,7 +48,7 @@ def multidb_wrapper(module: str):
 
 class WrapperBase(ABC):
 
-    def wrap_algorithm(self, module):
+    def wrap_algorithm(self, module, load_data=True):
         """
         Wrap an algorithm module to provide input and output handling for the
         vantage6 infrastructure.
@@ -85,6 +85,7 @@ class WrapperBase(ABC):
         - pandas DataFrames
 
         :param module: module that contains the vantage6 algorithms
+        :param load_data: attempt to load the data or execute the query
         :return:
         """
         info(f"wrapper for {module}")
@@ -107,14 +108,18 @@ class WrapperBase(ABC):
         # default one
         database_uri = os.environ["DATABASE_URI"]
         info(f"Using '{database_uri}' as database")
-        data = self.load_data(database_uri, input_data)
+
+        if load_data:
+            data = self.load_data(database_uri, input_data)
+        else:
+            data = None
 
         # make the actual call to the method/function
         info("Dispatching ...")
         output = dispatch_rpc(data, input_data, module, token)
 
         # write output from the method to mounted output file. Which will be
-        # transfered back to the server by the node-instance.
+        # transferred back to the server by the node-instance.
         output_file = os.environ["OUTPUT_FILE"]
         info(f"Writing output to {output_file}")
 
@@ -131,6 +136,9 @@ class DockerWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri, input_data):
         return pandas.read_csv(database_uri)
+
+
+CsvWrapper = DockerWrapper
 
 
 class SparqlDockerWrapper(WrapperBase):
@@ -170,7 +178,8 @@ def write_output(output_format, output, output_file):
     """
     Write output to output_file using the format from output_format.
 
-    If output_format == None, write output as pickle without indicating format (legacy method)
+    If output_format == None, write output as pickle without indicating format
+    (legacy method)
 
     :param output_format:
     :param output:
