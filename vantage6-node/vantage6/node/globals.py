@@ -12,13 +12,13 @@ DEFAULT_NODE_ENVIRONMENT = "application"
 #
 #   INSTALLATION SETTINGS
 #
-PACAKAGE_FOLDER = Path(__file__).parent.parent.parent
+PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
-DATA_FOLDER = PACAKAGE_FOLDER / APPNAME / "_data"
+DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
-# with open(Path(PACAKAGE_FOLDER) / APPNAME / "node" / "VERSION") as f:
+# with open(Path(PACKAGE_FOLDER) / APPNAME / "node" / "VERSION") as f:
 #     VERSION = f.read()
 
 

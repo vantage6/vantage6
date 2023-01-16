@@ -10,7 +10,7 @@ from docker.models.containers import Container
 
 from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.common.docker.addons import (
-    remove_container_if_exists, remove_container, pull_if_newer
+    remove_container_if_exists, remove_container
 )
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
@@ -372,22 +372,18 @@ class VPNManager(DockerBaseManager):
             containing port number and label is given
         """
         default_ports = [{'algo_port': DEFAULT_ALGO_VPN_PORT, 'label': None}]
-        try:
-            n2n_image = pull_if_newer(self.docker, image, self.log)
-        except Exception:
-            self.log.warn(f"Could not locate algorithm docker image {image}!")
-            return default_ports
+        algo_image = self.docker.images.get(image)
 
         exposed_ports = []
         try:
-            exposed_ports = n2n_image.attrs['Config']['ExposedPorts']
+            exposed_ports = algo_image.attrs['Config']['ExposedPorts']
         except KeyError:
             return default_ports
 
         # find any labels defined in the docker image
         labels = {}
         try:
-            labels = n2n_image.attrs['Config']['Labels']
+            labels = algo_image.attrs['Config']['Labels']
         except KeyError:
             pass  # No labels found, ignore
 
