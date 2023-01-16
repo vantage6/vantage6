@@ -53,14 +53,22 @@
   </tr>
 
 </table>
-<div *ngIf="userPermission.hasPermission('view', 'node', 'global') && orgs_without_nodes.length > 0">
+<div *ngIf="userPermission.hasPermission('view', 'node', 'global') && orgs_without_nodes.length > 0; else orgNodeMessage">
   <p class="text-warning">
     <mat-icon>warning</mat-icon>
     There are {{ orgs_without_nodes.length }} organizations in this
     collaboration without a node!
   </p>
 </div>
-<div *ngIf="userPermission.hasPermission('create', 'node', 'global')">
+<ng-template #orgNodeMessage>
+  <div *ngIf="userPermission.hasPermission('view', 'node', 'organization') && orgs_without_nodes.length > 0">
+    <p class="text-warning">
+      <mat-icon>warning</mat-icon>
+      Your organization has not yet registered a node for this collaboration!
+    </p>
+  </div>
+</ng-template>
+<div *ngIf="userPermission.hasPermission('create', 'node', '*')">
   <button *ngFor="let org of orgs_without_nodes"
           (click)="createNode(org)"
           mat-button class="btn btn-save inline">

@@ -91,7 +91,10 @@ export class CollaborationViewComponent
   setMissingNodes(): void {
     this.orgs_without_nodes = [];
     for (let org of this.collaboration.organizations) {
-      if (!org.node) {
+      if (
+        !org.node &&
+        this.userPermission.can(OpsType.VIEW, ResType.NODE, org.id)
+      ) {
         this.orgs_without_nodes.push(org);
       }
     }
