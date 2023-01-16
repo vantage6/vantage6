@@ -460,7 +460,8 @@ class Node(object):
                 self.__print_connection_error_logs()
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
             except Exception as e:
-                msg = 'Authentication failed. Retrying in 10 seconds!'
+                msg = ('Authentication failed. Retrying in '
+                       f'{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!')
                 self.log.warning(msg)
                 self.log.debug(e)
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
