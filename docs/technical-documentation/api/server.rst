@@ -45,6 +45,64 @@ Permission management
 .. autoclass:: vantage6.server.permission.PermissionManager
     :members:
 
+Socket functionality
+--------------------
+
+.. autoclass:: vantage6.server.websockets.DefaultSocketNamespace
+    :members:
+
+API endpoints
+-------------
+
+.. warning::
+    The API endpoints are also documented on the ``/apidocs`` endpoint of the
+    server (e.g. ``https://petronas.vantage6.ai/apidocs``). We are therefore
+    not including the API documentation here. Instead, we merely list the
+    supporting functions and classes.
+
+.. todo Include HATEOAS models, but these should be rewritten soon.
+.. todo consider including the auth_helper functions
+
+SQLAlchemy models
+-----------------
+
+Helper (base) classes
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: vantage6.server.model.base.ModelBase
+    :members:
+
+.. autoclass:: vantage6.server.model.base.Database
+    :members:
+
+.. autoclass:: vantage6.server.model.base.DatabaseSessionManager
+    :members:
+
+Database models for the API resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: vantage6.server.model.algorithm_port.AlgorithmPort
+    :members:
+    :exclude-members: id
+
+.. autoclass:: vantage6.server.model.collaboration.Collaboration
+    :members:
+    :exclude-members: id
+
+.. autoclass:: vantage6.server.model.member.Member
+    :members:
+    :exclude-members: id
+
+.. automodule:: vantage6.server.model.member
+
+.. autoclass:: vantage6.server.model.node.Node
+    :members:
+    :exclude-members: id
+
+.. autoclass:: vantage6.server.model.organization.Organization
+    :members:
+    :exclude-members: id
+
 Mail service
 ------------
 
