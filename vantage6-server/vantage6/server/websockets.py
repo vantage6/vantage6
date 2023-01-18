@@ -165,17 +165,6 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.error(e)
 
-    def on_join_room(self, room: str):
-        """
-        Let clients join any room they like by specifying the name.
-
-        Parameters
-        ----------
-        room : str
-            name of the room the client wants to join
-        """
-        self.__join_room_and_notify(room)
-
     def on_algorithm_status_change(self, data: Dict):
         """
         An algorithm container has changed its status.
