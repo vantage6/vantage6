@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 from typing import List
-=======
 from enum import Enum
->>>>>>> dev3
 
 from vantage6.server.model.rule import Operation, Scope
 
@@ -22,7 +19,6 @@ class DefaultRole(str, Enum):
 # function because that module has a connection to the database. This should
 # not be necessary. Fix that after fixing the circular imports described in
 # https://github.com/vantage6/vantage6/issues/53
-<<<<<<< HEAD
 def get_default_roles(db) -> List[dict]:
     """
     Get a list containing the default roles and their rules, so that they may
@@ -46,10 +42,6 @@ def get_default_roles(db) -> List[dict]:
         rules: List[int]
             A list of rule id's that the role contains
     """
-=======
-# Then simply do: import vantage6.server.db
-def get_default_roles(db):
->>>>>>> dev3
     # Define default roles
     # 1. Root user
     SUPER_ROLE = {
