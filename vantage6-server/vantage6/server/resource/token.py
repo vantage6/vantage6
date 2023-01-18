@@ -138,8 +138,7 @@ class UserToken(ServicesResources):
                 # server requires mfa but user hasn't set it up yet. Return
                 # an URI to generate a QR code
                 log.info(f'Redirecting user {username} to setup MFA')
-                return create_qr_uri(self.config.get("smtp", {}), user), \
-                    HTTPStatus.OK
+                return create_qr_uri(user), HTTPStatus.OK
             else:
                 # 2nd authentication factor: check the OTP secret of the user
                 mfa_code = request.json.get('mfa_code')
@@ -305,8 +304,8 @@ class ContainerToken(ServicesResources):
         # enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
             log.warning(
-                f"Node {g.node.id} attempts to generate key for task {task_id} "
-                f"which is outside its collaboration "
+                f"Node {g.node.id} attempts to generate key for task {task_id}"
+                f" which is outside its collaboration "
                 f"({g.node.collaboration_id}/{db_task.collaboration_id})."
             )
             return {"msg": "You are not within the collaboration"}, \

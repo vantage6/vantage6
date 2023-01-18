@@ -14,7 +14,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, Singleton
-from vantage6.server import db
+from vantage6.server import session
 
 
 module_name = logger_name(__name__)
@@ -242,12 +242,11 @@ class DatabaseSessionManager:
             return g.session
         else:
             # log.critical('Obtaining non flask session')
-            if not db.session:
+            if not session.session:
                 DatabaseSessionManager.new_session()
                 # log.critical('WE NEED TO MAKE A NEW ONE')
 
-            # print(f'db.session {db.session}')
-            return db.session
+            return session.session
 
     @staticmethod
     def new_session():
@@ -259,7 +258,7 @@ class DatabaseSessionManager:
             # g.session.refresh()
             # print('new flask session')
         else:
-            db.session = Database().session_b
+            session.session = Database().session_b
 
     @staticmethod
     def clear_session():
@@ -268,9 +267,9 @@ class DatabaseSessionManager:
             g.session.remove()
             # g.session = None
         else:
-            if db.session:
-                db.session.remove()
-                db.session = None
+            if session.session:
+                session.session.remove()
+                session.session = None
             else:
                 print('No DB session found to clear!')
 

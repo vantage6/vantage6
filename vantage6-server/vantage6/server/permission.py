@@ -6,6 +6,7 @@ from typing import Callable, List, Union
 from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.globals import RESOURCES
+from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
@@ -177,7 +178,7 @@ class PermissionManager:
             self.assign_rule_to_node(resource, scope, operation)
 
         # assign all new rules to root user
-        self.assign_rule_to_root(collection, scope, operation)
+        self.assign_rule_to_root(resource, scope, operation)
 
         self.collection(resource).add(rule.scope, rule.operation)
 
