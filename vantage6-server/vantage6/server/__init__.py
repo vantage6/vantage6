@@ -1,3 +1,10 @@
+"""
+The server has a central function in the vantage6 architecture. It communicates
+with the database to store which organizations, collaborations, users, etc.
+exist. It allows the users and nodes to authenticate and subsequently interact
+through the API the server hosts. Finally, it also communicates with
+authenticated nodes and users via the socketIO server that is run here.
+"""
 # -*- coding: utf-8 -*-
 from gevent import monkey
 
@@ -136,7 +143,7 @@ class ServerApp:
 
     @staticmethod
     def configure_logging():
-        """Turn 3rd party loggers off."""
+        """Set log levels of third party loggers."""
 
         # Prevent logging from urllib3
         logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -148,7 +155,7 @@ class ServerApp:
             .setLevel(logging.WARNING)
 
     def configure_flask(self):
-        """All flask config settings should go here."""
+        """Configure the Flask settings of the vantage6 server."""
 
         # let us handle exceptions
         self.app.config['PROPAGATE_EXCEPTIONS'] = True
@@ -272,7 +279,7 @@ class ServerApp:
                                        request.path[1:])
 
     def configure_api(self):
-        """"Define global API output."""
+        """Define global API output and its structure."""
 
         # helper to create HATEOAS schemas
         HATEOASModelSchema.api = self.api
@@ -393,7 +400,7 @@ class ServerApp:
                 return identity
 
     def load_resources(self):
-        """Import the modules containing Resources."""
+        """Import the modules containing API resources."""
 
         # make services available to the endpoints, this way each endpoint can
         # make use of 'em.
@@ -425,9 +432,12 @@ class ServerApp:
                 new_role.save()
 
     def start(self):
-        """Start the server.
         """
+        Start the server.
 
+        Before server is really started, some database settings are checked and
+        (re)set where appropriate.
+        """
         # add default roles (if they don't exist yet)
         self._add_default_roles()
 
@@ -466,7 +476,24 @@ class ServerApp:
 
 
 def run_server(config: str, environment: str = 'prod',
-               system_folders: bool = True):
+               system_folders: bool = True) -> ServerApp:
+    """
+    Run a vantage6 server.
+
+    Parameters
+    ----------
+    config: str
+        Configuration file path
+    environment: str
+        Configuration environment. Default value is 'prod'.
+    system_folders: bool
+        Whether to use system or user folders. Default is True.
+
+    Returns
+    -------
+    ServerApp
+        A running instance of the vantage6 server
+    """
     ctx = ServerContext.from_external_config_file(
         config,
         environment,
@@ -478,7 +505,15 @@ def run_server(config: str, environment: str = 'prod',
     return ServerApp(ctx).start()
 
 
-def run_dev_server(server_app: ServerApp, *args, **kwargs):
+def run_dev_server(server_app: ServerApp, *args, **kwargs) -> None:
+    """
+    Run a vantage6 development server (outside of a Docker container).
+
+    Parameters
+    ----------
+    server_app: ServerApp
+        Instance of a vantage6 server
+    """
     log.warn('*'*80)
     log.warn(' DEVELOPMENT SERVER '.center(80, '*'))
     log.warn('*'*80)

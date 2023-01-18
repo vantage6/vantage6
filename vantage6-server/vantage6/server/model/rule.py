@@ -8,6 +8,7 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Operation(Enumerate):
+    """ Enumerator of all available operations """
     VIEW = "v"
     EDIT = "e"
     CREATE = "c"
@@ -15,6 +16,7 @@ class Operation(Enumerate):
 
 
 class Scope(Enumerate):
+    """ Enumerator of all available scopes """
     OWN = "own"
     ORGANIZATION = "org"
     COLLABORATION = "col"
