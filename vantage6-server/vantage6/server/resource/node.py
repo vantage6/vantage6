@@ -45,7 +45,7 @@ def setup(api, api_base, services):
 # Permissions
 # -----------------------------------------------------------------------------
 def permissions(permission: PermissionManager):
-    add = permission.appender("node")
+    add = permission.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any node")
     add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,

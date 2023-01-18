@@ -2,6 +2,7 @@ import logging
 import importlib
 
 from collections import namedtuple
+from typing import Callable, List, Union
 from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.globals import RESOURCES
@@ -41,11 +42,6 @@ class RuleCollection:
         permission = Permission(RuleNeed(self.name, scope, operation))
         self.__setattr__(f'{operation.value}_{scope.value}', permission)
 
-    # TODO BvB 23-01-10 I don't think this function is ever used. Should we
-    # delete it?
-    def get(self, scope: Scope, operation: Operation):
-        return self.__getattribute__(f'{scope}_{operation}')
-
 
 class PermissionManager:
     """
@@ -71,48 +67,85 @@ class PermissionManager:
                 log.debug(f"Resource '{module_name}' contains no or invalid "
                           "permissions")
 
-    def assign_rule_to_node(self, name: str, scope: Scope,
+    def assign_rule_to_root(self, name: str, scope: Scope,
+                            operation: Operation):
+        """Assign a rule to the container role."""
+        self.assign_rule_to_fixed_role(DefaultRole.ROOT, name, scope,
+                                       operation)
+
+    def assign_rule_to_node(self, resource: str, scope: Scope,
                             operation: Operation) -> None:
         """
-        Assign a rule to the Node role."""
-        self.assign_rule_to_fixed_role("node", name, scope, operation)
+        Assign a rule to the Node role.
 
-    def assign_rule_to_container(self, name: str, scope: Scope,
+        resource: str
+            Resource that the rule applies to
+        scope: Scope
+            Scope that the rule applies to
+        operation: Operation
+            Operation that the rule applies to
+        """
+        self.assign_rule_to_fixed_role(DefaultRole.NODE, resource, scope,
+                                       operation)
+
+    def assign_rule_to_container(self, resource: str, scope: Scope,
                                  operation: Operation) -> None:
-        """Assign a rule to the container role."""
-        self.assign_rule_to_fixed_role("container", name, scope, operation)
+        """
+        Assign a rule to the container role.
+
+        resource: str
+            Resource that the rule applies to
+        scope: Scope
+            Scope that the rule applies to
+        operation: Operation
+            Operation that the rule applies to
+        """
+        self.assign_rule_to_fixed_role(DefaultRole.CONTAINER, resource, scope,
+                                       operation)
 
     @staticmethod
-    def assign_rule_to_fixed_role(fixedrole: str, name: str, scope: Scope,
+    def assign_rule_to_fixed_role(fixedrole: str, resource: str, scope: Scope,
                                   operation: Operation) -> None:
-        """Attach a rule to a fixed role (not adjustable by users)."""
+        """
+        Attach a rule to a fixed role (not adjustable by users).
+
+        fixedrole: str
+            Name of the fixed role that the rule should be added to
+        resource: str
+            Resource that the rule applies to
+        scope: Scope
+            Scope that the rule applies to
+        operation: Operation
+            Operation that the rule applies to
+        """
         role = Role.get_by_name(fixedrole)
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
             role = Role(name=fixedrole, description=f"{fixedrole} role")
 
-        rule = Rule.get_by_(name, scope, operation)
+        rule = Rule.get_by_(resource, scope, operation)
         if not rule:
-            log.error(f"Rule ({name},{scope},{operation}) not found!")
+            log.error(f"Rule ({resource},{scope},{operation}) not found!")
 
         if rule not in role.rules:
             role.rules.append(rule)
-            log.info(f"Rule ({name},{scope},{operation}) added to "
+            log.info(f"Rule ({resource},{scope},{operation}) added to "
                      f"{fixedrole} role!")
 
-    def register_rule(self, collection: str, scope: Scope,
+    def register_rule(self, resource: str, scope: Scope,
                       operation: Operation, description=None,
                       assign_to_node=False, assign_to_container=False) -> None:
-        """Register a rule in the database.
+        """
+        Register a rule in the database.
 
         If a rule already exists, nothing is done. This rule can be used in API
-        endpoints to determine if a user can do a certain operation in a
-        certain scope.
+        endpoints to determine if a user or node can do a certain operation in
+        a certain scope.
 
         Parameters
         ----------
-        rule : str
-            (Unique) name of the rule
+        resource : str
+            Resource that the rule applies to
         scope : Scope
             List of available scopes of this rule
         operation : Operation
@@ -120,49 +153,94 @@ class PermissionManager:
         description : String, optional
             Human readable description where the rule is used for, by default
                 None
-
-        Returns
-        -------
-        Permission (tuple)
-            permision object that can be used in API endpoints
+        assign_to_node: bool
+            Whether rule should be assigned to the node role or not. Default
+                False
+        assign_to_container: bool
+            Whether rule should be assigned to the container role or not.
+                Default False
         """
-
         # verify that the rule is in the DB, so that these can be assigned to
         # roles and users
-        rule = Rule.get_by_(collection, scope, operation)
+        rule = Rule.get_by_(resource, scope, operation)
         if not rule:
-            rule = Rule(name=collection, operation=operation, scope=scope,
+            rule = Rule(name=resource, operation=operation, scope=scope,
                         description=description)
             rule.save()
-            log.debug(f"New auth rule '{collection}' with scope={scope}"
+            log.debug(f"New auth rule '{resource}' with scope={scope}"
                       f" and operation={operation} is stored in the DB")
 
         if assign_to_container:
-            self.assign_rule_to_container(collection, scope, operation)
+            self.assign_rule_to_container(resource, scope, operation)
 
         if assign_to_node:
-            self.assign_rule_to_node(collection, scope, operation)
+            self.assign_rule_to_node(resource, scope, operation)
 
-        self.collection(collection).add(rule.scope, rule.operation)
+        # assign all new rules to root user
+        self.assign_rule_to_root(collection, scope, operation)
 
-    def appender(self, name):
+        self.collection(resource).add(rule.scope, rule.operation)
+
+    def appender(self, name: str) -> Callable:
+        """
+        Add a module's rules to the rule collection
+
+        Parameters
+        ----------
+        name: str
+            The name of the module whose rules are to be registered
+
+        Returns
+        -------
+        Callable
+            A callable ``register_rule`` function
+        """
         # make sure collection exists
         self.collection(name)
         return lambda *args, **kwargs: self.register_rule(name, *args,
                                                           **kwargs)
 
-    def collection(self, name) -> RuleCollection:
+    def collection(self, name: str) -> RuleCollection:
+        """
+        Get a RuleCollection object. If it doesn't exist yet, it will be
+        created.
+
+        Parameters
+        ----------
+        name: str
+            Name of the module whose RuleCollection is to be obtained
+
+        Returns
+        -------
+        RuleCollection
+            The collection of rules belonging to the module name
+        """
         if self._collection_exists(name):
             return self.collections[name]
         else:
             self.collections[name] = RuleCollection(name)
             return self.collections[name]
 
-    def _collection_exists(self, name) -> bool:
+    def _collection_exists(self, name: str) -> bool:
+        """
+        Check if a module's rule collection is defined
+
+        Parameters
+        ----------
+        name: str
+            Name of the module to be checked
+
+        Returns
+        -------
+        bool:
+            True if RuleCollection is defined for module, else False
+        """
         return name in self.collections
 
     def __getattr__(self, name: str) -> RuleCollection:
-        # __getattr__ is called when it is not found in the usual places
+        # TODO BvB 2023-01-18 I think this function might not be used. It would
+        # be triggered when we do something like
+        # `permissionManager.resource_name` but we don't ever do that (?!)
         try:
             collection = self.collections[name]
             return collection
@@ -195,7 +273,20 @@ class PermissionManager:
             scope=scope
         ).scalar()
 
-    def verify_user_rules(self, rules) -> bool:
+    def verify_user_rules(self, rules: List[Rule]) -> Union[dict, bool]:
+        """
+        Check if a user has all of a set of rules
+
+        Parameters
+        ----------
+        rules: List[Rule]
+            List of rules that user is checked to have
+
+        Returns
+        -------
+        Union[dict, bool]
+            False if user has all rules, else a dict with a message
+        """
         for rule in rules:
             requires = RuleNeed(rule.name, rule.scope, rule.operation)
             try:
