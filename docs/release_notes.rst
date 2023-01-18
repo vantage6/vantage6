@@ -1,6 +1,108 @@
 Release notes
 =============
 
+3.6.1
+-----
+
+*12 january 2023*
+
+- **Feature**
+
+ -  Algorithm containers can be killed from the client. This can be done
+    for a specific task or it possible to kill all tasks running at a specific
+    node. (`PR#417 <https://github.com/vantage6/vantage6/pull/417>`__,
+    `Issue#167 <https://github.com/vantage6/vantage6/issues/167>`__)
+ -  Added a ``status`` field for an algorithm, that tracks if an algorithm has
+    yet to start, is started, has finished, or has failed. In the latter case,
+    it also indicates how/when the algorithm failed
+    (`PR#417 <https://github.com/vantage6/vantage6/pull/417>`__).
+ -  The UI has been connected to the socket, and gives messages about node
+    and task status changes (`UI PR#84 <https://github.com/vantage6/vantage6-UI/pull/84>`_,
+    `UI Issue #73 <https://github.com/vantage6/vantage6-UI/issues/73>`_). There
+    are also new permissions for socket events on the server to authorize users
+    to see events from their (or all) collaborations
+    (`PR#417 <https://github.com/vantage6/vantage6/pull/417>`_).
+ -  It is now possible to create tasks in the UI (UI version >3.6.0). Note that
+    all tasks are then JSON serialized and you will not be able to run tasks
+    in an encrypted collaboration (as that would require uploading a private
+    key to a browser) (`PR#90 <#https://github.com/vantage6/vantage6-UI/pull/90>`_).
+
+    .. warning::
+        If you want to run the UI Docker image, note that from this version
+        onwards, you have to define the ``SERVER_URL`` and ``API_PATH``
+        environment variables (compared to just a ``API_URL`` before).
+ -  There is a new multi-database wrapper that will forward a dictionary of all
+    node databases and their paths to the algorithm. This allows you to use
+    multiple databases in a single algorithm easily.
+    (`PR#424 <https://github.com/vantage6/vantage6/pull/424>`_,
+    `Issue #398 <https://github.com/vantage6/vantage6/issues/398>`_).
+ -  New rules are now assigned automatically to the default root role. This
+    ensures that rules that are added in a new version are assigned to system
+    administrators, instead of them having to change the database
+    (`PR#456 <https://github.com/vantage6/vantage6/pull/456>`_,
+    `Issue #442 <https://github.com/vantage6/vantage6/issues/442>`_).
+ -  There is a new command ``vnode set-api-key`` that facilitates putting your
+    API key into the node configuration file (`PR#428 <https://github.com/vantage6/vantage6/pull/418>`_,
+    `Issue #259 <https://github.com/vantage6/vantage6/issues/259>`_).
+ -  Logging in the Python client has been improved: instead of all or nothing,
+    log level is now settable to one of debug, info, warn, error, critical
+    (`PR#453 <https://github.com/vantage6/vantage6/pull/453>`_,
+    `Issue #340 <https://github.com/vantage6/vantage6/issues/340>`_).
+ -  When there is an error in the VPN server configuration, the user receives
+    clearer error messages than before (`PR#444 <https://github.com/vantage6/vantage6/pull/444>`_,
+    `Issue #278 <https://github.com/vantage6/vantage6/issues/278>`_).
+
+- **Change**
+
+ -  The node status (online/offline) is now checked periodically over the socket
+    connection via a ping/pong construction. This is an improvement over the
+    older version where a node's status was changed only when it connected or
+    disconnected (`PR#450 <https://github.com/vantage6/vantage6/pull/450>`_,
+    `Issue #40 <https://github.com/vantage6/vantage6/issues/40>`_).
+
+    .. warning::
+        If a server upgrades to 3.6.1, the nodes should also be upgraded.
+        Otherwise, the node status will be incorrect and the logs will show
+        errors periodically with each attempted ping/pong.
+ -  It is no longer possible for any user to change the username of another
+    user, as this would be confusing for that user when logging in
+    (`PR#433 <https://github.com/vantage6/vantage6/pull/433>`_,
+    `Issue #396 <https://github.com/vantage6/vantage6/issues/396>`_).
+ -  The server has shorter log messages when someone calls a non-existing route.
+    The resulting 404 exception is no longer logged (`PR#452 <https://github.com/vantage6/vantage6/pull/452>`_,
+    `Issue #393 <https://github.com/vantage6/vantage6/issues/393>`_).
+ -  Removed old, unused scripts to start a node
+    (`PR#464 <https://github.com/vantage6/vantage6/pull/464>`_).
+
+- **Bugfix**
+
+ -  Node was unable to pull images from Docker Hub; this has been corrected.
+    (`PR#432 <https://github.com/vantage6/vantage6/pull/432>`__,
+    `Issue#422 <https://github.com/vantage6/vantage6/issues/422>`__).
+ -  File-based database extensions were always converted to ``.csv`` when they
+    were mounted to a node. Now, files keep their original file extensions
+    (`PR#426 <https://github.com/vantage6/vantage6/pull/426>`_,
+    `Issue #397 <https://github.com/vantage6/vantage6/issues/397>`_).
+ -  When a node configuration defined a wrong VPN subnet, the VPN connection
+    didn't work but this was not detected until VPN was used. Now, the user is
+    alerted immediately and VPN is turned off
+    (`PR#444 <https://github.com/vantage6/vantage6/pull/444>`_).
+ -  If a user tries to write a node or server config file to a non-existing
+    directory, they are now getting a clear error message instead of an
+    incorrect one (`PR#455 <https://github.com/vantage6/vantage6/pull/455>`_,
+    `Issue #1 <https://github.com/vantage6/vantage6/issues/1>`_)
+ -  There was a circular import in the infrastructure code, which has now been
+    resolved (`PR#451 <https://github.com/vantage6/vantage6/pull/451>`_,
+    `Issue #53 <https://github.com/vantage6/vantage6/issues/53>`_).
+ -  In PATCH ``/user``, it was not possible to set some fields (e.g.
+    ``firstname``) to an empty string if there was a value before.
+    (`PR#439 <https://github.com/vantage6/vantage6/pull/439>`_,
+    `Issue #334 <https://github.com/vantage6/vantage6/issues/334>`_).
+
+
+.. note::
+    Release 3.6.0 was skipped due to an issue in the release process.
+
 3.5.2
 -----
 

@@ -34,6 +34,7 @@ class Result(Base):
     assigned_at = Column(DateTime, default=datetime.datetime.utcnow)
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
+    status = Column(Text)
     log = Column(Text)
 
     # relationships

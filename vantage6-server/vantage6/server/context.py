@@ -20,10 +20,10 @@ class TestContext(AppContext):
 
     @staticmethod
     def test_config_location():
-        return (constants.PACAKAGE_FOLDER / constants.APPNAME /
+        return (constants.PACKAGE_FOLDER / constants.APPNAME /
                 "server" / "_data" / "unittest_config.yaml")
 
     @staticmethod
     def test_data_location():
-        return (constants.PACAKAGE_FOLDER / constants.APPNAME /
+        return (constants.PACKAGE_FOLDER / constants.APPNAME /
                 "server" / "_data")

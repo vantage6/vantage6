@@ -92,8 +92,11 @@ class VPNConfig(ServicesResources):
             log.error("Could not obtain VPN configuration file")
             log.error(e)
             return {
-                'msg': 'Could not obtain VPN configuration because the ' +
-                       'vantage6 server could not authorize to the VPN portal.'
+                'msg': (
+                    'Could not obtain VPN configuration because the vantage6 '
+                    'server could not authorize to the VPN portal. Please '
+                    'contact your server administrator.'
+                )
             }, HTTPStatus.INTERNAL_SERVER_ERROR
         except VPNConfigException as e:
             log.error("Could not obtain VPN configuration file")
@@ -107,8 +110,8 @@ class VPNConfig(ServicesResources):
             log.critical(f'Node <{g.node.id}> tries to obtain a vpn config. '
                          'However the VPN server is unreachable!')
             log.debug(e)
-            return {'msg': 'VPN server unreachable'}, \
-                HTTPStatus.SERVICE_UNAVAILABLE
+            return {'msg': 'VPN server unreachable. Please contact your server'
+                           ' administrator'}, HTTPStatus.SERVICE_UNAVAILABLE
 
         return {'ovpn_config': ovpn_config}, HTTPStatus.OK
 

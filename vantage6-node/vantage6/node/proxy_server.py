@@ -1,12 +1,16 @@
-import concurrent.futures
+"""
+This module contains a proxy server implementation that the node uses to
+communicate with the server. It contains general methods for any routes, and
+methods to handle tasks and results, including their encryption and decryption.
+"""
 import requests
 import logging
 
 from http import HTTPStatus
 from requests import Response
-from typing import Callable
+from typing import Callable, Union
 
-from flask import Flask, request, jsonify, copy_current_request_context
+from flask import Flask, request, jsonify
 
 from vantage6.node.server_io import NodeClient
 from vantage6.node.util import (
@@ -61,12 +65,12 @@ def make_proxied_request(endpoint: str) -> Response:
     Parameters
     ----------
     endpoint: str
-        endpoint to be reached at the vantage6-server
+        endpoint to be reached at the vantage6 server
 
     Returns
     -------
-    flask.Response
-        Response from the vantage6-server
+    requests.Response
+        Response from the vantage6 server
     """
     present = 'Authorization' in request.headers
     headers = {'Authorization': request.headers['Authorization']} if present \
@@ -83,21 +87,21 @@ def make_request(method: str, endpoint: str, json: dict = None,
 
     Parameters
     ----------
-    method : str
+    method: str
         HTTP method to be used
-    endpoint : str
-        endpoint of the vantage6-server
-    json : dict, optional
-        JSON body, by default None
-    params : dict, optional
-        HTTP parameters, by default None
-    headers : dict, optional
-        HTTP headers, by default None
+    endpoint: str
+        endpoint of the vantage6 server
+    json: dict, optional
+        JSON body
+    params: dict, optional
+        HTTP parameters
+    headers: dict, optional
+        HTTP headers
 
     Returns
     -------
-    Response
-        Response from the vantage6-server
+    requests.Response
+        Response from the vantage6 server
     """
 
     method = get_method(method)
@@ -116,8 +120,8 @@ def make_request(method: str, endpoint: str, json: dict = None,
             if response.status_code > 210:
                 log.warn('Proxy server received status code:'
                          f'{response.status_code}')
-                log.debug(f'method: {request.method}, url: {url}, json: {json}, params: {params}, '
-                          f'headers: {headers}')
+                log.debug(f'method: {request.method}, url: {url}, json: {json}'
+                          f', params: {params}, headers: {headers}')
                 if 'application/json' in response.headers.get('Content-Type'):
                     log.debug(response.json().get("msg", "no description..."))
 
@@ -140,7 +144,7 @@ def decrypt_result(result: dict) -> dict:
 
     Parameters
     ----------
-    result : dict
+    result: dict
         Result dict
 
     Returns
@@ -165,13 +169,14 @@ def decrypt_result(result: dict) -> dict:
     return result
 
 
-def get_response_json_and_handle_exceptions(response: Response):
+def get_response_json_and_handle_exceptions(
+        response: Response) -> Union[dict, None]:
     """
     Obtain json content from request response
 
     Parameters
     ----------
-    response : Response
+    response : requests.Response
         Requests response object
 
     Returns
@@ -193,8 +198,8 @@ def proxy_task():
 
     Returns
     -------
-    flask.Response
-        Response from the vantage6-server
+    requests.Response
+        Response from the vantage6 server
     """
     # We need the server io for the decryption of the results
     server_io: NodeClient = app.config.get("SERVER_IO")
@@ -223,7 +228,6 @@ def proxy_task():
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organizationn the public key is retrieved an the input is
     # encrypted specifically for them.
-    # @copy_current_request_context
     def encrypt_input(organization: dict) -> dict:
         """
         Encrypt the input for a specific organization by using its private key.
@@ -257,18 +261,13 @@ def proxy_task():
         )
 
         log.debug("Input succesfully encrypted for organization "
-                f"{organization_id}!")
+                  f"{organization_id}!")
         return organization
 
     if server_io.is_encrypted_collaboration():
 
         log.debug("Applying end-to-end encryption")
         data["organizations"] = [encrypt_input(o) for o in organizations]
-
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     futures = [executor.submit(encrypt_input, o)
-        #             for o in organizations]
-        # data["organizations"] = [future.result() for future in futures]
 
     # Attempt to send the task to the central server
     try:
@@ -293,8 +292,8 @@ def proxy_task_result(id: int) -> Response:
 
     Returns
     -------
-    Response
-        Reponse from the vantage6-server
+    requests.Response
+        Reponse from the vantage6 server
     """
     # We need the server io for the decryption of the results
     server_io = app.config.get("SERVER_IO")
@@ -334,8 +333,8 @@ def proxy_results(id: int) -> Response:
 
     Returns
     -------
-    flask.Response
-        Response of the vantage6-server
+    requests.Response
+        Response of the vantage6 server
     """
     # We need the server io for the decryption of the results
     server_io: NodeClient = app.config.get("SERVER_IO")
@@ -371,7 +370,7 @@ def proxy(central_server_path: str) -> Response:
 
     Returns
     -------
-    flask.Response
+    requests.Response
         Contains the server response
     """
     try:

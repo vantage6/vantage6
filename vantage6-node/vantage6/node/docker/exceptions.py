@@ -1,3 +1,9 @@
+"""
+Below are some custom exception types that are raised when algorithms cannot
+be executed successfully.
+"""
+
+
 class UnknownAlgorithmStartFail(Exception):
     """Algorithm failed to start due to an unknown reason. Potentially running
        it again would resolve the issue.

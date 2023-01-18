@@ -40,8 +40,9 @@ setup(
         'click==8.0.3',
         'PyYAML==5.4',
         'python-dateutil==2.8.1',
-        'docker==4.2.0',
-        'pyfiglet==0.8.post1'
+        'docker==5.0.3',
+        'cryptography==3.3.2',
+        'pyfiglet==0.8.post1',
     ],
     package_data={
         'vantage6.common': [

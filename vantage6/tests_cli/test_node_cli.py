@@ -86,7 +86,7 @@ class NodeCLITest(unittest.TestCase):
         )
 
     @patch("vantage6.cli.node.configuration_wizard")
-    @patch("vantage6.cli.node.check_config_write_permissions")
+    @patch("vantage6.cli.node.check_config_writeable")
     @patch("vantage6.cli.node.NodeContext")
     def test_new_config(self, context, permissions, wizard):
         """No error produced when creating new configuration."""
@@ -139,7 +139,7 @@ class NodeCLITest(unittest.TestCase):
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.check_config_write_permissions")
+    @patch("vantage6.cli.node.check_config_writeable")
     @patch("vantage6.cli.node.NodeContext")
     def test_new_write_permissions(self, context, permissions):
         """User needs write permissions."""
@@ -202,7 +202,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.pull_if_newer")
     @patch("vantage6.cli.node.NodeContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.node.check_docker_running", return_value=True)
     def test_start(self, check_docker, client, context, pull, volumes):
 
         # client.containers = MagicMock(name="docker.DockerClient.containers")
@@ -210,7 +210,6 @@ class NodeCLITest(unittest.TestCase):
         volume = MagicMock()
         volume.name = "data-vol-name"
         volumes.create.return_value = volume
-        check_docker.return_value = True
         context.config_exists.return_value = True
 
         ctx = MagicMock(
@@ -231,10 +230,9 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.node.check_docker_running",
+           return_value=True)
     def test_stop(self, check_docker, containers):
-
-        check_docker.return_value = True
 
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-user"
@@ -254,11 +252,9 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.time")
     @patch("vantage6.cli.node.print_log_worker")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.node.check_docker_running", return_value=True)
     def test_attach(self, check_docker, containers, log_worker, time_):
         """Attach docker logs without errors."""
-        check_docker.return_value = True
-
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-user"
         containers.list.return_value = [container1]
@@ -279,10 +275,9 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.node.q")
     @patch("docker.DockerClient.volumes")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.node.check_docker_running", return_value=True)
     def test_clean(self, check_docker, volumes, q):
         """Clean Docker volumes without errors."""
-
         volume1 = MagicMock()
         volume1.name = "some-name-tmpvol"
         volumes.list.return_value = [volume1]

@@ -119,6 +119,42 @@ After the installation is done, you need to configure the server to:
     same time. Be aware that all nodes need to be connected using the same
     protocol and port in order to communicate with each other.
 
+.. warning::
+    The EduVPN server should usually be available to the public internet to
+    allow all nodes to find it. Therefore, it should be properly secured, for
+    example by closing all public ports (except http/https).
+
+    Additionally, you may want to explicitly allow *only* VPN traffic between
+    nodes, and not between a node and the VPN server. You can achieve that by
+    updating the firewall rules on your machine. 
+    
+    On Debian machines, these rules can be found in `/etc/iptables/rules.v4` and `/etc/iptables/rules.v6`, on CentOS, Red Hat Enterprise Linux and Fedora they can be found in `/etc/sysconfig/iptables` and `/etc/sysconfig/ip6tables`.  You will have to do the following:
+
+    .. raw:: html
+
+        <details>
+        <summary><a>Iptables rules to prevent node-to-VPN-server communication</a></summary>
+
+    .. code:: bash
+
+        # In the firewall rules, below INPUT in the #SSH section, add this line
+        # to drop all VPN traffic with the VPN server as final destination:
+        -I INPUT -i tun+ -j DROP
+
+        # We only want to allow nodes to reach other nodes, and not other
+        # network interfaces available in the VPN.
+        # To achieve, replace the following rules:
+        -A FORWARD -i tun+ ! -o tun+ -j ACCEPT
+        -A FORWARD ! -i tun+ -o tun+ -j ACCEPT
+        # with:
+        -A FORWARD -i tun+ -o tun+ -j ACCEPT
+        -A FORWARD -i tun+ -j DROP
+
+
+    .. raw:: html
+
+        </details>
+
 **Example configuration**
 
 The following configuration makes a server

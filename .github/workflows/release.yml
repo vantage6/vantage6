@@ -3,19 +3,9 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'version/**'
+      - 'version/*.*.*'
 
 jobs:
-
-  # Check that the tag that is being used starts with `version/`. If
-  # this is not the case, this tag is not intended for release.
-  verify:
-    name: Verify version tag
-    runs-on: ubuntu-latest
-    steps:
-      - id: verify
-        if: startsWith(github.ref, 'refs/tags/version') != true
-        uses: andymckay/cancel-action@0.2
 
   # From the tag we split the individual version components:
   # major.minor.patch.stage<N>. Note that post releases are not part
@@ -78,7 +68,11 @@ jobs:
           git config --local user.name github-actions
           git config --local user.email github-actions@github.com
           git add *
+          git checkout -b release/${version}
           git commit -m "Updated the version ${version}"
+          git push
+          git checkout main
+          git merge release/${version}
           git push
 
     outputs:
@@ -111,58 +105,6 @@ jobs:
         automatic_release_tag: "v${{ env.version }}"
         prerelease: ${{ env.stage != '' }}
         title: "${{ env.version }}"
-
-  # Build an release all the vantage6 infrastructure packages. For all
-  # the packages it will (1) update the version as specified in the tag,
-  # (2) build the package, (3) upload it to pypi, and (4) build and push
-  # the Docker image
-  build-n-release:
-
-    name: Build and release the project
-    runs-on: ubuntu-latest
-    needs: version
-    env:
-      version: ${{ needs.version.outputs.version }}
-      major: ${{ needs.version.outputs.major }}
-      minor: ${{ needs.version.outputs.minor }}
-      patch: ${{ needs.version.outputs.patch }}
-      stage: ${{ needs.version.outputs.stage }}
-      build: ${{ needs.version.outputs.build }}
-
-    steps:
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
-
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install click
-          pip install wheel
-          pip install twine
-
-      - name: Build project
-        id: make
-        run: |
-          make rebuild
-
-      - name: Publish project to PyPi
-        id: publish
-        if: ${{ !env.ACT }}
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          make publish
 
   support-images:
     name: Build support images
@@ -201,7 +143,7 @@ jobs:
   infrastructure-images:
     name: Build infrastructure images
     runs-on: ubuntu-latest
-    needs: [version, build-n-release] # we need to packages to be released
+    needs: version
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
@@ -249,7 +191,7 @@ jobs:
   algorithm-base-image:
     name: Build algorithm base image
     runs-on: ubuntu-latest
-    needs: [version, build-n-release] # we need to python client to be released
+    needs: version
     env:
       version: ${{ needs.version.outputs.version }}
 
@@ -318,6 +260,58 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
+
+  # Build an release all the vantage6 infrastructure packages. For all
+  # the packages it will (1) update the version as specified in the tag,
+  # (2) build the package, (3) upload it to pypi, and (4) build and push
+  # the Docker image
+  build-n-release:
+
+    name: Build and release the project
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      version: ${{ needs.version.outputs.version }}
+      major: ${{ needs.version.outputs.major }}
+      minor: ${{ needs.version.outputs.minor }}
+      patch: ${{ needs.version.outputs.patch }}
+      stage: ${{ needs.version.outputs.stage }}
+      build: ${{ needs.version.outputs.build }}
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # we just made a version commit, so we need to pull that. Else the
+          # commit of the tag is used.
+          ref: 'main'
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install click
+          pip install wheel
+          pip install twine
+
+      - name: Build project
+        id: make
+        run: |
+          make rebuild
+
+      - name: Publish project to PyPi
+        id: publish
+        if: ${{ !env.ACT }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          make publish
 
   # When the project is built and released the Discord community is notified.
   notify:
