@@ -12,6 +12,8 @@ from vantage6.server import db
 from vantage6.server.model.authenticable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
 
+ALL_NODES_ROOM = 'all_nodes'
+
 
 class DefaultSocketNamespace(Namespace):
     """
@@ -25,7 +27,7 @@ class DefaultSocketNamespace(Namespace):
 
     log = logging.getLogger(logger_name(__name__))
 
-    def on_connect(self):
+    def on_connect(self) -> None:
         """
         A new incomming connection request from a client.
 
@@ -88,17 +90,32 @@ class DefaultSocketNamespace(Namespace):
             self.__join_room_and_notify(room)
 
     @staticmethod
-    def _add_node_to_rooms(node: Authenticatable):
-        """ Connect node to appropriate websocket rooms """
+    def _add_node_to_rooms(node: Authenticatable) -> None:
+        """
+        Connect node to appropriate websocket rooms
+
+        Parameters
+        ----------
+        node: Authenticatable
+            Node that is to be added to the rooms
+        """
         # node join rooms for all nodes and rooms for their collaboration
-        session.rooms.append('all_nodes')
+        session.rooms.append(ALL_NODES_ROOM)
         session.rooms.append(f'collaboration_{node.collaboration_id}')
         session.rooms.append(
             f'collaboration_{node.collaboration_id}_organization_'
             f'{node.organization_id}')
 
     @staticmethod
-    def _add_user_to_rooms(user: Authenticatable):
+    def _add_user_to_rooms(user: Authenticatable) -> None:
+        """
+        Connect user to appropriate websocket rooms
+
+        Parameters
+        ----------
+        user: Authenticatable
+            User that is to be added to the rooms
+        """
         # check for which collab rooms the user has permission to enter
         session.user = db.User.get(session.auth_id)
         if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
@@ -121,7 +138,7 @@ class DefaultSocketNamespace(Namespace):
                     f'{user.organization.id}'
                 )
 
-    def on_disconnect(self):
+    def on_disconnect(self) -> None:
         """
         Client that disconnects needs to leave all rooms.
         """
@@ -143,7 +160,7 @@ class DefaultSocketNamespace(Namespace):
 
         self.log.info(f'{session.name} disconnected')
 
-    def on_message(self, message: str):
+    def on_message(self, message: str) -> None:
         """
         An incomming message from any client.
 
@@ -154,7 +171,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.info('received message: ' + message)
 
-    def on_error(self, e: str):
+    def on_error(self, e: str) -> None:
         """
         An incomming error from any of the client.
 
@@ -165,7 +182,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.error(e)
 
-    def on_algorithm_status_change(self, data: Dict):
+    def on_algorithm_status_change(self, data: Dict) -> None:
         """
         An algorithm container has changed its status.
 
@@ -218,7 +235,7 @@ class DefaultSocketNamespace(Namespace):
             }, room=f"collaboration_{collaboration_id}"
         )
 
-    def __join_room_and_notify(self, room: str):
+    def __join_room_and_notify(self, room: str) -> None:
         """
         Joins room and notify other clients in this room.
 
@@ -230,13 +247,9 @@ class DefaultSocketNamespace(Namespace):
         join_room(room)
         msg = f'{session.type.title()} <{session.name}> joined room <{room}>'
         self.log.info(msg)
-        # share message with other users and nodes, except for all_nodes. That
-        # room contains nodes from outside your collaboration that shouldn't
-        # know about you.
-        if room != 'all_nodes':
-            emit('message', msg, room=room)
+        self.__notify_room_join_or_leave(room, msg)
 
-    def __leave_room_and_notify(self, room: str):
+    def __leave_room_and_notify(self, room: str) -> None:
         """
         Leave room and notify other clients in this room.
 
@@ -248,10 +261,19 @@ class DefaultSocketNamespace(Namespace):
         leave_room(room)
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
+        self.__notify_room_join_or_leave(room, msg)
+
+    @staticmethod
+    def __notify_room_join_or_leave(room: str, msg: str) -> None:
+        """
+        Notify a room that one of its clients is joining or leaving
+
+        """
         # share message with other users and nodes, except for all_nodes. That
-        # room contains nodes from outside your collaboration that shouldn't
-        # know about you.
-        if room != 'all_nodes':
+        # room must never be notified for join or leave events since it
+        # contains nodes from different collaborations that shouldn't
+        # know about each other.
+        if room != ALL_NODES_ROOM:
             emit('message', msg, room=room)
 
     def __alert_node_status(self, online: bool, node: Authenticatable) -> None:
