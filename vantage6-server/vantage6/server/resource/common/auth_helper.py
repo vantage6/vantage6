@@ -5,8 +5,7 @@ import pyotp
 from http import HTTPStatus
 from typing import Dict, Tuple, Union
 
-from vantage6.common.globals import APPNAME
-from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
+from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User
 
@@ -64,14 +63,12 @@ def user_login(
         HTTPStatus.UNAUTHORIZED
 
 
-def create_qr_uri(smtp_config, user) -> Dict:
+def create_qr_uri(user: User) -> Dict:
     """
     Create the URI to generate a QR code for authenticator apps
 
     Parameters
     ----------
-    config: ConfigurationManager
-        An instance of a vantage6 configuration manager for a vantage6 server
     user: User
         User for whom two-factor authentication is to be set up
 
@@ -81,11 +78,9 @@ def create_qr_uri(smtp_config, user) -> Dict:
         Dictionary with information on the TOTP secret required to generate
         a QR code or to enter it manually in an authenticator app
     """
-    provision_email = smtp_config.get("username",
-                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
     otp_secret = pyotp.random_base32()
     qr_uri = pyotp.totp.TOTP(otp_secret).provisioning_uri(
-        name=provision_email, issuer_name=APPNAME
+        name=user.username, issuer_name=f"{APPNAME} ({MAIN_VERSION_NAME})"
     )
     user.otp_secret = otp_secret
     user.save()

@@ -159,12 +159,12 @@ Vantage6 integration
 
 .. note::
     In this example we use a **csv**-file. It is also possible to use other
-    types of data-sources. This tutorial makes use of our algorithm wrapper
+    types of data sources. This tutorial makes use of our algorithm wrapper
     which is currently only available for **csv**, **SPARQL** and **Parquet**
     files.
 
     Other wrappers like **SQL**, **OMOP**, etc. are under consideration. Let
-    us now if you want to use one of these or other data-sources.
+    us now if you want to use one of these or other datasources.
 
 Now that we have a federated implementation of our algorithm we need to
 make it compatible with the vantage6 infrastructure. The infrastructure

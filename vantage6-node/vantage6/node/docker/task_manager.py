@@ -400,7 +400,7 @@ class DockerTaskManager(DockerBaseManager):
         }
 
         # Only prepend the data_folder is it is a file-based database
-        # This allows algorithms to access multiple data-sources at the
+        # This allows algorithms to access multiple data sources at the
         # same time
         db_labels = []
         for label in self.databases:

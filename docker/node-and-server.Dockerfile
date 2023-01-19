@@ -54,7 +54,7 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
   pip install uwsgi -Iv
 
-RUN chmod +x /vantage6/configs/server.sh
+RUN chmod +x /vantage6/vantage6-server/server.sh
 
 # expose the proxy server port
 ARG port=80
