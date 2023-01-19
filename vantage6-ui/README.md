@@ -58,7 +58,7 @@ Alternatively, we provide the Docker image `harbor2.vantage6.ai/infrastructure/u
 to help you deploy your own UI. In that case, run
 
 ```
-docker run --env SERVER_URL="<your_url>" API_PATH="<your_path>" -p 8080:80
+docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
 ```
 
 to run a UI on port 8080 that communicates with your own server. For instance,
@@ -66,3 +66,7 @@ you can point to a local server with default settings if you set
 SERVER_URL=`http://localhost:5000` and API_PATH=`/api`.
 If you don't enter environment variables, the UI points to
 `https://petronas.vantage6.ai` by default.
+
+Note that you can also use another UI image tag than `ui:latest`. For example,
+you can specify a version of the UI such as `ui:3.6.0`. Another option is
+to use the tag `ui:petronas`, which defaults to the latest v3 version.
