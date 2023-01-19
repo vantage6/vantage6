@@ -16,6 +16,7 @@ from vantage6.server.resource import (
     only_for,
     ServicesResources
 )
+from vantage6.server import db
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource.common._schema import PortSchema
 from vantage6.server.model import (
@@ -25,7 +26,7 @@ from vantage6.server.model import (
     Task
 )
 from vantage6.server.model.base import DatabaseSessionManager
-
+from vantage6.server.resource import with_container
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -47,6 +48,13 @@ def setup(api, api_base, services):
         Port,
         path + '/<int:id>',
         endpoint='port_with_id',
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
+    api.add_resource(
+        VPNAddress,
+        api_base + '/vpn/algorithm/addresses',
+        endpoint='vpn_address',
         methods=('GET',),
         resource_class_kwargs=services
     )
@@ -354,3 +362,86 @@ class Port(PortBase):
         s = port_schema
 
         return s.dump(port, many=False).data, HTTPStatus.OK
+
+
+class VPNAddress(ServicesResources):
+
+    @with_container
+    def get(self):
+        """
+        Get a list of the addresses (IP + port) and labels of algorithm
+        containers in the same task as the authenticating container.
+        ---
+
+        description: >-
+          Returns a dictionary of addresses of algorithm containers in the same
+          task.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Port|Global|View|❌|❌|View any result|\n
+          |Port|Organization|View|❌|✅|View the ports of your
+          organizations collaborations|\n
+
+          Not accessible to users.
+
+        parameters:
+          - in: path
+            name: include_children
+            schema:
+              type: boolean
+            description: Include the addresses of subtasks
+          - in: path
+            name: include_parent
+            schema:
+              type: boolean
+            description: Include the addresses of parent tasks
+
+        responses:
+          200:
+            description: Ok
+
+        security:
+        - bearerAuth: []
+
+        tags: ["VPN"]
+        """
+        task_id = g.container['task_id']
+        task_ids = [task_id]
+
+        task = db.Task.get(task_id)
+
+        # include child tasks if requested
+        if request.args.get('include_children', False):
+            subtasks = g.session.query(db.Task).filter(
+                db.Task.parent_id == task_id
+            ).all()
+            task_ids.extend([t.id for t in subtasks])
+
+        # include parent task if requested
+        if request.args.get('include_parent', False):
+            parent = g.session.query(db.Task).filter(
+                db.Task.id == task.parent_id
+            ).one_or_none()
+            if parent:
+                task_ids.append(parent.id)
+
+        ports = g.session.query(AlgorithmPort)\
+                 .join(Result)\
+                 .filter(Result.task_id.in_(task_ids))\
+                 .all()
+
+        # combine data from ports and nodes
+        addresses = []
+        for port in ports:
+            d = {
+                'port': port.port,
+                'label': port.label,
+                'ip': port.result.node.ip,
+                'organization_id': port.result.organization_id
+            }
+            addresses.append(d)
+
+        return {'addresses': addresses}, HTTPStatus.OK
