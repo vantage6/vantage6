@@ -69,7 +69,7 @@ jobs:
           git add *
           git checkout -b release/${version}
           git commit -m "Updated the version ${version}"
-          git push
+          git push --set-upstream origin release/${version}
           git checkout main
           git merge release/${version}
           git push
