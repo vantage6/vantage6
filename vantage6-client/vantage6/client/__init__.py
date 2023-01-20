@@ -2044,6 +2044,8 @@ class UserClient(ClientBase):
             return self.parent.request('rule', params=params)
 
 
+# TODO remove in v4+ (deprecated for AlgorithmClient but still kept for
+# backwards compatibility)
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
 
