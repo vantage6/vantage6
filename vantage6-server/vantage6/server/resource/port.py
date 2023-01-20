@@ -440,7 +440,8 @@ class VPNAddress(ServicesResources):
                 'port': port.port,
                 'label': port.label,
                 'ip': port.result.node.ip,
-                'organization_id': port.result.organization_id
+                'organization_id': port.result.organization_id,
+                'task_id': port.result.task_id
             }
             addresses.append(d)
 
