@@ -389,6 +389,11 @@ class VPNAddress(ServicesResources):
 
         parameters:
           - in: path
+            name: label
+            schema:
+              type: string
+            description: Algorithm port label to filter by
+          - in: path
             name: include_children
             schema:
               type: boolean
@@ -428,10 +433,17 @@ class VPNAddress(ServicesResources):
             if parent:
                 task_ids.append(parent.id)
 
-        ports = g.session.query(AlgorithmPort)\
-                 .join(Result)\
-                 .filter(Result.task_id.in_(task_ids))\
-                 .all()
+        # get all ports for the tasks requested
+        q = g.session.query(AlgorithmPort)\
+                     .join(Result)\
+                     .filter(Result.task_id.in_(task_ids))\
+
+        # filter by label if requested
+        filter_label = request.args.get('label')
+        if filter_label:
+            q = q.filter(AlgorithmPort.label == filter_label)
+
+        ports = q.all()
 
         # combine data from ports and nodes
         addresses = []
