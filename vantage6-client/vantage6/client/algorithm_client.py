@@ -136,48 +136,6 @@ class AlgorithmClient(ClientBase):
 
             return decoded_results
 
-    class VPN(ClientBase.SubClient):
-        """
-        A VPN client for the algorithm container.
-
-        It provides functions to obtain the IP addresses of other containers.
-        """
-        def get_addresses(
-            self, include_children: bool = False, include_parent: bool = False,
-            label: str = None
-        ) -> List[dict]:
-            """
-            Get information about the VPN IP addresses and ports of other
-            algorithm containers involved in the current task. These addresses
-            can be used to send VPN communication to.
-
-            Parameters
-            ----------
-            include_children : bool, optional
-                Include the IP addresses of the children of the current task,
-                by default False.
-            include_parent : bool, optional
-                Include the IP address of the parent of the current task, by
-                default False.
-            label : str, optional
-                The label of the port you are interested in, which is set
-                in the algorithm Dockerfile. If this parameter is set, only
-                the ports with this label will be returned.
-
-            Returns
-            -------
-            List[dict]
-                List of dictionaries containing the IP address and port number,
-                and other information to identify the containers.
-            """
-            results = self.request("vpn/algorithm/addresses", params={
-                "include_children": include_children,
-                "include_parent": include_parent,
-                "label": label
-            })
-
-            return results['addresses']
-
     class Task(ClientBase.SubClient):
         """
         A task client for the algorithm container.
@@ -252,6 +210,48 @@ class AlgorithmClient(ClientBase):
                 "organizations": organization_json_list,
                 "database": self.database
             })
+
+    class VPN(ClientBase.SubClient):
+        """
+        A VPN client for the algorithm container.
+
+        It provides functions to obtain the IP addresses of other containers.
+        """
+        def get_addresses(
+            self, include_children: bool = False, include_parent: bool = False,
+            label: str = None
+        ) -> List[dict]:
+            """
+            Get information about the VPN IP addresses and ports of other
+            algorithm containers involved in the current task. These addresses
+            can be used to send VPN communication to.
+
+            Parameters
+            ----------
+            include_children : bool, optional
+                Include the IP addresses of the children of the current task,
+                by default False.
+            include_parent : bool, optional
+                Include the IP address of the parent of the current task, by
+                default False.
+            label : str, optional
+                The label of the port you are interested in, which is set
+                in the algorithm Dockerfile. If this parameter is set, only
+                the ports with this label will be returned.
+
+            Returns
+            -------
+            List[dict]
+                List of dictionaries containing the IP address and port number,
+                and other information to identify the containers.
+            """
+            results = self.request("vpn/algorithm/addresses", params={
+                "include_children": include_children,
+                "include_parent": include_parent,
+                "label": label
+            })
+
+            return results['addresses']
 
     class Organization(ClientBase.SubClient):
         """
