@@ -57,35 +57,13 @@ class AlgorithmClient(ClientBase):
 
         self._access_token = token
 
-    def authenticate(self):
+    def request(self, *args, **kwargs) -> dict:
         """
-        This function merely serves to alert users that algorithm containers
-        cannot authenticate. They get their token from their node on startup.
-
-        Raises
-        ------
-        Exception
-            Containers cannot authenticate.
+        Make a request to the central server. This overwrites the parent
+        function so that containers will not try to refresh their token, which
+        they would be unable to do.
         """
-        raise Exception(
-            "Containers cannot authenticate! Their token is provided by the "
-            "node on startup."
-        )
-
-    def refresh_token(self):
-        """
-        This function merely serves to alert users that algorithm containers
-        cannot refresh their token. They get their token from their node on
-        startup.
-
-        Raises
-        ------
-        Exception
-            Containers cannot refresh their token.
-        """
-        raise Exception(
-            "Containers cannot refresh their token! Their token is provided by"
-            " the node on startup.")
+        return super().request(*args, **kwargs, retry=False)
 
     class Result(ClientBase.SubClient):
         """
