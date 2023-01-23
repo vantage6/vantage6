@@ -114,6 +114,22 @@ export class UserPermissionService {
     );
   }
 
+  hasMininimalPermission(
+    operation: OpsType | string,
+    resource: ResType | string,
+    minimum_scope: ScopeType | string
+  ): boolean {
+    // determine which scopes are at least minimum scope in hierarchy
+    let scopes: ScopeType[] = [ScopeType.GLOBAL];
+    if (minimum_scope != ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
+    if (minimum_scope != ScopeType.COLLABORATION)
+      scopes.push(ScopeType.ORGANIZATION);
+    if (minimum_scope != ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
+
+    // check if user has at least one of the scopes
+    return scopes.some((s) => this.hasPermission(operation, resource, s));
+  }
+
   async async_can(
     operation: OpsType | string,
     resource: ResType | string,

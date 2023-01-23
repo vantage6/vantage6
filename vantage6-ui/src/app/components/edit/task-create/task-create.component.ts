@@ -27,7 +27,7 @@ import {
   removeValueFromArray,
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
-import { ExitMode } from 'src/app/shared/enum';
+import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Result } from 'src/app/interfaces/result';
 
 @Component({
@@ -270,12 +270,58 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     // set selected organizations
     this.task.organizations = this.selected_orgs;
 
-    // check if all nodes are online. If they are, create the task. If not,
-    // alert the user that they aren't
-    if (this.relevantNodesOnline()) {
+    // if user is not allowed to see other organizations and/or nodes, we start
+    // the task without checking if other nodes are online - that is impossible
+    if (
+      !this.userPermission.hasMininimalPermission(
+        OpsType.VIEW,
+        ResType.ORGANIZATION,
+        ScopeType.COLLABORATION
+      ) ||
+      !this.userPermission.hasPermission(
+        OpsType.VIEW,
+        ResType.NODE,
+        ScopeType.GLOBAL
+      )
+    ) {
+      this.createTask();
+      this.modalService.openMessageModal([
+        'The task has been created!',
+        'Note that you do not have permissions to view if all required ' +
+          'nodes are online. If they are not, the task will not complete.',
+      ]);
+      return;
+    }
+
+    // check which nodes should be online to complete the task
+    let org_ids_to_be_online = [];
+    if (this.task_input.master) {
+      // master method: all nodes should be online
+      org_ids_to_be_online = getIdsFromArray(
+        (this.task.collaboration as Collaboration).organizations
+      );
+    } else {
+      // non-master method: only selected nodes need to be online
+      org_ids_to_be_online = getIdsFromArray(this.selected_orgs);
+    }
+
+    // check if nodes are online.
+    let offline_nodes: Node[] = [];
+    for (let org of (this.task.collaboration as Collaboration).organizations) {
+      if (
+        org_ids_to_be_online.includes(org.id) &&
+        org.node &&
+        !org.node.is_online
+      ) {
+        offline_nodes.push(org.node);
+      }
+    }
+
+    if (offline_nodes.length === 0) {
+      // all relevant nodes are online!
       this.createTask();
     } else {
-      this.alertNodesOffline();
+      this.alertNodesOffline(offline_nodes);
     }
   }
 
@@ -290,42 +336,16 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     );
   }
 
-  relevantNodesOnline(): boolean {
-    // check first which nodes should be online to complete the task
-    let org_ids_to_be_online = [];
-    if (this.task_input.master) {
-      // master method: all nodes should be online
-      org_ids_to_be_online = getIdsFromArray(
-        (this.task.collaboration as Collaboration).organizations
-      );
-    } else {
-      // non-master method: only selected nodes need to be online
-      org_ids_to_be_online = getIdsFromArray(this.selected_orgs);
-    }
-    // check if nodes are online. NB: the current user may not be allowed to
-    // view all nodes. We do not warn the user in such cases
-    // TODO more sophisticated check based on user permissions to check if the
-    // nodes they are allowed to see have been registered and are online
-    for (let org of (this.task.collaboration as Collaboration).organizations) {
-      if (
-        org_ids_to_be_online.includes(org.id) &&
-        org.node &&
-        !org.node.is_online
-      ) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  alertNodesOffline(): void {
+  alertNodesOffline(offline_nodes: Node[]): void {
     this.modalService
-      .openCreateModal([
-        'Some of the nodes responsible for handling this task are not online.' +
-          ' The task you are about to create will therefore probably not be ' +
-          'executed smoothly.',
-        'Are you sure you want to create this task now?',
-      ])
+      .openTaskCreateModal(
+        [
+          'The nodes below that will be involved in handling this task are ' +
+            'not online. The task you are about to create will therefore ' +
+            'not be executed smoothly.',
+        ],
+        offline_nodes
+      )
       .result.then((data) => {
         if (data.exitMode === ExitMode.CREATE) {
           this.createTask();
