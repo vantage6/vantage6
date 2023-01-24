@@ -204,25 +204,25 @@ specify any environment, you should only specify the key ``application``
        # `databases` section of the configuration file.
        - hostname: my-data-source
 
-           # SSH configuration of the remote machine
-           ssh:
+         # SSH configuration of the remote machine
+         ssh:
 
-             # Hostname or ip of the remote machine, in case it is the docker
-             # host you can use `host.docker.internal` for Windows and MacOS.
-             # In the case of Linux you can use `172.17.0.1` (the ip of the
-             # docker bridge on the host)
-             host: host.docker.internal
-             port: 22
+           # Hostname or ip of the remote machine, in case it is the docker
+           # host you can use `host.docker.internal` for Windows and MacOS.
+           # In the case of Linux you can use `172.17.0.1` (the ip of the
+           # docker bridge on the host)
+           host: host.docker.internal
+           port: 22
 
-             # fingerprint of the remote machine. This is used to verify the
-             # authenticity of the remote machine.
-             fingerprint: "ssh-rsa ..."
+           # fingerprint of the remote machine. This is used to verify the
+           # authenticity of the remote machine.
+           fingerprint: "ssh-rsa ..."
 
-             # Username and private key to use for authentication on the remote
-             # machine
-             identity:
-                 username: username
-                 key: /path/to/private_key.pem
+           # Username and private key to use for authentication on the remote
+           # machine
+           identity:
+             username: username
+             key: /path/to/private_key.pem
 
            # Once the SSH connection is established, a tunnel is created to
            # forward traffic from the local machine to the remote machine.
@@ -232,36 +232,36 @@ specify any environment, you should only specify the key ``application``
              # 0.0.0.0 as we want the algorithm container to be able to
              # connect.
              bind:
-                 ip: 0.0.0.0
-                 port: 8000
+               ip: 0.0.0.0
+               port: 8000
 
              # The port and ip on the remote machine. If the data source runs
              # on this machine, the ip most likely is 127.0.0.1.
              dest:
-                 ip: 127.0.0.1
-                 port: 8000
+               ip: 127.0.0.1
+               port: 8000
 
      # Settings for the logger
      logging:
-         # Controls the logging output level. Could be one of the following
-         # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-         level:        DEBUG
+       # Controls the logging output level. Could be one of the following
+       # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+       level:        DEBUG
 
-         # Filename of the log-file, used by RotatingFileHandler
-         file:         my_node.log
+       # Filename of the log-file, used by RotatingFileHandler
+       file:         my_node.log
 
-         # whenever the output needs to be shown in the console
-         use_console:  True
+       # whenever the output needs to be shown in the console
+       use_console:  True
 
-         # The number of log files that are kept, used by RotatingFileHandler
-         backup_count: 5
+       # The number of log files that are kept, used by RotatingFileHandler
+       backup_count: 5
 
-         # Size kb of a single log file, used by RotatingFileHandler
-         max_size:     1024
+       # Size kb of a single log file, used by RotatingFileHandler
+       max_size:     1024
 
-         # format: input for logging.Formatter,
-         format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-         datefmt:      "%Y-%m-%d %H:%M:%S"
+       # format: input for logging.Formatter,
+       format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+       datefmt:      "%Y-%m-%d %H:%M:%S"
 
      # directory where local task files (input/output) are stored
      task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\tno1
