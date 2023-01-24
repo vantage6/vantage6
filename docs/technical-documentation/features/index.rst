@@ -9,3 +9,4 @@ The following pages each describe one feature of vantage6 in some detail.
 
    2fa
    wrapper
+   ssh_tunnel
