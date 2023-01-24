@@ -1,6 +1,59 @@
 Release notes
 =============
 
+3.7.0
+-----
+
+*25 january 2023*
+
+- **Feature**
+
+ -  SSH tunnels are available on the node. This allows nodes to connect to
+    other machines over SSH, thereby greatly expanding the options to connect
+    databases and other services to the node, which before could only be made
+    available to the algorithms if they were running on the same machine as the
+    node (`PR#461 <https://github.com/vantage6/vantage6/pull/461>`__,
+    `Issue#162 <https://github.com/vantage6/vantage6/issues/162>`__).
+ -  For two-factor authentication, the information given to the authenticator
+    app has been updated to include a clearer description of the server and
+    username (`PR#483 <https://github.com/vantage6/vantage6/pull/483>`__,
+    `Issue#405 <https://github.com/vantage6/vantage6/issues/405>`__).
+ -  Added the option to run an algorithm without passing data to it using the
+    CSV wrapper (`PR#465 <https://github.com/vantage6/vantage6/pull/465>`__)
+ -  In the UI, when users are about to create a task, they will now be shown
+    which nodes relevant to the task are offline
+    (`PR#97 <https://github.com/vantage6/vantage6-UI/pull/97`__,
+    `Issue#96 <https://github.com/vantage6/vantage6-UI/issues/96>`__).
+
+- **Change**
+
+ -  The ``docker`` dependency is updated, so that ``docker.pull()`` now pulls
+    the `default` tag if no tag is specified, instead of all tags
+    (`PR#481 <https://github.com/vantage6/vantage6/pull/481>`__,
+    `Issue#473 <https://github.com/vantage6/vantage6/issues/473>`__).
+ -  If a node cannot authenticate to the server because the server cannot be
+    found, the user now gets a clearer error message(`PR#480 <https://github.com/vantage6/vantage6/pull/480>`__,
+    `Issue#460 <https://github.com/vantage6/vantage6/issues/460>`__).
+ -  The default role 'Organization admin' has been updated: it now allows to
+    create nodes for their own organization
+    (`PR#489 <https://github.com/vantage6/vantage6/pull/489>`__).
+ -  The release pipeline has been updated to 1) release to PyPi as last step (
+    since that is irreversible), 2) create release branches, 3) improve the
+    check on the version tag, and 4) update some soon-to-be-deprecated commands
+    (`PR#488 <https://github.com/vantage6/vantage6/pull/488>`__.
+ -  Not all nodes are alerted any more when a node comes online
+    (`PR#490 <https://github.com/vantage6/vantage6/pull/490>`__).
+ -  Added instructions to the UI on how to report bugs
+    (`PR#100 <https://github.com/vantage6/vantage6-UI/pull/100`__,
+    `Issue#57 <https://github.com/vantage6/vantage6-UI/issues/57>`__).
+
+
+- **Bugfix**
+
+ -  Newer images were not automatically pulled from harbor on node or server
+    startup. This has been fixed (`PR#482 <https://github.com/vantage6/vantage6/pull/482>`__,
+    `Issue#471 <https://github.com/vantage6/vantage6/issues/471>`__).
+
 3.6.1
 -----
 
@@ -10,8 +63,8 @@ Release notes
 
  -  Algorithm containers can be killed from the client. This can be done
     for a specific task or it possible to kill all tasks running at a specific
-    node. (`PR#417 <https://github.com/vantage6/vantage6/pull/417>`__,
-    `Issue#167 <https://github.com/vantage6/vantage6/issues/167>`__)
+    node (`PR#417 <https://github.com/vantage6/vantage6/pull/417>`__,
+    `Issue#167 <https://github.com/vantage6/vantage6/issues/167>`__).
  -  Added a ``status`` field for an algorithm, that tracks if an algorithm has
     yet to start, is started, has finished, or has failed. In the latter case,
     it also indicates how/when the algorithm failed
