@@ -22,7 +22,7 @@ Release notes
     CSV wrapper (`PR#465 <https://github.com/vantage6/vantage6/pull/465>`__)
  -  In the UI, when users are about to create a task, they will now be shown
     which nodes relevant to the task are offline
-    (`PR#97 <https://github.com/vantage6/vantage6-UI/pull/97`__,
+    (`PR#97 <https://github.com/vantage6/vantage6-UI/pull/97>`__,
     `Issue#96 <https://github.com/vantage6/vantage6-UI/issues/96>`__).
 
 - **Change**
@@ -44,7 +44,7 @@ Release notes
  -  Not all nodes are alerted any more when a node comes online
     (`PR#490 <https://github.com/vantage6/vantage6/pull/490>`__).
  -  Added instructions to the UI on how to report bugs
-    (`PR#100 <https://github.com/vantage6/vantage6-UI/pull/100`__,
+    (`PR#100 <https://github.com/vantage6/vantage6-UI/pull/100>`__,
     `Issue#57 <https://github.com/vantage6/vantage6-UI/issues/57>`__).
 
 
