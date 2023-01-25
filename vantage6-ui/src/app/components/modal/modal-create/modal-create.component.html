@@ -2,6 +2,17 @@
     <p *ngFor="let message of messages">
         {{message}}
     </p>
+    <div *ngFor="let node of offline_nodes">
+      <button mat-button
+        [className]="getButtonClasses(node)"
+        [routerLink]="['/node', node.id, 'view', node.organization_id]"
+      >
+          {{getNodeButtonText(node)}}
+      </button>
+    </div>
+    <p>
+        Are you sure you want to create this task now?
+    </p>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-edit" (click)="create()">Create</button>
