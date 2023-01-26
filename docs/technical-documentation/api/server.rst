@@ -69,14 +69,18 @@ SQLAlchemy models
 Helper (base) classes
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: vantage6.server.model.base.ModelBase
+.. .. autoclass:: vantage6.server.model.base.ModelBase
+..     :members:
+
+.. .. autoclass:: vantage6.server.model.base.Database
+..     :members:
+
+.. .. autoclass:: vantage6.server.model.base.DatabaseSessionManager
+..     :members:
+
+.. automodule:: vantage6.server.model.base
     :members:
 
-.. autoclass:: vantage6.server.model.base.Database
-    :members:
-
-.. autoclass:: vantage6.server.model.base.DatabaseSessionManager
-    :members:
 
 Database models for the API resources
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,23 +89,72 @@ Database models for the API resources
     :members:
     :exclude-members: id
 
+.. autoclass:: vantage6.server.model.authenticatable.Authenticatable
+    :members:
+    :exclude-members: id
+
 .. autoclass:: vantage6.server.model.collaboration.Collaboration
     :members:
     :exclude-members: id
 
-.. autoclass:: vantage6.server.model.member.Member
-    :members:
-    :exclude-members: id
-
-.. automodule:: vantage6.server.model.member
-
 .. autoclass:: vantage6.server.model.node.Node
+    :show-inheritance:
     :members:
     :exclude-members: id
 
 .. autoclass:: vantage6.server.model.organization.Organization
     :members:
     :exclude-members: id
+
+.. autoclass:: vantage6.server.model.result.Result
+    :members:
+    :exclude-members: id
+
+.. autoclass:: vantage6.server.model.role.Role
+    :members:
+    :exclude-members: id
+
+.. autoclass:: vantage6.server.model.rule.Rule
+    :members:
+    :exclude-members: id
+
+.. autoclass:: vantage6.server.model.task.Task
+    :members:
+    :exclude-members: id
+
+
+.. autoclass:: vantage6.server.model.user.User
+    :members:
+    :show-inheritance:
+    :exclude-members: id
+
+Database models that link resources together
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. todo these tables don't look right yet when they are rendered
+
+.. automodule:: vantage6.server.model.member
+
+.. autoclass:: vantage6.server.model.member.Member
+    :members:
+    :exclude-members: id
+
+------------------
+
+.. automodule:: vantage6.server.model.permission
+
+.. autoclass:: vantage6.server.model.permission.Permission
+    :members:
+
+.. autoclass:: vantage6.server.model.permission.UserPermission
+    :members:
+
+-------------------
+
+.. automodule:: vantage6.server.model.role_rule_association
+
+.. autoclass:: vantage6.server.model.role_rule_association.role_rule_association
+    :members:
 
 Mail service
 ------------
