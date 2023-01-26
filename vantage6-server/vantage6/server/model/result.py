@@ -11,16 +11,18 @@ from vantage6.server.model.base import Base
 from vantage6.server.model import (
     Node,
     Collaboration,
-    Task,
     Organization
 )
+from vantage6.server.model.task import Task
 from vantage6.server.model.base import DatabaseSessionManager
 
 log_ = logging.getLogger(logger_name(__name__))
 
 
 class Result(Base):
-    """Result of a Task as executed by a Node.
+    """
+    Table that describes which results are available. A Result is the
+    description of a Task as executed by a Node.
 
     The result (and the input) is encrypted and can be only read by the
     intended receiver of the message.
@@ -43,7 +45,15 @@ class Result(Base):
     ports = relationship("AlgorithmPort", back_populates="result")
 
     @property
-    def node(self):
+    def node(self) -> Node:
+        """
+        Returns the node that is associated with this result.
+
+        Returns
+        -------
+        model.node.Node
+            The node that is associated with this result.
+        """
         session = DatabaseSessionManager.get_session()
         try:
             node = session.query(Node)\
@@ -69,10 +79,26 @@ class Result(Base):
         return node
 
     @hybrid_property
-    def complete(self):
+    def complete(self) -> bool:
+        """
+        Returns whether the algorithm run has completed or not.
+
+        Returns
+        -------
+        bool
+            True if the algorithm run has completed, False otherwise.
+        """
         return self.finished_at is not None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the result.
+
+        Returns
+        -------
+        str
+            String representation of the result.
+        """
         return (
             "<Result "
             f"{self.id}: '{self.task.name}', "

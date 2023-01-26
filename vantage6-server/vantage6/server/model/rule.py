@@ -1,5 +1,6 @@
-
+from __future__ import annotations
 from enum import Enum as Enumerate
+from typing import Union
 
 from sqlalchemy import Column, Text, String, Enum
 from sqlalchemy.orm import relationship
@@ -24,7 +25,11 @@ class Scope(Enumerate):
 
 
 class Rule(Base):
-    """Rules to determine permissions in an API endpoint.
+    """
+    Table that describes which rules are available.
+
+    A rule gives access to a single type of action with a given operation,
+    scope and resource on which it acts.
     """
 
     # fields
@@ -40,7 +45,26 @@ class Rule(Base):
                          secondary="UserPermission")
 
     @classmethod
-    def get_by_(cls, name: str, scope: str, operation: str):
+    def get_by_(cls, name: str, scope: str, operation: str
+                ) -> Union[Rule, None]:
+        """
+        Get a rule by its name, scope and operation.
+
+        Parameters
+        ----------
+        name : str
+            Name of the resource on which the rule acts, e.g. 'node'
+        scope : str
+            Scope of the rule, e.g. 'organization'
+        operation : str
+            Operation of the rule, e.g. 'view'
+
+        Returns
+        -------
+        Rule or None
+            Rule with the given name, scope and operation or None if no rule
+            with the given name, scope and operation exists
+        """
         session = DatabaseSessionManager.get_session()
         try:
             return session.query(cls).filter_by(
@@ -51,7 +75,15 @@ class Rule(Base):
         except NoResultFound:
             return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        String representation of the rule.
+
+        Returns
+        -------
+        str
+            String representation of the rule
+        """
         return (
             f"<Rule "
             f"{self.id}: '{self.name}', "

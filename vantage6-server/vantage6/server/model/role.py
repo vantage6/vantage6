@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Union
 from sqlalchemy import Column, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
@@ -6,7 +8,12 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Role(Base):
-    """Collection of Rules
+    """
+    Tables that describes which roles are available.
+
+    A role is a collection of rules that are assigned to a user. A user can
+    have multiple roles assigned to them. A role can be assigned to multiple
+    users.
     """
 
     # fields
@@ -22,14 +29,36 @@ class Role(Base):
                          secondary="Permission")
 
     @classmethod
-    def get_by_name(cls, name):
+    def get_by_name(cls, name) -> Union[Role, None]:
+        """
+        Get a role by its name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the role
+
+        Returns
+        -------
+        Role or None
+            Role with the given name or None if no role with the given name
+            exists
+        """
         session = DatabaseSessionManager.get_session()
         try:
             return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
             return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        String representation of the role.
+
+        Returns
+        -------
+        str
+            String representation of the role
+        """
         return (
             f"<Role "
             f"{self.id}: '{self.name}', "

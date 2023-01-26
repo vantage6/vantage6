@@ -60,7 +60,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        list[Node]
+        list[model.node.Node]
             List of nodes that are part of the given organizations
         """
         return [n for n in self.nodes if n.organization.id in ids]
@@ -77,7 +77,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        Node | None
+        model.node.Node | None
             Node for the given organization for this collaboration, or None if
             there is no node for the given organization.
         """

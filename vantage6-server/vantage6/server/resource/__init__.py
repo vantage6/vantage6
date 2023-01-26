@@ -49,7 +49,9 @@ class ServicesResources(Resource):
 
     @staticmethod
     def obtain_auth():
-        """Obtain a authenticable object or dict in the case of a container."""
+        """
+        Obtain a authenticatable object or dict in the case of a container.
+        """
         if g.user:
             return g.user
         if g.node:

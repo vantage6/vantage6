@@ -9,7 +9,7 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 from vantage6.common import logger_name
 from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
-from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
 
 
@@ -191,12 +191,11 @@ class DefaultSocketNamespace(Namespace):
         ----------
         data: Dict
             Dictionary containing parameters on the updated algorithm status.
-            It should contain:
-             -   node_id: node_id where the algorithm container was running
-             -   status: New status of the algorithm container
-             -   result_id: result_id for which the algorithm was running
-             -   collaboration_id: collaboration for which the algorithm was
-                 running
+            It should contain: 1) node_id: node_id where the algorithm
+            container was running; 2) status: New status of the algorithm
+            container; 3) result_id: result_id for which the algorithm was
+            running; and 4) collaboration_id: collaboration for which the
+            algorithm was running
         """
         result_id = data.get('result_id')
         task_id = data.get('task_id')
