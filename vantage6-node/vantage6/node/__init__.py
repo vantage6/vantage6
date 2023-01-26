@@ -1,18 +1,26 @@
-""" Node
-
+"""
 A node in its simplest would retrieve a task from the central server by
 an API call, run this task and finally return the results to the central
 server again.
 
-The node application is seperated in 4 threads:
-- main thread, waits for new tasks to be added to the queue and
-    run the tasks
-- listening thread, listens for incommin websocket messages. Which
-    are handled by NodeTaskNamespace.
-- speaking thread, waits for results from docker to return and posts
-    them at the central server
-- proxy server thread, provides an interface for master containers
-    to post tasks and retrieve results
+The node application runs four threads:
+
+*Main thread*
+    Checks the task queue and run the next task if there is one available.
+*Listening thread*
+    Listens for incoming websocket messages. Among other functionality, it adds
+    new tasks to the task queue.
+*Speaking thread*
+    Waits for tasks to finish. When they do, return the results to the central
+    server.
+*Proxy server thread*
+    Algorithm containers are isolated from the internet for security reasons.
+    The local proxy server provides an interface to the central server for
+    *master* containers to create subtasks and retrieve their results.
+
+The node connects to the server using a websocket connection. This connection
+is mainly used for sharing status updates. This avoids the need for polling to
+see if there are new tasks available.
 """
 import sys
 import os
@@ -22,11 +30,13 @@ import datetime
 import logging
 import queue
 import json
+import shutil
+import requests.exceptions
 
 from pathlib import Path
 from threading import Thread
-from typing import Union
-from socketio import ClientNamespace, Client as SocketIO
+from typing import Dict, List, Union, Type
+from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
@@ -35,6 +45,8 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.exceptions import AuthenticationException
+from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.common.task_status import TaskStatus
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -43,10 +55,11 @@ from vantage6.node.globals import (
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import logger_name
+from vantage6.node.util import logger_name, get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
-from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.socket import NodeTaskNamespace
+from vantage6.node.docker.ssh_tunnel import SSHTunnel
 
 
 class VPNConnectMode(Enum):
@@ -55,91 +68,23 @@ class VPNConnectMode(Enum):
     REFRESH_COMPLETE = 3
 
 
-class NodeTaskNamespace(ClientNamespace):
-    """Class that handles incoming websocket events."""
-
-    # reference to the node objects, so a callback can edit the
-    # node instance.
-    node_worker_ref = None
-
-    def __init__(self, *args, **kwargs):
-        """ Handler for a websocket namespace.
-        """
-        super().__init__(*args, **kwargs)
-        self.log = logging.getLogger(logger_name(__name__))
-
-    def on_message(self, data):
-        self.log.info(data)
-
-    def on_connect(self):
-        """On connect or reconnect"""
-        self.log.info('(Re)Connected to the /tasks namespace')
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
-
-    def on_disconnect(self):
-        """ Server disconnects event."""
-        # self.node_worker_ref.socketIO.disconnect()
-        self.log.info('Disconnected from the server')
-
-    def on_new_task(self, task_id):
-        """ New task event."""
-        if self.node_worker_ref:
-            self.node_worker_ref.get_task_and_add_to_queue(task_id)
-            self.log.info(f'New task has been added task_id={task_id}')
-
-        else:
-            self.log.critical(
-                'Task Master Node reference not set is socket namespace'
-            )
-
-    def on_container_failed(self, run_id):
-        """A container in the collaboration has failed event.
-
-        TODO handle run sequence at this node. Maybe terminate all
-            containers with the same run_id?
-        """
-        self.log.critical(
-            f"A container on a node within your collaboration part of "
-            f"run_id={run_id} has exited with a non-zero status_code"
-        )
-
-    def on_expired_token(self, msg):
-        self.log.warning("Your token is no longer valid... reconnecting")
-        self.node_worker_ref.socketIO.disconnect()
-        self.log.debug("Old socket connection terminated")
-        self.node_worker_ref.server_io.refresh_token()
-        self.log.debug("Token refreshed")
-        self.node_worker_ref.connect_to_socket()
-        self.log.debug("Connected to socket")
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
-
-
 # ------------------------------------------------------------------------------
 class Node(object):
-    """Node to handle incomming computation requests.
-
-    The main steps this application follows: 1) retrieve (new) tasks
-    from the central server, 2) kick-off docker algorithm containers
-    based on this task and 3) retrieve the docker results and post
-    them to the central server.
-
-    TODO: read allowed repositories from the config file
     """
+    Authenticates to the central server, setup encryption, a
+    websocket connection, retrieving task that were posted while
+    offline, preparing dataset for usage and finally setup a
+    local proxy server..
 
-    def __init__(self, ctx):
-        """ Initialize a new Node instance.
+    Parameters
+    ----------
+    ctx: Union[NodeContext, DockerNodeContext]
+        Application context object.
 
-            Authenticates to the central server, setup encrpytion, a
-            websocket connection, retrieving task that were posted while
-            offline, preparing dataset for usage and finally setup a
-            local proxy server.
+    """
+    def __init__(self, ctx: Union[NodeContext, DockerNodeContext]):
 
-            :param ctx: application context, see utils
-        """
         self.log = logging.getLogger(logger_name(__name__))
-
         self.ctx = ctx
 
         # Initialize the node. If it crashes, shut down the parts that started
@@ -150,7 +95,8 @@ class Node(object):
             self.cleanup()
             raise
 
-    def initialize(self):
+    def initialize(self) -> None:
+        """Initialization of the node"""
         # check if docker is running, otherwise exit with error
         check_docker_running()
 
@@ -202,6 +148,9 @@ class Node(object):
         self.vpn_manager = self.setup_vpn_connection(
             isolated_network_mgr, self.ctx)
 
+        # Create SSH tunnel according to the node configuration
+        self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
+
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
@@ -236,11 +185,12 @@ class Node(object):
 
         self.log.info('Init complete')
 
-    def __proxy_server_worker(self):
-        """ Proxy algorithm container communcation.
+    def __proxy_server_worker(self) -> None:
+        """
+        Proxy algorithm container communcation.
 
-            A proxy for communication between algorithms and central
-            server.
+        A proxy for communication between algorithms and central
+        server.
         """
         if self.ctx.running_in_docker:
             # NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
@@ -290,7 +240,7 @@ class Node(object):
                 self.log.error('Proxyserver could not be started or crashed!')
                 self.log.error(e)
 
-    def sync_task_queue_with_server(self):
+    def sync_task_queue_with_server(self) -> None:
         """ Get all unprocessed tasks from the server for this node."""
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
@@ -302,13 +252,15 @@ class Node(object):
 
         self.log.info(f"received {self.queue._qsize()} tasks")
 
-    def __start_task(self, taskresult):
-        """Start a task.
+    def __start_task(self, taskresult: dict) -> None:
+        """
+        Start the docker image and notify the server that the task has been
+        started.
 
-            Start the docker image and notify the server that the task
-            has been started.
-
-            :param taskresult: an empty taskresult
+        Parameters
+        ----------
+        taskresult : dict
+            A dictionary with information required to run the algorithm
         """
         task = taskresult['task']
         self.log.info("Starting task {id} - {name}".format(**task))
@@ -323,7 +275,6 @@ class Node(object):
         token = token["container_token"]
 
         # create a temporary volume for each run_id
-        # FIXME: why is docker_temporary_volume_name() in ctx???
         vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
         self.__docker.create_volume(vol_name)
 
@@ -336,13 +287,32 @@ class Node(object):
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        vpn_ports = self.__docker.run(
+        task_status, vpn_ports = self.__docker.run(
             result_id=taskresult["id"],
+            task_info=task,
             image=task["image"],
             docker_input=taskresult['input'],
             tmp_vol_name=vol_name,
             token=token,
             database=task.get('database', 'default')
+        )
+
+        # save task status to the server and send socket event to update others
+        self.server_io.patch_results(
+            id=taskresult['id'], result={'status': task_status}
+        )
+        self.socketIO.emit(
+            'algorithm_status_change',
+            data={
+                'node_id': self.server_io.whoami.id_,
+                'status': task_status,
+                'result_id': taskresult['id'],
+                'task_id': task['id'],
+                'collaboration_id': self.server_io.collaboration_id,
+                'organization_id': self.server_io.whoami.organization_id,
+                'parent_id': get_parent_id(task),
+            },
+            namespace='/tasks',
         )
 
         if vpn_ports:
@@ -363,11 +333,12 @@ class Node(object):
                 f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
             )
 
-    def __listening_worker(self):
-        """ Listen for incoming (websocket) messages from the server.
+    def __listening_worker(self) -> None:
+        """
+        Listen for incoming (websocket) messages from the server.
 
-            Runs in a separate thread. Received events are dispatched
-            through the appropriate action_handler for a channel.
+        Runs in a separate thread. Received events are handled by the
+        appropriate action handler.
         """
         self.log.debug("Listening for incoming messages")
 
@@ -383,33 +354,36 @@ class Node(object):
                 self.log.error('Listening thread had an exception')
                 self.log.debug(e)
 
-    def __speaking_worker(self):
-        """ Sending messages to central server.
-
-            Routine that is in a seperate thread sending results
-            to the server when they come available.
-
-            TODO change to a single request, might need to reconsider
-                the flow
+    def __speaking_worker(self) -> None:
         """
+        Sending messages to central server.
+
+        Routine that is in a seperate thread sending results
+        to the server when they come available.
+        """
+        # TODO change to a single request, might need to reconsider
+        #     the flow
         self.log.debug("Waiting for results to send to the server")
 
         while True:
             try:
                 results = self.__docker.get_result()
 
-                # notify all of a crashed container
-                if results.status_code:
-                    self.socketIO.emit(
-                        'container_failed',
-                        data={
-                            'node_id': self.server_io.whoami.id_,
-                            'status_code': results.status_code,
-                            'result_id': results.result_id,
-                            'collaboration_id': self.server_io.collaboration_id
-                        },
-                        namespace='/tasks'
-                    )
+                # notify socket channel of algorithm status change
+                self.socketIO.emit(
+                    'algorithm_status_change',
+                    data={
+                        'node_id': self.server_io.whoami.id_,
+                        'status': results.status,
+                        'result_id': results.result_id,
+                        'task_id': results.task_id,
+                        'collaboration_id': self.server_io.collaboration_id,
+                        'organization_id':
+                            self.server_io.whoami.organization_id,
+                        'parent_id': results.parent_id,
+                    },
+                    namespace='/tasks',
+                )
 
                 self.log.info(
                     f"Sending result (id={results.result_id}) to the server!")
@@ -430,33 +404,50 @@ class Node(object):
                     return
 
                 response = self.server_io.request(f"task/{task_id}")
-                initiator_id = response.get("initiator")
 
-                if not initiator_id:
+                init_org_id = response.get("initiator")
+                if not init_org_id:
                     self.log.error(
-                        f"Initiator id from task (id={task_id})could not be "
-                        f"retrieved"
+                        f"Initiator organization from task (id={task_id})could"
+                        " not be retrieved!"
                     )
 
                 self.server_io.patch_results(
                     id=results.result_id,
-                    initiator_id=initiator_id,
                     result={
                         'result': results.data,
                         'log': results.logs,
+                        'status': results.status,
                         'finished_at': datetime.datetime.now().isoformat(),
-                    }
+                    },
+                    init_org_id=init_org_id,
                 )
-            except Exception as e:
-                self.log.error('Speaking thread had an exception')
-                self.log.debug(e)
+            except Exception:
+                self.log.exception('Speaking thread had an exception')
 
-    def authenticate(self):
-        """ Authenticate to the central server
+    def __print_connection_error_logs(self):
+        """ Print error message when node cannot find the server """
+        self.log.warning(
+            "Could not connect to the server. Retrying in 10 seconds")
+        if self.server_io.host == 'http://localhost' and running_in_docker():
+            self.log.warn(
+                f"You are trying to reach the server at {self.server_io.host}."
+                " As your node is running inside a Docker container, it cannot"
+                " reach localhost on your host system. Probably, you have to "
+                "change your serverl URL to http://host.docker.internal "
+                "(Windows/MacOS) or http://172.17.0.1 (Linux)."
+            )
+        else:
+            self.log.debug("Are you sure the server can be reached at "
+                           f"{self.server_io.base_path}?")
 
-            Authenticate with the server using the api-key. If the
-            server rejects for any reason we keep trying.
+    def authenticate(self) -> None:
         """
+        Authenticate with the server using the api-key from the configuration
+        file. If the server rejects for any reason -other than a wrong API key-
+        serveral attempts are taken to retry.
+        """
+
         api_key = self.config.get("api_key")
 
         success = False
@@ -471,8 +462,12 @@ class Node(object):
                 self.log.warning(msg)
                 self.log.debug(e)
                 break
+            except requests.exceptions.ConnectionError:
+                self.__print_connection_error_logs()
+                time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
             except Exception as e:
-                msg = 'Authentication failed. Retrying in 10 seconds!'
+                msg = ('Authentication failed. Retrying in '
+                       f'{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!')
                 self.log.warning(msg)
                 self.log.debug(e)
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
@@ -488,7 +483,7 @@ class Node(object):
             self.log.critical('Unable to authenticate. Exiting')
             exit(1)
 
-    def private_key_filename(self):
+    def private_key_filename(self) -> Path:
         """Get the path to the private key."""
 
         # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
@@ -507,8 +502,8 @@ class Node(object):
 
         return fullpath
 
-    def setup_encryption(self):
-        """Setup encryption ... or don't."""
+    def setup_encryption(self) -> None:
+        """ Setup encryption if the node is part of encrypted collaboration """
         encrypted_collaboration = self.server_io.is_encrypted_collaboration()
         encrypted_node = self.config['encryption']["enabled"]
 
@@ -566,18 +561,74 @@ class Node(object):
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_vpn_connection(
-        self,
-        isolated_network_mgr: NetworkManager,
-        ctx: Union[DockerNodeContext, NodeContext]
-    ) -> VPNManager:
+    def setup_ssh_tunnels(self, isolated_network_mgr: Type[NetworkManager]) \
+            -> List[SSHTunnel]:
+        """
+        Create a SSH tunnels when they are defined in the configuration file.
+        For each tunnel a new container is created. The image used can be
+        specified in the configuration file as `ssh-tunnel` in the `images`
+        section, else the default image is used.
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Manager for the isolated network
+        """
+        if 'ssh-tunnels' not in self.config:
+            self.log.info("No SSH tunnels configured")
+            return
+
+        custom_tunnel_image = self.config.get('images', {}).get('ssh-tunnel') \
+            if 'images' in self.config else None
+
+        configs = self.config['ssh-tunnels']
+        self.log.info(f"Setting up {len(configs)} SSH tunnels")
+
+        tunnels: List[SSHTunnel] = []
+        for config in configs:
+            self.log.debug(f"SSH tunnel config: {config}")
+
+            # copy (rename) the ssh key to the correct name, this is done so
+            # that the file is in the volume (somehow we can not file mount
+            # within a volume)
+            if self.ctx.running_in_docker:
+                ssh_key = f"/mnt/ssh/{config['hostname']}.pem.tmp"
+                key_path = shutil.copy(ssh_key,
+                                       f"/mnt/ssh/{config['hostname']}.pem")
+                volume = self.ctx.docker_ssh_volume_name
+
+            else:
+                ssh_key = config['ssh']['identity']['key']
+
+                volume = str(Path(ssh_key).parent)
+                key_path = shutil.copy(ssh_key,
+                                       f"{volume}/{config['hostname']}.pem")
+
+            os.chmod(key_path, 0o600)
+
+            try:
+                new_tunnel = SSHTunnel(isolated_network_mgr, config,
+                                       self.ctx.name, volume,
+                                       custom_tunnel_image)
+            except Exception as e:
+                self.log.error("Error setting up SSH tunnel")
+                self.log.debug(e, exc_info=True)
+                continue
+
+            tunnels.append(new_tunnel)
+
+        return tunnels
+
+    def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
+                             ctx: Union[DockerNodeContext, NodeContext]
+                             ) -> VPNManager:
         """
         Setup container which has a VPN connection
 
         Parameters
         ----------
         isolated_network_mgr: NetworkManager
-            Manager for the isolated network
+            Manager for the isolated Docker network
         ctx: NodeContext
             Context object for the node
 
@@ -592,7 +643,7 @@ class Node(object):
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
 
-        #FIXME: remove me in 4+. alpine image has been moved into the `images`
+        # FIXME: remove me in 4+. alpine image has been moved into the `images`
         # key. This is to support older configuration files.
         legacy_alpine = self.config.get('alpine')
 
@@ -615,8 +666,7 @@ class Node(object):
         )
 
         if not self.config.get('vpn_subnet'):
-            self.log.warn("VPN subnet is not defined!")
-            self.log.info("Not trying to establish VPN connection.")
+            self.log.warn("VPN subnet is not defined! VPN disabled.")
         elif not os.path.isfile(ovpn_file):
             # if vpn config doesn't exist, get it and write to disk
             self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE,
@@ -695,7 +745,7 @@ class Node(object):
             f.write(ovpn_config)
         return True
 
-    def link_docker_services(self):
+    def link_docker_services(self) -> None:
         docker_services = self.ctx.config.get("docker_services")
         if not docker_services:
             return
@@ -705,13 +755,11 @@ class Node(object):
                 container_name=container_name, config_alias=alias
             )
 
-    def connect_to_socket(self):
-        """ Create long-lasting websocket connection with the server.
-
-            The connection is used to receive status updates, such as
-            new tasks.
+    def connect_to_socket(self) -> None:
         """
-
+        Create long-lasting websocket connection with the server. The
+        connection is used to receive status updates, such as new tasks.
+        """
         self.socketIO = SocketIO(request_timeout=60)
 
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
@@ -737,12 +785,16 @@ class Node(object):
         self.log.info(f'Connected to host={self.server_io.host} on port='
                       f'{self.server_io.port}')
 
-    def get_task_and_add_to_queue(self, task_id):
-        """Fetches (open) task with task_id from the server.
-
-            The `task_id` is delivered by the websocket-connection.
+    def get_task_and_add_to_queue(self, task_id: int) -> None:
         """
+        Fetches (open) task with task_id from the server. The `task_id` is
+        delivered by the websocket-connection.
 
+        Parameters
+        ----------
+        task_id : int
+            Task identifier
+        """
         # fetch (open) result for the node with the task_id
         tasks = self.server_io.get_results(
             include_task=True,
@@ -755,8 +807,8 @@ class Node(object):
         for task in tasks:
             self.queue.put(task)
 
-    def run_forever(self):
-        """Forever check self.queue for incoming tasks (and execute them)."""
+    def run_forever(self) -> None:
+        """Keep checking queue for incoming tasks (and execute them)."""
         kill_listener = ContainerKillListener()
         try:
             while True:
@@ -791,13 +843,59 @@ class Node(object):
             self.cleanup()
             sys.exit()
 
-    def cleanup(self):
+    def kill_containers(self, kill_info: Dict) -> List[Dict]:
+        """
+        Kill containers on instruction from socket event
+
+        Parameters
+        ----------
+        kill_info: Dict
+            Dictionary received over websocket with instructions for which
+            tasks to kill
+
+        Returns
+        -------
+        List[Dict]:
+            List of dictionaries with information on killed task (keys:
+            result_id, task_id and parent_id)
+        """
+        if kill_info['collaboration_id'] != self.server_io.collaboration_id:
+            self.log.debug(
+                "Not killing tasks as this node is in another collaboration."
+            )
+            return []
+        elif 'node_id' in kill_info and \
+                kill_info['node_id'] != self.server_io.whoami.id_:
+            self.log.debug(
+                "Not killing tasks as instructions to kill tasks were directed"
+                " at another node in this collaboration.")
+            return []
+
+        # kill specific task if specified, else kill all algorithms
+        kill_list = kill_info.get('kill_list')
+        killed_algos = self.__docker.kill_tasks(
+            org_id=self.server_io.whoami.organization_id, kill_list=kill_list
+        )
+        # update status of killed tasks
+        for killed_algo in killed_algos:
+            self.server_io.patch_results(
+                id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+            )
+        return killed_algos
+
+    def cleanup(self) -> None:
+
         if hasattr(self, 'socketIO') and self.socketIO:
             self.socketIO.disconnect()
         if hasattr(self, 'vpn_manager') and self.vpn_manager:
             self.vpn_manager.exit_vpn()
+        if hasattr(self, 'ssh_tunnels') and self.ssh_tunnels:
+            for tunnel in self.ssh_tunnels:
+                tunnel.stop()
         if hasattr(self, '_Node__docker') and self.__docker:
             self.__docker.cleanup()
+
+        self.log.info("Bye!")
 
 
 # ------------------------------------------------------------------------------

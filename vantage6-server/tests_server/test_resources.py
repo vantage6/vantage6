@@ -15,8 +15,8 @@ from werkzeug.utils import cached_property
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
-from vantage6.server.globals import PACAKAGE_FOLDER
-from vantage6.server import ServerApp, db
+from vantage6.server.globals import PACKAGE_FOLDER
+from vantage6.server import ServerApp, session
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
                                    Collaboration, Task, Result)
 from vantage6.server.model.rule import Scope, Operation
@@ -57,7 +57,7 @@ class TestResources(unittest.TestCase):
         server = ServerApp(ctx)
         cls.server = server
 
-        file_ = str(PACAKAGE_FOLDER / APPNAME / "server" / "_data" /
+        file_ = str(PACKAGE_FOLDER / APPNAME / "server" / "_data" /
                     "unittest_fixtures.yaml")
         with open(file_) as f:
             cls.entities = yaml.safe_load(f.read())
@@ -91,12 +91,12 @@ class TestResources(unittest.TestCase):
 
     @classmethod
     def setUp(cls):
-        # set db.session
+        # set session.session
         DatabaseSessionManager.get_session()
 
     @classmethod
     def tearDown(cls):
-        # unset db.session
+        # unset session.session
         DatabaseSessionManager.clear_session()
 
     def login(self, type_='root'):
@@ -567,7 +567,7 @@ class TestResources(unittest.TestCase):
             "new_password": "A_new_password1"
         })
         self.assertEqual(result.status_code, 200)
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertTrue(user.check_password("A_new_password1"))
 
     def test_view_rules(self):
@@ -669,13 +669,13 @@ class TestResources(unittest.TestCase):
 
         # check a non-existing organization
         headers = self.login("root")
-        body["organization_id"] = -1
+        body["organization_id"] = 9999
         result = self.app.post('/api/role', headers=headers, json=body)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # check that assigning an unexisting rule is not possible
         headers = self.create_user_and_login()
-        body["rules"] = [-1]
+        body["rules"] = [9999]
         result = self.app.post("/api/role", headers=headers, json=body)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
@@ -694,7 +694,7 @@ class TestResources(unittest.TestCase):
             "description": "some description of this role..."
         })
 
-        db.session.refresh(role)
+        session.session.refresh(role)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(role.name, "a-different-role-name")
         self.assertEqual(role.description, "some description of this role...")
@@ -773,7 +773,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(len(role.rules), len(result.json))
 
-        result = self.app.get('/api/role/-1/rule', headers=headers)
+        result = self.app.get('/api/role/9999/rule', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
     def test_add_single_rule_to_role(self):
@@ -791,12 +791,12 @@ class TestResources(unittest.TestCase):
         rule = Rule.get()[0]
 
         # try to add rule to non existing role
-        result = self.app.post(f'/api/role/-1/rule/{rule.id}',
+        result = self.app.post(f'/api/role/9999/rule/{rule.id}',
                                headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
-        # try to add non existant rule
-        result = self.app.post(f'/api/role/{role.id}/rule/-1',
+        # try to add non existent rule
+        result = self.app.post(f'/api/role/{role.id}/rule/9999',
                                headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
@@ -818,12 +818,12 @@ class TestResources(unittest.TestCase):
         role.save()
 
         # try to add rule to non existing role
-        result = self.app.delete(f'/api/role/-1/rule/{rule.id}',
+        result = self.app.delete(f'/api/role/9999/rule/{rule.id}',
                                  headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
-        # try to add non existant rule
-        result = self.app.delete(f'/api/role/{role.id}/rule/-1',
+        # try to add non existent rule
+        result = self.app.delete(f'/api/role/{role.id}/rule/9999',
                                  headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
@@ -949,7 +949,7 @@ class TestResources(unittest.TestCase):
 
         # user not found
         headers = self.create_user_and_login()
-        result = self.app.get('/api/user/-1', headers=headers)
+        result = self.app.get('/api/user/9999', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # try to view users without any permissions
@@ -1055,7 +1055,7 @@ class TestResources(unittest.TestCase):
 
         # check non-existing user
         headers = self.create_user_and_login()
-        result = self.app.patch('/api/user/-1', headers=headers)
+        result = self.app.patch('/api/user/9999', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # patching without permissions
@@ -1092,7 +1092,7 @@ class TestResources(unittest.TestCase):
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'yeah'
         })
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("yeah", user.firstname)
 
@@ -1103,7 +1103,7 @@ class TestResources(unittest.TestCase):
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'firstname': 'whatever'
         })
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("whatever", user.firstname)
 
@@ -1120,7 +1120,7 @@ class TestResources(unittest.TestCase):
             'firstname': 'again',
             'lastname': 'and again',
         })
-        db.session.refresh(user)
+        session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("again", user.firstname)
         self.assertEqual("and again", user.lastname)
@@ -1196,13 +1196,13 @@ class TestResources(unittest.TestCase):
 
         # test missing role
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
-            'roles': [-1]
+            'roles': [9999]
         })
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # test missing rule
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
-            'rules': [-1]
+            'rules': [9999]
         })
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
@@ -1220,7 +1220,7 @@ class TestResources(unittest.TestCase):
 
         # check non-exsitsing user
         headers = self.create_user_and_login()
-        result = self.app.delete('/api/user/-1', headers=headers)
+        result = self.app.delete('/api/user/9999', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # try to delete without any permissions
@@ -1303,7 +1303,7 @@ class TestResources(unittest.TestCase):
         rule = Rule.get_by_("organization", Scope.GLOBAL,
                             Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        result = self.app.get('/api/organization/-1',
+        result = self.app.get('/api/organization/9999',
                               headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
@@ -1376,7 +1376,7 @@ class TestResources(unittest.TestCase):
 
         # unknown organization
         headers = self.create_user_and_login()
-        results = self.app.patch('/api/organization/-1', headers=headers)
+        results = self.app.patch('/api/organization/9999', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # try to change anything without permissions
@@ -1478,7 +1478,7 @@ class TestResources(unittest.TestCase):
         col.save()
 
         headers = self.create_user_and_login()
-        results = self.app.get('/api/organization/-1/collaboration',
+        results = self.app.get('/api/organization/9999/collaboration',
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
@@ -1565,7 +1565,7 @@ class TestResources(unittest.TestCase):
 
         # test an unknown collaboration
         headers = self.create_user_and_login()
-        results = self.app.patch("/api/collaboration/-1", headers=headers)
+        results = self.app.patch("/api/collaboration/9999", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test editing without any permission
@@ -1595,7 +1595,7 @@ class TestResources(unittest.TestCase):
 
         # test deleting unknown collaboration
         headers = self.create_user_and_login()
-        results = self.app.delete("/api/collaboration/-1",
+        results = self.app.delete("/api/collaboration/9999",
                                   headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
@@ -1614,8 +1614,8 @@ class TestResources(unittest.TestCase):
     def test_view_collaboration_organization_permissions_as_user(self):
         headers = self.create_user_and_login()
 
-        # un-existing collaboration
-        results = self.app.get("/api/collaboration/-1/organization",
+        # non-existing collaboration
+        results = self.app.get("/api/collaboration/9999/organization",
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
@@ -1745,7 +1745,7 @@ class TestResources(unittest.TestCase):
 
         # try to view an non-existant collaboration
         headers = self.create_user_and_login()
-        results = self.app.get("/api/collaboration/-1/node", headers=headers)
+        results = self.app.get("/api/collaboration/9999/node", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # try to view without any permissions
@@ -1793,9 +1793,8 @@ class TestResources(unittest.TestCase):
         # try non-existant collaboration
         headers = self.create_user_and_login()
 
-        results = self.app.post('/api/collaboration/-1/node', headers=headers,
-                                json={'id': node.id})
-
+        results = self.app.post('/api/collaboration/9999/node',
+                                headers=headers, json={'id': node.id})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # try without proper permissions
@@ -1807,7 +1806,7 @@ class TestResources(unittest.TestCase):
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.post(f'/api/collaboration/{col.id}/node',
-                                headers=headers, json={'id': -1})
+                                headers=headers, json={'id': 9999})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # add a node!
@@ -1833,7 +1832,7 @@ class TestResources(unittest.TestCase):
 
         # try non-existant collaboration
         headers = self.create_user_and_login()
-        results = self.app.delete('/api/collaboration/-1/node',
+        results = self.app.delete('/api/collaboration/9999/node',
                                   headers=headers, json={'id': node.id})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
@@ -1846,7 +1845,7 @@ class TestResources(unittest.TestCase):
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.delete(f'/api/collaboration/{col.id}/node',
-                                  headers=headers, json={'id': -1})
+                                  headers=headers, json={'id': 9999})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # try to add a node thats not in there
@@ -1874,7 +1873,7 @@ class TestResources(unittest.TestCase):
 
         # view non existing collaboration
         headers = self.create_user_and_login()
-        results = self.app.get('/api/collaboration/-1/task',
+        results = self.app.get('/api/collaboration/9999/task',
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
@@ -1931,7 +1930,7 @@ class TestResources(unittest.TestCase):
 
         # view non existing node
         headers = self.create_user_and_login()
-        results = self.app.get('/api/node/-1', headers=headers)
+        results = self.app.get('/api/node/9999', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # missing permissions
@@ -2000,7 +1999,7 @@ class TestResources(unittest.TestCase):
         # test non existing collaboration
         headers = self.create_user_and_login()
         results = self.app.post('/api/node', headers=headers,
-                                json={'collaboration_id': -1})
+                                json={'collaboration_id': 9999})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test creating a node without any permissions
@@ -2069,7 +2068,7 @@ class TestResources(unittest.TestCase):
 
         # unexisting node
         headers = self.create_user_and_login()
-        results = self.app.delete('/api/node/-1', headers=headers)
+        results = self.app.delete('/api/node/9999', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # organization permission other organization
@@ -2095,7 +2094,7 @@ class TestResources(unittest.TestCase):
     def test_patch_node_permissions_as_user(self):
         # test patching non-existant node
         headers = self.create_user_and_login()
-        results = self.app.patch("/api/node/-1", headers=headers)
+        results = self.app.patch("/api/node/9999", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test user without any permissions
@@ -2156,13 +2155,13 @@ class TestResources(unittest.TestCase):
 
         # try to patch the node's VPN IP address
         results = self.app.patch(f'/api/node/{node.id}', headers=headers,
-                                 json={'ip':'0.0.0.0'})
+                                 json={'ip': '0.0.0.0'})
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(results.json['ip'], '0.0.0.0')
 
         # assign unknow organization
         results = self.app.patch(f'/api/node/{node.id}', headers=headers,
-                                 json={'organization_id': -1})
+                                 json={'organization_id': 9999})
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # cleanup
@@ -2171,7 +2170,7 @@ class TestResources(unittest.TestCase):
     def test_view_task_permissions_as_user(self):
         # non existing task
         headers = self.create_user_and_login()
-        results = self.app.get('/api/task/-1', headers=headers)
+        results = self.app.get('/api/task/9999', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test user without any permissions and id
@@ -2243,7 +2242,7 @@ class TestResources(unittest.TestCase):
         # non existant collaboration
         headers = self.create_user_and_login()
         results = self.app.post('/api/task', headers=headers, json={
-            "collaboration_id": -1
+            "collaboration_id": 9999
         })
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
@@ -2375,7 +2374,7 @@ class TestResources(unittest.TestCase):
 
         # test non-existing task
         headers = self.create_user_and_login()
-        self.app.delete('/api/task/-1', headers=headers)
+        self.app.delete('/api/task/9999', headers=headers)
 
         # test with organization permissions from other organization
         org = Organization()
@@ -2414,7 +2413,7 @@ class TestResources(unittest.TestCase):
 
         # non-existing task
         headers = self.create_user_and_login()
-        result = self.app.get('/api/task/-1/result', headers=headers)
+        result = self.app.get('/api/task/9999/result', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # test with organization permissions from other organization

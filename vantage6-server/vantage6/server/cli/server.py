@@ -11,7 +11,7 @@ from vantage6.common import (
     info,
     warning,
     error,
-    check_config_write_permissions
+    check_config_writeable
 )
 from vantage6.server.model.base import Database
 from vantage6.server import ServerApp, run_dev_server
@@ -191,7 +191,7 @@ def cli_server_new(name, environment, system_folders):
             name = name_new
 
     # Check that we can write in this folder
-    if not check_config_write_permissions(system_folders):
+    if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         exit(1)
 

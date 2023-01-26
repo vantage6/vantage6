@@ -8,6 +8,7 @@ from sqlalchemy.orm import relationship, validates
 
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.rule import Operation, Rule, Scope
 
 
 class User(Authenticatable):
@@ -33,6 +34,7 @@ class User(Authenticatable):
     organization_id = Column(Integer, ForeignKey("organization.id"))
     failed_login_attempts = Column(Integer, default=0)
     last_login_attempt = Column(DateTime)
+    otp_secret = Column(String(32))
 
     # relationships
     organization = relationship("Organization", back_populates="users")
@@ -40,6 +42,7 @@ class User(Authenticatable):
                          secondary="Permission")
     rules = relationship("Rule", back_populates="users",
                          secondary="UserPermission")
+    created_tasks = relationship("Task", back_populates="init_user")
 
     def __repr__(self):
         organization = self.organization.name if self.organization else "None"
@@ -161,3 +164,26 @@ class User(Authenticatable):
         session = DatabaseSessionManager.get_session()
         return session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
+
+    def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
+        """
+        Check if user is allowed to execute a certain action
+
+        Parameters
+        ---------
+        resource: str
+            The resource type on which the action is to be performed
+        scope: Scope
+            The scope within which the user wants to perform an action
+        operation: Operation
+            The operation a user wants to execute
+
+        Returns
+        -------
+        bool
+            Whether or not user is allowed to execute the requested operation
+            on the resource
+        """
+        rule = Rule.get_by_(resource, scope, operation)
+        return rule in self.rules or \
+            any(rule in role.rules for role in self.roles)

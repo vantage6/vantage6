@@ -34,9 +34,9 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'requests==2.25.1',
-        'gevent==20.9.0',
+        'gevent==21.8.0',
         'python-socketio[client]==5.5.0',
-        'docker==4.2.0',
+        'docker==5.0.3',
         'cryptography==3.3.2',
         'click==8.0.3',
         'termcolor==1.1.0',

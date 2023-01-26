@@ -5,6 +5,7 @@ import os
 import time
 import subprocess
 
+from typing import Callable, Type, Iterable
 from threading import Thread
 from functools import wraps
 from colorama import (Fore, Style)
@@ -12,7 +13,7 @@ from sqlalchemy.engine.url import make_url
 from docker.client import DockerClient
 
 from vantage6.common import (info, warning, error, debug as debug_msg,
-                             check_config_write_permissions)
+                             check_config_writeable)
 from vantage6.common.docker.addons import (
     pull_if_newer, check_docker_running, remove_container,
     get_server_config_name, get_container, get_num_nonempty_networks,
@@ -39,35 +40,21 @@ from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
 
 
-def getServerContext(name, environment, system_folders):
-    # raise error if config could not be found
-    if not ServerContext.config_exists(
-            name,
-            environment,
-            system_folders
-    ):
-        scope = "system" if system_folders else "user"
-        error(
-                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
-                f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
-            )
-        exit(1)
+def click_insert_context(func: Callable) -> Callable:
+    """
+    Supply the Click function with additional context parameters. The context
+    is then passed to the function as the first argument.
 
-        # create server context, and initialize db
-    ServerContext.LOGGING_ENABLED = False
-    ctx = ServerContext(
-            name,
-            environment=environment,
-            system_folders=system_folders
-        )
+    Parameters
+    ----------
+    func : Callable
+        function you want the context to be passed to
 
-    return ctx
-
-
-def click_insert_context(func):
-
-    # add option decorators
+    Returns
+    -------
+    Callable
+        Click function with context
+    """
     @click.option('-n', '--name', default=None,
                   help="name of the configuration you want to use.")
     @click.option('-c', '--config', default=None,
@@ -79,38 +66,56 @@ def click_insert_context(func):
     @click.option('--user', 'system_folders', flag_value=False,
                   default=DEFAULT_SERVER_SYSTEM_FOLDERS)
     @wraps(func)
-    def func_with_context(name, config, environment, system_folders,
-                          *args, **kwargs):
+    def func_with_context(name: str, config: str, environment: str,
+                          system_folders: bool, *args, **kwargs) -> Callable:
+        """
+        Decorator function that adds the context to the function.
 
-        # select configuration if none supplied
+        Parameters
+        ----------
+        name : str
+            name of the configuration you want to use.
+        config : str
+            path to configuration file, overrides name
+        environment : str
+            DTAP environment to use
+        system_folders : bool
+            Wether to use system folders or not
+
+        Returns
+        -------
+        Callable
+            Decorated function
+        """
+        # path to configuration file always overrides name
         if config:
             ctx = ServerContext.from_external_config_file(
                 config,
                 environment,
                 system_folders
             )
-        else:
-            if name:
-                name, environment = (name, environment)
-            else:
-                try:
-                    name, environment = select_configuration_questionaire(
-                        "server", system_folders
-                    )
-                except Exception:
-                    error("No configurations could be found!")
-                    exit(1)
+            return func(ctx, *args, **kwargs)
 
-            ctx = getServerContext(name, environment, system_folders)
+        # in case no name is supplied, ask the user to select one
+        if not name:
+            try:
+                # select configuration if none supplied
+                name, environment = select_configuration_questionaire(
+                    "server", system_folders
+                )
+            except Exception:
+                error("No configurations could be found!")
+                exit(1)
 
+        ctx = get_server_context(name, environment, system_folders)
         return func(ctx, *args, **kwargs)
+
     return func_with_context
 
 
 @click.group(name='server')
-def cli_server():
+def cli_server() -> None:
     """Subcommand `vserver`."""
-    pass
 
 
 #
@@ -129,10 +134,34 @@ def cli_server():
 @click.option('--attach/--detach', default=False,
               help="Attach server logs to the console after start")
 @click_insert_context
-def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
-                     attach):
-    """Start the server."""
+def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
+                     rabbitmq_image: str, keep: bool, mount_src: str,
+                     attach: bool) -> None:
+    """
+    Start the server in a Docker container.
 
+    Parameters
+    ----------
+    ctx : Type[ServerContext]
+        Server context object
+    ip : str
+        ip interface to listen on
+    port : int
+        port to listen on
+    image : str
+        Server Docker image to use
+    rabbitmq_image : str
+        RabbitMQ docker image to use
+    keep : bool
+        Wether to keep the image after the server has finished, useful for
+        debugging
+    mount_src : str
+        Path to the vantage6 package source, this overrides the source code in
+        the container. This is useful when developing and testing the server.
+    attach : bool
+        Wether to attach the server logs to the console after starting the
+        server.
+    """
     info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
@@ -163,8 +192,9 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
     try:
         pull_if_newer(docker.from_env(), image)
         # docker_client.images.pull(image)
-    except Exception:
-        warning("... alas, no dice!")
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
     else:
         info(" ... success!")
 
@@ -179,7 +209,6 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
     if mount_src:
         mount_src = os.path.abspath(mount_src)
         mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
-
     # FIXME: code duplication with cli_server_import()
     # try to mount database
     uri = ctx.config['uri']
@@ -209,7 +238,7 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
         }
 
     else:
-        warning(f"Database could not be transfered, make sure {url.host} "
+        warning(f"Database could not be transferred, make sure {url.host} "
                 "is reachable from the Docker container")
         info("Consider using the docker-compose method to start a server")
 
@@ -255,7 +284,7 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
         network=server_network_mgr.network_name
     )
 
-    info(f"Success! container id = {container}")
+    info(f"Success! container id = {container.id}")
 
     if attach:
         logs = container.attach(stream=True, logs=True, stdout=True)
@@ -266,34 +295,18 @@ def cli_server_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 info("Note that your server is still running! Shut it down "
-                     f"with '{Fore.RED}vserver stop{Style.RESET_ALL}'")
+                     f"with {Fore.RED}vserver stop{Style.RESET_ALL}")
                 exit(0)
-
-
-def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
-                    network_mgr: NetworkManager) -> None:
-    """ Starts a RabbitMQ container """
-    rabbit_uri = ctx.config.get('rabbitmq_uri')
-    if not rabbit_uri:
-        warning('Message queue disabled! This means that the server '
-                'application cannot scale horizontally!')
-    elif rabbitmq.is_local_address(rabbit_uri):
-        # kick off RabbitMQ container
-        rabbit_mgr = RabbitMQManager(
-            ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
-        rabbit_mgr.start()
-    else:
-        info("Detected that the RabbitMQ service is a external service. "
-             "Assuming this service is up and running.")
 
 
 #
 #   list
 #
 @cli_server.command(name='list')
-def cli_server_configuration_list():
-    """Print the available configurations."""
-
+def cli_server_configuration_list() -> None:
+    """
+    Print the available configurations.
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -350,8 +363,15 @@ def cli_server_configuration_list():
 #
 @cli_server.command(name='files')
 @click_insert_context
-def cli_server_files(ctx):
-    """List files locations of a server instance."""
+def cli_server_files(ctx: Type[ServerContext]) -> None:
+    """
+    List files locations of a server instance.
+
+    Parameters
+    ----------
+    ctx : Type[ServerContext]
+        Server context object
+    """
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
     info(f"Database           = {ctx.get_database_uri()}")
@@ -362,20 +382,30 @@ def cli_server_files(ctx):
 #
 @cli_server.command(name='new')
 @click.option('-n', '--name', default=None,
-              help="name of the configutation you want to use.")
+              help="name of the configuration you want to use.")
 @click.option('-e', '--environment', default=DEFAULT_SERVER_ENVIRONMENT,
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_server_new(name, environment, system_folders):
-    """Create new configuration."""
+def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
+    """
+    Create a new server configuration.
+
+    Parameters
+    ----------
+    name : str
+        name of the new configuration
+    environment : str
+        DTAP environment you want to configure
+    system_folders : bool
+        Wether to use system folders or not
+    """
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
-        name_new = name.replace(" ", "-")
-        if name != name_new:
+        if name.count(" ") > 0:
+            name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
-            name = name_new
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(name)
@@ -390,31 +420,25 @@ def cli_server_new(name, environment, system_folders):
             )
             exit(1)
     except Exception as e:
-        print(e)
+        error(e)
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_write_permissions(system_folders):
+    if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(f"Create a new server using '{Fore.GREEN}vserver new "
              "--user{Style.RESET_ALL}' instead!")
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(
-        "server",
-        name,
-        environment=environment,
-        system_folders=system_folders
-    )
+    cfg_file = configuration_wizard("server", name, environment=environment,
+                                    system_folders=system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # info(f"root user created.")
     flag = "" if system_folders else "--user"
-    info(
-        f"You can start the server by running "
-        f"{Fore.GREEN}vserver start {flag}{Style.RESET_ALL}"
-    )
+    info(f"You can start the server by running {Fore.GREEN}vserver start "
+         f"{flag}{Style.RESET_ALL}")
 
 
 #
@@ -430,10 +454,27 @@ def cli_server_new(name, environment, system_folders):
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click_insert_context
-def cli_server_import(ctx, file_, drop_all, image, mount_src, keep):
-    """ Import organizations/collaborations/users and tasks.
+def cli_server_import(ctx: Type[ServerContext], file_: str, drop_all: bool,
+                      image: str, mount_src: str, keep: bool) -> None:
+    """
+    Batch import organizations/collaborations/users and tasks.
 
-        Especially useful for testing purposes.
+    Parameters
+    ----------
+    ctx : Type[ServerContext]
+        Server context object
+    file_ : str
+        Yaml file containing the vantage6 formatted data to import
+    drop_all : bool
+        Wether to drop all data before importing
+    image : str
+        Node Docker image to use which contains the import script
+    mount_src : str
+        Vantage6 source location, this will overwrite the source code in the
+        container. Useful for debugging/development.
+    keep : bool
+        Wether to keep the image after finishing/crashing. Useful for
+        debugging.
     """
     info("Starting server...")
     info("Finding Docker daemon.")
@@ -453,8 +494,9 @@ def cli_server_import(ctx, file_, drop_all, image, mount_src, keep):
     info(f"Pulling latest server image '{image}'.")
     try:
         docker_client.images.pull(image)
-    except Exception:
-        warning("... alas, no dice!")
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
     else:
         info(" ... success!")
 
@@ -500,7 +542,7 @@ def cli_server_import(ctx, file_, drop_all, image, mount_src, keep):
         }
 
     else:
-        warning(f"Database could not be transfered, make sure {url.host} "
+        warning(f"Database could not be transferred, make sure {url.host} "
                 "is reachable from the Docker container")
         info("Consider using the docker-compose method to start a server")
 
@@ -529,28 +571,22 @@ def cli_server_import(ctx, file_, drop_all, image, mount_src, keep):
 
     info(f"Success! container id = {container.id}")
 
-    # print_log_worker(container.logs(stream=True))
-    # for log in container.logs(stream=True):
-    #     print(log.decode("utf-8"))
-    # info(f"Check logs files using {Fore.GREEN}docker logs {container.id}"
-    #      f"{Style.RESET_ALL}")
-
-    # info("Reading yaml file.")
-    # with open(file_) as f:
-    #     entities = yaml.safe_load(f.read())
-
-    # info("Adding entities to database.")
-    # fixture.load(entities, drop_all=drop_all)
-
 
 #
 #   shell
 #
 @cli_server.command(name='shell')
 @click_insert_context
-def cli_server_shell(ctx):
-    """ Run a iPython shell. """
+def cli_server_shell(ctx: Type[ServerContext]) -> None:
+    """
+    Run an iPython shell in the server container and attach the ORM. This
+    can be used to modify the database.
 
+    Parameters
+    ----------
+    ctx : Type[ServerContext]
+        Server context object
+    """
     docker_client = docker.from_env()
     # will print an error if not
     check_docker_running()
@@ -581,9 +617,22 @@ def cli_server_shell(ctx):
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 @click.option('--all', 'all_servers', flag_value=True, help="Stop all servers")
-def cli_server_stop(name, environment, system_folders, all_servers):
-    """ Stop a running server """
+def cli_server_stop(name: str, environment: str, system_folders: bool,
+                    all_servers: bool):
+    """
+    Stop one or all running server(s).
 
+    Parameters
+    ----------
+    name : str
+        Name of the server to stop
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or not
+    all_servers : bool
+        Wether to stop all servers or not
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -600,56 +649,22 @@ def cli_server_stop(name, environment, system_folders, all_servers):
         for container_name in running_server_names:
             _stop_server_containers(client, container_name, environment,
                                     system_folders)
+        return
+
+    # make sure we have a configuration name to work with
+    if not name:
+        container_name = q.select("Select the server you wish to stop:",
+                                  choices=running_server_names).ask()
     else:
-        if not name:
-            container_name = q.select("Select the server you wish to stop:",
-                                      choices=running_server_names).ask()
-        else:
-            post_fix = "system" if system_folders else "user"
-            container_name = f"{APPNAME}-{name}-{post_fix}-server"
+        post_fix = "system" if system_folders else "user"
+        container_name = f"{APPNAME}-{name}-{post_fix}-server"
 
-        if container_name in running_server_names:
-            _stop_server_containers(client, container_name, environment,
-                                    system_folders)
-        else:
-            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
+    if container_name not in running_server_names:
+        error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
+        return
 
-
-def _stop_server_containers(client: DockerClient, container_name: str,
-                            environment: str, system_folders: bool) -> None:
-    """
-    Given a server's name, kill its docker container and related (RabbitMQ)
-    containers.
-    """
-    # kill the server
-    container = client.containers.get(container_name)
-    container.kill()
-    info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
-
-    # find the configuration name from the docker container name
-    # server name is formatted as f"{APPNAME}-{self.name}-{self.scope}-server"
-    scope = "system" if system_folders else "user"
-    config_name = get_server_config_name(container_name, scope)
-
-    ctx = getServerContext(config_name, environment, system_folders)
-
-    # delete the server network
-    network_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
-    network = get_network(client, name=network_name)
-    delete_network(network, kill_containers=False)
-
-    # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
-    # is not in other docker networks with other containers)
-    rabbit_uri = ctx.config.get('rabbitmq_uri')
-    if rabbit_uri:
-        rabbit_container_name = split_rabbitmq_uri(
-            rabbit_uri=rabbit_uri)['host']
-        rabbit_container = get_container(client, name=rabbit_container_name)
-        if rabbit_container and \
-                get_num_nonempty_networks(rabbit_container) == 0:
-            remove_container(rabbit_container, kill=True)
-            info(f"Stopped the {Fore.GREEN}{rabbit_container_name}"
-                 f"{Style.RESET_ALL} container.")
+    _stop_server_containers(client, container_name, environment,
+                            system_folders)
 
 
 #
@@ -660,9 +675,17 @@ def _stop_server_containers(client: DockerClient, container_name: str,
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_server_attach(name, system_folders):
-    """Attach the logs from the docker container to the terminal."""
+def cli_server_attach(name: str, system_folders: bool) -> None:
+    """
+    Attach the logs from the docker container to the terminal.
 
+    Parameters
+    ----------
+    name : str
+        Configuration name
+    system_folders : bool
+        Wether to use system folders or not
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -687,7 +710,7 @@ def cli_server_attach(name, system_folders):
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 info("Note that your server is still running! Shut it down "
-                     f"with '{Fore.RED}vserver stop{Style.RESET_ALL}'")
+                     f"with {Fore.RED}vserver stop{Style.RESET_ALL}")
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
@@ -701,9 +724,17 @@ def cli_server_attach(name, system_folders):
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_server_version(name, system_folders):
-    """Returns current version of vantage6 services installed."""
+def cli_server_version(name: str, system_folders: bool):
+    """
+    Print the version of the vantage6 services.
 
+    Parameters
+    ----------
+    name : str
+        Name of the server to inspect
+    system_folders : bool
+        Wether to use system folders or not
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -732,6 +763,123 @@ def cli_server_version(name, system_folders):
         error(f"Server {name} is not running! Cannot provide version...")
 
 
-def print_log_worker(logs_stream):
+#
+# helper functions
+#
+def get_server_context(name: str, environment: str, system_folders: bool) \
+        -> ServerContext:
+    """
+    Load the server context from the configuration file.
+
+    Returns
+    -------
+    ServerContext
+        Server context object
+    """
+    if not ServerContext.config_exists(name, environment, system_folders):
+        scope = "system" if system_folders else "user"
+        error(
+                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+                f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
+                f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
+            )
+        exit(1)
+
+    # We do not want to log this here, we do this in the container and not on
+    # the host. We only want CLI logging here.
+    ServerContext.LOGGING_ENABLED = False
+
+    # create server context, and initialize db
+    ctx = ServerContext(name, environment=environment,
+                        system_folders=system_folders)
+
+    return ctx
+
+
+def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
+                    network_mgr: NetworkManager) -> None:
+    """
+    Start the RabbitMQ container if it is not already running.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    rabbitmq_image : str
+        RabbitMQ image to use
+    network_mgr : NetworkManager
+        Network manager object
+    """
+    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    if not rabbit_uri:
+        warning('Message queue disabled! This means that the server '
+                'application cannot scale horizontally!')
+    elif rabbitmq.is_local_address(rabbit_uri):
+        # kick off RabbitMQ container
+        rabbit_mgr = RabbitMQManager(
+            ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
+        rabbit_mgr.start()
+    else:
+        info("Detected that the RabbitMQ service is a external service. "
+             "Assuming this service is up and running.")
+
+
+def _stop_server_containers(client: DockerClient, container_name: str,
+                            environment: str, system_folders: bool) -> None:
+    """
+    Given a server's name, kill its docker container and related (RabbitMQ)
+    containers.
+
+    Parameters
+    ----------
+    client : DockerClient
+        Docker client
+    container_name : str
+        Name of the server to stop
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or not
+    """
+    # kill the server
+    container = client.containers.get(container_name)
+    container.kill()
+    info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
+
+    # find the configuration name from the docker container name
+    # server name is formatted as f"{APPNAME}-{self.name}-{self.scope}-server"
+    scope = "system" if system_folders else "user"
+    config_name = get_server_config_name(container_name, scope)
+
+    ctx = get_server_context(config_name, environment, system_folders)
+
+    # delete the server network
+    network_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
+    network = get_network(client, name=network_name)
+    delete_network(network, kill_containers=False)
+
+    # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
+    # is not in other docker networks with other containers)
+    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    if rabbit_uri:
+        rabbit_container_name = split_rabbitmq_uri(
+            rabbit_uri=rabbit_uri)['host']
+        rabbit_container = get_container(client, name=rabbit_container_name)
+        if rabbit_container and \
+                get_num_nonempty_networks(rabbit_container) == 0:
+            remove_container(rabbit_container, kill=True)
+            info(f"Stopped the {Fore.GREEN}{rabbit_container_name}"
+                 f"{Style.RESET_ALL} container.")
+
+
+def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+    """
+    Print the logs from the docker container to the terminal.
+
+    Parameters
+    ----------
+    logs_stream : Iterable[bytes]
+        Output of the `container.attach(.)` method
+    """
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")

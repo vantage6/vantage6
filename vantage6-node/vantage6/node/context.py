@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from vantage6.common.globals import (
-    PACAKAGE_FOLDER,
+    PACKAGE_FOLDER,
     APPNAME
 )
 
@@ -69,10 +69,10 @@ class TestContext(AppContext):
 
     @staticmethod
     def test_config_location():
-        return (PACAKAGE_FOLDER / APPNAME /
+        return (PACKAGE_FOLDER / APPNAME /
                 "_data" / "unittest_config.yaml")
 
     @staticmethod
     def test_data_location():
-        return (PACAKAGE_FOLDER / APPNAME /
+        return (PACKAGE_FOLDER / APPNAME /
                 "_data")
