@@ -328,16 +328,16 @@ that the approved algorithm is the algorithm that runs on your data.
 There are two important steps to be taken to accomplish this:
 
 -  Set the (optional) ``allowed_images`` option in the
-   node-configuration file. You can specify a regex expression here. For
-   example
+   node-configuration file. You can specify a list of regex expressions here.
+   Some examples of what you could define:
 
-   1. ``^harbor2.vantage6.ai/[a-zA-Z]+/[a-zA-Z]+``: allows all images
+   1. ``^harbor2.vantage6.ai/[a-zA-Z]+/[a-zA-Z]+``: allow all images
       from the vantage6 registry
-   2. ``^harbor2.vantage6.ai/algorithms/glm``: only allows this specific
-      image, but all builds of this image
-   3. ``^harbor2.vantage6.ai/algorithms/glm@sha256:82becede498899ec668628e7cb0a``
-      ``d87b6e1c371cb8a1e597d83a47fac21d6af3``:
-      allows only this specific build from the GLM to run on your data
+   2. ``^harbor2.vantage6.ai/algorithms/glm``: only allow the GLM image, but
+      all builds of this image
+   3. ``^harbor2.vantage6.ai/algorithms/glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8``
+      ``a1e597d83a47fac21d6af3``: allows only this specific build from the GLM
+      image to run on your data
 
 -  Enable ``DOCKER_CONTENT_TRUST`` to verify the origin of the image.
    For more details see the `documentation from
