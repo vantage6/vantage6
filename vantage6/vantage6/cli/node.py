@@ -445,7 +445,15 @@ def cli_node_start(name: str, config: str, environment: str,
         info(f"  Processing database '{label}:{uri}'")
         label_capitals = label.upper()
 
-        file_based = Path(uri).exists()
+        try:
+            file_based = Path(uri).exists()
+        except Exception:
+            # If the database uri cannot be parsed, it is definitely not a
+            # file. In case of http servers or sql servers, checking the path
+            # of the the uri will lead to an OS-dependent error, which is why
+            # we catch all exceptions here.
+            file_based = False
+
         if not file_based and not force_db_mount:
             debug('  - non file-based database added')
             env[f'{label_capitals}_DATABASE_URI'] = uri
