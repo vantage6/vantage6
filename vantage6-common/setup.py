@@ -34,15 +34,17 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'appdirs==1.4.3',
-        'schema==0.7.1',
-        'termcolor==1.1.0',
-        'colorama==0.4.5',
+        'certifi==2022.12.7',
         'click==8.0.3',
+        'colorama==0.4.5',
+        'contextlib2==0.5.5',
+        'cryptography==3.3.2',
+        'docker==6.0.1',
+        'pyfiglet==0.8.post1',
         'PyYAML==5.4',
         'python-dateutil==2.8.1',
-        'docker==5.0.3',
-        'cryptography==3.3.2',
-        'pyfiglet==0.8.post1',
+        'schema==0.7.1',
+        'termcolor==1.1.0',
     ],
     package_data={
         'vantage6.common': [
