@@ -13,8 +13,23 @@ class Collaboration(Base):
     """
     Table that describes which collaborations are available.
 
-    Collaborations are combinations of one or more Organizations that do
-    studies together.
+    Collaborations are combinations of one or more :class:`.Organization` that
+    do studies together. Each :class:`.Organization` has a :class:`.Node` for
+    each collaboration that it is part of. Within a collaboration multiple
+    :class:`.Task` can be executed.
+
+    Attributes
+    ----------
+    name : str
+        Name of the collaboration
+    encrypted : bool
+        Whether the collaboration is encrypted or not
+    organizations : list[:class:`.Organization`]
+        List of organizations that are part of this collaboration
+    nodes : list[:class:`~.model.node.Node`]
+        List of nodes that are part of this collaboration
+    tasks : list[:class:`.Task`]
+        List of tasks that are part of this collaboration
     """
 
     # fields
@@ -60,7 +75,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        list[Node]
+        list[:class:`~.model.node.Node`]
             List of nodes that are part of the given organizations
         """
         return [n for n in self.nodes if n.organization.id in ids]
@@ -68,16 +83,16 @@ class Collaboration(Base):
     def get_node_from_organization(
             self, organization: Organization) -> Union[Node, None]:
         """
-        Returns the node that is part of the given organization.
+        Returns the node that is part of the given :class:`.Organization`.
 
         Parameters
         ----------
-        organization : Organization
+        organization: Organization
             Organization
 
         Returns
         -------
-        Node | None
+        Union[:class:`~.model.node.Node`, None]
             Node for the given organization for this collaboration, or None if
             there is no node for the given organization.
         """
@@ -89,19 +104,21 @@ class Collaboration(Base):
     @classmethod
     def find_by_name(cls, name: str) -> Union[Collaboration, None]:
         """
-        Find collaboration by its name.
+        Find :class:`.Collaboration` by its name.
 
+        Note
+        ----
         If multiple collaborations share the same name, the first
         collaboration found is returned.
 
         Parameters
         ----------
-        name : str
+        name: str
             Name of the collaboration
 
         Returns
         -------
-        Collaboration | None
+        Union[Collaboration, None]
             Collaboration with the given name, or None if no collaboration
             with the given name exists.
         """
@@ -120,7 +137,7 @@ class Collaboration(Base):
 
         Parameters
         ----------
-        name : str
+        name: str
             Name of the collaboration
 
         Returns

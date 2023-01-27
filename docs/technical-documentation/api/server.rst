@@ -1,5 +1,8 @@
 .. _server-api-refs:
 
+.. this removes all the class members from the right sidebar
+:tocdepth: 3
+
 Server
 ======
 
@@ -68,15 +71,6 @@ SQLAlchemy models
 
 Helper (base) classes
 ~~~~~~~~~~~~~~~~~~~~~
-
-.. .. autoclass:: vantage6.server.model.base.ModelBase
-..     :members:
-
-.. .. autoclass:: vantage6.server.model.base.Database
-..     :members:
-
-.. .. autoclass:: vantage6.server.model.base.DatabaseSessionManager
-..     :members:
 
 .. automodule:: vantage6.server.model.base
     :members:

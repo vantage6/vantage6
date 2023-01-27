@@ -16,6 +16,35 @@ class User(Authenticatable):
 
     Users always belong to an organization and can have certain
     rights within an organization.
+
+    Attributes
+    ----------
+    username : str
+        Username of the user
+    password : str
+        Password of the user
+    firstname : str
+        First name of the user
+    lastname : str
+        Last name of the user
+    email : str
+        Email address of the user
+    organization_id : int
+        Foreign key to the organization to which the user belongs
+    failed_login_attempts : int
+        Number of failed login attempts
+    last_login_attempt : datetime.datetime
+        Date and time of the last login attempt
+    otp_secret : str
+        Secret key for one time passwords
+    organization : :class:`~.model.organization.Organization`
+        Organization to which the user belongs
+    roles : list[:class:`~.model.role.Role`]
+        Roles that the user has
+    rules : list[:class:`~.model.rule.Rule`]
+        Rules that the user has
+    created_tasks : list[:class:`~.model.task.Task`]
+        Tasks that the user has created
     """
     _hidden_attributes = ['password']
 

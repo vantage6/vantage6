@@ -66,8 +66,6 @@ class ServerApp:
     """Vantage6 server instance."""
 
     def __init__(self, ctx):
-        """Create a vantage6-server application."""
-
         self.ctx = ctx
 
         # initialize, configure Flask
@@ -314,7 +312,7 @@ class ServerApp:
             return resp
 
     def configure_jwt(self):
-        """Load user and its claims."""
+        """Configure JWT authentication."""
 
         @self.jwt.additional_claims_loader
         def additional_claims_loader(identity):

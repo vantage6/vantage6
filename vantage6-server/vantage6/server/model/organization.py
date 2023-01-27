@@ -18,6 +18,35 @@ class Organization(Base):
     distributed tasks. Each organization contains a public key which other
     organizations can use to send encrypted messages that only this
     organization can read.
+
+    Attributes
+    ----------
+    name : str
+        Name of the organization
+    domain : str
+        Domain of the organization
+    address1 : str
+        Address of the organization
+    address2 : str
+        Address of the organization
+    zipcode : str
+        Zipcode of the organization
+    country : str
+        Country of the organization
+    _public_key : bytes
+        Public key of the organization
+    collaborations : list[Collaboration]
+        List of collaborations that this organization is part of
+    results : list[Result]
+        List of results that are part of this organization
+    nodes : list[Node]
+        List of nodes that are part of this organization
+    users : list[User]
+        List of users that are part of this organization
+    created_tasks : list[Task]
+        List of tasks that are created by this organization
+    roles : list[Role]
+
     """
     # fields
     name = Column(String)

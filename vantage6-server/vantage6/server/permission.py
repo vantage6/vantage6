@@ -35,6 +35,8 @@ class RuleCollection:
         """
         Add a rule to the rule collection
 
+        Parameters
+        ----------
         scope: Scope
             Scope within which to apply the rule
         operation: Operation
@@ -57,7 +59,7 @@ class PermissionManager:
 
     def load_rules_from_resources(self) -> None:
         """
-        At server startup, load rules from all resources
+        Collect all permission rules from all registered API resources
         """
         for res in RESOURCES:
             module = importlib.import_module('vantage6.server.resource.' + res)
@@ -79,6 +81,8 @@ class PermissionManager:
         """
         Assign a rule to the Node role.
 
+        Parameters
+        ----------
         resource: str
             Resource that the rule applies to
         scope: Scope
@@ -94,6 +98,8 @@ class PermissionManager:
         """
         Assign a rule to the container role.
 
+        Parameters
+        ----------
         resource: str
             Resource that the rule applies to
         scope: Scope
@@ -110,6 +116,8 @@ class PermissionManager:
         """
         Attach a rule to a fixed role (not adjustable by users).
 
+        Parameters
+        ----------
         fixedrole: str
             Name of the fixed role that the rule should be added to
         resource: str
@@ -137,29 +145,29 @@ class PermissionManager:
                       operation: Operation, description=None,
                       assign_to_node=False, assign_to_container=False) -> None:
         """
-        Register a rule in the database.
+        Register a permission rule in the database.
 
         If a rule already exists, nothing is done. This rule can be used in API
-        endpoints to determine if a user or node can do a certain operation in
-        a certain scope.
+        endpoints to determine if a user, node or container can do a certain
+        operation in a certain scope.
 
         Parameters
         ----------
         resource : str
-            Resource that the rule applies to
+            API resource that the rule applies to
         scope : Scope
-            List of available scopes of this rule
+            Scope of the rule
         operation : Operation
-            List of available operations on this rule
+            Operation of the rule
         description : String, optional
             Human readable description where the rule is used for, by default
-                None
-        assign_to_node: bool
+            None
+        assign_to_node: bool, optional
             Whether rule should be assigned to the node role or not. Default
-                False
-        assign_to_container: bool
+            False
+        assign_to_container: bool, optional
             Whether rule should be assigned to the container role or not.
-                Default False
+            Default False
         """
         # verify that the rule is in the DB, so that these can be assigned to
         # roles and users
@@ -209,7 +217,8 @@ class PermissionManager:
         Parameters
         ----------
         name: str
-            Name of the module whose RuleCollection is to be obtained
+            Name of the module whose RuleCollection is to be obtained or
+            created
 
         Returns
         -------
@@ -255,12 +264,12 @@ class PermissionManager:
 
         Parameters
         ----------
-        name : String
-            (Unique) name of the rule
-        scope : Scope (Enum)
-            Scope the rule
-        operation : Operation (Enum)
-            Operation on the entity
+        name: str
+            Name of the rule
+        scope: Scope
+            Scope of the rule
+        operation: Operation
+            Operation of the rule
 
         Returns
         -------
@@ -276,7 +285,7 @@ class PermissionManager:
 
     def verify_user_rules(self, rules: List[Rule]) -> Union[dict, bool]:
         """
-        Check if a user has all of a set of rules
+        Check if an user, node or container has all the `rules`
 
         Parameters
         ----------

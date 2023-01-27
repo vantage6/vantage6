@@ -24,6 +24,33 @@ class Result(Base):
 
     The result (and the input) is encrypted and can be only read by the
     intended receiver of the message.
+
+    Attributes
+    ----------
+    input : str
+        Input data of the task
+    task_id : int
+        Id of the task that was executed
+    organization_id : int
+        Id of the organization that executed the task
+    result : str
+        Result of the task
+    assigned_at : datetime
+        Time when the task was assigned to the node
+    started_at : datetime
+        Time when the task was started
+    finished_at : datetime
+        Time when the task was finished
+    status : str
+        Status of the task
+    log : str
+        Log of the task
+    task : Task
+        Task that was executed
+    organization : Organization
+        Organization that executed the task
+    ports : list[AlgorithmPort]
+        List of ports that are part of this result
     """
 
     # fields

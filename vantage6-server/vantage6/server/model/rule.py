@@ -25,6 +25,21 @@ class Scope(Enumerate):
 
 class Rule(Base):
     """Rules to determine permissions in an API endpoint.
+
+    Attributes
+    ----------
+    name : str
+        Name of the rule
+    operation : Operation
+        Operation of the rule
+    scope : Scope
+        Scope of the rule
+    description : str
+        Description of the rule
+    roles : list[Role]
+        Roles that have this rule
+    users : list[User]
+        Users that have this rule
     """
 
     # fields
