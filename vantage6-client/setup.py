@@ -34,9 +34,7 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
-        'fastparquet==2023.1.0',
         'pandas==1.5.3',
-        'pyarrow==11.0.0',
         'PyJWT==2.6.0',
         'pyfiglet==0.8.post1',
         'requests==2.28.2',

@@ -34,10 +34,8 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'appdirs==1.4.4',
-        'certifi==2022.12.7',
         'click==8.1.3',
         'colorama==0.4.6',
-        'contextlib2==21.6.0',
         'cryptography==39.0.0',
         'docker==6.0.1',
         'pyfiglet==0.8.post1',
