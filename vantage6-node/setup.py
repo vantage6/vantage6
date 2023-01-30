@@ -34,12 +34,12 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'requests==2.28.2',
-        'gevent==21.8.0',
+        'gevent==22.10.2',
         'python-socketio[client]==5.5.0',
         'docker==6.0.1',
-        'cryptography==3.3.2',
-        'click==8.0.3',
-        'termcolor==1.1.0',
+        'cryptography==39.0.0',
+        'click==8.1.3',
+        'termcolor==2.2.0',
         'bcrypt==4.0.1',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
@@ -48,10 +48,10 @@ setup(
         'dev': [
             'coverage==4.5.4',
             'python-coveralls==2.9.3',
-            'SQLAlchemy==1.3.15',
-            'schema==0.7.1',
-            'appdirs==1.4.3',
-            'PyJWT==2.4.0',
+            'SQLAlchemy==1.4.46',
+            'schema==0.7.5',
+            'appdirs==1.4.4',
+            'PyJWT==2.6.0',
             'Flask==1.1.1'
         ]
     },
