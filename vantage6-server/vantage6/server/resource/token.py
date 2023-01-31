@@ -363,8 +363,6 @@ def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
         'refresh_token': create_refresh_token(user_or_node),
         'refresh_url': api.url_for(RefreshToken),
     }
-    import jwt
-    print(jwt.decode(token_dict['access_token'], options={"verify_signature": False}))
     if isinstance(user_or_node, db.User):
         token_dict['user_url'] = api.url_for(server.resource.user.User,
                                              id=user_or_node.id)
