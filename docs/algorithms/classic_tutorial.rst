@@ -309,8 +309,9 @@ We can distinguish two types of methods that a user can trigger:
     information.
 
 .. warning::
-    The ``client`` the master method receives is an ``AlgorithmClient`` which is
-    different than the client you use as a user.
+    The ``client`` the master method receives is an ``AlgorithmClient`` (or a
+    ``ContainerClient`` if you are using an older version), which is different
+    than the client you use as a user.
 
 
 For our average algorithm the implementation will look as follows:

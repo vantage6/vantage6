@@ -1,7 +1,7 @@
 import jwt
 import pickle
 
-from typing import List
+from typing import List, Union
 
 from vantage6.client import ClientBase
 from vantage6.client import base64s_to_bytes, bytes_to_base64s
@@ -139,7 +139,7 @@ class AlgorithmClient(ClientBase):
 
         def create(
             self, input_: bytes, organization_ids: List[int] = [],
-            subtask: str = None, description: str = None
+            name: str = "subtask", description: str = None
         ) -> dict:
             """
             Create a new (child) task at the central server.
@@ -158,6 +158,11 @@ class AlgorithmClient(ClientBase):
                 Name of the subtask
             description : str, optional
                 Description of the subtask
+
+            Returns
+            -------
+            dict
+                Dictionary containing information on the created task
             """
             self.log.debug(f"Creating new subtask for {organization_ids}")
 
@@ -165,7 +170,6 @@ class AlgorithmClient(ClientBase):
                 description or
                 f"task from container on node_id={self.host_node_id}"
             )
-            name = subtask or "subtask"
 
             # serializing input. Note that the input is not encrypted here, but
             # in the proxy server (self.request())
@@ -197,7 +201,7 @@ class AlgorithmClient(ClientBase):
         def get_addresses(
             self, include_children: bool = False, include_parent: bool = False,
             label: str = None
-        ) -> List[dict]:
+        ) -> Union[List[dict], dict]:
             """
             Get information about the VPN IP addresses and ports of other
             algorithm containers involved in the current task. These addresses
@@ -218,15 +222,20 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List[dict]
+            List[dict] or dict
                 List of dictionaries containing the IP address and port number,
-                and other information to identify the containers.
+                and other information to identify the containers. If obtaining
+                the VPN addresses from the server fails, a dictionary with a
+                'message' key is returned instead.
             """
             results = self.request("vpn/algorithm/addresses", params={
                 "include_children": include_children,
                 "include_parent": include_parent,
                 "label": label
             })
+
+            if 'addresses' not in results:
+                return {'message': 'Obtaining VPN addresses failed!'}
 
             return results['addresses']
 
