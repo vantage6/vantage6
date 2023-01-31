@@ -28,7 +28,7 @@ class TestResult(unittest.TextTestResult):
         error = "[ERROR]"
 
         if self.showAll:
-            self.stream.writeln(error, 'red')
+            self.stream.writeln(error)
         elif self.dots:
             self.stream.write('E')
             self.stream.flush()
@@ -41,7 +41,7 @@ class TestResult(unittest.TextTestResult):
         fail = "[FAIL]"
 
         if self.showAll:
-            self.stream.writeln(fail, 'red')
+            self.stream.writeln(fail)
         elif self.dots:
             self.stream.write('F')
             self.stream.flush()
@@ -62,7 +62,7 @@ class TestResult(unittest.TextTestResult):
         skipped = "[SKIPPED] (%s)" % reason
 
         if self.showAll:
-            self.stream.writeln(skipped, 'yellow')
+            self.stream.writeln(skipped)
         elif self.dots:
             self.stream.write("s")
             self.stream.flush()
@@ -74,7 +74,7 @@ class TestResult(unittest.TextTestResult):
         ok = "[OK]"
 
         if self.showAll:
-            self.stream.writeln(ok, 'green')
+            self.stream.writeln(ok)
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
