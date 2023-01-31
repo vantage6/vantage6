@@ -92,7 +92,7 @@ def only_for(types=['user', 'node', 'container']):
 
             if g.type not in types:
                 # FIXME BvB 23-10-19: user gets a 500 error, would be better to
-                # get an error message with 403(?) code
+                # get an error message with 400 code
                 msg = f"{g.type}s are not allowed to access {request.url} " \
                       f"({request.method})"
                 log.warning(msg)
