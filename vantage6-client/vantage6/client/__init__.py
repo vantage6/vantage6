@@ -366,6 +366,7 @@ class ClientBase(object):
             raise Exception("Authentication Error!")
 
         self._access_token = response.json()["access_token"]
+        self.__refresh_token = response.json()["refresh_token"]
 
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_='', description='',

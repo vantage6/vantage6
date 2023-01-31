@@ -15,6 +15,7 @@ from flask_jwt_extended import (
     create_refresh_token,
     get_jwt_identity
 )
+from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6 import server
@@ -153,18 +154,10 @@ class UserToken(ServicesResources):
                                "incorrect!"
                     }, HTTPStatus.UNAUTHORIZED
 
-        token = create_access_token(user)
-
-        ret = {
-            'access_token': token,
-            'refresh_token': create_refresh_token(user),
-            'user_url': self.api.url_for(server.resource.user.User,
-                                         id=user.id),
-            'refresh_url': self.api.url_for(RefreshToken),
-        }
+        token = _get_token_dict(user, self.api)
 
         log.info(f"Succesfull login from {username}")
-        return ret, HTTPStatus.OK, {'jwt-token': token}
+        return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
 
     @staticmethod
     def validate_2fa_token(user: User, mfa_code: Union[int, str]) -> bool:
@@ -237,17 +230,10 @@ class NodeToken(ServicesResources):
             return {"msg": "Api key is not recognized!"}, \
                 HTTPStatus.UNAUTHORIZED
 
-        token = create_access_token(node)
-        ret = {
-            'access_token': token,
-            'refresh_token': create_refresh_token(node),
-            'node_url': self.api.url_for(server.resource.node.Node,
-                                         id=node.id),
-            'refresh_url': self.api.url_for(RefreshToken),
-        }
+        token = _get_token_dict(node, self.api)
 
         log.info(f"Succesfull login as node '{node.id}' ({node.name})")
-        return ret, HTTPStatus.OK, {'jwt-token': token}
+        return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
 
 
 class ContainerToken(ServicesResources):
@@ -357,6 +343,32 @@ class RefreshToken(ServicesResources):
         user_or_node_id = get_jwt_identity()
         log.info(f'Refreshing token for user or node "{user_or_node_id}"')
         user_or_node = db.Authenticatable.get(user_or_node_id)
-        ret = {'access_token': create_access_token(user_or_node)}
 
-        return ret, HTTPStatus.OK
+        return _get_token_dict(user_or_node, self.api), HTTPStatus.OK
+
+
+def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
+    """
+    Create a dictionary with the tokens and urls for the user or node.
+
+    Parameters
+    ----------
+    user_or_node : db.Authenticatable
+        The user or node to create the tokens for.
+    api : Api
+        The api to create the urls for.
+    """
+    token_dict = {
+        'access_token': create_access_token(user_or_node),
+        'refresh_token': create_refresh_token(user_or_node),
+        'refresh_url': api.url_for(RefreshToken),
+    }
+    import jwt
+    print(jwt.decode(token_dict['access_token'], options={"verify_signature": False}))
+    if isinstance(user_or_node, db.User):
+        token_dict['user_url'] = api.url_for(server.resource.user.User,
+                                             id=user_or_node.id)
+    else:
+        token_dict['node_url'] = api.url_for(server.resource.node.Node,
+                                             id=user_or_node.id)
+    return token_dict

@@ -228,6 +228,11 @@ specify any environment, you should only specify the key ``application``
        # set how long reset token provided via email are valid (default 1 hour)
        email_token_validity_minutes: 60
 
+       # set how long tokens and refresh tokens are valid (default 6 and 48
+       # hours, respectively)
+       token_expires_hours: 6
+       refresh_token_expires_hours: 48
+
        # If algorithm containers need direct communication between each other
        # the server also requires a VPN server. (!) This must be a EduVPN
        # instance as vantage6 makes use of their API (!)
