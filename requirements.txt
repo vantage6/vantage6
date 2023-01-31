@@ -63,7 +63,6 @@ schema==0.7.5
 six==1.16.0
 SPARQLWrapper==2.0.0
 SQLAlchemy==1.4.46
-termcolor==2.2.0
 traitlets==5.8.1
 urllib3==1.26.14
 wcwidth==0.2.6

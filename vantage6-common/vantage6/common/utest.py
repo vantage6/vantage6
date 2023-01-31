@@ -8,8 +8,6 @@ import os
 import logging
 import unittest
 from datetime import datetime
-from termcolor import colored
-
 
 class TestResult(unittest.TextTestResult):
 
@@ -30,7 +28,7 @@ class TestResult(unittest.TextTestResult):
         error = "[ERROR]"
 
         if self.showAll:
-            self.stream.writeln(colored(error, 'red'))
+            self.stream.writeln(error, 'red')
         elif self.dots:
             self.stream.write('E')
             self.stream.flush()
@@ -43,7 +41,7 @@ class TestResult(unittest.TextTestResult):
         fail = "[FAIL]"
 
         if self.showAll:
-            self.stream.writeln(colored(fail, 'red'))
+            self.stream.writeln(fail, 'red')
         elif self.dots:
             self.stream.write('F')
             self.stream.flush()
@@ -64,7 +62,7 @@ class TestResult(unittest.TextTestResult):
         skipped = "[SKIPPED] (%s)" % reason
 
         if self.showAll:
-            self.stream.writeln(colored(skipped, 'yellow'))
+            self.stream.writeln(skipped, 'yellow')
         elif self.dots:
             self.stream.write("s")
             self.stream.flush()
@@ -76,7 +74,7 @@ class TestResult(unittest.TextTestResult):
         ok = "[OK]"
 
         if self.showAll:
-            self.stream.writeln(colored(ok, 'green'))
+            self.stream.writeln(ok, 'green')
         elif self.dots:
             self.stream.write('.')
             self.stream.flush()
