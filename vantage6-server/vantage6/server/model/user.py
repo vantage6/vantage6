@@ -1,18 +1,20 @@
+from __future__ import annotations
 import bcrypt
 import re
 import datetime as dt
 
-from typing import Union
+from typing import Tuple, Union
 from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
 from sqlalchemy.orm import relationship, validates
 
 from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
 
 
 class User(Authenticatable):
-    """User (person) that can access the system.
+    """
+    Table to keep track of Users (persons) that can access the system.
 
     Users always belong to an organization and can have certain
     rights within an organization.
@@ -73,7 +75,15 @@ class User(Authenticatable):
                          secondary="UserPermission")
     created_tasks = relationship("Task", back_populates="init_user")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        String representation of the user.
+
+        Returns
+        -------
+        str
+            String representation of the user
+        """
         organization = self.organization.name if self.organization else "None"
         return (
             f"<User "
@@ -84,6 +94,22 @@ class User(Authenticatable):
 
     @validates("password")
     def _validate_password(self, key, password):
+        """
+        Validate the password of the user by hashing it, as it is also hashed
+        in the database.
+
+        Parameters
+        ----------
+        key: str
+            Name of the attribute (in this case 'password')
+        password: str
+            Password of the user
+
+        Returns
+        -------
+        str
+            Hashed password
+        """
         return self.hash(password)
 
     def set_password(self, pw) -> Union[str, None]:
@@ -123,14 +149,27 @@ class User(Authenticatable):
         self.password = pw
         self.save()
 
-    def check_password(self, pw):
+    def check_password(self, pw) -> bool:
+        """
+        Check if the password is correct
+
+        Parameters
+        ----------
+        pw: str
+            Password to check
+
+        Returns
+        -------
+        bool
+            Whether or not the password is correct
+        """
         if self.password is not None:
             expected_hash = self.password.encode('utf8')
             return bcrypt.checkpw(pw.encode('utf8'), expected_hash)
         return False
 
     def is_blocked(self, max_failed_attempts: int,
-                   inactivation_in_minutes: int):
+                   inactivation_in_minutes: int) -> Tuple(bool, str):
         """
         Check if user can login or if they are temporarily blocked because they
         entered a wrong password too often
@@ -168,28 +207,87 @@ class User(Authenticatable):
             return False, None
 
     @classmethod
-    def get_by_username(cls, username):
+    def get_by_username(cls, username) -> User:
+        """
+        Get a user by their username
+
+        Parameters
+        ----------
+        username: str
+            Username of the user
+
+        Returns
+        -------
+        User
+            User with the given username
+
+        Raises
+        ------
+        NoResultFound
+            If no user with the given username exists
+        """
         session = DatabaseSessionManager.get_session()
         return session.query(cls).filter_by(username=username).one()
 
     @classmethod
-    def get_by_email(cls, email):
+    def get_by_email(cls, email) -> User:
+        """
+        Get a user by their email
+
+        Parameters
+        ----------
+        email: str
+            Email of the user
+
+        Returns
+        -------
+        User
+            User with the given email
+
+        Raises
+        ------
+        NoResultFound
+            If no user with the given email exists
+        """
         session = DatabaseSessionManager.get_session()
         return session.query(cls).filter_by(email=email).one()
 
     @classmethod
-    def get_user_list(cls, filters=None):
-        session = DatabaseSessionManager.get_session()
-        return session.query(cls).all()
+    def username_exists(cls, username) -> bool:
+        """
+        Checks if user with certain username exists
 
-    @classmethod
-    def username_exists(cls, username):
+        Parameters
+        ----------
+        username: str
+            Username to check
+
+        Returns
+        -------
+        bool
+            Whether or not user with given username exists
+        """
         session = DatabaseSessionManager.get_session()
         return session.query(exists().where(cls.username == username))\
             .scalar()
 
     @classmethod
-    def exists(cls, field, value):
+    def exists(cls, field, value) -> bool:
+        """
+        Checks if user with certain key-value exists
+
+        Parameters
+        ----------
+        field: str
+            Name of the attribute to check
+        value: str
+            Value of the attribute to check
+
+        Returns
+        -------
+        bool
+            Whether or not user with given key-value exists
+        """
         session = DatabaseSessionManager.get_session()
         return session.query(exists().where(getattr(cls, field) == value))\
             .scalar()

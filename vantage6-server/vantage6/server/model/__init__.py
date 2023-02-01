@@ -1,4 +1,4 @@
-from .authenticable import Authenticatable
+from .authenticatable import Authenticatable
 from .user import User
 from .organization import Organization
 from .collaboration import Collaboration

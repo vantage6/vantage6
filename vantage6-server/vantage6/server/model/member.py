@@ -1,5 +1,5 @@
 """
-The member table is used to link organizations and collaborations together.
+The Member table is used to link organizations and collaborations together.
 Each line in the table represents that a certain organization is member
 of a certain collaboration by storing the ids of the organization and
 collaboration.

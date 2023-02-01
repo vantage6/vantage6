@@ -6,7 +6,7 @@ from vantage6.server.model.base import DatabaseSessionManager
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy import Column, Integer, String, ForeignKey
 
-from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.authenticatable import Authenticatable
 
 
 class Node(Authenticatable):
