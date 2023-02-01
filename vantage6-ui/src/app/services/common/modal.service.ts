@@ -69,7 +69,9 @@ export class ModalService {
   }
 
   closeLoadingModal(): void {
-    this.loadingModal?.close();
+    if (this.loadingModal) {
+      this.loadingModal?.close();
+    }
   }
 
   openEditModal(param_name: string, current_value: string): NgbModalRef {
