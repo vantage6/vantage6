@@ -312,7 +312,7 @@ class ContainerToken(ServicesResources):
                 HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
-        if db_task.complete:
+        if db_task.complete():
             log.warning(f"Node {g.node.id} attempts to generate a key for "
                         f"completed task {task_id}")
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST

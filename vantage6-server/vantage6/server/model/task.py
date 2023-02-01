@@ -37,9 +37,6 @@ class Task(Base):
     initiator = relationship("Organization", back_populates="created_tasks")
     init_user = relationship("User", back_populates="created_tasks")
 
-    # TODO remove this property in v4. It is superseded by status but now left
-    # here for backwards compatibility with other v3 versions
-    @hybrid_property
     def complete(self):
         return all([r.complete for r in self.results])
 
@@ -69,12 +66,6 @@ class Task(Base):
             return TaskStatus.PENDING.value
         else:
             return TaskStatus.COMPLETED.value
-
-    def results_for_node(self, node):
-        assert isinstance(node, Node), "Should be a node..."
-        return [result for result in self.results if
-                self.collaboration == node.collaboration and
-                self.organization == node.organization]
 
     @classmethod
     def next_run_id(cls):

@@ -488,7 +488,7 @@ class Tasks(TaskBase):
             return False
 
         # check master task is not completed yet
-        if db.Task.get(container["task_id"]).complete:
+        if db.Task.get(container["task_id"]).complete():
             log.warning(
                 f"Container from node={container['node_id']} "
                 f"attempts to start sub-task for a completed "
