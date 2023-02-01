@@ -138,7 +138,7 @@ class AlgorithmClient(ClientBase):
             )
 
         def create(
-            self, input_: bytes, organization_ids: List[int] = [],
+            self, input_: bytes, organization_ids: List[int] = None,
             name: str = "subtask", description: str = None
         ) -> dict:
             """
@@ -164,6 +164,8 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing information on the created task
             """
+            if organization_ids is None:
+                organization_ids = []
             self.log.debug(f"Creating new subtask for {organization_ids}")
 
             description = (
@@ -243,7 +245,7 @@ class AlgorithmClient(ClientBase):
         """
         Get information about organizations in the collaboration.
         """
-        def get(self, id: int) -> dict:
+        def get(self, id_: int) -> dict:
             """
             Get an organization by ID.
 
@@ -252,7 +254,7 @@ class AlgorithmClient(ClientBase):
             id: int
                 ID of the organization to retrieve
             """
-            return self.request(f"organization/{id}")
+            return self.request(f"organization/{id_}")
 
         def list(self) -> List[dict]:
             """
