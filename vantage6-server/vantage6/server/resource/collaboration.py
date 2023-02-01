@@ -279,7 +279,7 @@ class Collaborations(CollaborationBase):
         data = parser.parse_args()
 
         name = data["name"]
-        if db.Collaboration.name_exists(name):
+        if db.Collaboration.exists("name", name):
             return {"msg": f"Collaboration name '{name}' already exists!"}, \
                 HTTPStatus.BAD_REQUEST
 
@@ -411,6 +411,8 @@ class Collaboration(CollaborationBase):
             description: Collaboration with specified id is not found
           401:
             description: Unauthorized
+          400:
+            description: Collaboration name already exists
 
         security:
           - bearerAuth: []
@@ -432,7 +434,13 @@ class Collaboration(CollaborationBase):
         # only update fields that are provided
         data = request.get_json()
         if "name" in data:
-            collaboration.name = data["name"]
+            name = data["name"]
+            if collaboration.name != name and \
+                    db.Collaboration.exists("name", name):
+                return {
+                    "msg": f"Collaboration name '{name}' already exists!"
+                }, HTTPStatus.BAD_REQUEST
+            collaboration.name = name
         if "organization_ids" in data:
             collaboration.organizations = [
                 db.Organization.get(org_id)

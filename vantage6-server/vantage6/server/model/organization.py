@@ -18,7 +18,7 @@ class Organization(Base):
     """
 
     # fields
-    name = Column(String)
+    name = Column(String, unique=True)
     domain = Column(String)
     address1 = Column(String)
     address2 = Column(String)
