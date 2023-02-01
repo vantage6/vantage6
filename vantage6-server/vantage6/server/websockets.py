@@ -118,18 +118,18 @@ class DefaultSocketNamespace(Namespace):
         """
         # check for which collab rooms the user has permission to enter
         session.user = db.User.get(session.auth_id)
-        if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
+        if session.user.can('event', Scope.GLOBAL, Operation.RECEIVE):
             # user joins all collaboration rooms
             collabs = db.Collaboration.get()
             for collab in collabs:
                 session.rooms.append(f'collaboration_{collab.id}')
         elif session.user.can(
-                'event', Scope.COLLABORATION, Operation.VIEW):
+                'event', Scope.COLLABORATION, Operation.RECEIVE):
             # user joins all collaboration rooms that their organization
             # participates in
             for collab in user.organization.collaborations:
                 session.rooms.append(f'collaboration_{collab.id}')
-        elif session.user.can('event', Scope.ORGANIZATION, Operation.VIEW):
+        elif session.user.can('event', Scope.ORGANIZATION, Operation.RECEIVE):
             # user joins collaboration subrooms that include only messages
             # relevant to their own node
             for collab in user.organization.collaborations:

@@ -12,6 +12,8 @@ class Operation(Enumerate):
     EDIT = "e"
     CREATE = "c"
     DELETE = "d"
+    SEND = "s"
+    RECEIVE = "r"
 
 
 class Scope(Enumerate):

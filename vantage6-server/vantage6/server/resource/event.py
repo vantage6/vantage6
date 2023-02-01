@@ -51,17 +51,17 @@ def permissions(permissions: PermissionManager):
     # are permissions to do stuff via socket connections
     add = permissions.appender(module_name)
 
-    add(scope=Scope.ORGANIZATION, operation=Operation.VIEW,
+    add(scope=Scope.ORGANIZATION, operation=Operation.RECEIVE,
         description="view websocket events of your organization")
-    add(scope=Scope.COLLABORATION, operation=Operation.VIEW,
+    add(scope=Scope.COLLABORATION, operation=Operation.RECEIVE,
         description="view websocket events of your collaborations")
-    add(scope=Scope.GLOBAL, operation=Operation.VIEW,
+    add(scope=Scope.GLOBAL, operation=Operation.RECEIVE,
         description="view websocket events")
-    add(scope=Scope.ORGANIZATION, operation=Operation.CREATE,
+    add(scope=Scope.ORGANIZATION, operation=Operation.SEND,
         description="send websocket events for your organization")
-    add(scope=Scope.COLLABORATION, operation=Operation.CREATE,
+    add(scope=Scope.COLLABORATION, operation=Operation.SEND,
         description="send websocket events for your collaborations")
-    add(scope=Scope.GLOBAL, operation=Operation.CREATE,
+    add(scope=Scope.GLOBAL, operation=Operation.SEND,
         description="send websocket events to all collaborations")
 
 
@@ -131,9 +131,9 @@ class KillTask(ServicesResources):
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
-        if not self.r.c_glo.can():
+        if not self.r.s_glo.can():
             orgs = task.collaboration.organizations
-            if not (self.r.c_org.can() and g.user.organization in orgs):
+            if not (self.r.s_col.can() and g.user.organization in orgs):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
@@ -211,11 +211,11 @@ class KillNodeTasks(ServicesResources):
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
-        if not self.r.c_glo.can():
+        if not self.r.s_glo.can():
             collab_orgs = node.collaboration.organizations
             if not (
-                (self.r.c_col.can() and g.user.organization in collab_orgs) or
-                (self.r.c_org.can() and
+                (self.r.s_col.can() and g.user.organization in collab_orgs) or
+                (self.r.s_org.can() and
                     node.organization_id == g.user.organization_id)
             ):
                 return {'msg': 'You lack the permission to do that!'}, \
