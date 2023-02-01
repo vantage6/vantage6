@@ -92,11 +92,7 @@ class Collaboration(Base):
 
         Returns
         -------
-<<<<<<< HEAD
         Union[:class:`~.model.node.Node`, None]
-=======
-        model.node.Node | None
->>>>>>> change/update-server-docstrings
             Node for the given organization for this collaboration, or None if
             there is no node for the given organization.
         """
