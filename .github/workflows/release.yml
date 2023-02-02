@@ -98,7 +98,7 @@ jobs:
         ref: 'main'
 
     - name: Create a Release
-      uses: "marvinpinto/action-automatic-releases@latest"
+      uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "v${{ env.version }}"
@@ -286,10 +286,10 @@ jobs:
           # commit of the tag is used.
           ref: 'main'
 
-      - name: Set up Python 3.7
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |
