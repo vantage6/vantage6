@@ -141,6 +141,10 @@ class DefaultSocketNamespace(Namespace):
     def on_disconnect(self) -> None:
         """
         Client that disconnects needs to leave all rooms.
+
+        If a node disconnects, users may be alerted to that. Also, any
+        information on the node (e.g. configuration) is removed from the
+        database.
         """
         for room in session.rooms:
             # self.__leave_room_and_notify(room)
@@ -157,6 +161,10 @@ class DefaultSocketNamespace(Namespace):
             self.log.warning('emitting to /admin')
             self.socketio.emit('node-status-changed', namespace='/admin')
             self.__alert_node_status(online=False, node=auth)
+
+        # delete any data on the node stored on the server (e.g. configuration
+        # data)
+        self.__clean_node_data(auth)
 
         self.log.info(f'{session.name} disconnected')
 
@@ -235,6 +243,37 @@ class DefaultSocketNamespace(Namespace):
             }, room=f"collaboration_{collaboration_id}"
         )
 
+    def on_node_info_update(self, node_config: dict) -> None:
+        """
+        A node sends information about its configuration and other properties.
+        Store this in the database for the duration of the node's session.
+
+        Parameters
+        ----------
+        node_config: dict
+            Dictionary containing the node's configuration.
+        """
+        node = db.Node.get(session.auth_id)
+
+        # delete any old data that may be present (if cleanup on disconnect
+        # failed)
+        self.__clean_node_data(node=node)
+
+        # store (new) node config
+        to_store = []
+        for k, v in node_config.items():
+            # add single item or list of items
+            if not isinstance(v, list):
+                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
+            else:
+                to_store.extend([
+                    db.NodeConfig(node_id=node.id, key=k, value=i)
+                    for i in v
+                ])
+
+        node.config = to_store
+        node.save()
+
     def __join_room_and_notify(self, room: str) -> None:
         """
         Joins room and notify other clients in this room.
@@ -298,3 +337,16 @@ class DefaultSocketNamespace(Namespace):
                 namespace='/tasks',
                 room=room
             )
+
+    def __clean_node_data(self, node: db.Node) -> None:
+        """
+        Remove any information from the database that the node shared about
+        e.g. its configuration
+
+        Parameters
+        ----------
+        node: db.Node
+            The node SQLALchemy object
+        """
+        for conf in node.config:
+            conf.delete()
