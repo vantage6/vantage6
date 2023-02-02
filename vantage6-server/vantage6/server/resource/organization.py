@@ -409,11 +409,13 @@ class Organization(OrganizationBase):
 
         data = request.get_json()
         name = data.get('name', None)
-        if name and organization.name != name and \
-                db.Organization.exists("name", name):
-            return {
-                "msg": f"Organization with name '{name}' already exists!"
-            }, HTTPStatus.BAD_REQUEST
+        if name:
+            if organization.name != name and \
+                    db.Organization.exists("name", name):
+                return {
+                    "msg": f"Organization with name '{name}' already exists!"
+                }, HTTPStatus.BAD_REQUEST
+            organization.name = name
 
         fields = ["address1", "address2", "zipcode", "country",
                   "public_key", "domain"]

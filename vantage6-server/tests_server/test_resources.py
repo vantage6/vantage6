@@ -118,7 +118,7 @@ class TestResources(unittest.TestCase):
     def create_user(self, organization=None, rules=[], password="password"):
 
         if not organization:
-            organization = Organization(name="some-organization")
+            organization = Organization(name=str(uuid.uuid1()))
             organization.save()
 
         # user details
@@ -139,10 +139,10 @@ class TestResources(unittest.TestCase):
 
     def create_node(self, organization=None, collaboration=None):
         if not organization:
-            organization = Organization()
+            organization = Organization(name=str(uuid.uuid1()))
 
         if not collaboration:
-            collaboration = Collaboration()
+            collaboration = Collaboration(name=str(uuid.uuid1()))
 
         api_key = str(uuid1())
         node = Node(
@@ -173,9 +173,9 @@ class TestResources(unittest.TestCase):
                         node=None, task=None, api_key=None):
         if not node:
             if not collaboration:
-                collaboration = Collaboration()
+                collaboration = Collaboration(name=str(uuid.uuid1()))
             if not organization:
-                organization = Organization()
+                organization = Organization(name=str(uuid.uuid1()))
             api_key = str(uuid1())
             node = Node(organization=organization, collaboration=collaboration,
                         api_key=api_key)
@@ -325,7 +325,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # succesfully create a node
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
         col.save()
 
@@ -1421,9 +1421,9 @@ class TestResources(unittest.TestCase):
     def test_organization_view_nodes(self):
 
         # create organization, collaboration and node
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         org.save()
-        col = Collaboration(organizations=[org])
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         col.save()
         node = Node(organization=org, collaboration=col)
         node.save()
@@ -1738,8 +1738,8 @@ class TestResources(unittest.TestCase):
 
     def test_view_collaboration_node_permissions(self):
 
-        org = Organization()
-        col = Collaboration(organizations=[org])
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         node = Node(collaboration=col, organization=org)
         node.save()
 
@@ -1991,9 +1991,9 @@ class TestResources(unittest.TestCase):
 
     def test_create_node_permissions(self):
 
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
-        org2 = Organization()
+        org2 = Organization(name=str(uuid.uuid1()))
         org2.save()
 
         # test non existing collaboration
@@ -2061,8 +2061,8 @@ class TestResources(unittest.TestCase):
 
     def test_delete_node_permissions(self):
 
-        org = Organization()
-        col = Collaboration(organizations=[org])
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         node = Node(organization=org, collaboration=col)
         node.save()
 
@@ -2084,7 +2084,8 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # global permission
-        node2 = Node(organization=org, collaboration=col)
+        org2 = Organization(name=str(uuid.uuid1()))
+        node2 = Node(organization=org2, collaboration=col)
         node2.save()
         rule = Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
