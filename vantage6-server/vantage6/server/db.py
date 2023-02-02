@@ -22,7 +22,8 @@ from vantage6.server.model import (
     Rule,
     UserPermission,
     role_rule_association,
-    AlgorithmPort
+    AlgorithmPort,
+    NodeConfig
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING

@@ -883,6 +883,29 @@ class Node(object):
             )
         return killed_algos
 
+    def share_node_details(self) -> None:
+        """
+        Share part of the node's configuration with the server.
+
+        This helps the other parties in a collaboration to see e.g. which
+        algorithms they are allowed to run on this node.
+        """
+        config_to_share = {}
+
+        encryption_config = self.config.get('encryption')
+        if encryption_config:
+            if encryption_config.get('enabled') is not None:
+                config_to_share['encryption'] = \
+                    encryption_config.get('enabled')
+
+        allowed_algos = self.config.get('allowed_images')
+        config_to_share['allowed_images'] = allowed_algos if allowed_algos \
+            else 'all'
+
+        self.socketIO.emit(
+            'node_info_update', config_to_share, namespace='/tasks'
+        )
+
     def cleanup(self) -> None:
 
         if hasattr(self, 'socketIO') and self.socketIO:
