@@ -6,7 +6,26 @@ from vantage6.client import ContainerClient
 from vantage6.tools.util import info, warn, error
 
 
-def dispatch_rpc(data, input_data, module, token):
+def dispatch_rpc(data: any, input_data: dict, module: str, token: str) -> any:
+    """
+    Calls the right function in the algorithm module, based on the input data.
+
+    Parameters
+    ----------
+    data: any
+        The data to be passed to the algorithm
+    input_data: dict
+        The input data of the task
+    module: str
+        The name of the module to be imported
+    token: str
+        The JWT token
+
+    Returns
+    -------
+    any
+        The result of the algorithm
+    """
 
     # import algorithm module
     try:

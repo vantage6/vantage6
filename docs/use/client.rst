@@ -96,8 +96,6 @@ create a new user:
    #        Human readable description
    #    input : dict
    #        Algorithm input
-   #    data_format : str, optional
-   #        IO data format used, by default LEGACY
    #    database: str, optional
    #        Name of the database to use. This should match the key
    #        in the node configuration files. If not specified the
@@ -410,8 +408,7 @@ us create a task that runs the master algorithm of the
                                      name="an-awesome-task",
                                      image="harbor2.vantage6.ai/demo/average",
                                      description='',
-                                     input=input_,
-                                     data_format='json')
+                                     input=input_)
 
 Note that the ``kwargs`` we specified in the ``input_`` are specific to
 this algorithm: this algorithm expects an argument ``column_name`` to be
@@ -445,8 +442,7 @@ master algorithm will normally do:
                                      name="an-awesome-task",
                                      image="harbor2.vantage6.ai/demo/average",
                                      description='',
-                                     input=input_,
-                                     data_format='json')
+                                     input=input_)
 
 **Inspecting the results**
 
