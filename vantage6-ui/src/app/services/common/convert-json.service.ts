@@ -140,7 +140,7 @@ export class ConvertJsonService {
 
   getNode(node_json: any): Node {
     let config: { [key: string]: string[] } = {};
-    if (node_json.config.length > 0) {
+    if (node_json.config && node_json.config.length > 0) {
       for (let c of node_json.config) {
         c.key = c.key.replace(/_/g, ' '); // replace underscore with space
         // replace numerical values with their boolean representation
