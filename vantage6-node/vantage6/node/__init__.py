@@ -890,6 +890,12 @@ class Node(object):
         This helps the other parties in a collaboration to see e.g. which
         algorithms they are allowed to run on this node.
         """
+        # check if node allows to share node details, otherwise return
+        if not self.config.get('share_config', True):
+            self.log.debug("Not sharing node configuration in accordance with "
+                           "the configuration setting.")
+            return
+
         config_to_share = {}
 
         encryption_config = self.config.get('encryption')
@@ -902,6 +908,7 @@ class Node(object):
         config_to_share['allowed_images'] = allowed_algos if allowed_algos \
             else 'all'
 
+        self.log.debug(f"Sharing node configuration: {config_to_share}")
         self.socketIO.emit(
             'node_info_update', config_to_share, namespace='/tasks'
         )
