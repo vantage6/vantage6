@@ -338,7 +338,8 @@ class DefaultSocketNamespace(Namespace):
                 room=room
             )
 
-    def __clean_node_data(self, node: db.Node) -> None:
+    @staticmethod
+    def __clean_node_data(node: db.Node) -> None:
         """
         Remove any information from the database that the node shared about
         e.g. its configuration
