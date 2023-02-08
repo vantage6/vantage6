@@ -184,27 +184,20 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     }
     // set input
     let first_result = results[0];
-    let decoded_input = atob(first_result.input);
-    if (decoded_input.startsWith('json.')) {
-      let input = JSON.parse(decoded_input.slice(5));
-      this.task_input.master = input.master;
-      this.task_input.method = input.method;
-      if (input.args) {
-        this.task_input.args = input.args;
-        this.task_input.args.push('');
+    let input = JSON.parse(atob(first_result.input));
+    this.task_input.master = input.master;
+    this.task_input.method = input.method;
+    if (input.args) {
+      this.task_input.args = input.args;
+      this.task_input.args.push('');
+    }
+    if (input.kwargs) {
+      this.task_input.kwargs = [];
+      for (let key in input.kwargs) {
+        this.task_input.kwargs.push({ key: key, value: input.kwargs[key] });
       }
-      if (input.kwargs) {
-        this.task_input.kwargs = [];
-        for (let key in input.kwargs) {
-          this.task_input.kwargs.push({ key: key, value: input.kwargs[key] });
-        }
-        // create empty kwarg if user wants to add more
-        this.task_input.kwargs.push({ key: '', value: '' });
-      }
-    } else {
-      // input was not encoded in JSON, so we don't know how to read it...
-      // we should still reset the input though
-      this.initializeTaskInput();
+      // create empty kwarg if user wants to add more
+      this.task_input.kwargs.push({ key: '', value: '' });
     }
   }
 

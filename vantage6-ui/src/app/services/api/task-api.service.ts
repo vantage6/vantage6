@@ -44,7 +44,7 @@ export class TaskApiService extends BaseApiService {
     for (let org of task.organizations) {
       org_input.push({
         id: org.id,
-        input: btoa('json.' + JSON.stringify(input)),
+        input: btoa(JSON.stringify(input)),
       });
     }
 
