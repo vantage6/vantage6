@@ -57,7 +57,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { TaskTableComponent } from './components/table/task-table/task-table.component';
 import { TaskViewComponent } from './components/view/task-view/task-view.component';
 import { TaskViewSingleComponent } from './components/view-single/task-view-single/task-view-single.component';
-import { ResultViewComponent } from './components/view/result-view/result-view.component';
+import { RunViewComponent } from './components/view/run-view/run-view.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { CollaborationTableComponent } from './components/table/collaboration-table/collaboration-table.component';
 import { RoleViewSingleComponent } from './components/view-single/role-view-single/role-view-single.component';
@@ -105,7 +105,7 @@ import { ModalCreateComponent } from './components/modal/modal-create/modal-crea
     TaskTableComponent,
     TaskViewComponent,
     TaskViewSingleComponent,
-    ResultViewComponent,
+    RunViewComponent,
     ProfileComponent,
     CollaborationTableComponent,
     RoleViewSingleComponent,
