@@ -41,7 +41,7 @@ setup(
         'PyYAML==5.4',
         'python-dateutil==2.8.1',
         'docker==5.0.3',
-        'cryptography==3.3.2',
+        'cryptography==39.0.1',
         'pyfiglet==0.8.post1',
     ],
     package_data={
