@@ -67,7 +67,7 @@ class NodeClient(ClientBase):
 
             This token is used by algorithm containers that run on this
             node. These algorithms can then post tasks and retrieve
-            child-results (usually refered to as a master container).
+            child-runs (usually refered to as a master container).
             The server performs a few checks (e.g. if the task you
             request the key for is still open) before handing out this
             token.
@@ -88,7 +88,7 @@ class NodeClient(ClientBase):
 
     def get_results(self, id=None, state=None, include_task=False,
                     task_id=None):
-        """ Obtain the results for a specific task.
+        """ Obtain the algorithm run data for a specific task.
 
             Overload the definition of the parent by entering the
             task_id automatically.
@@ -126,10 +126,10 @@ class NodeClient(ClientBase):
             "started_at": datetime.datetime.now().isoformat()
         })
 
-    def patch_results(self, id: int, result: Dict,
+    def patch_results(self, id: int, data: Dict,
                       init_org_id: int = None) -> None:
         """
-        Update the results at the central server.
+        Update the algorithm run data at the central server.
 
         Typically used when to algorithm container is finished or
         when a status-update is posted (started, finished)
@@ -137,18 +137,18 @@ class NodeClient(ClientBase):
         Parameters
         ----------
         id: int
-            ID of the result to patch
-        result: Dict
+            ID of the run to patch
+        data: Dict
             Dictionary of fields that are to be patched
         init_org_id: int, optional
             Organization id of the origin of the task. This is required
-            when the result dict includes results, because then results have
+            when the run dict includes results, because then results have
             to be encrypted specifically for them
         """
         # TODO: the key `result` is not always present, e.g. when
         #     only the timestamps are updated
         # FIXME: public keys should be cached
-        if "result" in result:
+        if "result" in data:
             if not init_org_id:
                 self.log.critical(
                     "Organization id is not provided: cannot send results to "
@@ -165,8 +165,8 @@ class NodeClient(ClientBase):
                 self.log.critical('Does the initiating organization belong to '
                                   'your organization?')
 
-            result["result"] = self.cryptor.encrypt_bytes_to_str(
-                result["result"],
+            data["result"] = self.cryptor.encrypt_bytes_to_str(
+                data["result"],
                 public_key
             )
 
@@ -174,7 +174,7 @@ class NodeClient(ClientBase):
         else:
             self.log.debug("Just patchin'")
 
-        return self.request(f"result/{id}", json=result, method='patch')
+        return self.request(f"run/{id}", json=data, method='patch')
 
     def get_vpn_config(self) -> Tuple[bool, str]:
         """

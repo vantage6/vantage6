@@ -41,8 +41,9 @@ enter the endpoint.
 When an endpoint is then entered, there are additional permission checks. For
 users, permissions vary per user. Nodes and algorithm containers all have the
 same permissions, but for specific situations there are specific checks. For
-instance, nodes are only allowed to update their own results, and not those of
-other nodes. These checks are performed within the endpoints themselves.
+instance, nodes are only allowed to update the data of their own algorithm runs,
+and not those of other nodes. These checks are performed within the endpoints
+themselves.
 
 The following rules are defined:
 
@@ -82,10 +83,10 @@ same way, according to the HATEOAS constraints. An example is detailed below:
   {
       "id": 1,
       "name": "test",
-      "results": [
+      "runs": [
           {
               "id": 2,
-              "link": "/api/result/2",
+              "link": "/api/run/2",
               "methods": [
                   "PATCH",
                   "GET"
@@ -96,9 +97,9 @@ same way, according to the HATEOAS constraints. An example is detailed below:
       ...
   }
 
-The response for this task includes the results that are attached to this task.
-In compliance with HATEOAS, a link is supplied to the link where the result can
-be viewed in more detail.
+The response for this task includes the algorithm runs that are attached to this
+task. In compliance with HATEOAS, a link is supplied to the link where the run
+can be viewed in more detail.
 
 Serialization
 -------------

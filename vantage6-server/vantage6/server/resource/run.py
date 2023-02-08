@@ -20,11 +20,11 @@ from vantage6.server.resource import (
 )
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource.common._schema import (
-    ResultSchema,
-    ResultTaskIncludedSchema
+    RunSchema,
+    RunTaskIncludedSchema
 )
 from vantage6.server.model import (
-    Result as db_Result,
+    Run as db_Run,
     Node,
     Task,
     Collaboration,
@@ -43,24 +43,24 @@ def setup(api, api_base, services):
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        Results,
+        Runs,
         path,
-        endpoint='result_without_id',
+        endpoint='run_without_id',
         methods=('GET',),
         resource_class_kwargs=services
     )
     api.add_resource(
-        Result,
+        Run,
         path + '/<int:id>',
-        endpoint='result_with_id',
+        endpoint='run_with_id',
         methods=('GET', 'PATCH'),
         resource_class_kwargs=services
     )
 
 
 # Schemas
-result_schema = ResultSchema()
-result_inc_schema = ResultTaskIncludedSchema()
+run_schema = RunSchema()
+run_inc_schema = RunTaskIncludedSchema()
 
 
 # -----------------------------------------------------------------------------
@@ -70,38 +70,38 @@ def permissions(permissions: PermissionManager):
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW,
-        description="view any result")
+        description="view any run")
     add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
-        assign_to_node=True, description="view results of your organizations "
+        assign_to_node=True, description="view runs of your organizations "
         "collaborations")
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class ResultBase(ServicesResources):
+class RunBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
 
-class Results(ResultBase):
+class Runs(RunBase):
 
     @only_for(['node', 'user', 'container'])
     def get(self):
-        """ Returns a list of results
+        """ Returns a list of runs
         ---
 
         description: >-
-            Returns a list of all results you are allowed to see.\n
+            Returns a list of all runs you are allowed to see.\n
 
             ### Permission Table\n
             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
             Description|\n
             |--|--|--|--|--|--|\n
-            |Result|Global|View|❌|❌|View any result|\n
-            |Result|Organization|View|✅|✅|View the results of your
+            |Run|Global|View|❌|❌|View any run|\n
+            |Run|Organization|View|✅|✅|View the runs of your
             organization's collaborations|\n
 
             Accessible to users.
@@ -189,31 +189,31 @@ class Results(ResultBase):
         security:
         - bearerAuth: []
 
-        tags: ["Result"]
+        tags: ["Run"]
         """
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(db_Result)
+        q = DatabaseSessionManager.get_session().query(db_Run)
 
         # relation filters
         for param in ['task_id', 'organization_id', 'port']:
             if param in args:
-                q = q.filter(getattr(db_Result, param) == args[param])
+                q = q.filter(getattr(db_Run, param) == args[param])
 
         # date selections
         for param in ['assigned', 'started', 'finished']:
             if f'{param}_till' in args:
-                q = q.filter(getattr(db_Result, f'{param}_at')
+                q = q.filter(getattr(db_Run, f'{param}_at')
                              <= args[f'{param}_till'])
             if f'{param}_from' in args:
-                q = q.filter(db_Result.assigned_at >= args[f'{param}_from'])
+                q = q.filter(db_Run.assigned_at >= args[f'{param}_from'])
 
         # custom filters
         if args.get('state') == 'open':
-            q = q.filter(db_Result.finished_at == None)
+            q = q.filter(db_Run.finished_at == None)
 
-        q = q.join(Organization).join(Node).join(Task, db_Result.task)\
+        q = q.join(Organization).join(Node).join(Task, db_Run.task)\
             .join(Collaboration)
 
         if args.get('node_id'):
@@ -230,32 +230,32 @@ class Results(ResultBase):
                     HTTPStatus.UNAUTHORIZED
 
         # query the DB and paginate
-        q = q.order_by(desc(db_Result.id))
+        q = q.order_by(desc(db_Run.id))
         page = Pagination.from_query(query=q, request=request)
 
         # serialization of the models
-        s = result_inc_schema if self.is_included('task') else result_schema
+        s = run_inc_schema if self.is_included('task') else run_schema
 
         return self.response(page, s)
 
 
-class Result(ResultBase):
-    """Resource for /api/result"""
+class Run(RunBase):
+    """Resource for /api/run"""
 
     @only_for(['node', 'user', 'container'])
     def get(self, id):
-        """ Get a single result
+        """ Get a single run's data
         ---
 
         description: >-
-            Returns a result from a task specified by an id. \n
+            Returns a run from a task specified by an id. \n
 
             ### Permission Table\n
             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
             Description|\n
             |--|--|--|--|--|--|\n
-            |Result|Global|View|❌|❌|View any result|\n
-            |Result|Organization|View|✅|✅|View the results of your
+            |Run|Global|View|❌|❌|View any run|\n
+            |Run|Organization|View|✅|✅|View the runs of your
             organizations collaborations|\n
 
             Accessible to users.
@@ -280,41 +280,41 @@ class Result(ResultBase):
           401:
               description: Unauthorized
           404:
-              description: Result id not found
+              description: Run id not found
 
         security:
           - bearerAuth: []
 
-        tags: ["Result"]
+        tags: ["Run"]
         """
 
         auth_org = self.obtain_auth_organization()
 
-        result = db_Result.get(id)
-        if not result:
-            return {'msg': f'Result id={id} not found!'}, \
+        run = Run.get(id)
+        if not run:
+            return {'msg': f'Run id={id} not found!'}, \
                 HTTPStatus.NOT_FOUND
         if not self.r.v_glo.can():
-            c_orgs = result.task.collaboration.organizations
+            c_orgs = run.task.collaboration.organizations
             if not (self.r.v_org.can() and auth_org in c_orgs):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        s = result_inc_schema if request.args.get('include') == 'task' \
-            else result_schema
+        s = run_inc_schema if request.args.get('include') == 'task' \
+            else run_schema
 
-        return s.dump(result, many=False).data, HTTPStatus.OK
+        return s.dump(run, many=False).data, HTTPStatus.OK
 
     @with_node
     def patch(self, id):
-        """Update results
+        """Update algorithm run data, for example to update the result
         ---
         description: >-
-          Update results from the node. Only done if the request comes from the
+          Update runs from the node. Only done if the request comes from the
           correct, authenticated node.\n
 
           The user cannot access this endpoint so they cannot tamper with any
-          results.
+          runs.
 
         parameters:
           - in: path
@@ -347,47 +347,48 @@ class Result(ResultBase):
           200:
             description: Ok
           400:
-            description: Results already posted
+            description: Run already posted
           401:
             description: Unauthorized
           404:
-            description: Result id not found
+            description: Run id not found
 
         security:
           - bearerAuth: []
 
-        tags: ["Result"]
+        tags: ["Run"]
         """
-        result = db_Result.get(id)
-        if not result:
-            return {'msg': f'Result id={id} not found!'}, HTTPStatus.NOT_FOUND
+        run = Run.get(id)
+        if not run:
+            return {'msg': f'Run id={id} not found!'}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
 
-        if result.organization_id != g.node.organization_id:
+        if run.organization_id != g.node.organization_id:
             log.warn(
-                f"{g.node.name} tries to update a result that does not belong "
-                f"to him. ({result.organization_id}/{g.node.organization_id})"
+                f"{g.node.name} tries to update a run that does not belong "
+                f"to them ({run.organization_id}/{g.node.organization_id})."
             )
-            return {"msg": "This is not your result to PATCH!"}, \
+            return {"msg": "This is not your algorithm run to PATCH!"}, \
                 HTTPStatus.UNAUTHORIZED
 
-        if result.finished_at is not None:
-            return {"msg": "Cannot update an already finished result!"}, \
-                HTTPStatus.BAD_REQUEST
+        if run.finished_at is not None:
+            return {
+                "msg": "Cannot update an already finished algorithm run!"
+            }, HTTPStatus.BAD_REQUEST
 
         # notify collaboration nodes/users that the task has an update
         self.socketio.emit(
-            "status_update", {'result_id': id}, namespace='/tasks',
-            room=f'collaboration_{result.task.collaboration.id}'
+            "status_update", {'run_id': id}, namespace='/tasks',
+            room=f'collaboration_{run.task.collaboration.id}'
         )
 
-        result.started_at = parse_datetime(data.get("started_at"),
-                                           result.started_at)
-        result.finished_at = parse_datetime(data.get("finished_at"))
-        result.result = data.get("result")
-        result.log = data.get("log")
-        result.status = data.get("status", result.status)
-        result.save()
+        run.started_at = parse_datetime(data.get("started_at"),
+                                        run.started_at)
+        run.finished_at = parse_datetime(data.get("finished_at"))
+        run.result = data.get("result")
+        run.log = data.get("log")
+        run.status = data.get("status", run.status)
+        run.save()
 
-        return result_schema.dump(result, many=False).data, HTTPStatus.OK
+        return run_schema.dump(run, many=False).data, HTTPStatus.OK

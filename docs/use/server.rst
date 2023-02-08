@@ -525,8 +525,8 @@ the organization or see which collaborations it is participating in.
    # get all created tasks (from all users)
    tasks = organization.created_tasks
 
-   # get the results of all these tasks
-   results = organization.results
+   # get the algorithm runs of all these tasks (which include the results)
+   runs = organization.runs
 
    # get all nodes of this organization (for each collaboration
    # an organization participates in, it needs a node)
@@ -721,18 +721,19 @@ new node can be created as follows:
     save the API key immediately. If you lose it, you can reset the API key
     later via the shell, API, client or UI.
 
-Tasks and Results
+Tasks, Runs and results
 """""""""""""""""
 
 .. warning::
-    Tasks(/results) created from the shell are not picked up by nodes that are
+    Tasks (and runs) created from the shell are not picked up by nodes that are
     already running. The signal to notify them of a new task cannot be emitted
     this way. We therefore recommend sending tasks via the Python client.
 
 A task is intended for one or more organizations. For each organization
-the task is intended for, a corresponding (initially empty) result
-should be created. Each task can have multiple results, for example a
-result from each organization.
+the task is intended for, a corresponding algorithm run
+should be created. Each task can have multiple runs, for example a
+run from each organization. Each of these runs then contains the partial result
+for that organization.
 
 .. code:: python
 
@@ -742,19 +743,19 @@ result from each organization.
    # obtain collaboration for which we want to create a task
    collaboration = db.Collaboration.get(1)
 
-   # obtain the next run_id. Tasks sharing the same run_id
+   # obtain the next job_id. Tasks sharing the same job_id
    # can share the temporary volumes at the nodes. Usually this
-   # run_id is assigned through the API (as the user is not allowed
+   # job_id is assigned through the API (as the user is not allowed
    # to do so). All tasks from a master-container share the
-   # same run_id
-   run_id = db.Task.next_run_id()
+   # same job_id
+   job_id = db.Task.next_job_id()
 
    task = db.Task(
        name="some-name",
        description="some human readable description",
        image="docker-registry.org/image-name",
        collaboration=collaboration,
-       run_id=run_id,
+       job_id=job_id,
        database="default",
        initiator=iknl,
    )
@@ -767,19 +768,19 @@ result from each organization.
 
    import datetime
 
-   # now create a result model for each organization within the
+   # now create a run model for each organization within the
    # collaboration. This could also be a subset
    for org in collaboration.organizations:
-       res = db.Result(
+       run = db.Run(
            input=input_,
            organization=org,
            task=task,
            assigned_at=datetime.datetime.now()
        )
-       res.save()
+       run.save()
 
-Tasks can have a child/parent relationship. Note that the ``run_id`` is
-for parent and child tasks the same.
+Tasks can have a child/parent relationship. Note that the ``job_id`` is the same
+for parent and child tasks.
 
 .. code:: python
 
@@ -792,7 +793,7 @@ for parent and child tasks the same.
        description="some human readable description",
        image="docker-registry.org/image-name",
        collaboration=collaboration,
-       run_id=parent_task.run_id,
+       job_id=parent_task.job_id,
        database="default",
        initiator=iknl,
        parent=parent_task
@@ -800,19 +801,19 @@ for parent and child tasks the same.
    child_task.save()
 
 .. note::
-    Tasks that share a ``run_id`` have access to the same temporary folder at
+    Tasks that share a ``job_id`` have access to the same temporary folder at
     the node. This allows for multi-stage algorithms.
 
-Obtaining results:
+Obtaining algorithm run data:
 
 .. code:: python
 
-   # obtain all Results
-   db.Result.get()
+   # obtain all Runs
+   db.Run.get()
 
-   # obtain only completed results
-   [result for result in db.Result.get() if result.complete]
+   # obtain only completed runs
+   [run for run in db.Run.get() if run.complete]
 
-   # obtain result by its unique id
-   db.Result.get(1)
+   # obtain run by its unique id
+   db.Run.get(1)
 

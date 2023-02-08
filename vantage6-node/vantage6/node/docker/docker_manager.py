@@ -37,13 +37,12 @@ log = logging.getLogger(logger_name(__name__))
 
 
 class Result(NamedTuple):
-    # """ Data class to store the result of the docker image."""
     """
     Data class to store the result of the docker image.
 
     Attributes
     ----------
-    result_id: int
+    run_id: int
         ID of the current algorithm run
     logs: str
         Logs attached to current algorithm run
@@ -52,7 +51,7 @@ class Result(NamedTuple):
     status_code: int
         Status code of the algorithm run
     """
-    result_id: int
+    run_id: int
     task_id: int
     logs: str
     data: str
@@ -63,13 +62,13 @@ class Result(NamedTuple):
 class ToBeKilled(NamedTuple):
     """ Data class to store which tasks should be killed """
     task_id: int
-    result_id: int
+    run_id: int
     organization_id: int
 
 
-class KilledResult(NamedTuple):
+class KilledRun(NamedTuple):
     """ Data class to store which algorithms have been killed """
-    result_id: int
+    run_id: int
     task_id: int
     parent_id: int
 
@@ -78,7 +77,7 @@ class DockerManager(DockerBaseManager):
     """
     Wrapper for the docker-py module.
 
-    This classes manages tasks related to Docker, such as logging in to
+    This class manages tasks related to Docker, such as logging in to
     docker registries, managing input/output files, logs etc. Results
     can be retrieved through `get_result()` which returns the first available
     algorithm result.
@@ -188,7 +187,7 @@ class DockerManager(DockerBaseManager):
         Create a temporary volume for a single run.
 
         A single run can consist of multiple algorithm containers. It is
-        important to note that all algorithm containers having the same run_id
+        important to note that all algorithm containers having the same job_id
         have access to this container.
 
         Parameters
@@ -236,14 +235,14 @@ class DockerManager(DockerBaseManager):
         # if not, it is considered an illegal image
         return False
 
-    def is_running(self, result_id: int) -> bool:
+    def is_running(self, run_id: int) -> bool:
         """
-        Check if a container is already running for <result_id>.
+        Check if a container is already running for <run_id>.
 
         Parameters
         ----------
-        result_id: int
-            result_id of the algorithm container to be found
+        run_id: int
+            run_id of the algorithm container to be found
 
         Returns
         -------
@@ -254,32 +253,32 @@ class DockerManager(DockerBaseManager):
             "label": [
                 f"{APPNAME}-type=algorithm",
                 f"node={self.node_name}",
-                f"result_id={result_id}"
+                f"run_id={run_id}"
             ]
         })
         return bool(running_containers)
 
-    def cleanup_tasks(self) -> List[KilledResult]:
+    def cleanup_tasks(self) -> List[KilledRun]:
         """
         Stop all active tasks
 
         Returns
         -------
-        List[KilledResult]:
+        List[KilledRun]:
             List of information on tasks that have been killed
         """
-        result_ids_killed = []
+        run_ids_killed = []
         if self.active_tasks:
             self.log.debug(f'Killing {len(self.active_tasks)} active task(s)')
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup()
-            result_ids_killed.append(KilledResult(
-                result_id=task.result_id,
+            run_ids_killed.append(KilledRun(
+                run_id=task.run_id,
                 task_id=task.task_id,
                 parent_id=task.parent_id
             ))
-        return result_ids_killed
+        return run_ids_killed
 
     def cleanup(self) -> None:
         """
@@ -302,7 +301,7 @@ class DockerManager(DockerBaseManager):
         # remove the connected containers and the network
         self.isolated_network_mgr.delete(kill_containers=True)
 
-    def run(self, result_id: int, task_info: Dict, image: str,
+    def run(self, run_id: int, task_info: Dict, image: str,
             docker_input: bytes, tmp_vol_name: str, token: str, database: str
             ) -> Union[List[Dict], None]:
         """
@@ -311,8 +310,8 @@ class DockerManager(DockerBaseManager):
 
         Parameters
         ----------
-        result_id: int
-            Server result identifier
+        run_id: int
+            Server run identifier
         task_info: Dict
             Dictionary with task information
         image: str
@@ -339,14 +338,14 @@ class DockerManager(DockerBaseManager):
             return None
 
         # Check that this task is not already running
-        if self.is_running(result_id):
+        if self.is_running(run_id):
             self.log.warn("Task is already being executed, discarding task")
-            self.log.debug(f"result_id={result_id} is discarded")
+            self.log.debug(f"run_id={run_id} is discarded")
             return None
 
         task = DockerTaskManager(
             image=image,
-            result_id=result_id,
+            run_id=run_id,
             task_info=task_info,
             vpn_manager=self.vpn_manager,
             node_name=self.node_name,
@@ -371,8 +370,8 @@ class DockerManager(DockerBaseManager):
                 )
 
             except UnknownAlgorithmStartFail:
-                self.log.exception(f'Failed to start result {result_id} due '
-                                   'to unknown reason. Retrying')
+                self.log.exception(f'Failed to start run {run_id} for an '
+                                   'unknown reason. Retrying...')
                 time.sleep(1)  # add some time before retrying the next attempt
 
             except PermanentAlgorithmStartFail:
@@ -413,7 +412,7 @@ class DockerManager(DockerBaseManager):
             # at least one task is finished
 
             finished_task = finished_tasks.pop()
-            self.log.debug(f"Result id={finished_task.result_id} is finished")
+            self.log.debug(f"Run id={finished_task.run_id} is finished")
 
             # Check exit status and report
             logs = finished_task.report_status()
@@ -434,7 +433,7 @@ class DockerManager(DockerBaseManager):
             results = b''
 
         return Result(
-            result_id=finished_task.result_id,
+            run_id=finished_task.run_id,
             task_id=finished_task.task_id,
             logs=logs,
             data=results,
@@ -492,7 +491,7 @@ class DockerManager(DockerBaseManager):
 
     def kill_selected_tasks(
         self, org_id: int, kill_list: List[ToBeKilled] = None
-    ) -> List[KilledResult]:
+    ) -> List[KilledRun]:
         """
         Kill tasks specified by a kill list, if they are currently running on
         this node
@@ -506,37 +505,37 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        List[KilledResult]
+        List[KilledRun]
             List with information on killed tasks
         """
         killed_list = []
         for container_to_kill in kill_list:
             if container_to_kill['organization_id'] != org_id:
-                continue  # this result is on another node
+                continue  # this run is on another node
             # find the task
             task = next((
                 t for t in self.active_tasks
-                if t.result_id == container_to_kill['result_id']
+                if t.run_id == container_to_kill['run_id']
             ), None)
             if task:
                 self.log.info(
-                    f"Killing containers for result_id={task.result_id}")
+                    f"Killing containers for run_id={task.run_id}")
                 self.active_tasks.remove(task)
                 task.cleanup()
-                killed_list.append(KilledResult(
-                    result_id=task.result_id,
+                killed_list.append(KilledRun(
+                    run_id=task.run_id,
                     task_id=task.task_id,
                     parent_id=task.parent_id,
                 ))
             else:
                 self.log.warn(
-                    "Received instruction to kill result_id="
-                    f"{container_to_kill['result_id']}, but it was not "
+                    "Received instruction to kill run_id="
+                    f"{container_to_kill['run_id']}, but it was not "
                     "found running on this node.")
         return killed_list
 
     def kill_tasks(self, org_id: int,
-                   kill_list: List[ToBeKilled] = None) -> List[KilledResult]:
+                   kill_list: List[ToBeKilled] = None) -> List[KilledRun]:
         """
         Kill tasks currently running on this node.
 
@@ -550,25 +549,25 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        List[KilledResult]
+        List[KilledRun]
             List of dictionaries with information on killed tasks
         """
         if kill_list:
-            killed_results = self.kill_selected_tasks(org_id=org_id,
-                                                      kill_list=kill_list)
+            killed_runs = self.kill_selected_tasks(org_id=org_id,
+                                                   kill_list=kill_list)
         else:
             # received instruction to kill all tasks on this node
             self.log.warn(
                 "Received instruction from server to kill all algorithms "
                 "running on this node. Executing that now...")
-            killed_results = self.cleanup_tasks()
-            if len(killed_results):
+            killed_runs = self.cleanup_tasks()
+            if len(killed_runs):
                 self.log.warn(
-                    "Killed the following result ids as instructed via socket:"
-                    f" {', '.join([str(r.result_id) for r in killed_results])}"
+                    "Killed the following run ids as instructed via socket:"
+                    f" {', '.join([str(r.run_id) for r in killed_runs])}"
                 )
             else:
                 self.log.warn(
                     "Instructed to kill tasks but none were running"
                 )
-        return killed_results
+        return killed_runs

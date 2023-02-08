@@ -19,7 +19,7 @@ from vantage6.server.resource import (
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource.common._schema import PortSchema
 from vantage6.server.model import (
-    Result,
+    Run,
     AlgorithmPort,
     Collaboration,
     Task
@@ -91,7 +91,7 @@ class Ports(PortBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Port|Global|View|❌|❌|View any result|\n
+          |Port|Global|View|❌|❌|View any port|\n
           |Port|Organization|View|✅|✅|View the ports of your
           organizations collaborations|\n
 
@@ -104,12 +104,12 @@ class Ports(PortBase):
               type: integer
             description: Task id
           - in: query
-            name: result_id
+            name: run_id
             schema:
               type: integer
-            description: Result id
+            description: Run id
           - in: query
-            name: run_id
+            name: job_id
             schema:
               type: integer
             description: Run id
@@ -147,15 +147,15 @@ class Ports(PortBase):
         q = DatabaseSessionManager.get_session().query(AlgorithmPort)
 
         # relation filters
-        if 'result_id' in args:
-            q = q.filter(AlgorithmPort.result_id == args['result_id'])
-        if 'task_id' in args:
-            q = q.join(Result).filter(Result.task_id == args['task_id'])
         if 'run_id' in args:
-            # check if Result was already joined in 'task_id' arg
-            if Result not in [joined.class_ for joined in q._join_entities]:
-                q = q.join(Result)
-            q = q.join(Task).filter(Task.run_id == args['run_id'])
+            q = q.filter(AlgorithmPort.run_id == args['run_id'])
+        if 'task_id' in args:
+            q = q.join(Run).filter(Run.task_id == args['task_id'])
+        if 'job_id' in args:
+            # check if Run was already joined in 'task_id' arg
+            if Run not in [joined.class_ for joined in q._join_entities]:
+                q = q.join(Run)
+            q = q.join(Task).filter(Task.job_id == args['job_id'])
 
         # filter based on permissions
         if not self.r.v_glo.can():
@@ -196,9 +196,9 @@ class Ports(PortBase):
                     type: integer
                     description: Port number that receives container's VPN
                       traffic
-                  result_id:
+                  run_id:
                     type: integer
-                    description: Algorithm's result_id
+                    description: Algorithm's run_id
                   label:
                     type: string
                     description: Label for port specified in algorithm
@@ -219,16 +219,16 @@ class Ports(PortBase):
 
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
-        result_id = data.get('result_id', '')
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
-        if g.node.id != linked_result.node.id:
+        run_id = data.get('run_id', '')
+        linked_run = DatabaseSessionManager.get_session().query(
+            Run).filter(Run.id == run_id).one()
+        if g.node.id != linked_run.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         port = AlgorithmPort(
             port=data.get('port', ''),
-            result_id=result_id,
+            run_id=run_id,
             label=data.get('label' ''),
         )
         port.save()
@@ -239,12 +239,12 @@ class Ports(PortBase):
     def delete(self):
         # FIXME should we have swagger docs if only accessible for node? Also
         # same case for post request
-        """ Delete ports by result_id
+        """ Delete ports by run_id
         ---
         description: >-
           Deletes descriptions of a port that is available for VPN
           communication for a certain algorithm. The ports are deleted based
-          on result_id. Only the node on which the algorithm is running is
+          on run_id. Only the node on which the algorithm is running is
           allowed to delete this. This happens on task completion.\n
 
           This endpoint is not accessible for users, but only for
@@ -252,18 +252,18 @@ class Ports(PortBase):
 
         parameters:
           - in: path
-            name: result_id
+            name: run_id
             schema:
               type: integer
             minimum: 1
-            description: Result id for which ports must be deleted
+            description: Run id for which ports must be deleted
             required: true
 
         responses:
           200:
             description: Ok
           400:
-            description: Result id was not defined
+            description: Run id was not defined
           401:
             description: Unauthorized
 
@@ -273,23 +273,23 @@ class Ports(PortBase):
         tags: ["VPN"]
         """
         args = request.args
-        if 'result_id' not in args:
-            return {'msg': 'The result_id argument is required!'}, \
+        if 'run_id' not in args:
+            return {'msg': 'The run_id argument is required!'}, \
               HTTPStatus.BAD_REQUEST
 
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
-        result_id = args['result_id']
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
-        if g.node.id != linked_result.node.id:
+        run_id = args['run_id']
+        linked_run = DatabaseSessionManager.get_session().query(
+            Run).filter(Run.id == run_id).one()
+        if g.node.id != linked_run.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
         session = DatabaseSessionManager.get_session()
         session.query(AlgorithmPort).filter(
-            AlgorithmPort.result_id == result_id
+            AlgorithmPort.run_id == run_id
         ).delete()
         session.commit()
 

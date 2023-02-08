@@ -379,7 +379,7 @@ class NodeContext(AppContext):
             f"{self.docker_container_name}-ssh-vol"
         )
 
-    def docker_temporary_volume_name(self, run_id: int) -> str:
+    def docker_temporary_volume_name(self, job_id: int) -> str:
         """
         Docker volume in which temporary data is stored. Temporary data is
         linked to a specific run. Multiple algorithm containers can have the
@@ -387,7 +387,7 @@ class NodeContext(AppContext):
 
         Parameters
         ----------
-        run_id : int
+        job_id : int
             run id provided by the server
 
         Returns
@@ -395,7 +395,7 @@ class NodeContext(AppContext):
         str
             Docker volume name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}-{run_id}-tmpvol"
+        return f"{APPNAME}-{self.name}-{self.scope}-{job_id}-tmpvol"
 
     def get_database_uri(self, label: str = "default") -> str:
         """

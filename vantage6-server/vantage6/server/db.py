@@ -10,7 +10,7 @@ import sqlalchemy as sql
 from vantage6.server.model import (
     Base,
     Task,
-    Result,
+    Run,
     Organization,
     User,
     Node,

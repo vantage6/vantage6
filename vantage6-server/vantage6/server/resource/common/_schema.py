@@ -29,7 +29,7 @@ class HATEOASModelSchema(ModelSchema):
         setattr(self, "collaboration",
                 lambda obj: self.hateos("collaboration", obj))
         setattr(self, "user", lambda obj: self.hateos("user", obj))
-        setattr(self, "result", lambda obj: self.hateos("result", obj))
+        setattr(self, "run", lambda obj: self.hateos("run", obj))
         setattr(self, "task", lambda obj: self.hateos("task", obj))
         setattr(self, "port", lambda obj: self.hateos("port", obj))
         setattr(self, "parent_",
@@ -42,7 +42,7 @@ class HATEOASModelSchema(ModelSchema):
         setattr(self, "collaborations",
                 lambda obj: self.hateos_list("collaboration", obj))
         setattr(self, "users", lambda obj: self.hateos_list("user", obj))
-        setattr(self, "results", lambda obj: self.hateos_list("result", obj))
+        setattr(self, "runs", lambda obj: self.hateos_list("run", obj))
         setattr(self, "tasks", lambda obj: self.hateos_list("task", obj))
         setattr(self, "ports", lambda obj: self.hateos_list("port", obj))
         setattr(self, "children",
@@ -84,10 +84,10 @@ class HATEOASModelSchema(ModelSchema):
         endpoint = endpoint if endpoint else name
         # FIXME 2022-08-18 this is a quick n dirty fix for making the endpoint
         # /organization/{id} faster by preventing it reads all columns from
-        # all the organization's results.
+        # all the organization's runs.
         # THIS SHOULD NEVER MAKE IT INTO VERSION 4 AND HIGHER!!
-        if isinstance(obj, Organization) and plural_ == 'results':
-            elements = obj.get_result_ids()
+        if isinstance(obj, Organization) and plural_ == 'runs':
+            elements = obj.get_run_ids()
         else:
             elements = getattr(obj, plural_)
         for elem in elements:
@@ -133,49 +133,49 @@ class TaskSchema(HATEOASModelSchema):
     complete = fields.Boolean()
     status = fields.String()
     collaboration = fields.Method("collaboration")
-    results = fields.Method("results")
+    runs = fields.Method("runs")
     parent = fields.Method("parent_")
     children = fields.Method("children")
 
 
-# /task/{id}?include=result
+# /task/{id}?include=run
 class TaskIncludedSchema(TaskSchema):
-    """Returns the TaskSchema plus the correspoding results."""
-    results = fields.Nested('TaskResultSchema', many=True, exclude=['task'])
+    """Returns the TaskSchema plus the correspoding runs."""
+    runs = fields.Nested('TaskRunSchema', many=True, exclude=['task'])
 
 
-# /task/{id}/result
-class TaskResultSchema(HATEOASModelSchema):
+# /task/{id}/run
+class TaskRunSchema(HATEOASModelSchema):
     class Meta:
-        model = db.Result
+        model = db.Run
 
     node = fields.Function(
-        func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
+        func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
     )
     ports = fields.Function(
-        func=lambda obj: ResultPortSchema().dump(obj.ports, many=True).data
+        func=lambda obj: RunPortSchema().dump(obj.ports, many=True).data
     )
 
 
-class ResultSchema(HATEOASModelSchema):
+class RunSchema(HATEOASModelSchema):
     class Meta:
-        model = db.Result
+        model = db.Run
 
     organization = fields.Method("organization")
     task = fields.Method("task")
     node = fields.Function(
-        func=lambda obj: ResultNodeSchema().dump(obj.node, many=False).data
+        func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
     )
     ports = fields.Function(
-        func=lambda obj: ResultPortSchema().dump(obj.ports, many=True).data
+        func=lambda obj: RunPortSchema().dump(obj.ports, many=True).data
     )
 
 
-class ResultTaskIncludedSchema(ResultSchema):
-    task = fields.Nested('TaskSchema', many=False, exclude=["results"])
+class RunTaskIncludedSchema(RunSchema):
+    task = fields.Nested('TaskSchema', many=False, exclude=["runs"])
 
 
-class ResultNodeSchema(HATEOASModelSchema):
+class RunNodeSchema(HATEOASModelSchema):
     class Meta:
         model = db.Node
         exclude = ('type', 'api_key', 'collaboration', 'organization',
@@ -187,10 +187,10 @@ class PortSchema(HATEOASModelSchema):
         model = db.AlgorithmPort
 
 
-class ResultPortSchema(HATEOASModelSchema):
+class RunPortSchema(HATEOASModelSchema):
     class Meta:
         model = db.AlgorithmPort
-        exclude = ('result',)
+        exclude = ('run',)
 
 
 class OrganizationSchema(HATEOASModelSchema):
@@ -203,7 +203,7 @@ class OrganizationSchema(HATEOASModelSchema):
     nodes = fields.Method("nodes")
     users = fields.Method("users")
     created_tasks = fields.Method("tasks")
-    results = fields.Method("results")
+    runs = fields.Method("runs")
 
     # make sure
     public_key = fields.Function(
@@ -278,7 +278,7 @@ class NodeSchemaSimple(HATEOASModelSchema):
     #         'nodes',
     #         'collaborations',
     #         'users',
-    #         'results'
+    #         'runs'
     #         ]
     # )
     organization = fields.Method("organization")
@@ -289,7 +289,7 @@ class NodeSchemaSimple(HATEOASModelSchema):
             # 'id',
             # 'organization',
             'collaboration',
-            'taskresults',
+            'taskruns',
             'api_key',
             'type',
         ]
