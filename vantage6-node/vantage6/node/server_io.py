@@ -122,7 +122,7 @@ class NodeClient(ClientBase):
 
             TODO the initiator_id does not make sens here...
         """
-        self.patch_results(id, result={
+        self.patch_results(id, data={
             "started_at": datetime.datetime.now().isoformat()
         })
 

@@ -290,7 +290,7 @@ class Run(RunBase):
 
         auth_org = self.obtain_auth_organization()
 
-        run = Run.get(id)
+        run = db_Run.get(id)
         if not run:
             return {'msg': f'Run id={id} not found!'}, \
                 HTTPStatus.NOT_FOUND
@@ -358,7 +358,7 @@ class Run(RunBase):
 
         tags: ["Run"]
         """
-        run = Run.get(id)
+        run = db_Run.get(id)
         if not run:
             return {'msg': f'Run id={id} not found!'}, HTTPStatus.NOT_FOUND
 

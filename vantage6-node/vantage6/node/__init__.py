@@ -299,7 +299,7 @@ class Node(object):
 
         # save task status to the server and send socket event to update others
         self.server_io.patch_results(
-            id=task_incl_run['id'], result={'status': task_status}
+            id=task_incl_run['id'], data={'status': task_status}
         )
         self.socketIO.emit(
             'algorithm_status_change',
@@ -414,7 +414,7 @@ class Node(object):
 
                 self.server_io.patch_results(
                     id=results.run_id,
-                    result={
+                    data={
                         'result': results.data,
                         'log': results.logs,
                         'status': results.status,
@@ -876,7 +876,7 @@ class Node(object):
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.server_io.patch_results(
-                id=killed_algo.run_id, result={'status': TaskStatus.KILLED}
+                id=killed_algo.run_id, data={'status': TaskStatus.KILLED}
             )
         return killed_algos
 
