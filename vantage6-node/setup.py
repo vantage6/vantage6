@@ -37,7 +37,7 @@ setup(
         'gevent==21.8.0',
         'python-socketio[client]==5.5.0',
         'docker==5.0.3',
-        'cryptography==3.3.2',
+        'cryptography==39.0.1',
         'click==8.0.3',
         'termcolor==1.1.0',
         'bcrypt==3.1.7',
