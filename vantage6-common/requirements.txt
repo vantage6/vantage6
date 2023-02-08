@@ -8,4 +8,4 @@ pyfiglet==0.8.post1
 wincertstore==0.2
 contextlib2==0.5.5
 certifi==2022.12.7
-cryptography==3.3.2
+cryptography==39.0.1
