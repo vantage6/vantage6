@@ -118,11 +118,8 @@ class HATEOASModelSchema(ModelSchema):
 
     def meta_dump(self, pagination):
         """Based on type make a dump"""
-        data = self.default_dump(pagination)
+        data = self.dump(pagination.page.items, many=True).data
         return {'data': data, 'links': pagination.metadata_links}
-
-    def default_dump(self, pagination):
-        return self.dump(pagination.page.items, many=True).data
 
 
 # /task/{id}

@@ -38,10 +38,7 @@ class ServicesResources(Resource):
 
     def dump(self, page, schema):
         """Dump based on the request context (to paginate or not)"""
-        if self.is_included('metadata'):
-            return schema.meta_dump(page)
-        else:
-            return schema.default_dump(page)
+        return schema.meta_dump(page)
 
     def response(self, page, schema):
         """Prepare a valid HTTP OK response from a page object"""

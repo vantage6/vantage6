@@ -155,21 +155,22 @@ class Collaborations(CollaborationBase):
               type: integer
             description: Organization id
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
@@ -220,7 +221,7 @@ class Collaborations(CollaborationBase):
         # paginate the results
         page = Pagination.from_query(query=q, request=request)
 
-        # serialize models, include metadata if requested
+        # serialize models
         return self.response(page, collaboration_schema)
 
     @with_user
@@ -532,21 +533,22 @@ class CollaborationOrganization(ServicesResources):
             description: Collaboration id
             required: true
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
             200:
@@ -750,21 +752,22 @@ class CollaborationNode(ServicesResources):
             description: Collaboration id
             required: true
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
@@ -963,21 +966,22 @@ class CollaborationTask(ServicesResources):
             description: Collaboration id
             required: true
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:

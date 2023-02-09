@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import sqlalchemy
 
 from vantage6.common import logger_name
+from vantage6.server.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -77,34 +78,58 @@ class Pagination:
         total = query.distinct().order_by(None).count()
 
         # check if pagination is desired, else return all records
-        page_id = request.args.get('page')
-        if not page_id:
-            page_id = 1
-            per_page = total or 1
-        else:
-            page_id = int(page_id)
-            per_page = int(request.args.get('per_page', 10))
+        # FIXME BvB 2023-02-09 good error handling if page or per_page is not
+        #  an integer
+        page_id = int(request.args.get('page', DEFAULT_PAGE))
+        per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
 
         if page_id <= 0:
             raise AttributeError('page needs to be >= 1')
         if per_page <= 0:
             raise AttributeError('per_page needs to be >= 1')
 
+        # FIXME BvB 2020-02-09 good error handling if sort is not a valid
+        #  field
+        if request.args.get('sort', False):
+            query = cls._add_sorting(query, request.args.get('sort'))
+
         items = query.distinct().limit(per_page).offset((page_id-1)*per_page)\
             .all()
 
         return cls(items, page_id, per_page, total, request)
 
+    @staticmethod
+    def _add_sorting(query: sqlalchemy.orm.query, sort_string: str
+                     ) -> sqlalchemy.orm.query:
+        """
+        Add sorting to a query.
+
+        Parameters
+        ----------
+        query : sqlalchemy.orm.query
+            The query to add sorting to.
+        sort : str
+            The sorting to add. This can be a comma separated list of fields to
+            sort on. The fields can be prefixed with a '-' to indicate a
+            descending sort.
+        """
+        sort_list = sort_string.split(',')
+        for sorter in sort_list:
+            sorter = sorter.strip()
+            if sorter.startswith('-'):
+                query = query.order_by(sqlalchemy.desc(sorter[1:]))
+            else:
+                if sorter.startswith('+'):
+                    sorter = sorter[1:]
+                query = query.order_by(sorter)
+        return query
+
+    # TODO in v4+, remove this method if also removing the double endpoints
     @classmethod
     def from_list(cls, items: list, request):
-        page_id = request.args.get('page')
+        page_id = int(request.args.get('page', DEFAULT_PAGE))
+        per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
         total = len(items)
-        if not page_id:
-            page_id = 1
-            per_page = total or 1
-        else:
-            page_id = int(page_id)
-            per_page = int(request.args.get('per_page', 10))
 
         if page_id <= 0:
             raise AttributeError('page needs to be >= 1')
