@@ -323,14 +323,25 @@ class VPNManager(DockerBaseManager):
         for port in ports:
             port['port'] = vpn_client_port_options.pop()
 
+        vpn_ip = self._get_vpn_ip()
+
         # Set up forwarding VPN traffic to algorithm container
         command = 'sh -c "'
         for port in ports:
+            # Rule for directing external vpn traffic to algorithms
             command += (
                 'iptables -t nat -A PREROUTING -i tun0 -p tcp '
                 f'--dport {port["port"]} -j DNAT '
                 f'--to {algo_ip}:{port["algo_port"]};'
             )
+
+            # Rule for directing internal vpn traffic to algorithms
+            command += (
+                f'iptables -t nat -A PREROUTING -d {vpn_ip}/32 -p tcp '
+                f'--dport {port["port"]} -j DNAT '
+                f'--to {algo_ip}:{port["algo_port"]};'
+            )
+
             # remove the algorithm ports from the dictionaries as these are no
             # longer necessary
             del port['algo_port']
@@ -459,6 +470,11 @@ class VPNManager(DockerBaseManager):
             if self.is_isolated_interface(ip_interface, vpn_ip_isolated_netw):
                 isolated_interface = ip_interface
         return isolated_interface
+
+    def _get_vpn_ip(self):
+        _, interface = self.vpn_client_container.exec_run("ip --json addr show tun0")
+        interface = json.loads(interface)[0]
+        return interface["addr_info"][0]["local"]
 
     def is_isolated_interface(self, ip_interface: Dict,
                               vpn_ip_isolated_netw: str):
