@@ -71,29 +71,41 @@ class Pagination:
 
     @classmethod
     def from_query(cls, query: sqlalchemy.orm.query, request):
-        # We remove the ordering of the query since it doesn't matter for
-        # getting a count and might have performance implications as discussed
-        # on this Flask-SqlAlchemy issue
+        # Get the total number of records. We remove the ordering of the query
+        # since it doesn't matter for getting a count and might have
+        # performance implications as discussed on this Flask-SqlAlchemy issue:
         # https://github.com/mitsuhiko/flask-sqlalchemy/issues/100
         total = query.distinct().order_by(None).count()
 
-        # check if pagination is desired, else return all records
-        # FIXME BvB 2023-02-09 good error handling if page or per_page is not
-        #  an integer
-        page_id = int(request.args.get('page', DEFAULT_PAGE))
-        per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
+        # Get the page and page size from the request
+        try:
+            page_id = int(request.args.get('page', DEFAULT_PAGE))
+        except ValueError:
+            raise ValueError("The 'page' parameter should be an integer")
+        try:
+            per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
+        except ValueError:
+            raise ValueError("The 'per_page' parameter should be an integer")
 
+        # Check if the page and page size are valid
         if page_id <= 0:
-            raise AttributeError('page needs to be >= 1')
-        if per_page <= 0:
-            raise AttributeError('per_page needs to be >= 1')
+            raise ValueError("The 'page' parameter should be >= 1")
+        elif per_page <= 0:
+            raise ValueError("The 'per_page' parameter should be >= 1")
+        elif total < (page_id-1) * per_page:
+            raise ValueError(
+                "The 'page' and/or 'per_page' parameter values are too large: "
+                "there are no records present on this page"
+            )
 
         # FIXME BvB 2020-02-09 good error handling if sort is not a valid
         #  field
         if request.args.get('sort', False):
             query = cls._add_sorting(query, request.args.get('sort'))
 
-        items = query.distinct().limit(per_page).offset((page_id-1)*per_page)\
+        items = query.distinct()\
+            .limit(per_page)\
+            .offset((page_id-1)*per_page)\
             .all()
 
         return cls(items, page_id, per_page, total, request)

@@ -257,7 +257,10 @@ class Tasks(TaskBase):
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
         schema = task_result_schema if self.is_included('result') else\

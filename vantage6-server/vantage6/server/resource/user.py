@@ -226,7 +226,10 @@ class Users(UserBase):
                     HTTPStatus.UNAUTHORIZED
 
         # paginate results
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, user_schema)

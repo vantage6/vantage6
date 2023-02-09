@@ -163,6 +163,9 @@ class Nodes(NodeBase):
                 description: Ok
             401:
                 description: Unauthorized
+            400:
+                description: Improper values for pagination or sorting
+                  parameters
 
         security:
             - bearerAuth: []
@@ -193,7 +196,10 @@ class Nodes(NodeBase):
                     HTTPStatus.UNAUTHORIZED
 
         # paginate results
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(q, request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, node_schema)

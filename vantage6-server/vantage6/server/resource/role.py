@@ -180,10 +180,12 @@ class Roles(RoleBase):
                 sign (-) in front of the field to sort in descending order.
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
             - bearerAuth: []
@@ -238,7 +240,11 @@ class Roles(RoleBase):
                 # allow users without permission to view only their own roles
                 q = q.filter(db.Role.id.in_(own_role_ids))
 
-        page = Pagination.from_query(query=q, request=request)
+        # paginate results
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         return self.response(page, role_schema)
 

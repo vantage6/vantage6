@@ -160,6 +160,8 @@ class Organizations(OrganizationBase):
             description: Ok
           401:
             description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
           - bearerAuth: []
@@ -207,7 +209,10 @@ class Organizations(OrganizationBase):
                 HTTPStatus.UNAUTHORIZED
 
         # paginate the results
-        page = Pagination.from_query(query=q, request=request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of DB model
         return self.response(page, org_schema)

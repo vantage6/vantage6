@@ -99,6 +99,8 @@ class Rules(ServicesResources):
         responses:
           200:
             description: Ok
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
             - bearerAuth: []
@@ -120,7 +122,10 @@ class Rules(ServicesResources):
                  .filter(db.Role.id == args['role_id'])
 
         # paginate results
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(q, request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, rule_schema)

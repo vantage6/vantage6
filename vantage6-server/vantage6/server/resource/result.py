@@ -186,10 +186,12 @@ class Results(ResultBase):
                 sign (-) in front of the field to sort in descending order.
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
         - bearerAuth: []
@@ -236,7 +238,10 @@ class Results(ResultBase):
 
         # query the DB and paginate
         q = q.order_by(desc(db_Result.id))
-        page = Pagination.from_query(query=q, request=request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of the models
         s = result_inc_schema if self.is_included('task') else result_schema
