@@ -42,7 +42,6 @@ setup(
         'PyYAML==6.0',
         'python-dateutil==2.8.2',
         'schema==0.7.5',
-        'termcolor==2.2.0',
     ],
     package_data={
         'vantage6.common': [
