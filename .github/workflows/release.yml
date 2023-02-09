@@ -67,11 +67,7 @@ jobs:
           git config --local user.name github-actions
           git config --local user.email github-actions@github.com
           git add *
-          git checkout -b release/${version}
-          git commit -m "Updated the version ${version}"
-          git push --set-upstream origin release/${version}
-          git checkout main
-          git merge release/${version}
+          git commit -m "Updated the version to ${version}"
           git push
 
     outputs:
@@ -98,7 +94,7 @@ jobs:
         ref: 'main'
 
     - name: Create a Release
-      uses: "marvinpinto/action-automatic-releases@latest"
+      uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "v${{ env.version }}"
