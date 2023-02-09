@@ -1970,7 +1970,7 @@ class UserClient(ClientBase):
 
             # get_results also handles decryption
             runs = self.parent.get_results(task_id=task_id,
-                                              include_task=include_task)
+                                           include_task=include_task)
             cleaned_runs = []
             for run in runs:
                 if run.get('result'):
@@ -1979,6 +1979,52 @@ class UserClient(ClientBase):
                 cleaned_runs.append(run)
 
             return cleaned_runs
+
+    class Result(ClientBase.SubClient):
+        """
+        Client to get the results of one or multiple algorithm runs
+        """
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int) -> dict:
+            """View a specific result
+
+            Parameters
+            ----------
+            id_ : int
+                id of the run you want to inspect
+
+            Returns
+            -------
+            dict
+                Containing the run data
+            """
+            self.parent.log.info('--> Attempting to decrypt results!')
+
+            # get_results also handles decryption
+            run = self.parent.get_results(id=id_)
+            result_data = run.get('result')
+            if result_data:
+                try:
+                    run['result'] = deserialization.load_data(result_data)
+                except Exception as e:
+                    self.parent.log.warn('--> Failed to deserialize')
+                    self.parent.log.debug(e)
+
+            return run['result']
+
+        def from_task(self, task_id: int):
+            self.parent.log.info('--> Attempting to decrypt results!')
+
+            # get_results also handles decryption
+            runs = self.parent.get_results(task_id=task_id)
+            cleaned_results = []
+            for run in runs:
+                if run.get('result'):
+                    des_res = deserialization.load_data(run.get('result'))
+                    run['result'] = des_res
+                    cleaned_results.append(run['result'])
+            return cleaned_results
 
     class Rule(ClientBase.SubClient):
 
