@@ -186,7 +186,7 @@ class TestResources(unittest.TestCase):
 
         if not task:
             task = Task(image="some-image", collaboration=collaboration,
-                        results=[Run()])
+                        runs=[Run()])
             task.save()
 
         headers = self.login_node(api_key)
@@ -2436,7 +2436,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # test with global permission
-        rule = Rule.get_by_("result", Scope.GLOBAL, Operation.VIEW)
+        rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f'/api/task/{task.id}/run', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
