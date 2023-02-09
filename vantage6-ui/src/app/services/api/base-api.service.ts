@@ -7,6 +7,7 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { Resource } from 'src/app/shared/types';
 import { BehaviorSubject } from 'rxjs';
+import { Pagination } from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -77,16 +78,34 @@ export abstract class BaseApiService {
 
   async getResources(
     convertJsonFunc: Function,
+    pagination: Pagination,
     additionalConvertArgs: Resource[][] = [],
     request_params: any = {}
   ): Promise<Resource[]> {
     // get data of resources that logged-in user is allowed to view
+    if (pagination.page) request_params['page'] = pagination.page;
+    if (pagination.page_size) request_params['per_page'] = pagination.page_size;
+
     let json_data = await this.list(request_params).toPromise();
 
     let resources = [];
-    for (let dic of json_data) {
+    for (let dic of json_data['data']) {
       resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
     }
+
+    // if all pages are requested, get data of all pages
+    if (pagination.all_pages) {
+      let page = pagination.page ? pagination.page : 1;
+      while (json_data['links']['next']) {
+        page = page + 1;
+        request_params['page'] = page;
+        json_data = await this.list(request_params).toPromise();
+        for (let dic of json_data['data']) {
+          resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
+        }
+      }
+    }
+
     this.resource_list.next(resources);
     return this.resource_list.value;
   }

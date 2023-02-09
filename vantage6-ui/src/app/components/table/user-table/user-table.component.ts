@@ -10,6 +10,7 @@ import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { TableComponent } from '../base-table/table.component';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-user-table',
@@ -57,7 +58,7 @@ export class UserTableComponent extends TableComponent implements OnInit {
 
   async init(): Promise<void> {
     // get organizations
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
 

@@ -28,11 +28,11 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { FileService } from 'src/app/services/common/file.service';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-organization',
@@ -49,7 +49,6 @@ export class OrganizationComponent implements OnInit {
   loggedin_user: User = EMPTY_USER;
   users: User[] = [];
   roles: Role[] = [];
-  rules: Rule[] = [];
   nodes: Node[] = [];
   organization_nodes: Node[] = [];
   collaborations: Collaboration[] = [];
@@ -63,7 +62,6 @@ export class OrganizationComponent implements OnInit {
     private orgDataService: OrgDataService,
     private userDataService: UserDataService,
     public roleDataService: RoleDataService,
-    private ruleDataService: RuleDataService,
     private nodeDataService: NodeDataService,
     private collabDataService: CollabDataService,
     private modalService: ModalService,
@@ -82,10 +80,6 @@ export class OrganizationComponent implements OnInit {
 
   async init(): Promise<void> {
     this.loggedin_user = this.userPermission.user;
-    // get rules
-    (await this.ruleDataService.list()).subscribe((rules) => {
-      this.rules = rules;
-    });
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
@@ -99,9 +93,11 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setup() {
-    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-      this.organizations = orgs;
-    });
+    (await this.orgDataService.list(false, allPages())).subscribe(
+      (orgs: Organization[]) => {
+        this.organizations = orgs;
+      }
+    );
 
     // get all organizations that the user is allowed to see
     this.current_organization = getById(this.organizations, this.route_org_id);
@@ -147,6 +143,9 @@ export class OrganizationComponent implements OnInit {
       this.onRenewalRoles();
     });
 
+    // collect users for current organization
+    await this.setUsers();
+
     // collect collaborations for current organization
     await this.setCollaborations();
 
@@ -158,8 +157,6 @@ export class OrganizationComponent implements OnInit {
 
   async onRenewalRoles() {
     this.roles = await this.sortRoles(this.roles);
-    // collect users for current organization // TODO can we not set these separately?
-    this.setUsers();
   }
 
   async sortRoles(roles: Role[]): Promise<Role[]> {

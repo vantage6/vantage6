@@ -10,6 +10,7 @@ import { Collaboration } from 'src/app/interfaces/collaboration';
 import { deepcopy, getById, parseId } from 'src/app/shared/utils';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
+import { allPages } from 'src/app/interfaces/utils';
 
 export enum DisplayMode {
   COL = 'collaboration',
@@ -48,11 +49,12 @@ export class NodeTableComponent
   }
 
   async init(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    // TODO only get collabs and orgs that are in the nodes
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
 
-    (await this.collabDataService.list()).subscribe((cols) => {
+    (await this.collabDataService.list(false, allPages())).subscribe((cols) => {
       this.collaborations = cols;
     });
 

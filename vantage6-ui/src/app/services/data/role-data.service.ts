@@ -7,13 +7,12 @@ import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { ConvertJsonService } from 'src/app/services/common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Resource } from 'src/app/shared/types';
-import {
-  arrayContains,
-  filterArrayByProperty,
-  getIdsFromArray,
-  unique,
-} from 'src/app/shared/utils';
 import { RuleDataService } from './rule-data.service';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +29,9 @@ export class RoleDataService extends BaseDataService {
   }
 
   async getDependentResources(): Promise<Resource[][]> {
-    (await this.ruleDataService.list()).subscribe((rules) => {
+    // TODO is this required? It seems to require more data to be collected
+    // than is needed
+    (await this.ruleDataService.list(allPages())).subscribe((rules) => {
       this.rules = rules;
       // TODO when rules change, update roles as well
     });
@@ -76,27 +77,37 @@ export class RoleDataService extends BaseDataService {
     )) as Observable<Role>;
   }
 
-  async list(force_refresh: boolean = false): Promise<Observable<Role[]>> {
+  async list(
+    force_refresh: boolean = false,
+    pagination: Pagination = defaultFirstPage()
+  ): Promise<Observable<Role[]>> {
     return (await super.list_base(
       this.convertJsonService.getRole,
+      pagination,
       force_refresh
     )) as Observable<Role[]>;
   }
 
-  async list_with_params(request_params: any = {}): Promise<Role[]> {
+  async list_with_params(
+    pagination: Pagination = allPages(),
+    request_params: any = {}
+  ): Promise<Role[]> {
     return (await super.list_with_params_base(
       this.convertJsonService.getRole,
-      request_params
+      request_params,
+      pagination
     )) as Role[];
   }
 
   async org_list(
     organization_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<Role[]>> {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getRole,
+      pagination,
       force_refresh,
       { include_root: true }
     )) as Observable<Role[]>;

@@ -25,6 +25,7 @@ import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
+import { allPages } from 'src/app/interfaces/utils';
 
 export enum TaskInitator {
   ALL = 'All',
@@ -85,11 +86,12 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    // TODO get only orgs and collabs involved in tasks?
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
 
-    (await this.collabDataService.list()).subscribe((cols) => {
+    (await this.collabDataService.list(false, allPages())).subscribe((cols) => {
       this.collaborations = cols;
     });
 
@@ -268,7 +270,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   }
 
   protected async addInitiatingUsersToTasks() {
-    (await this.userDataService.list()).subscribe((users) => {
+    (await this.userDataService.list(allPages())).subscribe((users) => {
       this.users = users;
       // add users to tasks
       for (let r of this.resources as Task[]) {

@@ -6,6 +6,7 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { TableComponent } from 'src/app/components/table/base-table/table.component';
 import { ModalService } from 'src/app/services/common/modal.service';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-role-table',
@@ -50,7 +51,7 @@ export class RoleTableComponent
 
   async init(): Promise<void> {
     // get organizations
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
       this.addOrgsToRoles();
     });
