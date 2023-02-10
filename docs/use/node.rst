@@ -251,7 +251,7 @@ specify any environment, you should only specify the key ``application``
        file:         my_node.log
 
        # whenever the output needs to be shown in the console
-       use_console:  True
+       use_console:  true
 
        # The number of log files that are kept, used by RotatingFileHandler
        backup_count: 5
@@ -265,6 +265,12 @@ specify any environment, you should only specify the key ``application``
 
      # directory where local task files (input/output) are stored
      task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\tno1
+
+     # Whether or not your node shares some configuration (e.g. which images are
+     # allowed to run on your node) with the central server. This can be useful
+     # for other organizations in your collaboration to understand why a task
+     # is not completed. Obviously, no sensitive data is shared. Default true
+     share_config: true
 
 .. raw:: html
 

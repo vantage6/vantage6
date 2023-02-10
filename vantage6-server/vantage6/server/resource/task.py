@@ -477,9 +477,8 @@ class Tasks(TaskBase):
     def __verify_container_permissions(container, image, collaboration_id):
         """Validates that the container is allowed to create the task."""
 
-        # check that the image is allowed
-        # if container["image"] != task.image:
-        # FIXME why?
+        # check that the image is allowed: algorithm containers can only
+        # create tasks with the same image
         if not image.endswith(container["image"]):
             log.warning((f"Container from node={container['node_id']} "
                         f"attempts to post a task using illegal image!?"))
