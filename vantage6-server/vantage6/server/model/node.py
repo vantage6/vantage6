@@ -22,6 +22,7 @@ class Node(Authenticatable):
     # relationships
     collaboration = relationship("Collaboration", back_populates='nodes')
     organization = relationship("Organization", back_populates='nodes')
+    config = relationship("NodeConfig", back_populates="node")
 
     # the type specification in Authenticatable
     __mapper_args__ = {

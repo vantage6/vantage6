@@ -35,6 +35,7 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.info('(Re)Connected to the /tasks namespace')
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.share_node_details()
 
     def on_disconnect(self):
         """ Actions to be taken on socket disconnect event. """
