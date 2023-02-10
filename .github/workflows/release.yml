@@ -67,11 +67,7 @@ jobs:
           git config --local user.name github-actions
           git config --local user.email github-actions@github.com
           git add *
-          git checkout -b release/${version}
-          git commit -m "Updated the version ${version}"
-          git push --set-upstream origin release/${version}
-          git checkout main
-          git merge release/${version}
+          git commit -m "Updated the version to ${version}"
           git push
 
     outputs:
@@ -286,10 +282,10 @@ jobs:
           # commit of the tag is used.
           ref: 'main'
 
-      - name: Set up Python 3.7
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |

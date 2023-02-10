@@ -106,7 +106,7 @@ def load(fixtures, drop_all=False):
                 image=image,
                 collaboration=collaboration,
                 job_id=db.Task.next_job_id(),
-                initiator=init_org
+                init_org=init_org
             )
 
             for organization in collaboration.organizations:

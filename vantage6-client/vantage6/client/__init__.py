@@ -367,6 +367,8 @@ class ClientBase(object):
 
         self._access_token = response.json()["access_token"]
 
+    # TODO BvB 23-01-23 remove this method in v4+. It is only here for
+    # backwards compatibility
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_='', description='',
                   organization_ids: list = None,
@@ -436,6 +438,8 @@ class ClientBase(object):
             'database': database
         })
 
+    # TODO BvB 23-01-23 remove this method in v4+ (or make it private?). It is
+    # only here for backwards compatibility.
     def get_results(self, id: int = None, state: str = None,
                     include_task: bool = False, task_id: int = None,
                     node_id: int = None, params: dict = {}) -> dict:
@@ -1675,7 +1679,7 @@ class UserClient(ClientBase):
             return self.parent.request(f'task/{id_}', params=params)
 
         @post_filtering()
-        def list(self, initiator: int = None, initiating_user: int = None,
+        def list(self, initiating_org: int = None, initiating_user: int = None,
                  collaboration: int = None, image: str = None,
                  parent: int = None, job: int = None,
                  name: str = None, include_results: bool = False,
@@ -1690,7 +1694,7 @@ class UserClient(ClientBase):
                 Filter by the name of the task. It will match with a
                 Like operator. I.e. E% will search for task names that
                 start with an 'E'.
-            initiator: int, optional
+            initiating_org: int, optional
                 Filter by initiating organization
             initiating_user: int, optional
                 Filter by initiating user
@@ -1743,7 +1747,7 @@ class UserClient(ClientBase):
             # a name that distinguishes it better from the initiating user.
             # Then, we should also change it in the server
             params = {
-                'initiator_id': initiator, 'init_user_id': initiating_user,
+                'init_org_id': initiating_org, 'init_user_id': initiating_user,
                 'collaboration_id': collaboration,
                 'image': image, 'parent_id': parent, 'job_id': job,
                 'name': name, 'page': page, 'per_page': per_page,
@@ -2083,6 +2087,8 @@ class UserClient(ClientBase):
             return self.parent.request('rule', params=params)
 
 
+# TODO remove in v4+ (deprecated for AlgorithmClient but still kept for
+# backwards compatibility)
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
 

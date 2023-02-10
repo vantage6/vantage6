@@ -76,8 +76,8 @@ def make_proxied_request(endpoint: str) -> Response:
     headers = {'Authorization': request.headers['Authorization']} if present \
         else None
 
-    return make_request(request.method, endpoint, request.get_json(),
-                        request.args, headers)
+    json = request.get_json() if request.is_json else None
+    return make_request(request.method, endpoint, json, request.args, headers)
 
 
 def make_request(method: str, endpoint: str, json: dict = None,

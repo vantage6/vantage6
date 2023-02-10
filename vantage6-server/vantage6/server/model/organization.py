@@ -32,7 +32,7 @@ class Organization(Base):
     runs = relationship("Run", back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
-    created_tasks = relationship("Task", back_populates="initiator")
+    created_tasks = relationship("Task", back_populates="init_org")
     roles = relationship("Role", back_populates="organization")
 
     def get_run_ids(self):

@@ -119,7 +119,7 @@ class Tasks(TaskBase):
 
         parameters:
           - in: query
-            name: initiator_id
+            name: init_org_id
             schema:
               type: int
             description: The organization id of the origin of the request
@@ -240,7 +240,7 @@ class Tasks(TaskBase):
                     HTTPStatus.UNAUTHORIZED
 
         # filter based on arguments
-        for param in ['initiator_id', 'init_user_id', 'collaboration_id',
+        for param in ['init_org_id', 'init_user_id', 'collaboration_id',
                       'parent_id', 'job_id']:
             if param in args:
                 q = q.filter(getattr(db.Task, param) == args[param])
@@ -383,7 +383,7 @@ class Tasks(TaskBase):
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
                        database=data.get('database', ''),
-                       initiator=init_org)
+                       init_org=init_org)
 
         # create job_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new job_id. Tasks created
@@ -479,9 +479,8 @@ class Tasks(TaskBase):
     def __verify_container_permissions(container, image, collaboration_id):
         """Validates that the container is allowed to create the task."""
 
-        # check that the image is allowed
-        # if container["image"] != task.image:
-        # FIXME why?
+        # check that the image is allowed: algorithm containers can only
+        # create tasks with the same image
         if not image.endswith(container["image"]):
             log.warning((f"Container from node={container['node_id']} "
                         f"attempts to post a task using illegal image!?"))

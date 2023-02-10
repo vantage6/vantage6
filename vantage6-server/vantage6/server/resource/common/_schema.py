@@ -249,10 +249,17 @@ class NodeSchema(HATEOASModelSchema):
 
     organization = fields.Method("organization")
     collaboration = fields.Method("collaboration")
+    config = fields.Nested('NodeConfigSchema', many=True,
+                           exclude=['id', 'node'])
 
     class Meta:
         model = db.Node
         exclude = ('api_key',)
+
+
+class NodeConfigSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.NodeConfig
 
 
 # ------------------------------------------------------------------------------
