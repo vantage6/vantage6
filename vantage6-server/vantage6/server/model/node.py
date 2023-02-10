@@ -14,7 +14,7 @@ class Node(Authenticatable):
     id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
 
     # fields
-    name = Column(String)
+    name = Column(String, unique=True)
     api_key = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))

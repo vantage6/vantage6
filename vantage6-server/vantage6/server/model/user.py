@@ -155,15 +155,7 @@ class User(Authenticatable):
 
     @classmethod
     def username_exists(cls, username):
-        session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(cls.username == username))\
-            .scalar()
-
-    @classmethod
-    def exists(cls, field, value):
-        session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(getattr(cls, field) == value))\
-            .scalar()
+        return cls.exists(field='username', value=username)
 
     def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
         """

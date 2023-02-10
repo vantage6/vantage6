@@ -4,7 +4,7 @@ import inspect as class_inspect
 from typing import List
 from flask.globals import g
 
-from sqlalchemy import Column, Integer, inspect, Table
+from sqlalchemy import Column, Integer, inspect, Table, exists
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm.clsregistry import _ModuleMarker
@@ -317,6 +317,12 @@ class ModelBase:
 
         session.delete(self)
         session.commit()
+
+    @classmethod
+    def exists(cls, field, value):
+        session = DatabaseSessionManager.get_session()
+        return session.query(exists().where(getattr(cls, field) == value))\
+            .scalar()
 
     @classmethod
     def help(cls) -> str:
