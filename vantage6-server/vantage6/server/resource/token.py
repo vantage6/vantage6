@@ -18,6 +18,7 @@ from flask_jwt_extended import (
 from http import HTTPStatus
 
 from vantage6 import server
+from vantage6.common.task_status import has_task_finished
 from vantage6.server import db
 from vantage6.server.model.user import User
 from vantage6.server.resource import (
@@ -312,7 +313,7 @@ class ContainerToken(ServicesResources):
                 HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
-        if db_task.complete():
+        if has_task_finished(db_task.status):
             log.warning(f"Node {g.node.id} attempts to generate a key for "
                         f"completed task {task_id}")
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST

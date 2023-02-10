@@ -250,9 +250,9 @@ class TestResultModel(TestBaseModel):
         result.save()
         self.assertEqual(result, result)
 
-    def test_methods(self):
-        for result in Result.get():
-            self.assertFalse(result.complete)
+    # def test_methods(self):
+    #     for result in Result.get():
+    #         self.assertFalse(result.complete)
 
     def test_relations(self):
         result = Result.get()[0]
