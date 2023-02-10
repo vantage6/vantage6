@@ -119,8 +119,6 @@ class NodeClient(ClientBase):
             started, and is waiting for restuls.
 
             :param id: id of the task to set the start-time of
-
-            TODO the initiator_id does not make sens here...
         """
         self.patch_results(id, result={
             "started_at": datetime.datetime.now().isoformat()
