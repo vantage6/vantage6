@@ -119,7 +119,7 @@ class Tasks(TaskBase):
 
         parameters:
           - in: query
-            name: initiator_id
+            name: init_org_id
             schema:
               type: int
             description: The organization id of the origin of the request
@@ -240,7 +240,7 @@ class Tasks(TaskBase):
                     HTTPStatus.UNAUTHORIZED
 
         # filter based on arguments
-        for param in ['initiator_id', 'init_user_id', 'collaboration_id',
+        for param in ['init_org_id', 'init_user_id', 'collaboration_id',
                       'parent_id', 'run_id']:
             if param in args:
                 q = q.filter(getattr(db.Task, param) == args[param])
@@ -382,7 +382,7 @@ class Tasks(TaskBase):
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
                        database=data.get('database', ''),
-                       initiator=init_org)
+                       init_org=init_org)
 
         # create run_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new run_id. Tasks created

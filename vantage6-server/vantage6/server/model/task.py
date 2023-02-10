@@ -25,16 +25,14 @@ class Task(Base):
     run_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
     database = Column(String)
-    initiator_id = Column(Integer, ForeignKey("organization.id"))
+    init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
     results = relationship("Result", back_populates="task")
-    # TODO in v4, rename the 'initiator' column so that there is a clear
-    # distinction between initiating organization and user
-    initiator = relationship("Organization", back_populates="created_tasks")
+    init_org = relationship("Organization", back_populates="created_tasks")
     init_user = relationship("User", back_populates="created_tasks")
 
     # TODO remove this property in v4. It is superseded by status but now left
