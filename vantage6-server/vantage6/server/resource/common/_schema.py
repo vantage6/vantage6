@@ -296,7 +296,6 @@ class NodeSchemaSimple(HATEOASModelSchema):
             # 'id',
             # 'organization',
             'collaboration',
-            'taskruns',
             'api_key',
             'type',
         ]

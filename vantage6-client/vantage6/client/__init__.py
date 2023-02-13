@@ -572,6 +572,7 @@ class UserClient(ClientBase):
         self.organization = self.Organization(self)
         self.user = self.User(self)
         self.run = self.Run(self)
+        self.result = self.Result(self)
         self.task = self.Task(self)
         self.role = self.Role(self)
         self.node = self.Node(self)

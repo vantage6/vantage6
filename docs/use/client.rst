@@ -126,6 +126,7 @@ and ``get()`` method attached.
 -  ``client.collaboration``
 -  ``client.task``
 -  ``client.run``
+-  ``client.result``
 -  ``client.util``
 -  ``client.node``
 
