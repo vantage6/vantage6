@@ -1,7 +1,7 @@
 .. include:: <isonum.txt>
 
-How to use
-==========
+Use
+===
 
 In this section of the documentation, we aim to explain to you how to use
 vantage6. The first part, :ref:`use-client`, will inform you how to interact with
