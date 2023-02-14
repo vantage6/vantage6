@@ -1,17 +1,37 @@
 .. include:: <isonum.txt>
 
-Use
-===
+User (client)
+=============
 
-In this section of the documentation, we aim to explain to you how to use
-vantage6. The first part, :ref:`use-client`, will inform you how to interact with
-a vantage6 server through the several types of clients that are available.
-The :ref:`use-node` section will explain how to install a node for your
-organization and finally, in :ref:`use-server` you will be informed how to setup
-your own vantage6 server.
+In this section of the documentation, we explain how you can interact with
+vantage6 servers and nodes as a user.
+
+There are four ways in which you can interact with the central server: the
+:ref:`ui` (UI), the :ref:`python-client`, the :ref:`r-client`, and the
+:ref:`server-api`. In the sections below, we describe
+how to use each of these methods, and what you need to install (if anything).
+
+For most use cases, we recommend to use the :ref:`ui`, as this requires
+the least amount of effort. If you want to automate your workflow, we recommend
+using the Python Client.
+
+.. warning::
+    Note that for some algorithms, tasks cannot yet be created using the UI,
+    or the results cannot be retrieved. This is because these algorithms have
+    Python-specific datatypes that cannot be decoded in the UI. In this case,
+    you will need to use the Python client to create the task and read the
+    results.
+
+.. warning::
+    Depending on your algorithm it *may* be required to use a specific
+    language to post a task and retrieve the results. This could happen when
+    the output of an algorithm contains a language specific datatype and or
+    serialization.
 
 .. toctree::
     :maxdepth: 3
 
-    install
-    use
+    ui
+    pyclient
+    rclient
+    api

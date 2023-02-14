@@ -1,80 +1,65 @@
-.. _use-client:
+.. _python-client:
 
-Client
-------
+Python client
+-------------
 
-Introduction
+The Python client is the recommended way to interact with the vantage6 server
+for tasks that you want to automate. It is a Python library that facilitates
+communication with the vantage6 server, e.g. by encrypting and decrypting data
+for tasks for you.
+
+The Python client aims to completely cover the vantage6 server communication.
+It can create computation tasks and collect their
+results, manage organizations, collaborations, users, etc. Under the hood,
+the Python client talks to the server API to achieve this.
+
+Requirements
 ^^^^^^^^^^^^
 
-We provide four ways in which you can interact with the server to manage
-your vantage6 resources:
+You need Python to use the Python client. We recommend using Python 3.7, as
+the client has been tested with this version. For higher versions, it may be
+difficult to install the dependencies.
 
--  :ref:`use-client-ui`
--  :ref:`use-python-client`
--  :ref:`use-R-client`
--  :ref:`use-server-api`
+Install
+^^^^^^^
 
-The UI and the clients make it much easier to interact with the server
-than directly interacting with the server API through HTTP requests,
-especially as data is serialized and encrypted automatically. For most
-use cases, we recommend to use the UI and/or the Python client.
+It is important to install the Python client with the same version as the
+vantage6 server you are talking to. Check your server version by going to
+``https://<server_url>/version`` (e.g. `https://petronas.vantage6.ai/version`
+or `http://localhost:5000/api/version`) to find its version.
 
-.. note::
-    The R client is only suitable for creating tasks and retrieve their results.
-    With the Python client it is possible to use the entire API.
+Then you can install the ``vantage6-client`` with:
 
-Note that whenever you interact with the server, you are limited by your
-permissions. For instance, if you try to create another user but do not
-have permission to do so, you will receive an error message. All
-permissions are described by rules, which can be aggregated in roles.
-Contact your server administrator if you find your permissions are
-inappropriate.
+::
 
-.. note::
-    There are predefined roles such as 'Researcher' and 'Organization Admin'
-    that are automatically created by the server. These can be assigned to any
-    new user by the administrator that is creating the user.
+   pip install vantage6==<version>
 
-.. _use-client-ui:
-
-User Interface
-^^^^^^^^^^^^^^
-
-The User Interface (UI) is a web application that aims to make it easy
-to interact with the server. At present, it provides all functionality
-except for creating tasks. We aim to incorporate this functionality in
-the near future.
-
-Using the UI should be relatively straightforward. There are buttons
-that should help you e.g. create a collaboration or delete a user. If
-anything is unclear, please contact us via
-`Discord <https://discord.com/invite/yAyFf6Y>`__.
-
-
-.. figure:: /images/ui-screenshot.png
-
-    Screenshot of the vantage6 UI
+where you add the version you want to install. You may also leave out
+the version to install the most recent version.
 
 .. _use-python-client:
 
-Python client
-^^^^^^^^^^^^^
+Use
+^^^
 
-It is assumed you installed the :ref:`client install`. The Python client
-aims to completely cover the vantage6-server communication
-possibilities. It can create computation tasks and collect their
-results, manage organizations, collaborations, users, etc. The server
-hosts an API which the client uses for this purpose.
+First, we give an overview of the client. From the section :ref:`authentication`
+onwards, there is example code of how to login with the client, and then
+create organizations, tasks etc.
 
-The methods in the library are all
-documented in their docstring, you can view them using ``help(...)`` ,
-e.g. ``help(client.user.create)`` will show you the parameters needed to
-create a new user:
+Overview
+""""""""
 
-.. raw:: html
+The Python client contains groups of commands per resource type. For example,
+the group ``client.user`` has the following commands:
 
-   <details>
-   <summary><a>Example help function</a></summary>
+- ``client.user.list()``: list all users
+- ``client.user.create(username, password, ...)``: create a new user
+- ``client.user.delete(<id>)``: delete a user
+- ``client.user.get(<id>)``: get a user
+
+You can see how to use these methods by using ``help(...)`` , e.g.
+``help(client.task.create)`` will show you the parameters needed to create a
+new user:
 
 .. code:: python
 
@@ -108,16 +93,11 @@ create a new user:
    #    dict
    #        Containing the task information
 
-.. raw:: html
-
-   </details>
-
-In :ref:`authentication` and sections after that, there are more examples on
-how to use the Python client.
 
 The following groups (related to the :ref:`components`) of methods are
-available, most of them have a ``list()``, ``create()``, ``delete()``
-and ``get()`` method attached.
+available. They usually have ``list()``, ``create()``, ``delete()``
+and ``get()`` methods attached - except where they are not relevant (for
+example, a rule that gives a certain permission cannot be deleted).
 
 -  ``client.user``
 -  ``client.organization``
@@ -126,8 +106,10 @@ and ``get()`` method attached.
 -  ``client.collaboration``
 -  ``client.task``
 -  ``client.result``
--  ``client.util``
 -  ``client.node``
+
+Finally, the class ``client.util`` contains some utility functions, for example
+to check if the server is up and running or to change your own password.
 
 .. _authentication:
 
@@ -136,7 +118,7 @@ Authentication
 
 This section and the following sections introduce some minimal examples for
 administrative tasks that you can perform with our
-:ref:`use-python-client`. We start by authenticating.
+:ref:`Python client <use-python-client>`. We start by authenticating.
 
 To authenticate, we create a config file to store our login information.
 We do this so we do not have to define the ``server_url``,
@@ -241,7 +223,6 @@ now use encryption by running
 .. code:: python
 
    client.setup_encryption('/path/to/private/key')
-
    # or, if you don't use encryption
    client.setup_encryption(None)
 
@@ -496,94 +477,3 @@ using
    >>> result_info['data'][1]['result']
    {'sum': 173, 'count': 4}
 
-
-.. _use-R-client:
-
-R Client
-^^^^^^^^
-
-It is assumed you installed the :ref:`r client install`. The R client can
-create tasks and retrieve their results. If you want to do more
-administrative tasks, either use the API directly or use the
-:ref:`use-python-client`.
-
-Initialization of the R client can be done by:
-
-.. code:: r
-
-   setup.client <- function() {
-     # Username/password should be provided by the administrator of
-     # the server.
-     username <- "username@example.com"
-     password <- "password"
-
-     host <- 'https://petronas.vantage6.ai:443'
-     api_path <- ''
-
-     # Create the client & authenticate
-     client <- vtg::Client$new(host, api_path=api_path)
-     client$authenticate(username, password)
-
-     return(client)
-   }
-
-   # Create a client
-   client <- setup.client()
-
-Then this client can be used for the different algorithms. Refer to the
-README in the repository on how to call the algorithm. Usually this
-includes installing some additional client-side packages for the
-specific algorithm you are using.
-
-.. warning::
-    The R client is subject to change. We aim to make it more similar to the
-    Python client.
-
-Example
-"""""""
-
-This example shows how to run the vantage6 implementation of a federated Cox
-Proportional Hazard regression model. First you need to install the client side
-of the algorithm by:
-
-.. code:: r
-
-   devtools::install_github('iknl/vtg.coxph', subdir="src")
-
-This is the code to run the coxph:
-
-.. code:: r
-
-   print( client$getCollaborations() )
-
-   # Should output something like this:
-   #   id     name
-   # 1  1 ZEPPELIN
-   # 2  2 PIPELINE
-
-   # Select a collaboration
-   client$setCollaborationId(1)
-
-   # Define explanatory variables, time column and censor column
-   expl_vars <- c("Age","Race2","Race3","Mar2","Mar3","Mar4","Mar5","Mar9",
-                  "Hist8520","hist8522","hist8480","hist8501","hist8201",
-                  "hist8211","grade","ts","nne","npn","er2","er4")
-   time_col <- "Time"
-   censor_col <- "Censor"
-
-   # vtg.coxph contains the function `dcoxph`.
-   result <- vtg.coxph::dcoxph(client, expl_vars, time_col, censor_col)
-
-.. _use-server-api:
-
-Server API
-^^^^^^^^^^
-
-The server API is documented in the path ``https://SERVER[/api_path]/apidocs``.
-For Petronas, the API docs can thus be found at
-https://petronas.vantage6.ai/apidocs.
-
-This page will show you which API
-endpoints exist and how you can use them. All endpoints communicate via
-HTTP requests, so you can communicate with them using any platform or
-programming language that supports HTTP requests.

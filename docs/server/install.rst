@@ -59,7 +59,7 @@ vantage6 server itself:
   password, you need to set up an SMTP server.
 
 
-.. _UI:
+.. _install-ui:
 
 User Interface
 """"""""""""""
