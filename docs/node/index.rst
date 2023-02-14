@@ -17,6 +17,5 @@ then explain the installation process per component.
     :maxdepth: 3
 
     requirements
-    client
-    node
-    server
+    install
+    use

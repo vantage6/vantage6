@@ -13,6 +13,5 @@ your own vantage6 server.
 .. toctree::
     :maxdepth: 3
 
-    client
-    node
-    server
+    install
+    use
