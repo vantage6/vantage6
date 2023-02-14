@@ -160,9 +160,12 @@ class TaskRunSchema(HATEOASModelSchema):
 class RunSchema(HATEOASModelSchema):
     class Meta:
         model = db.Run
+        exclude = ('result',)
 
     organization = fields.Method("organization")
     task = fields.Method("task")
+    # result = fields.Nested("ResultSchema", many=False, exclude=["run"])
+    result = fields.Method("result")
     node = fields.Function(
         func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
     )
@@ -180,6 +183,14 @@ class RunNodeSchema(HATEOASModelSchema):
         model = db.Node
         exclude = ('type', 'api_key', 'collaboration', 'organization',
                    'last_seen')
+
+
+class ResultSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Run
+        only = ('result')
+
+    run = fields.Method("run")
 
 
 class PortSchema(HATEOASModelSchema):
