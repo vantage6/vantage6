@@ -1,7 +1,5 @@
 .. include:: <isonum.txt>
 
-.. _install_vantage6:
-
 Install
 =======
 

@@ -300,7 +300,7 @@ with id 1 and collaboration with id 1.
    print(f"Registered a node for collaboration with id {collaboration_id}, organization with id {organization_id}. The API key that was generated for this node was {api_key}")
 
 Remember to save the ``api_key`` that is returned here, since you will
-need it when you :ref:`node-configure` the node.
+need it when you :ref:`configure-node` the node.
 
 Creating a task
 """""""""""""""
@@ -333,7 +333,7 @@ comma-separated database, i.e. their config contains something like
 so that the third requirement is also met. As an end-user running the
 algorithm, you'll need to align with the node owner about which database
 name is used for the database you are interested in. For more details, see
-how to :ref:`node-configure` your node.
+how to :ref:`configure-node` your node.
 
 **Determining which collaboration / organizations to create a task for**
 

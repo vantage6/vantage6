@@ -1,9 +1,7 @@
 .. include:: <isonum.txt>
 
-.. _install_vantage6:
-
-Install
-=======
+Node
+====
 
 The vantage6 framework consists of several components that
 should be installed. Which component(s) you need depends on your use case. For
@@ -28,3 +26,4 @@ then explain the installation process per component.
     requirements
     install
     use
+    configure

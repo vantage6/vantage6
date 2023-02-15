@@ -1,14 +1,14 @@
-.. _requirements:
+.. _requirements-node:
+
+.. todo these requirements are almost same as server requirements. Maybe we
+   can find a way to only write it once and import it in both places.
 
 Requirements
 ------------
 
-Node & Server
-^^^^^^^^^^^^^
-
-The (minimal) requirements of the node and server are similar. Note that
-these are recommendations: it may also work on other hardware, operating systems,
-versions of Python etc. (but they are not tested as much).
+The (minimal) requirements of the node and :ref:`server <requirements-server>`
+are similar. Note that these are recommendations: it may also work on other
+hardware, operating systems, etc. (but they are not tested as much).
 
 **Hardware**
 

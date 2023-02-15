@@ -1,14 +1,15 @@
-.. _requirements:
+.. _requirements-server:
+
+.. todo these requirements are almost same as node requirements. Maybe we
+   can find a way to only write it once and import it in both places.
 
 Requirements
 ------------
 
-Node & Server
-^^^^^^^^^^^^^
-
-The (minimal) requirements of the node and server are similar. Note that
-these are recommendations: it may also work on other hardware, operating systems,
-versions of Python etc. (but they are not tested as much).
+The (minimal) requirements of the :ref:`node <requirements-node>` and server are
+similar. Note that these are recommendations: it may also work on other
+hardware, operating systems, versions of Python etc. (but they are not tested
+as much).
 
 **Hardware**
 
@@ -20,19 +21,13 @@ versions of Python etc. (but they are not tested as much).
 
 **Software**
 
--  Operating system
-
-   -  Ubuntu 18.04+ or
-   -  MacOS Big Sur+ or
-   -  Windows 10+
-
+-  Operating system: Ubuntu 18.04+
 -  :ref:`python`
 -  :ref:`docker`
 
-.. warning::
-    The hardware requirements of the node also depend on the algorithms that
-    the node will run. For example, you need much less compute power for a
-    descriptive statistical algorithm than for a machine learning model.
+.. note::
+    Note that it may be possible to run the server on other operating systems
+    (e.g. Windows, MacOS) but this is not tested and therefore not recommended.
 
 .. _python:
 
