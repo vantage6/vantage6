@@ -1,7 +1,7 @@
 .. include:: <isonum.txt>
 
-Server
-======
+Server admin guide
+==================
 
 This section shows you how you can set up your own vantage6 server. First, we
 discuss the requirements for your server machine, then guide you through the

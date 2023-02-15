@@ -1,8 +1,8 @@
 
 .. _server-deployment:
 
-Deployment
-^^^^^^^^^^
+Deploy
+^^^^^^
 
 The vantage6 server is a Flask application, that uses
 `python-socketio <https://python-socketio.readthedocs.io>`_ for socketIO

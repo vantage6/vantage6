@@ -1,7 +1,7 @@
 .. include:: <isonum.txt>
 
-Node
-====
+Node admin guide
+================
 
 This section shows you how you can set up your own vantage6 node. First, we
 discuss the requirements for your node machine, then guide you through the

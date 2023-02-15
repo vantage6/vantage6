@@ -1,7 +1,7 @@
 .. include:: <isonum.txt>
 
-User (client)
-=============
+User guide
+==========
 
 In this section of the documentation, we explain how you can interact with
 vantage6 servers and nodes as a user.
@@ -13,7 +13,7 @@ how to use each of these methods, and what you need to install (if anything).
 
 For most use cases, we recommend to use the :ref:`ui`, as this requires
 the least amount of effort. If you want to automate your workflow, we recommend
-using the Python Client.
+using the :ref:`python-client`.
 
 .. warning::
     Note that for some algorithms, tasks cannot yet be created using the UI,
