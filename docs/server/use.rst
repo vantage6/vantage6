@@ -1,15 +1,9 @@
 .. _use-server:
 
-Server
-------
+Use
+---
 
-Introduction
-^^^^^^^^^^^^
-
-It is assumed that you successfully installed the vantage6 :ref:`install-server`. To
-verify this, you can run the command ``vserver --help`` . If that prints a list of
-commands, your installation is successful. Also, make sure that Docker
-is running.
+This section explains which commands are available to manage your server.
 
 Quick start
 """""""""""
@@ -82,374 +76,11 @@ e.g. ``vserver start --help``.
 | version``      | running server                                      |
 +----------------+-----------------------------------------------------+
 
-The following sections explain how to use these commands to configure
-and maintain a vantage6-server instance:
-
--  :ref:`server-configure`
--  :ref:`server-import`
--  :ref:`server-deployment`
--  :ref:`server-logging`
--  :ref:`server-shell`
-
-.. _server-configure:
-
-Configure
-^^^^^^^^^
-
-The vantage6-server requires a configuration file to run. This is a
-``yaml`` file with specific contents. You can create and edit this file
-manually. To create an initial configuration file you can also use the
-configuration wizard: ``vserver new``.
-
-The directory where to store the configuration file depends on you
-operating system (OS). It is possible to store the configuration file at
-**system** or at **user** level. By default, server configuration files
-are stored at **system** level. The default directories per OS are as
-follows:
-
-+---------+----------------------------+------------------------------------+
-| **OS**  | **System**                 | **User**                           |
-+=========+============================+====================================+
-| Windows | ``C:\ProgramData           | ``C:\Users\<user>                  |
-|         | \vantage6\server``         | \AppData\Local\vantage6\server\``  |
-+---------+----------------------------+------------------------------------+
-| Macos   | ``/Library/Application     | ``/Users/<user>/Library/Appl       |
-|         | Support/vantage6/server/`` | ication Support/vantage6/server/`` |
-+---------+----------------------------+------------------------------------+
-| Ubuntu  | ``/etc/xdg/vantage6/       | ``~/.config/vantage6/server/``     |
-|         | server/``                  |                                    |
-+---------+----------------------------+------------------------------------+
-
-.. warning::
-    The command ``vserver`` looks in certain directories by default. It is
-    possible to use any directory and specify the location with the ``--config``
-    flag. However, note that using a different directory requires you to specify
-    the ``--config`` flag every time!
-
-.. _server-config-file-structure:
-
-Configuration file structure
-""""""""""""""""""""""""""""
-
-Each server instance (configuration) can have multiple environments. You
-can specify these under the key ``environments`` which allows four
-types: ``dev`` ,\ ``test``, ``acc`` and ``prod`` . If you do not want to
-specify any environment, you should only specify the key ``application``
-(not within ``environments``) .
-
-.. raw:: html
-
-   <details>
-   <summary><a>Example configuration file</a></summary>
-
-.. code:: yaml
-
-   application:
-     ...
-   environments:
-     test:
-
-       # Human readable description of the server instance. This is to help
-       # your peers to identify the server
-       description: Test
-
-       # Should be prod, acc, test or dev. In case the type is set to test
-       # the JWT-tokens expiration is set to 1 day (default is 6 hours). The
-       # other types can be used in future releases of vantage6
-       type: test
-
-       # IP adress to which the server binds. In case you specify 0.0.0.0
-       # the server listens on all interfaces
-       ip: 0.0.0.0
-
-       # Port to which the server binds
-       port: 5000
-
-       # API path prefix. (i.e. https://yourdomain.org/api_path/<endpoint>). In the
-       # case you use a referse proxy and use a subpath, make sure to include it
-       # here also.
-       api_path: /api
-
-       # The URI to the server database. This should be a valid SQLAlchemy URI,
-       # e.g. for an Sqlite database: sqlite:///database-name.sqlite,
-       # or Postgres: postgresql://username:password@172.17.0.1/database).
-       uri: sqlite:///test.sqlite
-
-       # This should be set to false in production as this allows to completely
-       # wipe the database in a single command. Useful to set to true when
-       # testing/developing.
-       allow_drop_all: True
-
-       # The secret key used to generate JWT authorization tokens. This should
-       # be kept secret as others are able to generate access tokens if they
-       # know this secret. This parameter is optional. In case it is not
-       # provided in the configuration it is generated each time the server
-       # starts. Thereby invalidating all previous distributed keys.
-       # OPTIONAL
-       jwt_secret_key: super-secret-key! # recommended but optional
-
-       # Settings for the logger
-       logging:
-
-         # Controls the logging output level. Could be one of the following
-         # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-         level:        DEBUG
-
-         # Filename of the log-file, used by RotatingFileHandler
-         file:         test.log
-
-         # Whether the output is shown in the console or not
-         use_console:  True
-
-         # The number of log files that are kept, used by RotatingFileHandler
-         backup_count: 5
-
-         # Size in kB of a single log file, used by RotatingFileHandler
-         max_size:     1024
-
-         # format: input for logging.Formatter,
-         format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-         datefmt:      "%Y-%m-%d %H:%M:%S"
-
-       # Configure a smtp mail server for the server to use for administrative
-       # purposes. e.g. allowing users to reset their password.
-       # OPTIONAL
-       smtp:
-         port: 587
-         server: smtp.yourmailserver.com
-         username: your-username
-         password: super-secret-password
-
-       # Set an email address you want to direct your users to for support
-       # (defaults to the address you set above in the SMTP server or otherwise
-       # to support@vantage6.ai)
-       support_email: your-support@email.com
-
-       # set how long reset token provided via email are valid (default 1 hour)
-       email_token_validity_minutes: 60
-
-       # If algorithm containers need direct communication between each other
-       # the server also requires a VPN server. (!) This must be a EduVPN
-       # instance as vantage6 makes use of their API (!)
-       # OPTIONAL
-       vpn_server:
-           # the URL of your VPN server
-           url: https://your-vpn-server.ext
-
-           # OATH2 settings, make sure these are the same as in the
-           # configuration file of your EduVPN instance
-           redirect_url: http://localhost
-           client_id: your_VPN_client_user_name
-           client_secret: your_VPN_client_user_password
-
-           # Username and password to acccess the EduVPN portal
-           portal_username: your_eduvpn_portal_user_name
-           portal_userpass: your_eduvpn_portal_user_password
-
-     prod:
-       ...
-
-.. raw:: html
-
-   </details>
-
-
-.. note::
-    We use `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
-    In short:
-
-    - ``dev`` Development environment. It is ok to break things here
-    - ``test`` Testing environment. Here, you can verify that everything
-      works as expected. This environment should resemble the target
-      environment where the final solution will be deployed as much as
-      possible.
-    - ``acc`` Acceptance environment. If the tests were successful, you can
-      try this environment, where the final user will test his/her analysis
-      to verify if everything meets his/her expectations.
-    - ``prod`` Production environment. The version of the proposed solution
-      where the final analyses are executed.
-
-
-Configuration wizard
-""""""""""""""""""""
-
-The most straightforward way of creating a new server configuration is
-using the command ``vserver new`` which allows you to configure most
-settings. The :ref:`server-configure` section details
-what each setting represents.
-
-By default, the configuration is stored at system level, which makes
-this configuration available for *all* users. In case you want to use a
-user directory you can add the ``--user`` flag when invoking the
-``vserver new`` command.
-
-Update configuration
-""""""""""""""""""""
-
-To update a configuration you need to modify the created ``yaml`` file.
-To see where this file is located you can use the command
-``vserver files`` . Do not forget to specify the flag ``--system`` in
-case of a system-wide configuration or the flag ``--user`` in case of a
-user-level configuration.
-
-.. _use-server-local:
-
-Local test setup
-""""""""""""""""
-
-If the nodes and the server run at the same machine, you have to make
-sure that the node can reach the server.
-
-**Windows and MacOS**
-
-Setting the server IP to ``0.0.0.0`` makes the server reachable
-at your localhost (this is also the case when the dockerized version
-is used). In order for the node to reach this server, set the
-``server_url`` setting to ``host.docker.internal``.
-
-:warning:
-    On the **M1** mac the local server might not be reachable from
-    your nodes as ``host.docker.internal`` does not seem to refer to the
-    host machine. Reach out to us on Discourse for a solution if you need
-    this!
-
-**Linux**
-
-You should bind the server to ``0.0.0.0``. In the node
-configuration files, you can then use ``http://172.17.0.1``, assuming you use
-the default docker network settings.
-
-.. _server-import:
-
-Batch import
-""""""""""""
-
-.. warning::
-    All users that are imported using ``vserver import`` receive the superuser
-    role. We are looking into ways to also be able to import roles. For more
-    background info refer to this
-    `issue <https://github.com/vantage6/vantage6/issues/71>`__.
-
-You can easily create a set of test users, organizations and collaborations by
-using a batch import. To do this, use the
-``vserver import /path/to/file.yaml`` command. An example ``yaml`` file is
-provided here:
-
-.. raw:: html
-
-   <details>
-   <summary><a>Example batch import</a></summary>
-
-.. code:: yaml
-
-   organizations:
-
-     - name:       IKNL
-       domain:     iknl.nl
-       address1:   Godebaldkwartier 419
-       address2:
-       zipcode:    3511DT
-       country:    Netherlands
-       users:
-         - username: admin
-           firstname: admin
-           lastname: robot
-           password: password
-         - username: frank@iknl.nl
-           firstname: Frank
-           lastname: Martin
-           password: password
-         - username: melle@iknl.nl
-           firstname: Melle
-           lastname: Sieswerda
-           password: password
-       public_key: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF2eU4wWVZhWWVZcHVWRVlpaDJjeQphTjdxQndCUnB5bVVibnRQNmw2Vk9OOGE1eGwxMmJPTlQyQ1hwSEVGUFhZQTFFZThQRFZwYnNQcVVKbUlseWpRCkgyN0NhZTlIL2lJbUNVNnViUXlnTzFsbG1KRTJQWDlTNXVxendVV3BXMmRxRGZFSHJLZTErUUlDRGtGSldmSEIKWkJkczRXMTBsMWlxK252dkZ4OWY3dk8xRWlLcVcvTGhQUS83Mm52YlZLMG9nRFNaUy9Jc1NnUlk5ZnJVU1FZUApFbGVZWUgwYmI5VUdlNUlYSHRMQjBkdVBjZUV4dXkzRFF5bXh2WTg3bTlkelJsN1NqaFBqWEszdUplSDAwSndjCk80TzJ0WDVod0lLL1hEQ3h4eCt4b3cxSDdqUWdXQ0FybHpodmdzUkdYUC9wQzEvL1hXaVZSbTJWZ3ZqaXNNaisKS2VTNWNaWWpkUkMvWkRNRW1QU29rS2Y4UnBZUk1lZk0xMWtETTVmaWZIQTlPcmY2UXEyTS9SMy90Mk92VDRlRgorUzVJeTd1QWk1N0ROUkFhejVWRHNZbFFxTU5QcUpKYlRtcGlYRWFpUHVLQitZVEdDSC90TXlrRG1JK1dpejNRCjh6SVo1bk1IUnhySFNqSWdWSFdwYnZlTnVaL1Q1aE95aE1uZHU0c3NpRkJyUXN5ZGc1RlVxR3lkdE1JMFJEVHcKSDVBc1ovaFlLeHdiUm1xTXhNcjFMaDFBaDB5SUlsZDZKREY5MkF1UlNTeDl0djNaVWRndEp5VVlYN29VZS9GKwpoUHVwVU4rdWVTUndGQjBiVTYwRXZQWTdVU2RIR1diVVIrRDRzTVQ4Wjk0UVl2S2ZCanU3ZXVKWSs0Mmd2Wm9jCitEWU9ZS05qNXFER2V5azErOE9aTXZNQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=
-
-     - name:       Small Organization
-       domain:     small-organization.example
-       address1:   Big Ambitions Drive 4
-       address2:
-       zipcode:    1234AB
-       country:    Nowhereland
-       users:
-         - username: admin@small-organization.example
-           firstname: admin
-           lastname: robot
-           password: password
-         - username: stan
-           firstname: Stan
-           lastname: the man
-           password: password
-       public_key: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF2eU4wWVZhWWVZcHVWRVlpaDJjeQphTjdxQndCUnB5bVVibnRQNmw2Vk9OOGE1eGwxMmJPTlQyQ1hwSEVGUFhZQTFFZThQRFZwYnNQcVVKbUlseWpRCkgyN0NhZTlIL2lJbUNVNnViUXlnTzFsbG1KRTJQWDlTNXVxendVV3BXMmRxRGZFSHJLZTErUUlDRGtGSldmSEIKWkJkczRXMTBsMWlxK252dkZ4OWY3dk8xRWlLcVcvTGhQUS83Mm52YlZLMG9nRFNaUy9Jc1NnUlk5ZnJVU1FZUApFbGVZWUgwYmI5VUdlNUlYSHRMQjBkdVBjZUV4dXkzRFF5bXh2WTg3bTlkelJsN1NqaFBqWEszdUplSDAwSndjCk80TzJ0WDVod0lLL1hEQ3h4eCt4b3cxSDdqUWdXQ0FybHpodmdzUkdYUC9wQzEvL1hXaVZSbTJWZ3ZqaXNNaisKS2VTNWNaWWpkUkMvWkRNRW1QU29rS2Y4UnBZUk1lZk0xMWtETTVmaWZIQTlPcmY2UXEyTS9SMy90Mk92VDRlRgorUzVJeTd1QWk1N0ROUkFhejVWRHNZbFFxTU5QcUpKYlRtcGlYRWFpUHVLQitZVEdDSC90TXlrRG1JK1dpejNRCjh6SVo1bk1IUnhySFNqSWdWSFdwYnZlTnVaL1Q1aE95aE1uZHU0c3NpRkJyUXN5ZGc1RlVxR3lkdE1JMFJEVHcKSDVBc1ovaFlLeHdiUm1xTXhNcjFMaDFBaDB5SUlsZDZKREY5MkF1UlNTeDl0djNaVWRndEp5VVlYN29VZS9GKwpoUHVwVU4rdWVTUndGQjBiVTYwRXZQWTdVU2RIR1diVVIrRDRzTVQ4Wjk0UVl2S2ZCanU3ZXVKWSs0Mmd2Wm9jCitEWU9ZS05qNXFER2V5azErOE9aTXZNQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=
-
-     - name:       Big Organization
-       domain:     big-organization.example
-       address1:   Offshore Accounting Drive 19
-       address2:
-       zipcode:    54331
-       country:    Nowhereland
-       users:
-         - username: admin@big-organization.example
-           firstname: admin
-           lastname: robot
-           password: password
-       public_key: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF2eU4wWVZhWWVZcHVWRVlpaDJjeQphTjdxQndCUnB5bVVibnRQNmw2Vk9OOGE1eGwxMmJPTlQyQ1hwSEVGUFhZQTFFZThQRFZwYnNQcVVKbUlseWpRCkgyN0NhZTlIL2lJbUNVNnViUXlnTzFsbG1KRTJQWDlTNXVxendVV3BXMmRxRGZFSHJLZTErUUlDRGtGSldmSEIKWkJkczRXMTBsMWlxK252dkZ4OWY3dk8xRWlLcVcvTGhQUS83Mm52YlZLMG9nRFNaUy9Jc1NnUlk5ZnJVU1FZUApFbGVZWUgwYmI5VUdlNUlYSHRMQjBkdVBjZUV4dXkzRFF5bXh2WTg3bTlkelJsN1NqaFBqWEszdUplSDAwSndjCk80TzJ0WDVod0lLL1hEQ3h4eCt4b3cxSDdqUWdXQ0FybHpodmdzUkdYUC9wQzEvL1hXaVZSbTJWZ3ZqaXNNaisKS2VTNWNaWWpkUkMvWkRNRW1QU29rS2Y4UnBZUk1lZk0xMWtETTVmaWZIQTlPcmY2UXEyTS9SMy90Mk92VDRlRgorUzVJeTd1QWk1N0ROUkFhejVWRHNZbFFxTU5QcUpKYlRtcGlYRWFpUHVLQitZVEdDSC90TXlrRG1JK1dpejNRCjh6SVo1bk1IUnhySFNqSWdWSFdwYnZlTnVaL1Q1aE95aE1uZHU0c3NpRkJyUXN5ZGc1RlVxR3lkdE1JMFJEVHcKSDVBc1ovaFlLeHdiUm1xTXhNcjFMaDFBaDB5SUlsZDZKREY5MkF1UlNTeDl0djNaVWRndEp5VVlYN29VZS9GKwpoUHVwVU4rdWVTUndGQjBiVTYwRXZQWTdVU2RIR1diVVIrRDRzTVQ4Wjk0UVl2S2ZCanU3ZXVKWSs0Mmd2Wm9jCitEWU9ZS05qNXFER2V5azErOE9aTXZNQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=
-
-   collaborations:
-
-     - name: ZEPPELIN
-       participants:
-         - name: IKNL
-           api_key: 123e4567-e89b-12d3-a456-426614174001
-         - name: Small Organization
-           api_key: 123e4567-e89b-12d3-a456-426614174002
-         - name: Big Organization
-           api_key: 123e4567-e89b-12d3-a456-426614174003
-       tasks: ["hello-world"]
-       encrypted: false
-
-     - name: PIPELINE
-       participants:
-         - name: IKNL
-           api_key: 123e4567-e89b-12d3-a456-426614174004
-         - name: Big Organization
-           api_key: 123e4567-e89b-12d3-a456-426614174005
-       tasks: ["hello-world"]
-       encrypted: false
-
-     - name: SLIPPERS
-       participants:
-         - name: Small Organization
-           api_key: 123e4567-e89b-12d3-a456-426614174006
-         - name: Big Organization
-           api_key: 123e4567-e89b-12d3-a456-426614174007
-       tasks: ["hello-world", "hello-world"]
-       encrypted: false
-
-.. raw:: html
-
-   </details>
-
-
-.. _server-logging:
-
-Logging
-^^^^^^^
-
-Logging is enabled by default. To configure the logger, look at the ``logging``
-section in the example configuration in :ref:`server-config-file-structure`.
-
-Useful commands:
-
-1. ``vserver files``: shows you where the log file is stored
-2. ``vserver attach``: show live logs of a running server in your
-   current console. This can also be achieved when starting the server
-   with ``vserver start --attach``
 
 .. _server-shell:
 
 Shell
-^^^^^
+"""""
 
 .. warning::
     The preferred method of managing entities is using the API, instead of the
@@ -470,7 +101,7 @@ what data is stored in it (e.g. ``db.Organization.help()``).
 .. _shell-organization:
 
 Organizations
-"""""""""""""
+^^^^^^^^^^^^^
 
 .. note::
     Organizations have a public key that is used for end-to-end encryption.
@@ -533,7 +164,7 @@ the organization or see which collaborations it is participating in.
    nodes = organization.nodes
 
 Roles and Rules
-"""""""""""""""
+^^^^^^^^^^^^^^^
 
 A user can have multiple roles and rules assigned to them. These are
 used to determine if the user has permission to view, edit, create or
@@ -569,7 +200,7 @@ delete certain resources using the API. A role is a collection of rules.
    user.save()
 
 Users
-"""""
+^^^^^
 
 Users belong to an organization. So if you have not created any
 :ref:`shell-organization` yet, then you should do that first. To create a user
@@ -630,7 +261,7 @@ To modify a user, simply adjust the properties and save the object.
    user.save()
 
 Collaborations
-""""""""""""""
+^^^^^^^^^^^^^^
 
 A collaboration consists of one or more organizations. To create a
 collaboration you need at least one but preferably multiple
@@ -686,7 +317,7 @@ We can obtain these by:
     on this setting. If they don't, you will receive an error message.
 
 Nodes
-"""""
+^^^^^
 
 Before nodes can login, they need to exist in the server's database. A
 new node can be created as follows:
@@ -722,7 +353,7 @@ new node can be created as follows:
     later via the shell, API, client or UI.
 
 Tasks and Results
-"""""""""""""""""
+^^^^^^^^^^^^^^^^^
 
 .. warning::
     Tasks(/results) created from the shell are not picked up by nodes that are

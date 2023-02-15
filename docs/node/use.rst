@@ -43,14 +43,18 @@ i.e. ``vnode start --help`` .
 +---------------------+------------------------------------------------+
 | ``vnode start``     | Start a node                                   |
 +---------------------+------------------------------------------------+
-| ``vnode stop``      | Stop one or all nodes                          |
+| ``vnode stop``      | Stop a nodes                                   |
 +---------------------+------------------------------------------------+
-| ``vnode files``     | List the files of a node                       |
+| ``vnode files``     | List the files of a node (e.g. config and log  |
+|                     | files)                                         |
 +---------------------+------------------------------------------------+
 | ``vnode attach``    | Print the node logs to the console             |
 +---------------------+------------------------------------------------+
-| ``vnode list``      | List all available nodes                       |
+| ``vnode list``      | List all existing nodes                        |
 +---------------------+------------------------------------------------+
 | ``vnode             | Create and upload a new public key for your    |
 | create-private-key``| organization                                   |
++---------------------+------------------------------------------------+
+| ``vnode             | Update the API key in your node configuration  |
+| set-api-key``       | file                                           |
 +---------------------+------------------------------------------------+

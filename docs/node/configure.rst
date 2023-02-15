@@ -6,9 +6,10 @@ Configure
 The vantage6-node requires a configuration file to run. This is a
 ``yaml`` file with a specific format.
 
-This sections describes how to configure the node. It first provides a complete
-example of configuration file options, and then explains where your vantage6
-configuration files are stored and how you can change them.
+The next sections describes how to configure the node. It first provides a few
+quick answers on setting up your node, then shows an example of all
+configuration file options, and finally explains where your vantage6
+configuration files are stored.
 
 How to create a configuration file
 """"""""""""""""""""""""""""""""""
@@ -90,12 +91,12 @@ The default directories per OS are as follows:
 | Linux       | |lin_sys|               | |lin_usr|                      |
 +-------------+-------------------------+--------------------------------+
 
-.. |win_sys| replace:: ``C:\ProgramData\vantage\node``
-.. |win_usr| replace:: ``C:\Users\<user>\AppData\Local\vantage\node``
-.. |mac_sys| replace:: ``/Library/Application/Support/vantage6/node``
-.. |mac_usr| replace:: ``/Users/<user>/Library/Application Support/vantage6/node``
-.. |lin_sys| replace:: ``/etc/vantage6/node``
-.. |lin_usr| replace:: ``/home/<user>/.config/vantage6/node``
+.. |win_sys| replace:: ``C:\ProgramData\vantage\node\``
+.. |win_usr| replace:: ``C:\Users\<user>\AppData\Local\vantage\node\``
+.. |mac_sys| replace:: ``/Library/Application/Support/vantage6/node/``
+.. |mac_usr| replace:: ``/Users/<user>/Library/Application Support/vantage6/node/``
+.. |lin_sys| replace:: ``/etc/vantage6/node/``
+.. |lin_usr| replace:: ``/home/<user>/.config/vantage6/node/``
 
 .. note::
     The command ``vnode`` looks in these directories by default. However, it is

@@ -1,19 +1,19 @@
 .. include:: <isonum.txt>
 
-Install
-=======
+Server
+======
 
-The vantage6 framework consists of several components that
-should be installed. Which component(s) you need depends on your use case. For
-example, if you only need to communicate to an existing vantage6 server, you
-don't have to install a server.
-
-We will first detail the requirements for installing a node and/or server, and
-then explain the installation process per component.
+This section shows you how you can set up your own vantage6 server. First, we
+discuss the requirements for your server machine, then guide you through the
+installation process. Finally, we explain how to configure and start your
+server.
 
 .. toctree::
     :maxdepth: 3
 
     requirements
     install
+    deploy
+    optional
     use
+    configure
