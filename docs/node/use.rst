@@ -58,3 +58,11 @@ i.e. ``vnode start --help`` .
 | ``vnode             | Update the API key in your node configuration  |
 | set-api-key``       | file                                           |
 +---------------------+------------------------------------------------+
+
+Local test setup
+""""""""""""""""
+
+Check the section on :ref:`use-server-local` of the server if
+you want to run both the node and server on the same machine.
+
+.. _node-security:

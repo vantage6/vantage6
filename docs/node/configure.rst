@@ -108,14 +108,6 @@ The default directories per OS are as follows:
     by using the ``--system`` flag. Note that in that case, you have to specify
     the ``--system`` flag for all ``vnode`` commands.
 
-Local test setup
-""""""""""""""""
-
-Check the section on :ref:`use-server-local` of the server if
-you want to run both the node and server on the same machine.
-
-.. _node-security:
-
 Security
 """"""""
 
