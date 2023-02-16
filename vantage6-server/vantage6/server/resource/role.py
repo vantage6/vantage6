@@ -8,7 +8,6 @@ from flask_restful import reqparse
 from sqlalchemy import or_
 
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource import (
     with_user,
     ServicesResources
@@ -189,7 +188,7 @@ class Roles(RoleBase):
 
         tags: ["Role"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Role)
+        q = g.session.query(db.Role)
 
         auth_org_id = self.obtain_organization_id()
         args = request.args

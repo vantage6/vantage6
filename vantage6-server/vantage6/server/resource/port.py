@@ -24,8 +24,6 @@ from vantage6.server.model import (
     Collaboration,
     Task
 )
-from vantage6.server.model.base import DatabaseSessionManager
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -144,7 +142,7 @@ class Ports(PortBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(AlgorithmPort)
+        q = g.session.query(AlgorithmPort)
 
         # relation filters
         if 'result_id' in args:
@@ -220,8 +218,9 @@ class Ports(PortBase):
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
         result_id = data.get('result_id', '')
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
+        linked_result = g.session.query(Result)\
+                         .filter(Result.id == result_id)\
+                         .one()
         if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
@@ -280,15 +279,15 @@ class Ports(PortBase):
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
         result_id = args['result_id']
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
+        linked_result = g.session.query(Result)\
+                         .filter(Result.id == result_id)\
+                         .one()
         if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
-        session = DatabaseSessionManager.get_session()
-        session.query(AlgorithmPort).filter(
+        session = g.session.query(AlgorithmPort).filter(
             AlgorithmPort.result_id == result_id
         ).delete()
         session.commit()
