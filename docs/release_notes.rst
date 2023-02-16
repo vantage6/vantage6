@@ -16,8 +16,8 @@ Release notes
     `PR#533 <https://github.com/vantage6/vantage6/pull/533>`_
     `Issue#518 <https://github.com/vantage6/vantage6/issues/518>`_).
  -  Fixed a bug that did not close Postgres DB sessions, resulting in a dead
-    server (`PR#540 <https://github.com/vantage6/vantage6/pull/540>_`,
-    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>_`).
+    server (`PR#540 <https://github.com/vantage6/vantage6/pull/540>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
 
 
 3.7.0
