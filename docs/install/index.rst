@@ -2,8 +2,8 @@
 
 .. _install_vantage6:
 
-Installation
-============
+Install
+=======
 
 The vantage6 framework consists of several components that
 should be installed. Which component(s) you need depends on your use case. For

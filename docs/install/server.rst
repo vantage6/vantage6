@@ -54,6 +54,10 @@ vantage6 server itself:
   A docker registry can be used to store algorithms but it is also
   possible to use `Docker hub <https://hub.docker.com/>`__ for this.
 
+:ref:`smtp-server`
+  If you want to send emails to your users, e.g. to help them reset their
+  password, you need to set up an SMTP server.
+
 
 .. _UI:
 
@@ -126,8 +130,8 @@ After the installation is done, you need to configure the server to:
 
     Additionally, you may want to explicitly allow *only* VPN traffic between
     nodes, and not between a node and the VPN server. You can achieve that by
-    updating the firewall rules on your machine. 
-    
+    updating the firewall rules on your machine.
+
     On Debian machines, these rules can be found in `/etc/iptables/rules.v4` and `/etc/iptables/rules.v6`, on CentOS, Red Hat Enterprise Linux and Fedora they can be found in `/etc/sysconfig/iptables` and `/etc/sysconfig/ip6tables`.  You will have to do the following:
 
     .. raw:: html
@@ -357,6 +361,17 @@ Harbor
 `Harbor <https://goharbor.io>`_ is another option for running a
 registry. Harbor provides access control, a user interface and automated
 scanning on vulnerabilities.
+
+.. _smtp-server:
+
+SMTP server
+"""""""""""
+
+Some features of the server require an SMTP server to send emails. For example,
+the server can send an email to a user when they lost their password. There
+are many ways to set up an SMTP server, and we will not go into detail here.
+Just remember that you need to configure the server to use your SMTP server
+(see :ref:`server-config-file-structure`).
 
 .. _server-deployment:
 
