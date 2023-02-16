@@ -170,8 +170,10 @@ class User(Authenticatable):
     @classmethod
     def exists(cls, field, value):
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(getattr(cls, field) == value))\
+        result = session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
+        session.commit()
+        return result
 
     def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
         """

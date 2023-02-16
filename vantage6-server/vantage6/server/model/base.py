@@ -306,6 +306,7 @@ class ModelBase:
             except NoResultFound:
                 result = None
 
+        # Always commit to avoid that transaction is not ended in Postgres
         session.commit()
 
         return result
