@@ -75,8 +75,14 @@ class Database(metaclass=Singleton):
         if URL.host is None and URL.database:
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
+        # self.engine = create_engine(uri, convert_unicode=True,
+        #                             pool_pre_ping=True)
         self.engine = create_engine(uri, convert_unicode=True,
-                                    pool_pre_ping=True)
+                                    pool_pre_ping=True,
+                                    pool_size=1, max_overflow=0,
+                                    # isolation_level="AUTOCOMMIT"
+                                    # echo_pool="debug"
+                                    )
 
         # we can call Session() to create a session, if a session already
         # exists it will return the same session (!). implicit access to the
@@ -299,6 +305,8 @@ class ModelBase:
                 result = session.query(cls).filter_by(id=id_).one()
             except NoResultFound:
                 result = None
+
+        session.commit()
 
         return result
 

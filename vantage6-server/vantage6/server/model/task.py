@@ -80,6 +80,7 @@ class Task(Base):
     def next_run_id(cls):
         session = DatabaseSessionManager.get_session()
         max_run_id = session.query(sql.func.max(cls.run_id)).scalar()
+        session.commit()
         if max_run_id:
             return max_run_id + 1
         else:
