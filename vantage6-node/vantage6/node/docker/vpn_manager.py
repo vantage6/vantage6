@@ -323,7 +323,7 @@ class VPNManager(DockerBaseManager):
         for port in ports:
             port['port'] = vpn_client_port_options.pop()
 
-        vpn_ip = self._get_vpn_ip()
+        vpn_ip = self.get_vpn_ip()
 
         # Set up forwarding VPN traffic to algorithm container
         command = 'sh -c "'
@@ -470,11 +470,6 @@ class VPNManager(DockerBaseManager):
             if self.is_isolated_interface(ip_interface, vpn_ip_isolated_netw):
                 isolated_interface = ip_interface
         return isolated_interface
-
-    def _get_vpn_ip(self):
-        _, interface = self.vpn_client_container.exec_run("ip --json addr show tun0")
-        interface = json.loads(interface)[0]
-        return interface["addr_info"][0]["local"]
 
     def is_isolated_interface(self, ip_interface: Dict,
                               vpn_ip_isolated_netw: str):
