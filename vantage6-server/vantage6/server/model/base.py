@@ -47,7 +47,7 @@ class Database(metaclass=Singleton):
         session = DatabaseSessionManager.get_session()
         for table in reversed(meta.sorted_tables):
             session.execute(table.delete())
-        session.commit()
+        # session.commit()
         DatabaseSessionManager.clear_session()
 
     def close(self):
@@ -76,14 +76,18 @@ class Database(metaclass=Singleton):
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
         self.engine = create_engine(uri, convert_unicode=True,
-                                    pool_pre_ping=True)
+                                    pool_pre_ping=True,
+                                    pool_size=1, max_overflow=0,
+                                    isolation_level="AUTOCOMMIT"
+                                    # echo_pool="debug"
+                                    )
 
         # we can call Session() to create a session, if a session already
         # exists it will return the same session (!). implicit access to the
         # Session (without calling it first). The scoped session is scoped to
         # the local thread the process is running in.
-        self.session_a = scoped_session(sessionmaker(autocommit=False,
-                                                     autoflush=False))
+        self.session_a = scoped_session(sessionmaker(autocommit=True,
+                                                     autoflush=True))
         self.session_a.configure(bind=self.engine)
 
         # because the Session factory returns the same session (if one exists
@@ -92,8 +96,8 @@ class Database(metaclass=Singleton):
         # Because the flask session is managed by the hooks `pre_request` and
         # `post request`. If we would use the same session for other tasks, the
         # session can be terminated unexpectedly.
-        self.session_b = scoped_session(sessionmaker(autocommit=False,
-                                                     autoflush=False))
+        self.session_b = scoped_session(sessionmaker(autocommit=True,
+                                                     autoflush=True))
         self.session_b.configure(bind=self.engine)
 
         # short hand to obtain a object-session.
@@ -310,14 +314,14 @@ class ModelBase:
         if not self.id:
             session.add(self)
 
-        session.commit()
+        # session.commit()
 
     def delete(self) -> None:
 
         session = DatabaseSessionManager.get_session()
 
         session.delete(self)
-        session.commit()
+        # session.commit()
 
     @classmethod
     def help(cls) -> str:

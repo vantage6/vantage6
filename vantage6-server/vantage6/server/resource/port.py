@@ -291,7 +291,7 @@ class Ports(PortBase):
         session.query(AlgorithmPort).filter(
             AlgorithmPort.result_id == result_id
         ).delete()
-        session.commit()
+        # session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
 
