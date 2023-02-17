@@ -164,14 +164,22 @@ class RunSchema(HATEOASModelSchema):
 
     organization = fields.Method("organization")
     task = fields.Method("task")
-    # result = fields.Nested("ResultSchema", many=False, exclude=["run"])
-    result = fields.Method("result")
+    # TODO Fix this before v4+ is released. We should call this field 'result'
+    # but that is not possible because of the 'result' field in the Run model.
+    result_link = fields.Method("result")
     node = fields.Function(
         func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
     )
     ports = fields.Function(
         func=lambda obj: RunPortSchema().dump(obj.ports, many=True).data
     )
+
+    def result(self, obj):
+        return {
+            "id": obj.id,
+            "link": url_for("result_with_id", id=obj.id),
+            "methods": ["GET", "PATCH"]
+        }
 
 
 class RunTaskIncludedSchema(RunSchema):
@@ -188,9 +196,17 @@ class RunNodeSchema(HATEOASModelSchema):
 class ResultSchema(HATEOASModelSchema):
     class Meta:
         model = db.Run
-        only = ('result')
+        exclude = ("assigned_at", "started_at", "finished_at", "status",
+                   "task", "ports", "organization", "log", "input",)
 
-    run = fields.Method("run")
+    run_link = fields.Method("make_run_link")
+
+    def make_run_link(self, obj):
+        return {
+            "id": obj.id,
+            "link": url_for("run_with_id", id=obj.id),
+            "methods": ["GET", "PATCH"]
+        }
 
 
 class PortSchema(HATEOASModelSchema):

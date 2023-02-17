@@ -575,7 +575,7 @@ class Run(SingleRunBase):
         return run_schema.dump(run, many=False).data, HTTPStatus.OK
 
 
-class Result(RunBase):
+class Result(SingleRunBase):
     """Resource for /api/result/<id>"""
 
     @only_for(['node', 'user', 'container'])
