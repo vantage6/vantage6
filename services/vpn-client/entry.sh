@@ -22,10 +22,10 @@ while [ "$eth1_interface" = "" ];do
 done
 
 # Extract ip range from string
-isolated_subnet=$(echo $eth1_interface| sed -En -e 's/.*inet ([0-9./]+).*/\1/p')
-echo "Isolated subnet is " $isolated_subnet
+isolated_subnet=$(echo "$eth1_interface" | sed -En -e 's/.*inet ([0-9./]+).*/\1/p')
+echo "Isolated subnet is " "$isolated_subnet"
 
-iptables -t nat -A POSTROUTING -o eth1 -s $isolated_subnet -d $isolated_subnet -j MASQUERADE
+iptables -t nat -A POSTROUTING -o eth1 -s "$isolated_subnet" -d "$isolated_subnet" -j MASQUERADE
 # Run vpn
 echo "Starting vpn client..."
 openvpn --config "$VPN_CONFIG" \
