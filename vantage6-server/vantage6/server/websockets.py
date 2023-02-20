@@ -162,9 +162,9 @@ class DefaultSocketNamespace(Namespace):
             self.socketio.emit('node-status-changed', namespace='/admin')
             self.__alert_node_status(online=False, node=auth)
 
-        # delete any data on the node stored on the server (e.g. configuration
-        # data)
-        self.__clean_node_data(auth)
+            # delete any data on the node stored on the server (e.g.
+            # configuration data)
+            self.__clean_node_data(auth)
 
         self.log.info(f'{session.name} disconnected')
 

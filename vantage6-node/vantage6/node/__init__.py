@@ -157,7 +157,8 @@ class Node(object):
             ctx=self.ctx,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
-            tasks_dir=self.__tasks_dir
+            tasks_dir=self.__tasks_dir,
+            client=self.server_io,
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
@@ -904,9 +905,19 @@ class Node(object):
                 config_to_share['encryption'] = \
                     encryption_config.get('enabled')
 
+        # TODO v4+ remove the old 'allowed_images' key, it's now inside
+        # 'policies'. It's now overwritten below if 'policies' is set.
         allowed_algos = self.config.get('allowed_images')
-        config_to_share['allowed_images'] = allowed_algos if allowed_algos \
-            else 'all'
+        config_to_share['allowed_algorithms'] = allowed_algos \
+            if allowed_algos else 'all'
+
+        # share node policies (e.g. who can run which algorithms)
+        policies = self.config.get('policies', {})
+        config_to_share['allowed_algorithms'] = \
+            policies.get('allowed_algorithms', 'all')
+        config_to_share['allowed_users'] = policies.get('allowed_users', 'all')
+        config_to_share['allowed_orgs'] = \
+            policies.get('allowed_organizations', 'all')
 
         self.log.debug(f"Sharing node configuration: {config_to_share}")
         self.socketIO.emit(

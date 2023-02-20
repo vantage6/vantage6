@@ -26,7 +26,7 @@ from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.util import logger_name
-
+from vantage6.node.server_io import NodeClient
 
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
@@ -87,7 +87,7 @@ class DockerManager(DockerBaseManager):
 
     def __init__(self, ctx: Union[DockerNodeContext, NodeContext],
                  isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
-                 tasks_dir: Path) -> None:
+                 tasks_dir: Path, client: NodeClient) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -109,6 +109,7 @@ class DockerManager(DockerBaseManager):
         config = ctx.config
         self.algorithm_env = config.get('algorithm_env', {})
         self.vpn_manager = vpn_manager
+        self.client = client
         self.__tasks_dir = tasks_dir
         self.alpine_image = config.get('alpine')
 
@@ -119,7 +120,9 @@ class DockerManager(DockerBaseManager):
         self.failed_tasks: List[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these regex
+        # TODO remove in v4+ as it is supersed by the 'policies' block
         self._allowed_images = config.get("allowed_images")
+        self._policies = config.get("policies", {})
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at
@@ -204,7 +207,9 @@ class DockerManager(DockerBaseManager):
             self.log.debug(f"Creating volume {volume_name}")
             self.docker.volumes.create(volume_name)
 
-    def is_docker_image_allowed(self, docker_image_name: str) -> bool:
+    def is_docker_image_allowed(
+        self, docker_image_name: str, initiator_id: int, init_user_id: int
+    ) -> bool:
         """
         Checks the docker image name.
 
@@ -215,13 +220,45 @@ class DockerManager(DockerBaseManager):
         ----------
         docker_image_name: str
             uri to the docker image
+        initiator_id: int
+            ID of the organization which initiated the task
+        init_user_id: int
+            ID of the user which initiated the task
 
         Returns
         -------
         bool
             Whether docker image is allowed or not
         """
+        allowed_algorithms = self._policies.get('allowed_algorithms')
 
+        # check if algorithm matches any of the regex cases
+        if allowed_algorithms:
+            if isinstance(allowed_algorithms, str):
+                allowed_algorithms = [allowed_algorithms]
+            found = False
+            for regex_expr in allowed_algorithms:
+                expr_ = re.compile(regex_expr)
+                if expr_.match(docker_image_name):
+                    found = True
+            if not found:
+                return False
+
+        # check if user or their organization is allowed
+        allowed_users = self._policies.get('allowed_users')
+        allowed_orgs = self._policies.get('allowed_organizations')
+        if allowed_users or allowed_orgs:
+            # TODO in v4+, simpify this logic when part below is removed
+            is_allowed = self.client.check_user_allowed_to_send_task(
+                allowed_users, allowed_orgs, initiator_id, init_user_id
+            )
+            if not is_allowed:
+                return False
+
+        # --------------------------------------------------------------------
+        # TODO in v4+, remove part below as it is superseded by the 'policies'
+        # block
+        # --------------------------------------------------------------------
         # if no limits are declared
         if not self._allowed_images:
             self.log.warn("All docker images are allowed on this Node!")
@@ -333,7 +370,9 @@ class DockerManager(DockerBaseManager):
             the algo container. None if VPN is not set up.
         """
         # Verify that an allowed image is used
-        if not self.is_docker_image_allowed(image):
+        if not self.is_docker_image_allowed(
+            image, task_info['initiator_id'], task_info['init_user_id']
+        ):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
             return None

@@ -226,3 +226,40 @@ class NodeClient(ClientBase):
         with open(ovpn_file, 'w') as f:
             f.write(ovpn_config)
         return True
+
+    def check_user_allowed_to_send_task(
+        self, allowed_users: list[str], allowed_orgs: list[str],
+        initiator_id: int, init_user_id: int
+    ) -> bool:
+        """
+        Check if the user is allowed to send a task to this node
+
+        Parameters
+        ----------
+        allowed_users: list[str]
+            List of allowed user IDs or usernames
+        allowed_orgs: list[str]
+            List of allowed organization IDs or names
+        initiator_id: int
+            ID of the organization that initiated the task
+        init_user_id: int
+            ID of the user that initiated the task
+
+        Returns
+        -------
+        bool
+            Whether or not the user is allowed to send a task to this node
+        """
+        for user in allowed_users:
+            try:
+                assert init_user_id == int(user)
+                return True
+            except Exception:
+                # TODO check if username is allowed. This requires probably a
+                # better filter on the server side to check multiple usernames
+                resp = self.request("user", params={"username": user})
+
+        # TODO get from current user: user id and org id
+        # TODO get user id and org id for all allowed orgs
+        # TODO then check if current user is in allowed users OR orgs
+
