@@ -252,7 +252,6 @@ class DatabaseSessionManager:
     def new_session():
         # log.critical('Create new DB session')
         if DatabaseSessionManager.in_flask_request():
-
             g.session = Database().session_a
 
             # g.session.refresh()
