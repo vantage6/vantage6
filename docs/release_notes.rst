@@ -1,6 +1,21 @@
 Release notes
 =============
 
+3.7.2
+-----
+
+*20 february 2023*
+
+- **Bugfix**
+
+ -  In 3.7.1, some sessions were closed, but not all. Now, sessions are also
+    terminated in the socketIO events
+    (`PR#543 <https://github.com/vantage6/vantage6/pull/543>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Latest versions of VPN images were not automatically downloaded by node
+    on VPN connection startup. This has been corrected (
+    `PR#533 <https://github.com/vantage6/vantage6/pull/542>`_).
+
 3.7.1
 -----
 
