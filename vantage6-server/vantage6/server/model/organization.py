@@ -41,18 +41,14 @@ class Organization(Base):
         # is already imported in model.Result
         from vantage6.server.model.result import Result
         session = DatabaseSessionManager.get_session()
-        result_ids = session.query(Result.id)\
+        return session.query(Result.id)\
                       .filter(Result.organization_id == self.id).all()
-        session.commit()
-        return result_ids
 
     @classmethod
     def get_by_name(cls, name):
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.query(cls).filter_by(name=name).first()
-            session.commit()
-            return result
+            return session.query(cls).filter_by(name=name).first()
         except NoResultFound:
             return None
 

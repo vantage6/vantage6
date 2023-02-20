@@ -301,9 +301,12 @@ class ModelBase:
             except NoResultFound:
                 result = None
 
+<<<<<<< HEAD
         # Always commit to avoid that transaction is not ended in Postgres
         session.commit()
 
+=======
+>>>>>>> parent of b2f9b412 (Fix sessions stuck in idle transactions by committing every select query)
         return result
 
     def save(self) -> None:

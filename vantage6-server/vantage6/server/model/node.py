@@ -47,7 +47,6 @@ class Node(Authenticatable):
         session = DatabaseSessionManager.get_session()
 
         nodes = session.query(cls).all()
-        session.commit()
         for node in nodes:
             is_correct_key = node.check_key(api_key)
             if is_correct_key:
@@ -67,19 +66,15 @@ class Node(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
 
-        result = session.query(cls).filter_by(status='online').all()
-        session.commit()
-        return result
+        return session.query(cls).filter_by(status='online').all()
 
     @classmethod
     def exists(cls, organization_id, collaboration_id):
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(
+        return session.query(cls).filter_by(
             organization_id=organization_id,
             collaboration_id=collaboration_id
         ).scalar()
-        session.commit()
-        return result
 
     def __repr__(self):
         return (
