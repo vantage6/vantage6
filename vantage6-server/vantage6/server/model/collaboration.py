@@ -42,14 +42,18 @@ class Collaboration(Base):
         collaboration found is returned."""
         session = DatabaseSessionManager.get_session()
         try:
-            return session.query(cls).filter_by(name=name).first()
+            result = session.query(cls).filter_by(name=name).first()
+            session.commit()
+            return result
         except NoResultFound:
             return None
 
     @classmethod
     def name_exists(cls, name):
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(cls.name == name)).scalar()
+        result = session.query(exists().where(cls.name == name)).scalar()
+        session.commit()
+        return result
 
     def __repr__(self):
         number_of_organizations = len(self.organizations)
