@@ -47,7 +47,6 @@ class Database(metaclass=Singleton):
         session = DatabaseSessionManager.get_session()
         for table in reversed(meta.sorted_tables):
             session.execute(table.delete())
-        # session.commit()
         DatabaseSessionManager.clear_session()
 
     def close(self):
@@ -301,30 +300,18 @@ class ModelBase:
             except NoResultFound:
                 result = None
 
-<<<<<<< HEAD
-        # Always commit to avoid that transaction is not ended in Postgres
-        session.commit()
-
-=======
->>>>>>> parent of b2f9b412 (Fix sessions stuck in idle transactions by committing every select query)
         return result
 
     def save(self) -> None:
-
         session = DatabaseSessionManager.get_session()
 
         # new objects do not have an `id`
         if not self.id:
             session.add(self)
 
-        # session.commit()
-
     def delete(self) -> None:
-
         session = DatabaseSessionManager.get_session()
-
         session.delete(self)
-        # session.commit()
 
     @classmethod
     def help(cls) -> str:

@@ -164,7 +164,6 @@ class User(Authenticatable):
         session = DatabaseSessionManager.get_session()
         result = session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
-        session.commit()
         return result
 
     def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
