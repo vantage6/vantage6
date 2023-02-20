@@ -435,8 +435,8 @@ class VPNAddress(ServicesResources):
 
         # get all ports for the tasks requested
         q = g.session.query(AlgorithmPort)\
-                     .join(Result)\
-                     .filter(Result.task_id.in_(task_ids))\
+                     .join(Run)\
+                     .filter(Run.task_id.in_(task_ids))\
 
         # filter by label if requested
         filter_label = request.args.get('label')
