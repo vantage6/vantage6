@@ -77,10 +77,7 @@ class Database(metaclass=Singleton):
 
         self.engine = create_engine(uri, convert_unicode=True,
                                     pool_pre_ping=True,
-                                    pool_size=1, max_overflow=0,
-                                    isolation_level="AUTOCOMMIT"
-                                    # echo_pool="debug"
-                                    )
+                                    isolation_level="AUTOCOMMIT")
 
         # we can call Session() to create a session, if a session already
         # exists it will return the same session (!). implicit access to the
