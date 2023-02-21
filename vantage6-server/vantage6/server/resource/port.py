@@ -287,10 +287,10 @@ class Ports(PortBase):
                 HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
-        session = g.session.query(AlgorithmPort).filter(
+        g.session.query(AlgorithmPort).filter(
             AlgorithmPort.result_id == result_id
         ).delete()
-        session.commit()
+        g.session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
 
