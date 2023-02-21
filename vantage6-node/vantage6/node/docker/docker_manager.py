@@ -26,6 +26,7 @@ from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.util import logger_name
+from vantage6.node.server_io import NodeClient
 
 
 from vantage6.node.docker.exceptions import (
@@ -87,7 +88,7 @@ class DockerManager(DockerBaseManager):
 
     def __init__(self, ctx: Union[DockerNodeContext, NodeContext],
                  isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
-                 tasks_dir: Path) -> None:
+                 tasks_dir: Path, client: NodeClient) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -101,6 +102,7 @@ class DockerManager(DockerBaseManager):
                 VPN Manager object
             tasks_dir: Path
                 Directory in which this task's data are stored
+            client: NodeClient
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)
@@ -109,6 +111,7 @@ class DockerManager(DockerBaseManager):
         config = ctx.config
         self.algorithm_env = config.get('algorithm_env', {})
         self.vpn_manager = vpn_manager
+        self.client = client
         self.__tasks_dir = tasks_dir
         self.alpine_image = config.get('alpine')
 
@@ -427,6 +430,11 @@ class DockerManager(DockerBaseManager):
             # remove finished tasks from active task list
             self.active_tasks.remove(finished_task)
 
+            # remove the VPN ports of this run from the database
+            self.client.request(
+                'port', params={'result_id': finished_task.result_id},
+                method="DELETE"
+            )
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()
