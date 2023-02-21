@@ -250,16 +250,44 @@ class NodeClient(ClientBase):
         bool
             Whether or not the user is allowed to send a task to this node
         """
+        # check if task-initating user id is in allowed users
         for user in allowed_users:
             try:
                 assert init_user_id == int(user)
                 return True
             except Exception:
-                # TODO check if username is allowed. This requires probably a
-                # better filter on the server side to check multiple usernames
-                resp = self.request("user", params={"username": user})
+                pass
 
-        # TODO get from current user: user id and org id
-        # TODO get user id and org id for all allowed orgs
-        # TODO then check if current user is in allowed users OR orgs
+        # check if task-initiating org id is in allowed orgs
+        for org in allowed_orgs:
+            try:
+                assert initiator_id == int(org)
+                return True
+            except Exception:
+                pass
+
+        # TODO it would be nicer to check all users in a single request
+        # but that requires other multi-filter options in the API
+        # TODO this option is now disabled since nodes do not have permission
+        # to access user information. We need to decide if we want to give them
+        # that permission for this.
+        # ----------------------------------------------------------
+        # check if task-initiating user name is in allowed users
+        # for user in allowed_users:
+        #     resp = self.request("user", params={"username": user})
+        #     print(resp)
+        #     for d in resp:
+        #         if d.get("username") == user and d.get("id") == init_user_id:
+        #             return True
+
+        # TODO rename initiator_id to init_org_id in v4+
+        # check if task-initiating org name is in allowed orgs
+        for org in allowed_orgs:
+            resp = self.request("organization", params={"name": org})
+            for d in resp:
+                if d.get("name") == org and d.get("id") == initiator_id:
+                    return True
+
+        # not in any of the allowed users or orgs
+        return False
 

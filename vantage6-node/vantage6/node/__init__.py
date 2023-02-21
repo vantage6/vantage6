@@ -298,10 +298,17 @@ class Node(object):
             database=task.get('database', 'default')
         )
 
-        # save task status to the server and send socket event to update others
+        # save task status to the server
+        update={'status': task_status}
+        if task_status == TaskStatus.NOT_ALLOWED:
+            # set finished_at to now, so that the task is not picked up again
+            # (as the task is not started at all, unlike other crashes, it will
+            # never finish and hence not be set to finished)
+            update['finished_at'] = datetime.datetime.now().isoformat()
         self.server_io.patch_results(
-            id=taskresult['id'], result={'status': task_status}
+            id=taskresult['id'], result=update
         )
+        # send socket event to alert everyone of task status change
         self.socketIO.emit(
             'algorithm_status_change',
             data={
@@ -915,9 +922,11 @@ class Node(object):
         policies = self.config.get('policies', {})
         config_to_share['allowed_algorithms'] = \
             policies.get('allowed_algorithms', 'all')
-        config_to_share['allowed_users'] = policies.get('allowed_users', 'all')
-        config_to_share['allowed_orgs'] = \
-            policies.get('allowed_organizations', 'all')
+        if policies.get('allowed_users') is not None:
+            config_to_share['allowed_users'] = policies.get('allowed_users')
+        if policies.get('allowed_organizations') is not None:
+            config_to_share['allowed_orgs'] = \
+                policies.get('allowed_organizations')
 
         self.log.debug(f"Sharing node configuration: {config_to_share}")
         self.socketIO.emit(

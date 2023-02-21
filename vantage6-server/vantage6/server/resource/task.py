@@ -346,6 +346,16 @@ class Tasks(TaskBase):
                 "Cannot create this task because there are no nodes registered"
                 f" for the following organization(s): {', '.join(missing)}."
             )}, HTTPStatus.BAD_REQUEST
+        # check if any of the nodes that are offline shared their configuration
+        # info and if this prevents this user from creating this task
+        if g.user:
+            for node in nodes:
+                if self._node_doesnt_allow_user_task(node.config):
+                    return {"msg": (
+                        "Cannot create this task because one of the nodes that"
+                        " you are trying to send this task to does not allow "
+                        "you to create tasks."
+                    )}, HTTPStatus.BAD_REQUEST
 
         # figure out the initiating organization of the task
         if g.user:
@@ -505,6 +515,40 @@ class Tasks(TaskBase):
             return False
 
         return True
+
+    def _node_doesnt_allow_user_task(
+        self, node_configs: list[db.NodeConfig]
+    ) -> bool:
+        """
+        Checks if the node allows user to create task.
+
+        Parameters
+        ----------
+        node_configs : list[db.NodeConfig]
+            List of node configurations.
+
+        Returns
+        -------
+        bool
+            True if the node doesn't allow the user to create task.
+        """
+        has_limitations = False
+        for config_option in node_configs:
+            if config_option.key == "allowed_users":
+                has_limitations = True
+                # TODO expand when we allow also usernames, like orgs below
+                if g.user.id == int(config_option.value):
+                    return False
+            elif config_option.key == "allowed_orgs":
+                has_limitations = True
+                if config_option.value.isdigit():
+                    if g.user.organization_id == int(config_option.value):
+                        return False
+                else:
+                    org = db.Organization.get_by_name(config_option.value)
+                    if org and g.user.organization_id == org.id:
+                        return False
+        return has_limitations
 
 
 class Task(TaskBase):

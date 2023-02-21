@@ -208,7 +208,7 @@ class DockerManager(DockerBaseManager):
             self.docker.volumes.create(volume_name)
 
     def is_docker_image_allowed(
-        self, docker_image_name: str, initiator_id: int, init_user_id: int
+        self, docker_image_name: str, task_info: dict
     ) -> bool:
         """
         Checks the docker image name.
@@ -220,19 +220,21 @@ class DockerManager(DockerBaseManager):
         ----------
         docker_image_name: str
             uri to the docker image
-        initiator_id: int
-            ID of the organization which initiated the task
-        init_user_id: int
-            ID of the user which initiated the task
+        task_info: dict
+            Dictionary with information about the task
 
         Returns
         -------
         bool
             Whether docker image is allowed or not
         """
-        allowed_algorithms = self._policies.get('allowed_algorithms')
+        # in case of subtasks, don't check anymore, as parent has already
+        # been checked
+        if task_info['parent'] is not None:
+            return True
 
         # check if algorithm matches any of the regex cases
+        allowed_algorithms = self._policies.get('allowed_algorithms')
         if allowed_algorithms:
             if isinstance(allowed_algorithms, str):
                 allowed_algorithms = [allowed_algorithms]
@@ -242,17 +244,24 @@ class DockerManager(DockerBaseManager):
                 if expr_.match(docker_image_name):
                     found = True
             if not found:
+                self.log.warn("A task was sent with a docker image that this"
+                               " node does not allow to run.")
                 return False
 
         # check if user or their organization is allowed
-        allowed_users = self._policies.get('allowed_users')
-        allowed_orgs = self._policies.get('allowed_organizations')
+        allowed_users = self._policies.get('allowed_users', [])
+        allowed_orgs = self._policies.get('allowed_organizations', [])
         if allowed_users or allowed_orgs:
-            # TODO in v4+, simpify this logic when part below is removed
+            # TODO in v4+, simpify this logic when part below is removed (
+            # simply return the result of the check_user_allowed_to_send_task)
             is_allowed = self.client.check_user_allowed_to_send_task(
-                allowed_users, allowed_orgs, initiator_id, init_user_id
+                allowed_users, allowed_orgs, task_info['initiator'],
+                task_info['init_user']
             )
             if not is_allowed:
+                self.log.warn(
+                    "A task was sent by a user or organization that this node"
+                    " does not allow to start tasks.")
                 return False
 
         # --------------------------------------------------------------------
@@ -370,18 +379,16 @@ class DockerManager(DockerBaseManager):
             the algo container. None if VPN is not set up.
         """
         # Verify that an allowed image is used
-        if not self.is_docker_image_allowed(
-            image, task_info['initiator_id'], task_info['init_user_id']
-        ):
+        if not self.is_docker_image_allowed(image, task_info):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
-            return None
+            return TaskStatus.NOT_ALLOWED,  None
 
         # Check that this task is not already running
         if self.is_running(result_id):
             self.log.warn("Task is already being executed, discarding task")
             self.log.debug(f"result_id={result_id} is discarded")
-            return None
+            return TaskStatus.ACTIVE, None
 
         task = DockerTaskManager(
             image=image,
