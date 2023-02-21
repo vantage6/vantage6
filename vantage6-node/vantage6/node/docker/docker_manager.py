@@ -103,6 +103,7 @@ class DockerManager(DockerBaseManager):
             tasks_dir: Path
                 Directory in which this task's data are stored
             client: NodeClient
+                Client object to communicate with the server
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)
