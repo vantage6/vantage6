@@ -11,6 +11,7 @@ import urllib.parse as urlparse
 from http import HTTPStatus
 from flask.globals import g
 from flask import request
+from flask_restful import Api
 import requests
 from requests_oauthlib import OAuth2Session
 
@@ -25,7 +26,19 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the collaboration resource.
+
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 

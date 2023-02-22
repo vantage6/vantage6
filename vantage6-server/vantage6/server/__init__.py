@@ -63,9 +63,16 @@ log = logging.getLogger(module_name)
 
 
 class ServerApp:
-    """Vantage6 server instance."""
+    """
+    Vantage6 server instance.
 
-    def __init__(self, ctx):
+    Attributes
+    ----------
+    ctx : ServerContext
+        Context object that contains the configuration of the server.
+    """
+
+    def __init__(self, ctx: ServerContext):
         """Create a vantage6-server application."""
 
         self.ctx = ctx
