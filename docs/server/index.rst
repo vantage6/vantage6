@@ -17,3 +17,4 @@ server.
     optional
     use
     configure
+    shell
