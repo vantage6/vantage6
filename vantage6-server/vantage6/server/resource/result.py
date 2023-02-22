@@ -30,8 +30,6 @@ from vantage6.server.model import (
     Collaboration,
     Organization
 )
-from vantage6.server.model.base import DatabaseSessionManager
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -194,7 +192,7 @@ class Results(ResultBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(db_Result)
+        q = g.session.query(db_Result)
 
         # relation filters
         for param in ['task_id', 'organization_id', 'port']:

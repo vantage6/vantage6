@@ -78,11 +78,13 @@ class Rule(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            return session.query(cls).filter_by(
+            result = session.query(cls).filter_by(
                 name=name,
                 operation=operation,
                 scope=scope
             ).first()
+            session.commit()
+            return result
         except NoResultFound:
             return None
 

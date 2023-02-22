@@ -8,7 +8,7 @@ a significant contribution to the design and implementation of vantage6.
 
     .. image:: /images/iknl-logo.jpg
         :alt: IKNL logo
-        :align: left
+        :align: center
 
 * Anja van Gestel
 * Bart van Beusekom

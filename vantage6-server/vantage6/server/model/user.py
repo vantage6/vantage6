@@ -227,7 +227,9 @@ class User(Authenticatable):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(username=username).one()
+        result = session.query(cls).filter_by(username=username).one()
+        session.commit()
+        return result
 
     @classmethod
     def get_by_email(cls, email) -> User:
@@ -250,7 +252,9 @@ class User(Authenticatable):
             If no user with the given email exists
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(email=email).one()
+        result = session.query(cls).filter_by(email=email).one()
+        session.commit()
+        return result
 
     @classmethod
     def username_exists(cls, username) -> bool:
@@ -268,8 +272,10 @@ class User(Authenticatable):
             Whether or not user with given username exists
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(cls.username == username))\
+        result = session.query(exists().where(cls.username == username))\
             .scalar()
+        session.commit()
+        return result
 
     @classmethod
     def exists(cls, field, value) -> bool:
@@ -289,8 +295,10 @@ class User(Authenticatable):
             Whether or not user with given key-value exists
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(getattr(cls, field) == value))\
+        result = session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
+        session.commit()
+        return result
 
     def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
         """

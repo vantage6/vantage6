@@ -294,7 +294,6 @@ class DatabaseSessionManager:
         """
         # log.critical('Create new DB session')
         if DatabaseSessionManager.in_flask_request():
-
             g.session = Database().session_a
 
             # g.session.refresh()
@@ -357,6 +356,9 @@ class ModelBase:
                 result = session.query(cls).filter_by(id=id_).one()
             except NoResultFound:
                 result = None
+
+        # Always commit to avoid that transaction is not ended in Postgres
+        session.commit()
 
         return result
 

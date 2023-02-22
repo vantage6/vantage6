@@ -1,6 +1,55 @@
 Release notes
 =============
 
+3.7.3
+-----
+
+*22 february 2023*
+
+- **Bugfix**
+
+ -  A database commit in 3.7.2 was done on the wrong variable, this has been
+    corrected (`PR#547 <https://github.com/vantage6/vantage6/pull/547>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Delete entries in the VPN port table after the algorithm has completed
+    (`PR#548 <https://github.com/vantage6/vantage6/pull/548>`_).
+ -  Limit number of characters of the task input printed to the logs
+    (`PR#550 <https://github.com/vantage6/vantage6/pull/550>`_).
+
+3.7.2
+-----
+
+*20 february 2023*
+
+- **Bugfix**
+
+ -  In 3.7.1, some sessions were closed, but not all. Now, sessions are also
+    terminated in the socketIO events
+    (`PR#543 <https://github.com/vantage6/vantage6/pull/543>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Latest versions of VPN images were not automatically downloaded by node
+    on VPN connection startup. This has been corrected (
+    `PR#533 <https://github.com/vantage6/vantage6/pull/542>`_).
+
+3.7.1
+-----
+
+*16 february 2023*
+
+- **Change**
+
+ -  Some changes to the release pipeline.
+
+- **Bugfix**
+
+ -  ``iptables`` dependency was missing in the VPN client container (
+    `PR#533 <https://github.com/vantage6/vantage6/pull/533>`_
+    `Issue#518 <https://github.com/vantage6/vantage6/issues/518>`_).
+ -  Fixed a bug that did not close Postgres DB sessions, resulting in a dead
+    server (`PR#540 <https://github.com/vantage6/vantage6/pull/540>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+
+
 3.7.0
 -----
 

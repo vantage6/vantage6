@@ -11,6 +11,7 @@ from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.model.base import DatabaseSessionManager
 
 ALL_NODES_ROOM = 'all_nodes'
 
@@ -96,6 +97,9 @@ class DefaultSocketNamespace(Namespace):
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
     @staticmethod
     def _add_node_to_rooms(node: Authenticatable) -> None:
         """
@@ -169,6 +173,9 @@ class DefaultSocketNamespace(Namespace):
 
         self.log.info(f'{session.name} disconnected')
 
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
     def on_message(self, message: str) -> None:
         """
         On receiving a message from a client, log it.
@@ -239,6 +246,9 @@ class DefaultSocketNamespace(Namespace):
             }, room=f"collaboration_{collaboration_id}"
         )
 
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
     def __join_room_and_notify(self, room: str) -> None:
         """
         Joins room and notify other clients in this room.
@@ -302,3 +312,8 @@ class DefaultSocketNamespace(Namespace):
                 namespace='/tasks',
                 room=room
             )
+
+    @staticmethod
+    def __cleanup() -> None:
+        """ Cleanup database connections """
+        DatabaseSessionManager.clear_session()

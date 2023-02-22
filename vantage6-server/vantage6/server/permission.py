@@ -277,11 +277,13 @@ class PermissionManager:
             Whenever this rule exists in the database or not
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(Rule).filter_by(
+        result = session.query(Rule).filter_by(
             name=name,
             operation=operation,
             scope=scope
         ).scalar()
+        session.commit()
+        return result
 
     def verify_user_rules(self, rules: List[Rule]) -> Union[dict, bool]:
         """

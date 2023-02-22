@@ -28,5 +28,6 @@ def tasks(self, collaboration: Collaboration, organization: Organization):
         .filter_by(collabotation_id=collaboration.id)\
         .filter(Node == node.id)\
         .all()
+    session.commit()
 
     return tasks
