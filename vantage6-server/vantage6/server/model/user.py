@@ -141,17 +141,23 @@ class User(Authenticatable):
     @classmethod
     def get_by_username(cls, username):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(username=username).one()
+        result = session.query(cls).filter_by(username=username).one()
+        session.commit()
+        return result
 
     @classmethod
     def get_by_email(cls, email):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(email=email).one()
+        result = session.query(cls).filter_by(email=email).one()
+        session.commit()
+        return result
 
     @classmethod
     def get_user_list(cls, filters=None):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).all()
+        result = session.query(cls).all()
+        session.commit()
+        return result
 
     @classmethod
     def username_exists(cls, username):

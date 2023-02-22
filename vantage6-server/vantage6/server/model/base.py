@@ -251,7 +251,6 @@ class DatabaseSessionManager:
     def new_session():
         # log.critical('Create new DB session')
         if DatabaseSessionManager.in_flask_request():
-
             g.session = Database().session_a
 
             # g.session.refresh()
@@ -299,6 +298,9 @@ class ModelBase:
             except NoResultFound:
                 result = None
 
+        # Always commit to avoid that transaction is not ended in Postgres
+        session.commit()
+
         return result
 
     def save(self) -> None:
@@ -321,8 +323,10 @@ class ModelBase:
     @classmethod
     def exists(cls, field, value):
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(getattr(cls, field) == value))\
+        result = session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
+        session.commit()
+        return result
 
     @classmethod
     def help(cls) -> str:
