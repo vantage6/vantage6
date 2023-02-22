@@ -21,8 +21,9 @@ as much).
 -  :ref:`docker`
 
 .. note::
-    Note that it may be possible to run the server on other operating systems
-    (e.g. Windows, MacOS) but this is not tested and therefore not recommended.
+    For the server, Ubuntu is highly recommended. It is possible to run a
+    development server (using `vserver start`) on Windows or MacOS, but for
+    production purposes we recommend using Ubuntu.
 
 .. warning::
     The hardware requirements of the node also depend on the algorithms that
