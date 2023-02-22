@@ -65,6 +65,7 @@ class Result(Base):
                 .filter(self.organization_id == Node.organization_id)\
                 .filter(Task.collaboration_id == Node.collaboration_id)\
                 .one()
+            session.commit()
         # FIXME 2022-03-03 BvB: the following errors are not currently
         # forwarded to the user as request response. Make that happen.
         except NoResultFound:

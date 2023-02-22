@@ -11,6 +11,9 @@ from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.model.base import DatabaseSessionManager
+
+ALL_NODES_ROOM = 'all_nodes'
 
 
 class DefaultSocketNamespace(Namespace):
@@ -26,7 +29,7 @@ class DefaultSocketNamespace(Namespace):
 
     log = logging.getLogger(logger_name(__name__))
 
-    def on_connect(self):
+    def on_connect(self) -> None:
         """
         A new incoming connection request from a client.
 
@@ -90,18 +93,36 @@ class DefaultSocketNamespace(Namespace):
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
     @staticmethod
-    def _add_node_to_rooms(node: Authenticatable):
-        """ Connect node to appropriate websocket rooms """
+    def _add_node_to_rooms(node: Authenticatable) -> None:
+        """
+        Connect node to appropriate websocket rooms
+
+        Parameters
+        ----------
+        node: Authenticatable
+            Node that is to be added to the rooms
+        """
         # node join rooms for all nodes and rooms for their collaboration
-        session.rooms.append('all_nodes')
+        session.rooms.append(ALL_NODES_ROOM)
         session.rooms.append(f'collaboration_{node.collaboration_id}')
         session.rooms.append(
             f'collaboration_{node.collaboration_id}_organization_'
             f'{node.organization_id}')
 
     @staticmethod
-    def _add_user_to_rooms(user: Authenticatable):
+    def _add_user_to_rooms(user: Authenticatable) -> None:
+        """
+        Connect user to appropriate websocket rooms
+
+        Parameters
+        ----------
+        user: Authenticatable
+            User that is to be added to the rooms
+        """
         # check for which collab rooms the user has permission to enter
         session.user = db.User.get(session.auth_id)
         if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
@@ -124,11 +145,13 @@ class DefaultSocketNamespace(Namespace):
                     f'{user.organization.id}'
                 )
 
-    def on_disconnect(self):
+    def on_disconnect(self) -> None:
         """
         Client that disconnects is removed from all rooms they were in.
 
-        If nodes disconnect, their status is also set to offline.
+        If nodes disconnect, their status is also set to offline and users may
+        be alerted to that. Also, any information on the node (e.g.
+        configuration) is removed from the database.
         """
         for room in session.rooms:
             # self.__leave_room_and_notify(room)
@@ -146,9 +169,16 @@ class DefaultSocketNamespace(Namespace):
             self.socketio.emit('node-status-changed', namespace='/admin')
             self.__alert_node_status(online=False, node=auth)
 
+        # delete any data on the node stored on the server (e.g. configuration
+        # data)
+        self.__clean_node_data(auth)
+
         self.log.info(f'{session.name} disconnected')
 
-    def on_message(self, message: str):
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
+    def on_message(self, message: str) -> None:
         """
         On receiving a message from a client, log it.
 
@@ -159,7 +189,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.info('received message: ' + message)
 
-    def on_error(self, e: str):
+    def on_error(self, e: str) -> None:
         """
         An receiving an error from a client, log it.
 
@@ -170,18 +200,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.error(e)
 
-    def on_join_room(self, room: str):
-        """
-        Let clients join any room they like by specifying the name.
-
-        Parameters
-        ----------
-        room : str
-            name of the room the client wants to join
-        """
-        self.__join_room_and_notify(room)
-
-    def on_algorithm_status_change(self, data: Dict):
+    def on_algorithm_status_change(self, data: Dict) -> None:
         """
         An algorithm container has changed its status. This status change may
         be that the algorithm has finished, crashed, etc. Here we notify the
@@ -229,7 +248,44 @@ class DefaultSocketNamespace(Namespace):
             }, room=f"collaboration_{collaboration_id}"
         )
 
-    def __join_room_and_notify(self, room: str):
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
+    def on_node_info_update(self, node_config: dict) -> None:
+        """
+        A node sends information about its configuration and other properties.
+        Store this in the database for the duration of the node's session.
+
+        Parameters
+        ----------
+        node_config: dict
+            Dictionary containing the node's configuration.
+        """
+        node = db.Node.get(session.auth_id)
+
+        # delete any old data that may be present (if cleanup on disconnect
+        # failed)
+        self.__clean_node_data(node=node)
+
+        # store (new) node config
+        to_store = []
+        for k, v in node_config.items():
+            # add single item or list of items
+            if not isinstance(v, list):
+                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
+            else:
+                to_store.extend([
+                    db.NodeConfig(node_id=node.id, key=k, value=i)
+                    for i in v
+                ])
+
+        node.config = to_store
+        node.save()
+
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
+    def __join_room_and_notify(self, room: str) -> None:
         """
         Joins room and notify other clients in this room.
 
@@ -241,9 +297,9 @@ class DefaultSocketNamespace(Namespace):
         join_room(room)
         msg = f'{session.type.title()} <{session.name}> joined room <{room}>'
         self.log.info(msg)
-        emit('message', msg, room=room)
+        self.__notify_room_join_or_leave(room, msg)
 
-    def __leave_room_and_notify(self, room: str):
+    def __leave_room_and_notify(self, room: str) -> None:
         """
         Leave room and notify other clients in this room.
 
@@ -255,7 +311,20 @@ class DefaultSocketNamespace(Namespace):
         leave_room(room)
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
-        emit('message', msg, room=room)
+        self.__notify_room_join_or_leave(room, msg)
+
+    @staticmethod
+    def __notify_room_join_or_leave(room: str, msg: str) -> None:
+        """
+        Notify a room that one of its clients is joining or leaving
+
+        """
+        # share message with other users and nodes, except for all_nodes. That
+        # room must never be notified for join or leave events since it
+        # contains nodes from different collaborations that shouldn't
+        # know about each other.
+        if room != ALL_NODES_ROOM:
+            emit('message', msg, room=room)
 
     def __alert_node_status(self, online: bool, node: Authenticatable) -> None:
         """
@@ -279,3 +348,22 @@ class DefaultSocketNamespace(Namespace):
                 namespace='/tasks',
                 room=room
             )
+
+    @staticmethod
+    def __clean_node_data(node: db.Node) -> None:
+        """
+        Remove any information from the database that the node shared about
+        e.g. its configuration
+
+        Parameters
+        ----------
+        node: db.Node
+            The node SQLALchemy object
+        """
+        for conf in node.config:
+            conf.delete()
+
+    @staticmethod
+    def __cleanup() -> None:
+        """ Cleanup database connections """
+        DatabaseSessionManager.clear_session()

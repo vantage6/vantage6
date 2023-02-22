@@ -3,7 +3,8 @@ FROM alpine:${ALPINE_VERSION}
 
 RUN apk add --no-cache \
         bind-tools \
-        openvpn
+        openvpn \
+        iptables
 
 RUN mkdir /app
 

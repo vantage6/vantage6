@@ -8,7 +8,6 @@ from flask_restful import reqparse
 
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -195,7 +194,7 @@ class Users(UserBase):
         tags: ["User"]
         """
         args = request.args
-        q = DatabaseSessionManager.get_session().query(db.User)
+        q = g.session.query(db.User)
 
         # filter by any field of this endpoint
         for param in ['username', 'firstname', 'lastname', 'email']:

@@ -109,7 +109,9 @@ class Collaboration(Base):
         # in collab names anymore, so correct docstring above
         session = DatabaseSessionManager.get_session()
         try:
-            return session.query(cls).filter_by(name=name).first()
+            result = session.query(cls).filter_by(name=name).first()
+            session.commit()
+            return result
         except NoResultFound:
             return None
 
@@ -129,7 +131,9 @@ class Collaboration(Base):
             True if a collaboration with the given name exists, else False
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(cls.name == name)).scalar()
+        result = session.query(exists().where(cls.name == name)).scalar()
+        session.commit()
+        return result
 
     def __repr__(self) -> str:
         """

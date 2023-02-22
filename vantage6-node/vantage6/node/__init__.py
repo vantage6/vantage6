@@ -157,7 +157,8 @@ class Node(object):
             ctx=self.ctx,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
-            tasks_dir=self.__tasks_dir
+            tasks_dir=self.__tasks_dir,
+            client=self.server_io,
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
@@ -327,6 +328,8 @@ class Node(object):
                 self.server_io.request('port', method='POST', json=port)
 
             # Save IP address of VPN container
+            # FIXME BvB 2023-02-21: node IP is now updated when task is started
+            # but this should be done when VPN connection is established
             node_id = self.server_io.whoami.id_
             node_ip = self.vpn_manager.get_vpn_ip()
             self.server_io.request(
@@ -882,6 +885,36 @@ class Node(object):
                 id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
             )
         return killed_algos
+
+    def share_node_details(self) -> None:
+        """
+        Share part of the node's configuration with the server.
+
+        This helps the other parties in a collaboration to see e.g. which
+        algorithms they are allowed to run on this node.
+        """
+        # check if node allows to share node details, otherwise return
+        if not self.config.get('share_config', True):
+            self.log.debug("Not sharing node configuration in accordance with "
+                           "the configuration setting.")
+            return
+
+        config_to_share = {}
+
+        encryption_config = self.config.get('encryption')
+        if encryption_config:
+            if encryption_config.get('enabled') is not None:
+                config_to_share['encryption'] = \
+                    encryption_config.get('enabled')
+
+        allowed_algos = self.config.get('allowed_images')
+        config_to_share['allowed_images'] = allowed_algos if allowed_algos \
+            else 'all'
+
+        self.log.debug(f"Sharing node configuration: {config_to_share}")
+        self.socketIO.emit(
+            'node_info_update', config_to_share, namespace='/tasks'
+        )
 
     def cleanup(self) -> None:
 
