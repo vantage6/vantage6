@@ -69,8 +69,7 @@ class ServerApp:
         self.ctx = ctx
 
         # initialize, configure Flask
-        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__),
-                         static_folder='static')
+        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing

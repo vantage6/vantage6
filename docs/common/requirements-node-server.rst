@@ -35,7 +35,7 @@ as much).
 Python
 """"""
 
-Installation of any of the vantage6 packages requires Python 3.7.
+Installation of any of the vantage6 packages requires Python 3.10.
 For installation instructions, see `python.org <https://python.org>`__,
 `anaconda.com <https://anaconda.com>`__ or use the package manager
 native to your OS and/or distribution.
@@ -44,9 +44,9 @@ native to your OS and/or distribution.
     We recommend you install vantage6 in a new, clean Python (Conda)
     environment.
 
-    Other version of Python >= 3.6 will most likely also work, but may give
-    issues with installing dependencies. For now, we test vantage6 on
-    version 3.7, so that is a safe choice.
+    Higher versions of Python (3.11+) will most likely also work, as might lower
+    versions (3.8 or 3.9). However, we develop and test vantage6 on version
+    3.10, so that is the safest choice.
 
 .. _docker:
 

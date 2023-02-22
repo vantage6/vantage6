@@ -26,29 +26,29 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
-def docker_wrapper(module: str, load_data=True):
+def docker_wrapper(module: str, load_data=True, use_new_client=False):
     wrapper = DockerWrapper()
-    wrapper.wrap_algorithm(module, load_data)
+    wrapper.wrap_algorithm(module, load_data, use_new_client)
 
 
-def sparql_wrapper(module: str):
+def sparql_wrapper(module: str, use_new_client=False):
     wrapper = SparqlDockerWrapper()
-    wrapper.wrap_algorithm(module)
+    wrapper.wrap_algorithm(module, use_new_client)
 
 
-def parquet_wrapper(module: str):
+def parquet_wrapper(module: str, use_new_client=False):
     wrapper = ParquetWrapper()
-    wrapper.wrap_algorithm(module)
+    wrapper.wrap_algorithm(module, use_new_client)
 
 
-def multidb_wrapper(module: str):
+def multidb_wrapper(module: str, use_new_client=False):
     wrapper = MultiDBWrapper()
-    wrapper.wrap_algorithm(module)
+    wrapper.wrap_algorithm(module, use_new_client)
 
 
 class WrapperBase(ABC):
 
-    def wrap_algorithm(self, module, load_data=True):
+    def wrap_algorithm(self, module, load_data=True, use_new_client=False):
         """
         Wrap an algorithm module to provide input and output handling for the
         vantage6 infrastructure.
@@ -116,7 +116,7 @@ class WrapperBase(ABC):
 
         # make the actual call to the method/function
         info("Dispatching ...")
-        output = dispatch_rpc(data, input_data, module, token)
+        output = dispatch_rpc(data, input_data, module, token, use_new_client)
 
         # write output from the method to mounted output file. Which will be
         # transferred back to the server by the node-instance.
