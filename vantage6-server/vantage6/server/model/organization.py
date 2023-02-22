@@ -37,9 +37,9 @@ class Organization(Base):
         Public key of the organization
     collaborations : list[Collaboration]
         List of collaborations that this organization is part of
-    results : list[Result]
+    results : list[:class:`~vantage6.server.model.result.Result`]
         List of results that are part of this organization
-    nodes : list[Node]
+    nodes : list[:class:`~vantage6.server.model.node.Node`]
         List of nodes that are part of this organization
     users : list[User]
         List of users that are part of this organization
@@ -81,7 +81,7 @@ class Organization(Base):
         from vantage6.server.model.result import Result
         session = DatabaseSessionManager.get_session()
         result_ids = session.query(Result.id)\
-                      .filter(Result.organization_id == self.id).all()
+                            .filter(Result.organization_id == self.id).all()
         session.commit()
         return result_ids
 

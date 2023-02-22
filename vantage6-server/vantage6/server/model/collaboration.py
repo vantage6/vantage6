@@ -13,8 +13,9 @@ class Collaboration(Base):
     """
     Table that describes which collaborations are available.
 
-    Collaborations are combinations of one or more :class:`.Organization` that
-    do studies together. Each :class:`.Organization` has a :class:`.Node` for
+    Collaborations are combinations of one or more organizations
+    that do studies together. Each :class:`.Organization` has a
+    :class:`~vantage6.server.model.node.Node` for
     each collaboration that it is part of. Within a collaboration multiple
     :class:`.Task` can be executed.
 
@@ -26,7 +27,7 @@ class Collaboration(Base):
         Whether the collaboration is encrypted or not
     organizations : list[:class:`.Organization`]
         List of organizations that are part of this collaboration
-    nodes : list[:class:`~.model.node.Node`]
+    nodes : list[:class:`~vantage6.server.model.node.Node`]
         List of nodes that are part of this collaboration
     tasks : list[:class:`.Task`]
         List of tasks that are part of this collaboration
@@ -75,7 +76,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        list[:class:`~.model.node.Node`]
+        list[:class:`~vantage6.server.model.node.Node`]
             List of nodes that are part of the given organizations
         """
         return [n for n in self.nodes if n.organization.id in ids]
@@ -92,7 +93,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        Union[:class:`~.model.node.Node`, None]
+        Union[:class:`~vantage6.server.model.node.Node`, None]
             Node for the given organization for this collaboration, or None if
             there is no node for the given organization.
         """
