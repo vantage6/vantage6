@@ -294,7 +294,7 @@ class DockerTaskManager(DockerBaseManager):
         return vpn_ports
 
     @staticmethod
-    def _printable_input(input: str) -> str:
+    def _printable_input(input_: str) -> str:
         """
         Return a version of the input with limited number of characters
 
@@ -308,9 +308,9 @@ class DockerTaskManager(DockerBaseManager):
         str
             Input with limited number of characters, to be printed to logs
         """
-        if len(input) > 550:
-            return f'{input[:500]}... ({len(input) - 500} characters omitted)'
-        return input
+        if len(input_) > 550:
+            return f'{input_[:500]}... ({len(input_)-500} characters omitted)'
+        return input_
 
     def _make_task_folders(self) -> None:
         """ Generate task folders """
