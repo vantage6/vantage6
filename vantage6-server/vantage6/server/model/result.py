@@ -68,16 +68,12 @@ class Result(Base):
             raise
         return node
 
-    @hybrid_property
-    def complete(self):
-        return self.finished_at is not None
-
     def __repr__(self):
         return (
             "<Result "
             f"{self.id}: '{self.task.name}', "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.task.collaboration.name}, "
-            f"is_complete: {self.complete}"
+            f"status: {self.status}"
             ">"
         )

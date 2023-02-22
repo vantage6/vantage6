@@ -15,6 +15,7 @@ from werkzeug.utils import cached_property
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.common.task_status import TaskStatus
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp, session
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
@@ -186,7 +187,7 @@ class TestResources(unittest.TestCase):
 
         if not task:
             task = Task(image="some-image", collaboration=collaboration,
-                        results=[Result()])
+                        results=[Result(status=TaskStatus.PENDING)])
             task.save()
 
         headers = self.login_node(api_key)
@@ -2218,7 +2219,7 @@ class TestResources(unittest.TestCase):
         col.save()
         task = Task(collaboration=col, image="some-image")
         task.save()
-        res = Result(task=task)
+        res = Result(task=task, status=TaskStatus.PENDING)
         res.save()
 
         headers = self.create_node_and_login(organization=org)
@@ -2324,7 +2325,8 @@ class TestResources(unittest.TestCase):
         col = Collaboration(organizations=[org])
         parent_task = Task(collaboration=col, image="some-image")
         parent_task.save()
-        parent_res = Result(organization=org, task=parent_task)
+        parent_res = Result(organization=org, task=parent_task,
+                            status=TaskStatus.PENDING)
         parent_res.save()
 
         # test wrong image name
@@ -2359,7 +2361,17 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
         # test already completed task
-        parent_res.finished_at = datetime.date(2020, 1, 1)
+        parent_res.status = TaskStatus.COMPLETED
+        parent_res.save()
+        results = self.app.post('/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col.id,
+            'image': 'some-image'
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test a failed task
+        parent_res.status = TaskStatus.FAILED
         parent_res.save()
         results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
@@ -2451,7 +2463,7 @@ class TestResources(unittest.TestCase):
         col = Collaboration(organizations=[org])
         task = Task(collaboration=col, image="some-image")
         task.save()
-        res = Result(task=task, organization=org)
+        res = Result(task=task, organization=org, status=TaskStatus.PENDING)
         res.save()
 
         headers = self.login_container(collaboration=col, organization=org,
