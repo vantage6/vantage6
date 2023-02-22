@@ -9,7 +9,5 @@ Technical Docs
 
    features/index
    architecture
-   node/node
-   server/server
    api/node
    api/server
