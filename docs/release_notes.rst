@@ -1,6 +1,21 @@
 Release notes
 =============
 
+3.7.3
+-----
+
+*22 february 2023*
+
+- **Bugfix**
+
+ -  A database commit in 3.7.2 was done on the wrong variable, this has been
+    corrected (`PR#547 <https://github.com/vantage6/vantage6/pull/547>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Delete entries in the VPN port table after the algorithm has completed
+    (`PR#548 <https://github.com/vantage6/vantage6/pull/548>`_).
+ -  Limit number of characters of the task input printed to the logs
+    (`PR#550 <https://github.com/vantage6/vantage6/pull/550>`_).
+
 3.7.2
 -----
 
