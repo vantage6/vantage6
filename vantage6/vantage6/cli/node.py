@@ -300,11 +300,11 @@ def cli_node_start(name: str, config: str, environment: str,
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
-            question = (f"Configuration '{name}' using environment "
-                        "'{environment}' does not exist.\n  Do you want to "
-                        "create this config now?")
+            warning(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} "
+                    f"using environment {Fore.RED}{environment}"
+                    f"{Style.RESET_ALL} does not exist. ")
 
-            if q.confirm(question).ask():
+            if q.confirm("Create this configuration now?").ask():
                 configuration_wizard("node", name, environment, system_folders)
 
             else:
