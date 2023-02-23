@@ -47,7 +47,7 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
-def smart_wrapper(module: str, load_data=True, use_new_client=False) -> None:
+def auto_wrapper(module: str, load_data=True, use_new_client=False) -> None:
     """
     Wrap an algorithm module to provide input and output handling for the
     vantage6 infrastructure. This function will automatically select the
