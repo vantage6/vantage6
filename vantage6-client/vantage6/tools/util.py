@@ -1,13 +1,13 @@
 import sys
 
 
-def info(msg):
-    sys.stdout.write("info > "+msg+"\n")
+def info(msg: str):
+    sys.stdout.write(f"info > {msg}\n")
 
 
-def warn(msg):
-    sys.stdout.write("warn > "+msg+"\n")
+def warn(msg: str):
+    sys.stdout.write(f"warn > {msg}\n")
 
 
-def error(msg):
-    sys.stdout.write("error > "+msg+"\n")
+def error(msg: str):
+    sys.stdout.write(f"error > {msg}\n")

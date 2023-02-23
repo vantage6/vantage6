@@ -1,29 +1,90 @@
 """
-Docker Wrapper
+Wrapper
 
-This module contains the `docker_wrapper` function for providing vantage6
-algorithms with uniform input and output handling.
+This module contains algorithm wrappers. These wrappers are used to provide
+different data adapters to the algorithms. This way we ony need to write the
+algorithm once and can use it with different data adapters.
+
+Currently the following wrappers are available:
+    - ``DockerWrapper``
+    - ``SparqlDockerWrapper``
+    - ``ParquetWrapper``
+    - ``SQLWrapper``
+    - ``OMOPWrapper``
+
+When writing the Docker file for the algorithm, you can call the
+`smart_wrapper` which will automatically select the correct wrapper based on
+the database type. The database type is set by the vantage6 node based on its
+configuration file.
+
+For legacy reasons, the ``docker_wrapper``, ``sparql_docker_wrapper`` and
+``parquet_wrapper`` are still available. These wrappers are deprecated and
+will be removed in the future.
+
+The ``multi_wrapper`` is used when multiple databases are connected to a single
+algorithm. This wrapper is separated from the other wrappers because it is not
+compatible with the ``smart_wrapper``.
 """
-
 import os
 import pickle
 import io
-from abc import ABC, abstractmethod
 import pandas
 import json
 
-from vantage6.tools.dispatch_rpc import dispatch_rpc
-from vantage6.tools.util import info
+from typing import BinaryIO
+from abc import ABC, abstractmethod
+from SPARQLWrapper import SPARQLWrapper, CSV
+
 from vantage6.tools import deserialization, serialization
+from vantage6.tools.dispatch_rpc import dispatch_rpc
+from vantage6.tools.util import info, error
 from vantage6.tools.data_format import DataFormat
 from vantage6.tools.exceptions import DeserializationException
-from SPARQLWrapper import SPARQLWrapper, CSV
-from typing import BinaryIO
 
 _DATA_FORMAT_SEPARATOR = '.'
 _MAX_FORMAT_STRING_LENGTH = 10
 
 _SPARQL_RETURN_FORMAT = CSV
+
+
+def smart_wrapper(module: str, load_data=True, use_new_client=False) -> None:
+    """
+    Wrap an algorithm module to provide input and output handling for the
+    vantage6 infrastructure. This function will automatically select the
+    correct wrapper based on the database type.
+
+    Parameters
+    ----------
+    module : str
+        Python module name of the algorithm to wrap.
+    load_data : bool, optional
+        Wether to load the data or not, by default True
+    use_new_client : bool, optional
+        Wether to use the new client or not, by default False
+    """
+
+    # Get the database type from the environment variable, this variable is
+    # set by the vantage6 node based on its configuration file.
+    database_type = os.environ.get("DATABASE_TYPE", "csv").lower()
+
+    # Create the correct wrapper based on the database type, note that the
+    # multi database wrapper is not available.
+    if database_type == "csv":
+        wrapper = DockerWrapper()
+    elif database_type == "sparql":
+        wrapper = SparqlDockerWrapper()
+    elif database_type == "parquet":
+        wrapper = ParquetWrapper()
+    elif database_type == "sql":
+        wrapper = SQLWrapper()
+    elif database_type == "omop":
+        wrapper = OMOPWrapper()
+    else:
+        error(f"Unknown database type: {database_type}")
+        return
+
+    # Execute the algorithm with the correct data wrapper
+    wrapper.wrap_algorithm(module, load_data, use_new_client)
 
 
 def docker_wrapper(module: str, load_data=True, use_new_client=False):
@@ -128,7 +189,7 @@ class WrapperBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data):
         pass
 
 
@@ -159,13 +220,26 @@ class SparqlDockerWrapper(WrapperBase):
 
 class ParquetWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri, *_):
         return pandas.read_parquet(database_uri)
+
+
+class SQLWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        return pandas.read_sql(database_uri, input_data['query'])
+
+
+class OMOPWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        # TODO: parse the OMOP json and convert to SQL
+        return pandas.read_sql(database_uri, input_data['query'])
 
 
 class MultiDBWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(*_):
         db_labels = json.loads(os.environ.get("DB_LABELS"))
         databases = {}
         for db_label in db_labels:
