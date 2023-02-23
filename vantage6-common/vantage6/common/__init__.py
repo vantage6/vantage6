@@ -5,6 +5,7 @@ import appdirs
 import ipaddress
 import typing
 
+from typing import Union, List, Dict
 from colorama import init, Fore, Style
 
 from vantage6.common.globals import STRING_ENCODING
@@ -156,3 +157,22 @@ def is_ip_address(ip: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def get_database_config(label: str, databases: List) -> Union[Dict, None]:
+    """Get database configuration from config file
+
+    Parameters
+    ----------
+    label: str
+        Label of database configuration to retrieve
+    databases: List[Dict]
+        List of database configurations
+
+    Returns
+    -------
+    Union[Dict, None]: database configuration
+    """
+    for database in databases:
+        if database["label"] == label:
+            return database

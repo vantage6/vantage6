@@ -397,9 +397,9 @@ class DockerTaskManager(DockerBaseManager):
             proxy_host = os.environ['PROXY_SERVER_HOST']
 
         except Exception:
-            print('-' * 80)
-            print(os.environ)
-            print('-' * 80)
+            self.log.warn("PROXY_SERVER_HOST not set, using "
+                          "host.docker.internal")
+            self.log.debug(os.environ)
             proxy_host = 'host.docker.internal'
 
         # define enviroment variables for the docker-container, the
@@ -418,16 +418,32 @@ class DockerTaskManager(DockerBaseManager):
             "API_PATH": "",
         }
 
+        if database in self.databases:
+            environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
+        else:
+            # In this case the algorithm might crash if it tries to access
+            # the DATABASE_LABEL environment variable
+            self.log.warning("A user specified a database that does not "
+                             "exist. Available databases are: "
+                             f"{self.databases.keys()}. This is likely to "
+                             "result in an algorithm crash.")
+            self.debug(f"User specified database: {database}")
+
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
         # same time
         db_labels = []
         for label in self.databases:
             db = self.databases[label]
-            var_name = f'{label.upper()}_DATABASE_URI'
-            environment_variables[var_name] = \
+
+            uri_var_name = f'{label.upper()}_DATABASE_URI'
+            environment_variables[uri_var_name] = \
                 f"{self.data_folder}/{os.path.basename(db['uri'])}" \
                 if db['is_file'] else db['uri']
+
+            type_var_name = f'{label.upper()}_DATABASE_TYPE'
+            environment_variables[type_var_name] = db['type']
+
             db_labels.append(label)
         environment_variables['DB_LABELS'] = json.dumps(db_labels)
 
