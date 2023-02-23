@@ -30,7 +30,8 @@ from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_config_writeable
+    bytes_to_base64s, check_config_writeable,
+    get_database_config
 )
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -438,11 +439,30 @@ def cli_node_start(name: str, config: str, environment: str,
 
     # only mount the DB if it is a file
     info("Setting up databases")
-    db_labels = ctx.databases.keys()
+
+    # Check wether the new or old database configuration is used
+    # TODO: remove this in version v4+
+    old_format = isinstance(ctx.databases, dict)
+    if old_format:
+        db_labels = ctx.databases.keys()
+        warning('Using the old database configuration format. Please update.')
+        debug('Because you are using the old format, algorithms using the '
+              'auto wrapper will not work!')
+    else:
+        db_labels = [db['label'] for db in ctx.databases['database']]
+
     for label in db_labels:
 
-        uri = ctx.databases[label]
-        info(f"  Processing database '{label}:{uri}'")
+        if old_format:
+            uri = ctx.databases[label]
+            db_type = ''
+        else:
+            db_config = get_database_config(ctx.databases, label)
+            uri = db_config['uri']
+            db_type = db_config['type']
+
+        info(f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
+             f"{Fore.GREEN}{label}:{uri}{Style.RESET_ALL}")
         label_capitals = label.upper()
 
         try:
