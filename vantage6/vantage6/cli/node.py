@@ -442,14 +442,14 @@ def cli_node_start(name: str, config: str, environment: str,
 
     # Check wether the new or old database configuration is used
     # TODO: remove this in version v4+
-    old_format = isinstance(ctx.databases, dict)
+    old_format = isinstance(ctx.database, dict)
     if old_format:
-        db_labels = ctx.databases.keys()
+        db_labels = ctx.database.keys()
         warning('Using the old database configuration format. Please update.')
         debug('Because you are using the old format, algorithms using the '
               'auto wrapper will not work!')
     else:
-        db_labels = [db['label'] for db in ctx.databases['database']]
+        db_labels = [db['label'] for db in ctx.databases]
 
     for label in db_labels:
 

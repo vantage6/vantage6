@@ -35,7 +35,7 @@ class NodeConfiguration(Configuration):
         "server_url": Use(str),
         "port": Or(Use(int), None),
         "task_dir": Use(str),
-        "database": [Use(dict)],
+        "databases": [Use(dict)],
         "api_path": Use(str),
         "logging": {
             "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING",

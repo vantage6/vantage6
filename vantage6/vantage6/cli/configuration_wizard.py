@@ -46,7 +46,7 @@ def node_configuration_questionaire(dirs, instance_name):
         }
     ])
 
-    config["database"] = list()
+    config["databases"] = list()
     while q.confirm("Do you want to add a database?").ask():
         db_label = q.prompt([
             {
@@ -65,7 +65,7 @@ def node_configuration_questionaire(dirs, instance_name):
         ])
         db_type = q.select("Database type:", choices=DATABASE_TYPES).ask()
 
-        config["database"].append(
+        config["databases"].append(
             {
                 "label": db_label.get("label"),
                 "uri": db_path.get("uri"),
