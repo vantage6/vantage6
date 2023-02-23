@@ -3,6 +3,7 @@ import uuid
 
 from pathlib import Path
 
+from vantage6.common.globals import DATABASE_TYPES
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
@@ -45,31 +46,32 @@ def node_configuration_questionaire(dirs, instance_name):
         }
     ])
 
-    config["databases"] = q.prompt([
-        {
-            "type": "text",
-            "name": "default",
-            "message": "Default database path:"
-        }
-    ])
-    i = 1
-    while q.confirm("Do you want to add another database?").ask():
-        q2 = q.prompt([
+    config["database"] = list()
+    while q.confirm("Do you want to add a database?").ask():
+        db_label = q.prompt([
             {
                 "type": "text",
                 "name": "label",
-                "message": "Enter the label for the database:",
-                "default": f"database_{i}"
-            },
+                "message": "Enter unique label for the database:",
+                "default": "default"
+            }
+        ])
+        db_path = q.prompt([
             {
                 "type": "text",
                 "name": "path",
-                "message": "The path of the database file:",
-                "default": str(
-                    Path(config.get("databases").get("default")).parent)
-            }])
-        config["databases"][q2.get("label")] = q2.get("path")
-        i += 1
+                "message": "Database path:"
+            }
+        ])
+        db_type = q.select("Database type:", choices=DATABASE_TYPES).ask()
+
+        config["database"].append(
+            {
+                "label": db_label.get("label"),
+                "path": db_path.get("path"),
+                "type": db_type
+            }
+        )
 
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
@@ -93,10 +95,9 @@ def node_configuration_questionaire(dirs, instance_name):
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
 
-    encryption = q.select("Enable encryption?",
-                          choices=["true", "false"]).ask()
+    encryption = q.confirm("Enable encryption?", default=True).ask()
 
-    private_key = "" if encryption == "false" else \
+    private_key = "" if not encryption else \
         q.text("Path to private key file:").ask()
 
     config["encryption"] = {
