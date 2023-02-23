@@ -59,8 +59,8 @@ def node_configuration_questionaire(dirs, instance_name):
         db_path = q.prompt([
             {
                 "type": "text",
-                "name": "path",
-                "message": "Database path:"
+                "name": "uri",
+                "message": "Database URI:"
             }
         ])
         db_type = q.select("Database type:", choices=DATABASE_TYPES).ask()
@@ -68,7 +68,7 @@ def node_configuration_questionaire(dirs, instance_name):
         config["database"].append(
             {
                 "label": db_label.get("label"),
-                "path": db_path.get("path"),
+                "uri": db_path.get("uri"),
                 "type": db_type
             }
         )
