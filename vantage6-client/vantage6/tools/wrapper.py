@@ -63,9 +63,18 @@ def auto_wrapper(module: str, load_data=True, use_new_client=False) -> None:
         Wether to use the new client or not, by default False
     """
 
+    # Get the database label from the environment variable, this variable is
+    # set by the client/user/researcher.
+    try:
+        label = os.environ["USER_REQUESTED_DATABASE_LABEL"]
+    except KeyError:
+        error("No database label found, are you using an outdated node?")
+        return
+
     # Get the database type from the environment variable, this variable is
     # set by the vantage6 node based on its configuration file.
-    database_type = os.environ.get("DATABASE_TYPE", "csv").lower()
+    database_type = os.environ.get(f"{label.upper()}_DATABASE_TYPE", "csv")\
+        .lower()
 
     # Create the correct wrapper based on the database type, note that the
     # multi database wrapper is not available.
@@ -151,7 +160,7 @@ class WrapperBase(ABC):
         """
         info(f"wrapper for {module}")
 
-        # read input from the mounted inputfile.
+        # read input from the mounted input file.
         input_file = os.environ["INPUT_FILE"]
         info(f"Reading input file {input_file}")
 
@@ -167,7 +176,8 @@ class WrapperBase(ABC):
 
         # TODO in v4+, we should work with multiple databases instead of this
         # default one
-        database_uri = os.environ["DATABASE_URI"]
+        label = os.environ["USER_REQUESTED_DATABASE_LABEL"]
+        database_uri = os.environ[f"{label.upper()}_DATABASE_URI"]
         info(f"Using '{database_uri}' as database")
 
         if load_data:
