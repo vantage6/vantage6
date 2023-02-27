@@ -79,7 +79,9 @@ def auto_wrapper(module: str, load_data=True, use_new_client=False) -> None:
     # Create the correct wrapper based on the database type, note that the
     # multi database wrapper is not available.
     if database_type == "csv":
-        wrapper = DockerWrapper()
+        wrapper = CSVWrapper()
+    if database_type == "excel":
+        wrapper = ExcelWrapper()
     elif database_type == "sparql":
         wrapper = SparqlDockerWrapper()
     elif database_type == "parquet":
@@ -203,13 +205,20 @@ class WrapperBase(ABC):
         pass
 
 
-class DockerWrapper(WrapperBase):
+class CSVWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri, input_data):
         return pandas.read_csv(database_uri)
 
 
-CsvWrapper = DockerWrapper
+CsvWrapper = CSVWrapper
+DockerWrapper = CSVWrapper
+
+
+class ExcelWrapper(WrapperBase):
+    @staticmethod
+    def load_data(database_uri, input_data):
+        return pandas.read_excel(database_uri)
 
 
 class SparqlDockerWrapper(WrapperBase):
