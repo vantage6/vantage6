@@ -13,7 +13,7 @@ Currently the following wrappers are available:
     - ``OMOPWrapper``
 
 When writing the Docker file for the algorithm, you can call the
-`smart_wrapper` which will automatically select the correct wrapper based on
+`auto_wrapper` which will automatically select the correct wrapper based on
 the database type. The database type is set by the vantage6 node based on its
 configuration file.
 
@@ -31,7 +31,7 @@ import io
 import pandas
 import json
 
-from typing import BinaryIO
+from typing import BinaryIO, Any, Generator
 from abc import ABC, abstractmethod
 from SPARQLWrapper import SPARQLWrapper, CSV
 
@@ -47,7 +47,8 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
-def auto_wrapper(module: str, load_data=True, use_new_client=False) -> None:
+def auto_wrapper(module: str, load_data: bool = True,
+                 use_new_client: bool = False) -> None:
     """
     Wrap an algorithm module to provide input and output handling for the
     vantage6 infrastructure. This function will automatically select the
@@ -98,40 +99,85 @@ def auto_wrapper(module: str, load_data=True, use_new_client=False) -> None:
     wrapper.wrap_algorithm(module, load_data, use_new_client)
 
 
-def docker_wrapper(module: str, load_data=True, use_new_client=False):
+def docker_wrapper(module: str, load_data: bool = True,
+                   use_new_client: bool = False) -> None:
+    """
+    Specific wrapper for CSV only data sources.
+
+    Parameters
+    ----------
+    module : str
+        Module name of the algorithm package.
+    load_data : bool, optional
+        Whether to load the data into a pandas DataFrame or not, by default
+        True
+    use_new_client : bool, optional
+        Whether to use the new or old client, by default False
+    """
     wrapper = DockerWrapper()
     wrapper.wrap_algorithm(module, load_data, use_new_client)
 
 
-def sparql_wrapper(module: str, use_new_client=False):
+def sparql_wrapper(module: str, use_new_client: bool = False) -> None:
+    """
+    Specific wrapper for SPARQL data sources.
+
+    Parameters
+    ----------
+    module : str
+        Module name of the algorithm package.
+    use_new_client : bool, optional
+        Whether to use the new or old client, by default False
+    """
     wrapper = SparqlDockerWrapper()
     wrapper.wrap_algorithm(module, use_new_client)
 
 
-def parquet_wrapper(module: str, use_new_client=False):
+def parquet_wrapper(module: str, use_new_client: bool = False) -> None:
+    """
+    Specific wrapper for Parquet data sources.
+
+    Parameters
+    ----------
+    module : str
+        Module name of the algorithm package.
+    use_new_client : bool, optional
+        Whether to use the new or old client, by default False
+    """
     wrapper = ParquetWrapper()
     wrapper.wrap_algorithm(module, use_new_client)
 
 
-def multidb_wrapper(module: str, use_new_client=False):
+def multidb_wrapper(module: str, use_new_client: bool = False) -> None:
+    """
+    Specific wrapper for multiple data sources.
+
+    Parameters
+    ----------
+    module : str
+        Module name of the algorithm package.
+    use_new_client : bool, optional
+        Whether to use the new or old client, by default False
+    """
     wrapper = MultiDBWrapper()
     wrapper.wrap_algorithm(module, use_new_client)
 
 
 class WrapperBase(ABC):
 
-    def wrap_algorithm(self, module, load_data=True, use_new_client=False):
+    def wrap_algorithm(self, module: str, load_data: bool = True,
+                       use_new_client:bool = False) -> None:
         """
         Wrap an algorithm module to provide input and output handling for the
         vantage6 infrastructure.
 
         Data is received in the form of files, whose location should be
         specified in the following environment variables:
-        - `INPUT_FILE`: input arguments for the algorithm
-        - `OUTPUT_FILE`: location where the results of the algorithm should be
-            stored
-        - `TOKEN_FILE`: access token for the vantage6 server REST api
-        - `DATABASE_URI`: either a database endpoint or path to a csv file.
+        - ``INPUT_FILE``: input arguments for the algorithm
+        - ``OUTPUT_FILE``: location where the results of the algorithm should
+          be stored
+        - ``TOKEN_FILE``: access token for the vantage6 server REST api
+        - ``DATABASE_URI``: either a database endpoint or path to a csv file.
 
         The wrapper is able to parse a number of input file formats. The
         available formats can be found in
@@ -156,9 +202,13 @@ class WrapperBase(ABC):
         - built-in collections (list, dict, tuple, etc.)
         - pandas DataFrames
 
-        :param module: module that contains the vantage6 algorithms
-        :param load_data: attempt to load the data or execute the query
-        :return:
+        Parameters
+        ----------
+        module : str
+            Python module name of the algorithm to wrap.
+        load_data : bool, optional
+            Whether to load the data into a pandas DataFrame or not, by default
+            True
         """
         info(f"wrapper for {module}")
 
@@ -201,34 +251,45 @@ class WrapperBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def load_data(database_uri: str, input_data):
+    def load_data(database_uri: str, input_data: dict):
+        """
+        Load the local (privacy sensitive) data from the database.
+
+        Parameters
+        ----------
+        database_uri : str
+            URI of the database to read
+        input_data : dict
+            User defined input, which could contain a query for the database
+        """
         pass
 
 
 class CSVWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         return pandas.read_csv(database_uri)
 
 
+# for backwards compatibility
 CsvWrapper = CSVWrapper
 DockerWrapper = CSVWrapper
 
 
 class ExcelWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         return pandas.read_excel(database_uri)
 
 
 class SparqlDockerWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         query = input_data['query']
         return SparqlDockerWrapper._query_triplestore(database_uri, query)
 
     @staticmethod
-    def _query_triplestore(endpoint: str, query: str):
+    def _query_triplestore(endpoint: str, query: str) -> pandas.DataFrame:
         sparql = SPARQLWrapper(endpoint, returnFormat=_SPARQL_RETURN_FORMAT)
         sparql.setQuery(query)
 
@@ -239,26 +300,26 @@ class SparqlDockerWrapper(WrapperBase):
 
 class ParquetWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         return pandas.read_parquet(database_uri)
 
 
 class SQLWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         return pandas.read_sql(database_uri, input_data['query'])
 
 
 class OMOPWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         # TODO: parse the OMOP json and convert to SQL
         return pandas.read_sql(database_uri, input_data['query'])
 
 
 class MultiDBWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, input_data):
+    def load_data(database_uri: str, input_data: dict) -> dict:
         db_labels = json.loads(os.environ.get("DB_LABELS"))
         databases = {}
         for db_label in db_labels:
@@ -267,17 +328,21 @@ class MultiDBWrapper(WrapperBase):
         return databases
 
 
-def write_output(output_format, output, output_file):
+def write_output(output_format: str, output: Any, output_file: str) -> None:
     """
     Write output to output_file using the format from output_format.
 
     If output_format == None, write output as pickle without indicating format
     (legacy method)
 
-    :param output_format:
-    :param output:
-    :param output_file:
-    :return:
+    Parameters
+    ----------
+    output_format : str
+        Data type of the output e.g. 'pickle', 'json', 'csv', 'parquet'
+    output : Any
+        Output of the algorithm, could by any type
+    output_file : str
+        Path to the output file
     """
     with open(output_file, 'wb') as fp:
         if output_format:
@@ -293,13 +358,25 @@ def write_output(output_format, output, output_file):
             fp.write(pickle.dumps(output))
 
 
-def load_input(input_file):
+def load_input(input_file: str) -> Any:
     """
     Try to read the specified data format and deserialize the rest of the
     stream accordingly. If this fails, assume the data format is pickle.
 
-    :param input_file:
-    :return:
+    Parameters
+    ----------
+    input_file : str
+        Path to the input file
+
+    Returns
+    -------
+    Any
+        Deserialized input data
+
+    Raises
+    ------
+    DeserializationException
+        Failed to deserialize input data
     """
     with open(input_file, "rb") as fp:
         try:
@@ -315,21 +392,34 @@ def load_input(input_file):
     return input_data
 
 
-def _read_formatted(file: BinaryIO):
+def _read_formatted(file: BinaryIO) -> Any:
     data_format = str.join('', list(_read_data_format(file)))
     data_format = DataFormat(data_format.lower())
     return deserialization.deserialize(file, data_format)
 
 
-def _read_data_format(file: BinaryIO):
+def _read_data_format(file: BinaryIO) -> Generator[str, None, None]:
     """
     Try to read the prescribed data format. The data format should be specified
     as follows: DATA_FORMAT.ACTUAL_BYTES. This function will attempt to read
     the string before the period. It will fail if the file is not in the right
     format.
 
-    :param file: Input file received from vantage infrastructure.
-    :return:
+    Parameters
+    ----------
+    file : BinaryIO
+        Input file received from the user.
+
+    Yields
+    ------
+    Generator[str, None, None]
+        The data format as a string
+
+    Raises
+    ------
+    DeserializationException
+        The file did not have a data format prepended or a non-unicode string
+        was encountered
     """
     success = False
 
@@ -338,7 +428,7 @@ def _read_data_format(file: BinaryIO):
             char = file.read(1).decode()
         except UnicodeDecodeError:
             # We aren't reading a unicode string
-            raise DeserializationException('No data format specified')
+            raise DeserializationException('Non unicode string encountered')
 
         if char == _DATA_FORMAT_SEPARATOR:
             success = True
