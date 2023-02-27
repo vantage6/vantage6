@@ -101,7 +101,7 @@ class NodeCLITest(unittest.TestCase):
         ])
 
         # check that info message is produced
-        self.assertEqual(result.output[:6], "[info]")
+        self.assertEqual(result.output[:7], "[info ]")
 
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
@@ -118,7 +118,7 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(
             result.output[:60],
-            "[info]  - Replaced spaces from configuration name: some-name"
+            "[info ] - Replaced spaces from configuration name: some-name"
         )
 
     @patch("vantage6.cli.node.NodeContext")
@@ -178,7 +178,7 @@ class NodeCLITest(unittest.TestCase):
         result = runner.invoke(cli_node_files, [])
 
         # we check that no warnings have been produced
-        self.assertEqual(result.output[:6], "[info]")
+        self.assertEqual(result.output[:7], "[info ]")
 
         # check status code is OK
         self.assertEqual(result.exit_code, 0)
@@ -244,7 +244,7 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(
             result.output,
-            "[info]  - Stopped the vantage6-iknl-user Node.\n"
+            "[info ] - Stopped the vantage6-iknl-user Node.\n"
         )
 
         self.assertEqual(result.exit_code, 0)
@@ -267,8 +267,8 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(
             result.output,
-            "[info]  - Closing log file. Keyboard Interrupt.\n"
-            "[info]  - Note that your node is still running! Shut it down "
+            "[info ] - Closing log file. Keyboard Interrupt.\n"
+            "[info ] - Note that your node is still running! Shut it down "
             "with 'vnode stop'\n"
         )
         self.assertEqual(result.exit_code, 0)
