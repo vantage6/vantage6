@@ -164,10 +164,10 @@ def get_database_config(databases: List, label: str) -> Union[Dict, None]:
 
     Parameters
     ----------
-    label: str
-        Label of database configuration to retrieve
     databases: List[Dict]
         List of database configurations
+    label: str
+        Label of database configuration to retrieve
 
     Returns
     -------
