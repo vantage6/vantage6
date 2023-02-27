@@ -180,17 +180,14 @@ class DockerManager(DockerBaseManager):
         self.databases = {}
         for label in db_labels:
             label_upper = label.upper()
+            db_config = get_database_config(databases, label)
             if running_in_docker():
                 uri_env = os.environ[f'{label_upper}_DATABASE_URI']
                 uri = f'/mnt/{uri_env}'
+                db_type = db_config['type']
             else:
-                if old_format:
-                    uri = databases[label]
-                    db_type = None
-                else:
-                    db_config = get_database_config(label, databases)
-                    uri = db_config['uri']
-                    db_type = db_config['type']
+                uri = db_config['uri']
+                db_type = db_config['type']
 
             db_is_file = Path(uri).exists()
             if db_is_file:
