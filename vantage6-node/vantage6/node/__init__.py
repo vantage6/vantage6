@@ -157,7 +157,8 @@ class Node(object):
             ctx=self.ctx,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
-            tasks_dir=self.__tasks_dir
+            tasks_dir=self.__tasks_dir,
+            client=self.server_io,
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
@@ -327,6 +328,8 @@ class Node(object):
                 self.server_io.request('port', method='POST', json=port)
 
             # Save IP address of VPN container
+            # FIXME BvB 2023-02-21: node IP is now updated when task is started
+            # but this should be done when VPN connection is established
             node_id = self.server_io.whoami.id_
             node_ip = self.vpn_manager.get_vpn_ip()
             self.server_io.request(

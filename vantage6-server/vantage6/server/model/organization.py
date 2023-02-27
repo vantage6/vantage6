@@ -18,7 +18,7 @@ class Organization(Base):
     """
 
     # fields
-    name = Column(String)
+    name = Column(String, unique=True)
     domain = Column(String)
     address1 = Column(String)
     address2 = Column(String)
@@ -43,14 +43,18 @@ class Organization(Base):
         # is already imported in model.Run
         from vantage6.server.model.run import Run
         session = DatabaseSessionManager.get_session()
-        return session.query(Run.id)\
-                      .filter(Run.organization_id == self.id).all()
+        result_ids = session.query(Run.id)\
+                            .filter(Run.organization_id == self.id).all()
+        session.commit()
+        return result_ids
 
     @classmethod
     def get_by_name(cls, name):
         session = DatabaseSessionManager.get_session()
         try:
-            return session.query(cls).filter_by(name=name).first()
+            result = session.query(cls).filter_by(name=name).first()
+            session.commit()
+            return result
         except NoResultFound:
             return None
 

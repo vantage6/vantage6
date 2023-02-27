@@ -1,6 +1,55 @@
 Release notes
 =============
 
+3.7.3
+-----
+
+*22 february 2023*
+
+- **Bugfix**
+
+ -  A database commit in 3.7.2 was done on the wrong variable, this has been
+    corrected (`PR#547 <https://github.com/vantage6/vantage6/pull/547>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Delete entries in the VPN port table after the algorithm has completed
+    (`PR#548 <https://github.com/vantage6/vantage6/pull/548>`_).
+ -  Limit number of characters of the task input printed to the logs
+    (`PR#550 <https://github.com/vantage6/vantage6/pull/550>`_).
+
+3.7.2
+-----
+
+*20 february 2023*
+
+- **Bugfix**
+
+ -  In 3.7.1, some sessions were closed, but not all. Now, sessions are also
+    terminated in the socketIO events
+    (`PR#543 <https://github.com/vantage6/vantage6/pull/543>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Latest versions of VPN images were not automatically downloaded by node
+    on VPN connection startup. This has been corrected (
+    `PR#533 <https://github.com/vantage6/vantage6/pull/542>`_).
+
+3.7.1
+-----
+
+*16 february 2023*
+
+- **Change**
+
+ -  Some changes to the release pipeline.
+
+- **Bugfix**
+
+ -  ``iptables`` dependency was missing in the VPN client container (
+    `PR#533 <https://github.com/vantage6/vantage6/pull/533>`_
+    `Issue#518 <https://github.com/vantage6/vantage6/issues/518>`_).
+ -  Fixed a bug that did not close Postgres DB sessions, resulting in a dead
+    server (`PR#540 <https://github.com/vantage6/vantage6/pull/540>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+
+
 3.7.0
 -----
 
@@ -869,18 +918,18 @@ Release notes
 -  **Temporary Volumes**
 
   -  Each algorithm mounts temporary volume, which is linked to the
-     node and the ``run_id`` of the task
+     node and the ``job_id`` of the task
   -  The mounting target is specified in an environment variable
      ``TEMPORARY_FOLDER``. The algorithm can write anything to this
      directory.
   -  These volumes need to be cleaned manually.
      (``docker rm VOLUME_NAME``)
   -  Successive algorithms only have access to the volume if they share
-     the same ``run_id`` . Each time a **user** creates a task, a new
-     ``run_id`` is issued. If you need to share information between
+     the same ``job_id`` . Each time a **user** creates a task, a new
+     ``job_id`` is issued. If you need to share information between
      containers, you need to do this through a master container. If a
-     master container creates a task, all slave tasks will obtain the
-     same ``run_id``.
+     central container creates a task, all child tasks will get the
+     same ``job_id``.
 
 -  **RESTful API**
 

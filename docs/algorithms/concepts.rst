@@ -364,7 +364,7 @@ should be added to you algorithm Dockerfile:
 Port ``8888`` and ``8889`` are the internal ports to which the algorithm
 container listens. When another container want to communicate with this
 container it can retrieve the IP and external port from the central
-server by using the ``run_id`` and the label of the port you want to
+server by using the ``job_id`` and the label of the port you want to
 use (``com`` or ``data`` in this case)
 
 

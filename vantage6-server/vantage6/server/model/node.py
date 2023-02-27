@@ -14,7 +14,7 @@ class Node(Authenticatable):
     id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
 
     # fields
-    name = Column(String)
+    name = Column(String, unique=True)
     api_key = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
@@ -48,6 +48,7 @@ class Node(Authenticatable):
         session = DatabaseSessionManager.get_session()
 
         nodes = session.query(cls).all()
+        session.commit()
         for node in nodes:
             is_correct_key = node.check_key(api_key)
             if is_correct_key:
@@ -67,15 +68,19 @@ class Node(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
 
-        return session.query(cls).filter_by(status='online').all()
+        result = session.query(cls).filter_by(status='online').all()
+        session.commit()
+        return result
 
     @classmethod
     def exists(cls, organization_id, collaboration_id):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(
+        result = session.query(cls).filter_by(
             organization_id=organization_id,
             collaboration_id=collaboration_id
         ).scalar()
+        session.commit()
+        return result
 
     def __repr__(self):
         return (

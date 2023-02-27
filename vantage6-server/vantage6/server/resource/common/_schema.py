@@ -130,7 +130,6 @@ class TaskSchema(HATEOASModelSchema):
     class Meta:
         model = db.Task
 
-    complete = fields.Boolean()
     status = fields.String()
     collaboration = fields.Method("collaboration")
     runs = fields.Method("runs")

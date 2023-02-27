@@ -15,6 +15,7 @@ from werkzeug.utils import cached_property
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.common.task_status import TaskStatus
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp, session
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
@@ -118,7 +119,7 @@ class TestResources(unittest.TestCase):
     def create_user(self, organization=None, rules=[], password="password"):
 
         if not organization:
-            organization = Organization(name="some-organization")
+            organization = Organization(name=str(uuid.uuid1()))
             organization.save()
 
         # user details
@@ -139,10 +140,10 @@ class TestResources(unittest.TestCase):
 
     def create_node(self, organization=None, collaboration=None):
         if not organization:
-            organization = Organization()
+            organization = Organization(name=str(uuid.uuid1()))
 
         if not collaboration:
-            collaboration = Collaboration()
+            collaboration = Collaboration(name=str(uuid.uuid1()))
 
         api_key = str(uuid1())
         node = Node(
@@ -173,9 +174,9 @@ class TestResources(unittest.TestCase):
                         node=None, task=None, api_key=None):
         if not node:
             if not collaboration:
-                collaboration = Collaboration()
+                collaboration = Collaboration(name=str(uuid.uuid1()))
             if not organization:
-                organization = Organization()
+                organization = Organization(name=str(uuid.uuid1()))
             api_key = str(uuid1())
             node = Node(organization=organization, collaboration=collaboration,
                         api_key=api_key)
@@ -186,7 +187,7 @@ class TestResources(unittest.TestCase):
 
         if not task:
             task = Task(image="some-image", collaboration=collaboration,
-                        runs=[Run()])
+                        runs=[Run(status=TaskStatus.PENDING)])
             task.save()
 
         headers = self.login_node(api_key)
@@ -325,7 +326,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # succesfully create a node
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
         col.save()
 
@@ -1421,9 +1422,9 @@ class TestResources(unittest.TestCase):
     def test_organization_view_nodes(self):
 
         # create organization, collaboration and node
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         org.save()
-        col = Collaboration(organizations=[org])
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         col.save()
         node = Node(organization=org, collaboration=col)
         node.save()
@@ -1738,8 +1739,8 @@ class TestResources(unittest.TestCase):
 
     def test_view_collaboration_node_permissions(self):
 
-        org = Organization()
-        col = Collaboration(organizations=[org])
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         node = Node(collaboration=col, organization=org)
         node.save()
 
@@ -1991,9 +1992,9 @@ class TestResources(unittest.TestCase):
 
     def test_create_node_permissions(self):
 
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
-        org2 = Organization()
+        org2 = Organization(name=str(uuid.uuid1()))
         org2.save()
 
         # test non existing collaboration
@@ -2061,8 +2062,8 @@ class TestResources(unittest.TestCase):
 
     def test_delete_node_permissions(self):
 
-        org = Organization()
-        col = Collaboration(organizations=[org])
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         node = Node(organization=org, collaboration=col)
         node.save()
 
@@ -2084,7 +2085,8 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # global permission
-        node2 = Node(organization=org, collaboration=col)
+        org2 = Organization(name=str(uuid.uuid1()))
+        node2 = Node(organization=org2, collaboration=col)
         node2.save()
         rule = Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
@@ -2217,7 +2219,7 @@ class TestResources(unittest.TestCase):
         col.save()
         task = Task(collaboration=col, image="some-image")
         task.save()
-        res = Run(task=task)
+        res = Run(task=task, status=TaskStatus.PENDING)
         res.save()
 
         headers = self.create_node_and_login(organization=org)
@@ -2323,7 +2325,8 @@ class TestResources(unittest.TestCase):
         col = Collaboration(organizations=[org])
         parent_task = Task(collaboration=col, image="some-image")
         parent_task.save()
-        parent_res = Run(organization=org, task=parent_task)
+        parent_res = Run(organization=org, task=parent_task,
+                         status=TaskStatus.PENDING)
         parent_res.save()
 
         # test wrong image name
@@ -2358,7 +2361,17 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
         # test already completed task
-        parent_res.finished_at = datetime.date(2020, 1, 1)
+        parent_res.status = TaskStatus.COMPLETED
+        parent_res.save()
+        results = self.app.post('/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col.id,
+            'image': 'some-image'
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test a failed task
+        parent_res.status = TaskStatus.FAILED
         parent_res.save()
         results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
@@ -2450,7 +2463,7 @@ class TestResources(unittest.TestCase):
         col = Collaboration(organizations=[org])
         task = Task(collaboration=col, image="some-image")
         task.save()
-        res = Run(task=task, organization=org)
+        res = Run(task=task, organization=org, status=TaskStatus.PENDING)
         res.save()
 
         headers = self.login_container(collaboration=col, organization=org,

@@ -172,6 +172,7 @@ class Organizations(OrganizationBase):
 
         # query
         q = g.session.query(db.Organization)
+        g.session.commit()
 
         # filter by a field of this endpoint
         if 'name' in args:
@@ -190,6 +191,7 @@ class Organizations(OrganizationBase):
             collabs = g.session.query(db.Collaboration).filter(
                 db.Collaboration.organizations.any(id=auth_org.id)
             ).all()
+            g.session.commit()
 
             # list comprehension fetish, and add own organization in case
             # this organization does not participate in any collaborations yet
@@ -237,6 +239,8 @@ class Organizations(OrganizationBase):
             description: Ok
           401:
             description: Unauthorized
+          400:
+            description: Organization with that name already exists
 
         security:
           - bearerAuth: []
@@ -249,8 +253,14 @@ class Organizations(OrganizationBase):
                 HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
+        name = data.get('name', '')
+        if db.Organization.exists("name", name):
+            return {
+                "msg": f"Organization with name '{name}' already exists!"
+            }, HTTPStatus.BAD_REQUEST
+
         organization = db.Organization(
-            name=data.get('name', ''),
+            name=name,
             address1=data.get('address1', ''),
             address2=data.get('address2' ''),
             zipcode=data.get('zipcode', ''),
@@ -377,6 +387,8 @@ class Organization(OrganizationBase):
             description: Organization with specified id is not found
           401:
             description: Unauthorized
+          400:
+            description: Organization with that name already exists
 
         security:
           - bearerAuth: []
@@ -398,7 +410,16 @@ class Organization(OrganizationBase):
                 HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
-        fields = ["name", "address1", "address2", "zipcode", "country",
+        name = data.get('name', None)
+        if name:
+            if organization.name != name and \
+                    db.Organization.exists("name", name):
+                return {
+                    "msg": f"Organization with name '{name}' already exists!"
+                }, HTTPStatus.BAD_REQUEST
+            organization.name = name
+
+        fields = ["address1", "address2", "zipcode", "country",
                   "public_key", "domain"]
         for field in fields:
             if field in data and data[field] is not None:

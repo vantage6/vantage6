@@ -9,7 +9,6 @@ from sqlalchemy import desc
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
     Scope as S,
     PermissionManager,
@@ -224,7 +223,7 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Task)
+        q = g.session.query(db.Task)
         args = request.args
 
         # obtain organization id
@@ -336,7 +335,7 @@ class Tasks(TaskBase):
             )}, HTTPStatus.BAD_REQUEST
 
         # check if all the organizations have a registered node
-        nodes = DatabaseSessionManager.get_session().query(db.Node)\
+        nodes = g.session.query(db.Node)\
             .filter(db.Node.organization_id.in_(org_ids))\
             .filter(db.Node.collaboration_id == collaboration_id)\
             .all()
@@ -489,7 +488,7 @@ class Tasks(TaskBase):
             return False
 
         # check master task is not completed yet
-        if db.Task.get(container["task_id"]).complete:
+        if has_task_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 f"Container from node={container['node_id']} "
                 f"attempts to start sub-task for a completed "

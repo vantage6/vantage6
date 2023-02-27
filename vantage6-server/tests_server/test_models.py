@@ -250,9 +250,15 @@ class TestRunModel(TestBaseModel):
         run.save()
         self.assertEqual(run, run)
 
+<<<<<<< HEAD
     def test_methods(self):
         for run in Run.get():
             self.assertFalse(run.complete)
+=======
+    # def test_methods(self):
+    #     for result in Result.get():
+    #         self.assertFalse(result.complete)
+>>>>>>> release/v4.0
 
     def test_relations(self):
         run = Run.get()[0]

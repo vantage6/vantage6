@@ -12,7 +12,6 @@ from vantage6.server.resource import ServicesResources
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server import db
 from vantage6.server.resource.common._schema import NodeSchema
 
@@ -168,7 +167,7 @@ class Nodes(NodeBase):
 
         tags: ["Node"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Node)
+        q = g.session.query(db.Node)
         auth_org_id = self.obtain_organization_id()
         args = request.args
 
@@ -241,8 +240,9 @@ class Nodes(NodeBase):
           404:
             description: Collaboration specified by id does not exists
           400:
-            description: Organization is not part of the collaboration or it
-              already has a node for this collaboration
+            description: Organization is not part of the collaboration, or it
+              already has a node for this collaboration, or the node name is
+              not unique.
           401:
             description: Unauthorized
 
@@ -290,9 +290,13 @@ class Nodes(NodeBase):
                     f'node for collaboration id={collaboration.id}'}, \
                         HTTPStatus.BAD_REQUEST
 
-        # if no name is profided, generate one
+        # if no name is provided, generate one
         name = data['name'] if data['name'] else \
             f"{organization.name} - {collaboration.name} Node"
+        if db.Node.exists("name", name):
+            return {
+                "msg": f"Node name '{name}' already exists!"
+            }, HTTPStatus.BAD_REQUEST
 
         # Ok we're good to go!
         api_key = str(uuid.uuid4())
@@ -474,7 +478,7 @@ class Node(NodeBase):
             description: Ok, node is updated
           400:
             description: A node already exist for this organization in this
-              collaboration
+              collaboration, or a node already exists with this name
           401:
             description: Unauthorized
           404:
@@ -501,7 +505,12 @@ class Node(NodeBase):
 
         # update fields
         if 'name' in data:
-            node.name = data['name']
+            name = data['name']
+            if node.name != name and db.Node.exists("name", name):
+                return {
+                    "msg": f"Node name '{name}' already exists!"
+                }, HTTPStatus.BAD_REQUEST
+            node.name = name
 
         # organization goes before collaboration (!)
         org_id = data.get('organization_id')

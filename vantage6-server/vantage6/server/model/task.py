@@ -34,12 +34,6 @@ class Task(Base):
     init_org = relationship("Organization", back_populates="created_tasks")
     init_user = relationship("User", back_populates="created_tasks")
 
-    # TODO remove this property in v4. It is superseded by status but now left
-    # here for backwards compatibility with other v3 versions
-    @hybrid_property
-    def complete(self):
-        return all([r.complete for r in self.runs])
-
     @hybrid_property
     def status(self) -> str:
         """
@@ -50,13 +44,9 @@ class Task(Base):
         str:
             Status of task
         """
-        # TODO what if there are no run ids? -> currently returns unknown
+        # TODO what if there are no result ids? -> currently returns unknown
         run_statuses = [r.status for r in self.runs]
-        if all([status is None for status in run_statuses]):
-            # TODO remove in v4 (this is for backwards compatibility because
-            # task statuses where not present in <3.6)
-            return 'unknown'
-        elif any([has_task_failed(status) for status in run_statuses]):
+        if any([has_task_failed(status) for status in run_statuses]):
             return TaskStatus.FAILED.value
         elif TaskStatus.ACTIVE in run_statuses:
             return TaskStatus.ACTIVE.value
@@ -71,6 +61,7 @@ class Task(Base):
     def next_job_id(cls):
         session = DatabaseSessionManager.get_session()
         max_job_id = session.query(sql.func.max(cls.job_id)).scalar()
+        session.commit()
         if max_job_id:
             return max_job_id + 1
         else:

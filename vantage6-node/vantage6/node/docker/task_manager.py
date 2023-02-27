@@ -273,7 +273,7 @@ class DockerTaskManager(DockerBaseManager):
         try:
             if deserialized_input:
                 self.log.info(f"Run docker image {self.image} with input "
-                              f"{deserialized_input}")
+                              f"{self._printable_input(deserialized_input)}")
             else:
                 self.log.info(f"Run docker image {self.image}")
             self.container = self.docker.containers.run(
@@ -292,6 +292,25 @@ class DockerTaskManager(DockerBaseManager):
 
         self.status = TaskStatus.ACTIVE
         return vpn_ports
+
+    @staticmethod
+    def _printable_input(input_: str) -> str:
+        """
+        Return a version of the input with limited number of characters
+
+        Parameters
+        ----------
+        input: str
+            Input of a task
+
+        Returns
+        -------
+        str
+            Input with limited number of characters, to be printed to logs
+        """
+        if len(input_) > 550:
+            return f'{input_[:500]}... ({len(input_)-500} characters omitted)'
+        return input_
 
     def _make_task_folders(self) -> None:
         """ Generate task folders """

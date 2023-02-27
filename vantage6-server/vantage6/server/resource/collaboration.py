@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from flask import request
+from flask import request, g
 from flask_restful import reqparse
 from http import HTTPStatus
 
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
@@ -185,7 +184,7 @@ class Collaborations(CollaborationBase):
 
         # obtain organization from authenticated
         auth_org_id = self.obtain_organization_id()
-        q = DatabaseSessionManager.get_session().query(db.Collaboration)
+        q = g.session.query(db.Collaboration)
         args = request.args
 
         # filter by a field of this endpoint
@@ -279,7 +278,7 @@ class Collaborations(CollaborationBase):
         data = parser.parse_args()
 
         name = data["name"]
-        if db.Collaboration.name_exists(name):
+        if db.Collaboration.exists("name", name):
             return {"msg": f"Collaboration name '{name}' already exists!"}, \
                 HTTPStatus.BAD_REQUEST
 
@@ -411,6 +410,8 @@ class Collaboration(CollaborationBase):
             description: Collaboration with specified id is not found
           401:
             description: Unauthorized
+          400:
+            description: Collaboration name already exists
 
         security:
           - bearerAuth: []
@@ -432,7 +433,13 @@ class Collaboration(CollaborationBase):
         # only update fields that are provided
         data = request.get_json()
         if "name" in data:
-            collaboration.name = data["name"]
+            name = data["name"]
+            if collaboration.name != name and \
+                    db.Collaboration.exists("name", name):
+                return {
+                    "msg": f"Collaboration name '{name}' already exists!"
+                }, HTTPStatus.BAD_REQUEST
+            collaboration.name = name
         if "organization_ids" in data:
             collaboration.organizations = [
                 db.Organization.get(org_id)
