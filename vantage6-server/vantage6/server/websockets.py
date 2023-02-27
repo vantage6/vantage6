@@ -11,6 +11,7 @@ from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
 from vantage6.server.model.authenticable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.model.base import DatabaseSessionManager
 
 ALL_NODES_ROOM = 'all_nodes'
 
@@ -88,6 +89,9 @@ class DefaultSocketNamespace(Namespace):
 
         for room in session.rooms:
             self.__join_room_and_notify(room)
+
+        # cleanup (e.g. database session)
+        self.__cleanup()
 
     @staticmethod
     def _add_node_to_rooms(node: Authenticatable) -> None:
@@ -168,6 +172,9 @@ class DefaultSocketNamespace(Namespace):
 
         self.log.info(f'{session.name} disconnected')
 
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
     def on_message(self, message: str) -> None:
         """
         An incomming message from any client.
@@ -243,6 +250,9 @@ class DefaultSocketNamespace(Namespace):
             }, room=f"collaboration_{collaboration_id}"
         )
 
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
     def on_node_info_update(self, node_config: dict) -> None:
         """
         A node sends information about its configuration and other properties.
@@ -273,6 +283,9 @@ class DefaultSocketNamespace(Namespace):
 
         node.config = to_store
         node.save()
+
+        # cleanup (e.g. database session)
+        self.__cleanup()
 
     def __join_room_and_notify(self, room: str) -> None:
         """
@@ -339,6 +352,7 @@ class DefaultSocketNamespace(Namespace):
             )
 
     @staticmethod
+<<<<<<< HEAD
     def __clean_node_data(node: db.Node) -> None:
         """
         Remove any information from the database that the node shared about
@@ -351,3 +365,8 @@ class DefaultSocketNamespace(Namespace):
         """
         for conf in node.config:
             conf.delete()
+=======
+    def __cleanup() -> None:
+        """ Cleanup database connections """
+        DatabaseSessionManager.clear_session()
+>>>>>>> main

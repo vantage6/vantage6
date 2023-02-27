@@ -27,7 +27,6 @@ from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.util import logger_name
 from vantage6.node.server_io import NodeClient
-
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail
@@ -101,6 +100,8 @@ class DockerManager(DockerBaseManager):
                 VPN Manager object
             tasks_dir: Path
                 Directory in which this task's data are stored
+            client: NodeClient
+                Client object to communicate with the server
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)
@@ -473,6 +474,11 @@ class DockerManager(DockerBaseManager):
             # remove finished tasks from active task list
             self.active_tasks.remove(finished_task)
 
+            # remove the VPN ports of this run from the database
+            self.client.request(
+                'port', params={'result_id': finished_task.result_id},
+                method="DELETE"
+            )
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()

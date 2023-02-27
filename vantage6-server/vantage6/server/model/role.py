@@ -25,7 +25,9 @@ class Role(Base):
     def get_by_name(cls, name):
         session = DatabaseSessionManager.get_session()
         try:
-            return session.query(cls).filter_by(name=name).first()
+            result = session.query(cls).filter_by(name=name).first()
+            session.commit()
+            return result
         except NoResultFound:
             return None
 
