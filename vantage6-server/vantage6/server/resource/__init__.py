@@ -159,13 +159,13 @@ class ServicesResources(Resource):
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types=['user', 'node', 'container']):
+def only_for(types: list[str] = ['user', 'node', 'container']):
     """
     JWT endpoint protection decorator
 
     Parameters
     ----------
-    types : list
+    types : list[str]
         List of types that are allowed to access the endpoint. Possible types
         are 'user', 'node' and 'container'.
 
@@ -252,7 +252,7 @@ with_node = only_for(["node"])
 with_container = only_for(["container"])
 
 
-def parse_datetime(dt=None, default=None) -> datetime:
+def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
     """
     Utility function to parse a datetime string.
 

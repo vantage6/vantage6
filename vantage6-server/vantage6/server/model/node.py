@@ -73,7 +73,7 @@ class Node(Authenticatable):
         return False
 
     @classmethod
-    def get_by_api_key(cls, api_key: str) -> Union[Node, None]:
+    def get_by_api_key(cls, api_key: str) -> Node | None:
         """
         Returns Node based on the provided API key.
 
@@ -84,7 +84,7 @@ class Node(Authenticatable):
 
         Returns
         -------
-        Node or None
+        Node | None
             Returns the node if a node is associated with api_key, None if no
             node is associated with api_key.
         """

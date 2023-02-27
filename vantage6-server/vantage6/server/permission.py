@@ -28,7 +28,7 @@ class RuleCollection:
         Name of the resource endpoint (e.g. node, organization, user)
     """
 
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
 
     def add(self, scope: Scope, operation: Operation) -> None:
@@ -69,8 +69,17 @@ class PermissionManager:
                           "permissions")
 
     def assign_rule_to_root(self, name: str, scope: Scope,
-                            operation: Operation):
-        """Assign a rule to the container role."""
+                            operation: Operation) -> None:
+        """
+        Assign a rule to the root role.
+
+        resource: str
+            Resource that the rule applies to
+        scope: Scope
+            Scope that the rule applies to
+        operation: Operation
+            Operation that the rule applies to
+        """
         self.assign_rule_to_fixed_role(DefaultRole.ROOT, name, scope,
                                        operation)
 
@@ -250,13 +259,14 @@ class PermissionManager:
             raise e
 
     @staticmethod
-    def rule_exists_in_db(name, scope, operation) -> bool:
+    def rule_exists_in_db(name: str, scope: Scope,
+                          operation: Operation) -> bool:
         """Check if the rule exists in the DB.
 
         Parameters
         ----------
-        name : String
-            (Unique) name of the rule
+        name : str
+            Name of the rule
         scope : Scope (Enum)
             Scope the rule
         operation : Operation (Enum)

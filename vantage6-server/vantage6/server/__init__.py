@@ -1,6 +1,6 @@
 """
-The server has a central function in the vantage6 architecture. It communicates
-with the database to store which organizations, collaborations, users, etc.
+The server has a central function in the vantage6 architecture. It stores
+in the database which organizations, collaborations, users, etc.
 exist. It allows the users and nodes to authenticate and subsequently interact
 through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
@@ -37,6 +37,7 @@ from threading import Thread
 
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
+from vantage6.cli.globals import DEFAULT_SERVER_ENVIRONMENT
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common._schema import HATEOASModelSchema
 from vantage6.common import logger_name
@@ -534,7 +535,7 @@ class ServerApp:
         self.__pong_node_ids.append(node_id)
 
 
-def run_server(config: str, environment: str = 'prod',
+def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
                system_folders: bool = True) -> ServerApp:
     """
     Run a vantage6 server.
@@ -544,7 +545,7 @@ def run_server(config: str, environment: str = 'prod',
     config: str
         Configuration file path
     environment: str
-        Configuration environment. Default value is 'prod'.
+        Configuration environment to use.
     system_folders: bool
         Whether to use system or user folders. Default is True.
 

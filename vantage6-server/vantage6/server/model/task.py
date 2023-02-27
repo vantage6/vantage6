@@ -48,7 +48,7 @@ class Task(Base):
 
         Returns
         -------
-        bool:
+        bool
             True if task is complete, False otherwise
         """
         return all([r.complete for r in self.results])
@@ -61,7 +61,7 @@ class Task(Base):
 
         Returns
         -------
-        str:
+        str
             Status of task
         """
         # TODO what if there are no result ids? -> currently returns unknown
@@ -92,7 +92,7 @@ class Task(Base):
 
         Returns
         -------
-        List[model.result.Result]:
+        List[model.result.Result]
             List of results for the given node
         """
         assert isinstance(node, Node), "Should be a node..."
@@ -107,7 +107,7 @@ class Task(Base):
 
         Returns
         -------
-        int:
+        int
             Next available run id
         """
         session = DatabaseSessionManager.get_session()
@@ -124,7 +124,7 @@ class Task(Base):
 
         Returns
         -------
-        str:
+        str
             String representation of the Task object
         """
         return (

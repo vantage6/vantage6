@@ -210,11 +210,18 @@ class DefaultSocketNamespace(Namespace):
         ----------
         data: Dict
             Dictionary containing parameters on the updated algorithm status.
-            It should contain: 1) node_id: node_id where the algorithm
-            container was running; 2) status: New status of the algorithm
-            container; 3) result_id: result_id for which the algorithm was
-            running; and 4) collaboration_id: collaboration for which the
-            algorithm was running
+            It should look as follows:
+
+            {
+                # node_id where algorithm container was running
+                "node_id": 1,
+                # new status of algorithm container
+                "status": "active",
+                # result_id for which the algorithm was running
+                "result_id": 1,
+                # collaboration_id for which the algorithm was running
+                "collaboration_id": 1
+            }
         """
         result_id = data.get('result_id')
         task_id = data.get('task_id')

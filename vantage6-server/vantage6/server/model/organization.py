@@ -43,7 +43,7 @@ class Organization(Base):
 
         Returns
         -------
-        list[int]
+        List[int]
             List of result ids
         """
         # FIXME this should be removed in version 4.0 and above
@@ -52,12 +52,12 @@ class Organization(Base):
         from vantage6.server.model.result import Result
         session = DatabaseSessionManager.get_session()
         result_ids = session.query(Result.id)\
-                      .filter(Result.organization_id == self.id).all()
+                            .filter(Result.organization_id == self.id).all()
         session.commit()
         return result_ids
 
     @classmethod
-    def get_by_name(cls, name) -> Union[Organization, None]:
+    def get_by_name(cls, name) -> Organization | None:
         """
         Returns the organization with the given name.
 
@@ -68,7 +68,7 @@ class Organization(Base):
 
         Returns
         -------
-        Organization
+        Organization | None
             Organization with the given name if it exists, otherwise None
         """
         session = DatabaseSessionManager.get_session()
@@ -101,7 +101,7 @@ class Organization(Base):
             return ""
 
     @public_key.setter
-    def public_key(self, public_key_b64) -> None:
+    def public_key(self, public_key_b64: str) -> None:
         """
         Set public key of the organization. Assumes that the public key is
         already b64-encoded.

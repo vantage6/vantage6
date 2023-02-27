@@ -29,7 +29,9 @@ class Rule(Base):
     Table that describes which rules are available.
 
     A rule gives access to a single type of action with a given operation,
-    scope and resource on which it acts.
+    scope and resource on which it acts. Note that rules are defined on startup
+    of the server, based on permissions defined in the endpoints. You cannot
+    edit the rules in the database.
     """
 
     # fields
@@ -61,7 +63,7 @@ class Rule(Base):
 
         Returns
         -------
-        Rule or None
+        Rule | None
             Rule with the given name, scope and operation or None if no rule
             with the given name, scope and operation exists
         """

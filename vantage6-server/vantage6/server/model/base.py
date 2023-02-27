@@ -239,8 +239,8 @@ class DatabaseSessionManager:
     Class to manage DB sessions.
 
     There are 2 different ways a session can be obtained. Either a session used
-    within a request or a session used elsewhere (e.g. iPython or within the
-    application itself).
+    within a request or a session used elsewhere (e.g. socketIO event, iPython
+    or within the application itself).
 
     In case of the Flask request, the session is stored in the flask global
     `g`. Then, it can be accessed in every endpoint.
