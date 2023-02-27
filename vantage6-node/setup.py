@@ -43,7 +43,7 @@ setup(
     ],
     extras_require={
         'dev': [
-            'coverage==4.5.4',
+            'coverage==6.4.4',
             'python-coveralls==2.9.3',
             'SQLAlchemy==1.4.46',
             'schema==0.7.5',

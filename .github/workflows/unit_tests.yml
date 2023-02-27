@@ -27,7 +27,6 @@ jobs:
         # note that these are not the requirements from the individual packages, but
         # the requirments from the repository root
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install coverage==6.4.4
         make install-dev
     - name: Lint with flake8
       run: |
