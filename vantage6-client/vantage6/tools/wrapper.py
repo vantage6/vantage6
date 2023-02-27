@@ -239,7 +239,7 @@ class SparqlDockerWrapper(WrapperBase):
 
 class ParquetWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri, *_):
+    def load_data(database_uri, input_data):
         return pandas.read_parquet(database_uri)
 
 
@@ -258,7 +258,7 @@ class OMOPWrapper(WrapperBase):
 
 class MultiDBWrapper(WrapperBase):
     @staticmethod
-    def load_data(*_):
+    def load_data(database_uri, input_data):
         db_labels = json.loads(os.environ.get("DB_LABELS"))
         databases = {}
         for db_label in db_labels:
