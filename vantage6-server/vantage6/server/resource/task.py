@@ -515,8 +515,9 @@ class Tasks(TaskBase):
 
         return True
 
+    @staticmethod
     def _node_doesnt_allow_user_task(
-        self, node_configs: list[db.NodeConfig]
+        node_configs: list[db.NodeConfig]
     ) -> bool:
         """
         Checks if the node allows user to create task.
