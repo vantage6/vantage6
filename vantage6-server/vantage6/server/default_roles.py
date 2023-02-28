@@ -38,7 +38,7 @@ def get_default_roles(db):
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_('result', Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_('run', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('port', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.VIEW),
     ]

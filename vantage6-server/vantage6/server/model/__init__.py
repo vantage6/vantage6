@@ -7,7 +7,7 @@ from .member import Member
 from .node_config import NodeConfig
 from .node import Node
 from .task import Task
-from .result import Result
+from .run import Run
 from .permission import Permission, UserPermission
 from .role import Role
 from .rule import Rule

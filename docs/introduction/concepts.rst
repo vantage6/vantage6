@@ -60,8 +60,8 @@ relationships.
    also be assigned to a user.
 -  Users can create **tasks** for one or more organizations within a
    collaboration.
--  A task should produce a **result** for each organization involved in
-   the task.
+-  A task should produce an algorithm **run** for each organization involved in
+   the task. The results are part of such an algorithm run.
 
 The following schema is a *simplified* version of the database:
 

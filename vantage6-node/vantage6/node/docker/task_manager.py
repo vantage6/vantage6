@@ -38,7 +38,7 @@ class DockerTaskManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, task_info: Dict, tasks_dir: Path,
+                 run_id: int, task_info: Dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: Union[str, None] = None):
@@ -53,8 +53,8 @@ class DockerTaskManager(DockerBaseManager):
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
             Name of the node, to track running algorithms
-        result_id: int
-            Server result identifier
+        run_id: int
+            Algorithm run identifier
         task_info: Dict
             Dictionary with info about the task
         tasks_dir: Path
@@ -71,7 +71,7 @@ class DockerTaskManager(DockerBaseManager):
         super().__init__(isolated_network_mgr)
         self.image = image
         self.__vpn_manager = vpn_manager
-        self.result_id = result_id
+        self.run_id = run_id
         self.task_id = task_info['id']
         self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
@@ -88,7 +88,7 @@ class DockerTaskManager(DockerBaseManager):
         self.labels = {
             f"{APPNAME}-type": "algorithm",
             "node": node_name,
-            "result_id": str(result_id)
+            "run_id": str(run_id)
         }
         self.helper_labels = self.labels
         self.helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
@@ -227,7 +227,7 @@ class DockerTaskManager(DockerBaseManager):
             the algo container. None if VPN is inactive
         """
         vpn_ports = None
-        container_name = f'{APPNAME}-{self.node_name}-result-{self.result_id}'
+        container_name = f'{APPNAME}-{self.node_name}-run-{self.run_id}'
         helper_container_name = container_name + '-helper'
 
         # Try to pull the latest image
@@ -327,7 +327,7 @@ class DockerTaskManager(DockerBaseManager):
         # Alternatively, if we're not running in docker it should point to the
         # folder on the host that can act like a data volume. In both cases,
         # we can just copy the required files to it
-        self.task_folder_name = f"task-{self.result_id:09d}"
+        self.task_folder_name = f"task-{self.run_id:09d}"
         self.task_folder_path = \
             os.path.join(self.__tasks_dir, self.task_folder_name)
         os.makedirs(self.task_folder_path, exist_ok=True)

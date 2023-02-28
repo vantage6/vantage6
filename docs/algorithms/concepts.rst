@@ -64,8 +64,8 @@ container.
    * - ``TEMPORARY_FOLDER``
      - Path to the temporary folder. This folder can be used to store
        intermediate results. These intermediate results are shared between all
-       containers that have the same run_id. Algorithm containers which are
-       created from an algorithm container themselves share the same run_id.
+       containers that have the same ``job_id``. Algorithm containers which are
+       created from an algorithm container themselves share the same ``job_id``.
 
    * - ``HOST``
      - Contains the URL to the vantage6-server.
@@ -111,11 +111,11 @@ The algorithm container has access to several file mounts.
     files with other algorithm containers that:
 
     -  run on the same node
-    -  have the same ``run_id``
+    -  have the same ``job_id``
 
     Algorithm containers that origin from another container (a.k.a master
-    container or parent container) share the same ``run_id``. i.o. if a user
-    creates a task a new ``run_id`` is assigned.
+    container or parent container) share the same ``job_id``. i.o. if a user
+    creates a task a new ``job_id`` is assigned.
 
 The paths to these files and directories are stored in the environment
 variables, which we will explain now.
@@ -364,7 +364,7 @@ should be added to you algorithm Dockerfile:
 Port ``8888`` and ``8889`` are the internal ports to which the algorithm
 container listens. When another container want to communicate with this
 container it can retrieve the IP and external port from the central
-server by using the ``result_id`` and the label of the port you want to
+server by using the ``job_id`` and the label of the port you want to
 use (``com`` or ``data`` in this case)
 
 

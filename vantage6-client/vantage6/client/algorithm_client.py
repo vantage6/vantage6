@@ -64,38 +64,38 @@ class AlgorithmClient(ClientBase):
         """
         return super().request(*args, **kwargs, retry=False)
 
-    class Result(ClientBase.SubClient):
+    class Run(ClientBase.SubClient):
         """
-        Result client for the algorithm container.
+        Algorithm Run client for the algorithm container.
 
-        This client is used to obtain results of tasks with the same run_id
-        from the central server.
+        This client is used to obtain algorithm runs of tasks with the same
+        job_id from the central server.
         """
 
         def get(self, task_id: int) -> List:
             """
-            Obtain results from a specific task at the server.
+            Obtain algorithm runs from a specific task at the server.
 
-            Containers are allowed to obtain the results of their children
-            (having the same run_id at the server). The permissions are checked
+            Containers are allowed to obtain the runs of their children
+            (having the same job_id at the server). The permissions are checked
             at te central server.
 
             Note that the returned results are not decrypted. The algorithm is
-            responisble for decrypting the results.
+            responsible for decrypting the results.
 
             Parameters
             ----------
             task_id: int
-                ID of the task from which you want to obtain the results
+                ID of the task from which you want to obtain the algorithm runs
 
             Returns
             -------
             List
-                List of results. The type of the results depends on the
-                algorithm.
+                List of algorithm run data. The type of the results depends on
+                the algorithm.
             """
-            results = self.request(
-                f"task/{task_id}/result"
+            runs = self.request(
+                f"task/{task_id}/run"
             )
 
             decoded_results = []
@@ -104,8 +104,8 @@ class AlgorithmClient(ClientBase):
             # FIXME Are we completely sure that the format is always a pickle?
             try:
                 decoded_results = [
-                    pickle.loads(base64s_to_bytes(result.get("result")))
-                    for result in results if result.get("result")
+                    pickle.loads(base64s_to_bytes(run.get("result")))
+                    for run in runs if run.get("result")
                 ]
             except Exception as e:
                 self.log.error('Unable to unpickle result')
@@ -145,7 +145,7 @@ class AlgorithmClient(ClientBase):
             Create a new (child) task at the central server.
 
             Containers are allowed to create child tasks (having the
-            same run_id) at the central server. The docker image must
+            same job_id) at the central server. The docker image must
             be the same as the docker image of this container self.
 
             Parameters

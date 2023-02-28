@@ -150,6 +150,10 @@ class DefaultSocketNamespace(Namespace):
         information on the node (e.g. configuration) is removed from the
         database.
         """
+        if not self.__is_identified_client():
+            self.log.debug('Client disconnected before identification')
+            return
+
         for room in session.rooms:
             # self.__leave_room_and_notify(room)
             self.__leave_room_and_notify(room)
@@ -213,12 +217,12 @@ class DefaultSocketNamespace(Namespace):
                 node_id where the algorithm container was running
             status : int
                 New status of the algorithm container
-            result_id : int
-                result_id for which the algorithm was running
+            run_id : int
+                run_id for which the algorithm was running
             collaboration_id : int
                 collaboration for which the algorithm was running
         """
-        result_id = data.get('result_id')
+        run_id = data.get('run_id')
         task_id = data.get('task_id')
         collaboration_id = data.get('collaboration_id')
         status = data.get('status')
@@ -226,10 +230,10 @@ class DefaultSocketNamespace(Namespace):
         organization_id = data.get('organization_id')
         parent_id = data.get('parent_id')
 
-        run_id = db.Result.get(result_id).task.run_id
+        job_id = db.Run.get(run_id).task.job_id
 
         # log event in server logs
-        msg = (f"A container for run_id={run_id} and result_id={result_id} "
+        msg = (f"A container for job_id={job_id} and run_id={run_id} "
                f"in collaboration_id={collaboration_id} on node_id={node_id}")
         if has_task_failed(status):
             self.log.critical(f"{msg} exited with status={status}.")
@@ -240,9 +244,9 @@ class DefaultSocketNamespace(Namespace):
         emit(
             "algorithm_status_change", {
                 "status": status,
-                "result_id": result_id,
-                "task_id": task_id,
                 "run_id": run_id,
+                "task_id": task_id,
+                "job_id": job_id,
                 "collaboration_id": collaboration_id,
                 "node_id": node_id,
                 "organization_id": organization_id,
@@ -352,7 +356,18 @@ class DefaultSocketNamespace(Namespace):
             )
 
     @staticmethod
-<<<<<<< HEAD
+    def __is_identified_client() -> bool:
+        """
+        Check if client has been identified as an authenticated user or node
+
+        Returns
+        -------
+        bool
+            True if client has been identified, False otherwise
+        """
+        return hasattr(session, 'auth_id')
+
+    @staticmethod
     def __clean_node_data(node: db.Node) -> None:
         """
         Remove any information from the database that the node shared about
@@ -365,8 +380,7 @@ class DefaultSocketNamespace(Namespace):
         """
         for conf in node.config:
             conf.delete()
-=======
+
     def __cleanup() -> None:
         """ Cleanup database connections """
         DatabaseSessionManager.clear_session()
->>>>>>> main

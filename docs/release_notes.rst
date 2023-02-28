@@ -918,18 +918,18 @@ Release notes
 -  **Temporary Volumes**
 
   -  Each algorithm mounts temporary volume, which is linked to the
-     node and the ``run_id`` of the task
+     node and the ``job_id`` of the task
   -  The mounting target is specified in an environment variable
      ``TEMPORARY_FOLDER``. The algorithm can write anything to this
      directory.
   -  These volumes need to be cleaned manually.
      (``docker rm VOLUME_NAME``)
   -  Successive algorithms only have access to the volume if they share
-     the same ``run_id`` . Each time a **user** creates a task, a new
-     ``run_id`` is issued. If you need to share information between
+     the same ``job_id`` . Each time a **user** creates a task, a new
+     ``job_id`` is issued. If you need to share information between
      containers, you need to do this through a master container. If a
-     master container creates a task, all slave tasks will obtain the
-     same ``run_id``.
+     central container creates a task, all child tasks will get the
+     same ``job_id``.
 
 -  **RESTful API**
 

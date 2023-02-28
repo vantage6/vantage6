@@ -105,6 +105,7 @@ example, a rule that gives a certain permission cannot be deleted).
 -  ``client.role``
 -  ``client.collaboration``
 -  ``client.task``
+-  ``client.run``
 -  ``client.result``
 -  ``client.node``
 
@@ -429,6 +430,8 @@ master algorithm will normally do:
                                      input=input_,
                                      data_format='json')
 
+.. todo check if the part below is still correct in v4+
+
 **Inspecting the results**
 
 Of course, it will take a little while to run your algorithm. You can
@@ -447,17 +450,17 @@ every 3 seconds to see if the task has been completed:
 
    print("Results are ready!")
 
-When the results are in, you can get the result_id from the task object:
+When the results are in, you can get the task_id from the task object:
 
 .. code:: python
 
-   result_id = task_info['id']
+   task_id = task_info['id']
 
 and then retrieve the results
 
 .. code:: python
 
-   result_info = client.result.list(task=result_id)
+   result_info = client.result.list(task=task_id)
 
 The number of results may be different depending on what you run, but
 for the master algorithm in this example, we can retrieve it using:

@@ -253,21 +253,21 @@ class Node(object):
 
         self.log.info(f"received {self.queue._qsize()} tasks")
 
-    def __start_task(self, taskresult: dict) -> None:
+    def __start_task(self, task_incl_run: dict) -> None:
         """
         Start the docker image and notify the server that the task has been
         started.
 
         Parameters
         ----------
-        taskresult : dict
+        task_incl_run : dict
             A dictionary with information required to run the algorithm
         """
-        task = taskresult['task']
+        task = task_incl_run['task']
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.server_io.set_task_start_time(taskresult["id"])
+        self.server_io.set_task_start_time(task_incl_run["id"])
 
         token = self.server_io.request_token_for_container(
             task["id"],
@@ -275,24 +275,24 @@ class Node(object):
         )
         token = token["container_token"]
 
-        # create a temporary volume for each run_id
-        vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
+        # create a temporary volume for each job_id
+        vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
         self.__docker.create_volume(vol_name)
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
         # again.
         # FIXME: should probably find & fix the root cause?
-        if type(taskresult['input']) == dict:
-            taskresult['input'] = json.dumps(taskresult['input'])
+        if type(task_incl_run['input']) == dict:
+            task_incl_run['input'] = json.dumps(task_incl_run['input'])
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
-            result_id=taskresult["id"],
+            run_id=task_incl_run["id"],
             task_info=task,
             image=task["image"],
-            docker_input=taskresult['input'],
+            docker_input=task_incl_run['input'],
             tmp_vol_name=vol_name,
             token=token,
             database=task.get('database', 'default')
@@ -300,14 +300,14 @@ class Node(object):
 
         # save task status to the server and send socket event to update others
         self.server_io.patch_results(
-            id=taskresult['id'], result={'status': task_status}
+            id=task_incl_run['id'], data={'status': task_status}
         )
         self.socketIO.emit(
             'algorithm_status_change',
             data={
                 'node_id': self.server_io.whoami.id_,
                 'status': task_status,
-                'result_id': taskresult['id'],
+                'run_id': task_incl_run['id'],
                 'task_id': task['id'],
                 'collaboration_id': self.server_io.collaboration_id,
                 'organization_id': self.server_io.whoami.organization_id,
@@ -321,10 +321,10 @@ class Node(object):
             # to the algorithm container. First delete any existing port
             # assignments in case algorithm has crashed
             self.server_io.request(
-                'port', params={'result_id': taskresult['id']}, method="DELETE"
+                'port', params={'run_id': task_incl_run['id']}, method="DELETE"
             )
             for port in vpn_ports:
-                port['result_id'] = taskresult['id']
+                port['run_id'] = task_incl_run['id']
                 self.server_io.request('port', method='POST', json=port)
 
             # Save IP address of VPN container
@@ -378,7 +378,7 @@ class Node(object):
                     data={
                         'node_id': self.server_io.whoami.id_,
                         'status': results.status,
-                        'result_id': results.result_id,
+                        'run_id': results.run_id,
                         'task_id': results.task_id,
                         'collaboration_id': self.server_io.collaboration_id,
                         'organization_id':
@@ -389,19 +389,19 @@ class Node(object):
                 )
 
                 self.log.info(
-                    f"Sending result (id={results.result_id}) to the server!")
+                    f"Sending result (run={results.run_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
                 # just store the task_id when retrieving the task the first
                 # time?
                 response = self.server_io.request(
-                    f"result/{results.result_id}"
+                    f"run/{results.run_id}"
                 )
                 task_id = response.get("task").get("id")
 
                 if not task_id:
                     self.log.error(
-                        f"task_id of result (id={results.result_id}) "
+                        f"task_id of run (id={results.run_id}) "
                         f"could not be retrieved"
                     )
                     return
@@ -416,8 +416,8 @@ class Node(object):
                     )
 
                 self.server_io.patch_results(
-                    id=results.result_id,
-                    result={
+                    id=results.run_id,
+                    data={
                         'result': results.data,
                         'log': results.logs,
                         'status': results.status,
@@ -798,15 +798,12 @@ class Node(object):
         task_id : int
             Task identifier
         """
-        # fetch (open) result for the node with the task_id
+        # fetch (open) algorithm run for the node with the task_id
         tasks = self.server_io.get_results(
             include_task=True,
             state='open',
             task_id=task_id
         )
-
-        # in the current setup, only a single result for a single node
-        # in a task exists.
         for task in tasks:
             self.queue.put(task)
 
@@ -860,7 +857,7 @@ class Node(object):
         -------
         List[Dict]:
             List of dictionaries with information on killed task (keys:
-            result_id, task_id and parent_id)
+            run_id, task_id and parent_id)
         """
         if kill_info['collaboration_id'] != self.server_io.collaboration_id:
             self.log.debug(
@@ -882,7 +879,7 @@ class Node(object):
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.server_io.patch_results(
-                id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+                id=killed_algo.run_id, data={'status': TaskStatus.KILLED}
             )
         return killed_algos
 

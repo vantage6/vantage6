@@ -29,20 +29,22 @@ class Organization(Base):
     # relations
     collaborations = relationship("Collaboration", secondary="Member",
                                   back_populates="organizations")
-    results = relationship("Result", back_populates="organization")
+    runs = relationship("Run", back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
     created_tasks = relationship("Task", back_populates="init_org")
     roles = relationship("Role", back_populates="organization")
 
-    def get_result_ids(self):
-        # FIXME this should be removed in version 4.0 and above
+    def get_run_ids(self):
+        # FIXME this should be removed in version 4.0 and above, it only exists
+        # to make the organization endpoint faster and these links should be
+        # adapted there.
         # note that the import below is required since this file (Organization)
-        # is already imported in model.Result
-        from vantage6.server.model.result import Result
+        # is already imported in model.Run
+        from vantage6.server.model.run import Run
         session = DatabaseSessionManager.get_session()
-        result_ids = session.query(Result.id)\
-                      .filter(Result.organization_id == self.id).all()
+        result_ids = session.query(Run.id)\
+                            .filter(Run.organization_id == self.id).all()
         session.commit()
         return result_ids
 

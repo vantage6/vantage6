@@ -138,35 +138,35 @@ def make_request(method: str, endpoint: str, json: dict = None,
     raise Exception("Proxy request failed")
 
 
-def decrypt_result(result: dict) -> dict:
+def decrypt_result(run: dict) -> dict:
     """
-    Decrypt the `result` from a result dictonary
+    Decrypt the `result` from a run dictonary
 
     Parameters
     ----------
-    result: dict
-        Result dict
+    run: dict
+        Run dict
 
     Returns
     -------
     dict
-        Result dict with the `result` decrypted
+        Run dict with the `result` decrypted
     """
     server_io: NodeClient = app.config.get('SERVER_IO')
 
     # if the result is a None, there is no need to decrypt that..
     try:
-        if result['result']:
-            result["result"] = bytes_to_base64s(
+        if run['result']:
+            run["result"] = bytes_to_base64s(
                 server_io.cryptor.decrypt_str_to_bytes(
-                    result["result"]
+                    run["result"]
                 )
             )
     except Exception:
         log.exception("Unable to decrypt and/or decode results, sending them "
                       "to the algorithm...")
 
-    return result
+    return run
 
 
 def get_response_json_and_handle_exceptions(
@@ -280,7 +280,7 @@ def proxy_task():
     return response.json(), HTTPStatus.OK
 
 
-@app.route('/task/<int:id>/result', methods=["GET"])
+@app.route('/task/<int:id>/run', methods=["GET"])
 def proxy_task_result(id: int) -> Response:
     """
     Obtain and decrypt all results to belong to a certain task
@@ -303,33 +303,33 @@ def proxy_task_result(id: int) -> Response:
 
     # Forward the request
     try:
-        response: Response = make_proxied_request(f"task/{id}/result")
+        response: Response = make_proxied_request(f"task/{id}/run")
     except Exception:
-        log.exception('Error on /result/<int:id>')
+        log.exception('Error on "task/<id>/run"')
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Attempt to decrypt the results. The enpoint should have returned
     # a list of results
     unencrypted = []
-    results = get_response_json_and_handle_exceptions(response)
-    for result in results:
-        result = decrypt_result(result)
-        unencrypted.append(result)
+    runs = get_response_json_and_handle_exceptions(response)
+    for run in runs:
+        run = decrypt_result(run)
+        unencrypted.append(run)
 
     return jsonify(unencrypted), HTTPStatus.OK
 
 
-@app.route('/result/<int:id>', methods=["GET"])
+@app.route('/run/<int:id>', methods=["GET"])
 def proxy_results(id: int) -> Response:
     """
-    Obtain and decrypt the result from the vantage6 server to be used by
+    Obtain and decrypt the algorithm run from the vantage6 server to be used by
     an algorithm container.
 
     Parameters
     ----------
     id : int
-        Id of the result to be obtained
+        Id of the run to be obtained
 
     Returns
     -------
@@ -344,17 +344,17 @@ def proxy_results(id: int) -> Response:
 
     # Make the proxied request
     try:
-        response: Response = make_proxied_request(f"result/{id}")
+        response: Response = make_proxied_request(f"run/{id}")
     except Exception:
-        log.exception('Error on /result/<int:id>')
+        log.exception('Error on /run/<int:id>')
         return {'msg': 'Request failed, see node logs...'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Try to decrypt the results
-    result = get_response_json_and_handle_exceptions(response)
-    result = decrypt_result(result)
+    run = get_response_json_and_handle_exceptions(response)
+    run = decrypt_result(run)
 
-    return result, HTTPStatus.OK
+    return run, HTTPStatus.OK
 
 
 @app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH",

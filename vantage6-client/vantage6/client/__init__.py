@@ -443,36 +443,36 @@ class ClientBase(object):
     def get_results(self, id: int = None, state: str = None,
                     include_task: bool = False, task_id: int = None,
                     node_id: int = None, params: dict = {}) -> dict:
-        """Get task result(s) from the central server
+        """Get task's algorithm run(s) from the central server
 
         Depending if a `id` is specified or not, either a single or a
-        list of results is returned. The input and result field of the
-        result are attempted te be decrypted. This fails if the public
+        list of runs is returned. The input and result field of the
+        run are attempted to be decrypted. This fails if the public
         key at the server is not derived from the currently private key
-        or when the result is not from your organization.
+        or when the run is not from your organization.
 
         Parameters
         ----------
         id : int, optional
-            Id of the result, by default None
+            Id of the algorithm run, by default None
         state : str, optional
             The state of the task (e.g. `open`), by default None
         include_task : bool, optional
             Whenever to include the orginating task, by default False
         task_id : int, optional
-            The id of the originating task, this will return all results
+            The id of the originating task, this will return all runs
             belonging to this task, by default None
         node_id : int, optional
-            The id of the node at which this result has been produced,
-            this will return all results from this node, by default None
+            The id of the node at which this run has been produced,
+            this will return all runs from this node, by default None
 
         Returns
         -------
         dict
-            Containing the result(s)
+            Containing data on the algorithm run(s)
         """
         # Determine endpoint and create dict with query parameters
-        endpoint = 'result' if not id else f'result/{id}'
+        endpoint = 'run' if not id else f'run/{id}'
 
         if state:
             params['state'] = state
@@ -484,35 +484,35 @@ class ClientBase(object):
             params['node_id'] = node_id
 
         # self.log.debug(f"Retrieving results using query parameters:{params}")
-        results = self.request(endpoint=endpoint, params=params)
+        run_data = self.request(endpoint=endpoint, params=params)
 
-        if isinstance(results, str):
+        if isinstance(run_data, str):
             self.log.warn("Requesting results failed")
-            self.log.debug(f"Results message: {results}")
+            self.log.debug(f"Results message: {run_data}")
             return {}
 
         # hack: in the case that the pagination metadata is included we
         # need to strip that for decrypting
-        if isinstance(results, dict) and 'data' in results:
-            wrapper = results
-            results = results['data']
+        if isinstance(run_data, dict) and 'data' in run_data:
+            wrapper = run_data
+            run_data = run_data['data']
 
         if id:
             # Single result
-            self._decrypt_result(results)
+            self._decrypt_result(run_data)
 
         else:
             # Multiple results
-            for result in results:
-                self._decrypt_result(result)
+            for run in run_data:
+                self._decrypt_run(run)
 
         if 'wrapper' in locals():
-            wrapper['data'] = results
-            results = wrapper
+            wrapper['data'] = run_data
+            run_data = wrapper
 
-        return results
+        return run_data
 
-    def _decrypt_result(self, result):
+    def _decrypt_run(self, run):
         """Helper to decrypt the keys 'input' and 'result' in dict.
 
         Keys are replaced, but object reference remains intact: changes are
@@ -522,22 +522,22 @@ class ClientBase(object):
         cryptor = self.cryptor
         try:
             self.log.info('Decrypting input')
-            # TODO this only works when the results belong to the
+            # TODO this only works when the runs belong to the
             # same organization... We should make different implementation
             # of get_results
-            result["input"] = cryptor.decrypt_str_to_bytes(result["input"])
+            run["input"] = cryptor.decrypt_str_to_bytes(run["input"])
 
         except Exception as e:
             self.log.debug(e)
 
         try:
-            if result["result"]:
+            if run["result"]:
                 self.log.info('Decrypting result')
-                result["result"] = \
-                    cryptor.decrypt_str_to_bytes(result["result"])
+                run["run"] = \
+                    cryptor.decrypt_str_to_bytes(run["result"])
 
         except ValueError as e:
-            self.log.error("Could not decrypt/decode input or result.")
+            self.log.error("Could not decrypt/decode result.")
             self.log.error(e)
             # raise
 
@@ -571,6 +571,7 @@ class UserClient(ClientBase):
         self.collaboration = self.Collaboration(self)
         self.organization = self.Organization(self)
         self.user = self.User(self)
+        self.run = self.Run(self)
         self.result = self.Result(self)
         self.task = self.Task(self)
         self.role = self.Role(self)
@@ -1681,10 +1682,10 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(self, initiating_org: int = None, initiating_user: int = None,
                  collaboration: int = None, image: str = None,
-                 parent: int = None, run: int = None,
+                 parent: int = None, job: int = None,
                  name: str = None, include_results: bool = False,
                  description: str = None, database: str = None,
-                 result: int = None, status: str = None, page: int = 1,
+                 run: int = None, status: str = None, page: int = 1,
                  per_page: int = 20, include_metadata: bool = True) -> dict:
             """List tasks
 
@@ -1704,8 +1705,8 @@ class UserClient(ClientBase):
                 Filter by Docker image name (with LIKE operator)
             parent: int, optional
                 Filter by parent task
-            run: int, optional
-                Filter by run
+            job: int, optional
+                Filter by job id
             include_results : bool, optional
                 Whenever to include the results in the tasks, by default
                 False
@@ -1713,8 +1714,8 @@ class UserClient(ClientBase):
                 Filter by description (with LIKE operator)
             database: str, optional
                 Filter by database (with LIKE operator)
-            result: int, optional
-                Only show task that contains this result id
+            run: int, optional
+                Only show task that contains this run id
             status: str, optional
                 Filter by task status (e.g. 'active', 'pending', 'completed',
                 'crashed')
@@ -1749,10 +1750,10 @@ class UserClient(ClientBase):
             params = {
                 'init_org_id': initiating_org, 'init_user_id': initiating_user,
                 'collaboration_id': collaboration,
-                'image': image, 'parent_id': parent, 'run_id': run,
+                'image': image, 'parent_id': parent, 'job_id': job,
                 'name': name, 'page': page, 'per_page': per_page,
                 'description': description, 'database': database,
-                'result_id': result, 'status': status,
+                'run_id': run, 'status': status,
             }
             includes = []
             if include_results:
@@ -1802,7 +1803,7 @@ class UserClient(ClientBase):
         def delete(self, id_: int) -> dict:
             """Delete a task
 
-            Also removes the related results.
+            Also removes the related runs.
 
             Parameters
             ----------
@@ -1838,37 +1839,37 @@ class UserClient(ClientBase):
             })
             self.parent.log.info(f'--> {msg}')
 
-    class Result(ClientBase.SubClient):
+    class Run(ClientBase.SubClient):
 
         @post_filtering(iterable=False)
         def get(self, id_: int, include_task: bool = False) -> dict:
-            """View a specific result
+            """View a specific run
 
             Parameters
             ----------
             id_ : int
-                id of the result you want to inspect
+                id of the run you want to inspect
             include_task : bool, optional
                 Whenever to include the task or not, by default False
 
             Returns
             -------
             dict
-                Containing the result data
+                Containing the run data
             """
             self.parent.log.info('--> Attempting to decrypt results!')
 
             # get_results also handles decryption
-            result = self.parent.get_results(id=id_, include_task=include_task)
-            result_data = result.get('result')
+            run = self.parent.get_results(id=id_, include_task=include_task)
+            result_data = run.get('result')
             if result_data:
                 try:
-                    result['result'] = deserialization.load_data(result_data)
+                    run['result'] = deserialization.load_data(result_data)
                 except Exception as e:
                     self.parent.log.warn('--> Failed to deserialize')
                     self.parent.log.debug(e)
 
-            return result
+            return run
 
         @post_filtering()
         def list(self, task: int = None, organization: int = None,
@@ -1878,7 +1879,7 @@ class UserClient(ClientBase):
                  finished: Tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
                  include_metadata: bool = True) -> list:
-            """List results
+            """List runs
 
             Parameters
             ----------
@@ -1899,7 +1900,7 @@ class UserClient(ClientBase):
             finished: Tuple[str, str], optional
                 Filter on a range of finished times (format: yyyy-mm-dd)
             port: int, optional
-                Port on which result was computed
+                Port on which run was computed
             page: int, optional
                 Pagination page number, defaults to 1
             per_page: int, optional
@@ -1912,14 +1913,14 @@ class UserClient(ClientBase):
             -------
             dict
                 Containing the key 'data' which contains a list of
-                results, and a key 'links' which contains the pagination
+                runs, and a key 'links' which contains the pagination
                 metadata
 
             OR
 
             list of dicts
                 When include_metadata is set to False, the metadata wrapper
-                is stripped and only a list of results is returned
+                is stripped and only a list of runs is returned
             """
             includes = []
             if include_metadata:
@@ -1941,47 +1942,93 @@ class UserClient(ClientBase):
                 'port': port
             }
 
-            results = self.parent.get_results(params=params)
+            runs = self.parent.get_results(params=params)
 
-            if isinstance(results, dict):
-                wrapper = results
-                results = results['data']
+            if isinstance(runs, dict):
+                wrapper = runs
+                runs = runs['data']
 
-            cleaned_results = []
-            for result in results:
-                if result.get('result'):
+            cleaned_runs = []
+            for run in runs:
+                if run.get('result'):
                     try:
                         des_res = deserialization.load_data(
-                            result.get('result')
+                            run.get('result')
                         )
                     except Exception as e:
-                        id_ = result.get('id')
-                        self.parent.log.warn('Could not deserialize result id='
+                        id_ = run.get('id')
+                        self.parent.log.warn('Could not deserialize run id='
                                              f'{id_}')
                         self.parent.log.debug(e)
                         continue
-                    result['result'] = des_res
-                cleaned_results.append(result)
+                    run['result'] = des_res
+                cleaned_runs.append(run)
 
             if 'wrapper' in locals():
-                wrapper['data'] = cleaned_results
-                cleaned_results = wrapper
+                wrapper['data'] = cleaned_runs
+                cleaned_runs = wrapper
 
-            return cleaned_results
+            return cleaned_runs
 
         def from_task(self, task_id: int, include_task: bool = False):
             self.parent.log.info('--> Attempting to decrypt results!')
 
             # get_results also handles decryption
-            results = self.parent.get_results(task_id=task_id,
-                                              include_task=include_task)
-            cleaned_results = []
-            for result in results:
-                if result.get('result'):
-                    des_res = deserialization.load_data(result.get('result'))
-                    result['result'] = des_res
-                cleaned_results.append(result)
+            runs = self.parent.get_results(task_id=task_id,
+                                           include_task=include_task)
+            cleaned_runs = []
+            for run in runs:
+                if run.get('result'):
+                    des_res = deserialization.load_data(run.get('result'))
+                    run['result'] = des_res
+                cleaned_runs.append(run)
 
+            return cleaned_runs
+
+    class Result(ClientBase.SubClient):
+        """
+        Client to get the results of one or multiple algorithm runs
+        """
+
+        @post_filtering(iterable=False)
+        def get(self, id_: int) -> dict:
+            """View a specific result
+
+            Parameters
+            ----------
+            id_ : int
+                id of the run you want to inspect
+
+            Returns
+            -------
+            dict
+                Containing the run data
+            """
+            self.parent.log.info('--> Attempting to decrypt results!')
+
+            # get_results also handles decryption
+            run = self.parent.get_results(id=id_)
+            result_data = run.get('result')
+            if result_data:
+                try:
+                    run['result'] = deserialization.load_data(result_data)
+                except Exception as e:
+                    self.parent.log.warn('--> Failed to deserialize')
+                    self.parent.log.debug(e)
+
+            return run['result']
+
+        def from_task(self, task_id: int):
+            self.parent.log.info('--> Attempting to decrypt results!')
+
+            # get_results also handles decryption
+            runs = self.parent.get_results(task_id=task_id)
+            cleaned_results = []
+            for run in runs:
+                if run.get('result'):
+                    des_res = deserialization.load_data(run.get('result'))
+                    run['result'] = des_res
+                    cleaned_results.append(run['result'])
             return cleaned_results
 
     class Rule(ClientBase.SubClient):
@@ -2104,14 +2151,14 @@ class ContainerClient(ClientBase):
         """ Obtain results from a specific task at the server
 
             Containers are allowed to obtain the results of their
-            children (having the same run_id at the server). The
+            children (having the same job_id at the server). The
             permissions are checked at te central server.
 
             :param task_id: id of the task from which you want to obtain
                 the results
         """
         results = self.request(
-            f"task/{task_id}/result"
+            f"task/{task_id}/run"
         )
 
         res = []
@@ -2136,7 +2183,7 @@ class ContainerClient(ClientBase):
         Return IP address and port number of other algorithm containers
         involved in a task so that VPN can be used for communication
         """
-        results = self.request(f"task/{task_id}/result")
+        results = self.request(f"task/{task_id}/run")
 
         algorithm_addresses = []
         for result in results:
@@ -2167,7 +2214,7 @@ class ContainerClient(ClientBase):
         """ Create a new (child) task at the central server.
 
             Containers are allowed to create child tasks (having the
-            same run_id) at the central server. The docker image must
+            same job_id) at the central server. The docker image must
             be the same as the docker image of this container self.
 
             :param input_: input to the task

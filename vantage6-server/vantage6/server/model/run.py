@@ -19,10 +19,10 @@ from vantage6.server.model.base import DatabaseSessionManager
 log_ = logging.getLogger(logger_name(__name__))
 
 
-class Result(Base):
-    """Result of a Task as executed by a Node.
+class Run(Base):
+    """A Run (of an algorithm) as executed by a Node.
 
-    The result (and the input) is encrypted and can be only read by the
+    The input and result fields will be encrypted and can be only read by the
     intended receiver of the message.
     """
 
@@ -38,9 +38,9 @@ class Result(Base):
     log = Column(Text)
 
     # relationships
-    task = relationship("Task", back_populates="results")
-    organization = relationship("Organization", back_populates="results")
-    ports = relationship("AlgorithmPort", back_populates="result")
+    task = relationship("Task", back_populates="runs")
+    organization = relationship("Organization", back_populates="runs")
+    ports = relationship("AlgorithmPort", back_populates="run")
 
     @property
     def node(self):
@@ -49,9 +49,9 @@ class Result(Base):
             node = session.query(Node)\
                 .join(Collaboration)\
                 .join(Organization)\
-                .join(Result)\
+                .join(Run)\
                 .join(Task)\
-                .filter(Result.id == self.id)\
+                .filter(Run.id == self.id)\
                 .filter(self.organization_id == Node.organization_id)\
                 .filter(Task.collaboration_id == Node.collaboration_id)\
                 .one()
@@ -71,7 +71,7 @@ class Result(Base):
 
     def __repr__(self):
         return (
-            "<Result "
+            "<Run "
             f"{self.id}: '{self.task.name}', "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.task.collaboration.name}, "

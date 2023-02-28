@@ -247,17 +247,17 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
     socket: SocketIO
         SocketIO connection object to communicate kill instructions to node
     """
-    # Gather results and task ids of current task and child tasks
-    child_results = [r for child in task.children for r in child.results]
-    all_results = task.results + child_results
+    # Gather runs and task ids of current task and child tasks
+    child_runs = [r for child in task.children for r in child.runs]
+    all_runs = task.runs + child_runs
     child_task_ids = [child.id for child in task.children]
     all_task_ids = [task.id] + child_task_ids
 
     kill_list = [{
         'task_id': task_id,
-        'result_id': result.id,
-        'organization_id': result.organization_id
-    } for result, task_id in zip(all_results, all_task_ids)]
+        'run_id': run.id,
+        'organization_id': run.organization_id
+    } for run, task_id in zip(all_runs, all_task_ids)]
 
     # emit socket event to the node to execute the container kills
     socket.emit(
@@ -271,10 +271,10 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
 
     # set tasks and subtasks status to killed
     def set_killed(task: db.Task):
-        for result in task.results:
-            result.status = TaskStatus.KILLED
-            result.finished_at = dt.datetime.now()
-            result.save()
+        for run in task.runs:
+            run.status = TaskStatus.KILLED
+            run.finished_at = dt.datetime.now()
+            run.save()
 
     set_killed(task)
     for subtask in task.children:
