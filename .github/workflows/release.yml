@@ -52,11 +52,11 @@ jobs:
 
       - name: Checkout correct branch
         uses: actions/checkout@v3
-        env:
-          branch: ${{ steps.branchname.outputs.branch }}
+        # env:
+        #   branch: ${{ steps.branchname.outputs.branch }}
         with:
           fetch-depth: 0
-          ref: ${branch}
+          ref: ${{ env.branch }}
           token: ${{ secrets.COMMIT_PAT }}
 
       - name: Update version in packages
@@ -94,6 +94,7 @@ jobs:
       stage: ${{ steps.split.outputs.stage }}
       build: ${{ steps.split.outputs.build }}
       major_name: ${{ steps.split.outputs.major_name }}
+      branch: ${{ steps.branchname.outputs.branch }}
 
   # Create Github release which can be used DOI generation
   github-release:
@@ -102,12 +103,11 @@ jobs:
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
+      branch: ${{ needs.version.outputs.branch }}
     steps:
     - uses: actions/checkout@v3
-      env:
-        branch: ${{ steps.branchname.outputs.branch }}
       with:
-        ref: ${branch}
+        ref: ${{env.branch}}
 
     - name: Create a Release
       uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
@@ -123,6 +123,7 @@ jobs:
     needs: version
     env:
       version: ${{ needs.version.outputs.version }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
 
@@ -134,10 +135,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        env:
-          branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: ${branch}
+          ref: ${{ env.branch }}
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -161,6 +160,7 @@ jobs:
       minor: ${{ needs.version.outputs.minor }}
       patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
 
@@ -172,10 +172,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        env:
-          branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: ${branch}
+          ref: ${{ env.branch }}
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -205,6 +203,7 @@ jobs:
     needs: version
     env:
       version: ${{ needs.version.outputs.version }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
       - name: Login to harbor2.vantage6.ai
@@ -215,10 +214,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        env:
-          branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: ${branch}
+          ref: ${{ env.branch }}
 
 
       - # Add support for more platforms with QEMU (optional)
@@ -290,15 +287,14 @@ jobs:
       patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
       build: ${{ needs.version.outputs.build }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        env:
-          branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: ${branch}
+          ref: ${{ env.branch }}
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -333,14 +329,13 @@ jobs:
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
+      branch: ${{ needs.version.outputs.branch }}
     steps:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        env:
-          branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: ${branch}
+          ref: ${{ env.branch }}
 
       - name: Install dependencies
         run: |
