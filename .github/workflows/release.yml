@@ -38,12 +38,16 @@ jobs:
 
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Get branch on which the tag is based
         id: branchname
         run: |
          raw=$(git branch -r --contains ${{ github.ref }})
-         branch=${raw/origin\/}
+         echo $raw
+         branch=${raw##*/}
+         echo $branch
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - env:
