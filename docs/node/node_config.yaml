@@ -34,10 +34,16 @@ application:
     network_config: harbor2.vantage6.ai/infrastructure/vpn_network
 
   # path or endpoint to the local data source. The client can request a
-  # certain database to be used if it is specified here. They are
-  # specified as label:local_path pairs.
+  # certain database by using its label. The type is used by the
+  # auto_wrapper method used by algorithms. This way the algorithm wrapper
+  # knows how to read the data from the source. The auto_wrapper currently
+  # supports: 'csv', 'parquet', 'sql', 'sparql', 'excel', 'omop'. If your
+  # algorithm does not use the wrapper and you have a different type of
+  # data source you can specify 'other'.
   databases:
-    default: D:\data\datafile.csv
+    - label: default
+      uri: D:\data\datafile.csv
+      type: csv
 
   # end-to-end encryption settings
   encryption:

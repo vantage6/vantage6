@@ -16,6 +16,7 @@ import shutil
 from typing import Dict, List, NamedTuple, Union
 from pathlib import Path
 
+from vantage6.common import get_database_config
 from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
 from vantage6.common.task_status import TaskStatus, has_task_failed
@@ -141,12 +142,12 @@ class DockerManager(DockerBaseManager):
         self.login_to_registries(docker_registries)
 
         # set database uri and whether or not it is a file
-        self._set_database(config)
+        self._set_database(ctx.databases)
 
         # keep track of linked docker services
         self.linked_services: List[str] = []
 
-    def _set_database(self, config: Dict) -> None:
+    def _set_database(self, databases: Union[Dict, List]) -> None:
         """"
         Set database location and whether or not it is a file
 
@@ -156,9 +157,17 @@ class DockerManager(DockerBaseManager):
             Configuration of the app
         """
 
+        # Check wether the new or old database config is used.
+        # TODO: we should remove the old way in v4+
+        old_format = isinstance(databases, dict)
+
         # Check that the `default` database label is present. If this is
         # not the case, older algorithms will break
-        db_labels = config['databases'].keys()
+        if old_format:
+            db_labels = databases.keys()
+        else:
+            db_labels = [db['label'] for db in databases]
+
         if 'default' not in db_labels:
             self.log.error("'default' database not specified in the config!")
             self.log.debug(f'databases in config={db_labels}')
@@ -171,11 +180,14 @@ class DockerManager(DockerBaseManager):
         self.databases = {}
         for label in db_labels:
             label_upper = label.upper()
+            db_config = get_database_config(databases, label)
             if running_in_docker():
                 uri_env = os.environ[f'{label_upper}_DATABASE_URI']
                 uri = f'/mnt/{uri_env}'
             else:
-                uri = config['databases'][label]
+                uri = db_config['uri']
+
+            db_type = db_config['type']
 
             db_is_file = Path(uri).exists()
             if db_is_file:
@@ -184,7 +196,8 @@ class DockerManager(DockerBaseManager):
                 shutil.copy(uri, self.__tasks_dir)
                 uri = self.__tasks_dir / os.path.basename(uri)
 
-            self.databases[label] = {'uri': uri, 'is_file': db_is_file}
+            self.databases[label] = {'uri': uri, 'is_file': db_is_file,
+                                     'type': db_type}
         self.log.debug(f"Databases: {self.databases}")
 
     def create_volume(self, volume_name: str) -> None:

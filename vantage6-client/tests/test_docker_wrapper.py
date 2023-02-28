@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 from pytest import raises
 
-from vantage6.tools import docker_wrapper
+from vantage6.tools import wrapper
 from vantage6.tools.exceptions import DeserializationException
 
 MODULE_NAME = 'algorithm_module'
@@ -144,7 +144,7 @@ def run_docker_wrapper_with_echo_db(input_file, tmp_path):
             'DATABASE_URI': db_file
         }
 
-        docker_wrapper.docker_wrapper(MODULE_NAME)
+        wrapper.docker_wrapper(MODULE_NAME)
     return output_file
 
 
@@ -178,7 +178,7 @@ def test_sparql_docker_wrapper_passes_dataframe(
     SPARQLWrapper.return_value.query.return_value.convert.return_value = \
         DATA.encode()
 
-    docker_wrapper.sparql_wrapper(MODULE_NAME)
+    wrapper.sparql_wrapper(MODULE_NAME)
 
     dispatch_rpc.assert_called_once()
 
