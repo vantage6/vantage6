@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List, Union
 import bcrypt
 
 from vantage6.server.model.base import DatabaseSessionManager
@@ -100,13 +99,13 @@ class Node(Authenticatable):
         return None
 
     @classmethod
-    def get_online_nodes(cls) -> List[Node]:
+    def get_online_nodes(cls) -> list[Node]:
         """
         Return nodes that currently have status 'online'
 
         Returns
         -------
-        List[Node]
+        list[Node]
             List of node models that are currently online
         """
         session = DatabaseSessionManager.get_session()

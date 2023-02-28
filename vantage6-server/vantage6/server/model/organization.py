@@ -1,6 +1,5 @@
 from __future__ import annotations
 import base64
-from typing import List, Union
 
 from sqlalchemy import Column, String, LargeBinary
 from sqlalchemy.orm import relationship
@@ -37,13 +36,13 @@ class Organization(Base):
     created_tasks = relationship("Task", back_populates="initiator")
     roles = relationship("Role", back_populates="organization")
 
-    def get_result_ids(self) -> List[int]:
+    def get_result_ids(self) -> list[int]:
         """
         Returns a list of result ids that are part of this organization.
 
         Returns
         -------
-        List[int]
+        list[int]
             List of result ids
         """
         # FIXME this should be removed in version 4.0 and above

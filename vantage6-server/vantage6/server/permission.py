@@ -286,7 +286,8 @@ class PermissionManager:
         session.commit()
         return result
 
-    def verify_user_rules(self, rules: List[Rule]) -> Union[dict, bool]:
+    @staticmethod
+    def verify_user_rules(rules: List[Rule]) -> Union[dict, bool]:
         """
         Check if a user has all of a set of rules
 
