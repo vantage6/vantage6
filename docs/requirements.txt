@@ -1,0 +1,10 @@
+# requirements for readthedocs generation
+-r ../vantage6-common/requirements.txt
+-r ../vantage6-client/requirements.txt
+-r ../vantage6/requirements.txt
+-r ../vantage6-node/requirements.txt
+-r ../vantage6-server/requirements.txt
+sphinx==5.3.0
+sphinx-autobuild
+sphinx-autodoc-typehints
+furo==2022.12.7

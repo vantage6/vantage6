@@ -22,7 +22,8 @@ from vantage6.server.model import (
     Rule,
     UserPermission,
     role_rule_association,
-    AlgorithmPort
+    AlgorithmPort,
+    NodeConfig
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
@@ -30,11 +31,6 @@ from vantage6.common.globals import STRING_ENCODING
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
-
-# DB connection session. This is used by the iPython shell (from db import
-# session). It is important to mention that the flask requests obtain their
-# session from `g.session` which is initialized on `pre_request`.
-session = None
 
 
 def jsonable(value):
@@ -59,7 +55,7 @@ def jsonable(value):
             elif isinstance(column_value, datetime.datetime):
                 column_value = column_value.isoformat()
             elif isinstance(column_value, bytes):
-                log.debug(f"decoding bytes!")
+                log.debug("decoding bytes!")
                 column_value = column_value.decode(STRING_ENCODING)
 
             retval[column] = column_value

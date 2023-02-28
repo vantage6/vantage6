@@ -18,22 +18,22 @@ from vantage6.cli.server import (
 
 class ServerCLITest(unittest.TestCase):
 
-    @patch("docker.types.Mount")
+    @patch("vantage6.cli.server.NetworkManager")
+    @patch("vantage6.cli.server.docker.types.Mount")
     @patch("os.makedirs")
     @patch("vantage6.cli.server.pull_if_newer")
     @patch("vantage6.cli.server.ServerContext")
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.server.docker.from_env")
+    @patch("vantage6.cli.server.check_docker_running", return_value=True)
     def test_start(self, docker_check, containers, context,
-                   pull, os_makedirs, mount):
+                   pull, os_makedirs, mount, network_manager):
         """Start server without errors"""
-
-        docker_check.return_value = True
-
         container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system"
-        containers.list.return_value = [container1]
-        containers.run.return_value = True
+        container1.containers.name = f"{APPNAME}-iknl-system"
+        containers.containers.list.return_value = [container1]
+        containers.containers.run.return_value = True
+
+        # mount.types.Mount.return_value = MagicMock()
 
         ctx = MagicMock(
             config={
@@ -54,11 +54,9 @@ class ServerCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.server.ServerContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.server.check_docker_running", return_value=True)
     def test_configuration_list(self, docker_check, containers, context):
         """Configuration list without errors."""
-        docker_check.return_value = True
-
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-system"
         containers.list.return_value = [container1]
@@ -92,7 +90,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.server.print_log_worker")
     @patch("vantage6.cli.server.click.Path")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.server.check_docker_running", return_value=True)
     @patch("vantage6.cli.server.ServerContext")
     def test_import(self, context, docker_check, click_path, log, containers):
         """Import entities without errors."""
@@ -114,7 +112,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.server.configuration_wizard")
-    @patch("vantage6.cli.server.check_config_write_permissions")
+    @patch("vantage6.cli.server.check_config_writeable")
     @patch("vantage6.cli.server.ServerContext")
     def test_new(self, context, permissions, wizard):
         """New configuration without errors."""
@@ -130,14 +128,14 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.server.ServerContext")
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.server.docker.from_env")
+    @patch("vantage6.cli.server.check_docker_running", return_value=True)
     def test_stop(self, docker_check, containers, context):
         """Stop server without errors."""
 
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-system-server"
-        containers.list.return_value = [container1]
+        containers.containers.list.return_value = [container1]
 
         ctx = MagicMock(
             config={
@@ -154,7 +152,7 @@ class ServerCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.server.time.sleep")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.common.docker.addons.check_docker_running")
+    @patch("vantage6.cli.server.check_docker_running", return_value=True)
     def test_attach(self, docker_check, containers, sleep):
         """Attach log to the console without errors."""
         container1 = MagicMock()

@@ -40,8 +40,8 @@ class AppContext(metaclass=Singleton):
                 OS specific folder will be used to find the configuration file
                 specified by `instance_name`.
         """
-        self.scope = "system" if system_folders else "user"
-        self.name = instance_name
+        self.scope: str = "system" if system_folders else "user"
+        self.name: str = instance_name
 
         # configuration environment, load a single configuration from
         # entire confiration file (which can contain multiple environments)
@@ -58,7 +58,7 @@ class AppContext(metaclass=Singleton):
 
         # will load a specific environment in the config_file, this
         # triggers to set the logging as this is env dependant
-        self.environment = environment
+        self.environment: str = environment
 
         # lookup system / user directories, this needs to be done after
         # the environment is been set. This way we can check if the
@@ -83,11 +83,16 @@ class AppContext(metaclass=Singleton):
         self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
         self.log.info(" --> Blog: https://vantage6.ai")
-        self.log.info("-" * 45)
+        self.log.info("-" * 60)
+        self.log.info("Cite us!")
+        self.log.info("If you publish your findings obtained using vantage6, ")
+        self.log.info("please cite the proper sources as mentioned in:")
+        self.log.info("https://vantage6.ai/vantage6/references")
+        self.log.info("-" * 60)
         self.log.info(f"Started application {APPNAME} with environment "
                       f"{self.environment}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
-        self.log.info(f"Succesfully loaded configuration from "
+        self.log.info(f"Successfully loaded configuration from "
                       f"'{self.config_file}'")
         self.log.info("Logging to '%s'" % self.log_file)
         self.log.info(f"Common package version '{__version__}'")
@@ -224,7 +229,7 @@ class AppContext(metaclass=Singleton):
         assert env in self.config_manager.available_environments, \
             f"Requested environment {env} is not found in the configuration"
         self.__environment = env
-        self.config = self.config_manager.get(env)
+        self.config: dict = self.config_manager.get(env)
 
     @classmethod
     def find_config_file(cls, instance_type, instance_name, system_folders,

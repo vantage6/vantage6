@@ -1,0 +1,40 @@
+{# ssh configuration file template for creating tunnels #}
+Host {{ hostname }}
+
+    {# The user on the remote machine to which we want to connect #}
+    User {{ username }}
+
+    {# We don't want to use password authentication as we want to use a private
+       key to authenticate with the remote machine #}
+    PasswordAuthentication no
+
+    {# allow for the use of a private key to authenticate with the remote
+       machine #}
+    PubkeyAuthentication yes
+
+    {# The identity file is the private key of the user on the remote
+       machine #}
+    IdentityFile {{ identity_file }}
+
+    {# Port of the remote machine to which the SSH server is listening #}
+    Port {{ port }}
+
+    {# local port is the port on the remote machine, the bind ip and port is
+       the address of the tunnel container. Usually the BINDIP is 0.0.0.0 as we
+       want to allow algorithms to connect to the tunnel container. #}
+    LocalForward {{ bind_ip }}:{{ bind_port }} {{ local_ip }}:{{ local_port }}
+
+    {# We only want to connect if the fingerprint matches #}
+    StrictHostKeyChecking yes
+
+    {# We do not need to check if the ip-changed, we do not connect in case
+       the keys does not match #}
+    CheckHostIP no
+
+    AddressFamily inet {#ipv4#}
+
+    ExitOnForwardFailure yes
+    ServerAliveInterval 10
+    ServerAliveCountMax 3
+
+

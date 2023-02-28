@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from flask import request
+from flask import request, g
 from flask_restful import reqparse
 from http import HTTPStatus
 
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
     PermissionManager
 )
-from vantage6.server.resource._schema import (
+from vantage6.server.resource.common._schema import (
     CollaborationSchema,
     TaskSchema,
     OrganizationSchema,
@@ -185,7 +184,7 @@ class Collaborations(CollaborationBase):
 
         # obtain organization from authenticated
         auth_org_id = self.obtain_organization_id()
-        q = DatabaseSessionManager.get_session().query(db.Collaboration)
+        q = g.session.query(db.Collaboration)
         args = request.args
 
         # filter by a field of this endpoint

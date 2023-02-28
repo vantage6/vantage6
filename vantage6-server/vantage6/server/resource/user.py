@@ -8,7 +8,6 @@ from flask_restful import reqparse
 
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -19,7 +18,7 @@ from vantage6.server.resource import (
     ServicesResources
 )
 from vantage6.server.resource.pagination import Pagination
-from vantage6.server.resource._schema import UserSchema
+from vantage6.server.resource.common._schema import UserSchema
 
 
 module_name = logger_name(__name__)
@@ -195,7 +194,7 @@ class Users(UserBase):
         tags: ["User"]
         """
         args = request.args
-        q = DatabaseSessionManager.get_session().query(db.User)
+        q = g.session.query(db.User)
 
         # filter by any field of this endpoint
         for param in ['username', 'firstname', 'lastname', 'email']:
@@ -552,19 +551,31 @@ class User(UserBase):
             return {"msg": "You cannot change your password here!"}, \
                 HTTPStatus.BAD_REQUEST
 
-        if data["username"]:
-            if (user.username != data["username"] and
-                    db.User.exists("username", data["username"])):
+        if data["username"] is not None:
+            if data["username"] == '':
                 return {
-                    "msg": "User with that username already exists"
+                    "msg": "Empty username is not allowed!"
                 }, HTTPStatus.BAD_REQUEST
+            elif user.username != data["username"]:
+                if db.User.exists("username", data["username"]):
+                    return {
+                        "msg": "User with that username already exists"
+                    }, HTTPStatus.BAD_REQUEST
+                elif user.id != g.user.id:
+                    return {
+                        "msg": "You cannot change the username of another user"
+                    }, HTTPStatus.BAD_REQUEST
             user.username = data["username"]
-        if data["firstname"]:
+        if data["firstname"] is not None:
             user.firstname = data["firstname"]
-        if data["lastname"]:
+        if data["lastname"] is not None:
             user.lastname = data["lastname"]
-        if data["email"]:
-            if (user.email != data["email"] and
+        if data["email"] is not None:
+            if data["email"] == '':
+                return {
+                    "msg": "Empty email is not allowed!"
+                }, HTTPStatus.BAD_REQUEST
+            elif (user.email != data["email"] and
                     db.User.exists("email", data["email"])):
                 return {
                     "msg": "User with that email already exists."

@@ -15,7 +15,7 @@ from vantage6.server.permission import (
 from vantage6.server.resource import (
     with_user_or_node, only_for, with_user, ServicesResources
 )
-from vantage6.server.resource._schema import (
+from vantage6.server.resource.common._schema import (
     OrganizationSchema,
     CollaborationSchema,
     NodeSchema
@@ -172,6 +172,7 @@ class Organizations(OrganizationBase):
 
         # query
         q = g.session.query(db.Organization)
+        g.session.commit()
 
         # filter by a field of this endpoint
         if 'name' in args:
@@ -190,6 +191,7 @@ class Organizations(OrganizationBase):
             collabs = g.session.query(db.Collaboration).filter(
                 db.Collaboration.organizations.any(id=auth_org.id)
             ).all()
+            g.session.commit()
 
             # list comprehension fetish, and add own organization in case
             # this organization does not participate in any collaborations yet
