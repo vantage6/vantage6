@@ -364,3 +364,7 @@ class DefaultSocketNamespace(Namespace):
         """
         for conf in node.config:
             conf.delete()
+
+    def __cleanup() -> None:
+        """ Cleanup database connections """
+        DatabaseSessionManager.clear_session()
