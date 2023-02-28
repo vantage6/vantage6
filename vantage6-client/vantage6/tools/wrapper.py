@@ -424,7 +424,7 @@ def _read_data_format(file: BinaryIO) -> Generator:
     """
     success = False
 
-    for i in range(_MAX_FORMAT_STRING_LENGTH):
+    for _ in range(_MAX_FORMAT_STRING_LENGTH):
         try:
             char = file.read(1).decode()
         except UnicodeDecodeError:
