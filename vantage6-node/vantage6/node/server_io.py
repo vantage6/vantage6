@@ -251,20 +251,12 @@ class NodeClient(ClientBase):
             Whether or not the user is allowed to send a task to this node
         """
         # check if task-initating user id is in allowed users
-        for user in allowed_users:
-            try:
-                assert init_user_id == int(user)
-                return True
-            except Exception:
-                pass
+        if any(str(init_user_id) == user for user in allowed_users):
+            return True
 
         # check if task-initiating org id is in allowed orgs
-        for org in allowed_orgs:
-            try:
-                assert initiator_id == int(org)
-                return True
-            except Exception:
-                pass
+        if any(str(initiator_id) == org for org in allowed_orgs):
+            return True
 
         # TODO it would be nicer to check all users in a single request
         # but that requires other multi-filter options in the API
@@ -290,4 +282,3 @@ class NodeClient(ClientBase):
 
         # not in any of the allowed users or orgs
         return False
-
