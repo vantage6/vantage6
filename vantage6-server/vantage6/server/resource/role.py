@@ -4,7 +4,7 @@ import logging
 from http import HTTPStatus
 from flask.globals import request
 from flask import g
-from flask_restful import reqparse
+from flask_restful import reqparse, Api
 from sqlalchemy import or_
 
 from vantage6.server import db
@@ -25,8 +25,19 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the role resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -63,8 +74,16 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permission: PermissionManager):
-    add = permission.appender(module_name)
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
+    add = permissions.appender(module_name)
     add(scope=Scope.GLOBAL, operation=Operation.VIEW,
         description="View any role")
     add(scope=Scope.ORGANIZATION, operation=Operation.VIEW,

@@ -21,6 +21,8 @@ class TaskStatus(str, Enum):
     CRASHED = 'crashed'
     # Container was killed by user
     KILLED = 'killed by user'
+    # Task was not allowed by node policies
+    NOT_ALLOWED = 'not allowed'
 
 
 def has_task_failed(status: TaskStatus) -> bool:

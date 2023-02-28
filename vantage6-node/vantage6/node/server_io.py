@@ -4,10 +4,14 @@ central server.
 """
 import jwt
 import datetime
+import time
+
 from typing import Dict, Tuple
+from threading import Thread
 
 from vantage6.common import WhoAmI
 from vantage6.client import ClientBase
+from vantage6.node.globals import REFRESH_BEFORE_EXPIRES_SECONDS
 
 
 class NodeClient(ClientBase):
@@ -60,6 +64,26 @@ class NodeClient(ClientBase):
             organization_id=organization_id,
             organization_name=organization_name
         )
+
+    def auto_refresh_token(self) -> None:
+        """ Start a thread that refreshes token before it expires. """
+        # set up thread to refresh token
+        t = Thread(target=self.__refresh_token_worker, daemon=True)
+        t.start()
+
+    def __refresh_token_worker(self) -> None:
+        """ Keep refreshing token to prevent it from expiring. """
+        while True:
+            # get the time until the token expires
+            expiry_time = jwt.decode(
+                self.token, options={"verify_signature": False})["exp"]
+            time_until_expiry = expiry_time - time.time()
+            if time_until_expiry < REFRESH_BEFORE_EXPIRES_SECONDS:
+                self.refresh_token()
+            else:
+                time.sleep(
+                    int(time_until_expiry - REFRESH_BEFORE_EXPIRES_SECONDS + 1)
+                )
 
     def request_token_for_container(self, task_id: int, image: str):
         """ Request a container-token at the central server.
@@ -226,3 +250,59 @@ class NodeClient(ClientBase):
         with open(ovpn_file, 'w') as f:
             f.write(ovpn_config)
         return True
+
+    def check_user_allowed_to_send_task(
+        self, allowed_users: list[str], allowed_orgs: list[str],
+        initiator_id: int, init_user_id: int
+    ) -> bool:
+        """
+        Check if the user is allowed to send a task to this node
+
+        Parameters
+        ----------
+        allowed_users: list[str]
+            List of allowed user IDs or usernames
+        allowed_orgs: list[str]
+            List of allowed organization IDs or names
+        initiator_id: int
+            ID of the organization that initiated the task
+        init_user_id: int
+            ID of the user that initiated the task
+
+        Returns
+        -------
+        bool
+            Whether or not the user is allowed to send a task to this node
+        """
+        # check if task-initating user id is in allowed users
+        if any(str(init_user_id) == user for user in allowed_users):
+            return True
+
+        # check if task-initiating org id is in allowed orgs
+        if any(str(initiator_id) == org for org in allowed_orgs):
+            return True
+
+        # TODO it would be nicer to check all users in a single request
+        # but that requires other multi-filter options in the API
+        # TODO this option is now disabled since nodes do not have permission
+        # to access user information. We need to decide if we want to give them
+        # that permission for this.
+        # ----------------------------------------------------------
+        # check if task-initiating user name is in allowed users
+        # for user in allowed_users:
+        #     resp = self.request("user", params={"username": user})
+        #     print(resp)
+        #     for d in resp:
+        #         if d.get("username") == user and d.get("id") == init_user_id:
+        #             return True
+
+        # TODO rename initiator_id to init_org_id in v4+
+        # check if task-initiating org name is in allowed orgs
+        for org in allowed_orgs:
+            resp = self.request("organization", params={"name": org})
+            for d in resp:
+                if d.get("name") == org and d.get("id") == initiator_id:
+                    return True
+
+        # not in any of the allowed users or orgs
+        return False

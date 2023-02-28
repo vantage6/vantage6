@@ -298,10 +298,17 @@ class Node(object):
             database=task.get('database', 'default')
         )
 
-        # save task status to the server and send socket event to update others
+        # save task status to the server
+        update={'status': task_status}
+        if task_status == TaskStatus.NOT_ALLOWED:
+            # set finished_at to now, so that the task is not picked up again
+            # (as the task is not started at all, unlike other crashes, it will
+            # never finish and hence not be set to finished)
+            update['finished_at'] = datetime.datetime.now().isoformat()
         self.server_io.patch_results(
-            id=taskresult['id'], result={'status': task_status}
+            id=taskresult['id'], result=update
         )
+        # send socket event to alert everyone of task status change
         self.socketIO.emit(
             'algorithm_status_change',
             data={
@@ -485,6 +492,9 @@ class Node(object):
         else:
             self.log.critical('Unable to authenticate. Exiting')
             exit(1)
+
+        # start thread to keep the connection alive by refreshing the token
+        self.server_io.auto_refresh_token()
 
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""
@@ -907,9 +917,21 @@ class Node(object):
                 config_to_share['encryption'] = \
                     encryption_config.get('enabled')
 
+        # TODO v4+ remove the old 'allowed_images' key, it's now inside
+        # 'policies'. It's now overwritten below if 'policies' is set.
         allowed_algos = self.config.get('allowed_images')
-        config_to_share['allowed_images'] = allowed_algos if allowed_algos \
-            else 'all'
+        config_to_share['allowed_algorithms'] = allowed_algos \
+            if allowed_algos else 'all'
+
+        # share node policies (e.g. who can run which algorithms)
+        policies = self.config.get('policies', {})
+        config_to_share['allowed_algorithms'] = \
+            policies.get('allowed_algorithms', 'all')
+        if policies.get('allowed_users') is not None:
+            config_to_share['allowed_users'] = policies.get('allowed_users')
+        if policies.get('allowed_organizations') is not None:
+            config_to_share['allowed_orgs'] = \
+                policies.get('allowed_organizations')
 
         self.log.debug(f"Sharing node configuration: {config_to_share}")
         self.socketIO.emit(

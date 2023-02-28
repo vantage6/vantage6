@@ -5,7 +5,8 @@ from .base import Base
 
 
 class AlgorithmPort(Base):
-    """Table that describes which algorithms are reachable via which ports
+    """
+    Table that describes which algorithms are reachable via which ports
 
     Each algorithm with a VPN connection can claim multiple ports via the
     Dockerfile EXPOSE and LABEL commands. These claims are saved in this table.
