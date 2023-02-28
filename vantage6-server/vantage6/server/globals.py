@@ -16,7 +16,10 @@ DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "server" / "_data"
 #
 
 # Expiretime of JWT tokens
-JWT_ACCESS_TOKEN_EXPIRES = datetime.timedelta(hours=6)
+ACCESS_TOKEN_EXPIRES_HOURS = datetime.timedelta(hours=6)
+
+# minimum validity of JWT Tokens in seconds
+MIN_TOKEN_VALIDITY_SECONDS = 1800
 
 # Expiretime of JWT token in a test environment
 JWT_TEST_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=1)
@@ -34,9 +37,13 @@ SUPER_USER_INFO = {
     "password": "root"
 }
 
-# Whenever the refresh tokens should expire. Note that setting this to true
-# would mean that nodes will disconnect after some time
-REFRESH_TOKENS_EXPIRE = False
+# Expiration time of refresh tokens
+REFRESH_TOKENS_EXPIRE_HOURS = 48
+
+# Minimum time in seconds that a refresh token must be valid *longer than* the
+# access token. This is to prevent the access token from expiring before the
+# refresh token.
+MIN_REFRESH_TOKEN_EXPIRY_DELTA = 1
 
 # default support email address
 DEFAULT_SUPPORT_EMAIL_ADDRESS = 'support@vantage6.ai'
