@@ -92,7 +92,6 @@ class TestUserModel(TestBaseModel):
         # print(User.get())
         assert User.get_by_username(user.get("username"))
         assert User.username_exists(user.get("username"))
-        assert User.get_user_list()
 
     def test_duplicate_user(self):
         """Duplicate usernames are not permitted."""

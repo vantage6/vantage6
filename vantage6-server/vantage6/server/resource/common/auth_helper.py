@@ -3,7 +3,7 @@ import datetime as dt
 import pyotp
 
 from http import HTTPStatus
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server import db
@@ -15,7 +15,7 @@ log = logging.getLogger(module_name)
 
 def user_login(
     password_policy: Dict, username: str, password: str
-) -> Tuple[Union[User, Dict], HTTPStatus]:
+) -> Tuple[User | dict, HTTPStatus]:
     """
     Returns user a message in case of failed login attempt.
 

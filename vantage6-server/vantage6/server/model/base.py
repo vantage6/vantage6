@@ -22,10 +22,13 @@ log = logging.getLogger(module_name)
 
 
 class Database(metaclass=Singleton):
-    """A singleton we can destroy, a module we cannot.
+    """
+    Database class that is used to connect to the database and create the
+    database session.
 
-        Thats why we want a singlton. This is especially usefull when creating
-        unit test in which we want fresh databases every now and then.
+    The database is created as a singleton, so that it can be destroyed (as
+    opposed to a module). This is especially useful when creating
+    unit tests in which we want fresh databases every now and then.
     """
 
     def __init__(self):
@@ -35,6 +38,9 @@ class Database(metaclass=Singleton):
         self.allow_drop_all = False
 
     def drop_all(self):
+        """
+        Drop all tables in the database.
+        """
         if self.allow_drop_all:
             Base.metadata.drop_all(bind=self.engine)
             # Base.metadata.create_all(bind=self.engine)
@@ -43,6 +49,9 @@ class Database(metaclass=Singleton):
             log.error("Cannot drop tables, configuration does not allow this!")
 
     def clear_data(self):
+        """
+        Clear all data from the database.
+        """
         meta = Base.metadata
         session = DatabaseSessionManager.get_session()
         for table in reversed(meta.sorted_tables):
@@ -51,6 +60,9 @@ class Database(metaclass=Singleton):
         DatabaseSessionManager.clear_session()
 
     def close(self):
+        """
+        Delete all tables and close the database connection.
+        """
         self.drop_all()
         self.engine = None
         self.Session = None
@@ -59,7 +71,16 @@ class Database(metaclass=Singleton):
         self.URI = None
 
     def connect(self, uri='sqlite:////tmp/test.db', allow_drop_all=False):
+        """
+        Connect to the database.
 
+        Parameters
+        ----------
+        uri : str
+            URI of the database. Defaults to a sqlite database in /tmp.
+        allow_drop_all : bool, optional
+            If True, the database can be dropped. Defaults to False.
+        """
         self.allow_drop_all = allow_drop_all
         self.URI = uri
 
@@ -214,24 +235,41 @@ class Database(metaclass=Singleton):
 
 
 class DatabaseSessionManager:
-    """Class to manage DB sessions from.
+    """
+    Class to manage DB sessions.
 
     There are 2 different ways a session can be obtained. Either a session used
-    within a request or a session used else where (e.g. iPython or within the
-    application itself).
+    within a request or a session used elsewhere (e.g. socketIO event, iPython
+    or within the application itself).
 
-    In case of the flask-request the session is stored in the flask global `g`.
-    So that it can be accessed in every endpoint.
+    In case of the Flask request, the session is stored in the flask global
+    `g`. Then, it can be accessed in every endpoint.
 
     In all other cases the session is attached to the db module.
     """
 
     @staticmethod
-    def in_flask_request():
+    def in_flask_request() -> bool:
+        """
+        Check if we are in a flask request.
+
+        Returns
+        -------
+        boolean
+            True if we are in a flask request, False otherwise
+        """
         return True if g else False
 
     @staticmethod
-    def get_session():
+    def get_session() -> Session:
+        """
+        Get a session. Creates a new session if none exists.
+
+        Returns
+        -------
+        Session
+            A database session
+        """
         if DatabaseSessionManager.in_flask_request():
 
             # needed for SocketIO requests
@@ -248,7 +286,12 @@ class DatabaseSessionManager:
             return session.session
 
     @staticmethod
-    def new_session():
+    def new_session() -> None:
+        """
+        Create a new session. If we are in a flask request, the session is
+        stored in the flask global `g`. Otherwise, the session is stored in
+        the db module.
+        """
         # log.critical('Create new DB session')
         if DatabaseSessionManager.in_flask_request():
             g.session = Database().session_a
@@ -259,7 +302,12 @@ class DatabaseSessionManager:
             session.session = Database().session_b
 
     @staticmethod
-    def clear_session():
+    def clear_session() -> None:
+        """
+        Clear the session. If we are in a flask request, the session is
+        cleared from the flask global `g`. Otherwise, the session is removed
+        from the db module.
+        """
         if DatabaseSessionManager.in_flask_request():
             # print(f"gsession: {g.session}")
             g.session.remove()
@@ -285,7 +333,15 @@ class ModelBase:
 
     @classmethod
     def get(cls, id_=None):
+        """
+        Get a single object by its id, or a list of objects when no id is
+        specified.
 
+        Parameters
+        ----------
+        id_: int, optional
+            The id of the object to get. If not specified, return all matches.
+        """
         session = DatabaseSessionManager.get_session()
 
         result = None
@@ -304,7 +360,9 @@ class ModelBase:
         return result
 
     def save(self) -> None:
-
+        """
+        Save the object to the database.
+        """
         session = DatabaseSessionManager.get_session()
 
         # new objects do not have an `id`
@@ -314,14 +372,19 @@ class ModelBase:
         session.commit()
 
     def delete(self) -> None:
-
+        """
+        Delete the object from the database.
+        """
         session = DatabaseSessionManager.get_session()
 
         session.delete(self)
         session.commit()
 
     @classmethod
-    def help(cls) -> str:
+    def help(cls) -> None:
+        """
+        Print a help message for the class.
+        """
         i = inspect(cls)
         properties = ''.join([f' ->{a.key}\n' for a in i.mapper.column_attrs])
         relations = ''.join([f' ->{a[0]}\n' for a in i.relationships.items()])

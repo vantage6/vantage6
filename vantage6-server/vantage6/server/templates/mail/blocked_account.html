@@ -94,11 +94,6 @@
                     max-width: 100%;
                 }
             }
-            /* #11B5E9; light blue
-            #0f497b; Dark blue
-            #f9f9f9; White
-            #f9ac23; Orange
-            #aabfce; Light grey? */
         </style>
     </head>
     <body>
@@ -122,12 +117,19 @@
                                     </tr>
                                     <tr style="background-color:#f9f9f9;" width="100%">
                                         <td colspan=3 style="padding:40px; color:#0f497b;">
+
                                             Dear <strong>{{firstname}}</strong>,
-                                            <p>To reset your {{reset_type}} use the following token:</p>
-                                            <p style="font-family: 'Courier New', Courier, monospace; font-size: 12px; overflow-wrap:break-word;padding:10px; color: white; background-color: #0f497b;">
-                                                {{token}}
+
+                                            <p>
+                                                After {{number_of_allowed_attempts}} failed login attempts your user account has been blocked.<br/>
+                                                <ul>
+                                                    <li>Source IP: {{ip}}</li>
+                                                    <li>Last attempt at: {{time}} (UTC)</li>
+                                                </ul>
                                             </p>
-                                            <p>If you have not requested a {{reset_type}} reset, {{what_to_do}}.</p>
+                                            <p>
+                                                Your account will be unlocked in {{time_remaining}} minutes. Please wait or reactivate your account via email.
+                                            </p>
                                             <p>Sincerely, <br/>vantage6 Support Team</p>
                                         </td>
                                     </tr>
@@ -144,7 +146,7 @@
                                 <a style="color:#0f497b; font-weight: bold;" href="https://discord.gg/yAyFf6Y">Join our Discord channel</a>
                             </td >
                             <td style="padding-top:20px; padding-bottom: 20px;text-align: right;">
-                                <a style="color:#0f497b; font-weight: bold;" href="mailto:{{support_email}}">{{support_email}}</a>
+                                <a style="color:#0f497b; font-weight: bold;" href="mailto:support@vantage6.ai">support@vantage6.ai</a>
                             </td>
                         </tr>
                     </table>

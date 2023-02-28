@@ -486,6 +486,9 @@ class Node(object):
             self.log.critical('Unable to authenticate. Exiting')
             exit(1)
 
+        # start thread to keep the connection alive by refreshing the token
+        self.server_io.auto_refresh_token()
+
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""
 

@@ -366,6 +366,7 @@ class ClientBase(object):
             raise Exception("Authentication Error!")
 
         self._access_token = response.json()["access_token"]
+        self.__refresh_token = response.json()["refresh_token"]
 
     # TODO BvB 23-01-23 remove this method in v4+. It is only here for
     # backwards compatibility
