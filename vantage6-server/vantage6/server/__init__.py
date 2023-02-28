@@ -106,8 +106,7 @@ class ServerApp:
         # set up socket ping/pong
         log.debug(
             "Starting thread for socket ping/pong between server and nodes")
-        t = Thread(target=self.__socket_pingpong_worker, daemon=True)
-        t.start()
+        self.socketio.start_background_task(self.__socket_pingpong_worker)
 
         log.info("Initialization done")
 
@@ -484,7 +483,7 @@ class ServerApp:
         while True:
             # Send ping event
             try:
-                self.__pong_node_ids = []
+                ping_time = dt.datetime.utcnow()
                 self.socketio.emit(
                     'ping', namespace='/tasks', room='all_nodes',
                     callback=self.__pong_response
@@ -497,7 +496,7 @@ class ServerApp:
                 # Otherwise set them to offline.
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
-                    if node.id not in self.__pong_node_ids:
+                    if node.last_seen < ping_time:
                         node.status = 'offline'
                         node.save()
 
@@ -514,7 +513,6 @@ class ServerApp:
         node.status = 'online'
         node.last_seen = dt.datetime.utcnow()
         node.save()
-        self.__pong_node_ids.append(node_id)
 
 
 def run_server(config: str, environment: str = 'prod',
