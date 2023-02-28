@@ -48,7 +48,7 @@ jobs:
 
       - env:
           branch: ${{ steps.branchname.outputs.branch }}
-        run: echo $branch
+        run: echo ${branch}
 
       - name: Checkout correct branch
         uses: actions/checkout@v3
@@ -56,7 +56,7 @@ jobs:
           branch: ${{ steps.branchname.outputs.branch }}
         with:
           fetch-depth: 0
-          ref: $branch
+          ref: ${branch}
           token: ${{ secrets.COMMIT_PAT }}
 
       - name: Update version in packages
@@ -107,7 +107,7 @@ jobs:
       env:
         branch: ${{ steps.branchname.outputs.branch }}
       with:
-        ref: $branch
+        ref: ${branch}
 
     - name: Create a Release
       uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
@@ -137,7 +137,7 @@ jobs:
         env:
           branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: $branch
+          ref: ${branch}
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -175,7 +175,7 @@ jobs:
         env:
           branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: $branch
+          ref: ${branch}
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -218,7 +218,7 @@ jobs:
         env:
           branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: $branch
+          ref: ${branch}
 
 
       - # Add support for more platforms with QEMU (optional)
@@ -298,7 +298,7 @@ jobs:
         env:
           branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: $branch
+          ref: ${branch}
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -340,7 +340,7 @@ jobs:
         env:
           branch: ${{ steps.branchname.outputs.branch }}
         with:
-          ref: $branch
+          ref: ${branch}
 
       - name: Install dependencies
         run: |
