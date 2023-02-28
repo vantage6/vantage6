@@ -39,7 +39,7 @@ class Role(Base):
                          secondary="Permission")
 
     @classmethod
-    def get_by_name(cls, name) -> Union[Role, None]:
+    def get_by_name(cls, name: str) -> Union[Role, None]:
         """
         Get a role by its name.
 
@@ -50,7 +50,7 @@ class Role(Base):
 
         Returns
         -------
-        Role or None
+        Role | None
             Role with the given name or None if no role with the given name
             exists
         """

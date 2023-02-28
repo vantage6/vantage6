@@ -11,6 +11,7 @@ from http import HTTPStatus
 from unittest.mock import patch
 from flask import Response as BaseResponse
 from flask.testing import FlaskClient
+from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
 
 from vantage6.common import logger_name
@@ -54,7 +55,11 @@ class TestResources(unittest.TestCase):
         ctx = context.TestContext.from_external_config_file(
             "unittest_config.yaml")
 
-        server = ServerApp(ctx)
+        # create server instance. Patch the start_background_task method
+        # to prevent the server from starting a ping/pong thread that will
+        # prevent the tests from starting
+        with patch.object(SocketIO, 'start_background_task'):
+            server = ServerApp(ctx)
         cls.server = server
 
         file_ = str(PACKAGE_FOLDER / APPNAME / "server" / "_data" /

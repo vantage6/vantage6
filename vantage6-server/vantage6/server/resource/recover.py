@@ -7,6 +7,7 @@ from flask_jwt_extended import (
     create_access_token,
     decode_token
 )
+from flask_restful import Api
 from jwt.exceptions import DecodeError
 from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
@@ -27,8 +28,19 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the recover resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 

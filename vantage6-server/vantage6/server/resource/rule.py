@@ -4,6 +4,7 @@ import logging
 from http import HTTPStatus
 from flask.globals import request
 from flask import g
+from flask_restful import Api
 
 from vantage6.server.resource import (
     with_user,
@@ -20,8 +21,19 @@ log = logging.getLogger(module_name)
 rule_schema = RuleSchema()
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the rule resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 

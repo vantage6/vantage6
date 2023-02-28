@@ -93,7 +93,7 @@ class User(Authenticatable):
         )
 
     @validates("password")
-    def _validate_password(self, key, password):
+    def _validate_password(self, key: str, password: str) -> str:
         """
         Validate the password of the user by hashing it, as it is also hashed
         in the database.
@@ -112,7 +112,7 @@ class User(Authenticatable):
         """
         return self.hash(password)
 
-    def set_password(self, pw) -> Union[str, None]:
+    def set_password(self, pw: str) -> Union[str, None]:
         """
         Set the password of the current user. This function doesn't save the
         new password to the database
@@ -149,7 +149,7 @@ class User(Authenticatable):
         self.password = pw
         self.save()
 
-    def check_password(self, pw) -> bool:
+    def check_password(self, pw: str) -> bool:
         """
         Check if the password is correct
 
@@ -169,7 +169,7 @@ class User(Authenticatable):
         return False
 
     def is_blocked(self, max_failed_attempts: int,
-                   inactivation_in_minutes: int) -> Tuple(bool, str):
+                   inactivation_in_minutes: int) -> Tuple[bool, str | None]:
         """
         Check if user can login or if they are temporarily blocked because they
         entered a wrong password too often
@@ -198,16 +198,12 @@ class User(Authenticatable):
         if has_max_attempts and td_last_login < td_max_blocked:
             minutes_remaining = \
                 (td_max_blocked - td_last_login).seconds // 60 + 1
-            return True, (
-                f"Your account is blocked for the next {minutes_remaining} "
-                "minutes due to failed login attempts. Please wait or "
-                "reactivate your account via email."
-            )
+            return True, minutes_remaining
         else:
             return False, None
 
     @classmethod
-    def get_by_username(cls, username) -> User:
+    def get_by_username(cls, username: str) -> User:
         """
         Get a user by their username
 
@@ -232,7 +228,7 @@ class User(Authenticatable):
         return result
 
     @classmethod
-    def get_by_email(cls, email) -> User:
+    def get_by_email(cls, email: str) -> User:
         """
         Get a user by their email
 
@@ -257,7 +253,7 @@ class User(Authenticatable):
         return result
 
     @classmethod
-    def username_exists(cls, username) -> bool:
+    def username_exists(cls, username: str) -> bool:
         """
         Checks if user with certain username exists
 
@@ -278,7 +274,7 @@ class User(Authenticatable):
         return result
 
     @classmethod
-    def exists(cls, field, value) -> bool:
+    def exists(cls, field: str, value: str) -> bool:
         """
         Checks if user with certain key-value exists
 

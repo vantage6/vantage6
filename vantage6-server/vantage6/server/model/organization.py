@@ -1,6 +1,5 @@
 from __future__ import annotations
 import base64
-from typing import List, Union
 
 from sqlalchemy import Column, String, LargeBinary
 from sqlalchemy.orm import relationship
@@ -66,7 +65,7 @@ class Organization(Base):
     created_tasks = relationship("Task", back_populates="initiator")
     roles = relationship("Role", back_populates="organization")
 
-    def get_result_ids(self) -> List[int]:
+    def get_result_ids(self) -> list[int]:
         """
         Returns a list of result ids that are part of this organization.
 
@@ -86,7 +85,7 @@ class Organization(Base):
         return result_ids
 
     @classmethod
-    def get_by_name(cls, name) -> Union[Organization, None]:
+    def get_by_name(cls, name) -> Organization | None:
         """
         Returns the organization with the given name.
 
@@ -97,7 +96,7 @@ class Organization(Base):
 
         Returns
         -------
-        Organization
+        Organization | None
             Organization with the given name if it exists, otherwise None
         """
         session = DatabaseSessionManager.get_session()
@@ -130,7 +129,7 @@ class Organization(Base):
             return ""
 
     @public_key.setter
-    def public_key(self, public_key_b64) -> None:
+    def public_key(self, public_key_b64: str) -> None:
         """
         Set public key of the organization. Assumes that the public key is
         already b64-encoded.
