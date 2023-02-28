@@ -42,7 +42,7 @@ without sharing record-level data.
 
 .. _components:
 
-Components
+Entities
 -------------
 
 There are several entities in vantage6, such as users, organizations,
@@ -69,8 +69,82 @@ The following schema is a *simplified* version of the database:
 
    Simplified database model
 
+
+Network Actors
+--------------
+
+As we saw in Figure :numref:`architecture-figure`, vantage6 consists of a
+central server, a number of nodes and a client. This section explains in some
+more detail what these network actors are responsible for.
+
+Server
+++++++
+
+.. note::
+    When we refer to the server, this is not just the *vantage6-server*, but
+    also other infrastructure components that the vantage6 server relies on.
+
+The server is responsible for coordinating all communication in the vantage6
+network. It consists of several components:
+
+**vantage6 server**
+    Contains the users, organizations, collaborations, tasks and their results.
+    It handles authentication and authorization to the system and is the
+    central point of contact for clients and nodes.
+    .. todo For more details see `vantage6-server`_.
+
+**Docker registry**
+    Contains algorithms stored in `Images <https://en.wikipedia.org/wiki/OS-level_virtualization>`_
+    which can be used by clients to request a computation. The node will
+    retrieve the algorithm from this registry and execute it.
+
+**VPN server (optionally)**
+    If algorithms need to be able to engage in peer-to-peer communication, a
+    VPN server can be set up to help them do so. This is usually the case when
+    working with MPC, and is also often required for machine learning
+    applications.
+
+**RabbitMQ message queue (optionally)**
+    The *vantage6 server* uses the socketIO protocol to communicate between
+    server, nodes and clients. If there are multiple instances of the vantage6
+    server, it is important that the messages are communicated to all relevant
+    actors, not just the ones that a certain server instance is connected to.
+    RabbitMQ is therefore used to synchronize the messages between multiple
+    *vantage6 server* instances.
+
+
+Data Station
+++++++++++++
+
+**vantage6 node**
+    The node is responsible for executing the algorithms on the **local data**.
+    It protects the data by allowing only specified algorithms to be executed after
+    verifying their origin. The **node** is responsible for picking up the
+    task, executing the algorithm and sending the results back to the server. The
+    node needs access to local data. For more details see the
+    :ref:`technical documentation of the node <node-api-refs>`.
+
+**database**
+    The database may be in any format that the algorithms relevant to your use
+    case support. There is tooling available for CSV, `Parquet <https://parquet.apache.org/>`_
+    and `SPARQL <https://en.wikipedia.org/wiki/SPARQL>`_. There are other
+    data-adapters (e.g. `OMOP <https://www.ohdsi.org/data-standardization/>`_ and
+    `FHIR <https://hl7.org/fhir/>`_) in development.
+
+
+User or Application
++++++++++++++++++++
+
+.. todo add refs for client/UI
+
+A user or application interacts with the *vantage6-server*. They can create
+tasks and retrieve their results, or manage entities at the server (i.e.
+creating or editing users, organizations and collaborations). This can be done
+using clients or via the user interface.
+
+
 End to end encryption
-^^^^^^^^^^^^^^^^^^^^^
+-------------
 
 Encryption in vantage6 is handled at organization level. Whether
 encryption is used or not, is set at collaboration level. All the nodes

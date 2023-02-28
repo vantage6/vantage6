@@ -40,7 +40,11 @@ class DefaultSocketNamespace(Namespace):
 
         Nodes that are connecting are also set to status 'online'.
 
+
+        Note
+        ----
         Note that reconnecting clients are treated the same as new clients.
+
         """
         self.log.info(f'Client connected: "{request.sid}"')
 

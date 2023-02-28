@@ -390,7 +390,7 @@ class ServerApp:
             return resp
 
     def configure_jwt(self):
-        """Load user and its claims."""
+        """Configure JWT authentication."""
 
         @self.jwt.additional_claims_loader
         def additional_claims_loader(identity):

@@ -10,8 +10,20 @@ from vantage6.server.model.authenticatable import Authenticatable
 
 class Node(Authenticatable):
     """
-    Table that describes which nodes are available. Nodes are the
-    applications that execute Tasks.
+    Table that contains all registered nodes.
+
+    Attributes
+    ----------
+    id : int
+        Primary key
+    name : str
+        Name of the node
+    api_key : str
+        API key of the node
+    collaboration : :class:`~.model.collaboration.Collaboration`
+        Collaboration that the node belongs to
+    organization : :class:`~.model.organization.Organization`
+        Organization that the node belongs to
     """
     _hidden_attributes = ['api_key']
 

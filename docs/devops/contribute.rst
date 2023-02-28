@@ -114,6 +114,7 @@ From the same page you should request a CVE number so we can alert dependent
 software projects. Github will review the request. We are not sure what this
 entails, but so far they approved all advisories.
 
+.. _community-meetings:
 
 Community Meetings
 ------------------

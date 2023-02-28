@@ -25,13 +25,27 @@ class Scope(Enumerate):
 
 
 class Rule(Base):
-    """
-    Table that describes which rules are available.
+    """Rules to determine permissions in an API endpoint.
 
     A rule gives access to a single type of action with a given operation,
     scope and resource on which it acts. Note that rules are defined on startup
     of the server, based on permissions defined in the endpoints. You cannot
     edit the rules in the database.
+
+    Attributes
+    ----------
+    name : str
+        Name of the rule
+    operation : Operation
+        Operation of the rule
+    scope : Scope
+        Scope of the rule
+    description : str
+        Description of the rule
+    roles : list[Role]
+        Roles that have this rule
+    users : list[User]
+        Users that have this rule
     """
 
     # fields

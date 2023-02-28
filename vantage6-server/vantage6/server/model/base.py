@@ -27,8 +27,8 @@ class Database(metaclass=Singleton):
     database session.
 
     The database is created as a singleton, so that it can be destroyed (as
-    opposed to a module). This is especially useful when creating
-    unit tests in which we want fresh databases every now and then.
+    opposed to a module). This is especially useful when creating unit tests
+    in which we want fresh databases every now and then.
     """
 
     def __init__(self):
@@ -61,7 +61,8 @@ class Database(metaclass=Singleton):
 
     def close(self):
         """
-        Delete all tables and close the database connection.
+        Delete all tables and close the database connection. Only used for
+        unit testing.
         """
         self.drop_all()
         self.engine = None
@@ -188,7 +189,7 @@ class Database(metaclass=Singleton):
 
     def add_col_to_table(self, column: Column, table_cls: Table) -> None:
         """
-        Database operation to add column to the table
+        Database operation to add column to `Table`
 
         Parameters
         ----------
@@ -278,10 +279,8 @@ class DatabaseSessionManager:
 
             return g.session
         else:
-            # log.critical('Obtaining non flask session')
             if not session.session:
                 DatabaseSessionManager.new_session()
-                # log.critical('WE NEED TO MAKE A NEW ONE')
 
             return session.session
 
@@ -321,7 +320,10 @@ class DatabaseSessionManager:
 
 
 class ModelBase:
-    """Declarative base that defines default attributes."""
+    """
+    Declarative base that defines default attributes. All data models inherit
+    from this class.
+    """
     _hidden_attributes = []
 
     @declared_attr
@@ -332,7 +334,7 @@ class ModelBase:
     id = Column(Integer, primary_key=True)
 
     @classmethod
-    def get(cls, id_=None):
+    def get(cls, id_: int = None):
         """
         Get a single object by its id, or a list of objects when no id is
         specified.
@@ -340,7 +342,7 @@ class ModelBase:
         Parameters
         ----------
         id_: int, optional
-            The id of the object to get. If not specified, return all matches.
+            The id of the object to get. If not specified, return all.
         """
         session = DatabaseSessionManager.get_session()
 
