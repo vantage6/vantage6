@@ -355,7 +355,8 @@ class DefaultSocketNamespace(Namespace):
                 room=room
             )
 
-    def __is_identified_client(self) -> bool:
+    @staticmethod
+    def __is_identified_client() -> bool:
         """
         Check if client has been identified as an authenticated user or node
 

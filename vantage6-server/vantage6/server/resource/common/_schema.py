@@ -173,7 +173,8 @@ class RunSchema(HATEOASModelSchema):
         func=lambda obj: RunPortSchema().dump(obj.ports, many=True).data
     )
 
-    def result(self, obj):
+    @staticmethod
+    def result(obj):
         return {
             "id": obj.id,
             "link": url_for("result_with_id", id=obj.id),
@@ -200,7 +201,8 @@ class ResultSchema(HATEOASModelSchema):
 
     run_link = fields.Method("make_run_link")
 
-    def make_run_link(self, obj):
+    @staticmethod
+    def make_run_link(obj):
         return {
             "id": obj.id,
             "link": url_for("run_with_id", id=obj.id),
