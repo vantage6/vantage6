@@ -497,9 +497,6 @@ class User(UserBase):
                     items:
                       type: integer
                     description: Extra rules for the user on top of the roles
-                  organization_id:
-                    type: integer
-                    description: Organization id of the user
 
         parameters:
           - in: path
@@ -543,7 +540,6 @@ class User(UserBase):
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
         parser.add_argument("email", type=str, required=False)
-        parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
 
         # check if user defined a password, which is deprecated
@@ -664,24 +660,6 @@ class User(UserBase):
                 )}, HTTPStatus.UNAUTHORIZED
 
             user.rules = rules
-
-        if data["organization_id"] and \
-                data["organization_id"] != g.user.organization_id:
-            if not self.r.e_glo.can():
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            else:
-                # check that newly assigned organization exists
-                org = db.Organization.get(data['organization_id'])
-                if not org:
-                    return {'msg': 'Organization does not exist.'}, \
-                        HTTPStatus.NOT_FOUND
-                else:
-                    log.warn(
-                        f'Running as root and assigning (new) '
-                        f'organization_id={data["organization_id"]}'
-                    )
-                    user.organization_id = data["organization_id"]
 
         try:
             user.save()
