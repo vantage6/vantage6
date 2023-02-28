@@ -40,7 +40,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: main
           token: ${{ secrets.COMMIT_PAT }}
 
       - name: Update version in packages
@@ -88,10 +87,6 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
     steps:
     - uses: actions/checkout@v3
-      with:
-        # we just made a version commit, so we need to pull that. Else the
-        # commit of the tag is used.
-        ref: 'main'
 
     - name: Create a Release
       uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
@@ -118,10 +113,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -156,10 +147,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -199,11 +186,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
-
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -279,10 +261,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -321,10 +299,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
 
       - name: Install dependencies
         run: |
