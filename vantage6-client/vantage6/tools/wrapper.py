@@ -103,7 +103,8 @@ def auto_wrapper(module: str, load_data: bool = True,
 def docker_wrapper(module: str, load_data: bool = True,
                    use_new_client: bool = False) -> None:
     """
-    Specific wrapper for CSV only data sources.
+    Specific wrapper for CSV only data sources. Use the ``auto_wrapper``
+    to automatically select the correct wrapper based on the database type.
 
     Parameters
     ----------
@@ -121,7 +122,8 @@ def docker_wrapper(module: str, load_data: bool = True,
 
 def sparql_wrapper(module: str, use_new_client: bool = False) -> None:
     """
-    Specific wrapper for SPARQL data sources.
+    Specific wrapper for SPARQL only data sources. Use the ``auto_wrapper``
+    to automatically select the correct wrapper based on the database type.
 
     Parameters
     ----------
@@ -136,7 +138,8 @@ def sparql_wrapper(module: str, use_new_client: bool = False) -> None:
 
 def parquet_wrapper(module: str, use_new_client: bool = False) -> None:
     """
-    Specific wrapper for Parquet data sources.
+    Specific wrapper for Parquet only data sources. Use the ``auto_wrapper``
+    to automatically select the correct wrapper based on the database type.
 
     Parameters
     ----------
@@ -269,6 +272,21 @@ class WrapperBase(ABC):
 class CSVWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+        """
+        Load the local (privacy sensitive) data from the database.
+
+        Parameters
+        ----------
+        database_uri : str
+            URI of the csv file, supplied by te node
+        input_data : dict
+            Unused, as csv files do not require a query
+
+        Returns
+        -------
+        pandas.DataFrame
+            The data from the csv file
+        """
         return pandas.read_csv(database_uri)
 
 
@@ -280,12 +298,48 @@ DockerWrapper = CSVWrapper
 class ExcelWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
-        return pandas.read_excel(database_uri)
+        """
+        Load the local (privacy sensitive) data from the database.
+
+        Parameters
+        ----------
+        database_uri : str
+            URI of the excel file, supplied by te node
+        input_data : dict
+            May contain a 'sheet_name', which is passed to pandas.read_excel
+
+        Returns
+        -------
+        pandas.DataFrame
+            The data from the excel file
+        """
+        # The default sheet_name is 0, which is the first sheet
+        sheet_name = input_data.get('sheet_name', 0)
+        if sheet_name:
+            info(f"Reading sheet '{sheet_name}' from excel file")
+        return pandas.read_excel(database_uri, sheet_name=sheet_name)
 
 
 class SparqlDockerWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+        """
+        Load the local (privacy sensitive) data from the database.
+
+        Parameters
+        ----------
+        database_uri : str
+            URI of the triplestore, supplied by te node
+        input_data : dict
+            Can contain a 'query', to retrieve the data from the triplestore
+
+        Returns
+        -------
+        pandas.DataFrame
+            The data from the triplestore
+        """
+        if 'query' not in input_data:
+            error("No query in the input specified. Exiting ...")
         query = input_data['query']
         return SparqlDockerWrapper._query_triplestore(database_uri, query)
 
@@ -302,18 +356,66 @@ class SparqlDockerWrapper(WrapperBase):
 class ParquetWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+        """
+        Load the local (privacy sensitive) data from the database.
+
+        Parameters
+        ----------
+        database_uri : str
+            URI of the parquet file, supplied by te node
+        input_data : dict
+            Unused, as no additional settings are required
+
+        Returns
+        -------
+        pandas.DataFrame
+            The data from the parquet file
+        """
         return pandas.read_parquet(database_uri)
 
 
 class SQLWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+        """
+        Load the local (privacy sensitive) data from the database.
+
+        Parameters
+        ----------
+        database_uri : str
+            URI of the sql database, supplied by te node
+        input_data : dict
+            Contain a 'query', to retrieve the data from the database
+
+        Returns
+        -------
+        pandas.DataFrame
+            The data from the database
+        """
+        if 'query' not in input_data:
+            error("No query in the input specified. Exiting ...")
         return pandas.read_sql(database_uri, input_data['query'])
 
 
 class OMOPWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+        """
+        Load the local (privacy sensitive) data from the database.
+
+        Parameters
+        ----------
+        database_uri : str
+            URI of the OMOP database, supplied by te node
+        input_data : dict
+            Contain a JSON cohort definition from the ATLAS tool, to retrieve
+            the data from the database
+
+        Returns
+        -------
+        pandas.DataFrame
+            The data from the database
+        """
         # TODO: parse the OMOP json and convert to SQL
         return pandas.read_sql(database_uri, input_data['query'])
 
@@ -321,6 +423,23 @@ class OMOPWrapper(WrapperBase):
 class MultiDBWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> dict:
+        """
+        Supply the all URI's to the algorithm. Note that this does not load
+        the data from the database, but only the URI's. So the algorithm
+        needs to load the data itself.
+
+        Parameters
+        ----------
+        database_uri : str
+            Unused, as all databases URI are passed on to the algorithm.
+        input_data : dict
+            Unused
+
+        Returns
+        -------
+        dict
+            A dictionary with the database label as key and the URI as value
+        """
         db_labels = json.loads(os.environ.get("DB_LABELS"))
         databases = {}
         for db_label in db_labels:
