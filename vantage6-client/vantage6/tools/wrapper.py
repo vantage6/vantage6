@@ -261,7 +261,7 @@ class WrapperBase(ABC):
         database_uri : str
             URI of the database to read
         input_data : dict
-            User defined input, which could contain a query for the database
+            User defined input, which may contain a query for the database
         """
         pass
 
