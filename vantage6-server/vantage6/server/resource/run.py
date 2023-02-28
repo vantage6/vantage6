@@ -397,13 +397,13 @@ class Results(MultiRunBase):
 class SingleRunBase(RunBase):
     """Base class for resources that return a single run or result"""
 
-    def get_single_run(self, id_) -> Union[db_Run, tuple]:
+    def get_single_run(self, id) -> Union[db_Run, tuple]:
         """
         Set up a query to retrieve a single algorithm run
 
         Parameters
         ----------
-        id_ : int
+        id : int
             The id of the run to retrieve
 
         Returns
@@ -414,9 +414,9 @@ class SingleRunBase(RunBase):
         """
         auth_org = self.obtain_auth_organization()
 
-        run = db_Run.get(id_)
+        run = db_Run.get(id)
         if not run:
-            return {'msg': f'Run id={id_} not found!'}, \
+            return {'msg': f'Run id={id} not found!'}, \
                 HTTPStatus.NOT_FOUND
         if not self.r.v_glo.can():
             c_orgs = run.task.collaboration.organizations
@@ -430,7 +430,7 @@ class Run(SingleRunBase):
     """Resource for /api/run"""
 
     @only_for(['node', 'user', 'container'])
-    def get(self, id_):
+    def get(self, id):
         """ Get a single run's data
         ---
 
@@ -449,7 +449,7 @@ class Run(SingleRunBase):
 
         parameters:
           - in: path
-            name: id_
+            name: id
             schema:
               type: integer
             minimum: 1
@@ -474,7 +474,7 @@ class Run(SingleRunBase):
 
         tags: ["Algorithm"]
         """
-        run = self.get_single_run(id_)
+        run = self.get_single_run(id)
 
         # return error code if run is not found
         if not isinstance(run, db_Run):
@@ -486,7 +486,7 @@ class Run(SingleRunBase):
         return s.dump(run, many=False).data, HTTPStatus.OK
 
     @with_node
-    def patch(self, id_):
+    def patch(self, id):
         """Update algorithm run data, for example to update the result
         ---
         description: >-
@@ -498,7 +498,7 @@ class Run(SingleRunBase):
 
         parameters:
           - in: path
-            name: id_
+            name: id
             schema:
               type: integer
               minimum: 1
@@ -538,9 +538,9 @@ class Run(SingleRunBase):
 
         tags: ["Algorithm"]
         """
-        run = db_Run.get(id_)
+        run = db_Run.get(id)
         if not run:
-            return {'msg': f'Run id={id_} not found!'}, HTTPStatus.NOT_FOUND
+            return {'msg': f'Run id={id} not found!'}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
 
@@ -559,7 +559,7 @@ class Run(SingleRunBase):
 
         # notify collaboration nodes/users that the task has an update
         self.socketio.emit(
-            "status_update", {'run_id': id_}, namespace='/tasks',
+            "status_update", {'run_id': id}, namespace='/tasks',
             room=f'collaboration_{run.task.collaboration.id}'
         )
 
