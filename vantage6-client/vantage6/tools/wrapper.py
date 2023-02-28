@@ -257,7 +257,7 @@ class WrapperBase(ABC):
     @abstractmethod
     def load_data(database_uri: str, input_data: dict):
         """
-        Load the local (privacy sensitive) data from the database.
+        Load the local privacy-sensitive data from the database.
 
         Parameters
         ----------
@@ -273,7 +273,7 @@ class CSVWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         """
-        Load the local (privacy sensitive) data from the database.
+        Load the local privacy-sensitive data from the database.
 
         Parameters
         ----------
@@ -299,7 +299,7 @@ class ExcelWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         """
-        Load the local (privacy sensitive) data from the database.
+        Load the local privacy-sensitive data from the database.
 
         Parameters
         ----------
@@ -324,7 +324,7 @@ class SparqlDockerWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         """
-        Load the local (privacy sensitive) data from the database.
+        Load the local privacy-sensitive data from the database.
 
         Parameters
         ----------
@@ -357,7 +357,7 @@ class ParquetWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         """
-        Load the local (privacy sensitive) data from the database.
+        Load the local privacy-sensitive data from the database.
 
         Parameters
         ----------
@@ -378,7 +378,7 @@ class SQLWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         """
-        Load the local (privacy sensitive) data from the database.
+        Load the local privacy-sensitive data from the database.
 
         Parameters
         ----------
@@ -401,7 +401,7 @@ class OMOPWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
         """
-        Load the local (privacy sensitive) data from the database.
+        Load the local privacy-sensitive data from the database.
 
         Parameters
         ----------
