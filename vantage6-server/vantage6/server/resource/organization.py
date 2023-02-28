@@ -118,7 +118,7 @@ class OrganizationBase(ServicesResources):
 
 class Organizations(OrganizationBase):
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"))
     def get(self):
         """ Returns a list organizations
         ---
@@ -288,7 +288,7 @@ class Organizations(OrganizationBase):
 
 class Organization(OrganizationBase):
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"]))
     def get(self, id):
         """Get organization
         ---
@@ -360,7 +360,7 @@ class Organization(OrganizationBase):
             return {'msg': 'You do not have permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-    @only_for(["user", "node"])
+    @only_for(("user", "node"))
     def patch(self, id):
         """Update organization
         ---
@@ -436,7 +436,7 @@ class OrganizationCollaboration(ServicesResources):
 
     col_schema = CollaborationSchema()
 
-    @only_for(["user", "node"])
+    @only_for(("user", "node"]))
     def get(self, id):
         """Get collaborations from organization
         ---

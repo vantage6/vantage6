@@ -324,7 +324,7 @@ class Collaborations(CollaborationBase):
 
 class Collaboration(CollaborationBase):
 
-    @only_for(['user', 'node', 'container'])
+    @only_for(('user', 'node', 'container'))
     def get(self, id):
         """ Get collaboration
         ---
@@ -525,7 +525,7 @@ class CollaborationOrganization(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
-    @only_for(["node", "user", "container"])
+    @only_for(("node", "user", "container"))
     def get(self, id):
         """ Returns organizations that participate in the collaboration
         ---

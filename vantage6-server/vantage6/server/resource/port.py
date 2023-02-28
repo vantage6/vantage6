@@ -106,7 +106,7 @@ class PortBase(ServicesResources):
 
 class Ports(PortBase):
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self):
         """ Returns a list of ports
         ---
@@ -327,7 +327,7 @@ class Ports(PortBase):
 class Port(PortBase):
     """Resource for /api/port"""
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self, id):
         """ Get a single port
         ---

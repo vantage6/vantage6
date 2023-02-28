@@ -159,7 +159,7 @@ class ServicesResources(Resource):
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types: list[str] = ['user', 'node', 'container']):
+def only_for(types: tuple[str] = ('user', 'node', 'container')):
     """
     JWT endpoint protection decorator
 
@@ -246,10 +246,10 @@ def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
 
 
 # create alias decorators
-with_user_or_node = only_for(["user", "node"])
-with_user = only_for(["user"])
-with_node = only_for(["node"])
-with_container = only_for(["container"])
+with_user_or_node = only_for(("user", "node",))
+with_user = only_for("user",))
+with_node = only_for(("node",))
+with_container = only_for(("container",))
 
 
 def parse_datetime(dt: str = None, default: datetime = None) -> datetime:

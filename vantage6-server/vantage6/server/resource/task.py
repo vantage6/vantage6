@@ -120,7 +120,7 @@ class TaskBase(ServicesResources):
 
 class Tasks(TaskBase):
 
-    @only_for(['user', 'node', 'container'])
+    @only_for(("user", "node", "container"))
     def get(self):
         """List tasks
         ---
@@ -280,7 +280,7 @@ class Tasks(TaskBase):
 
         return self.response(page, schema)
 
-    @only_for(["user", "container"])
+    @only_for(("user", "container"))
     def post(self):
         """Adds new computation task
         ---
@@ -530,7 +530,7 @@ class Tasks(TaskBase):
 class Task(TaskBase):
     """Resource for /api/task"""
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"))
     def get(self, id):
         """Get task
         ---

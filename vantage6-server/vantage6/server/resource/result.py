@@ -106,7 +106,7 @@ class ResultBase(ServicesResources):
 
 class Results(ResultBase):
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self):
         """ Returns a list of results
         ---
@@ -260,7 +260,7 @@ class Results(ResultBase):
 class Result(ResultBase):
     """Resource for /api/result"""
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self, id):
         """ Get a single result
         ---
