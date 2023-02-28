@@ -288,7 +288,7 @@ class Organizations(OrganizationBase):
 
 class Organization(OrganizationBase):
 
-    @only_for(("user", "node", "container"]))
+    @only_for(("user", "node", "container"))
     def get(self, id):
         """Get organization
         ---
@@ -436,7 +436,7 @@ class OrganizationCollaboration(ServicesResources):
 
     col_schema = CollaborationSchema()
 
-    @only_for(("user", "node"]))
+    @only_for(("user", "node"))
     def get(self, id):
         """Get collaborations from organization
         ---
