@@ -16,6 +16,7 @@ from vantage6.server.resource import (
     only_for,
     ServicesResources
 )
+from vantage6.server import db
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource.common._schema import PortSchema
 from vantage6.server.model import (
@@ -24,8 +25,7 @@ from vantage6.server.model import (
     Collaboration,
     Task
 )
-from vantage6.server.model.base import DatabaseSessionManager
-
+from vantage6.server.resource import with_container
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -47,6 +47,13 @@ def setup(api, api_base, services):
         Port,
         path + '/<int:id>',
         endpoint='port_with_id',
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
+    api.add_resource(
+        VPNAddress,
+        api_base + '/vpn/algorithm/addresses',
+        endpoint='vpn_address',
         methods=('GET',),
         resource_class_kwargs=services
     )
@@ -144,7 +151,7 @@ class Ports(PortBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(AlgorithmPort)
+        q = g.session.query(AlgorithmPort)
 
         # relation filters
         if 'result_id' in args:
@@ -220,8 +227,9 @@ class Ports(PortBase):
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
         result_id = data.get('result_id', '')
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
+        linked_result = g.session.query(Result)\
+                         .filter(Result.id == result_id)\
+                         .one()
         if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
@@ -280,18 +288,18 @@ class Ports(PortBase):
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
         result_id = args['result_id']
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
+        linked_result = g.session.query(Result)\
+                         .filter(Result.id == result_id)\
+                         .one()
         if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
-        session = DatabaseSessionManager.get_session()
-        session.query(AlgorithmPort).filter(
+        g.session.query(AlgorithmPort).filter(
             AlgorithmPort.result_id == result_id
         ).delete()
-        session.commit()
+        g.session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
 
@@ -354,3 +362,99 @@ class Port(PortBase):
         s = port_schema
 
         return s.dump(port, many=False).data, HTTPStatus.OK
+
+
+class VPNAddress(ServicesResources):
+
+    @with_container
+    def get(self):
+        """
+        Get a list of the addresses (IP + port) and labels of algorithm
+        containers in the same task as the authenticating container.
+        ---
+
+        description: >-
+          Returns a dictionary of addresses of algorithm containers in the same
+          task.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Port|Global|View|❌|❌|View any result|\n
+          |Port|Organization|View|❌|✅|View the ports of your
+          organizations collaborations|\n
+
+          Not accessible to users.
+
+        parameters:
+          - in: path
+            name: label
+            schema:
+              type: string
+            description: Algorithm port label to filter by
+          - in: path
+            name: include_children
+            schema:
+              type: boolean
+            description: Include the addresses of subtasks
+          - in: path
+            name: include_parent
+            schema:
+              type: boolean
+            description: Include the addresses of parent tasks
+
+        responses:
+          200:
+            description: Ok
+
+        security:
+        - bearerAuth: []
+
+        tags: ["VPN"]
+        """
+        task_id = g.container['task_id']
+        task_ids = [task_id]
+
+        task = db.Task.get(task_id)
+
+        # include child tasks if requested
+        if request.args.get('include_children', False):
+            subtasks = g.session.query(db.Task).filter(
+                db.Task.parent_id == task_id
+            ).all()
+            task_ids.extend([t.id for t in subtasks])
+
+        # include parent task if requested
+        if request.args.get('include_parent', False):
+            parent = g.session.query(db.Task).filter(
+                db.Task.id == task.parent_id
+            ).one_or_none()
+            if parent:
+                task_ids.append(parent.id)
+
+        # get all ports for the tasks requested
+        q = g.session.query(AlgorithmPort)\
+                     .join(Result)\
+                     .filter(Result.task_id.in_(task_ids))\
+
+        # filter by label if requested
+        filter_label = request.args.get('label')
+        if filter_label:
+            q = q.filter(AlgorithmPort.label == filter_label)
+
+        ports = q.all()
+
+        # combine data from ports and nodes
+        addresses = []
+        for port in ports:
+            d = {
+                'port': port.port,
+                'label': port.label,
+                'ip': port.result.node.ip,
+                'organization_id': port.result.organization_id,
+                'task_id': port.result.task_id
+            }
+            addresses.append(d)
+
+        return {'addresses': addresses}, HTTPStatus.OK

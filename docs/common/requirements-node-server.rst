@@ -1,14 +1,7 @@
-.. _requirements:
-
-Requirements
-------------
-
-Node & Server
-^^^^^^^^^^^^^
-
-The (minimal) requirements of the node and server are similar. Note that
-these are recommendations: it may also work on other hardware, operating systems,
-versions of Python etc. (but they are not tested as much).
+The (minimal) requirements of the node and server are
+similar. Note that these are recommendations: it may also work on other
+hardware, operating systems, versions of Python etc. (but they are not tested
+as much).
 
 **Hardware**
 
@@ -20,14 +13,17 @@ versions of Python etc. (but they are not tested as much).
 
 **Software**
 
--  Operating system
-
-   -  Ubuntu 18.04+ or
-   -  MacOS Big Sur+ or
-   -  Windows 10+
-
+-  Operating system:
+   -  Ubuntu 18.04+
+   -  MacOS Big Sur+ (only for node)
+   -  Windows 10+ (only for node)
 -  :ref:`python`
 -  :ref:`docker`
+
+.. note::
+    For the server, Ubuntu is highly recommended. It is possible to run a
+    development server (using `vserver start`) on Windows or MacOS, but for
+    production purposes we recommend using Ubuntu.
 
 .. warning::
     The hardware requirements of the node also depend on the algorithms that
@@ -39,7 +35,7 @@ versions of Python etc. (but they are not tested as much).
 Python
 """"""
 
-Installation of any of the vantage6 packages requires Python 3.7.
+Installation of any of the vantage6 packages requires Python 3.10.
 For installation instructions, see `python.org <https://python.org>`__,
 `anaconda.com <https://anaconda.com>`__ or use the package manager
 native to your OS and/or distribution.
@@ -48,9 +44,9 @@ native to your OS and/or distribution.
     We recommend you install vantage6 in a new, clean Python (Conda)
     environment.
 
-    Other version of Python >= 3.6 will most likely also work, but may give
-    issues with installing dependencies. For now, we test vantage6 on
-    version 3.7, so that is a safe choice.
+    Higher versions of Python (3.11+) will most likely also work, as might lower
+    versions (3.8 or 3.9). However, we develop and test vantage6 on version
+    3.10, so that is the safest choice.
 
 .. _docker:
 

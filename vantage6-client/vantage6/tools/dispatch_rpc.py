@@ -3,10 +3,11 @@ import importlib
 import jwt
 
 from vantage6.client import ContainerClient
+from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.tools.util import info, warn, error
 
 
-def dispatch_rpc(data, input_data, module, token):
+def dispatch_rpc(data, input_data, module, token, use_new_client=False):
 
     # import algorithm module
     try:
@@ -26,11 +27,16 @@ def dispatch_rpc(data, input_data, module, token):
         api_path = os.environ["API_PATH"]
 
         # init Docker Client
-        client = ContainerClient(token=token, host=host, port=port,
-                                 path=api_path)
+        # TODO In v4+ we should always use the new client, delete option then
+        if use_new_client:
+            client = AlgorithmClient(token=token, host=host, port=port,
+                                     path=api_path)
+        else:
+            client = ContainerClient(token=token, host=host, port=port,
+                                     path=api_path)
 
         # read JWT token, to log te collaboration id. The
-        # ContainerClient automatically sets the collaboration_id
+        # AlgorithmClient automatically sets the collaboration_id
         claims = jwt.decode(token, options={"verify_signature": False})
 
         # Backwards comptability from < 3.3.0

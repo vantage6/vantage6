@@ -7,7 +7,7 @@ from flask.globals import g
 from sqlalchemy import Column, Integer, inspect, Table
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.ext.declarative.clsregistry import _ModuleMarker
+from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
@@ -75,8 +75,7 @@ class Database(metaclass=Singleton):
         if URL.host is None and URL.database:
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
-        self.engine = create_engine(uri, convert_unicode=True,
-                                    pool_pre_ping=True)
+        self.engine = create_engine(uri, pool_pre_ping=True)
 
         # we can call Session() to create a session, if a session already
         # exists it will return the same session (!). implicit access to the
@@ -115,7 +114,7 @@ class Database(metaclass=Singleton):
         table_names = self.__iengine.get_table_names()
 
         # go through all SQLAlchemy models
-        for _, table_cls in Base._decl_class_registry.items():
+        for table_cls in Base.registry._class_registry.values():
             if isinstance(table_cls, _ModuleMarker):
                 continue  # skip, not a model
 
@@ -252,7 +251,6 @@ class DatabaseSessionManager:
     def new_session():
         # log.critical('Create new DB session')
         if DatabaseSessionManager.in_flask_request():
-
             g.session = Database().session_a
 
             # g.session.refresh()
@@ -299,6 +297,9 @@ class ModelBase:
                 result = session.query(cls).filter_by(id=id_).one()
             except NoResultFound:
                 result = None
+
+        # Always commit to avoid that transaction is not ended in Postgres
+        session.commit()
 
         return result
 
