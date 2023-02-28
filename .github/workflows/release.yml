@@ -36,6 +36,9 @@ jobs:
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
       - name: Get branch on which the tag is based
         id: branchname
         run: |
@@ -43,7 +46,11 @@ jobs:
          branch=${raw/origin\/}
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
-      - name: Checkout
+      - env:
+          branch: ${{ steps.branchname.outputs.branch }}
+        run: echo $branch
+
+      - name: Checkout correct branch
         uses: actions/checkout@v3
         env:
           branch: ${{ steps.branchname.outputs.branch }}
