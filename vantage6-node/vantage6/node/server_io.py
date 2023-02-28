@@ -1,28 +1,19 @@
-""" Server IO
-
-This module is basically a high level interface to the central server.
-
-The module contains three communication classes: 1) The
-NodeClient provides an interface from the Node to the central
-server, 2) The UserClient provides an interface for users/
-researchers and finally 3) The ContainerClient which provides
-an interface for algorithms to the central server (this is mainly used
-by master containers).
+"""
+This module provides a client interface for the node to communicate with the
+central server.
 """
 import jwt
 import datetime
-from typing import Tuple
+from typing import Dict, Tuple
 
-# from vantage6.node.encryption import Cryptor, NoCryptor
+from vantage6.common import WhoAmI
 from vantage6.client import ClientBase
-from vantage6.client import WhoAmI
 
 
 class NodeClient(ClientBase):
     """ Node interface to the central server."""
 
     def __init__(self, *args, **kwargs):
-        """ A node is always for a single collaboration."""
         super().__init__(*args, **kwargs)
 
         # self.name = None
@@ -130,30 +121,41 @@ class NodeClient(ClientBase):
 
             TODO the initiator_id does not make sens here...
         """
-        self.patch_results(id, None, result={
+        self.patch_results(id, result={
             "started_at": datetime.datetime.now().isoformat()
         })
 
-    def patch_results(self, id: int, initiator_id: int, result: dict):
-        """ Update the results at the central server.
-
-            Typically used when to algorithm container is finished or
-            when a status-update is posted (started, finished)
-
-            :param id: id of the task to patch
-            :param initiator_id: organization id of the origin of the
-                task. This is required because we want to encrypt the
-                results specifically for him
-
-            TODO: the key `results` is not always present, e.g. when
-                only the timestamps are updated
-            FIXME: public keys should be cached
+    def patch_results(self, id: int, result: Dict,
+                      init_org_id: int = None) -> None:
         """
+        Update the results at the central server.
+
+        Typically used when to algorithm container is finished or
+        when a status-update is posted (started, finished)
+
+        Parameters
+        ----------
+        id: int
+            ID of the result to patch
+        result: Dict
+            Dictionary of fields that are to be patched
+        init_org_id: int, optional
+            Organization id of the origin of the task. This is required
+            when the result dict includes results, because then results have
+            to be encrypted specifically for them
+        """
+        # TODO: the key `result` is not always present, e.g. when
+        #     only the timestamps are updated
+        # FIXME: public keys should be cached
         if "result" in result:
-            msg = f"Retrieving public key from organization={initiator_id}"
+            if not init_org_id:
+                self.log.critical(
+                    "Organization id is not provided: cannot send results to "
+                    "server as they cannot be encrypted")
+            msg = f"Retrieving public key from organization={init_org_id}"
             self.log.debug(msg)
 
-            org = self.request(f"organization/{initiator_id}")
+            org = self.request(f"organization/{init_org_id}")
             public_key = None
             try:
                 public_key = org["public_key"]

@@ -4,6 +4,7 @@ Resources below '/<api_base>/token'
 """
 import logging
 import datetime as dt
+import pyotp
 
 from typing import Union
 from flask import request, g, render_template
@@ -17,9 +18,13 @@ from http import HTTPStatus
 
 from vantage6 import server
 from vantage6.server import db
+from vantage6.server.model.user import User
 from vantage6.server.resource import (
     with_node,
     ServicesResources
+)
+from vantage6.server.resource.common.auth_helper import (
+  user_login, create_qr_uri
 )
 
 module_name = __name__.split('.')[-1]
@@ -74,13 +79,24 @@ class UserToken(ServicesResources):
         """Login user
         ---
         description: >-
-          Allow user to sign in by supplying a username and password.
+          Allow user to sign in by supplying a username and password. When MFA
+          is enabled on the server, a code is also required
 
         requestBody:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                properties:
+                  username:
+                    type: string
+                    description: Username of user that is logging in
+                  password:
+                    type: string
+                    description: User password
+                  mfa_code:
+                    type: string
+                    description: Two-factor authentication code. Only required
+                      if two-factor authentication is mandatory.
 
         responses:
           200:
@@ -88,6 +104,9 @@ class UserToken(ServicesResources):
           400:
             description: Username/password combination unknown, or missing from
               request body.
+          401:
+            description: Password and/or two-factor authentication token
+              incorrect.
 
         tags: ["Authentication"]
         """
@@ -106,10 +125,32 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        user, code = self.user_login(username, password)
-        if code is not HTTPStatus.OK:  # login failed
+        user, code = user_login(self.config.get("password_policy", {}),
+                                username, password)
+        if code != HTTPStatus.OK:  # login failed
             log.error(f"Failed to login for user='{username}'")
             return user, code
+
+        is_mfa_enabled = self.config.get('two_factor_auth', False)
+        if is_mfa_enabled:
+            if user.otp_secret is None:
+                # server requires mfa but user hasn't set it up yet. Return
+                # an URI to generate a QR code
+                log.info(f'Redirecting user {username} to setup MFA')
+                return create_qr_uri(user), HTTPStatus.OK
+            else:
+                # 2nd authentication factor: check the OTP secret of the user
+                mfa_code = request.json.get('mfa_code')
+                if not mfa_code:
+                    # note: this is not treated as error, but simply guide
+                    # user to also fill in second factor
+                    return {"msg": "Please include your two-factor "
+                            "authentication code"}, HTTPStatus.OK
+                elif not self.validate_2fa_token(user, mfa_code):
+                    return {
+                        "msg": "Your two-factor authentication code is "
+                               "incorrect!"
+                    }, HTTPStatus.UNAUTHORIZED
 
         token = create_access_token(user)
 
@@ -180,6 +221,28 @@ class UserToken(ServicesResources):
                                       **template_vars)
         )
 
+    @staticmethod
+    def validate_2fa_token(user: User, mfa_code: Union[int, str]) -> bool:
+        """
+        Check whether the 6-digit two-factor authentication code is valid
+
+        Parameters
+        ----------
+        user: User
+            The SQLAlchemy model of the user who is authenticating
+        mfa_code:
+            A six-digit TOTP code from an authenticator app
+
+        Returns
+        -------
+        bool
+          Whether six-digit code is valid or not
+        """
+        # the option `valid_window=1` means the code from 1 time window (30s)
+        # ago, is also valid. This prevents that users around the edge of
+        # the time window can still login successfully if server is a bit slow
+        return pyotp.TOTP(user.otp_secret).verify(str(mfa_code),
+                                                  valid_window=1)
 
 
 class NodeToken(ServicesResources):
@@ -189,7 +252,7 @@ class NodeToken(ServicesResources):
         ---
         description: >-
           Allows node to sign in using a unique API key. If the login is
-          successful this returns a dictionairy with access and refresh tokens
+          successful this returns a dictionary with access and refresh tokens
           for the node as well as a node_url and a refresh_url.
 
         requestBody:
@@ -275,6 +338,7 @@ class ContainerToken(ServicesResources):
 
         task_id = data.get("task_id")
         claim_image = data.get("image")
+
         db_task = db.Task.get(task_id)
         if not db_task:
             log.warning(f"Node {g.node.id} attempts to generate key for task "
@@ -285,7 +349,7 @@ class ContainerToken(ServicesResources):
         # verify that task the token is requested for exists
         if claim_image != db_task.image:
             log.warning(
-                f"Node {g.node.id} attemts to generate key for image "
+                f"Node {g.node.id} attempts to generate key for image "
                 f"{claim_image} that does not belong to task {task_id}."
             )
             return {"msg": "Image and task do no match"}, \
@@ -295,8 +359,8 @@ class ContainerToken(ServicesResources):
         # enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
             log.warning(
-                f"Node {g.node.id} attemts to generate key for task {task_id} "
-                f"which is outside its collaboration "
+                f"Node {g.node.id} attempts to generate key for task {task_id}"
+                f" which is outside its collaboration "
                 f"({g.node.collaboration_id}/{db_task.collaboration_id})."
             )
             return {"msg": "You are not within the collaboration"}, \
@@ -316,7 +380,8 @@ class ContainerToken(ServicesResources):
             "organization_id": g.node.organization_id,
             "collaboration_id": g.node.collaboration_id,
             "task_id": task_id,
-            "image": claim_image
+            "image": claim_image,
+            "database": db_task.database
         }
         token = create_access_token(container, expires_delta=False)
 

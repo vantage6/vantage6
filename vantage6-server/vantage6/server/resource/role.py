@@ -8,7 +8,6 @@ from flask_restful import reqparse
 from sqlalchemy import or_
 
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource import (
     with_user,
     ServicesResources
@@ -18,8 +17,9 @@ from vantage6.server.permission import (
     PermissionManager
 )
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.resource._schema import RoleSchema, RuleSchema
+from vantage6.server.resource.common._schema import RoleSchema, RuleSchema
 from vantage6.server.resource.pagination import Pagination
+from vantage6.server.default_roles import DefaultRole
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -188,7 +188,7 @@ class Roles(RoleBase):
 
         tags: ["Role"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Role)
+        q = g.session.query(db.Role)
 
         auth_org_id = self.obtain_organization_id()
         args = request.args
@@ -283,10 +283,12 @@ class Roles(RoleBase):
         responses:
           201:
             description: Created
-          404:
-            description: Organization or rule was not found
+          400:
+            description: Non-allowed role name
           401:
             description: Unauthorized
+          404:
+            description: Organization or rule was not found
 
         security:
           - bearerAuth: []
@@ -299,6 +301,13 @@ class Roles(RoleBase):
         parser.add_argument("rules", type=int, action='append', required=False)
         parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
+
+        # check if role name is allowed (i.e. not a default role name)
+        if 'name' in data and data['name'] in [role for role in DefaultRole]:
+            return {
+                "msg": f"Cannot create role '{data['name']}' as it is a "
+                       "reserved role name."
+            }, HTTPStatus.BAD_REQUEST
 
         # obtain the requested rules from the DB.
         rules = []
@@ -442,6 +451,8 @@ class Role(RoleBase):
         responses:
           200:
             description: Ok
+          400:
+            description: Non-allowed role name change
           401:
             description: Unauthorized
           404:
@@ -458,6 +469,18 @@ class Role(RoleBase):
         if not role:
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
+
+        # check if role name is allowed (i.e. not a default role name)
+        if 'name' in data and data['name'] in [role for role in DefaultRole]:
+            return {
+                "msg": f"Cannot change role name into '{data['name']}' as that"
+                       " is a reserved role name."
+            }, HTTPStatus.BAD_REQUEST
+        elif role.name in [role for role in DefaultRole]:
+            return {
+                "msg": f"This role ('{role.name}') is a default role. Its name"
+                       " cannot be changed."
+            }, HTTPStatus.BAD_REQUEST
 
         # check permission of the user
         if not self.r.e_glo.can():

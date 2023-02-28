@@ -5,6 +5,7 @@ from collections import namedtuple
 from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.globals import RESOURCES
+from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
@@ -50,12 +51,20 @@ class PermissionManager:
     def assign_rule_to_node(self, name: str, scope: Scope,
                             operation: Operation):
         """Assign a rule to the Node role."""
-        self.assign_rule_to_fixed_role("node", name, scope, operation)
+        self.assign_rule_to_fixed_role(DefaultRole.NODE, name, scope,
+                                       operation)
 
     def assign_rule_to_container(self, name: str, scope: Scope,
                                  operation: Operation):
         """Assign a rule to the container role."""
-        self.assign_rule_to_fixed_role("container", name, scope, operation)
+        self.assign_rule_to_fixed_role(DefaultRole.CONTAINER, name, scope,
+                                       operation)
+
+    def assign_rule_to_root(self, name: str, scope: Scope,
+                            operation: Operation):
+        """Assign a rule to the container role."""
+        self.assign_rule_to_fixed_role(DefaultRole.ROOT, name, scope,
+                                       operation)
 
     @staticmethod
     def assign_rule_to_fixed_role(fixedrole: str, name: str, scope: Scope,
@@ -118,6 +127,9 @@ class PermissionManager:
         if assign_to_node:
             self.assign_rule_to_node(collection, scope, operation)
 
+        # assign all new rules to root user
+        self.assign_rule_to_root(collection, scope, operation)
+
         self.collection(collection).add(rule.scope, rule.operation)
 
     def appender(self, name):
@@ -164,11 +176,13 @@ class PermissionManager:
             Whenever this rule exists in the database or not
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(Rule).filter_by(
+        result = session.query(Rule).filter_by(
             name=name,
             operation=operation,
             scope=scope
         ).scalar()
+        session.commit()
+        return result
 
     def verify_user_rules(self, rules):
         for rule in rules:

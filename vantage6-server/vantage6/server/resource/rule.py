@@ -3,6 +3,7 @@ import logging
 
 from http import HTTPStatus
 from flask.globals import request
+from flask import g
 
 from vantage6.server.resource import (
     with_user,
@@ -10,8 +11,7 @@ from vantage6.server.resource import (
 )
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.resource._schema import RuleSchema
+from vantage6.server.resource.common._schema import RuleSchema
 from vantage6.server.resource.pagination import Pagination
 
 
@@ -104,7 +104,7 @@ class Rules(ServicesResources):
 
         tags: ["Rule"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Rule)
+        q = g.session.query(db.Rule)
 
         args = request.args
 

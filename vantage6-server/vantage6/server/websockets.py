@@ -7,7 +7,13 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
+from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
+from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.model.base import DatabaseSessionManager
+
+ALL_NODES_ROOM = 'all_nodes'
 
 
 class DefaultSocketNamespace(Namespace):
@@ -22,7 +28,7 @@ class DefaultSocketNamespace(Namespace):
 
     log = logging.getLogger(logger_name(__name__))
 
-    def on_connect(self):
+    def on_connect(self) -> None:
         """
         A new incomming connection request from a client.
 
@@ -41,17 +47,17 @@ class DefaultSocketNamespace(Namespace):
 
         except jwt.exceptions.ExpiredSignatureError:
             self.log.error("JWT has expired")
-            emit("expired_token", "", room=request.sid)
+            emit("expired_token", room=request.sid)
             return
 
         except Exception as e:
             self.log.error("Couldn't connect client! No or Invalid JWT token?")
             self.log.exception(e)
-            session.name = "no-sure-yet"
+            session.name = "not-sure-yet"
             self.__join_room_and_notify(request.sid)
 
             # FIXME: expired probably doesn't cover it ...
-            emit("expired_token", "", room=request.sid)
+            emit("expired_token", room=request.sid)
             return
 
         # get identity from token.
@@ -63,7 +69,8 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        self.socketio.emit('node-status-changed', namespace='/admin')
+        if auth.type == 'node':
+            self.socketio.emit('node-status-changed', namespace='/admin')
 
         # define socket-session variables.
         session.type = auth.type
@@ -72,22 +79,76 @@ class DefaultSocketNamespace(Namespace):
             f'Client identified as <{session.type}>: <{session.name}>'
         )
 
-        # join appropiate rooms, nodes join a specific collaboration room.
-        # users do not belong to specific collaborations.
-        session.rooms = ['all_connections', 'all_'+session.type+'s']
-
+        # join appropiate rooms
+        session.rooms = []
         if session.type == 'node':
-            session.rooms.append('collaboration_' + str(auth.collaboration_id))
-            session.rooms.append('node_' + str(auth.id))
+            self._add_node_to_rooms(auth)
+            self.__alert_node_status(online=True, node=auth)
         elif session.type == 'user':
-            session.rooms.append('user_'+str(auth.id))
+            self._add_user_to_rooms(auth)
 
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
-    def on_disconnect(self):
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
+    @staticmethod
+    def _add_node_to_rooms(node: Authenticatable) -> None:
+        """
+        Connect node to appropriate websocket rooms
+
+        Parameters
+        ----------
+        node: Authenticatable
+            Node that is to be added to the rooms
+        """
+        # node join rooms for all nodes and rooms for their collaboration
+        session.rooms.append(ALL_NODES_ROOM)
+        session.rooms.append(f'collaboration_{node.collaboration_id}')
+        session.rooms.append(
+            f'collaboration_{node.collaboration_id}_organization_'
+            f'{node.organization_id}')
+
+    @staticmethod
+    def _add_user_to_rooms(user: Authenticatable) -> None:
+        """
+        Connect user to appropriate websocket rooms
+
+        Parameters
+        ----------
+        user: Authenticatable
+            User that is to be added to the rooms
+        """
+        # check for which collab rooms the user has permission to enter
+        session.user = db.User.get(session.auth_id)
+        if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
+            # user joins all collaboration rooms
+            collabs = db.Collaboration.get()
+            for collab in collabs:
+                session.rooms.append(f'collaboration_{collab.id}')
+        elif session.user.can(
+                'event', Scope.COLLABORATION, Operation.VIEW):
+            # user joins all collaboration rooms that their organization
+            # participates in
+            for collab in user.organization.collaborations:
+                session.rooms.append(f'collaboration_{collab.id}')
+        elif session.user.can('event', Scope.ORGANIZATION, Operation.VIEW):
+            # user joins collaboration subrooms that include only messages
+            # relevant to their own node
+            for collab in user.organization.collaborations:
+                session.rooms.append(
+                    f'collaboration_{collab.id}_organization_'
+                    f'{user.organization.id}'
+                )
+
+    def on_disconnect(self) -> None:
         """
         Client that disconnects needs to leave all rooms.
+
+        If a node disconnects, users may be alerted to that. Also, any
+        information on the node (e.g. configuration) is removed from the
+        database.
         """
         for room in session.rooms:
             # self.__leave_room_and_notify(room)
@@ -100,12 +161,21 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        self.log.warning('emitting to /admin')
-        self.socketio.emit('node-status-changed', namespace='/admin')
+        if session.type == 'node':
+            self.log.warning('emitting to /admin')
+            self.socketio.emit('node-status-changed', namespace='/admin')
+            self.__alert_node_status(online=False, node=auth)
+
+        # delete any data on the node stored on the server (e.g. configuration
+        # data)
+        self.__clean_node_data(auth)
 
         self.log.info(f'{session.name} disconnected')
 
-    def on_message(self, message: str):
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
+    def on_message(self, message: str) -> None:
         """
         An incomming message from any client.
 
@@ -116,7 +186,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.info('received message: ' + message)
 
-    def on_error(self, e: str):
+    def on_error(self, e: str) -> None:
         """
         An incomming error from any of the client.
 
@@ -127,52 +197,97 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.error(e)
 
-    def on_join_room(self, room: str):
+    def on_algorithm_status_change(self, data: Dict) -> None:
         """
-        Let clients join any room they like by specifying the name.
+        An algorithm container has changed its status.
+
+        This status change may be that the algorithm has finished, crashed,
+        etc. Here we notify the collaboration of the change.
 
         Parameters
         ----------
-        room : str
-            name of the room the client wants to join
-        """
-        self.__join_room_and_notify(room)
-
-    def on_container_failed(self, data: Dict):
-        """
-        An algorithm container has crashed at a node.
-
-        This event notifies all nodes, and users that a container has crashed
-        in their collaboration.
-
-        Parameters
-        ----------
-        node_id : int
-            node_id where the algorithm container was running
-        status_code : int
-            status code from the container
-        result_id : int
-            result_id for which the container was running
-        collaboration_id : int
-            collaboration for which the task was running
+        data: Dict
+            Dictionary containing parameters on the updated algorithm status.
+            It should contain:
+            node_id : int
+                node_id where the algorithm container was running
+            status : int
+                New status of the algorithm container
+            result_id : int
+                result_id for which the algorithm was running
+            collaboration_id : int
+                collaboration for which the algorithm was running
         """
         result_id = data.get('result_id')
+        task_id = data.get('task_id')
         collaboration_id = data.get('collaboration_id')
-        status_code = data.get('status_code')
+        status = data.get('status')
         node_id = data.get('node_id')
+        organization_id = data.get('organization_id')
+        parent_id = data.get('parent_id')
 
         run_id = db.Result.get(result_id).task.run_id
 
-        self.log.critical(
-            f"A container in for run_id={run_id} and result_id={result_id}"
-            f" within collaboration_id={collaboration_id} on node_id={node_id}"
-            f" exited with status_code={status_code}."
+        # log event in server logs
+        msg = (f"A container for run_id={run_id} and result_id={result_id} "
+               f"in collaboration_id={collaboration_id} on node_id={node_id}")
+        if has_task_failed(status):
+            self.log.critical(f"{msg} exited with status={status}.")
+        else:
+            self.log.info(f"{msg} has a new status={status}.")
+
+        # emit task status change to other nodes/users in the collaboration
+        emit(
+            "algorithm_status_change", {
+                "status": status,
+                "result_id": result_id,
+                "task_id": task_id,
+                "run_id": run_id,
+                "collaboration_id": collaboration_id,
+                "node_id": node_id,
+                "organization_id": organization_id,
+                "parent_id": parent_id,
+            }, room=f"collaboration_{collaboration_id}"
         )
 
-        room = "collaboration_"+str(collaboration_id)
-        emit("container_failed", run_id, room=room)
+        # cleanup (e.g. database session)
+        self.__cleanup()
 
-    def __join_room_and_notify(self, room: str):
+    def on_node_info_update(self, node_config: dict) -> None:
+        """
+        A node sends information about its configuration and other properties.
+        Store this in the database for the duration of the node's session.
+
+        Parameters
+        ----------
+        node_config: dict
+            Dictionary containing the node's configuration.
+        """
+        node = db.Node.get(session.auth_id)
+
+        # delete any old data that may be present (if cleanup on disconnect
+        # failed)
+        self.__clean_node_data(node=node)
+
+        # store (new) node config
+        to_store = []
+        for k, v in node_config.items():
+            # add single item or list of items
+            if not isinstance(v, list):
+                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
+            else:
+                to_store.extend([
+                    db.NodeConfig(node_id=node.id, key=k, value=i)
+                    for i in v
+                ])
+
+        node.config = to_store
+        node.save()
+
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
+    def __join_room_and_notify(self, room: str) -> None:
         """
         Joins room and notify other clients in this room.
 
@@ -182,11 +297,11 @@ class DefaultSocketNamespace(Namespace):
             name of the room the client want to join
         """
         join_room(room)
-        msg = f'<{session.name}> joined room <{room}>'
+        msg = f'{session.type.title()} <{session.name}> joined room <{room}>'
         self.log.info(msg)
-        emit('message', msg, room=room)
+        self.__notify_room_join_or_leave(room, msg)
 
-    def __leave_room_and_notify(self, room: str):
+    def __leave_room_and_notify(self, room: str) -> None:
         """
         Leave room and notify other clients in this room.
 
@@ -198,4 +313,60 @@ class DefaultSocketNamespace(Namespace):
         leave_room(room)
         msg = f'{session.name} left room {room}'
         self.log.info(msg)
-        emit('message', msg, room=room)
+        self.__notify_room_join_or_leave(room, msg)
+
+    @staticmethod
+    def __notify_room_join_or_leave(room: str, msg: str) -> None:
+        """
+        Notify a room that one of its clients is joining or leaving
+
+        """
+        # share message with other users and nodes, except for all_nodes. That
+        # room must never be notified for join or leave events since it
+        # contains nodes from different collaborations that shouldn't
+        # know about each other.
+        if room != ALL_NODES_ROOM:
+            emit('message', msg, room=room)
+
+    def __alert_node_status(self, online: bool, node: Authenticatable) -> None:
+        """
+        Send status update of nodes when they change on/offline status
+
+        Parameters
+        ----------
+        online: bool
+            Whether node is coming online or not
+        node: Authenticatable
+            The node SQLALchemy object
+        """
+        event = 'node-online' if online else 'node-offline'
+        for room in session.rooms:
+            self.socketio.emit(
+                event,
+                {
+                    'id': node.id, 'name': node.name,
+                    'org_id': node.organization.id
+                },
+                namespace='/tasks',
+                room=room
+            )
+
+    @staticmethod
+<<<<<<< HEAD
+    def __clean_node_data(node: db.Node) -> None:
+        """
+        Remove any information from the database that the node shared about
+        e.g. its configuration
+
+        Parameters
+        ----------
+        node: db.Node
+            The node SQLALchemy object
+        """
+        for conf in node.config:
+            conf.delete()
+=======
+    def __cleanup() -> None:
+        """ Cleanup database connections """
+        DatabaseSessionManager.clear_session()
+>>>>>>> main

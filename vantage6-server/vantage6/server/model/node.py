@@ -22,6 +22,7 @@ class Node(Authenticatable):
     # relationships
     collaboration = relationship("Collaboration", back_populates='nodes')
     organization = relationship("Organization", back_populates='nodes')
+    config = relationship("NodeConfig", back_populates="node")
 
     # the type specification in Authenticatable
     __mapper_args__ = {
@@ -47,6 +48,7 @@ class Node(Authenticatable):
         session = DatabaseSessionManager.get_session()
 
         nodes = session.query(cls).all()
+        session.commit()
         for node in nodes:
             is_correct_key = node.check_key(api_key)
             if is_correct_key:
@@ -55,12 +57,30 @@ class Node(Authenticatable):
         return None
 
     @classmethod
+    def get_online_nodes(cls):
+        """
+        Return nodes that currently have status 'online'
+
+        Returns
+        -------
+        List[Node]
+            List of node models that are currently online
+        """
+        session = DatabaseSessionManager.get_session()
+
+        result = session.query(cls).filter_by(status='online').all()
+        session.commit()
+        return result
+
+    @classmethod
     def exists(cls, organization_id, collaboration_id):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(
+        result = session.query(cls).filter_by(
             organization_id=organization_id,
             collaboration_id=collaboration_id
         ).scalar()
+        session.commit()
+        return result
 
     def __repr__(self):
         return (

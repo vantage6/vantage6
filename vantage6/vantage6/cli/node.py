@@ -1,16 +1,19 @@
-""" Node Manager Command Line Interface
+"""
+The node module contains the CLI commands for the node manager. The following
+commands are available:
 
-    The node manager is responsible for:
-    1) Creating, updating and deleting configurations (=nodes).
-    2) Starting, Stopping nodes
+    * vnode new
+    * vnode list
+    * vnode files
+    * vnode start
+    * vnode stop
+    * vnode attach
+    * vnode clean
+    * vnode remove
+    * vnode version
+    * vnode create-private-key
 
-    Configuration Commands
-    * node new
-    * node list
-    * node files
-    * node start
-    * node stop
-    * node attach
+
 """
 import click
 import sys
@@ -20,13 +23,14 @@ import time
 import os.path
 import itertools
 
+from typing import Iterable, Tuple, List
 from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_config_write_permissions
+    bytes_to_base64s, check_config_writeable
 )
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -40,9 +44,8 @@ from vantage6.common.docker.addons import (
   remove_container_if_exists,
   check_docker_running
 )
+from vantage6.common.encryption import RSACryptor
 from vantage6.client import Client
-from vantage6.client.encryption import RSACryptor
-
 
 from vantage6.cli.context import NodeContext
 from vantage6.cli.globals import (
@@ -51,16 +54,17 @@ from vantage6.cli.globals import (
 )
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
-    select_configuration_questionaire
+    select_configuration_questionaire,
+    NodeConfigurationManager
 )
 from vantage6.cli.utils import (
-    check_config_name_allowed, check_if_docker_deamon_is_running
+    check_config_name_allowed, check_if_docker_daemon_is_running
 )
 from vantage6.cli import __version__
 
 
 @click.group(name="node")
-def cli_node():
+def cli_node() -> None:
     """Subcommand `vnode`."""
     pass
 
@@ -69,8 +73,10 @@ def cli_node():
 #   list
 #
 @cli_node.command(name="list")
-def cli_node_list():
-    """Lists all nodes in the default configuration directory."""
+def cli_node_list() -> None:
+    """
+    Lists all nodes in the default configuration directories.
+    """
 
     client = docker.from_env()
     check_docker_running()
@@ -128,11 +134,22 @@ def cli_node_list():
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_new_configuration(name, environment, system_folders):
-    """Create a new configuration file.
+def cli_node_new_configuration(name: str, environment: str,
+                               system_folders: bool) -> None:
+    """
+    Create a new configuration file.
 
     Checks if the configuration already exists. If this is not the case
-    a questionaire is invoked to create a new configuration file.
+    a questionnaire is invoked to create a new configuration file.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Store this configuration in the system folders or in the user folders.
     """
     # select configuration name if none supplied
     if not name:
@@ -162,8 +179,8 @@ def cli_node_new_configuration(name, environment, system_folders):
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_write_permissions(system_folders):
-        error("Your user does not have write access to all folders. Exiting")
+    if not check_config_writeable(system_folders):
+        error("Cannot write configuration file. Exiting...")
         exit(1)
 
     # create config in ctx location
@@ -183,11 +200,21 @@ def cli_node_new_configuration(name, environment, system_folders):
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_files(name, environment, system_folders):
-    """ Prints location important files.
+def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
+    """
+    Prints location important files.
 
-        If the specified configuration cannot be found, it exits. Otherwise
-        it returns the absolute path to the output.
+    If the specified configuration cannot be found, it exits. Otherwise
+    it returns the absolute path to the output.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Is this configuration stored in the system or in the user folders.
     """
     name, environment = select_node(name, environment, system_folders)
 
@@ -225,18 +252,37 @@ def cli_node_files(name, environment, system_folders):
               help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
               help="mount vantage6-master package source")
-def cli_node_start(name, config, environment, system_folders, image, keep,
-                   mount_src, attach, force_db_mount):
-    """Start the node instance.
+def cli_node_start(name: str, config: str, environment: str,
+                   system_folders: bool, image: str, keep: bool,
+                   mount_src: str, attach: bool, force_db_mount: bool) -> None:
+    """
+    Start the node instance inside a Docker container.
 
-        If no name or config is specified the default.yaml configuation is
-        used. In case the configuration file not excists, a questionaire is
-        invoked to create one. Note that in this case it is not possible to
-        specify specific environments for the configuration (e.g. test,
-        prod, acc).
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    config : str
+        Absolute path to configuration-file; overrides NAME
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Is this configuration stored in the system or in the user folders.
+    image : str
+        Node Docker image to use.
+    keep : bool
+        Keep container when finished or in the event of a crash. This is useful
+        for debugging.
+    mount_src : str
+        Mount vantage6 package source that replaces the source inside the
+        container. This is useful for debugging.
+    attach : bool
+        Attach node logs to the console after start.
+    force_db_mount : bool
+        Skip the check of the existence of the DB (always try to mount).
     """
     info("Starting node...")
-    info("Finding Docker deamon")
+    info("Finding Docker daemon")
     docker_client = docker.from_env()
     check_docker_running()
 
@@ -308,8 +354,9 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         # docker_client.images.pull(image)
         pull_if_newer(docker.from_env(), image)
 
-    except Exception:
-        warning(' ... alas, no dice!')
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
     else:
         info(" ... success!")
 
@@ -317,6 +364,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
+    ssh_volume = docker_client.volumes.create(ctx.docker_ssh_volume_name)
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
@@ -325,6 +373,7 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
         ("/mnt/log", str(ctx.log_dir)),
         ("/mnt/data", data_volume.name),
         ("/mnt/vpn", vpn_volume.name),
+        ("/mnt/ssh", ssh_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
@@ -356,6 +405,29 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
             warning(f"private key file provided {fullpath}, "
                     "but does not exists")
 
+    # Mount private keys for ssh tunnels
+    ssh_tunnels = ctx.config.get("ssh-tunnels", [])
+    for ssh_tunnel in ssh_tunnels:
+        hostname = ssh_tunnel.get("hostname")
+        key_path = ssh_tunnel.get("ssh", {}).get("identity", {}).get("key")
+        if not key_path:
+            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                  "key not provided. Continuing to start without this tunnel.")
+            info()
+        key_path = Path(key_path)
+        if not key_path.exists():
+            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                  "key does not exist. Continuing to start without this "
+                  "tunnel.")
+
+        info(f"  Mounting private key for {hostname} at {key_path}")
+
+        # we remove the .tmp in the container, this is because the file is
+        # mounted in a volume mount point. Somehow the file is than empty in
+        # the volume but not for the node instance. By removing the .tmp we
+        # make sure that the file is not empty in the volume.
+        mounts.append((f"/mnt/ssh/{hostname}.pem.tmp", str(key_path)))
+
     # Be careful not to use 'environment' as it would override the function
     # argument ;-).
     env = {
@@ -371,18 +443,28 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 
         uri = ctx.databases[label]
         info(f"  Processing database '{label}:{uri}'")
-        LABEL = label.upper()
+        label_capitals = label.upper()
 
-        file_based = Path(uri).exists()
+        try:
+            file_based = Path(uri).exists()
+        except Exception:
+            # If the database uri cannot be parsed, it is definitely not a
+            # file. In case of http servers or sql servers, checking the path
+            # of the the uri will lead to an OS-dependent error, which is why
+            # we catch all exceptions here.
+            file_based = False
+
         if not file_based and not force_db_mount:
             debug('  - non file-based database added')
-            env[f'{LABEL}_DATABASE_URI'] = uri
+            env[f'{label_capitals}_DATABASE_URI'] = uri
         else:
             debug('  - file-based database added')
-            env[f'{LABEL}_DATABASE_URI'] = f'{label}.csv'
-            mounts.append((f'/mnt/{label}.csv', str(uri)))
+            suffix = Path(uri).suffix
+            env[f'{label_capitals}_DATABASE_URI'] = f'{label}{suffix}'
+            mounts.append((f'/mnt/{label}{suffix}', str(uri)))
 
         # FIXME legacy to support < 2.1.3 can be removed from 3+
+        # FIXME this is still required in v3+ but should be removed in v4
         if label == 'default':
             env['DATABASE_URI'] = '/mnt/default.csv'
 
@@ -441,10 +523,24 @@ def cli_node_start(name, config, environment, system_folders, image, keep,
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 @click.option('--all', 'all_nodes', flag_value=True)
-@click.option('--force', 'force', flag_value=True, help="kills containers instantly")
-def cli_node_stop(name, system_folders, all_nodes, force):
-    """Stop a running container. """
+@click.option('--force', 'force', flag_value=True, help="kills containers "
+                                                        "instantly")
+def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
+                  force: bool) -> None:
+    """
+    Stop a running node container.
 
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    system_folders : bool
+        Is this configuration stored in the system or in the user folders.
+    all_nodes : bool
+        If set to true, all running nodes will be stopped.
+    force : bool
+        If set to true, the node will not be stopped gracefully.
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -458,7 +554,6 @@ def cli_node_stop(name, system_folders, all_nodes, force):
         warning('Forcing the node to stop will not terminate helper '
                 'containers, neither will it remove routing rules made on the '
                 'host!')
-
 
     if all_nodes:
         for name in running_node_names:
@@ -497,9 +592,17 @@ def cli_node_stop(name, system_folders, all_nodes, force):
 @click.option("-n", "--name", default=None, help="configuration name")
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_attach(name, system_folders):
-    """Attach the logs from the docker container to the terminal."""
+def cli_node_attach(name: str, system_folders: bool) -> None:
+    """
+    Attach the logs from the docker container to the terminal.
 
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    system_folders : bool
+        Wether this configuration stored in the system or in the user folders.
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -543,10 +646,30 @@ def cli_node_attach(name, system_folders):
 @click.option("-o", "--organization-name", default=None,
               help="Organization name")
 @click.option('--overwrite', 'overwrite', flag_value=True, default=False)
-def cli_node_create_private_key(name, config, environment, system_folders,
-                                upload, organization_name, overwrite):
-    """Create and upload a new private key (use with caughtion)"""
+def cli_node_create_private_key(
+        name: str, config: str, environment: str, system_folders: bool,
+        upload: bool, organization_name: str, overwrite: bool
+        ) -> None:
+    """
+    Create and upload a new private key (use with caution).
 
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    config : str
+        Absolute path to configuration-file; overrides NAME.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Wether this configuration stored in the system or in the user folders.
+    upload : bool
+        Wether to upload the private key to the server.
+    organization_name : str
+        Used to store and reference the private key.
+    overwrite : bool
+        Overwrite existing private key if present.
+    """
     NodeContext.LOGGING_ENABLED = False
     if config:
         name = Path(config).stem
@@ -632,6 +755,8 @@ def cli_node_create_private_key(name, config, environment, system_folders,
         if 'client' not in locals():
             client = create_client_and_authenticate(ctx)
 
+        # TODO what happens if the user doesn't have permission to upload key?
+        # Does that lead to an exception or not?
         try:
             client.request(
                 f"/organization/{client.whoami.organization_id}",
@@ -654,24 +779,26 @@ def cli_node_create_private_key(name, config, environment, system_folders,
 #   clean
 #
 @cli_node.command(name='clean')
-def cli_node_clean():
-    """ This command erases docker volumes"""
+def cli_node_clean() -> None:
+    """
+    This command erases temporary Docker volumes.
+    """
     client = docker.from_env()
     check_docker_running()
 
     # retrieve all volumes
     volumes = client.volumes.list()
-    canditates = []
+    candidates = []
     msg = "This would remove the following volumes: "
     for volume in volumes:
         if volume.name[-6:] == "tmpvol":
-            canditates.append(volume)
+            candidates.append(volume)
             msg += volume.name + ","
     info(msg)
 
     confirm = q.confirm("Are you sure?")
     if confirm.ask():
-        for volume in canditates:
+        for volume in candidates:
             try:
                 volume.remove()
                 # info(volume.name)
@@ -692,19 +819,30 @@ def cli_node_clean():
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_remove(name, environment, system_folders):
-    """Delete a node permanently
+def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
+    """
+    Delete a node permanently
 
-    - if the node is still running, exit and tell user to run vnode stop first
-    - remove configuration file
-    - remove log file
-    - remove docker volumes attached to the node
+    * if the node is still running, exit and tell user to run vnode stop first
+    * remove configuration file
+    * remove log file
+    * remove docker volumes attached to the node
+
+    Parameters
+    ----------
+    name : str
+        Configuration name
+    environment : str
+        DTAP environment, note that regardless of the environment, the entire
+        configuration is deleted
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
     """
     # select configuration name if none supplied
     name, environment = select_node(name, environment, system_folders)
 
     client = docker.from_env()
-    check_if_docker_deamon_is_running(client)
+    check_if_docker_daemon_is_running(client)
 
     # check if node is still running, otherwise don't allow deleting it
     running_node_names = find_running_node_names(client)
@@ -761,9 +899,17 @@ def cli_node_remove(name, environment, system_folders):
 @click.option("-n", "--name", default=None, help="configuration name")
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_version(name, system_folders):
-    """Returns current version of vantage6 services installed."""
+def cli_node_version(name: str, system_folders: bool) -> None:
+    """
+    Returns current version of vantage6 services installed.
 
+    Parameters
+    ----------
+    name : str
+        Configuration name
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -789,13 +935,73 @@ def cli_node_version(name, system_folders):
         error(f"Node {name} is not running! Cannot provide version...")
 
 
-def print_log_worker(logs_stream):
+#
+#   set-api-key
+#
+@cli_node.command(name='set-api-key')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("--api-key", default=None, help="New API key")
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_set_api_key(name, api_key, environment, system_folders):
+    """
+    Put a new API key into the node configuration file
+    """
+    # select name and environment
+    name, environment = select_node(name, environment, system_folders)
+
+    # Check that we can write in the config folder
+    if not check_config_writeable(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        exit(1)
+
+    if not api_key:
+        api_key = q.text("Please enter your new API key:").ask()
+
+    # get configuration manager
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+    conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
+
+    # set new api key, and save the file
+    ctx.config['api_key'] = api_key
+    conf_mgr.put(environment, ctx.config)
+    conf_mgr.save(ctx.config_file)
+    info("Your new API key has been uploaded to the config file "
+         f"{ctx.config_file}.")
+
+
+#  helper functions
+def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+    """
+    Print the logs from the logs stream.
+
+    Parameters
+    ----------
+    logs_stream : Iterable[bytes]
+        Output of the container.attach() method
+    """
+
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def create_client_and_authenticate(ctx):
-    """Create a client and authenticate."""
+def create_client_and_authenticate(ctx: NodeContext) -> Client:
+    """
+    Generate a client and authenticate with the server.
+
+    Parameters
+    ----------
+    ctx : NodeContext
+        Context of the node loaded from the configuration file
+
+    Returns
+    -------
+    Client
+        vantage6 client
+    """
     host = ctx.config['server_url']
     port = ctx.config['port']
     api_path = ctx.config['api_path']
@@ -817,8 +1023,17 @@ def create_client_and_authenticate(ctx):
     return client
 
 
-def select_node(name, environment, system_folders):
-    """ Let user select node through questionnaire if name is yet unknown """
+def select_node(name: str, environment: str, system_folders: bool) \
+        -> Tuple[str, str]:
+    """
+    Let user select node through questionnaire if name/environment is not
+    given.
+
+    Returns
+    -------
+    Tuple[str, str]
+        name, environment of the configuration file
+    """
     name, environment = (name, environment) if name else \
         select_configuration_questionaire("node", system_folders)
 
@@ -833,13 +1048,36 @@ def select_node(name, environment, system_folders):
     return name, environment
 
 
-def find_running_node_names(client):
+def find_running_node_names(client: docker.DockerClient) -> List[str]:
+    """
+    Returns a list of names of running nodes.
+
+    Parameters
+    ----------
+    client : docker.DockerClient
+        Docker client instance
+
+    Returns
+    -------
+    List[str]
+        List of names of running nodes
+    """
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
     return [node.name for node in running_nodes]
 
 
-def remove_file(file: str, file_type: str):
+def remove_file(file: str, file_type: str) -> None:
+    """
+    Remove a file if it exists.
+
+    Parameters
+    ----------
+    file : str
+        absolute path to the file to be deleted
+    file_type : str
+        type of file, used for logging
+    """
     if os.path.isfile(file):
         info(f"Removing {file_type} file: {file}")
         try:

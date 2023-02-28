@@ -19,7 +19,7 @@ from vantage6.server.resource import (
     ServicesResources
 )
 from vantage6.server.resource.pagination import Pagination
-from vantage6.server.resource._schema import (
+from vantage6.server.resource.common._schema import (
     ResultSchema,
     ResultTaskIncludedSchema
 )
@@ -30,8 +30,6 @@ from vantage6.server.model import (
     Collaboration,
     Organization
 )
-from vantage6.server.model.base import DatabaseSessionManager
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -194,7 +192,7 @@ class Results(ResultBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(db_Result)
+        q = g.session.query(db_Result)
 
         # relation filters
         for param in ['task_id', 'organization_id', 'port']:
@@ -377,15 +375,17 @@ class Result(ResultBase):
                 HTTPStatus.BAD_REQUEST
 
         # notify collaboration nodes/users that the task has an update
-        self.socketio.emit("status_update", {'result_id': id},
-                           namespace='/tasks', room='collaboration_' +
-                           str(result.task.collaboration.id))
+        self.socketio.emit(
+            "status_update", {'result_id': id}, namespace='/tasks',
+            room=f'collaboration_{result.task.collaboration.id}'
+        )
 
         result.started_at = parse_datetime(data.get("started_at"),
                                            result.started_at)
         result.finished_at = parse_datetime(data.get("finished_at"))
         result.result = data.get("result")
         result.log = data.get("log")
+        result.status = data.get("status", result.status)
         result.save()
 
         return result_schema.dump(result, many=False).data, HTTPStatus.OK

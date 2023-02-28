@@ -2,6 +2,7 @@ import docker
 import logging
 import json
 import time
+import ipaddress
 
 from json.decoder import JSONDecodeError
 from typing import List, Union, Dict
@@ -9,7 +10,7 @@ from docker.models.containers import Container
 
 from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.common.docker.addons import (
-    remove_container_if_exists, remove_container
+    remove_container_if_exists, remove_container, pull_if_newer
 )
 from vantage6.node.util import logger_name
 from vantage6.node.globals import (
@@ -60,12 +61,22 @@ class VPNManager(DockerBaseManager):
         self.network_config_image = NETWORK_CONFIG_IMAGE \
             if not network_config_image else network_config_image
 
+        self._update_images()
+
         self.log.debug('Used VPN images:')
         self.log.debug(f'  Alpine: {self.alpine_image}')
         self.log.debug(f'  Client: {self.vpn_client_image}')
         self.log.debug(f'  Config: {self.network_config_image}')
 
         self.has_vpn = False
+
+    def _update_images(self) -> None:
+        """ Pulls the latest version of the VPN images """
+        self.log.info("Updating VPN images...")
+        pull_if_newer(self.docker, self.alpine_image, self.log)
+        pull_if_newer(self.docker, self.vpn_client_image, self.log)
+        pull_if_newer(self.docker, self.network_config_image, self.log)
+        self.log.info("Done updating VPN images")
 
     def connect_vpn(self) -> None:
         """
@@ -124,6 +135,17 @@ class VPNManager(DockerBaseManager):
         else:
             raise ConnectionError("VPN connection not established!")
 
+        # check that the VPN connection IP address is part of the subnet
+        # defined in the node configuration. If not, the VPN connection would
+        # not work.
+        if not self._vpn_in_right_subnet():
+            self.log.error(
+                "The VPN subnet defined in the node configuration file does "
+                "not match the VPN server subnet. Turning off VPN..."
+            )
+            self.exit_vpn(cleanup_host_rules=False)
+            return
+
         # create network exception so that packet transfer between VPN network
         # and the vpn client container is allowed
         self.isolated_bridge = self._find_isolated_bridge()
@@ -153,9 +175,15 @@ class VPNManager(DockerBaseManager):
                 time.sleep(1)
         return self.has_vpn
 
-    def exit_vpn(self) -> None:
+    def exit_vpn(self, cleanup_host_rules: bool = True) -> None:
         """
         Gracefully shutdown the VPN and clean up
+
+        Parameters
+        ----------
+        cleanup_host_rules: bool, optional
+            Whether or not to clear host configuration rules. Should be True
+            if they have been created at the time this function runs.
         """
         if not self.has_vpn:
             return
@@ -166,21 +194,22 @@ class VPNManager(DockerBaseManager):
         # Clean up host network changes. We have added two rules to the front
         # of the DOCKER-USER chain. We now execute more or less the same
         # commands, but with -D (delete) instead of -I (insert)
-        command = (
-            'sh -c "'
-            f'iptables -D DOCKER-USER -d {self.subnet} '
-            f'-i {self.isolated_bridge} -j ACCEPT; '
-            f'iptables -D DOCKER-USER -s {self.subnet} '
-            f'-o {self.isolated_bridge} -j ACCEPT; '
-            '"'
-        )
-        self.docker.containers.run(
-            image=self.network_config_image,
-            network='host',
-            cap_add='NET_ADMIN',
-            command=command,
-            remove=True,
-        )
+        if cleanup_host_rules:
+            command = (
+                'sh -c "'
+                f'iptables -D DOCKER-USER -d {self.subnet} '
+                f'-i {self.isolated_bridge} -j ACCEPT; '
+                f'iptables -D DOCKER-USER -s {self.subnet} '
+                f'-o {self.isolated_bridge} -j ACCEPT; '
+                '"'
+            )
+            self.docker.containers.run(
+                image=self.network_config_image,
+                network='host',
+                cap_add='NET_ADMIN',
+                command=command,
+                remove=True,
+            )
 
     def get_vpn_ip(self) -> str:
         """
@@ -304,14 +333,25 @@ class VPNManager(DockerBaseManager):
         for port in ports:
             port['port'] = vpn_client_port_options.pop()
 
+        vpn_ip = self.get_vpn_ip()
+
         # Set up forwarding VPN traffic to algorithm container
         command = 'sh -c "'
         for port in ports:
+            # Rule for directing external vpn traffic to algorithms
             command += (
                 'iptables -t nat -A PREROUTING -i tun0 -p tcp '
                 f'--dport {port["port"]} -j DNAT '
                 f'--to {algo_ip}:{port["algo_port"]};'
             )
+
+            # Rule for directing internal vpn traffic to algorithms
+            command += (
+                f'iptables -t nat -A PREROUTING -d {vpn_ip}/32 -p tcp '
+                f'--dport {port["port"]} -j DNAT '
+                f'--to {algo_ip}:{port["algo_port"]};'
+            )
+
             # remove the algorithm ports from the dictionaries as these are no
             # longer necessary
             del port['algo_port']
@@ -319,6 +359,21 @@ class VPNManager(DockerBaseManager):
         self.vpn_client_container.exec_run(command)
 
         return ports
+
+    def _vpn_in_right_subnet(self) -> bool:
+        """
+        Check if the VPN connection is part of the subnet defined in the node
+        configuration.
+
+        Returns
+        -------
+        bool
+            Whether the VPN IP address is part of the subnet or not
+        """
+        vpn_ip = self.get_vpn_ip()
+        return (
+            ipaddress.ip_address(vpn_ip) in ipaddress.ip_network(self.subnet)
+        )
 
     def _find_exposed_ports(self, image: str) -> List[Dict]:
         """
@@ -337,19 +392,19 @@ class VPNManager(DockerBaseManager):
             List of ports forward VPN traffic to. For each port, a dictionary
             containing port number and label is given
         """
-        n2n_image = self.docker.images.get(image)
         default_ports = [{'algo_port': DEFAULT_ALGO_VPN_PORT, 'label': None}]
+        algo_image = self.docker.images.get(image)
 
         exposed_ports = []
         try:
-            exposed_ports = n2n_image.attrs['Config']['ExposedPorts']
+            exposed_ports = algo_image.attrs['Config']['ExposedPorts']
         except KeyError:
             return default_ports
 
         # find any labels defined in the docker image
         labels = {}
         try:
-            labels = n2n_image.attrs['Config']['Labels']
+            labels = algo_image.attrs['Config']['Labels']
         except KeyError:
             pass  # No labels found, ignore
 

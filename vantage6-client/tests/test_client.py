@@ -6,6 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from vantage6.client import Client
+from vantage6.common.globals import STRING_ENCODING
 
 # Mock server
 HOST = 'mock_server'
@@ -22,7 +23,6 @@ COLLABORATION_ID = 1
 ORGANIZATION_IDS = [1]
 SAMPLE_INPUT = {'method': 'test-task'}
 FAKE_NAME = 'john doe'
-STRING_ENCODING = 'utf-8'
 
 
 class TestClient(TestCase):

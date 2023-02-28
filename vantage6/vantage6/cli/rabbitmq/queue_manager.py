@@ -102,15 +102,15 @@ class RabbitMQManager:
 
     def _wait_for_startup(self) -> None:
         """ Wait until RabbitMQ has been initialized """
-        INTERVAL = 10
-        ATTEMPTS = int((RABBIT_TIMEOUT + INTERVAL) / INTERVAL)
+        interval = 10
+        attempts = int((RABBIT_TIMEOUT + interval) / interval)
         is_running = False
-        for _ in range(ATTEMPTS):
+        for _ in range(attempts):
             if self.is_running():
                 is_running = True
                 break
-            debug(f"RabbitMQ is not yet running. Retrying in {INTERVAL}s...")
-            time.sleep(INTERVAL)
+            debug(f"RabbitMQ is not yet running. Retrying in {interval}s...")
+            time.sleep(interval)
         if is_running:
             info("RabbitMQ was started successfully!")
         else:

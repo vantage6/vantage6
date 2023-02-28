@@ -2,25 +2,33 @@
 to be cleaned at some point. """
 import logging
 import os
+import pickle
+import docker.errors
+import json
 
 from typing import Dict, List, Union
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
-    remove_container_if_exists, remove_container
+    remove_container_if_exists, remove_container, pull_if_newer,
+    running_in_docker
 )
-from vantage6.node.util import logger_name
+from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.common.task_status import TaskStatus
+from vantage6.node.util import logger_name, get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
-from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.common.docker.addons import pull_if_newer, running_in_docker
+from vantage6.node.docker.exceptions import (
+    UnknownAlgorithmStartFail,
+    PermanentAlgorithmStartFail
+)
 
 
 class DockerTaskManager(DockerBaseManager):
     """
-    Manager for running a Vantage6 algorithm container within docker.
+    Manager for running a vantage6 algorithm container within docker.
 
     Ensures that the environment is properly set up (docker volumes,
     directories, environment variables, etc). Then runs the algorithm as a
@@ -30,7 +38,7 @@ class DockerTaskManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, tasks_dir: Path,
+                 result_id: int, task_info: Dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: Union[str, None] = None):
@@ -47,6 +55,8 @@ class DockerTaskManager(DockerBaseManager):
             Name of the node, to track running algorithms
         result_id: int
             Server result identifier
+        task_info: Dict
+            Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
         isolated_network_mgr: NetworkManager
@@ -62,6 +72,8 @@ class DockerTaskManager(DockerBaseManager):
         self.image = image
         self.__vpn_manager = vpn_manager
         self.result_id = result_id
+        self.task_id = task_info['id']
+        self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
         self.databases = databases
         self.data_volume_name = docker_volume_name
@@ -71,6 +83,7 @@ class DockerTaskManager(DockerBaseManager):
 
         self.container = None
         self.status_code = None
+        self.docker_input = None
 
         self.labels = {
             f"{APPNAME}-type": "algorithm",
@@ -84,6 +97,9 @@ class DockerTaskManager(DockerBaseManager):
         #   in some way.
         self.tmp_folder = "/mnt/tmp"
         self.data_folder = "/mnt/data"
+
+        # keep track of the task status
+        self.status: TaskStatus = TaskStatus.INITIALIZING
 
     def is_finished(self) -> bool:
         """
@@ -115,6 +131,9 @@ class DockerTaskManager(DockerBaseManager):
             self.log.error(f"Received non-zero exitcode: {self.status_code}")
             self.log.error(f"  Container id: {self.container.id}")
             self.log.info(logs)
+            self.status = TaskStatus.CRASHED
+        else:
+            self.status = TaskStatus.COMPLETED
         return logs
 
     def get_results(self) -> bytes:
@@ -136,9 +155,16 @@ class DockerTaskManager(DockerBaseManager):
             self.log.info(f"Retrieving latest image: '{self.image}'")
             pull_if_newer(self.docker, self.image, self.log)
 
+        except docker.errors.APIError as e:
+            self.log.debug('Failed to pull image: could not find image')
+            self.log.exception(e)
+            self.status = TaskStatus.NO_DOCKER_IMAGE
+            raise PermanentAlgorithmStartFail
         except Exception as e:
             self.log.debug('Failed to pull image')
-            self.log.error(e)
+            self.log.exception(e)
+            self.status = TaskStatus.FAILED
+            raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
             algorithm_env: Dict, database: str) -> List[Dict]:
@@ -169,9 +195,8 @@ class DockerTaskManager(DockerBaseManager):
         self._make_task_folders()
 
         # prepare volumes
-        self.volumes = self._prepare_volumes(
-            docker_input, tmp_vol_name, token
-        )
+        self.docker_input = docker_input
+        self.volumes = self._prepare_volumes(tmp_vol_name, token)
         self.log.debug(f"volumes: {self.volumes}")
 
         # setup environment variables
@@ -236,9 +261,21 @@ class DockerTaskManager(DockerBaseManager):
                 algo_image_name=self.image
             )
 
+        # try reading docker input
+        deserialized_input = None
+        if self.docker_input:
+            try:
+                deserialized_input = pickle.loads(self.docker_input)
+            except Exception:
+                pass
+
         # attempt to run the image
         try:
-            self.log.info(f"Run docker image={self.image}")
+            if deserialized_input:
+                self.log.info(f"Run docker image {self.image} with input "
+                              f"{self._printable_input(deserialized_input)}")
+            else:
+                self.log.info(f"Run docker image {self.image}")
             self.container = self.docker.containers.run(
                 self.image,
                 detach=True,
@@ -248,12 +285,32 @@ class DockerTaskManager(DockerBaseManager):
                 name=container_name,
                 labels=self.labels
             )
-        except Exception as e:
-            self.log.error('Could not run docker image!?')
-            self.log.error(e)
-            return None
 
+        except Exception as e:
+            self.status = TaskStatus.START_FAILED
+            raise UnknownAlgorithmStartFail(e)
+
+        self.status = TaskStatus.ACTIVE
         return vpn_ports
+
+    @staticmethod
+    def _printable_input(input_: str) -> str:
+        """
+        Return a version of the input with limited number of characters
+
+        Parameters
+        ----------
+        input: str
+            Input of a task
+
+        Returns
+        -------
+        str
+            Input with limited number of characters, to be printed to logs
+        """
+        if len(input_) > 550:
+            return f'{input_[:500]}... ({len(input_)-500} characters omitted)'
+        return input_
 
     def _make_task_folders(self) -> None:
         """ Generate task folders """
@@ -276,15 +333,12 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, docker_input: bytes, tmp_vol_name: str,
-                         token: str) -> Dict:
+    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> Dict:
         """
         Generate docker volumes required to run the algorithm
 
         Parameters
         ----------
-        docker_input: bytes
-            Input that can be read by docker container
         tmp_vol_name: str
             Name of temporary docker volume assigned to the algorithm
         token: str
@@ -295,13 +349,13 @@ class DockerTaskManager(DockerBaseManager):
         Dict:
             Volumes to support running the algorithm
         """
-        if isinstance(docker_input, str):
-            docker_input = docker_input.encode('utf8')
+        if isinstance(self.docker_input, str):
+            self.docker_input = self.docker_input.encode('utf8')
 
         # Create I/O files & token for the algorithm container
         self.log.debug("prepare IO files in docker volume")
         io_files = [
-            ('input', docker_input),
+            ('input', self.docker_input),
             ('output', b''),
             ('token', token.encode("ascii")),
         ]
@@ -365,16 +419,20 @@ class DockerTaskManager(DockerBaseManager):
         }
 
         # Only prepend the data_folder is it is a file-based database
-        # This allows algorithms to access multiple data-sources at the
+        # This allows algorithms to access multiple data sources at the
         # same time
+        db_labels = []
         for label in self.databases:
             db = self.databases[label]
             var_name = f'{label.upper()}_DATABASE_URI'
             environment_variables[var_name] = \
                 f"{self.data_folder}/{os.path.basename(db['uri'])}" \
                 if db['is_file'] else db['uri']
+            db_labels.append(label)
+        environment_variables['DB_LABELS'] = json.dumps(db_labels)
 
         # Support legacy algorithms
+        # TODO remove in v4+
         try:
             environment_variables["DATABASE_URI"] = (
                 f"{self.data_folder}/"
