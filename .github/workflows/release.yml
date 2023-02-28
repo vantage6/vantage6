@@ -50,10 +50,8 @@ jobs:
          echo $branch
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
-      - name: Checkout correct branch
+      - name: Checkout branch on which tag was pushed
         uses: actions/checkout@v3
-        # env:
-        #   branch: ${{ steps.branchname.outputs.branch }}
         with:
           fetch-depth: 0
           ref: ${{ env.branch }}
@@ -84,7 +82,7 @@ jobs:
           git config --local user.email github-actions@github.com
           git add *
           git commit -m "Updated the version to ${version}"
-          git push
+          git push origin HEAD:${{ env.branch }}
 
     outputs:
       version: ${{ steps.split.outputs.version }}
