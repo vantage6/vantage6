@@ -36,10 +36,20 @@ jobs:
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
+      - name: Get branch on which the tag is based
+        id: branchname
+        run: |
+         raw=$(git branch -r --contains ${{ github.ref }})
+         branch=${raw/origin\/}
+         echo "branch=${branch}" >> $GITHUB_OUTPUT
+
       - name: Checkout
         uses: actions/checkout@v3
+        env:
+          branch: ${{ steps.branchname.outputs.branch }}
         with:
           fetch-depth: 0
+          ref: $branch
           token: ${{ secrets.COMMIT_PAT }}
 
       - name: Update version in packages
@@ -87,6 +97,10 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
     steps:
     - uses: actions/checkout@v3
+      env:
+        branch: ${{ steps.branchname.outputs.branch }}
+      with:
+        ref: $branch
 
     - name: Create a Release
       uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
@@ -113,6 +127,10 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        env:
+          branch: ${{ steps.branchname.outputs.branch }}
+        with:
+          ref: $branch
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -147,6 +165,10 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        env:
+          branch: ${{ steps.branchname.outputs.branch }}
+        with:
+          ref: $branch
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -186,6 +208,11 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        env:
+          branch: ${{ steps.branchname.outputs.branch }}
+        with:
+          ref: $branch
+
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -261,6 +288,10 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        env:
+          branch: ${{ steps.branchname.outputs.branch }}
+        with:
+          ref: $branch
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -299,6 +330,10 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        env:
+          branch: ${{ steps.branchname.outputs.branch }}
+        with:
+          ref: $branch
 
       - name: Install dependencies
         run: |
