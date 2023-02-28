@@ -44,7 +44,7 @@ setup(
         'flask-marshmallow==0.14.0',
         'Flask-SocketIO==5.3.2',
         'gevent==22.10.2',
-        'iPython==8.9.0',
+        'ipython==8.10.0',
         'jinja2==3.1.2',
         'marshmallow==2.16.3',
         'marshmallow-sqlalchemy==0.15.0',
