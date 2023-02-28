@@ -1,6 +1,6 @@
 application: {}
   # you may also add your configuration here and leave environments empty
-  ...
+
 environments:
   # name of the environment (should be 'test', 'prod', 'acc' or 'dev')
   test:
@@ -84,6 +84,11 @@ environments:
     # set how long reset token provided via email are valid (default 1 hour)
     email_token_validity_minutes: 60
 
+    # set how long tokens and refresh tokens are valid (default 6 and 48
+    # hours, respectively)
+    token_expires_hours: 6
+    refresh_token_expires_hours: 48
+
     # If algorithm containers need direct communication between each other
     # the server also requires a VPN server. (!) This must be a EduVPN
     # instance as vantage6 makes use of their API (!)
@@ -102,5 +107,6 @@ environments:
         portal_username: your_eduvpn_portal_user_name
         portal_userpass: your_eduvpn_portal_user_password
 
-  prod:
-    ...
+  prod: {}
+  acc: {}
+  dev: {}

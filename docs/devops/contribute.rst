@@ -114,6 +114,7 @@ From the same page you should request a CVE number so we can alert dependent
 software projects. Github will review the request. We are not sure what this
 entails, but so far they approved all advisories.
 
+.. _community-meetings:
 
 Community Meetings
 ------------------
@@ -168,7 +169,7 @@ Setup your environment
 
   ::
 
-    conda create -n vantage6 python=3.7
+    conda create -n vantage6 python=3.10
     conda activate vantage6
 
   It is also possible to use ``virtualenv`` if you do not have a conda

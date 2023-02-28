@@ -1,4 +1,4 @@
-FROM python:3.7-slim-buster
+FROM python:3.10-slim-buster
 
 # we need to copy the readme for the setup.py from the vantage6-client
 # as it uses the top-level readme.

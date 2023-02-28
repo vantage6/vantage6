@@ -333,14 +333,25 @@ class VPNManager(DockerBaseManager):
         for port in ports:
             port['port'] = vpn_client_port_options.pop()
 
+        vpn_ip = self.get_vpn_ip()
+
         # Set up forwarding VPN traffic to algorithm container
         command = 'sh -c "'
         for port in ports:
+            # Rule for directing external vpn traffic to algorithms
             command += (
                 'iptables -t nat -A PREROUTING -i tun0 -p tcp '
                 f'--dport {port["port"]} -j DNAT '
                 f'--to {algo_ip}:{port["algo_port"]};'
             )
+
+            # Rule for directing internal vpn traffic to algorithms
+            command += (
+                f'iptables -t nat -A PREROUTING -d {vpn_ip}/32 -p tcp '
+                f'--dport {port["port"]} -j DNAT '
+                f'--to {algo_ip}:{port["algo_port"]};'
+            )
+
             # remove the algorithm ports from the dictionaries as these are no
             # longer necessary
             del port['algo_port']

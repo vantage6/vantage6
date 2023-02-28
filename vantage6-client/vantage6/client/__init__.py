@@ -366,7 +366,10 @@ class ClientBase(object):
             raise Exception("Authentication Error!")
 
         self._access_token = response.json()["access_token"]
+        self.__refresh_token = response.json()["refresh_token"]
 
+    # TODO BvB 23-01-23 remove this method in v4+. It is only here for
+    # backwards compatibility
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_='', description='',
                   organization_ids: list = None,
@@ -436,6 +439,8 @@ class ClientBase(object):
             'database': database
         })
 
+    # TODO BvB 23-01-23 remove this method in v4+ (or make it private?). It is
+    # only here for backwards compatibility.
     def get_results(self, id: int = None, state: str = None,
                     include_task: bool = False, task_id: int = None,
                     node_id: int = None, params: dict = {}) -> dict:
@@ -2044,6 +2049,8 @@ class UserClient(ClientBase):
             return self.parent.request('rule', params=params)
 
 
+# TODO remove in v4+ (deprecated for AlgorithmClient but still kept for
+# backwards compatibility)
 class ContainerClient(ClientBase):
     """ Container interface to the local proxy server (central server).
 
