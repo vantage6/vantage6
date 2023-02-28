@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy import Column, String, ForeignKey, Integer, sql
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -8,15 +9,15 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Task(Base):
-    """Central definition of a single task.
+    """
+    Table that describes all tasks.
 
-    A task can assigned in the Result for multiple organizations. The input
+    A task can contain multiple Results for multiple organizations. The input
     of the task is different for each organization (due to the encryption).
     Therefore the input for the task is encrypted for each organization
     separately. The task originates from an organization to which the results
     need to be encrypted, therefore the originating organization is also logged
     """
-
     # fields
     name = Column(String)
     description = Column(String)
@@ -40,17 +41,27 @@ class Task(Base):
     # TODO remove this property in v4. It is superseded by status but now left
     # here for backwards compatibility with other v3 versions
     @hybrid_property
-    def complete(self):
+    def complete(self) -> bool:
+        """
+        Determine if a task is complete, i.e. whether all underlying results
+        are complete.
+
+        Returns
+        -------
+        bool
+            True if task is complete, False otherwise
+        """
         return all([r.complete for r in self.results])
 
     @hybrid_property
     def status(self) -> str:
         """
-        Determine the status of a task by
+        Returns the status of a task, which is derived from the statuses of
+        the underlying algorithm runs.
 
         Returns
         -------
-        str:
+        str
             Status of task
         """
         # TODO what if there are no result ids? -> currently returns unknown
@@ -70,14 +81,35 @@ class Task(Base):
         else:
             return TaskStatus.COMPLETED.value
 
-    def results_for_node(self, node):
+    def results_for_node(self, node: Node) -> List:
+        """
+        Get all results for a given node.
+
+        Parameters
+        ----------
+        node: model.node.Node
+            Node for which to get the results
+
+        Returns
+        -------
+        List[model.result.Result]
+            List of results for the given node
+        """
         assert isinstance(node, Node), "Should be a node..."
         return [result for result in self.results if
                 self.collaboration == node.collaboration and
                 self.organization == node.organization]
 
     @classmethod
-    def next_run_id(cls):
+    def next_run_id(cls) -> int:
+        """
+        Get the next available run id for a new task.
+
+        Returns
+        -------
+        int
+            Next available run id
+        """
         session = DatabaseSessionManager.get_session()
         max_run_id = session.query(sql.func.max(cls.run_id)).scalar()
         session.commit()
@@ -86,7 +118,15 @@ class Task(Base):
         else:
             return 1
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        String representation of the Task object
+
+        Returns
+        -------
+        str
+            String representation of the Task object
+        """
         return (
             f"<Task "
             f"{self.id}: '{self.name}', "

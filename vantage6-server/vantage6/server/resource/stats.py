@@ -34,7 +34,7 @@
 #     """Resource for /api/stats"""
 
 #     # stats_schema = StatsSchema()
-#     @only_for(["user", "node"])
+#     @only_for(("user", "node"))
 #     def get(self, id=None):
 #         schema = CollaborationSchemaSimple(many=True)
 

@@ -3,6 +3,7 @@ import logging
 import json
 
 from flask import g, request, url_for
+from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
 
@@ -28,7 +29,19 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the task resource.
+
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -58,7 +71,15 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW,
@@ -99,7 +120,7 @@ class TaskBase(ServicesResources):
 
 class Tasks(TaskBase):
 
-    @only_for(['user', 'node', 'container'])
+    @only_for(("user", "node", "container"))
     def get(self):
         """List tasks
         ---
@@ -259,7 +280,7 @@ class Tasks(TaskBase):
 
         return self.response(page, schema)
 
-    @only_for(["user", "container"])
+    @only_for(("user", "container"))
     def post(self):
         """Adds new computation task
         ---
@@ -554,7 +575,7 @@ class Tasks(TaskBase):
 class Task(TaskBase):
     """Resource for /api/task"""
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"))
     def get(self, id):
         """Get task
         ---
