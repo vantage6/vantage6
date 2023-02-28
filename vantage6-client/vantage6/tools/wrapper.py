@@ -6,11 +6,12 @@ different data adapters to the algorithms. This way we ony need to write the
 algorithm once and can use it with different data adapters.
 
 Currently the following wrappers are available:
-    - ``DockerWrapper``
+    - ``DockerWrapper`` (= ``CSVWrapper``)
     - ``SparqlDockerWrapper``
     - ``ParquetWrapper``
     - ``SQLWrapper``
     - ``OMOPWrapper``
+    - ``ExcelWrapper``
 
 When writing the Docker file for the algorithm, you can call the
 `auto_wrapper` which will automatically select the correct wrapper based on
@@ -166,7 +167,7 @@ def multidb_wrapper(module: str, use_new_client: bool = False) -> None:
 class WrapperBase(ABC):
 
     def wrap_algorithm(self, module: str, load_data: bool = True,
-                       use_new_client:bool = False) -> None:
+                       use_new_client: bool = False) -> None:
         """
         Wrap an algorithm module to provide input and output handling for the
         vantage6 infrastructure.
@@ -398,7 +399,7 @@ def _read_formatted(file: BinaryIO) -> Any:
     return deserialization.deserialize(file, data_format)
 
 
-def _read_data_format(file: BinaryIO) -> Generator[str, None, None]:
+def _read_data_format(file: BinaryIO) -> Generator:
     """
     Try to read the prescribed data format. The data format should be specified
     as follows: DATA_FORMAT.ACTUAL_BYTES. This function will attempt to read
@@ -412,7 +413,7 @@ def _read_data_format(file: BinaryIO) -> Generator[str, None, None]:
 
     Yields
     ------
-    Generator[str, None, None]
+    Generator
         The data format as a string
 
     Raises
