@@ -50,10 +50,6 @@ jobs:
          echo $branch
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
-      - env:
-          branch: ${{ steps.branchname.outputs.branch }}
-        run: echo ${branch}
-
       - name: Checkout correct branch
         uses: actions/checkout@v3
         env:
