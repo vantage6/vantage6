@@ -1,13 +1,6 @@
-""" Server IO
-
-This module is basically a high level interface to the central server.
-
-The module contains three communication classes: 1) The
-NodeClient provides an interface from the Node to the central
-server, 2) The UserClient provides an interface for users/
-researchers and finally 3) The ContainerClient which provides
-an interface for algorithms to the central server (this is mainly used
-by master containers).
+"""
+This module provides a client interface for the node to communicate with the
+central server.
 """
 import jwt
 import datetime
@@ -25,7 +18,6 @@ class NodeClient(ClientBase):
     """ Node interface to the central server."""
 
     def __init__(self, *args, **kwargs):
-        """ A node is always for a single collaboration."""
         super().__init__(*args, **kwargs)
 
         # self.name = None

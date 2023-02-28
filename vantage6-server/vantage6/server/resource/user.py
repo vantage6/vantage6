@@ -8,7 +8,6 @@ from flask_restful import reqparse
 
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -195,7 +194,7 @@ class Users(UserBase):
         tags: ["User"]
         """
         args = request.args
-        q = DatabaseSessionManager.get_session().query(db.User)
+        q = g.session.query(db.User)
 
         # filter by any field of this endpoint
         for param in ['username', 'firstname', 'lastname', 'email']:
@@ -498,9 +497,6 @@ class User(UserBase):
                     items:
                       type: integer
                     description: Extra rules for the user on top of the roles
-                  organization_id:
-                    type: integer
-                    description: Organization id of the user
 
         parameters:
           - in: path
@@ -544,7 +540,6 @@ class User(UserBase):
         parser.add_argument("firstname", type=str, required=False)
         parser.add_argument("lastname", type=str, required=False)
         parser.add_argument("email", type=str, required=False)
-        parser.add_argument("organization_id", type=int, required=False)
         data = parser.parse_args()
 
         # check if user defined a password, which is deprecated
@@ -665,24 +660,6 @@ class User(UserBase):
                 )}, HTTPStatus.UNAUTHORIZED
 
             user.rules = rules
-
-        if data["organization_id"] and \
-                data["organization_id"] != g.user.organization_id:
-            if not self.r.e_glo.can():
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            else:
-                # check that newly assigned organization exists
-                org = db.Organization.get(data['organization_id'])
-                if not org:
-                    return {'msg': 'Organization does not exist.'}, \
-                        HTTPStatus.NOT_FOUND
-                else:
-                    log.warn(
-                        f'Running as root and assigning (new) '
-                        f'organization_id={data["organization_id"]}'
-                    )
-                    user.organization_id = data["organization_id"]
 
         try:
             user.save()

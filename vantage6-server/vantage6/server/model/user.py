@@ -130,40 +130,46 @@ class User(Authenticatable):
         if has_max_attempts and td_last_login < td_max_blocked:
             minutes_remaining = \
                 (td_max_blocked - td_last_login).seconds // 60 + 1
-            return True, (
-                f"Your account is blocked for the next {minutes_remaining} "
-                "minutes due to failed login attempts. Please wait or "
-                "reactivate your account via email."
-            )
+            return True, minutes_remaining
         else:
             return False, None
 
     @classmethod
     def get_by_username(cls, username):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(username=username).one()
+        result = session.query(cls).filter_by(username=username).one()
+        session.commit()
+        return result
 
     @classmethod
     def get_by_email(cls, email):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(email=email).one()
+        result = session.query(cls).filter_by(email=email).one()
+        session.commit()
+        return result
 
     @classmethod
     def get_user_list(cls, filters=None):
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).all()
+        result = session.query(cls).all()
+        session.commit()
+        return result
 
     @classmethod
     def username_exists(cls, username):
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(cls.username == username))\
+        result = session.query(exists().where(cls.username == username))\
             .scalar()
+        session.commit()
+        return result
 
     @classmethod
     def exists(cls, field, value):
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(getattr(cls, field) == value))\
+        result = session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
+        session.commit()
+        return result
 
     def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
         """
