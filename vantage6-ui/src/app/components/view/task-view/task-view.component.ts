@@ -69,14 +69,9 @@ export class TaskViewComponent
           r.organization = org;
         });
       }
-      // try to decrypt the result
-      try {
-        let decrypted_result = atob(r.result);
-        if (decrypted_result.startsWith('json.')) {
-          r.decrypted_result = decrypted_result.slice(5);
-        }
-      } catch {
-        // ignore: could not read result
+      //decrypt the result
+      if (r.result) {
+        r.decrypted_result = atob(r.result);
       }
     }
   }
