@@ -2,13 +2,12 @@
 """
 Resources below '/<api_base>/token'
 """
-from __future__ import print_function, unicode_literals
-
 import logging
+import datetime as dt
 import pyotp
 
 from typing import Union
-from flask import request, g
+from flask import request, g, render_template
 from flask_jwt_extended import (
     jwt_required,
     create_access_token,
@@ -165,18 +164,66 @@ class UserToken(ServicesResources):
                                "incorrect!"
                     }, HTTPStatus.UNAUTHORIZED
 
-        token = create_access_token(user)
-
-        ret = {
-            'access_token': token,
-            'refresh_token': create_refresh_token(user),
-            'user_url': self.api.url_for(server.resource.user.User,
-                                         id=user.id),
-            'refresh_url': self.api.url_for(RefreshToken),
-        }
+        token = _get_token_dict(user, self.api)
 
         log.info(f"Succesfull login from {username}")
-        return ret, HTTPStatus.OK, {'jwt-token': token}
+        return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
+
+    def user_login(self, username: str, password: str) -> Union[dict, db.User]:
+        """Returns user a message in case of failed login attempt."""
+        log.info(f"Trying to login '{username}'")
+        failed_login_msg = "Failed to login"
+        if db.User.username_exists(username):
+            user = db.User.get_by_username(username)
+            pw_policy = self.config.get('password_policy', {})
+            max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
+            inactivation_time = pw_policy.get('inactivation_minutes', 15)
+
+            is_blocked, min_rem = user.is_blocked(max_failed_attempts,
+                                                  inactivation_time)
+            if is_blocked:
+                self.notify_user_blocked(user, max_failed_attempts, min_rem)
+                return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
+            elif user.check_password(password):
+                user.failed_login_attempts = 0
+                user.save()
+                return user, HTTPStatus.OK
+            else:
+                # update the number of failed login attempts
+                user.failed_login_attempts = 1 \
+                    if (
+                        not user.failed_login_attempts or
+                        user.failed_login_attempts >= max_failed_attempts
+                    ) else user.failed_login_attempts + 1
+                user.last_login_attempt = dt.datetime.now()
+                user.save()
+
+        return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
+
+    def notify_user_blocked(self, user: db.User, max_n_attempts: int,
+                            min_rem: int) -> None:
+        """Sends an email to the user when his or her account is locked"""
+        if not user.email:
+            log.warning(f'User {user.username} is locked, but does not have'
+                        'an email registered. So no message has been sent.')
+
+        log.info(f'User {user.username} is locked')
+
+        template_vars = {'firstname': user.firstname,
+                         'number_of_allowed_attempts': max_n_attempts,
+                         'ip': request.access_route[-1],
+                         'time': dt.datetime.now(dt.timezone.utc),
+                         'time_remaining': min_rem}
+
+        self.mail.send_email(
+            "Your account has been temporary suspended",
+            sender="support@vantage6.ai",
+            recipients=[user.email],
+            text_body=render_template("mail/blocked_account.txt",
+                                      **template_vars),
+            html_body=render_template("mail/blocked_account.html",
+                                      **template_vars)
+        )
 
     @staticmethod
     def validate_2fa_token(user: User, mfa_code: Union[int, str]) -> bool:
@@ -209,7 +256,7 @@ class NodeToken(ServicesResources):
         ---
         description: >-
           Allows node to sign in using a unique API key. If the login is
-          successful this returns a dictionairy with access and refresh tokens
+          successful this returns a dictionary with access and refresh tokens
           for the node as well as a node_url and a refresh_url.
 
         requestBody:
@@ -249,17 +296,10 @@ class NodeToken(ServicesResources):
             return {"msg": "Api key is not recognized!"}, \
                 HTTPStatus.UNAUTHORIZED
 
-        token = create_access_token(node)
-        ret = {
-            'access_token': token,
-            'refresh_token': create_refresh_token(node),
-            'node_url': self.api.url_for(server.resource.node.Node,
-                                         id=node.id),
-            'refresh_url': self.api.url_for(RefreshToken),
-        }
+        token = _get_token_dict(node, self.api)
 
         log.info(f"Succesfull login as node '{node.id}' ({node.name})")
-        return ret, HTTPStatus.OK, {'jwt-token': token}
+        return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
 
 
 class ContainerToken(ServicesResources):
@@ -369,6 +409,30 @@ class RefreshToken(ServicesResources):
         user_or_node_id = get_jwt_identity()
         log.info(f'Refreshing token for user or node "{user_or_node_id}"')
         user_or_node = db.Authenticatable.get(user_or_node_id)
-        ret = {'access_token': create_access_token(user_or_node)}
 
-        return ret, HTTPStatus.OK
+        return _get_token_dict(user_or_node, self.api), HTTPStatus.OK
+
+
+def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
+    """
+    Create a dictionary with the tokens and urls for the user or node.
+
+    Parameters
+    ----------
+    user_or_node : db.Authenticatable
+        The user or node to create the tokens for.
+    api : Api
+        The api to create the urls for.
+    """
+    token_dict = {
+        'access_token': create_access_token(user_or_node),
+        'refresh_token': create_refresh_token(user_or_node),
+        'refresh_url': api.url_for(RefreshToken),
+    }
+    if isinstance(user_or_node, db.User):
+        token_dict['user_url'] = api.url_for(server.resource.user.User,
+                                             id=user_or_node.id)
+    else:
+        token_dict['node_url'] = api.url_for(server.resource.node.Node,
+                                             id=user_or_node.id)
+    return token_dict

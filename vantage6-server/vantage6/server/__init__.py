@@ -44,13 +44,15 @@ from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
-    JWT_ACCESS_TOKEN_EXPIRES,
+    ACCESS_TOKEN_EXPIRES_HOURS,
     JWT_TEST_ACCESS_TOKEN_EXPIRES,
     RESOURCES,
     SUPER_USER_INFO,
-    REFRESH_TOKENS_EXPIRE,
+    REFRESH_TOKENS_EXPIRE_HOURS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    MAX_RESPONSE_TIME_PING
+    MAX_RESPONSE_TIME_PING,
+    MIN_TOKEN_VALIDITY_SECONDS,
+    MIN_REFRESH_TOKEN_EXPIRY_DELTA,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
@@ -121,8 +123,7 @@ class ServerApp:
         # set up socket ping/pong
         log.debug(
             "Starting thread for socket ping/pong between server and nodes")
-        t = Thread(target=self.__socket_pingpong_worker, daemon=True)
-        t.start()
+        self.socketio.start_background_task(self.__socket_pingpong_worker)
 
         log.info("Initialization done")
 
@@ -161,7 +162,7 @@ class ServerApp:
 
     @staticmethod
     def configure_logging():
-        """Set log levels of third party loggers."""
+        """Set third party loggers to a warning level"""
 
         # Prevent logging from urllib3
         logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -181,9 +182,6 @@ class ServerApp:
         # patch where to obtain token
         self.app.config['JWT_AUTH_URL_RULE'] = '/api/token'
 
-        # False means refresh tokens never expire
-        self.app.config['JWT_REFRESH_TOKEN_EXPIRES'] = REFRESH_TOKENS_EXPIRE
-
         # If no secret is set in the config file, one is generated. This
         # implies that all (even refresh) tokens will be invalidated on restart
         self.app.config['JWT_SECRET_KEY'] = self.ctx.config.get(
@@ -192,7 +190,20 @@ class ServerApp:
         )
 
         # Default expiration time
-        self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
+        token_expiry_seconds = self._get_jwt_expiration_seconds(
+            config_key='token_expires_hours',
+            default_hours=ACCESS_TOKEN_EXPIRES_HOURS
+        )
+        self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = token_expiry_seconds
+
+        # Set refresh token expiration time
+        self.app.config['JWT_REFRESH_TOKEN_EXPIRES'] = \
+                self._get_jwt_expiration_seconds(
+            config_key='refresh_token_expires_hours',
+            default_hours=REFRESH_TOKENS_EXPIRE_HOURS,
+            longer_than=token_expiry_seconds + MIN_REFRESH_TOKEN_EXPIRY_DELTA,
+            is_refresh=True
+        )
 
         # Set an extra long expiration time on access tokens for testing
         # TODO: this does not seem needed...
@@ -299,6 +310,64 @@ class ServerApp:
         def static_from_root():
             return send_from_directory(self.app.static_folder,
                                        request.path[1:])
+
+
+    def _get_jwt_expiration_seconds(
+        self, config_key: str, default_hours: int,
+        longer_than: int = MIN_TOKEN_VALIDITY_SECONDS,
+        is_refresh: bool = False
+    ) -> int:
+        """
+        Return the expiration time for JWT tokens.
+
+        This time may be specified in the config file. If it is not, the
+        default value is returned.
+
+        Parameters
+        ----------
+        config_key: str
+            The config key to look for that sets the expiration time
+        default_hours: int
+            The default expiration time in hours
+        longer_than: int
+            The minimum expiration time in hours.
+        is_refresh: bool
+            If True, the expiration time is for a refresh token. If False, it
+            is for an access token.
+
+        Returns
+        -------
+        int:
+            The JWT token expiration time in seconds
+        """
+        hours_expire = self.ctx.config.get(config_key)
+        if hours_expire is None:
+            # No value is present in the config file, use default
+            refresh_expire = int(float(default_hours) * 3600)
+        elif isinstance(hours_expire, (int, float)) or \
+                hours_expire.is_numeric():
+            # Numeric value is present in the config file
+            refresh_expire = int(float(hours_expire) * 3600)
+            if refresh_expire < longer_than:
+                log.warning(
+                    f"Invalid value for '{config_key}': {hours_expire}. Tokens"
+                    f" must be valid for at least {longer_than} seconds. Using"
+                    f" default value: {REFRESH_TOKENS_EXPIRE_HOURS} hours")
+                if is_refresh:
+                    log.warning("Note that refresh tokens should be valid at "
+                                f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
+                                "seconds longer than access tokens.")
+                refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+        else:
+            # Non-numeric value is present in the config file. Warn and use
+            # default
+            log.warning("Invalid value for 'refresh_token_expires_hours':"
+                        f" {hours_expire}. Using default value: "
+                        f"{REFRESH_TOKENS_EXPIRE_HOURS} hours")
+            refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+
+        return refresh_expire
+
 
     def configure_api(self):
         """Define global API output and its structure."""
@@ -502,7 +571,7 @@ class ServerApp:
         while True:
             # Send ping event
             try:
-                self.__pong_node_ids = []
+                ping_time = dt.datetime.utcnow()
                 self.socketio.emit(
                     'ping', namespace='/tasks', room='all_nodes',
                     callback=self.__pong_response
@@ -515,7 +584,7 @@ class ServerApp:
                 # Otherwise set them to offline.
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
-                    if node.id not in self.__pong_node_ids:
+                    if node.last_seen < ping_time:
                         node.status = 'offline'
                         node.save()
 
@@ -532,7 +601,6 @@ class ServerApp:
         node.status = 'online'
         node.last_seen = dt.datetime.utcnow()
         node.save()
-        self.__pong_node_ids.append(node_id)
 
 
 def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
