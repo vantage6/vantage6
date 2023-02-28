@@ -352,7 +352,6 @@ class DefaultSocketNamespace(Namespace):
             )
 
     @staticmethod
-<<<<<<< HEAD
     def __clean_node_data(node: db.Node) -> None:
         """
         Remove any information from the database that the node shared about
@@ -365,8 +364,7 @@ class DefaultSocketNamespace(Namespace):
         """
         for conf in node.config:
             conf.delete()
-=======
+
     def __cleanup() -> None:
         """ Cleanup database connections """
         DatabaseSessionManager.clear_session()
->>>>>>> main
