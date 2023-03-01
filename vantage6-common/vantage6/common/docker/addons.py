@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import re
 import docker
@@ -11,7 +12,6 @@ from dateutil.parser import parse
 from docker.client import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
-from typing import Dict, Union
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
@@ -26,16 +26,19 @@ class ContainerKillListener:
     """Listen for signals that the docker container should be shut down """
     kill_now = False
 
-    def __init__(self):
+    def __init__(self) -> None:
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-    def exit_gracefully(self, *args):
+    def exit_gracefully(self, *args) -> None:
+        """Set kill_now to True. This will trigger the container to stop"""
         self.kill_now = True
 
 
-def check_docker_running():
-    """Return True if docker engine is running"""
+def check_docker_running() -> None:
+    """
+    Check if docker engine is running. If not, exit the program.
+    """
     try:
         docker_client.ping()
     except Exception as e:
@@ -47,12 +50,21 @@ def check_docker_running():
 
 
 def running_in_docker() -> bool:
-    """Return True if this code is executed within a Docker container."""
+    """
+    Check if this code is executed within a Docker container.
+
+    Returns
+    -------
+    bool
+        True if the code is executed within a Docker container, False otherwise
+    """
     return pathlib.Path('/.dockerenv').exists()
 
 
-def registry_basic_auth_header(docker_client, registry):
-    """Obtain credentials for registry
+def registry_basic_auth_header(
+        docker_client: DockerClient, registry: str) -> dict[str, str]:
+    """
+    Obtain credentials for registry
 
     This is a wrapper around docker-py to obtain the credentials used
     to access a registry. Normally communication to the registry goes
@@ -64,8 +76,10 @@ def registry_basic_auth_header(docker_client, registry):
 
     Parameters
     ----------
+    docker_client: DockerClient
+        Docker client
     registry : str
-        registry name (e.g. harbor.vantage6.ai)
+        registry name (e.g. harbor2.vantage6.ai)
 
     Returns
     -------
@@ -99,25 +113,27 @@ def registry_basic_auth_header(docker_client, registry):
     return {'authorization': f'Basic {b64_basic_auth}'}
 
 
-def inspect_remote_image_timestamp(docker_client, image: str, log=ClickLogger):
+def inspect_remote_image_timestamp(
+    docker_client: DockerClient, image: str,
+    log: logging.Logger | ClickLogger = ClickLogger
+) -> datetime | None:
     """
     Obtain creation timestamp object from remote image.
 
     Parameters
     ----------
-    reg : str
-        registry where the image is hosted
-    rep : str
-        repository in the registry
-    img : str
-        image name
-    tag : str, optional
-        image tag to be used, by default "latest"
+    docker_client: DockerClient
+        Docker client
+    image: str
+        Image name
+    log: logging.Logger | ClickLogger
+        Logger
 
     Returns
     -------
-    datetime
-        timestamp object containing the creation date and time of the image
+    datetime | None
+        Timestamp containing the creation date and time of the image, or None
+        if the remote image could not be found.
     """
     # check if a tag has been profided
 
@@ -177,25 +193,27 @@ def inspect_remote_image_timestamp(docker_client, image: str, log=ClickLogger):
     return timestamp
 
 
-def inspect_local_image_timestamp(docker_client, image: str, log=ClickLogger):
+def inspect_local_image_timestamp(
+    docker_client: DockerClient, image: str,
+    log: logging.Logger | ClickLogger = ClickLogger
+) -> datetime | None:
     """
     Obtain creation timestamp object from local image.
 
     Parameters
     ----------
-    reg : str
-        registry where the image is hosted
-    rep : str
-        repository in the registry
-    img : str
-        image name
-    tag : str, optional
-        image tag to be used, by default "latest"
+    docker_client: DockerClient
+        Docker client
+    image: str
+        Image name
+    log: logging.Logger | ClickLogger
+        Logger
 
     Returns
     -------
-    datetime
-        timestamp object containing the creation date and time of the image
+    datetime | None
+        Timestamp containing the creation date and time of the local image. If
+        the image does not exist, None is returned.
     """
     # p = re.split(r"[/:]", image)
     # if len(p) == 4:
@@ -215,8 +233,10 @@ def inspect_local_image_timestamp(docker_client, image: str, log=ClickLogger):
     return timestamp
 
 
-def pull_if_newer(docker_client: DockerClient, image: str,
-                  log: Union[logging.Logger, ClickLogger] = ClickLogger):
+def pull_if_newer(
+    docker_client: DockerClient, image: str,
+    log: logging.Logger | ClickLogger = ClickLogger
+) -> None:
     """
     Docker pull only if the remote image is newer.
 
@@ -228,6 +248,11 @@ def pull_if_newer(docker_client: DockerClient, image: str,
         Image to be pulled
     log: logger.Logger or ClickLogger
         Logger class
+
+    Raises
+    ------
+    docker.errors.APIError
+        If the image cannot be pulled
     """
     local_ = inspect_local_image_timestamp(docker_client, image, log=log)
     remote_ = inspect_remote_image_timestamp(docker_client, image, log=log)
@@ -305,7 +330,7 @@ def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
         remove_container(container, kill=True)
 
 
-def remove_container(container: Container, kill=False) -> None:
+def remove_container(container: Container, kill: bool = False) -> None:
     """
     Removes a docker container
 
@@ -382,7 +407,7 @@ def delete_network(network: Network, kill_containers: bool = True) -> None:
         log.warn(f"Could not delete existing network {network.name}")
 
 
-def get_networks_of_container(container: Container) -> Dict:
+def get_networks_of_container(container: Container) -> dict:
     """
     Get list of networks the container is in
 
@@ -430,7 +455,7 @@ def get_num_nonempty_networks(container: Container) -> int:
     return count_non_empty_networks
 
 
-def get_server_config_name(container_name: str, scope: str):
+def get_server_config_name(container_name: str, scope: str) -> str:
     """
     Get the configuration name of a server from its docker container name
 

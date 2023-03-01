@@ -1,7 +1,6 @@
 import docker
 import logging
 
-from typing import List, Union
 from docker.models.containers import Container
 
 from vantage6.common.docker.addons import delete_network
@@ -12,6 +11,16 @@ from vantage6.common import logger_name
 def remove_subnet_mask(ip: str) -> str:
     """
     Remove the subnet mask of an ip address, e.g. 172.1.0.0/16 -> 172.1.0.0
+
+    Parameters
+    ----------
+    ip: str
+        IP subnet, potentially including a mask
+
+    Returns
+    -------
+    str
+        IP subnet address without the subnet mask
     """
     return ip[0:ip.find('/')]
 
@@ -113,8 +122,8 @@ class NetworkManager(object):
         self.network.reload()
         return container in self.network.containers
 
-    def connect(self, container_name: str, aliases: List[str] = [],
-                ipv4: Union[str, None] = None) -> None:
+    def connect(self, container_name: str, aliases: list[str] = [],
+                ipv4: str | None = None) -> None:
         """
         Connect a container to the network.
 
@@ -122,9 +131,9 @@ class NetworkManager(object):
         ----------
         container_name: str
             Name of the container that should be connected to the network
-        aliases: List[str]
+        aliases: list[str]
             A list of aliases for the container in the network
-        ipv4: str
+        ipv4: str | None
             An IP address to assign to the container in the network
         """
         self.log.debug(
@@ -133,7 +142,7 @@ class NetworkManager(object):
             container_name, aliases=aliases, ipv4_address=ipv4
         )
 
-    def disconnect(self, container_name: str):
+    def disconnect(self, container_name: str) -> None:
         """
         Disconnect a container from the network.
 
