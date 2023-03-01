@@ -45,10 +45,7 @@ jobs:
         id: branchname
         run: |
          raw=$(git branch -r --contains ${{ github.ref }})
-         echo $raw
          branch=${raw##*/}
-         echo $branch
-         # TODO propagate this variable to other steps later in this job
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
@@ -153,7 +150,7 @@ jobs:
   infrastructure-images:
     name: Build infrastructure images
     runs-on: ubuntu-latest
-    needs: version
+    needs: [version, support-images]
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
