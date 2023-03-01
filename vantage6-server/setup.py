@@ -44,7 +44,7 @@ setup(
         'flask-marshmallow==0.14.0',
         'Flask-SocketIO==5.3.2',
         'gevent==22.10.2',
-        'iPython==8.9.0',
+        'ipython==8.10.0',
         'jinja2==3.1.2',
         'marshmallow==2.16.3',
         'marshmallow-sqlalchemy==0.15.0',
@@ -54,13 +54,13 @@ setup(
         'requests-oauthlib==1.3.1',
         'schema==0.7.5',
         'SQLAlchemy==1.4.46',
-        'Werkzeug==2.2.2',
+        'Werkzeug==2.2.3',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}'
     ],
     extras_require={
         'dev': [
-            'coverage==4.5.4'
+            'coverage==6.4.4'
         ]
     },
     package_data={

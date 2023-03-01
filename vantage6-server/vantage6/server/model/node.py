@@ -1,14 +1,30 @@
+from __future__ import annotations
 import bcrypt
 
 from vantage6.server.model.base import DatabaseSessionManager
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy import Column, Integer, String, ForeignKey
 
-from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.authenticatable import Authenticatable
 
 
 class Node(Authenticatable):
-    """Application that executes Tasks."""
+    """
+    Table that contains all registered nodes.
+
+    Attributes
+    ----------
+    id : int
+        Primary key
+    name : str
+        Name of the node
+    api_key : str
+        API key of the node
+    collaboration : :class:`~.model.collaboration.Collaboration`
+        Collaboration that the node belongs to
+    organization : :class:`~.model.organization.Organization`
+        Organization that the node belongs to
+    """
     _hidden_attributes = ['api_key']
 
     id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
@@ -30,20 +46,58 @@ class Node(Authenticatable):
     }
 
     @validates("api_key")
-    def _validate_api_key(self, key, api_key):
+    def _validate_api_key(self, key: str, api_key: str) -> str:
+        """
+        Hashes the api_key before storing it in the database.
+
+        Parameters
+        ----------
+        key : str
+            The name of the attribute that is being validated
+        api_key : str
+            The value of the attribute that is being validated
+
+        Returns
+        -------
+        str
+            The hashed api_key
+        """
         return self.hash(api_key)
 
-    def check_key(self, key):
+    def check_key(self, key: str) -> bool:
+        """
+        Checks if the provided key matches the stored key.
+
+        Parameters
+        ----------
+        key : str
+            The key to check
+
+        Returns
+        -------
+        bool
+            True if the provided key matches the stored key, False otherwise
+        """
         if self.api_key is not None:
             expected_hash = self.api_key.encode('utf8')
             return bcrypt.checkpw(key.encode('utf8'), expected_hash)
         return False
 
     @classmethod
-    def get_by_api_key(cls, api_key):
-        """returns Node based on the provided API key.
+    def get_by_api_key(cls, api_key: str) -> Node | None:
+        """
+        Returns Node based on the provided API key.
 
-        Returns None if no Node is associated with api_key.
+        Parameters
+        ----------
+        api_key : str
+            The API key of the node to search for
+
+        Returns
+        -------
+        Node | None
+            Returns the node if a node is associated with api_key, None if no
+            node is associated with api_key.
         """
         session = DatabaseSessionManager.get_session()
 
@@ -57,13 +111,13 @@ class Node(Authenticatable):
         return None
 
     @classmethod
-    def get_online_nodes(cls):
+    def get_online_nodes(cls) -> list[Node]:
         """
         Return nodes that currently have status 'online'
 
         Returns
         -------
-        List[Node]
+        list[Node]
             List of node models that are currently online
         """
         session = DatabaseSessionManager.get_session()
@@ -73,7 +127,23 @@ class Node(Authenticatable):
         return result
 
     @classmethod
-    def exists(cls, organization_id, collaboration_id):
+    def exists(cls, organization_id: int, collaboration_id: int) -> bool:
+        """
+        Check if a node exists for the given organization and collaboration.
+
+        Parameters
+        ----------
+        organization_id : int
+            The id of the organization
+        collaboration_id : int
+            The id of the collaboration
+
+        Returns
+        -------
+        bool
+            True if a node exists for the given organization and collaboration,
+            False otherwise.
+        """
         session = DatabaseSessionManager.get_session()
         result = session.query(cls).filter_by(
             organization_id=organization_id,
@@ -82,7 +152,15 @@ class Node(Authenticatable):
         session.commit()
         return result
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        String representation of the Node model.
+
+        Returns
+        -------
+        str
+            String representation of the Node model
+        """
         return (
             "<Node "
             f"{self.id}: '{self.name}', "

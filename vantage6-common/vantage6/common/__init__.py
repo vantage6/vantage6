@@ -5,6 +5,7 @@ import appdirs
 import ipaddress
 import typing
 
+from typing import Union, List, Dict
 from colorama import init, Fore, Style
 
 from vantage6.common.globals import STRING_ENCODING
@@ -64,8 +65,8 @@ def base64s_to_bytes(bytes_string):
 def echo(msg, level="info"):
     type_ = {
         "error": f"[{Fore.RED}error{Style.RESET_ALL}]",
-        "warn": f"[{Fore.YELLOW}warn{Style.RESET_ALL}]",
-        "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]",
+        "warn": f"[{Fore.YELLOW}warn {Style.RESET_ALL}]",
+        "info": f"[{Fore.GREEN}info {Style.RESET_ALL}]",
         "debug": f"[{Fore.CYAN}debug{Style.RESET_ALL}]",
     }.get(level)
     click.echo(f"{type_:16} - {msg}")
@@ -156,3 +157,53 @@ def is_ip_address(ip: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def get_database_config(databases: List, label: str) -> Union[Dict, None]:
+    """Get database configuration from config file
+
+    Parameters
+    ----------
+    databases: List[Dict]
+        List of database configurations
+    label: str
+        Label of database configuration to retrieve
+
+    Returns
+    -------
+    Union[Dict, None]: database configuration
+
+    Notes
+    -----
+    The ``databases`` configuration can be in two formats. The new format
+    allows for the specification of the database type. The structure of the
+    new format is as follows:
+
+    1. Old format:
+    {
+        "database_label": "database_uri",
+        ...
+    }
+
+    2. New format:
+    [
+        {
+            "label": "database_label",
+            "uri": "database_uri",
+            "db_type": "database_type"
+        }
+    ]
+
+    The old format should be removed in version 4+.
+    """
+    old_format = isinstance(databases, dict)
+    if old_format:
+        return {
+            "label": label,
+            "uri": databases[label],
+            "type": None
+        }
+    else:
+        for database in databases:
+            if database["label"] == label:
+                return database

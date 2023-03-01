@@ -55,9 +55,9 @@ install:
 install-dev:
 	cd vantage6-common && pip install -e .
 	cd vantage6-client && pip install -e .
-	cd vantage6 && pip install -e .
-	cd vantage6-node && pip install -e .
-	cd vantage6-server && pip install -e .
+	cd vantage6 && pip install -e .[dev]
+	cd vantage6-node && pip install -e .[dev]
+	cd vantage6-server && pip install -e .[dev]
 
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"

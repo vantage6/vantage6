@@ -11,19 +11,47 @@ from vantage6.server.model.base import Base
 from vantage6.server.model import (
     Node,
     Collaboration,
-    Task,
     Organization
 )
+from vantage6.server.model.task import Task
 from vantage6.server.model.base import DatabaseSessionManager
 
 log_ = logging.getLogger(logger_name(__name__))
 
 
 class Run(Base):
-    """A Run (of an algorithm) as executed by a Node.
+    """
+    A Run is the description of a Task as executed by a Node.
 
     The input and result fields will be encrypted and can be only read by the
     intended receiver of the message.
+
+    Attributes
+    ----------
+    input : str
+        Input data of the task
+    task_id : int
+        Id of the task that was executed
+    organization_id : int
+        Id of the organization that executed the task
+    result : str
+        Result of the task
+    assigned_at : datetime
+        Time when the task was assigned to the node
+    started_at : datetime
+        Time when the task was started
+    finished_at : datetime
+        Time when the task was finished
+    status : str
+        Status of the task
+    log : str
+        Log of the task
+    task : Task
+        Task that was executed
+    organization : Organization
+        Organization that executed the task
+    ports : list[AlgorithmPort]
+        List of ports that are part of this result
     """
 
     # fields
@@ -43,7 +71,15 @@ class Run(Base):
     ports = relationship("AlgorithmPort", back_populates="run")
 
     @property
-    def node(self):
+    def node(self) -> Node:
+        """
+        Returns the node that is associated with this result.
+
+        Returns
+        -------
+        model.node.Node
+            The node that is associated with this result.
+        """
         session = DatabaseSessionManager.get_session()
         try:
             node = session.query(Node)\
@@ -69,7 +105,15 @@ class Run(Base):
             raise
         return node
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the result.
+
+        Returns
+        -------
+        str
+            String representation of the result.
+        """
         return (
             "<Run "
             f"{self.id}: '{self.task.name}', "

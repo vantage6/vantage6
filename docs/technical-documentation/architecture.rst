@@ -1,62 +1,10 @@
 Architecture
 ============
-*An overview of the vantage6 infrastructure and its components*
 
-Overview
---------
-
-See the :ref:`Introduction on architecture <architectureoverview>` and
-:numref:`architecture-overview` for a high-level overview of the
-infrastructure. In the next sections we first explain the
-`Three Design Principles`_. Then the actors within a privacy preserving
-network are explained in `Network Actors`_. Finally the vantage6 software
-components are explained in `Components`_.
-
-
-.. _architecture-overview:
-
-.. figure:: /images/architecture-overview.png
-   :alt: Architecture overview
-   :align: center
-
-   General diagram of the basic components of vantage6. (A) the client, also
-   called User, Reseacher or Application, (B)
-
-.. todo:: update fig 3 and fig 5 reference
-
-Three Design principles
------------------------
-Before describing the architecture of vantage6, we need to outline a few
-concepts. We define a party as an entity that takes part in one (or more)
-collaborations. We define a collaboration as an agreement between two or more
-parties to participate in a study (i.e., to answer a research question).
-Moreover, there are a three fundamental functional aspects of FL and MPC
-infrastructures that are worth describing (and that are often overlooked8):
-
-**Autonomy**
-  All involved parties should remain independent and autonomous. In practice,
-  this translates to each party being in charge of the control and management
-  of their own data, without the need of the infrastructure itself to do so.
-  Furthermore, each party should be able decide with how much of its data will
-  contribute to the solution of the collaboration’s global model
-  (e.g., number of patients) and which algorithms will be allowed to be
-  executed.
-
-**Heterogeneity**
-  Parties should be allowed to have differences in hardware and operating
-  systems. The system should also enable collaborations among parties of
-  different nature (e.g., between a registry and a biobank or between
-  hospitals of different countries). Not only does this diversity have the
-  potential to enrich the data to answer the question at hand, but also allows
-  posing and answering more distinct, interesting research questions.
-
-**Flexibility**
-  Related to the latter, such an infrastructure should not limit the use of
-  relevant data. The research question might need either
-  `horizontally- or vertically-partitioned <https://en.wikipedia.org/wiki/Partition_(database)#Partitioning_methods>`_
-  data to be answered. The supporting system should be able to handle these two
-  (very different) scenarios.
-
+.. NOTE BvB 2022-01-04
+.. I have moved the section below to the 'Concepts' section that comes after
+.. the main introduction (and adapted it there). So probably most of this can be
+.. deleted...
 
 Network Actors
 --------------

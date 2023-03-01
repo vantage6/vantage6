@@ -2,6 +2,7 @@
 import logging
 
 from flask import request, g
+from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6.common import logger_name
@@ -26,8 +27,19 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the organization resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -64,7 +76,15 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW,
@@ -98,7 +118,7 @@ class OrganizationBase(ServicesResources):
 
 class Organizations(OrganizationBase):
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"))
     def get(self):
         """ Returns a list organizations
         ---
@@ -276,7 +296,7 @@ class Organizations(OrganizationBase):
 
 class Organization(OrganizationBase):
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"))
     def get(self, id):
         """Get organization
         ---
@@ -348,7 +368,7 @@ class Organization(OrganizationBase):
             return {'msg': 'You do not have permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-    @only_for(["user", "node"])
+    @only_for(("user", "node"))
     def patch(self, id):
         """Update organization
         ---
@@ -435,7 +455,7 @@ class OrganizationCollaboration(ServicesResources):
 
     col_schema = CollaborationSchema()
 
-    @only_for(["user", "node"])
+    @only_for(("user", "node"))
     def get(self, id):
         """Get collaborations from organization
         ---

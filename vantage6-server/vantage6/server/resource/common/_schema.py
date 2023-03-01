@@ -15,7 +15,9 @@ log = logging.getLogger(logger_name(__name__))
 
 
 class HATEOASModelSchema(ModelSchema):
-    """Convert foreign-key fields to HATEOAS specification."""
+    """
+    This class is used to convert foreign-key fields to HATEOAS specification.
+    """
 
     api = None
 
@@ -55,9 +57,8 @@ class HATEOASModelSchema(ModelSchema):
         setattr(self, "rules", lambda obj: self.hateos_list("rule", obj))
         setattr(self, "roles", lambda obj: self.hateos_list("role", obj))
 
-        # special cases
-
     def many_hateos_from_secondary(self, first, second, obj):
+        # TODO this function doesn't appear to be used. Remove in v4+?
         hateos_list = list()
         for elem in getattr(obj, first):
             hateos_list.append(
@@ -66,6 +67,7 @@ class HATEOASModelSchema(ModelSchema):
         return hateos_list
 
     def hateos_from_secondairy_model(self, first, second, obj):
+        # TODO this function doesn't appear to be used. Remove in v4+?
         first_elem = getattr(obj, first)
         second_elem = getattr(first_elem, second)
         return self._hateos_from_related(second_elem, second)

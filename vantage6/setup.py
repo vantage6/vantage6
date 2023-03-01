@@ -38,7 +38,7 @@ setup(
         'click==8.1.3',
         'colorama==0.4.6',
         'docker==6.0.1',
-        'iPython==8.9.0',
+        'ipython==8.10.0',
         'questionary==1.10.0',
         'schema==0.7.5',
         'SQLAlchemy==1.4.46',
@@ -47,7 +47,7 @@ setup(
     ],
     extras_require={
         'dev': [
-            'coverage==4.5.4'
+            'coverage==6.4.4'
         ]
     },
     package_data={

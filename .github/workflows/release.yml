@@ -36,11 +36,23 @@ jobs:
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: main
+
+      - name: Get branch on which the tag is based
+        id: branchname
+        run: |
+         raw=$(git branch -r --contains ${{ github.ref }})
+         branch=${raw##*/}
+         echo "branch=${branch}" >> $GITHUB_OUTPUT
+
+      - name: Checkout branch on which tag was pushed
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ env.branch }}
           token: ${{ secrets.COMMIT_PAT }}
 
       - name: Update version in packages
@@ -63,12 +75,13 @@ jobs:
       - name: commit
         env:
           version: ${{ steps.split.outputs.version }}
+          branch: ${{ steps.branchname.outputs.branch }}
         run: |
           git config --local user.name github-actions
           git config --local user.email github-actions@github.com
           git add *
           git commit -m "Updated the version to ${version}"
-          git push
+          git push origin HEAD:$branch
 
     outputs:
       version: ${{ steps.split.outputs.version }}
@@ -78,6 +91,7 @@ jobs:
       stage: ${{ steps.split.outputs.stage }}
       build: ${{ steps.split.outputs.build }}
       major_name: ${{ steps.split.outputs.major_name }}
+      branch: ${{ steps.branchname.outputs.branch }}
 
   # Create Github release which can be used DOI generation
   github-release:
@@ -86,12 +100,11 @@ jobs:
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
+      branch: ${{ needs.version.outputs.branch }}
     steps:
     - uses: actions/checkout@v3
       with:
-        # we just made a version commit, so we need to pull that. Else the
-        # commit of the tag is used.
-        ref: 'main'
+        ref: ${{env.branch}}
 
     - name: Create a Release
       uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
@@ -107,6 +120,7 @@ jobs:
     needs: version
     env:
       version: ${{ needs.version.outputs.version }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
 
@@ -119,9 +133,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
+          ref: ${{ env.branch }}
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -145,6 +157,7 @@ jobs:
       minor: ${{ needs.version.outputs.minor }}
       patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
 
@@ -157,9 +170,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
+          ref: ${{ env.branch }}
 
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -174,14 +185,14 @@ jobs:
         name: Build Docker support images
         run: make support-image TAG=$version
 
-      - # we only release a new base image if it is a major release
+      - # we only release a new base image if it is a major or minor release
         name: Build Docker base image
-        if: ${{ env.minor == 0 && env.patch == 0 && env.stage == '' }}
-        run: make base-image TAG=$major
+        if: ${{ env.patch == 0 && env.stage == '' }}
+        run: make base-image TAG=${major}.${minor}
 
       - # build the actual infrastructure images
         name: Build Docker image
-        run: make image TAG=$version BASE=$major
+        run: make image TAG=$version BASE=${major}.${minor}
 
   algorithm-base-image:
     name: Build algorithm base image
@@ -189,6 +200,7 @@ jobs:
     needs: version
     env:
       version: ${{ needs.version.outputs.version }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
       - name: Login to harbor2.vantage6.ai
@@ -200,9 +212,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
+          ref: ${{ env.branch }}
 
 
       - # Add support for more platforms with QEMU (optional)
@@ -274,15 +284,14 @@ jobs:
       patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
       build: ${{ needs.version.outputs.build }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
 
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
+          ref: ${{ env.branch }}
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -317,14 +326,13 @@ jobs:
     env:
       version: ${{ needs.version.outputs.version }}
       stage: ${{ needs.version.outputs.stage }}
+      branch: ${{ needs.version.outputs.branch }}
     steps:
 
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          # we just made a version commit, so we need to pull that. Else the
-          # commit of the tag is used.
-          ref: 'main'
+          ref: ${{ env.branch }}
 
       - name: Install dependencies
         run: |
