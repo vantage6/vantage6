@@ -92,7 +92,7 @@ This is a - non-exhaustive - list of vantage6 resources.
 
 * `Discord <https://discord.gg/yAyFf6Y>`_  |rarr| *Chat with the vantage6
   community*
-* :ref:`Community meetings <Community Planning>` |rarr| *Bi-monthly developer
+* :ref:`Community meetings <community-meetings>` |rarr| *Bi-monthly developer
   community meeting*
 
 
@@ -115,9 +115,9 @@ Index
    node/index
    server/index
    algorithms/index
+   technical-documentation/index
    devops/index
    glossary
-..  technical-documentation/index
 
 .. toctree::
    :maxdepth: 2

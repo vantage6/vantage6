@@ -8,18 +8,19 @@ node and server with naming conventions, standard file locations, and in the
 case of the node with a local database URIs.
 
 *Server Context*
-    In case the server is run in development mode, the context will also used
-    the server package. Normally the server uses the
-    `vantage6.server.context.DockerServerContext` which provides the same
-    functionality but is tailored to the Docker environment.
+    A class to provide context for the server, both for development mode as
+    for production.
 
 *Node Context*
-    In case the node is run in development mode, the context will also used by
+    In case the node is run in development mode, this context will also used by
     the node package. Normally the node uses the
     `vantage6.node.context.DockerNodeContext` which provides the same
     functionality but is tailored to the Docker environment.
 -------------------------------------------------------------------------------
 """
+# TODO BvB 2023-01-10 we should have a look at all context classes and define
+# them in the same place. Now the DockerNodeContext is defined in the node, but
+# the server only has a TestServerContext there. This should be made consistent
 from __future__ import annotations
 
 import os.path

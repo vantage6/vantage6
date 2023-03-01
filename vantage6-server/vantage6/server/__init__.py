@@ -1,3 +1,10 @@
+"""
+The server has a central function in the vantage6 architecture. It stores
+in the database which organizations, collaborations, users, etc.
+exist. It allows the users and nodes to authenticate and subsequently interact
+through the API the server hosts. Finally, it also communicates with
+authenticated nodes and users via the socketIO server that is run here.
+"""
 # -*- coding: utf-8 -*-
 from gevent import monkey
 
@@ -30,19 +37,22 @@ from threading import Thread
 
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
+from vantage6.cli.globals import DEFAULT_SERVER_ENVIRONMENT
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common._schema import HATEOASModelSchema
 from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
-    JWT_ACCESS_TOKEN_EXPIRES,
+    ACCESS_TOKEN_EXPIRES_HOURS,
     JWT_TEST_ACCESS_TOKEN_EXPIRES,
     RESOURCES,
     SUPER_USER_INFO,
-    REFRESH_TOKENS_EXPIRE,
+    REFRESH_TOKENS_EXPIRE_HOURS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    MAX_RESPONSE_TIME_PING
+    MAX_RESPONSE_TIME_PING,
+    MIN_TOKEN_VALIDITY_SECONDS,
+    MIN_REFRESH_TOKEN_EXPIRY_DELTA,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
@@ -56,16 +66,22 @@ log = logging.getLogger(module_name)
 
 
 class ServerApp:
-    """Vantage6 server instance."""
+    """
+    Vantage6 server instance.
 
-    def __init__(self, ctx):
+    Attributes
+    ----------
+    ctx : ServerContext
+        Context object that contains the configuration of the server.
+    """
+
+    def __init__(self, ctx: ServerContext):
         """Create a vantage6-server application."""
 
         self.ctx = ctx
 
         # initialize, configure Flask
-        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__),
-                         static_folder='static')
+        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
@@ -107,8 +123,7 @@ class ServerApp:
         # set up socket ping/pong
         log.debug(
             "Starting thread for socket ping/pong between server and nodes")
-        t = Thread(target=self.__socket_pingpong_worker, daemon=True)
-        t.start()
+        self.socketio.start_background_task(self.__socket_pingpong_worker)
 
         log.info("Initialization done")
 
@@ -147,7 +162,7 @@ class ServerApp:
 
     @staticmethod
     def configure_logging():
-        """Turn 3rd party loggers off."""
+        """Set third party loggers to a warning level"""
 
         # Prevent logging from urllib3
         logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -159,16 +174,13 @@ class ServerApp:
             .setLevel(logging.WARNING)
 
     def configure_flask(self):
-        """All flask config settings should go here."""
+        """Configure the Flask settings of the vantage6 server."""
 
         # let us handle exceptions
         self.app.config['PROPAGATE_EXCEPTIONS'] = True
 
         # patch where to obtain token
         self.app.config['JWT_AUTH_URL_RULE'] = '/api/token'
-
-        # False means refresh tokens never expire
-        self.app.config['JWT_REFRESH_TOKEN_EXPIRES'] = REFRESH_TOKENS_EXPIRE
 
         # If no secret is set in the config file, one is generated. This
         # implies that all (even refresh) tokens will be invalidated on restart
@@ -178,7 +190,20 @@ class ServerApp:
         )
 
         # Default expiration time
-        self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
+        token_expiry_seconds = self._get_jwt_expiration_seconds(
+            config_key='token_expires_hours',
+            default_hours=ACCESS_TOKEN_EXPIRES_HOURS
+        )
+        self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = token_expiry_seconds
+
+        # Set refresh token expiration time
+        self.app.config['JWT_REFRESH_TOKEN_EXPIRES'] = \
+                self._get_jwt_expiration_seconds(
+            config_key='refresh_token_expires_hours',
+            default_hours=REFRESH_TOKENS_EXPIRE_HOURS,
+            longer_than=token_expiry_seconds + MIN_REFRESH_TOKEN_EXPIRY_DELTA,
+            is_refresh=True
+        )
 
         # Set an extra long expiration time on access tokens for testing
         # TODO: this does not seem needed...
@@ -286,8 +311,66 @@ class ServerApp:
             return send_from_directory(self.app.static_folder,
                                        request.path[1:])
 
+
+    def _get_jwt_expiration_seconds(
+        self, config_key: str, default_hours: int,
+        longer_than: int = MIN_TOKEN_VALIDITY_SECONDS,
+        is_refresh: bool = False
+    ) -> int:
+        """
+        Return the expiration time for JWT tokens.
+
+        This time may be specified in the config file. If it is not, the
+        default value is returned.
+
+        Parameters
+        ----------
+        config_key: str
+            The config key to look for that sets the expiration time
+        default_hours: int
+            The default expiration time in hours
+        longer_than: int
+            The minimum expiration time in hours.
+        is_refresh: bool
+            If True, the expiration time is for a refresh token. If False, it
+            is for an access token.
+
+        Returns
+        -------
+        int:
+            The JWT token expiration time in seconds
+        """
+        hours_expire = self.ctx.config.get(config_key)
+        if hours_expire is None:
+            # No value is present in the config file, use default
+            refresh_expire = int(float(default_hours) * 3600)
+        elif isinstance(hours_expire, (int, float)) or \
+                hours_expire.is_numeric():
+            # Numeric value is present in the config file
+            refresh_expire = int(float(hours_expire) * 3600)
+            if refresh_expire < longer_than:
+                log.warning(
+                    f"Invalid value for '{config_key}': {hours_expire}. Tokens"
+                    f" must be valid for at least {longer_than} seconds. Using"
+                    f" default value: {REFRESH_TOKENS_EXPIRE_HOURS} hours")
+                if is_refresh:
+                    log.warning("Note that refresh tokens should be valid at "
+                                f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
+                                "seconds longer than access tokens.")
+                refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+        else:
+            # Non-numeric value is present in the config file. Warn and use
+            # default
+            log.warning("Invalid value for 'refresh_token_expires_hours':"
+                        f" {hours_expire}. Using default value: "
+                        f"{REFRESH_TOKENS_EXPIRE_HOURS} hours")
+            refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+
+        return refresh_expire
+
+
     def configure_api(self):
-        """"Define global API output."""
+        """Define global API output and its structure."""
 
         # helper to create HATEOAS schemas
         HATEOASModelSchema.api = self.api
@@ -307,7 +390,7 @@ class ServerApp:
             return resp
 
     def configure_jwt(self):
-        """Load user and its claims."""
+        """Configure JWT authentication."""
 
         @self.jwt.additional_claims_loader
         def additional_claims_loader(identity):
@@ -408,7 +491,7 @@ class ServerApp:
                 return identity
 
     def load_resources(self):
-        """Import the modules containing Resources."""
+        """Import the modules containing API resources."""
 
         # make services available to the endpoints, this way each endpoint can
         # make use of 'em.
@@ -440,9 +523,12 @@ class ServerApp:
                 new_role.save()
 
     def start(self):
-        """Start the server.
         """
+        Start the server.
 
+        Before server is really started, some database settings are checked and
+        (re)set where appropriate.
+        """
         # add default roles (if they don't exist yet)
         self._add_default_roles()
 
@@ -485,7 +571,7 @@ class ServerApp:
         while True:
             # Send ping event
             try:
-                self.__pong_node_ids = []
+                ping_time = dt.datetime.utcnow()
                 self.socketio.emit(
                     'ping', namespace='/tasks', room='all_nodes',
                     callback=self.__pong_response
@@ -498,7 +584,7 @@ class ServerApp:
                 # Otherwise set them to offline.
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
-                    if node.id not in self.__pong_node_ids:
+                    if node.last_seen < ping_time:
                         node.status = 'offline'
                         node.save()
 
@@ -515,11 +601,27 @@ class ServerApp:
         node.status = 'online'
         node.last_seen = dt.datetime.utcnow()
         node.save()
-        self.__pong_node_ids.append(node_id)
 
 
-def run_server(config: str, environment: str = 'prod',
-               system_folders: bool = True):
+def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
+               system_folders: bool = True) -> ServerApp:
+    """
+    Run a vantage6 server.
+
+    Parameters
+    ----------
+    config: str
+        Configuration file path
+    environment: str
+        Configuration environment to use.
+    system_folders: bool
+        Whether to use system or user folders. Default is True.
+
+    Returns
+    -------
+    ServerApp
+        A running instance of the vantage6 server
+    """
     ctx = ServerContext.from_external_config_file(
         config,
         environment,
@@ -531,7 +633,15 @@ def run_server(config: str, environment: str = 'prod',
     return ServerApp(ctx).start()
 
 
-def run_dev_server(server_app: ServerApp, *args, **kwargs):
+def run_dev_server(server_app: ServerApp, *args, **kwargs) -> None:
+    """
+    Run a vantage6 development server (outside of a Docker container).
+
+    Parameters
+    ----------
+    server_app: ServerApp
+        Instance of a vantage6 server
+    """
     log.warn('*'*80)
     log.warn(' DEVELOPMENT SERVER '.center(80, '*'))
     log.warn('*'*80)
