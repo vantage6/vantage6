@@ -150,7 +150,7 @@ jobs:
   infrastructure-images:
     name: Build infrastructure images
     runs-on: ubuntu-latest
-    needs: [version, support-images]
+    needs: version
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
