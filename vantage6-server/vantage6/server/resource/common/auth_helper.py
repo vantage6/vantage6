@@ -3,12 +3,8 @@ import datetime as dt
 import pyotp
 
 from http import HTTPStatus
-from flask import request, render_template
-from flask_mail import Mail
-
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
-from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.server import db
 from vantage6.server.model.user import User
 
@@ -17,20 +13,17 @@ log = logging.getLogger(module_name)
 
 
 def user_login(
-    config: dict, username: str, password: str, mail: Mail
-) -> tuple[dict | db.User, HTTPStatus]:
+    password_policy: dict, username: str, password: str
+) -> tuple[User | dict, HTTPStatus]:
     """
     Returns user a message in case of failed login attempt.
 
-    config: dict
-        Dictionary with configuration settings
+    config: ConfigurationManager
+        An instance of a vantage6 configuration manager for a vantage6 server
     username: str
         Username of user to be logged in
     password: str
         Password of user to be logged in
-    mail: flask_mail.Mail
-        An instance of the Flask mail class. Used to send email to user in case
-        of too many failed login attempts.
 
     Returns
     -------
@@ -41,19 +34,16 @@ def user_login(
         Status code that the current request should return
     """
     log.info(f"Trying to login '{username}'")
-    failed_login_msg = "Failed to login"
+
     if db.User.username_exists(username):
         user = db.User.get_by_username(username)
-        password_policy = config.get("password_policy", {})
         max_failed_attempts = password_policy.get('max_failed_attempts', 5)
         inactivation_time = password_policy.get('inactivation_minutes', 15)
 
-        is_blocked, min_rem = user.is_blocked(max_failed_attempts,
-                                              inactivation_time)
+        is_blocked, time_remaining_msg = user.is_blocked(
+            max_failed_attempts, inactivation_time)
         if is_blocked:
-            notify_user_blocked(user, max_failed_attempts, min_rem, mail,
-                                config)
-            return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
+            return {"msg": time_remaining_msg}, HTTPStatus.UNAUTHORIZED
         elif user.check_password(password):
             user.failed_login_attempts = 0
             user.save()
@@ -68,56 +58,8 @@ def user_login(
             user.last_login_attempt = dt.datetime.now()
             user.save()
 
-    return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
-
-
-def notify_user_blocked(
-    user: db.User, max_n_attempts: int, min_rem: int, mail: Mail,
-    config: dict
-) -> None:
-    """
-    Sends an email to the user when his or her account is locked
-
-    Parameters
-    ----------
-    user: User
-        User who is temporarily blocked
-    max_n_attempts: int
-        Maximum number of failed login attempts before the account is locked
-    min_rem: int
-        Number of minutes remaining before the account is unlocked
-    mail: flask_mail.Mail
-        An instance of the Flask mail class. Used to send email to user in case
-        of too many failed login attempts.
-    config: dict
-        Dictionary with configuration settings
-    """
-    if not user.email:
-        log.warning(f'User {user.username} is locked, but does not have'
-                    'an email registered. So no message has been sent.')
-
-    log.info(f'User {user.username} is locked. Sending them an email.')
-
-    email_info = config.get("smtp", {})
-    email_sender = email_info.get("username", DEFAULT_SUPPORT_EMAIL_ADDRESS)
-    support_email = config.get("support_email", email_sender)
-
-    template_vars = {
-        'firstname': user.firstname,
-        'number_of_allowed_attempts': max_n_attempts,
-        'ip': request.access_route[-1],
-        'time': dt.datetime.now(dt.timezone.utc),
-        'time_remaining': min_rem,
-        'support_email': support_email,
-    }
-
-    mail.send_email(
-        "Failed login attempts on your vantage6 account",
-        sender=email_sender,
-        recipients=[user.email],
-        text_body=render_template("mail/blocked_account.txt", **template_vars),
-        html_body=render_template("mail/blocked_account.html", **template_vars)
-    )
+    return {"msg": "Invalid username or password!"}, \
+        HTTPStatus.UNAUTHORIZED
 
 
 def create_qr_uri(user: User) -> dict:
@@ -131,7 +73,7 @@ def create_qr_uri(user: User) -> dict:
 
     Returns
     -------
-    dict
+    Dict
         Dictionary with information on the TOTP secret required to generate
         a QR code or to enter it manually in an authenticator app
     """
