@@ -45,10 +45,7 @@ jobs:
         id: branchname
         run: |
          raw=$(git branch -r --contains ${{ github.ref }})
-         echo $raw
          branch=${raw##*/}
-         echo $branch
-         # TODO propagate this variable to other steps later in this job
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
@@ -188,14 +185,14 @@ jobs:
         name: Build Docker support images
         run: make support-image TAG=$version
 
-      - # we only release a new base image if it is a major release
+      - # we only release a new base image if it is a major or minor release
         name: Build Docker base image
-        if: ${{ env.minor == 0 && env.patch == 0 && env.stage == '' }}
-        run: make base-image TAG=$major
+        if: ${{ env.patch == 0 && env.stage == '' }}
+        run: make base-image TAG=${major}.${minor}
 
       - # build the actual infrastructure images
         name: Build Docker image
-        run: make image TAG=$version BASE=$major
+        run: make image TAG=$version BASE=${major}.${minor}
 
   algorithm-base-image:
     name: Build algorithm base image
