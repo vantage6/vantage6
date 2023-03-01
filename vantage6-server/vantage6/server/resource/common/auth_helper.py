@@ -3,7 +3,6 @@ import datetime as dt
 import pyotp
 
 from http import HTTPStatus
-from typing import Dict, Tuple
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server import db
@@ -14,8 +13,8 @@ log = logging.getLogger(module_name)
 
 
 def user_login(
-    password_policy: Dict, username: str, password: str
-) -> Tuple[User | dict, HTTPStatus]:
+    password_policy: dict, username: str, password: str
+) -> tuple[User | dict, HTTPStatus]:
     """
     Returns user a message in case of failed login attempt.
 
@@ -63,7 +62,7 @@ def user_login(
         HTTPStatus.UNAUTHORIZED
 
 
-def create_qr_uri(user: User) -> Dict:
+def create_qr_uri(user: User) -> dict:
     """
     Create the URI to generate a QR code for authenticator apps
 

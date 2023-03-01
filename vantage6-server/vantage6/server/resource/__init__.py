@@ -4,7 +4,6 @@ from http import HTTPStatus
 import logging
 
 from functools import wraps
-from typing import Union
 
 from flask import g, request
 from flask_restful import Resource, Api
@@ -109,7 +108,7 @@ class ServicesResources(Resource):
         return self.dump(page, schema), HTTPStatus.OK, page.headers
 
     @staticmethod
-    def obtain_auth() -> Union[db.Authenticatable, dict]:
+    def obtain_auth() -> db.Authenticatable | dict:
         """
         Read authenticatable object or dict from the flask global context.
 

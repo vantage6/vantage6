@@ -6,7 +6,6 @@ import logging
 import datetime as dt
 import pyotp
 
-from typing import Union
 from flask import request, g, render_template
 from flask_jwt_extended import (
     jwt_required,
@@ -169,7 +168,7 @@ class UserToken(ServicesResources):
         log.info(f"Succesfull login from {username}")
         return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
 
-    def user_login(self, username: str, password: str) -> Union[dict, db.User]:
+    def user_login(self, username: str, password: str) -> dict | db.User:
         """Returns user a message in case of failed login attempt."""
         log.info(f"Trying to login '{username}'")
         failed_login_msg = "Failed to login"
@@ -226,7 +225,7 @@ class UserToken(ServicesResources):
         )
 
     @staticmethod
-    def validate_2fa_token(user: User, mfa_code: Union[int, str]) -> bool:
+    def validate_2fa_token(user: User, mfa_code: int | str) -> bool:
         """
         Check whether the 6-digit two-factor authentication code is valid
 
