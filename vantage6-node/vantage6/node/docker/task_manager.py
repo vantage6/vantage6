@@ -6,7 +6,6 @@ import pickle
 import docker.errors
 import json
 
-from typing import Dict, List, Union
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
@@ -38,10 +37,10 @@ class DockerTaskManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, task_info: Dict, tasks_dir: Path,
+                 result_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: Union[str, None] = None):
+                 alpine_image: str | None = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -55,17 +54,17 @@ class DockerTaskManager(DockerBaseManager):
             Name of the node, to track running algorithms
         result_id: int
             Server result identifier
-        task_info: Dict
+        task_info: dict
             Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
         isolated_network_mgr: NetworkManager
             Manager of isolated network to which algorithm needs to connect
-        databases: Dict
+        databases: dict
             List of databases
         docker_volume_name: str
             Name of the docker volume
-        alpine_image: str or None
+        alpine_image: str | None
             Name of alternative Alpine image to be used
         """
         super().__init__(isolated_network_mgr)
@@ -167,7 +166,7 @@ class DockerTaskManager(DockerBaseManager):
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: Dict, database: str) -> List[Dict]:
+            algorithm_env: dict, database: str) -> list[dict]:
         """
         Runs the docker-image in detached mode.
 
@@ -213,7 +212,7 @@ class DockerTaskManager(DockerBaseManager):
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
-    def _run_algorithm(self) -> List[Dict]:
+    def _run_algorithm(self) -> list[dict]:
         """
         Run the algorithm container
 
@@ -333,7 +332,7 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> Dict:
+    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> dict:
         """
         Generate docker volumes required to run the algorithm
 
@@ -346,7 +345,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        Dict:
+        dict:
             Volumes to support running the algorithm
         """
         if isinstance(self.docker_input, str):
@@ -378,19 +377,19 @@ class DockerTaskManager(DockerBaseManager):
                 {"bind": self.data_folder, "mode": "rw"}
         return volumes
 
-    def _setup_environment_vars(self, algorithm_env: Dict = {},
-                                database: str = 'default') -> Dict:
+    def _setup_environment_vars(self, algorithm_env: dict = {},
+                                database: str = 'default') -> dict:
         """"
         Set environment variables required to run the algorithm
 
         Parameters
         ----------
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
 
         Returns
         -------
-        Dict:
+        dict:
             Environment variables required to run algorithm
         """
         try:

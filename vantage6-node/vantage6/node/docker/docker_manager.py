@@ -13,7 +13,7 @@ import docker
 import re
 import shutil
 
-from typing import Dict, List, NamedTuple, Union
+from typing import NamedTuple
 from pathlib import Path
 
 from vantage6.common import get_database_config
@@ -57,7 +57,7 @@ class Result(NamedTuple):
     logs: str
     data: str
     status: str
-    parent_id: Union[int, None]
+    parent_id: int | None
 
 
 class ToBeKilled(NamedTuple):
@@ -85,7 +85,7 @@ class DockerManager(DockerBaseManager):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, ctx: Union[DockerNodeContext, NodeContext],
+    def __init__(self, ctx: DockerNodeContext | NodeContext,
                  isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
                  tasks_dir: Path, client: NodeClient) -> None:
         """ Initialization of DockerManager creates docker connection and
@@ -93,7 +93,7 @@ class DockerManager(DockerBaseManager):
 
             Parameters
             ----------
-            ctx: DockerNodeContext or NodeContext
+            ctx: DockerNodeContext | NodeContext
                 Context object from which some settings are obtained
             isolated_network_mgr: NetworkManager
                 Manager for the isolated network
@@ -116,10 +116,10 @@ class DockerManager(DockerBaseManager):
         self.alpine_image = config.get('alpine')
 
         # keep track of the running containers
-        self.active_tasks: List[DockerTaskManager] = []
+        self.active_tasks: list[DockerTaskManager] = []
 
         # keep track of the containers that have failed to start
-        self.failed_tasks: List[DockerTaskManager] = []
+        self.failed_tasks: list[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these regex
         # TODO remove in v4+ as it is supersed by the 'policies' block
@@ -145,16 +145,16 @@ class DockerManager(DockerBaseManager):
         self._set_database(ctx.databases)
 
         # keep track of linked docker services
-        self.linked_services: List[str] = []
+        self.linked_services: list[str] = []
 
-    def _set_database(self, databases: Union[Dict, List]) -> None:
+    def _set_database(self, databases: dict | list) -> None:
         """"
         Set database location and whether or not it is a file
 
         Parameters
         ----------
-        config: Dict
-            Configuration of the app
+        databases: dict | list
+            databases as specified in the config file
         """
 
         # Check wether the new or old database config is used.
@@ -259,7 +259,7 @@ class DockerManager(DockerBaseManager):
                     found = True
             if not found:
                 self.log.warn("A task was sent with a docker image that this"
-                               " node does not allow to run.")
+                              " node does not allow to run.")
                 return False
 
         # check if user or their organization is allowed
@@ -319,13 +319,13 @@ class DockerManager(DockerBaseManager):
         })
         return bool(running_containers)
 
-    def cleanup_tasks(self) -> List[KilledResult]:
+    def cleanup_tasks(self) -> list[KilledResult]:
         """
         Stop all active tasks
 
         Returns
         -------
-        List[KilledResult]:
+        list[KilledResult]:
             List of information on tasks that have been killed
         """
         result_ids_killed = []
@@ -362,9 +362,9 @@ class DockerManager(DockerBaseManager):
         # remove the connected containers and the network
         self.isolated_network_mgr.delete(kill_containers=True)
 
-    def run(self, result_id: int, task_info: Dict, image: str,
+    def run(self, result_id: int, task_info: dict, image: str,
             docker_input: bytes, tmp_vol_name: str, token: str, database: str
-            ) -> Union[List[Dict], None]:
+            ) -> list[dict] | None:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
@@ -373,7 +373,7 @@ class DockerManager(DockerBaseManager):
         ----------
         result_id: int
             Server result identifier
-        task_info: Dict
+        task_info: dict
             Dictionary with task information
         image: str
             Docker image name
@@ -388,7 +388,7 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
@@ -556,8 +556,8 @@ class DockerManager(DockerBaseManager):
         self.linked_services.append(container_name)
 
     def kill_selected_tasks(
-        self, org_id: int, kill_list: List[ToBeKilled] = None
-    ) -> List[KilledResult]:
+        self, org_id: int, kill_list: list[ToBeKilled] = None
+    ) -> list[KilledResult]:
         """
         Kill tasks specified by a kill list, if they are currently running on
         this node
@@ -566,12 +566,12 @@ class DockerManager(DockerBaseManager):
         ----------
         org_id: int
             The organization id of this node
-        kill_list: List[ToBeKilled]
+        kill_list: list[ToBeKilled]
             A list of info about tasks that should be killed.
 
         Returns
         -------
-        List[KilledResult]
+        list[KilledResult]
             List with information on killed tasks
         """
         killed_list = []
@@ -601,7 +601,7 @@ class DockerManager(DockerBaseManager):
         return killed_list
 
     def kill_tasks(self, org_id: int,
-                   kill_list: List[ToBeKilled] = None) -> List[KilledResult]:
+                   kill_list: list[ToBeKilled] = None) -> list[KilledResult]:
         """
         Kill tasks currently running on this node.
 
@@ -609,13 +609,13 @@ class DockerManager(DockerBaseManager):
         ----------
         org_id: int
             The organization id of this node
-        kill_list: List[ToBeKilled] (optional)
+        kill_list: list[ToBeKilled] (optional)
             A list of info on tasks that should be killed. If the list
             is not specified, all running algorithm containers will be killed.
 
         Returns
         -------
-        List[KilledResult]
+        list[KilledResult]
             List of dictionaries with information on killed tasks
         """
         if kill_list:
