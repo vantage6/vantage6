@@ -48,6 +48,7 @@ jobs:
          echo $raw
          branch=${raw##*/}
          echo $branch
+         # TODO propagate this variable to other steps later in this job
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
@@ -77,12 +78,13 @@ jobs:
       - name: commit
         env:
           version: ${{ steps.split.outputs.version }}
+          branch: ${{ steps.branchname.outputs.branch }}
         run: |
           git config --local user.name github-actions
           git config --local user.email github-actions@github.com
           git add *
           git commit -m "Updated the version to ${version}"
-          git push origin HEAD:${{ env.branch }}
+          git push origin HEAD:$branch
 
     outputs:
       version: ${{ steps.split.outputs.version }}
