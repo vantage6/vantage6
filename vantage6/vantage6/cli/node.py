@@ -12,8 +12,6 @@ commands are available:
     * vnode remove
     * vnode version
     * vnode create-private-key
-
-
 """
 import click
 import sys
@@ -23,7 +21,7 @@ import time
 import os.path
 import itertools
 
-from typing import Iterable, Tuple, List
+from typing import Iterable
 from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
@@ -961,9 +959,21 @@ def cli_node_version(name: str, system_folders: bool) -> None:
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_set_api_key(name, api_key, environment, system_folders):
+def cli_node_set_api_key(name: str, api_key: str, environment: str,
+                         system_folders: bool) -> None:
     """
     Put a new API key into the node configuration file
+
+    Parameters
+    ----------
+    name : str
+        Node configuration name
+    api_key : str
+        New API key
+    environment : str
+        DTAP environment
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
     """
     # select name and environment
     name, environment = select_node(name, environment, system_folders)
@@ -999,7 +1009,6 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
     logs_stream : Iterable[bytes]
         Output of the container.attach() method
     """
-
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
 
@@ -1040,14 +1049,14 @@ def create_client_and_authenticate(ctx: NodeContext) -> Client:
 
 
 def select_node(name: str, environment: str, system_folders: bool) \
-        -> Tuple[str, str]:
+        -> tuple[str, str]:
     """
     Let user select node through questionnaire if name/environment is not
     given.
 
     Returns
     -------
-    Tuple[str, str]
+    tuple[str, str]
         name, environment of the configuration file
     """
     name, environment = (name, environment) if name else \
@@ -1064,7 +1073,7 @@ def select_node(name: str, environment: str, system_folders: bool) \
     return name, environment
 
 
-def find_running_node_names(client: docker.DockerClient) -> List[str]:
+def find_running_node_names(client: docker.DockerClient) -> list[str]:
     """
     Returns a list of names of running nodes.
 
@@ -1075,7 +1084,7 @@ def find_running_node_names(client: docker.DockerClient) -> List[str]:
 
     Returns
     -------
-    List[str]
+    list[str]
         List of names of running nodes
     """
     running_nodes = client.containers.list(

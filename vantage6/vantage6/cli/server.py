@@ -5,7 +5,7 @@ import os
 import time
 import subprocess
 
-from typing import Callable, Type, Iterable
+from typing import Iterable
 from threading import Thread
 from functools import wraps
 from colorama import (Fore, Style)
@@ -40,7 +40,7 @@ from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
 
 
-def click_insert_context(func: Callable) -> Callable:
+def click_insert_context(func: callable) -> callable:
     """
     Supply the Click function with additional context parameters. The context
     is then passed to the function as the first argument.
@@ -67,7 +67,7 @@ def click_insert_context(func: Callable) -> Callable:
                   default=DEFAULT_SERVER_SYSTEM_FOLDERS)
     @wraps(func)
     def func_with_context(name: str, config: str, environment: str,
-                          system_folders: bool, *args, **kwargs) -> Callable:
+                          system_folders: bool, *args, **kwargs) -> callable:
         """
         Decorator function that adds the context to the function.
 
@@ -134,7 +134,7 @@ def cli_server() -> None:
 @click.option('--attach/--detach', default=False,
               help="Attach server logs to the console after start")
 @click_insert_context
-def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
+def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
                      rabbitmq_image: str, keep: bool, mount_src: str,
                      attach: bool) -> None:
     """
@@ -142,7 +142,7 @@ def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
 
     Parameters
     ----------
-    ctx : Type[ServerContext]
+    ctx : ServerContext
         Server context object
     ip : str
         ip interface to listen on
@@ -363,7 +363,7 @@ def cli_server_configuration_list() -> None:
 #
 @cli_server.command(name='files')
 @click_insert_context
-def cli_server_files(ctx: Type[ServerContext]) -> None:
+def cli_server_files(ctx: ServerContext) -> None:
     """
     List files locations of a server instance.
 
@@ -454,14 +454,14 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click_insert_context
-def cli_server_import(ctx: Type[ServerContext], file_: str, drop_all: bool,
+def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
                       image: str, mount_src: str, keep: bool) -> None:
     """
     Batch import organizations/collaborations/users and tasks.
 
     Parameters
     ----------
-    ctx : Type[ServerContext]
+    ctx : ServerContext
         Server context object
     file_ : str
         Yaml file containing the vantage6 formatted data to import
@@ -577,7 +577,7 @@ def cli_server_import(ctx: Type[ServerContext], file_: str, drop_all: bool,
 #
 @cli_server.command(name='shell')
 @click_insert_context
-def cli_server_shell(ctx: Type[ServerContext]) -> None:
+def cli_server_shell(ctx: ServerContext) -> None:
     """
     Run an iPython shell in the server container and attach the ORM. This
     can be used to modify the database.
@@ -724,7 +724,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_server_version(name: str, system_folders: bool):
+def cli_server_version(name: str, system_folders: bool) -> None:
     """
     Print the version of the vantage6 services.
 
@@ -770,6 +770,15 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
+
+    Parameters
+    ----------
+    name : str
+        Name of the server to inspect
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or if False, the user folders
 
     Returns
     -------
