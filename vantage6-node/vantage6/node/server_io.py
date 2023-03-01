@@ -6,7 +6,6 @@ import jwt
 import datetime
 import time
 
-from typing import Dict, Tuple
 from threading import Thread
 
 from vantage6.common import WhoAmI
@@ -149,7 +148,7 @@ class NodeClient(ClientBase):
             "started_at": datetime.datetime.now().isoformat()
         })
 
-    def patch_results(self, id: int, result: Dict,
+    def patch_results(self, id: int, result: dict,
                       init_org_id: int = None) -> None:
         """
         Update the results at the central server.
@@ -161,7 +160,7 @@ class NodeClient(ClientBase):
         ----------
         id: int
             ID of the result to patch
-        result: Dict
+        result: dict
             Dictionary of fields that are to be patched
         init_org_id: int, optional
             Organization id of the origin of the task. This is required
@@ -199,7 +198,7 @@ class NodeClient(ClientBase):
 
         return self.request(f"result/{id}", json=result, method='patch')
 
-    def get_vpn_config(self) -> Tuple[bool, str]:
+    def get_vpn_config(self) -> tuple[bool, str]:
         """
         Obtain VPN configuration from the server
 
