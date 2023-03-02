@@ -305,7 +305,7 @@ class Node(object):
             # never finish and hence not be set to finished)
             update['finished_at'] = datetime.datetime.now().isoformat()
         self.server_io.patch_results(
-            id=taskresult['id'], result=update
+            id_=taskresult['id'], result=update
         )
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
@@ -422,7 +422,7 @@ class Node(object):
                     )
 
                 self.server_io.patch_results(
-                    id=results.result_id,
+                    id_=results.result_id,
                     result={
                         'result': results.data,
                         'log': results.logs,
@@ -911,7 +911,7 @@ class Node(object):
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.server_io.patch_results(
-                id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+                id_=killed_algo.result_id, result={'status': TaskStatus.KILLED}
             )
         return killed_algos
 

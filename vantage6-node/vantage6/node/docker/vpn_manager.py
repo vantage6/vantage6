@@ -470,7 +470,8 @@ class VPNManager(DockerBaseManager):
         )
         host_interfaces = json.loads(host_interfaces)
 
-        linked_interface = self._get_if(host_interfaces, link_index)
+        linked_interface = \
+            self._get_interface_from_idx(host_interfaces, link_index)
         bridge_interface = linked_interface['master']
         return bridge_interface
 
@@ -547,7 +548,8 @@ class VPNManager(DockerBaseManager):
             remove=True,
         )
 
-    def _get_if(self, interfaces: list[dict], index: int) -> dict | None:
+    def _get_interface_from_idx(self, interfaces: list[dict],
+                                index: int) -> dict | None:
         """
         Get interface configuration based on interface index
 
