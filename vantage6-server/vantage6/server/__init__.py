@@ -385,7 +385,8 @@ class ServerApp:
 
         # whatever you get try to json it
         @self.api.representation('application/json')
-        def output_json(  # pylint: disable=unused-argument
+        # pylint: disable=unused-argument
+        def output_json(
             data: Any, code: HTTPStatus, headers: dict = None
         ) -> Response:
             """
@@ -415,7 +416,8 @@ class ServerApp:
         """Configure JWT authentication."""
 
         @self.jwt.additional_claims_loader
-        def additional_claims_loader(  # pylint: disable=unused-argument
+        # pylint: disable=unused-argument
+        def additional_claims_loader(
                 identity: db.Authenticatable | dict) -> dict:
             """
             Create additional claims for JWT tokens: set user type and for
@@ -452,7 +454,8 @@ class ServerApp:
             return claims
 
         @self.jwt.user_identity_loader
-        def user_identity_loader(  # pylint: disable=unused-argument
+        # pylint: disable=unused-argument
+        def user_identity_loader(
                 identity: db.Authenticatable | dict) -> str | dict:
             """"
             JSON serializing identity to be used by create_access_token.
@@ -477,7 +480,8 @@ class ServerApp:
                         from '{str(identity)}'")
 
         @self.jwt.user_lookup_loader
-        def user_lookup_loader(  # pylint: disable=unused-argument
+        # pylint: disable=unused-argument
+        def user_lookup_loader(
             jwt_payload: dict, jwt_headers: dict
         ) -> db.Authenticatable | dict:
             """
