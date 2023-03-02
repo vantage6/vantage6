@@ -8,7 +8,15 @@ from discord.ext import tasks, commands
 # from dotenv import load_dotenv
 
 
-def info(msg):
+def info(msg: str):
+    """
+    Print a message to the console.
+
+    Parameters
+    ----------
+    msg : str
+        The message to print.
+    """
     print(msg)
 
 
@@ -20,13 +28,31 @@ bot = commands.bot.Bot('$')
 
 class PostUpdates(commands.Cog):
 
-    def __init__(self, bot, version, notes, post_notes):
+    def __init__(self, bot: commands.bot.Bot, version: str, notes: str,
+                 post_notes: str) -> None:
+        """
+        Post updates to the discord channel.
+
+        Parameters
+        ----------
+        bot : commands.bot.Bot
+            The bot to use.
+        version : str
+            The version of the release.
+        notes : str
+            Any additional nodes on the release.
+        post_notes : str
+            Any additional notes on the post.
+        """
         self.bot = bot
         self.info = [version, notes, post_notes]
         self.update_community.start()
 
     @tasks.loop(count=1)
-    async def update_community(self):
+    async def update_community(self) -> None:
+        """
+        Send a message to 'announcements' discord channel.
+        """
         info("Ready to send message")
         for channel in self.bot.get_all_channels():
             if channel.name == 'announcements':
@@ -35,12 +61,29 @@ class PostUpdates(commands.Cog):
 
     @update_community.before_loop
     async def before_printer(self):
+        """ Wait until the bot logs in. """
         info('Signing in to Discord...')
         await self.bot.wait_until_ready()
 
     @staticmethod
-    def create_embed(version, summary, notes):
+    def create_embed(version: str, summary: str, notes: str) -> Embed:
+        """
+        Create an embed for the discord channel.
 
+        Parameters
+        ----------
+        version : str
+            The version of the release.
+        summary : str
+            A summary of the release.
+        notes : str
+            Any additional notes on the release.
+
+        Returns
+        -------
+        Embed
+            The embed to send to the discord channel.
+        """
         description = (
             ':triangular_flag_on_post: A new **vantage6** release! '
             ':triangular_flag_on_post:\n\n'
@@ -102,8 +145,10 @@ class PostUpdates(commands.Cog):
 @click.option('--version', default=None, help="major.minor.patch.specBuild")
 @click.option('--notes', default=None)
 @click.option('--post-notes', default=None)
-def update_the_community(version, notes, post_notes):
-
+def update_the_community(version: str, notes: str, post_notes):
+    """
+    Send a message to the discord channel.
+    """
     bot.add_cog(PostUpdates(bot, version, notes, post_notes))
     bot.run(TOKEN)
 

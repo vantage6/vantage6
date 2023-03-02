@@ -2,13 +2,41 @@ import os
 import importlib
 import jwt
 
+from types import ModuleType
+from typing import Any
+
 from vantage6.client import ContainerClient
 from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.tools.util import info, warn, error
 
 
-def dispatch_rpc(data, input_data, module, token, use_new_client=False):
+def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
+                 use_new_client: bool = False) -> Any:
+    """
+    Load the algorithm module and call the correct method to run an algorithm.
 
+    Parameters
+    ----------
+    data : Any
+        The data that is passed to the algorithm.
+    input_data : dict
+        The input data that is passed to the algorithm. This should at least
+        contain the key 'method' which is the name of the method that should be
+        called. Another often used key is 'master' which indicates that this
+        container is a master container. Other keys depend on the algorithm.
+    module : ModuleType
+        The module that contains the algorithm.
+    token : str
+        The JWT token that is used to authenticate from the algorithm container
+        to the server.
+    use_new_client : bool, optional
+        Whether to use the new client or the old client, by default False
+
+    Returns
+    -------
+    Any
+        The result of the algorithm.
+    """
     # import algorithm module
     try:
         lib = importlib.import_module(module)

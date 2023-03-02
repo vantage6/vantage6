@@ -17,7 +17,6 @@ import sys
 import traceback
 
 from pathlib import Path
-from typing import Dict, Tuple, Union
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import bytes_to_base64s, base64s_to_bytes
@@ -35,7 +34,18 @@ LEGACY = 'legacy'
 
 
 class ServerInfo(typing.NamedTuple):
-    """Data-class to store the server info."""
+    """
+    Data-class to store the server info.
+
+    Attributes
+    ----------
+    host : str
+        Adress (including protocol, e.g. `https://`) of the vantage6 server
+    port : int
+        Port numer to which the server listens
+    path : str
+        Path of the api, e.g. '/api'
+    """
     host: str
     port: int
     path: str
@@ -44,11 +54,12 @@ class ServerInfo(typing.NamedTuple):
 class ClientBase(object):
     """Common interface to the central server.
 
-    Contains the basis for all other clients. This includes a basic interface
-    to authenticate, generic request, creating tasks and result retrieval.
+    Contains the basis for all other clients, e.g. UserClient, NodeClient and
+    AlgorithmClient. This includes a basic interface to authenticate, send
+    generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, host: str, port: int, path: str = '/api'):
+    def __init__(self, host: str, port: int, path: str = '/api') -> None:
         """Basic setup for the client
 
         Parameters
@@ -78,12 +89,27 @@ class ClientBase(object):
 
     @property
     def name(self) -> str:
-        """Return the node's/client's name"""
+        """
+        Return the node's/client's name
+
+        Returns
+        -------
+        str
+            Name of the user or node
+        """
         return self.whoami.name
 
     @property
     def headers(self) -> dict:
-        """Headers that are send with each request"""
+        """
+        Defines headers that are sent with each request. This includes the
+        authorization token.
+
+        Returns
+        -------
+        dict
+            Headers
+        """
         if self._access_token:
             return {'Authorization': 'Bearer ' + self._access_token}
         else:
@@ -91,27 +117,62 @@ class ClientBase(object):
 
     @property
     def token(self) -> str:
-        """JWT Authorization token"""
+        """
+        JWT Authorization token
+
+        Returns
+        -------
+        str
+            JWT token
+        """
         return self._access_token
 
     @property
     def host(self) -> str:
-        """Host including protocol (HTTP/HTTPS)"""
+        """
+        Host including protocol (HTTP/HTTPS)
+
+        Returns
+        -------
+        str
+            Host address of the vantage6 server
+        """
         return self.__host
 
     @property
     def port(self) -> int:
-        """Port to vantage6-server listens"""
+        """
+        Port on which vantage6 server listens
+
+        Returns
+        -------
+        int
+            Port number
+        """
         return self.__port
 
     @property
     def path(self) -> str:
-        """Path/endpoint at the server where the api resides"""
+        """
+        Path/endpoint at the server where the api resides
+
+        Returns
+        -------
+        str
+            Path to the api
+        """
         return self.__api_path
 
     @property
     def base_path(self) -> str:
-        """Combination of host, port and api-path"""
+        """
+        Full path to the server URL. Combination of host, port and api-path
+
+        Returns
+        -------
+        str
+            Server URL
+        """
         if self.__port:
             return f"{self.host}:{self.port}{self.__api_path}"
 
@@ -220,6 +281,10 @@ class ClientBase(object):
         private_key_file : str
             File path of the private key file
 
+        Raises
+        ------
+        AssertionError
+            If the client is not authenticated
         """
         assert self._access_token, \
             "Encryption can only be setup after authentication"
@@ -342,6 +407,8 @@ class ClientBase(object):
         ------
         Exception
             Authentication Error!
+        AssertionError
+            Refresh URL not found
         """
         self.log.info("Refreshing token")
         assert self.__refresh_url, \
@@ -399,11 +466,18 @@ class ClientBase(object):
             data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
             will use pickle serialization. Default is 'legacy'., by default
             LEGACY
+        database : str, optional
+            Database label to use for the task, by default 'default'
 
         Returns
         -------
         dict
             Containing the task meta-data
+
+        Raises
+        ------
+        AssertionError
+            Encryption has not yet been setup.
         """
         assert self.cryptor, "Encryption has not yet been setup!"
 
@@ -466,6 +540,8 @@ class ClientBase(object):
         node_id : int, optional
             The id of the node at which this result has been produced,
             this will return all results from this node, by default None
+        params : dict, optional
+            Additional query parameters, by default {}
 
         Returns
         -------
@@ -513,11 +589,22 @@ class ClientBase(object):
 
         return results
 
-    def _decrypt_result(self, result):
-        """Helper to decrypt the keys 'input' and 'result' in dict.
+    def _decrypt_result(self, result: dict) -> None:
+        """
+        Helper to decrypt the keys 'input' and 'result' in dict.
 
         Keys are replaced, but object reference remains intact: changes are
         made *in-place*.
+
+        Parameters
+        ----------
+        result : dict
+            The result dict to decrypt
+
+        Raises
+        ------
+        AssertionError
+            Encryption has not been initialized
         """
         assert self.cryptor, "Encryption has not been initialized"
         cryptor = self.cryptor
@@ -543,15 +630,23 @@ class ClientBase(object):
             # raise
 
     class SubClient:
-        """Create sub groups of commands using this SubClient"""
-        def __init__(self, parent):
+        """
+        Create sub groups of commands using this SubClient
+
+        Parameters
+        ----------
+        parent : UserClient
+            The parent client
+        """
+        def __init__(self, parent) -> None:
             self.parent: UserClient = parent
 
 
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, verbose=False, log_level='debug', **kwargs):
+    def __init__(self, *args, verbose=False, log_level='debug',
+                 **kwargs) -> None:
         """Create user client
 
         All paramters from `ClientBase` can be used here.
@@ -560,12 +655,14 @@ class UserClient(ClientBase):
         ----------
         verbose : bool, optional
             Whenever to print (info) messages, by default False
+        log_level : str, optional
+            The log level to use, by default 'debug'
         """
         super(UserClient, self).__init__(*args, **kwargs)
 
         # Replace logger by print logger
         # TODO in v4+, remove the verbose option and only keep log_level
-        self.log = self.get_logger(verbose, log_level)
+        self.log = self._get_logger(verbose, log_level)
 
         # attach sub-clients
         self.util = self.Util(self)
@@ -593,7 +690,7 @@ class UserClient(ClientBase):
         self.log.info("-" * 60)
 
     @staticmethod
-    def get_logger(enabled: bool, level: str) -> logging.Logger:
+    def _get_logger(enabled: bool, level: str) -> logging.Logger:
         """
         Create print-logger
 
@@ -630,7 +727,7 @@ class UserClient(ClientBase):
         return logger
 
     def authenticate(self, username: str, password: str,
-                     mfa_code: Union[int, str] = None) -> None:
+                     mfa_code: int | str = None) -> None:
         """Authenticate as a user
 
         It also collects some additional info about your user.
@@ -641,7 +738,7 @@ class UserClient(ClientBase):
             Username used to authenticate
         password : str
             Password used to authenticate
-        mfa_token: str or int
+        mfa_token: str | int
             Six-digit two-factor authentication code
         """
         auth_json = {
@@ -693,7 +790,7 @@ class UserClient(ClientBase):
             self.log.info('--> Retrieving additional user info failed!')
             self.log.error(traceback.format_exc())
 
-    def wait_for_results(self, task_id: int, sleep: float = 1) -> Dict:
+    def wait_for_results(self, task_id: int, sleep: float = 1) -> dict:
         """
         Polls the server to check when results are ready, and returns the
         results when the task is completed.
@@ -707,7 +804,7 @@ class UserClient(ClientBase):
 
         Returns
         -------
-        Dict
+        dict
             A dictionary with the results of the task, after it has completed.
         """
         # Disable logging (additional logging would prevent the 'wait' message
@@ -743,7 +840,7 @@ class UserClient(ClientBase):
         """Collection of general utilities"""
 
         def get_server_version(self) -> dict:
-            r"""View the version number of the vantage6-server
+            """View the version number of the vantage6-server
 
             Returns
             -------
@@ -903,14 +1000,11 @@ class UserClient(ClientBase):
         def generate_private_key(self, file_: str = None) -> None:
             """Generate new private key
 
-            ....
-
             Parameters
             ----------
             file_ : str, optional
                 Path where to store the private key, by default None
             """
-
             if not file_:
                 self.parent.log.info('--> Using current directory')
                 file_ = "private_key.pem"
@@ -968,7 +1062,7 @@ class UserClient(ClientBase):
 
             Notes
             -----
-            - pagination does not work in combination with scope
+            - Pagination does not work in combination with scope
               `organization` as pagination is missing at endpoint
               /organization/<id>/collaboration
             """
@@ -1059,7 +1153,7 @@ class UserClient(ClientBase):
                  ip: str = None, last_seen_from: str = None,
                  last_seen_till: str = None, page: int = 1, per_page: int = 20,
                  include_metadata: bool = True,
-                 ) -> list:
+                 ) -> list[dict]:
             """List nodes
 
             Parameters
@@ -1201,9 +1295,11 @@ class UserClient(ClientBase):
         """Collection of organization requests"""
 
         @post_filtering()
-        def list(self, name: str = None, country: int = None,
-                 collaboration: int = None, page: int = None,
-                 per_page: int = None, include_metadata: bool = True) -> list:
+        def list(
+            self, name: str = None, country: int = None,
+            collaboration: int = None, page: int = None, per_page: int = None,
+            include_metadata: bool = True
+        ) -> list[dict]:
             """List organizations
 
             Parameters
@@ -1225,7 +1321,7 @@ class UserClient(ClientBase):
 
             Returns
             -------
-            list of dicts
+            list[dict]
                 Containing meta-data information of the organizations
             """
             includes = ['metadata'] if include_metadata else []
@@ -1506,8 +1602,8 @@ class UserClient(ClientBase):
                 Rule ids that are assigned to this user. Note that you
                 can only assign rules that you own
 
-            Return
-            ----------
+            Returns
+            -------
             dict
                 Containing data of the new user
             """
@@ -1529,7 +1625,7 @@ class UserClient(ClientBase):
         def list(self, name: str = None, description: str = None,
                  organization: int = None, rule: int = None, user: int = None,
                  include_root: bool = None, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> list:
+                 include_metadata: bool = True) -> list[dict]:
             """List of roles
 
             Parameters
@@ -1558,7 +1654,7 @@ class UserClient(ClientBase):
 
             Returns
             -------
-            list of dicts
+            list[dict]
                 Containing roles meta-data
             """
             includes = ['metadata'] if include_metadata else []
@@ -1881,9 +1977,9 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(self, task: int = None, organization: int = None,
                  state: str = None, node: int = None,
-                 include_task: bool = False, started: Tuple[str, str] = None,
-                 assigned: Tuple[str, str] = None,
-                 finished: Tuple[str, str] = None, port: int = None,
+                 include_task: bool = False, started: tuple[str, str] = None,
+                 assigned: tuple[str, str] = None,
+                 finished: tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
                  include_metadata: bool = True) -> list:
             """List results
@@ -1900,11 +1996,11 @@ class UserClient(ClientBase):
                 Filter by node id
             include_task : bool, optional
                 Whenever to include the task or not, by default False
-            started: Tuple[str, str], optional
+            started: tuple[str, str], optional
                 Filter on a range of start times (format: yyyy-mm-dd)
-            assigned: Tuple[str, str], optional
+            assigned: tuple[str, str], optional
                 Filter on a range of assign times (format: yyyy-mm-dd)
-            finished: Tuple[str, str], optional
+            finished: tuple[str, str], optional
                 Filter on a range of finished times (format: yyyy-mm-dd)
             port: int, optional
                 Port on which result was computed
@@ -1918,15 +2014,12 @@ class UserClient(ClientBase):
 
             Returns
             -------
-            dict
-                Containing the key 'data' which contains a list of
+            dict | list[dict]
+                If include_metadata is True, a dictionary is returned
+                containing the key 'data' which contains a list of
                 results, and a key 'links' which contains the pagination
-                metadata
-
-            OR
-
-            list of dicts
-                When include_metadata is set to False, the metadata wrapper
+                metadata.
+                When include_metadata is False, the metadata wrapper
                 is stripped and only a list of results is returned
             """
             includes = []
@@ -1977,7 +2070,24 @@ class UserClient(ClientBase):
 
             return cleaned_results
 
-        def from_task(self, task_id: int, include_task: bool = False):
+        def from_task(
+            self, task_id: int, include_task: bool = False
+        ) -> list[dict]:
+            """
+            Get all results from a specific task
+
+            Parameters
+            ----------
+            task_id : int
+                Id of the task to get results from
+            include_task : bool, optional
+                Whenever to include the task or not, by default False
+
+            Returns
+            -------
+            list[dict]
+                Containing the results
+            """
             self.parent.log.info('--> Attempting to decrypt results!')
 
             # get_results also handles decryption
