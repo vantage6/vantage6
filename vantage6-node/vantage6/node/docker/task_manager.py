@@ -181,12 +181,12 @@ class DockerTaskManager(DockerBaseManager):
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
@@ -221,7 +221,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] or None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is inactive
         """
@@ -377,7 +377,7 @@ class DockerTaskManager(DockerBaseManager):
                 {"bind": self.data_folder, "mode": "rw"}
         return volumes
 
-    def _setup_environment_vars(self, algorithm_env: dict = {},
+    def _setup_environment_vars(self, algorithm_env: dict,
                                 database: str = 'default') -> dict:
         """"
         Set environment variables required to run the algorithm
@@ -386,6 +386,8 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         algorithm_env: dict
             Dictionary with additional environment variables to set
+        database: str
+            Label of the database to use
 
         Returns
         -------
