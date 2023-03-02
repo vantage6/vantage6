@@ -28,6 +28,9 @@ class ClientMockProtocol:
         self.lib = import_module(module)
         self.tasks = []
 
+    # TODO in v4+, don't provide a default value for list? There is no use
+    # in calling this function with 0 organizations as the task will never
+    # be executed in that case.
     def create_new_task(self, input_: dict,
                         organization_ids: list[int] = []) -> int:
         """
