@@ -2070,9 +2070,11 @@ class UserClient(ClientBase):
 
             return cleaned_results
 
+        # note: using typing.List instead of `list` to prevent referring
+        # to the list() function in an incorrect manner
         def from_task(
             self, task_id: int, include_task: bool = False
-        ) -> list[dict]:
+        ) -> typing.List[dict]:
             """
             Get all results from a specific task
 
