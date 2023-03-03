@@ -493,7 +493,8 @@ class VPNManager(DockerBaseManager):
                 isolated_interface = ip_interface
         return isolated_interface
 
-    def is_isolated_interface(self, ip_interface: dict,
+    @staticmethod
+    def is_isolated_interface(ip_interface: dict,
                               vpn_ip_isolated_netw: str) -> bool:
         """
         Return True if a network interface is the isolated network
@@ -548,7 +549,8 @@ class VPNManager(DockerBaseManager):
             remove=True,
         )
 
-    def _get_interface_from_idx(self, interfaces: list[dict],
+    @staticmethod
+    def _get_interface_from_idx(interfaces: list[dict],
                                 index: int) -> dict | None:
         """
         Get interface configuration based on interface index
@@ -571,7 +573,8 @@ class VPNManager(DockerBaseManager):
 
         return None
 
-    def _get_link_index(self, if_json: dict | list) -> int:
+    @staticmethod
+    def _get_link_index(if_json: dict | list) -> int:
         """
         Get the link index of an interface
 
