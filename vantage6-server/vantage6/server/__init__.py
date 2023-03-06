@@ -361,9 +361,8 @@ class ServerApp:
         else:
             # Non-numeric value is present in the config file. Warn and use
             # default
-            log.warning("Invalid value for 'refresh_token_expires_hours':"
-                        f" {hours_expire}. Using default value: "
-                        f"{default_hours} hours")
+            log.error(f"Invalid value for '{config_key}': {hours_expire}. "
+                      f"Using default value: {default_hours} hours")
             seconds_expire = int(float(default_hours) * 3600)
 
         return seconds_expire
