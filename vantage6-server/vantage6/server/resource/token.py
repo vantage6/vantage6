@@ -136,8 +136,7 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        user, code = user_login(self.config.get("password_policy", {}),
-                                username, password, self.mail)
+        user, code = user_login(self.config, username, password, self.mail)
         if code != HTTPStatus.OK:  # login failed
             log.error(f"Failed to login for user='{username}'")
             return user, code

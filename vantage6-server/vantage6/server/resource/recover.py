@@ -361,8 +361,8 @@ class RecoverTwoFactorSecret(ServicesResources):
             return ret
 
         # check password
-        user, code = user_login(self.config.get("password_policy", {}),
-                                user.username, password, self.mail)
+        user, code = user_login(self.config, user.username, password,
+                                self.mail)
         if code != HTTPStatus.OK:
             log.error(f"Failed to reset 2FA for user {username}, wrong "
                       "password")

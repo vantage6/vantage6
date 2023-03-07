@@ -8,6 +8,7 @@ from flask_mail import Mail
 
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
+from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.server import db
 from vantage6.server.model.user import User
 
@@ -15,13 +16,14 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def user_login(password_policy: dict, username: str,
-               password: str, mail: Mail) -> tuple[dict | db.User, HTTPStatus]:
+def user_login(
+    config: dict, username: str, password: str, mail: Mail
+) -> tuple[dict | db.User, HTTPStatus]:
     """
     Returns user a message in case of failed login attempt.
 
-    password_policy: dict
-        Dctionary with password policy settings
+    config: dict
+        Dictionary with configuration settings
     username: str
         Username of user to be logged in
     password: str
@@ -42,13 +44,15 @@ def user_login(password_policy: dict, username: str,
     failed_login_msg = "Failed to login"
     if db.User.username_exists(username):
         user = db.User.get_by_username(username)
+        password_policy = config.get("password_policy", {})
         max_failed_attempts = password_policy.get('max_failed_attempts', 5)
         inactivation_time = password_policy.get('inactivation_minutes', 15)
 
         is_blocked, min_rem = user.is_blocked(max_failed_attempts,
                                               inactivation_time)
         if is_blocked:
-            notify_user_blocked(user, max_failed_attempts, min_rem, mail)
+            notify_user_blocked(user, max_failed_attempts, min_rem, mail,
+                                config)
             return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
         elif user.check_password(password):
             user.failed_login_attempts = 0
@@ -67,8 +71,10 @@ def user_login(password_policy: dict, username: str,
     return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
 
 
-def notify_user_blocked(user: db.User, max_n_attempts: int,
-                        min_rem: int, mail: Mail) -> None:
+def notify_user_blocked(
+    user: db.User, max_n_attempts: int, min_rem: int, mail: Mail,
+    config: dict
+) -> None:
     """
     Sends an email to the user when his or her account is locked
 
@@ -83,6 +89,8 @@ def notify_user_blocked(user: db.User, max_n_attempts: int,
     mail: flask_mail.Mail
         An instance of the Flask mail class. Used to send email to user in case
         of too many failed login attempts.
+    config: dict
+        Dictionary with configuration settings
     """
     if not user.email:
         log.warning(f'User {user.username} is locked, but does not have'
@@ -90,18 +98,22 @@ def notify_user_blocked(user: db.User, max_n_attempts: int,
 
     log.info(f'User {user.username} is locked. Sending them an email.')
 
+    email_info = config.get("smtp", {})
+    email_sender = email_info.get("username", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+    support_email = config.get("support_email", email_sender)
+
     template_vars = {
         'firstname': user.firstname,
         'number_of_allowed_attempts': max_n_attempts,
         'ip': request.access_route[-1],
         'time': dt.datetime.now(dt.timezone.utc),
         'time_remaining': min_rem,
-        'support_email': 'support@vantage6.ai',
+        'support_email': support_email,
     }
 
     mail.send_email(
         "Failed login attempts on your vantage6 account",
-        sender="support@vantage6.ai",
+        sender=email_sender,
         recipients=[user.email],
         text_body=render_template("mail/blocked_account.txt", **template_vars),
         html_body=render_template("mail/blocked_account.html", **template_vars)
