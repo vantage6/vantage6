@@ -343,30 +343,29 @@ class ServerApp:
         hours_expire = self.ctx.config.get(config_key)
         if hours_expire is None:
             # No value is present in the config file, use default
-            refresh_expire = int(float(default_hours) * 3600)
+            seconds_expire = int(float(default_hours) * 3600)
         elif isinstance(hours_expire, (int, float)) or \
-                hours_expire.is_numeric():
+                hours_expire.replace(".", "").isnumeric():
             # Numeric value is present in the config file
-            refresh_expire = int(float(hours_expire) * 3600)
-            if refresh_expire < longer_than:
+            seconds_expire = int(float(hours_expire) * 3600)
+            if seconds_expire < longer_than:
                 log.warning(
                     f"Invalid value for '{config_key}': {hours_expire}. Tokens"
                     f" must be valid for at least {longer_than} seconds. Using"
-                    f" default value: {REFRESH_TOKENS_EXPIRE_HOURS} hours")
+                    f" default value: {default_hours} hours")
                 if is_refresh:
                     log.warning("Note that refresh tokens should be valid at "
                                 f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
                                 "seconds longer than access tokens.")
-                refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+                seconds_expire = int(float(default_hours) * 3600)
         else:
             # Non-numeric value is present in the config file. Warn and use
             # default
-            log.warning("Invalid value for 'refresh_token_expires_hours':"
-                        f" {hours_expire}. Using default value: "
-                        f"{REFRESH_TOKENS_EXPIRE_HOURS} hours")
-            refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+            log.error(f"Invalid value for '{config_key}': {hours_expire}. "
+                      f"Using default value: {default_hours} hours")
+            seconds_expire = int(float(default_hours) * 3600)
 
-        return refresh_expire
+        return seconds_expire
 
 
     def configure_api(self):
