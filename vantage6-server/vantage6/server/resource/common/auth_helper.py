@@ -88,24 +88,23 @@ def notify_user_blocked(user: db.User, max_n_attempts: int,
         log.warning(f'User {user.username} is locked, but does not have'
                     'an email registered. So no message has been sent.')
 
-    log.info(f'User {user.username} is locked')
+    log.info(f'User {user.username} is locked. Sending them an email.')
 
     template_vars = {
         'firstname': user.firstname,
         'number_of_allowed_attempts': max_n_attempts,
         'ip': request.access_route[-1],
         'time': dt.datetime.now(dt.timezone.utc),
-        'time_remaining': min_rem
+        'time_remaining': min_rem,
+        'support_email': 'support@vantage6.ai',
     }
 
     mail.send_email(
-        "Your account has been temporary suspended",
+        "Failed login attempts on your vantage6 account",
         sender="support@vantage6.ai",
         recipients=[user.email],
-        text_body=render_template("mail/blocked_account.txt",
-                                  **template_vars),
-        html_body=render_template("mail/blocked_account.html",
-                                  **template_vars)
+        text_body=render_template("mail/blocked_account.txt", **template_vars),
+        html_body=render_template("mail/blocked_account.html", **template_vars)
     )
 
 
