@@ -55,6 +55,10 @@ class NodeConfiguration(Configuration):
     }
 
 
+class TestConfiguration(Configuration):
+    VALIDATORS = {}
+
+
 class NodeConfigurationManager(ConfigurationManager):
 
     def __init__(self, name, *args, **kwargs):
@@ -73,3 +77,13 @@ class ServerConfigurationManager(ConfigurationManager):
     @classmethod
     def from_file(cls, path):
         return super().from_file(path, conf_class=ServerConfiguration)
+
+
+class TestingConfigurationManager(ConfigurationManager):
+
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(conf_class=TestConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path):
+        return super().from_file(path, conf_class=TestConfiguration)

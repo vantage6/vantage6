@@ -1,7 +1,7 @@
 import vantage6.server.globals as constants
 
 from vantage6.common.context import AppContext
-from vantage6.server.configuration.configuration_manager import (
+from vantage6.cli.configuration_manager import (
     TestingConfigurationManager
 )
 
