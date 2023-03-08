@@ -1,6 +1,18 @@
 Release notes
 =============
 
+3.8.1
+-----
+
+*8 march 2023*
+
+- **Bugfix**
+
+ - In 3.8.0, starting RabbitMQ for horizontal scaling caused a server crash
+   due to a missing ``kombu`` dependency. This dependency was wrongly removed
+   in updating all dependencies for python 3.10 (
+   `PR#585 <https://github.com/vantage6/vantage6/pull/585>`_).
+
 3.8.0
 -----
 
