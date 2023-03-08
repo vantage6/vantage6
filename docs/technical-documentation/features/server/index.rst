@@ -27,7 +27,6 @@ The following pages each describe one feature of the vantage6 server.
 .. * Database
 .. * Models / structure
 .. * Relation to other components
-.. * VPN server
 .. * CLI (vserver local)
 .. * Clients (Python, R) (maybe elsewhere?)
 .. * UI (maybe elsewhere?)
