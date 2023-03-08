@@ -4,21 +4,24 @@ Release notes
 3.8.0
 -----
 
-*18 march 2023*
+*8 march 2023*
 
 - **Security**
 
  - Refresh tokens are no longer indefinitely valid (
    `CVE#CVE-2023-23929 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-23929>`_,
    `commit <https://github.com/vantage6/vantage6/commit/48ebfca42359e9a6743e9598684585e2522cdce8>`_).
- - It was possible to obtain usernames by brute forcing the login (
+ - It was possible to obtain usernames by brute forcing the login since v3.3.0.
+   This was due to a change where users got to see a message their account was
+   blocked after N failed login attempts. Now, users get an email instead if
+   their account is blocked (
    `CVE#CVE-2022-39228 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-39228>`_,
    `commit <https://github.com/vantage6/vantage6/commit/ab4381c35d24add06f75d5a8a284321f7a340bd2>`_
    ).
- - Assigning existing users to a different organizations was possible. It may
+ - Assigning existing users to a different organizations was possible. This may
    lead to unintended access: if a user from organization A is accidentally
    assigned to organization B, they will retain their permissions and
-   therefore might be able to access stuff they should not be allowed to
+   therefore might be able to access resources they should not be allowed to
    access (`CVE#CVE-2023-22738 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-22738>`_,
    `commit <https://github.com/vantage6/vantage6/commit/798aca1de142a4eca175ef51112e2235642f4f24>`_).
 
@@ -27,11 +30,14 @@ Release notes
  - Python version upgrade to 3.10 and many dependencies are upgraded (
    `PR#513 <https://github.com/vantage6/vantage6/pull/513>`_,
    `Issue#251 <https://github.com/vantage6/vantage6/issues/251>`_).
- - Added ``AlgorithmClient`` to replace the outdated ``ContainerClient`` (
+ - Added ``AlgorithmClient`` which will replace ``ContainerClient`` in v4.0.
+   For now, the new ``AlgorithmClient`` can be used by specifying
+   ``use_new_client=True`` in the algorithm wrapper (
    `PR#510 <https://github.com/vantage6/vantage6/pull/510>`_,
    `Issue#493 <https://github.com/vantage6/vantage6/issues/493>`_).
- - It is now possible to request some of the node configuration settings for a
-   specific node (`PR#523 <https://github.com/vantage6/vantage6/pull/523>`_,
+ - It is now possible to request some of the node configuration settings, e.g.
+   which algorithms they allow to be run (
+   `PR#523 <https://github.com/vantage6/vantage6/pull/523>`_,
    `Issue#12 <https://github.com/vantage6/vantage6/issues/12>`_).
  - Added ``auto_wrapper`` which detects the data source types and reads the
    data accordingly. This removes the need to rebuild every algorithm for
@@ -65,8 +71,6 @@ Release notes
    each other through the VPN. This has been fixed (
    `PR#532 <https://github.com/vantage6/vantage6/pull/532>`_,
    `Issue#336 <https://github.com/vantage6/vantage6/issues/336>`_).
-
-
 
 
 3.7.3
