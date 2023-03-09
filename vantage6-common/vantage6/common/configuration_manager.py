@@ -228,7 +228,7 @@ class ConfigurationManager(object):
         """
         return [key for key, env in self.environments.items() if env]
 
-    def _get_environment_from_dict(self, dic: dict, env: str):
+    def _get_environment_from_dict(self, dic: dict, env: str) -> dict:
         """
         Get a configuration from a dictionary.
 
