@@ -8,7 +8,6 @@ import logging
 
 from http import HTTPStatus
 from requests import Response
-from typing import Callable, Union
 
 from flask import Flask, request, jsonify
 
@@ -31,7 +30,7 @@ server_url = None
 RETRY = 3
 
 
-def get_method(method: str) -> Callable:
+def get_method(method: str) -> callable:
     """
     Obtain http method based on string identifier
 
@@ -170,7 +169,7 @@ def decrypt_result(run: dict) -> dict:
 
 
 def get_response_json_and_handle_exceptions(
-        response: Response) -> Union[dict, None]:
+        response: Response) -> dict | None:
     """
     Obtain json content from request response
 
@@ -181,7 +180,7 @@ def get_response_json_and_handle_exceptions(
 
     Returns
     -------
-    dict or None
+    dict | None
         Dict containing the json body
     """
     try:

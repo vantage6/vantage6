@@ -1,7 +1,6 @@
 import logging
 
 from threading import Thread
-from typing import List
 from flask_mail import Message, Mail
 from flask import Flask
 
@@ -45,7 +44,7 @@ class MailService:
                 log.error("Mailserver error!")
                 log.debug(e)
 
-    def send_email(self, subject: str, sender: str, recipients: List[str],
+    def send_email(self, subject: str, sender: str, recipients: list[str],
                    text_body: str, html_body: str) -> None:
         """
         Send an email.

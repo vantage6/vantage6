@@ -1,8 +1,6 @@
 import jwt
 import pickle
 
-from typing import List, Union
-
 from vantage6.client import ClientBase
 from vantage6.client import base64s_to_bytes, bytes_to_base64s
 
@@ -30,7 +28,7 @@ class AlgorithmClient(ClientBase):
         Arguments passed to the parent ClientBase class.
     """
 
-    def __init__(self, token: str, *args, **kwargs):
+    def __init__(self, token: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
@@ -61,6 +59,16 @@ class AlgorithmClient(ClientBase):
         Make a request to the central server. This overwrites the parent
         function so that containers will not try to refresh their token, which
         they would be unable to do.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments passed to the parent ClientBase.request function.
+
+        Returns
+        -------
+        dict
+            Response from the central server.
         """
         return super().request(*args, **kwargs, retry=False)
 
@@ -72,7 +80,7 @@ class AlgorithmClient(ClientBase):
         job_id from the central server.
         """
 
-        def get(self, task_id: int) -> List:
+        def get(self, task_id: int) -> list:
             """
             Obtain algorithm runs from a specific task at the server.
 
@@ -90,7 +98,7 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List
+            list
                 List of algorithm run data. The type of the results depends on
                 the algorithm.
             """
@@ -138,7 +146,7 @@ class AlgorithmClient(ClientBase):
             )
 
         def create(
-            self, input_: bytes, organization_ids: List[int] = None,
+            self, input_: bytes, organization_ids: list[int] = None,
             name: str = "subtask", description: str = None
         ) -> dict:
             """
@@ -152,8 +160,8 @@ class AlgorithmClient(ClientBase):
             ----------
             input_ : bytes
                 Input to the task. Should be b64 encoded.
-            organization_ids : List[int], optional
-                List of organization IDs that should execute the task
+            organization_ids : list[int]
+                List of organization IDs that should execute the task.
             name: str, optional
                 Name of the subtask
             description : str, optional
@@ -203,7 +211,7 @@ class AlgorithmClient(ClientBase):
         def get_addresses(
             self, include_children: bool = False, include_parent: bool = False,
             label: str = None
-        ) -> Union[List[dict], dict]:
+        ) -> list[dict] | dict:
             """
             Get information about the VPN IP addresses and ports of other
             algorithm containers involved in the current task. These addresses
@@ -224,7 +232,7 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List[dict] or dict
+            list[dict] | dict
                 List of dictionaries containing the IP address and port number,
                 and other information to identify the containers. If obtaining
                 the VPN addresses from the server fails, a dictionary with a
@@ -253,10 +261,15 @@ class AlgorithmClient(ClientBase):
             ----------
             id: int
                 ID of the organization to retrieve
+
+            Returns
+            -------
+            dict
+                Dictionary containing the organization data.
             """
             return self.request(f"organization/{id_}")
 
-        def list(self) -> List[dict]:
+        def list(self) -> list[dict]:
             """
             Obtain all organization in the collaboration.
 
@@ -267,7 +280,7 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List[dict]
+            list[dict]
                 List of organizations in the collaboration.
             """
             organizations = self.request(
@@ -302,6 +315,7 @@ class AlgorithmClient(ClientBase):
             Returns
             -------
             dict
-                Dictionary containing the node data.
+                Dictionary containing data on the node this algorithm is
+                running on.
             """
             return self.request(f"node/{self.host_node_id}")

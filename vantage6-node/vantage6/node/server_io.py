@@ -6,7 +6,6 @@ import jwt
 import datetime
 import time
 
-from typing import Dict, Tuple
 from threading import Thread
 
 from vantage6.common import WhoAmI
@@ -24,15 +23,18 @@ class NodeClient(ClientBase):
         self.collaboration_id = None
         self.whoami = None
 
-    def authenticate(self, api_key: str):
-        """ Nodes authentication at the central server.
+    def authenticate(self, api_key: str) -> None:
+        """
+        Nodes authentication at the central server.
 
-            It also identifies itself by retrieving the collaboration
-            and organization to which this node belongs. The server
-            returns a JWT-token that is used in all succeeding requests.
+        It also identifies itself by retrieving the collaboration
+        and organization to which this node belongs. The server
+        returns a JWT-token that is used in all succeeding requests.
 
-            :param api_key: api-key used to authenticate to the central
-                server
+        Parameters
+        ----------
+        api_key : str
+            The api key of the node.
         """
         super().authenticate({"api_key": api_key}, path="token/node")
 
@@ -78,20 +80,27 @@ class NodeClient(ClientBase):
                     int(time_until_expiry - REFRESH_BEFORE_EXPIRES_SECONDS + 1)
                 )
 
-    def request_token_for_container(self, task_id: int, image: str):
+    def request_token_for_container(self, task_id: int, image: str) -> dict:
         """ Request a container-token at the central server.
 
-            This token is used by algorithm containers that run on this
-            node. These algorithms can then post tasks and retrieve
-            child-runs (usually refered to as a master container).
-            The server performs a few checks (e.g. if the task you
-            request the key for is still open) before handing out this
-            token.
+        This token is used by algorithm containers that run on this
+        node. These algorithms can then post tasks and retrieve
+        child-results (usually refered to as a master container).
+        The server performs a few checks (e.g. if the task you
+        request the key for is still open) before handing out this
+        token.
 
-            :param task_id: id from the task, which is going to use this
-                container-token (a task results in a algorithm-
-                container at the node)
-            :param image: image-name of the task
+        Parameters
+        ----------
+        task_id : int
+            id from the task, which is going to use this container token
+        image : str
+            Docker image name of the task
+
+        Returns
+        -------
+        dict
+            The container token.
         """
         self.log.debug(
             f"requesting container token for task_id={task_id} "
@@ -102,45 +111,74 @@ class NodeClient(ClientBase):
             "image": image
         })
 
-    def get_results(self, id=None, state=None, include_task=False,
-                    task_id=None):
-        """ Obtain the algorithm run data for a specific task.
+    def get_results(
+        self, id_: int = None, state: str = None, include_task: bool = False,
+        task_id: int = None
+    ) -> dict:
+        """
+        Obtain the results for a specific task.
 
-            Overload the definition of the parent by entering the
-            task_id automatically.
+        Overload the definition of the parent by entering the
+        task_id automatically.
+
+        Parameters
+        ----------
+        id_ : int, optional
+            ID of the result, by default None
+        state : str, optional
+            State of the result, by default None
+        include_task : bool, optional
+            Include the task in the result, by default False
+        task_id : int, optional
+            ID of the task, by default None
+
+        Returns
+        -------
+        dict
+            The results.
         """
         return super().get_results(
-            id=id,
+            id=id_,
             state=state,
             include_task=include_task,
             task_id=task_id,
             node_id=self.whoami.id_
         )
 
-    def is_encrypted_collaboration(self):
-        """ Boolean whenever the encryption is enabled.
+    def is_encrypted_collaboration(self) -> bool:
+        """
+        Check whether the encryption is enabled.
 
-            End-to-end encryption is per collaboration managed at the
-            central server. It is important to note that the local
-            configuration-file should allow explicitly for unencrpyted
-            messages. This function returns the setting from the server.
+        End-to-end encryption is per collaboration managed at the
+        central server. It is important to note that the local
+        configuration-file should allow explicitly for unencrpyted
+        messages. This function returns the setting from the server.
+
+        Returns
+        -------
+        bool
+            True if the collaboration is encrypted, False otherwise.
         """
         response = self.request(f"collaboration/{self.collaboration_id}")
         return response.get("encrypted") == 1
 
-    def set_task_start_time(self, id: int):
-        """ Sets the start time of the task at the central server.
-
-            This is important as this will note that the task has been
-            started, and is waiting for restuls.
-
-            :param id: id of the task to set the start-time of
+    def set_task_start_time(self, id_: int) -> None:
         """
-        self.patch_results(id, data={
+        Sets the start time of the task at the central server.
+
+        This is important as this will note that the task has been
+        started, and is waiting for restuls.
+
+        Parameters
+        ----------
+        id_ : int
+            ID of the task.
+        """
+        self.patch_results(id_, data={
             "started_at": datetime.datetime.now().isoformat()
         })
 
-    def patch_results(self, id: int, data: Dict,
+    def patch_results(self, id_: int, data: dict,
                       init_org_id: int = None) -> None:
         """
         Update the algorithm run data at the central server.
@@ -150,7 +188,7 @@ class NodeClient(ClientBase):
 
         Parameters
         ----------
-        id: int
+        id_: int
             ID of the run to patch
         data: Dict
             Dictionary of fields that are to be patched
@@ -188,9 +226,9 @@ class NodeClient(ClientBase):
         else:
             self.log.debug("Just patchin'")
 
-        return self.request(f"run/{id}", json=data, method='patch')
+        return self.request(f"run/{id_}", json=data, method='patch')
 
-    def get_vpn_config(self) -> Tuple[bool, str]:
+    def get_vpn_config(self) -> tuple[bool, str]:
         """
         Obtain VPN configuration from the server
 
@@ -221,6 +259,11 @@ class NodeClient(ClientBase):
         ----------
         ovpn_file: str
             The path to the current ovpn configuration on disk
+
+        Returns
+        -------
+        bool
+            Whether or not the refresh was successful
         """
         # Extract the contents of the VPN file
         with open(ovpn_file, 'r') as file:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from enum import Enum as Enumerate
-from typing import Union
 
 from sqlalchemy import Column, Text, String, Enum
 from sqlalchemy.orm import relationship
@@ -63,8 +62,7 @@ class Rule(Base):
                          secondary="UserPermission")
 
     @classmethod
-    def get_by_(cls, name: str, scope: str, operation: str
-                ) -> Union[Rule, None]:
+    def get_by_(cls, name: str, scope: str, operation: str) -> Rule | None:
         """
         Get a rule by its name, scope and operation.
 

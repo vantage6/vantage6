@@ -1,4 +1,3 @@
-from typing import List
 from sqlalchemy import Column, String, ForeignKey, Integer, sql
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property

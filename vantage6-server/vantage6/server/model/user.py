@@ -3,7 +3,6 @@ import bcrypt
 import re
 import datetime as dt
 
-from typing import Tuple, Union
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, validates
 
@@ -112,7 +111,7 @@ class User(Authenticatable):
         """
         return self.hash(password)
 
-    def set_password(self, pw: str) -> Union[str, None]:
+    def set_password(self, pw: str) -> str | None:
         """
         Set the password of the current user. This function doesn't save the
         new password to the database
@@ -169,7 +168,7 @@ class User(Authenticatable):
         return False
 
     def is_blocked(self, max_failed_attempts: int,
-                   inactivation_in_minutes: int) -> Tuple[bool, str | None]:
+                   inactivation_in_minutes: int) -> tuple[bool, str | None]:
         """
         Check if user can login or if they are temporarily blocked because they
         entered a wrong password too often

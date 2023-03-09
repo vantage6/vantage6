@@ -1,11 +1,10 @@
-from typing import List
 from enum import Enum
 
 from vantage6.server.model.rule import Operation, Scope
 
 
-# Name of the default roles
 class DefaultRole(str, Enum):
+    """ Enum containing the names of the default roles """
     ROOT = "Root"
     CONTAINER = "container"
     NODE = "node"
@@ -19,7 +18,7 @@ class DefaultRole(str, Enum):
 # function because that module has a connection to the database. This should
 # not be necessary. Fix that after fixing the circular imports described in
 # https://github.com/vantage6/vantage6/issues/53
-def get_default_roles(db) -> List[dict]:
+def get_default_roles(db) -> list[dict]:
     """
     Get a list containing the default roles and their rules, so that they may
     be created in the database
