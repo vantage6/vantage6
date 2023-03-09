@@ -16,6 +16,7 @@ import shutil
 from typing import NamedTuple
 from pathlib import Path
 
+from vantage6.common import logger_name
 from vantage6.common import get_database_config
 from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
@@ -26,7 +27,6 @@ from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
-from vantage6.node.util import logger_name
 from vantage6.node.server_io import NodeClient
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
