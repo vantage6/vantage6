@@ -122,7 +122,7 @@ class NetworkManager(object):
         self.network.reload()
         return container in self.network.containers
 
-    def connect(self, container_name: str, aliases: list[str] = [],
+    def connect(self, container_name: str, aliases: list[str] = None,
                 ipv4: str | None = None) -> None:
         """
         Connect a container to the network.
