@@ -8,6 +8,7 @@ import json
 
 from pathlib import Path
 
+from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
@@ -15,7 +16,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -304,20 +305,22 @@ class DockerTaskManager(DockerBaseManager):
         return vpn_ports
 
     @staticmethod
-    def _printable_input(input_: str) -> str:
+    def _printable_input(input_: str | dict) -> str:
         """
         Return a version of the input with limited number of characters
 
         Parameters
         ----------
-        input: str
-            Input of a task
+        input: str | dict
+            Deserialized input of a task
 
         Returns
         -------
         str
             Input with limited number of characters, to be printed to logs
         """
+        if isinstance(input_, dict):
+            input_ = str(input_)
         if len(input_) > 550:
             return f'{input_[:500]}... ({len(input_)-500} characters omitted)'
         return input_
