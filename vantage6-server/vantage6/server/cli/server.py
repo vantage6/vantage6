@@ -35,7 +35,27 @@ help_ = {
 }
 
 
-def click_insert_context(func):
+def click_insert_context(func: callable) -> callable:
+    """
+    Decorator to insert a ServerContext object into the function.
+
+    This decorator will insert a ServerContext object into the function. The
+    ServerContext object is created based on the configuration file that is
+    selected by the user. The user can select the configuration file by
+    supplying the name of the configuration file, or by supplying the path to
+    the configuration file. The decorator will also initialize the database
+    connection.
+
+    Parameters
+    ----------
+    func : callable
+        The function to decorate.
+
+    Returns
+    -------
+    callable
+        The decorated function.
+    """
 
     # add option decorators
     @click.option('-n', '--name', default=None, help=help_["name"])
@@ -98,7 +118,7 @@ def click_insert_context(func):
 
 
 @click.group(name='server')
-def cli_server():
+def cli_server() -> None:
     """Subcommand `vserver`."""
     pass
 
@@ -112,9 +132,22 @@ def cli_server():
 @click.option('--debug', is_flag=True,
               help='run server in debug mode (auto-restart)')
 @click_insert_context
-def cli_server_start(ctx, ip, port, debug):
-    """Start the server."""
+def cli_server_start(ctx: ServerContext, ip: str, port: str,
+                     debug: bool) -> None:
+    """
+    Start the server.
 
+    Parameters
+    ----------
+    ctx : ServerContext
+        The server context.
+    ip : str
+        The ip address to listen on.
+    port : str
+        The port to listen on.
+    debug : bool
+        Run server in debug mode (auto-restart).
+    """
     info("Starting server.")
 
     # Run the server
@@ -129,8 +162,8 @@ def cli_server_start(ctx, ip, port, debug):
 #   list
 #
 @cli_server.command(name='list')
-def cli_server_configuration_list():
-    """Print the available configurations."""
+def cli_server_configuration_list() -> None:
+    """Print the available servers."""
 
     click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
     click.echo("-"*70)
@@ -163,8 +196,15 @@ def cli_server_configuration_list():
 #
 @cli_server.command(name='files')
 @click_insert_context
-def cli_server_files(ctx):
-    """List files locations of a server instance."""
+def cli_server_files(ctx: ServerContext) -> None:
+    """
+    List files locations of a server instance.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        The context of the server instance.
+    """
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
     info(f"Database           = {ctx.get_database_uri()}")
@@ -180,9 +220,19 @@ def cli_server_files(ctx):
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
-def cli_server_new(name, environment, system_folders):
-    """Create new configuration."""
+def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
+    """
+    Create new server configuration.
 
+    Parameters
+    ----------
+    name : str
+        The name of the configuration.
+    environment : str
+        The environment of the configuration.
+    system_folders : bool
+        Whether to use system folders or not.
+    """
     if not name:
         name = q.text("Please enter a configuration-name:").ask()
         name_new = name.replace(" ", "-")
@@ -228,11 +278,22 @@ def cli_server_new(name, environment, system_folders):
 @click.argument('file_', type=click.Path(exists=True))
 @click.option('--drop-all', is_flag=True, default=False)
 @click_insert_context
-def cli_server_import(ctx, file_, drop_all):
-    """ Import organizations/collaborations/users and tasks.
-
-        Especially usefull for testing purposes.
+def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool) -> None:
     """
+    Import organizations/collaborations/users and tasks. Mainly useful for
+    testing purposes.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        The context of the server instance.
+    file_ : str
+        The YAML file with resources to import.
+    drop_all : bool
+        Whether to drop all tables before importing.
+    """
+    # Note: ctx appears to be unused but is needed for the click_insert_context
+    # to select the server in which to import the data.
     info("Reading yaml file.")
     with open(file_) as f:
         entities = yaml.safe_load(f.read())
@@ -246,9 +307,21 @@ def cli_server_import(ctx, file_, drop_all):
 #
 @cli_server.command(name='shell')
 @click_insert_context
-def cli_server_shell(ctx):
-    """ Run a iPython shell. """
-    # shell.init(ctx.environment)
+def cli_server_shell(ctx: ServerContext) -> None:
+    """
+    Run an iPython shell.
+
+    Note that using the shell is not recommended, as there are no checks on
+    the validity of the data you are entering. It is better to use the UI,
+    Python client, or the API.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        The context of the server instance.
+    """
+    # Note: ctx appears to be unused but is needed for the click_insert_context
+    # to select the server and start the database connection.
     c = get_config()
     c.InteractiveShellEmbed.colors = "Linux"
 
@@ -269,6 +342,6 @@ def cli_server_shell(ctx):
 #   version
 #
 @cli_server.command(name='version')
-def cli_server_version():
-    """Returns current version of vantage6 services installed."""
+def cli_server_version() -> None:
+    """ Prints current version of vantage6 services installed. """
     click.echo(__version__)

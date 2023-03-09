@@ -1,5 +1,4 @@
 import logging
-from typing import Dict
 import jwt
 
 from flask import request, session
@@ -204,7 +203,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.error(e)
 
-    def on_algorithm_status_change(self, data: Dict) -> None:
+    def on_algorithm_status_change(self, data: dict) -> None:
         """
         An algorithm container has changed its status. This status change may
         be that the algorithm has finished, crashed, etc. Here we notify the

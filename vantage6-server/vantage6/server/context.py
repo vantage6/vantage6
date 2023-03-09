@@ -7,23 +7,40 @@ from vantage6.cli.configuration_manager import (
 
 
 class TestContext(AppContext):
+    """
+    Server context for testing purposes.
+
+    Note that this context is specific to the server: for nodes, there is a
+    separate test context.
+    """
 
     INST_CONFIG_MANAGER = TestingConfigurationManager
     LOGGING_ENABLED = False
 
     @classmethod
-    def from_external_config_file(cls, path):
+    def from_external_config_file(cls) -> 'TestContext':
+        """
+        Create a context the unittest configuration file.
+
+        Returns
+        -------
+        TestContext
+            Context object
+        """
         return super().from_external_config_file(
             cls.test_config_location(),
             "unittest", "application", True
         )
 
     @staticmethod
-    def test_config_location():
+    def test_config_location() -> str:
+        """
+        Location of the unittest configuration file.
+
+        Returns
+        -------
+        str
+            Path to the unittest configuration file
+        """
         return (constants.PACKAGE_FOLDER / constants.APPNAME /
                 "server" / "_data" / "unittest_config.yaml")
-
-    @staticmethod
-    def test_data_location():
-        return (constants.PACKAGE_FOLDER / constants.APPNAME /
-                "server" / "_data")

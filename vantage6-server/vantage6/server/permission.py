@@ -2,7 +2,6 @@ import logging
 import importlib
 
 from collections import namedtuple
-from typing import Callable, List, Union
 from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.globals import RESOURCES
@@ -199,7 +198,7 @@ class PermissionManager:
 
         self.collection(resource).add(rule.scope, rule.operation)
 
-    def appender(self, name: str) -> Callable:
+    def appender(self, name: str) -> callable:
         """
         Add a module's rules to the rule collection
 
@@ -296,7 +295,7 @@ class PermissionManager:
         return result
 
     @staticmethod
-    def verify_user_rules(rules: List[Rule]) -> Union[dict, bool]:
+    def verify_user_rules(rules: list[Rule]) -> dict | bool:
         """
         Check if an user, node or container has all the `rules`
 
