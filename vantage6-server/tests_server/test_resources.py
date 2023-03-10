@@ -52,8 +52,7 @@ class TestResources(unittest.TestCase):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
 
-        ctx = context.TestContext.from_external_config_file(
-            "unittest_config.yaml")
+        ctx = context.TestContext.from_external_config_file()
 
         # create server instance. Patch the start_background_task method
         # to prevent the server from starting a ping/pong thread that will
