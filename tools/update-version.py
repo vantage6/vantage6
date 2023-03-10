@@ -18,8 +18,8 @@ def info(msg: str):
 
 # pattern to use in the regex to update version
 pattern = (
-    r"(version_info\s*=\s*\(*)(\s*\d+,\s*\d+,\s*\d+,)(\s*)('\w*')"
-    r"(,\s*__build__)(,\s*)(\d+)(\)*)"
+    r"(version_info\s*=\s*\()(\s*\d+,\s*\d+,\s*\d+,)(\s*)('\w*')"
+    r"(,\s*__build__)(,\s*)(\d+)(\))"
 )
 
 
@@ -89,7 +89,7 @@ def update_version(version: str) -> None:
             content = f.read()
             new_content = re.sub(
                 pattern,
-                r"\1 {}, {}, {},\3\4\5\6\7\8".format(major, minor, patch),
+                r"\g<1>{}, {}, {},\3\4\5\6\7\8".format(major, minor, patch),
                 content
             )
 
