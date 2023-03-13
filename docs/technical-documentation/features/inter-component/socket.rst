@@ -13,7 +13,8 @@ central server is the socketIO server; the clients can be nodes or users.
 
 .. note::
     The vantage6 user interface automatically establishes a socketIO connection
-    with the server when the user logs in. The user is then
+    with the server when the user logs in. The user can then view the updates
+    they are allowed to see.
 
 Permissions
 +++++++++++

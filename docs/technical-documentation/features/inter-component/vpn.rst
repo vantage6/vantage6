@@ -27,6 +27,12 @@ have to be adapted specifically for the vantage6 infrastructure, which is not
 always feasible. In such cases, it is better to setup a VPN connection to
 allow algorithm containers to communicate directly with one another.
 
+Another reason to use a VPN connection is that for some algorithms, routing
+all partial results through the central server can be undeseriable. For example,
+with many algorithms using an `MPC <https://en.wikipedia.org/wiki/Secure_multi-party_computation>`_
+protocol, it may be possible for the central party to reconstruct the original
+data if they have access to all partial results.
+
 How to use
 ^^^^^^^^^^
 
@@ -128,7 +134,7 @@ and port of each of the algorithms running that task.
 How does it work?
 ^^^^^^^^^^^^^^^^^
 
-As said before, the implementation of algorithm-to-algorithm communication is
+As mentioned before, the implementation of algorithm-to-algorithm communication is
 discussed at length in this `paper <https://ebooks.iospress.nl/pdf/doi/10.3233/SHTI220682>`_.
 Below, we will give a brief overview of the implementation.
 
