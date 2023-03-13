@@ -43,7 +43,7 @@ from enum import Enum
 from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
-from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
@@ -299,7 +299,7 @@ class Node(object):
         )
 
         # save task status to the server
-        update={'status': task_status}
+        update = {'status': task_status}
         if task_status == TaskStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
@@ -797,6 +797,23 @@ class Node(object):
 
         self.log.info(f'Connected to host={self.server_io.host} on port='
                       f'{self.server_io.port}')
+
+        self.log.debug("Starting thread for to ping the server to notify this"
+                       " node is online.")
+        self.socketIO.start_background_task(self.__socket_ping_worker)
+
+    def __socket_ping_worker(self) -> None:
+        """
+        Send ping messages periodically to the server over the socketIO
+        connection to notify the server that this node is online
+        """
+        while True:
+            try:
+                self.socketIO.emit('ping', namespace='/tasks')
+            except Exception:
+                self.log.exception('Ping thread had an exception')
+            # Wait before sending next ping
+            time.sleep(PING_INTERVAL_SECONDS)
 
     def get_task_and_add_to_queue(self, task_id: int) -> None:
         """
