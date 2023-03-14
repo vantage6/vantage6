@@ -137,13 +137,17 @@ class NodeClient(ClientBase):
         dict
             The results.
         """
-        return super().get_results(
+        data = super().get_results(
             id=id_,
             state=state,
             include_task=include_task,
             task_id=task_id,
             node_id=self.whoami.id_
         )
+        # hack: strip pagination metadata
+        if isinstance(data, dict) and 'data' in data:
+            return data['data']
+        return data
 
     def is_encrypted_collaboration(self) -> bool:
         """
