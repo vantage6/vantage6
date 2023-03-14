@@ -61,7 +61,7 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('run', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('port', Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.RECEIVE),
     ]
     VIEWER_ROLE = {
         'name': DefaultRole.VIEWER,
@@ -91,7 +91,7 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.DELETE),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.CREATE),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.EDIT),
-        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.CREATE),
+        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.SEND),
     ]
     ORG_ADMIN_ROLE = {
         'name': DefaultRole.ORG_ADMIN,
@@ -113,8 +113,8 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.CREATE),
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.VIEW),
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE),
-        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.VIEW),
-        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.CREATE),
+        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.RECEIVE),
+        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.SEND),
     ]
     COLLAB_ADMIN_ROLE = {
         'name': DefaultRole.COL_ADMIN,

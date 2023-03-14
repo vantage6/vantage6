@@ -6,7 +6,6 @@ from sqlalchemy.orm.exc import NoResultFound
 from vantage6.server.model.base import Base, DatabaseSessionManager
 from vantage6.server.model.node import Node
 from vantage6.server.model.organization import Organization
-from vantage6.server.model.collaboration import Collaboration
 
 
 class Collaboration(Base):
