@@ -11,6 +11,7 @@ import { catchError, filter, switchMap, take, tap } from 'rxjs/operators';
 
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { environment } from 'src/environments/environment';
+import { SignOutService } from '../services/common/sign-out.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -21,7 +22,8 @@ export class AuthInterceptor implements HttpInterceptor {
 
   constructor(
     private http: HttpClient,
-    private tokenStorage: TokenStorageService
+    private tokenStorage: TokenStorageService,
+    private signOutService: SignOutService
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<any> {
@@ -33,8 +35,14 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(request).pipe(
       catchError((error) => {
         if (error instanceof HttpErrorResponse && error.status === 401) {
-          // if there is a 401 error, try token refresh
-          return this.handle401Error(request, next);
+          // if there is a 401 error, try token refresh. Unless the token
+          // refresh already returned a 401, in which case we need to logout
+          if (request.url === `${environment.api_url}/token/refresh`) {
+            this.signOutService.signOut();
+            return of(true);
+          } else {
+            return this.handle401Error(request, next);
+          }
         } else {
           return throwError(error);
         }
@@ -92,10 +100,6 @@ export class AuthInterceptor implements HttpInterceptor {
       .pipe(
         tap((token) => {
           this.tokenStorage.setLoginData(token);
-        }),
-        catchError((error) => {
-          this.tokenStorage.signOut();
-          return of(false);
         })
       );
   }
