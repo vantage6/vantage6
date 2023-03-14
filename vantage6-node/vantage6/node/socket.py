@@ -2,9 +2,8 @@ import logging
 
 from socketio import ClientNamespace
 
+from vantage6.common import logger_name
 from vantage6.common.task_status import TaskStatus, has_task_failed
-from vantage6.node.util import logger_name
-
 
 class NodeTaskNamespace(ClientNamespace):
     """Class that handles incoming websocket events."""

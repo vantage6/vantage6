@@ -39,6 +39,7 @@ from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
+from vantage6.common import logger_name
 from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
@@ -54,7 +55,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace

@@ -11,12 +11,8 @@ from requests import Response
 
 from flask import Flask, request, jsonify
 
+from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.node.server_io import NodeClient
-from vantage6.node.util import (
-    logger_name,
-    base64s_to_bytes,
-    bytes_to_base64s
-)
 
 # Initialize FLASK
 app = Flask(__name__)
