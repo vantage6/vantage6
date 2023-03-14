@@ -114,34 +114,22 @@ From the same page you should request a CVE number so we can alert dependent
 software projects. Github will review the request. We are not sure what this
 entails, but so far they approved all advisories.
 
+.. _community-meetings:
 
-Community Planning
+Community Meetings
 ------------------
+
 We host bi-monthly community meetings intended for aligning development
 efforts. Anyone is welcome to join although they are mainly intended for
 infrastructure and algorithm developers. There is an opportunity to present
 what your team is working on an find collaboration partners.
 
-Community meetings schedule:
+Community meetings are usually held on the third Thursday of the month at 10:00
+AM CET on Microsoft Teams. Reach out on `Discord <https://discord.gg/yAyFf6Y>`_
+if you want to join the community meeting.
 
-.. list-table:: Community meetings
-   :name: meetings
-   :widths: 50 50
-   :header-rows: 1
-
-   * - Date
-     - Time
-   * - 17 November 2022
-     - 10:00 - 12:00
-   * - 19 January 2023
-     - 10:00 - 12:00
-   * - 16 March 2023
-     - 10:00 - 12:00
-
-
-
-Reach out on `Discord <https://discord.gg/yAyFf6Y>`_ if you want to join the
-community meeting.
+For more information and slides from previous meetings, check our
+`website <https://vantage6.ai/community-meetings/>`_.
 
 .. _submit-patch:
 
@@ -181,7 +169,7 @@ Setup your environment
 
   ::
 
-    conda create -n vantage6 python=3.7
+    conda create -n vantage6 python=3.10
     conda activate vantage6
 
   It is also possible to use ``virtualenv`` if you do not have a conda

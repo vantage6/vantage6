@@ -3,6 +3,7 @@ import uuid
 
 from pathlib import Path
 
+from vantage6.common.globals import DATABASE_TYPES
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
@@ -10,9 +11,22 @@ from vantage6.cli.configuration_manager import (
 )
 
 
-def node_configuration_questionaire(dirs, instance_name):
-    """Questionary to generate a config file for the node instance."""
+def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
+    """
+    Questionary to generate a config file for the node instance.
 
+    Parameters
+    ----------
+    dirs : dict
+        Dictionary with the directories of the node instance.
+    instance_name : str
+        Name of the node instance.
+
+    Returns
+    -------
+    dict
+        Dictionary with the new node configuration
+    """
     config = q.prompt([
         {
             "type": "text",
@@ -45,31 +59,32 @@ def node_configuration_questionaire(dirs, instance_name):
         }
     ])
 
-    config["databases"] = q.prompt([
-        {
-            "type": "text",
-            "name": "default",
-            "message": "Default database path:"
-        }
-    ])
-    i = 1
-    while q.confirm("Do you want to add another database?").ask():
-        q2 = q.prompt([
+    config["databases"] = list()
+    while q.confirm("Do you want to add a database?").ask():
+        db_label = q.prompt([
             {
                 "type": "text",
                 "name": "label",
-                "message": "Enter the label for the database:",
-                "default": f"database_{i}"
-            },
+                "message": "Enter unique label for the database:",
+                "default": "default"
+            }
+        ])
+        db_path = q.prompt([
             {
                 "type": "text",
-                "name": "path",
-                "message": "The path of the database file:",
-                "default": str(
-                    Path(config.get("databases").get("default")).parent)
-            }])
-        config["databases"][q2.get("label")] = q2.get("path")
-        i += 1
+                "name": "uri",
+                "message": "Database URI:"
+            }
+        ])
+        db_type = q.select("Database type:", choices=DATABASE_TYPES).ask()
+
+        config["databases"].append(
+            {
+                "label": db_label.get("label"),
+                "uri": db_path.get("uri"),
+                "type": db_type
+            }
+        )
 
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
@@ -93,10 +108,9 @@ def node_configuration_questionaire(dirs, instance_name):
         "datefmt": "%Y-%m-%d %H:%M:%S"
     }
 
-    encryption = q.select("Enable encryption?",
-                          choices=["true", "false"]).ask()
+    encryption = q.confirm("Enable encryption?", default=True).ask()
 
-    private_key = "" if encryption == "false" else \
+    private_key = "" if not encryption else \
         q.text("Path to private key file:").ask()
 
     config["encryption"] = {
@@ -107,8 +121,20 @@ def node_configuration_questionaire(dirs, instance_name):
     return config
 
 
-def server_configuration_questionaire(dirs, instance_name):
-    """Questionary to generate a config file for the node instance."""
+def server_configuration_questionaire(instance_name: str) -> dict:
+    """
+    Questionary to generate a config file for the node instance.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the node instance.
+
+    Returns
+    -------
+    dict
+        Dictionary with the new server configuration
+    """
 
     config = q.prompt([
         {
@@ -221,8 +247,27 @@ def server_configuration_questionaire(dirs, instance_name):
     return config
 
 
-def configuration_wizard(type_, instance_name, environment, system_folders):
+def configuration_wizard(type_: str, instance_name: str, environment: str,
+                         system_folders: bool) -> Path:
+    """
+    Create a configuration file for a node or server instance.
 
+    Parameters
+    ----------
+    type_ : str
+        Type of the instance. Either "node" or "server"
+    instance_name : str
+        Name of the instance
+    environment : str
+        Name of the environment
+    system_folders : bool
+        Whether to use the system folders or not
+
+    Returns
+    -------
+    Path
+        Path to the configuration file
+    """
     # for defaults and where to save the config
     dirs = NodeContext.instance_folders(type_, instance_name, system_folders)
 
@@ -232,7 +277,7 @@ def configuration_wizard(type_, instance_name, environment, system_folders):
         config = node_configuration_questionaire(dirs, instance_name)
     else:
         conf_manager = ServerConfigurationManager
-        config = server_configuration_questionaire(dirs, instance_name)
+        config = server_configuration_questionaire(instance_name)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this
@@ -250,10 +295,23 @@ def configuration_wizard(type_, instance_name, environment, system_folders):
     return config_file
 
 
-def select_configuration_questionaire(type_, system_folders):
-    """Ask which configuration the user wants to use
+def select_configuration_questionaire(
+        type_: str, system_folders: bool) -> tuple[str, str]:
+    """
+    Ask which configuration the user wants to use. It shows only configurations
+    that are in the default folder.
 
-    It shows only configurations that are in the default folder.
+    Parameters
+    ----------
+    type_ : str
+        Type of the instance. Either "node" or "server"
+    system_folders : bool
+        Whether to use the system folders or not
+
+    Returns
+    -------
+    tuple[str, str]
+        Name of the configuration and the environment
     """
     context = NodeContext if type_ == "node" else ServerContext
     configs, f = context.available_configurations(system_folders)

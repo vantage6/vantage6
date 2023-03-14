@@ -2,6 +2,7 @@
 import logging
 
 from flask import g, request
+from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
 
@@ -16,23 +17,34 @@ from vantage6.server.resource import (
     only_for,
     ServicesResources
 )
+from vantage6.server import db
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource.common._schema import PortSchema
 from vantage6.server.model import (
-    Result,
+    Run,
     AlgorithmPort,
     Collaboration,
     Task
 )
-from vantage6.server.model.base import DatabaseSessionManager
-
+from vantage6.server.resource import with_container
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the port resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -50,6 +62,13 @@ def setup(api, api_base, services):
         methods=('GET',),
         resource_class_kwargs=services
     )
+    api.add_resource(
+        VPNAddress,
+        api_base + '/vpn/algorithm/addresses',
+        endpoint='vpn_address',
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
 
 
 # Schemas
@@ -59,7 +78,15 @@ port_schema = PortSchema()
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any port")
@@ -79,7 +106,7 @@ class PortBase(ServicesResources):
 
 class Ports(PortBase):
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self):
         """ Returns a list of ports
         ---
@@ -91,7 +118,7 @@ class Ports(PortBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Port|Global|View|❌|❌|View any result|\n
+          |Port|Global|View|❌|❌|View any port|\n
           |Port|Organization|View|✅|✅|View the ports of your
           organizations collaborations|\n
 
@@ -104,12 +131,12 @@ class Ports(PortBase):
               type: integer
             description: Task id
           - in: query
-            name: result_id
+            name: run_id
             schema:
               type: integer
-            description: Result id
+            description: Run id
           - in: query
-            name: run_id
+            name: job_id
             schema:
               type: integer
             description: Run id
@@ -147,18 +174,18 @@ class Ports(PortBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(AlgorithmPort)
+        q = g.session.query(AlgorithmPort)
 
         # relation filters
-        if 'result_id' in args:
-            q = q.filter(AlgorithmPort.result_id == args['result_id'])
-        if 'task_id' in args:
-            q = q.join(Result).filter(Result.task_id == args['task_id'])
         if 'run_id' in args:
-            # check if Result was already joined in 'task_id' arg
-            if Result not in [joined.class_ for joined in q._join_entities]:
-                q = q.join(Result)
-            q = q.join(Task).filter(Task.run_id == args['run_id'])
+            q = q.filter(AlgorithmPort.run_id == args['run_id'])
+        if 'task_id' in args:
+            q = q.join(Run).filter(Run.task_id == args['task_id'])
+        if 'job_id' in args:
+            # check if Run was already joined in 'task_id' arg
+            if Run not in [joined.class_ for joined in q._join_entities]:
+                q = q.join(Run)
+            q = q.join(Task).filter(Task.job_id == args['job_id'])
 
         # filter based on permissions
         if not self.r.v_glo.can():
@@ -202,9 +229,9 @@ class Ports(PortBase):
                     type: integer
                     description: Port number that receives container's VPN
                       traffic
-                  result_id:
+                  run_id:
                     type: integer
-                    description: Algorithm's result_id
+                    description: Algorithm's run_id
                   label:
                     type: string
                     description: Label for port specified in algorithm
@@ -225,16 +252,15 @@ class Ports(PortBase):
 
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
-        result_id = data.get('result_id', '')
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
-        if g.node.id != linked_result.node.id:
+        run_id = data.get('run_id', '')
+        linked_run = g.session.query.query(Run).filter(Run.id == run_id).one()
+        if g.node.id != linked_run.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         port = AlgorithmPort(
             port=data.get('port', ''),
-            result_id=result_id,
+            run_id=run_id,
             label=data.get('label' ''),
         )
         port.save()
@@ -245,12 +271,12 @@ class Ports(PortBase):
     def delete(self):
         # FIXME should we have swagger docs if only accessible for node? Also
         # same case for post request
-        """ Delete ports by result_id
+        """ Delete ports by run_id
         ---
         description: >-
           Deletes descriptions of a port that is available for VPN
           communication for a certain algorithm. The ports are deleted based
-          on result_id. Only the node on which the algorithm is running is
+          on run_id. Only the node on which the algorithm is running is
           allowed to delete this. This happens on task completion.\n
 
           This endpoint is not accessible for users, but only for
@@ -258,18 +284,18 @@ class Ports(PortBase):
 
         parameters:
           - in: path
-            name: result_id
+            name: run_id
             schema:
               type: integer
             minimum: 1
-            description: Result id for which ports must be deleted
+            description: Run id for which ports must be deleted
             required: true
 
         responses:
           200:
             description: Ok
           400:
-            description: Result id was not defined
+            description: Run id was not defined
           401:
             description: Unauthorized
 
@@ -279,25 +305,23 @@ class Ports(PortBase):
         tags: ["VPN"]
         """
         args = request.args
-        if 'result_id' not in args:
-            return {'msg': 'The result_id argument is required!'}, \
+        if 'run_id' not in args:
+            return {'msg': 'The run_id argument is required!'}, \
               HTTPStatus.BAD_REQUEST
 
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
-        result_id = args['result_id']
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
-        if g.node.id != linked_result.node.id:
+        run_id = args['run_id']
+        linked_run = g.session.query(Run).filter(Run.id == run_id).one()
+        if g.node.id != linked_run.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
-        session = DatabaseSessionManager.get_session()
-        session.query(AlgorithmPort).filter(
-            AlgorithmPort.result_id == result_id
+        g.session.query(AlgorithmPort).filter(
+            AlgorithmPort.run_id == run_id
         ).delete()
-        session.commit()
+        g.session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
 
@@ -305,7 +329,7 @@ class Ports(PortBase):
 class Port(PortBase):
     """Resource for /api/port"""
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self, id):
         """ Get a single port
         ---
@@ -360,3 +384,99 @@ class Port(PortBase):
         s = port_schema
 
         return s.dump(port, many=False).data, HTTPStatus.OK
+
+
+class VPNAddress(ServicesResources):
+
+    @with_container
+    def get(self):
+        """
+        Get a list of the addresses (IP + port) and labels of algorithm
+        containers in the same task as the authenticating container.
+        ---
+
+        description: >-
+          Returns a dictionary of addresses of algorithm containers in the same
+          task.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Port|Global|View|❌|❌|View any result|\n
+          |Port|Organization|View|❌|✅|View the ports of your
+          organizations collaborations|\n
+
+          Not accessible to users.
+
+        parameters:
+          - in: path
+            name: label
+            schema:
+              type: string
+            description: Algorithm port label to filter by
+          - in: path
+            name: include_children
+            schema:
+              type: boolean
+            description: Include the addresses of subtasks
+          - in: path
+            name: include_parent
+            schema:
+              type: boolean
+            description: Include the addresses of parent tasks
+
+        responses:
+          200:
+            description: Ok
+
+        security:
+        - bearerAuth: []
+
+        tags: ["VPN"]
+        """
+        task_id = g.container['task_id']
+        task_ids = [task_id]
+
+        task = db.Task.get(task_id)
+
+        # include child tasks if requested
+        if request.args.get('include_children', False):
+            subtasks = g.session.query(db.Task).filter(
+                db.Task.parent_id == task_id
+            ).all()
+            task_ids.extend([t.id for t in subtasks])
+
+        # include parent task if requested
+        if request.args.get('include_parent', False):
+            parent = g.session.query(db.Task).filter(
+                db.Task.id == task.parent_id
+            ).one_or_none()
+            if parent:
+                task_ids.append(parent.id)
+
+        # get all ports for the tasks requested
+        q = g.session.query(AlgorithmPort)\
+                     .join(Run)\
+                     .filter(Run.task_id.in_(task_ids))\
+
+        # filter by label if requested
+        filter_label = request.args.get('label')
+        if filter_label:
+            q = q.filter(AlgorithmPort.label == filter_label)
+
+        ports = q.all()
+
+        # combine data from ports and nodes
+        addresses = []
+        for port in ports:
+            d = {
+                'port': port.port,
+                'label': port.label,
+                'ip': port.result.node.ip,
+                'organization_id': port.result.organization_id,
+                'task_id': port.result.task_id
+            }
+            addresses.append(d)
+
+        return {'addresses': addresses}, HTTPStatus.OK

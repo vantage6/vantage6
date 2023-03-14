@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class TaskStatus(str, Enum):
+    """ Enum to represent the status of a task """
     # Task has not yet been started (usually, node is offline)
     PENDING = 'pending'
     # Task is being started
@@ -21,6 +22,8 @@ class TaskStatus(str, Enum):
     CRASHED = 'crashed'
     # Container was killed by user
     KILLED = 'killed by user'
+    # Task was not allowed by node policies
+    NOT_ALLOWED = 'not allowed'
 
 
 def has_task_failed(status: TaskStatus) -> bool:

@@ -35,11 +35,11 @@ import requests.exceptions
 
 from pathlib import Path
 from threading import Thread
-from typing import Dict, List, Union, Type
 from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
+from vantage6.common import logger_name
 from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
@@ -55,7 +55,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -78,11 +78,11 @@ class Node(object):
 
     Parameters
     ----------
-    ctx: Union[NodeContext, DockerNodeContext]
+    ctx: NodeContext | DockerNodeContext
         Application context object.
 
     """
-    def __init__(self, ctx: Union[NodeContext, DockerNodeContext]):
+    def __init__(self, ctx: NodeContext | DockerNodeContext):
 
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
@@ -157,7 +157,8 @@ class Node(object):
             ctx=self.ctx,
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
-            tasks_dir=self.__tasks_dir
+            tasks_dir=self.__tasks_dir,
+            client=self.server_io,
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
@@ -252,21 +253,21 @@ class Node(object):
 
         self.log.info(f"received {self.queue._qsize()} tasks")
 
-    def __start_task(self, taskresult: dict) -> None:
+    def __start_task(self, task_incl_run: dict) -> None:
         """
         Start the docker image and notify the server that the task has been
         started.
 
         Parameters
         ----------
-        taskresult : dict
+        task_incl_run : dict
             A dictionary with information required to run the algorithm
         """
-        task = taskresult['task']
+        task = task_incl_run['task']
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.server_io.set_task_start_time(taskresult["id"])
+        self.server_io.set_task_start_time(task_incl_run["id"])
 
         token = self.server_io.request_token_for_container(
             task["id"],
@@ -274,39 +275,46 @@ class Node(object):
         )
         token = token["container_token"]
 
-        # create a temporary volume for each run_id
-        vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
+        # create a temporary volume for each job_id
+        vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
         self.__docker.create_volume(vol_name)
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
         # again.
         # FIXME: should probably find & fix the root cause?
-        if type(taskresult['input']) == dict:
-            taskresult['input'] = json.dumps(taskresult['input'])
+        if type(task_incl_run['input']) == dict:
+            task_incl_run['input'] = json.dumps(task_incl_run['input'])
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
-            result_id=taskresult["id"],
+            run_id=task_incl_run["id"],
             task_info=task,
             image=task["image"],
-            docker_input=taskresult['input'],
+            docker_input=task_incl_run['input'],
             tmp_vol_name=vol_name,
             token=token,
             database=task.get('database', 'default')
         )
 
-        # save task status to the server and send socket event to update others
+        # save task status to the server
+        update = {'status': task_status}
+        if task_status == TaskStatus.NOT_ALLOWED:
+            # set finished_at to now, so that the task is not picked up again
+            # (as the task is not started at all, unlike other crashes, it will
+            # never finish and hence not be set to finished)
+            update['finished_at'] = datetime.datetime.now().isoformat()
         self.server_io.patch_results(
-            id=taskresult['id'], result={'status': task_status}
+            id_=task_incl_run['id'], result=update
         )
+        # send socket event to alert everyone of task status change
         self.socketIO.emit(
             'algorithm_status_change',
             data={
                 'node_id': self.server_io.whoami.id_,
                 'status': task_status,
-                'result_id': taskresult['id'],
+                'run_id': task_incl_run['id'],
                 'task_id': task['id'],
                 'collaboration_id': self.server_io.collaboration_id,
                 'organization_id': self.server_io.whoami.organization_id,
@@ -320,13 +328,15 @@ class Node(object):
             # to the algorithm container. First delete any existing port
             # assignments in case algorithm has crashed
             self.server_io.request(
-                'port', params={'result_id': taskresult['id']}, method="DELETE"
+                'port', params={'run_id': task_incl_run['id']}, method="DELETE"
             )
             for port in vpn_ports:
-                port['result_id'] = taskresult['id']
+                port['run_id'] = task_incl_run['id']
                 self.server_io.request('port', method='POST', json=port)
 
             # Save IP address of VPN container
+            # FIXME BvB 2023-02-21: node IP is now updated when task is started
+            # but this should be done when VPN connection is established
             node_id = self.server_io.whoami.id_
             node_ip = self.vpn_manager.get_vpn_ip()
             self.server_io.request(
@@ -375,7 +385,7 @@ class Node(object):
                     data={
                         'node_id': self.server_io.whoami.id_,
                         'status': results.status,
-                        'result_id': results.result_id,
+                        'run_id': results.run_id,
                         'task_id': results.task_id,
                         'collaboration_id': self.server_io.collaboration_id,
                         'organization_id':
@@ -386,19 +396,19 @@ class Node(object):
                 )
 
                 self.log.info(
-                    f"Sending result (id={results.result_id}) to the server!")
+                    f"Sending result (run={results.run_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
                 # just store the task_id when retrieving the task the first
                 # time?
                 response = self.server_io.request(
-                    f"result/{results.result_id}"
+                    f"run/{results.run_id}"
                 )
                 task_id = response.get("task").get("id")
 
                 if not task_id:
                     self.log.error(
-                        f"task_id of result (id={results.result_id}) "
+                        f"task_id of run (id={results.run_id}) "
                         f"could not be retrieved"
                     )
                     return
@@ -413,8 +423,8 @@ class Node(object):
                     )
 
                 self.server_io.patch_results(
-                    id=results.result_id,
-                    result={
+                    id_=results.run_id,
+                    data={
                         'result': results.data,
                         'log': results.logs,
                         'status': results.status,
@@ -482,6 +492,9 @@ class Node(object):
         else:
             self.log.critical('Unable to authenticate. Exiting')
             exit(1)
+
+        # start thread to keep the connection alive by refreshing the token
+        self.server_io.auto_refresh_token()
 
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""
@@ -561,8 +574,8 @@ class Node(object):
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_ssh_tunnels(self, isolated_network_mgr: Type[NetworkManager]) \
-            -> List[SSHTunnel]:
+    def setup_ssh_tunnels(self, isolated_network_mgr: NetworkManager) \
+            -> list[SSHTunnel]:
         """
         Create a SSH tunnels when they are defined in the configuration file.
         For each tunnel a new container is created. The image used can be
@@ -584,7 +597,7 @@ class Node(object):
         configs = self.config['ssh-tunnels']
         self.log.info(f"Setting up {len(configs)} SSH tunnels")
 
-        tunnels: List[SSHTunnel] = []
+        tunnels: list[SSHTunnel] = []
         for config in configs:
             self.log.debug(f"SSH tunnel config: {config}")
 
@@ -620,7 +633,7 @@ class Node(object):
         return tunnels
 
     def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
-                             ctx: Union[DockerNodeContext, NodeContext]
+                             ctx: DockerNodeContext | NodeContext
                              ) -> VPNManager:
         """
         Setup container which has a VPN connection
@@ -629,7 +642,7 @@ class Node(object):
         ----------
         isolated_network_mgr: NetworkManager
             Manager for the isolated Docker network
-        ctx: NodeContext
+        ctx: DockerNodeContext | NodeContext
             Context object for the node
 
         Returns
@@ -795,15 +808,12 @@ class Node(object):
         task_id : int
             Task identifier
         """
-        # fetch (open) result for the node with the task_id
+        # fetch (open) algorithm run for the node with the task_id
         tasks = self.server_io.get_results(
             include_task=True,
             state='open',
             task_id=task_id
         )
-
-        # in the current setup, only a single result for a single node
-        # in a task exists.
         for task in tasks:
             self.queue.put(task)
 
@@ -843,21 +853,21 @@ class Node(object):
             self.cleanup()
             sys.exit()
 
-    def kill_containers(self, kill_info: Dict) -> List[Dict]:
+    def kill_containers(self, kill_info: dict) -> list[dict]:
         """
         Kill containers on instruction from socket event
 
         Parameters
         ----------
-        kill_info: Dict
+        kill_info: dict
             Dictionary received over websocket with instructions for which
             tasks to kill
 
         Returns
         -------
-        List[Dict]:
+        list[dict]:
             List of dictionaries with information on killed task (keys:
-            result_id, task_id and parent_id)
+            run_id, task_id and parent_id)
         """
         if kill_info['collaboration_id'] != self.server_io.collaboration_id:
             self.log.debug(
@@ -879,9 +889,51 @@ class Node(object):
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.server_io.patch_results(
-                id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+                id_=killed_algo.run_id, data={'status': TaskStatus.KILLED}
             )
         return killed_algos
+
+    def share_node_details(self) -> None:
+        """
+        Share part of the node's configuration with the server.
+
+        This helps the other parties in a collaboration to see e.g. which
+        algorithms they are allowed to run on this node.
+        """
+        # check if node allows to share node details, otherwise return
+        if not self.config.get('share_config', True):
+            self.log.debug("Not sharing node configuration in accordance with "
+                           "the configuration setting.")
+            return
+
+        config_to_share = {}
+
+        encryption_config = self.config.get('encryption')
+        if encryption_config:
+            if encryption_config.get('enabled') is not None:
+                config_to_share['encryption'] = \
+                    encryption_config.get('enabled')
+
+        # TODO v4+ remove the old 'allowed_images' key, it's now inside
+        # 'policies'. It's now overwritten below if 'policies' is set.
+        allowed_algos = self.config.get('allowed_images')
+        config_to_share['allowed_algorithms'] = allowed_algos \
+            if allowed_algos else 'all'
+
+        # share node policies (e.g. who can run which algorithms)
+        policies = self.config.get('policies', {})
+        config_to_share['allowed_algorithms'] = \
+            policies.get('allowed_algorithms', 'all')
+        if policies.get('allowed_users') is not None:
+            config_to_share['allowed_users'] = policies.get('allowed_users')
+        if policies.get('allowed_organizations') is not None:
+            config_to_share['allowed_orgs'] = \
+                policies.get('allowed_organizations')
+
+        self.log.debug(f"Sharing node configuration: {config_to_share}")
+        self.socketIO.emit(
+            'node_info_update', config_to_share, namespace='/tasks'
+        )
 
     def cleanup(self) -> None:
 

@@ -3,13 +3,13 @@ import logging
 import json
 
 from flask import g, request, url_for
+from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
 
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
     Scope as S,
     PermissionManager,
@@ -19,7 +19,7 @@ from vantage6.server.resource import only_for, ServicesResources, with_user
 from vantage6.server.resource.common._schema import (
     TaskSchema,
     TaskIncludedSchema,
-    TaskResultSchema
+    TaskRunSchema
 )
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource.event import kill_task
@@ -29,7 +29,19 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the task resource.
+
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -48,9 +60,9 @@ def setup(api, api_base, services):
         resource_class_kwargs=services
     )
     api.add_resource(
-        TaskResult,
-        path + '/<int:id>/result',
-        endpoint='task_result',
+        TaskRun,
+        path + '/<int:id>/run',
+        endpoint='task_run',
         methods=('GET',),
         resource_class_kwargs=services
     )
@@ -59,7 +71,15 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW,
@@ -87,8 +107,8 @@ def permissions(permissions: PermissionManager):
 # Resources / API's
 # ------------------------------------------------------------------------------
 task_schema = TaskSchema()
-task_result_schema = TaskIncludedSchema()
-task_result_schema2 = TaskResultSchema()
+task_run_schema = TaskIncludedSchema()
+task_run_schema2 = TaskRunSchema()
 
 
 class TaskBase(ServicesResources):
@@ -100,7 +120,7 @@ class TaskBase(ServicesResources):
 
 class Tasks(TaskBase):
 
-    @only_for(['user', 'node', 'container'])
+    @only_for(("user", "node", "container"))
     def get(self):
         """List tasks
         ---
@@ -119,7 +139,7 @@ class Tasks(TaskBase):
 
         parameters:
           - in: query
-            name: initiator_id
+            name: init_org_id
             schema:
               type: int
             description: The organization id of the origin of the request
@@ -149,7 +169,7 @@ class Tasks(TaskBase):
               type: int
             description: The id of the parent task
           - in: query
-            name: run_id
+            name: job_id
             schema:
               type: int
             description: The run id that belongs to the task
@@ -181,10 +201,10 @@ class Tasks(TaskBase):
               characters\n
               * underscore sign (_) represents one, single character
           - in: query
-            name: result_id
+            name: run_id
             schema:
               type: int
-            description: A result id that belongs to the task
+            description: A run id that belongs to the task
           - in: query
             name: include
             schema:
@@ -229,7 +249,7 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Task)
+        q = g.session.query(db.Task)
         args = request.args
 
         # obtain organization id
@@ -245,15 +265,15 @@ class Tasks(TaskBase):
                     HTTPStatus.UNAUTHORIZED
 
         # filter based on arguments
-        for param in ['initiator_id', 'init_user_id', 'collaboration_id',
-                      'parent_id', 'run_id']:
+        for param in ['init_org_id', 'init_user_id', 'collaboration_id',
+                      'parent_id', 'job_id']:
             if param in args:
                 q = q.filter(getattr(db.Task, param) == args[param])
         for param in ['name', 'image', 'description', 'database', 'status']:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
-        if 'result_id' in args:
-            q = q.join(db.Result).filter(db.Result.id == args['result_id'])
+        if 'run_id' in args:
+            q = q.join(db.Run).filter(db.Run.id == args['run_id'])
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
@@ -263,12 +283,13 @@ class Tasks(TaskBase):
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
-        schema = task_result_schema if self.is_included('result') else\
+        # TODO BvB 2023-02-08: does this work?
+        schema = task_run_schema if self.is_included('result') else\
             task_schema
 
         return self.response(page, schema)
 
-    @only_for(["user", "container"])
+    @only_for(("user", "container"))
     def post(self):
         """Adds new computation task
         ---
@@ -287,7 +308,7 @@ class Tasks(TaskBase):
           collaboration in which your organization participates|\n
 
           ## Accessed as `User`\n
-          This endpoint is accessible to users. A new `run_id` is
+          This endpoint is accessible to users. A new `job_id` is
           created when a user creates a task. The user needs to be within an
           organization that is part of the collaboration to which the task is
           posted.\n
@@ -295,7 +316,7 @@ class Tasks(TaskBase):
           ## Accessed as `Container`\n
           When this endpoint is accessed by an algorithm container, it is
           considered to be a child-task of the container, and will get the
-          `run_id` from the initial task. Containers have limited permissions
+          `job_id` from the initial task. Containers have limited permissions
           to create tasks: they are only allowed to create tasks in the same
           collaboration using the same image.\n
 
@@ -343,7 +364,7 @@ class Tasks(TaskBase):
             )}, HTTPStatus.BAD_REQUEST
 
         # check if all the organizations have a registered node
-        nodes = DatabaseSessionManager.get_session().query(db.Node)\
+        nodes = g.session.query(db.Node)\
             .filter(db.Node.organization_id.in_(org_ids))\
             .filter(db.Node.collaboration_id == collaboration_id)\
             .all()
@@ -354,6 +375,16 @@ class Tasks(TaskBase):
                 "Cannot create this task because there are no nodes registered"
                 f" for the following organization(s): {', '.join(missing)}."
             )}, HTTPStatus.BAD_REQUEST
+        # check if any of the nodes that are offline shared their configuration
+        # info and if this prevents this user from creating this task
+        if g.user:
+            for node in nodes:
+                if self._node_doesnt_allow_user_task(node.config):
+                    return {"msg": (
+                        "Cannot create this task because one of the nodes that"
+                        " you are trying to send this task to does not allow "
+                        "you to create tasks."
+                    )}, HTTPStatus.BAD_REQUEST
 
         # figure out the initiating organization of the task
         if g.user:
@@ -390,19 +421,19 @@ class Tasks(TaskBase):
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
                        database=data.get('database', ''),
-                       initiator=init_org)
+                       init_org=init_org)
 
-        # create run_id. Users can only create top-level -tasks (they will not
-        # have sub-tasks). Therefore, always create a new run_id. Tasks created
+        # create job_id. Users can only create top-level -tasks (they will not
+        # have sub-tasks). Therefore, always create a new job_id. Tasks created
         # by containers are always sub-tasks
         if g.user:
-            task.run_id = task.next_run_id()
+            task.job_id = task.next_job_id()
             task.init_user_id = g.user.id
-            log.debug(f"New run_id {task.run_id}")
+            log.debug(f"New job_id {task.job_id}")
         elif g.container:
             task.parent_id = g.container["task_id"]
             parent = db.Task.get(g.container["task_id"])
-            task.run_id = parent.run_id
+            task.job_id = parent.job_id
             task.init_user_id = parent.init_user_id
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
@@ -413,7 +444,7 @@ class Tasks(TaskBase):
         self.socketio.emit(
             "task_created", {
                 "task_id": task.id,
-                "run_id": task.run_id,
+                "job_id": task.job_id,
                 "collaboration_id": collaboration_id,
                 "init_org_id": init_org.id,
             }, room=f"collaboration_{collaboration_id}", namespace='/tasks'
@@ -441,8 +472,9 @@ class Tasks(TaskBase):
         else:
             assign_orgs = organizations_json_list
 
-        # now we need to create results for the nodes to fill. Each node
-        # receives their instructions from a result, not from the task itself
+        # now we need to create runs for the nodes to fill. Each node
+        # receives their instructions from an algorithm run record, not from
+        # the task itself
         log.debug(f"Assigning task to {len(assign_orgs)} nodes.")
         for org in assign_orgs:
             organization = db.Organization.get(org['id'])
@@ -452,14 +484,14 @@ class Tasks(TaskBase):
             # point
             if isinstance(input_, dict):
                 input_ = json.dumps(input_).encode(STRING_ENCODING)
-            # Create result
-            result = db.Result(
+            # Create run
+            run = db.Run(
                 task=task,
                 organization=organization,
                 input=input_,
                 status=TaskStatus.PENDING
             )
-            result.save()
+            run.save()
 
         # notify nodes a new task available (only to online nodes), nodes that
         # are offline will receive this task on sign in.
@@ -485,9 +517,8 @@ class Tasks(TaskBase):
     def __verify_container_permissions(container, image, collaboration_id):
         """Validates that the container is allowed to create the task."""
 
-        # check that the image is allowed
-        # if container["image"] != task.image:
-        # FIXME why?
+        # check that the image is allowed: algorithm containers can only
+        # create tasks with the same image
         if not image.endswith(container["image"]):
             log.warning((f"Container from node={container['node_id']} "
                         f"attempts to post a task using illegal image!?"))
@@ -496,7 +527,7 @@ class Tasks(TaskBase):
             return False
 
         # check master task is not completed yet
-        if db.Task.get(container["task_id"]).complete:
+        if has_task_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 f"Container from node={container['node_id']} "
                 f"attempts to start sub-task for a completed "
@@ -515,11 +546,46 @@ class Tasks(TaskBase):
 
         return True
 
+    @staticmethod
+    def _node_doesnt_allow_user_task(
+        node_configs: list[db.NodeConfig]
+    ) -> bool:
+        """
+        Checks if the node allows user to create task.
+
+        Parameters
+        ----------
+        node_configs : list[db.NodeConfig]
+            List of node configurations.
+
+        Returns
+        -------
+        bool
+            True if the node doesn't allow the user to create task.
+        """
+        has_limitations = False
+        for config_option in node_configs:
+            if config_option.key == "allowed_users":
+                has_limitations = True
+                # TODO expand when we allow also usernames, like orgs below
+                if g.user.id == int(config_option.value):
+                    return False
+            elif config_option.key == "allowed_orgs":
+                has_limitations = True
+                if config_option.value.isdigit():
+                    if g.user.organization_id == int(config_option.value):
+                        return False
+                else:
+                    org = db.Organization.get_by_name(config_option.value)
+                    if org and g.user.organization_id == org.id:
+                        return False
+        return has_limitations
+
 
 class Task(TaskBase):
     """Resource for /api/task"""
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"))
     def get(self, id):
         """Get task
         ---
@@ -569,7 +635,7 @@ class Task(TaskBase):
         auth_org = self.obtain_auth_organization()
 
         # obtain schema
-        schema = task_result_schema if request.args.get('include') == \
+        schema = task_run_schema if request.args.get('include') == \
             'results' else task_schema
 
         # check permissions
@@ -586,7 +652,7 @@ class Task(TaskBase):
         """Remove task
         ---
         description: >-
-          Remove tasks and their results.\n
+          Remove tasks and their runs.\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -635,39 +701,39 @@ class Task(TaskBase):
         if not has_task_finished(task.status):
             kill_task(task, self.socketio)
 
-        # retrieve results that belong to this task
+        # retrieve runs that belong to this task
         log.info(f'Removing task id={task.id}')
-        for result in task.results:
-            log.info(f" Removing result id={result.id}")
-            result.delete()
+        for run in task.runs:
+            log.info(f" Removing run id={run.id}")
+            run.delete()
 
         # permissions ok, delete...
         task.delete()
 
-        return {"msg": f"task id={id} and its result successfully deleted"}, \
-            HTTPStatus.OK
+        return {"msg": f"task id={id} and its algorithm run data have been "
+                       "successfully deleted"}, HTTPStatus.OK
 
 
-class TaskResult(ServicesResources):
-    """Resource for /api/task/<int:id>/result"""
+class TaskRun(ServicesResources):
+    """Resource for /api/task/<int:id>/run"""
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, "result")
+        self.r = getattr(self.permissions, "run")
 
     @only_for(['user', 'container'])
     def get(self, id):
-        """Return the results for a specific task
+        """Return the algorithm runs for a specific task
         ---
         description: >-
-          Returns the task's results specified by the task id.\n
+          Returns the task's algorithm runs specified by the task id.\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Result|Global|View|❌|❌|View any result|\n
-          |Result|Organization|View|✅|✅|View results for the
+          |Run|Global|View|❌|❌|View any run|\n
+          |Run|Organization|View|✅|✅|View runs for the
           collaborations in which your organization participates with|\n
 
           Accessible to users.
@@ -724,7 +790,7 @@ class TaskResult(ServicesResources):
                     HTTPStatus.UNAUTHORIZED
 
         # pagination
-        page = Pagination.from_list(task.results, request)
+        page = Pagination.from_list(task.runs, request)
 
         # model serialization
-        return self.response(page, task_result_schema2)
+        return self.response(page, task_run_schema2)

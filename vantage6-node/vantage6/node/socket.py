@@ -1,11 +1,9 @@
 import logging
 
 from socketio import ClientNamespace
-from typing import Dict
 
+from vantage6.common import logger_name
 from vantage6.common.task_status import TaskStatus, has_task_failed
-from vantage6.node.util import logger_name
-
 
 class NodeTaskNamespace(ClientNamespace):
     """Class that handles incoming websocket events."""
@@ -35,6 +33,7 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.info('(Re)Connected to the /tasks namespace')
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.share_node_details()
 
     def on_disconnect(self):
         """ Actions to be taken on socket disconnect event. """
@@ -79,19 +78,19 @@ class NodeTaskNamespace(ClientNamespace):
         ----------
         data: Dict
             Dictionary with relevant data to the status change. Should include:
-            run_id: int
-                run_id of the algorithm container that changed status
+            job_id: int
+                job_id of the algorithm container that changed status
             status: str
                 New status of the algorithm container
         """
         status = data.get('status')
-        run_id = data.get('run_id')
+        job_id = data.get('job_id')
         if has_task_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
-            #     containers with the same run_id?
+            #     containers with the same job_id?
             self.log.critical(
                 f"A container on a node within your collaboration part of "
-                f"run_id={run_id} has exited with status '{status}'"
+                f"job_id={job_id} has exited with status '{status}'"
             )
         # else: no need to do anything when a task has started/finished/... on
         # another node
@@ -111,12 +110,12 @@ class NodeTaskNamespace(ClientNamespace):
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
 
-    def on_kill_containers(self, kill_info: Dict):
+    def on_kill_containers(self, kill_info: dict):
         """
         Action to be taken when nodes are instructed by server to kill one or
         more tasks
 
-        kill_info: Dict
+        kill_info: dict
             A dictionary that contains information on which tasks should be
             killed. This information may instruct a node to kill all its tasks
             or include a list of which tasks should be killed.
@@ -127,7 +126,7 @@ class NodeTaskNamespace(ClientNamespace):
             self.emit(
                 "algorithm_status_change",
                 {
-                    'result_id': killed.result_id,
+                    'run_id': killed.run_id,
                     'task_id': killed.task_id,
                     'collaboration_id':
                         self.node_worker_ref.server_io.collaboration_id,

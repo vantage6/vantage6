@@ -3,8 +3,8 @@ from enum import Enum
 from vantage6.server.model.rule import Operation, Scope
 
 
-# Name of the default roles
 class DefaultRole(str, Enum):
+    """ Enum containing the names of the default roles """
     ROOT = "Root"
     CONTAINER = "container"
     NODE = "node"
@@ -18,8 +18,29 @@ class DefaultRole(str, Enum):
 # function because that module has a connection to the database. This should
 # not be necessary. Fix that after fixing the circular imports described in
 # https://github.com/vantage6/vantage6/issues/53
-# Then simply do: import vantage6.server.db
-def get_default_roles(db):
+def get_default_roles(db) -> list[dict]:
+    """
+    Get a list containing the default roles and their rules, so that they may
+    be created in the database
+
+    Parameters
+    ----------
+    db
+        The vantage6.server.db module
+
+    Returns
+    -------
+    List[Dict]
+        A list with dictionaries that each describe one of the roles. Each role
+        dictionary contains the following:
+
+        name: str
+            Name of the role
+        description: str
+            Description of the role
+        rules: List[int]
+            A list of rule id's that the role contains
+    """
     # Define default roles
     # 1. Root user
     SUPER_ROLE = {
@@ -38,9 +59,9 @@ def get_default_roles(db):
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_('result', Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_('run', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('port', Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.RECEIVE),
     ]
     VIEWER_ROLE = {
         'name': DefaultRole.VIEWER,
@@ -70,7 +91,7 @@ def get_default_roles(db):
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.DELETE),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.CREATE),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.EDIT),
-        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.CREATE),
+        db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.SEND),
     ]
     ORG_ADMIN_ROLE = {
         'name': DefaultRole.ORG_ADMIN,
@@ -92,8 +113,8 @@ def get_default_roles(db):
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.CREATE),
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.VIEW),
         db.Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE),
-        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.VIEW),
-        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.CREATE),
+        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.RECEIVE),
+        db.Rule.get_by_('event', Scope.COLLABORATION, Operation.SEND),
     ]
     COLLAB_ADMIN_ROLE = {
         'name': DefaultRole.COL_ADMIN,

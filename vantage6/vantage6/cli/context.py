@@ -8,23 +8,23 @@ node and server with naming conventions, standard file locations, and in the
 case of the node with a local database URIs.
 
 *Server Context*
-    In case the server is run in development mode, the context will also used
-    the server package. Normally the server uses the
-    `vantage6.server.context.DockerServerContext` which provides the same
-    functionality but is tailored to the Docker environment.
+    A class to provide context for the server, both for development mode as
+    for production.
 
 *Node Context*
-    In case the node is run in development mode, the context will also used by
+    In case the node is run in development mode, this context will also used by
     the node package. Normally the node uses the
     `vantage6.node.context.DockerNodeContext` which provides the same
     functionality but is tailored to the Docker environment.
 -------------------------------------------------------------------------------
 """
+# TODO BvB 2023-01-10 we should have a look at all context classes and define
+# them in the same place. Now the DockerNodeContext is defined in the node, but
+# the server only has a TestServerContext there. This should be made consistent
 from __future__ import annotations
 
 import os.path
 
-from typing import Tuple
 from pathlib import Path
 
 from sqlalchemy.engine.url import make_url
@@ -90,12 +90,12 @@ class ServerContext(AppContext):
     @property
     def docker_container_name(self) -> str:
         """
-        Unique name of the docker container.
+        Name of the docker container that the server is running in.
 
         Returns
         -------
         str
-            Unique docker container name
+            Server's docker container name
         """
         return f"{APPNAME}-{self.name}-{self.scope}-server"
 
@@ -158,7 +158,7 @@ class ServerContext(AppContext):
 
     @classmethod
     def available_configurations(cls, system_folders: bool = S_FOL) \
-            -> Tuple[list, list]:
+            -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -169,7 +169,7 @@ class ServerContext(AppContext):
 
         Returns
         -------
-        Tuple[List, List]
+        tuple[list, list]
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
@@ -262,7 +262,7 @@ class NodeContext(AppContext):
 
     @classmethod
     def available_configurations(cls, system_folders: bool = N_FOL) \
-            -> Tuple[list, list]:
+            -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -273,7 +273,7 @@ class NodeContext(AppContext):
 
         Returns
         -------
-        Tuple[List, List]
+        tuple[list, list]
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
@@ -287,7 +287,7 @@ class NodeContext(AppContext):
         Parameters
         ----------
         system_folders : bool, optional
-            System wide or user configuration, by default N_FOL
+            System wide or user configuration
 
         Returns
         -------
@@ -297,7 +297,7 @@ class NodeContext(AppContext):
         return AppContext.type_data_folder("node", system_folders)
 
     @property
-    def databases(self):
+    def databases(self) -> dict:
         """
         Dictionary of local databases that are available for this node.
 
@@ -312,12 +312,12 @@ class NodeContext(AppContext):
     @property
     def docker_container_name(self) -> str:
         """
-        Unique Docker container name of the node.
+        Docker container name of the node.
 
         Returns
         -------
         str
-            Unique Docker container name
+            Node's Docker container name
         """
         return f"{APPNAME}-{self.name}-{self.scope}"
 
@@ -379,7 +379,7 @@ class NodeContext(AppContext):
             f"{self.docker_container_name}-ssh-vol"
         )
 
-    def docker_temporary_volume_name(self, run_id: int) -> str:
+    def docker_temporary_volume_name(self, job_id: int) -> str:
         """
         Docker volume in which temporary data is stored. Temporary data is
         linked to a specific run. Multiple algorithm containers can have the
@@ -387,7 +387,7 @@ class NodeContext(AppContext):
 
         Parameters
         ----------
-        run_id : int
+        job_id : int
             run id provided by the server
 
         Returns
@@ -395,7 +395,7 @@ class NodeContext(AppContext):
         str
             Docker volume name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}-{run_id}-tmpvol"
+        return f"{APPNAME}-{self.name}-{self.scope}-{job_id}-tmpvol"
 
     def get_database_uri(self, label: str = "default") -> str:
         """

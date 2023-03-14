@@ -6,9 +6,9 @@ import pickle
 import docker.errors
 import json
 
-from typing import Dict, List, Union
 from pathlib import Path
 
+from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
@@ -16,7 +16,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -38,10 +38,10 @@ class DockerTaskManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, task_info: Dict, tasks_dir: Path,
+                 run_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: Union[str, None] = None):
+                 alpine_image: str | None = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -53,25 +53,25 @@ class DockerTaskManager(DockerBaseManager):
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
             Name of the node, to track running algorithms
-        result_id: int
-            Server result identifier
-        task_info: Dict
+        run_id: int
+            Algorithm run identifier
+        task_info: dict
             Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
         isolated_network_mgr: NetworkManager
             Manager of isolated network to which algorithm needs to connect
-        databases: Dict
+        databases: dict
             List of databases
         docker_volume_name: str
             Name of the docker volume
-        alpine_image: str or None
+        alpine_image: str | None
             Name of alternative Alpine image to be used
         """
         super().__init__(isolated_network_mgr)
         self.image = image
         self.__vpn_manager = vpn_manager
-        self.result_id = result_id
+        self.run_id = run_id
         self.task_id = task_info['id']
         self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
@@ -88,7 +88,7 @@ class DockerTaskManager(DockerBaseManager):
         self.labels = {
             f"{APPNAME}-type": "algorithm",
             "node": node_name,
-            "result_id": str(result_id)
+            "run_id": str(run_id)
         }
         self.helper_labels = self.labels
         self.helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
@@ -167,7 +167,7 @@ class DockerTaskManager(DockerBaseManager):
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: Dict, database: str) -> List[Dict]:
+            algorithm_env: dict, database: str) -> list[dict]:
         """
         Runs the docker-image in detached mode.
 
@@ -182,12 +182,12 @@ class DockerTaskManager(DockerBaseManager):
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
@@ -213,7 +213,7 @@ class DockerTaskManager(DockerBaseManager):
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
-    def _run_algorithm(self) -> List[Dict]:
+    def _run_algorithm(self) -> list[dict]:
         """
         Run the algorithm container
 
@@ -222,12 +222,12 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] or None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is inactive
         """
         vpn_ports = None
-        container_name = f'{APPNAME}-{self.node_name}-result-{self.result_id}'
+        container_name = f'{APPNAME}-{self.node_name}-run-{self.run_id}'
         helper_container_name = container_name + '-helper'
 
         # Try to pull the latest image
@@ -273,7 +273,7 @@ class DockerTaskManager(DockerBaseManager):
         try:
             if deserialized_input:
                 self.log.info(f"Run docker image {self.image} with input "
-                              f"{deserialized_input}")
+                              f"{self._printable_input(deserialized_input)}")
             else:
                 self.log.info(f"Run docker image {self.image}")
             self.container = self.docker.containers.run(
@@ -293,6 +293,27 @@ class DockerTaskManager(DockerBaseManager):
         self.status = TaskStatus.ACTIVE
         return vpn_ports
 
+    @staticmethod
+    def _printable_input(input_: str | dict) -> str:
+        """
+        Return a version of the input with limited number of characters
+
+        Parameters
+        ----------
+        input: str | dict
+            Deserialized input of a task
+
+        Returns
+        -------
+        str
+            Input with limited number of characters, to be printed to logs
+        """
+        if isinstance(input_, dict):
+            input_ = str(input_)
+        if len(input_) > 550:
+            return f'{input_[:500]}... ({len(input_)-500} characters omitted)'
+        return input_
+
     def _make_task_folders(self) -> None:
         """ Generate task folders """
         # FIXME: We should have a separate mount/volume for this. At the
@@ -308,13 +329,13 @@ class DockerTaskManager(DockerBaseManager):
         # Alternatively, if we're not running in docker it should point to the
         # folder on the host that can act like a data volume. In both cases,
         # we can just copy the required files to it
-        self.task_folder_name = f"task-{self.result_id:09d}"
+        self.task_folder_name = f"task-{self.run_id:09d}"
         self.task_folder_path = \
             os.path.join(self.__tasks_dir, self.task_folder_name)
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> Dict:
+    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> dict:
         """
         Generate docker volumes required to run the algorithm
 
@@ -327,7 +348,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        Dict:
+        dict:
             Volumes to support running the algorithm
         """
         if isinstance(self.docker_input, str):
@@ -359,28 +380,30 @@ class DockerTaskManager(DockerBaseManager):
                 {"bind": self.data_folder, "mode": "rw"}
         return volumes
 
-    def _setup_environment_vars(self, algorithm_env: Dict = {},
-                                database: str = 'default') -> Dict:
+    def _setup_environment_vars(self, algorithm_env: dict,
+                                database: str = 'default') -> dict:
         """"
         Set environment variables required to run the algorithm
 
         Parameters
         ----------
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
+        database: str
+            Label of the database to use
 
         Returns
         -------
-        Dict:
+        dict:
             Environment variables required to run algorithm
         """
         try:
             proxy_host = os.environ['PROXY_SERVER_HOST']
 
         except Exception:
-            print('-' * 80)
-            print(os.environ)
-            print('-' * 80)
+            self.log.warn("PROXY_SERVER_HOST not set, using "
+                          "host.docker.internal")
+            self.log.debug(os.environ)
             proxy_host = 'host.docker.internal'
 
         # define enviroment variables for the docker-container, the
@@ -399,16 +422,32 @@ class DockerTaskManager(DockerBaseManager):
             "API_PATH": "",
         }
 
+        if database in self.databases:
+            environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
+        else:
+            # In this case the algorithm might crash if it tries to access
+            # the DATABASE_LABEL environment variable
+            self.log.warning("A user specified a database that does not "
+                             "exist. Available databases are: "
+                             f"{self.databases.keys()}. This is likely to "
+                             "result in an algorithm crash.")
+            self.debug(f"User specified database: {database}")
+
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
         # same time
         db_labels = []
         for label in self.databases:
             db = self.databases[label]
-            var_name = f'{label.upper()}_DATABASE_URI'
-            environment_variables[var_name] = \
+
+            uri_var_name = f'{label.upper()}_DATABASE_URI'
+            environment_variables[uri_var_name] = \
                 f"{self.data_folder}/{os.path.basename(db['uri'])}" \
                 if db['is_file'] else db['uri']
+
+            type_var_name = f'{label.upper()}_DATABASE_TYPE'
+            environment_variables[type_var_name] = db['type']
+
             db_labels.append(label)
         environment_variables['DB_LABELS'] = json.dumps(db_labels)
 

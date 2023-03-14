@@ -1,5 +1,4 @@
 import logging
-from typing import Dict
 import jwt
 
 from flask import request, session
@@ -9,19 +8,21 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 from vantage6.common import logger_name
 from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
-from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.model.base import DatabaseSessionManager
 
 ALL_NODES_ROOM = 'all_nodes'
 
 
 class DefaultSocketNamespace(Namespace):
     """
-    Handlers for SocketIO events are different than handlers for routes and
-    that introduces a lot of confusion around what can and cannot be done in a
-    SocketIO handler. The main difference is that all the SocketIO events
-    generated for a client occur in the context of a single long running
-    request.
+    This is the default SocketIO namespace. It is used for all the long-running
+    socket communication between the server and the clients. The clients of the
+    socket connection are nodes and users.
+
+    When socket communication is received from one of the clients, the
+    functions in this class are called to execute the corresponding action.
     """
     socketio = None
 
@@ -29,15 +30,21 @@ class DefaultSocketNamespace(Namespace):
 
     def on_connect(self) -> None:
         """
-        A new incomming connection request from a client.
+        A new incoming connection request from a client.
 
-        New incomming connections are authenticated using their
-        JWT authorization token which is obtained from the REST api.
-        A session is created for each connected clients which lives
-        as long as the connection is active. There has not been made
-        any difference between connecting and re-connecting.
+        New connections are authenticated using their JWT authorization token
+        which is obtained from the REST API. A session is created for each
+        connected client, and lives as long as the connection is active.
+        Each client is assigned to rooms based on their permissions.
+
+        Nodes that are connecting are also set to status 'online'.
+
+
+        Note
+        ----
+        Note that reconnecting clients are treated the same as new clients.
+
         """
-
         self.log.info(f'Client connected: "{request.sid}"')
 
         # try to catch jwt authorization token.
@@ -89,6 +96,9 @@ class DefaultSocketNamespace(Namespace):
         for room in session.rooms:
             self.__join_room_and_notify(room)
 
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
     @staticmethod
     def _add_node_to_rooms(node: Authenticatable) -> None:
         """
@@ -118,18 +128,18 @@ class DefaultSocketNamespace(Namespace):
         """
         # check for which collab rooms the user has permission to enter
         session.user = db.User.get(session.auth_id)
-        if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
+        if session.user.can('event', Scope.GLOBAL, Operation.RECEIVE):
             # user joins all collaboration rooms
             collabs = db.Collaboration.get()
             for collab in collabs:
                 session.rooms.append(f'collaboration_{collab.id}')
         elif session.user.can(
-                'event', Scope.COLLABORATION, Operation.VIEW):
+                'event', Scope.COLLABORATION, Operation.RECEIVE):
             # user joins all collaboration rooms that their organization
             # participates in
             for collab in user.organization.collaborations:
                 session.rooms.append(f'collaboration_{collab.id}')
-        elif session.user.can('event', Scope.ORGANIZATION, Operation.VIEW):
+        elif session.user.can('event', Scope.ORGANIZATION, Operation.RECEIVE):
             # user joins collaboration subrooms that include only messages
             # relevant to their own node
             for collab in user.organization.collaborations:
@@ -140,8 +150,16 @@ class DefaultSocketNamespace(Namespace):
 
     def on_disconnect(self) -> None:
         """
-        Client that disconnects needs to leave all rooms.
+        Client that disconnects is removed from all rooms they were in.
+
+        If nodes disconnect, their status is also set to offline and users may
+        be alerted to that. Also, any information on the node (e.g.
+        configuration) is removed from the database.
         """
+        if not self.__is_identified_client():
+            self.log.debug('Client disconnected before identification')
+            return
+
         for room in session.rooms:
             # self.__leave_room_and_notify(room)
             self.__leave_room_and_notify(room)
@@ -158,52 +176,61 @@ class DefaultSocketNamespace(Namespace):
             self.socketio.emit('node-status-changed', namespace='/admin')
             self.__alert_node_status(online=False, node=auth)
 
+            # delete any data on the node stored on the server (e.g.
+            # configuration data)
+            self.__clean_node_data(auth)
+
         self.log.info(f'{session.name} disconnected')
+
+        # cleanup (e.g. database session)
+        self.__cleanup()
 
     def on_message(self, message: str) -> None:
         """
-        An incomming message from any client.
+        On receiving a message from a client, log it.
 
         Parameters
         ----------
-        message : str
-            message that is going to be displayed in the server-log
+        message: str
+            Message that is going to be displayed in the server log
         """
         self.log.info('received message: ' + message)
 
     def on_error(self, e: str) -> None:
         """
-        An incomming error from any of the client.
+        An receiving an error from a client, log it.
 
         Parameters
         ----------
-        e : str
-            error message that is being displayed in the server log
+        e: str
+            Error message that is being displayed in the server log
         """
         self.log.error(e)
 
-    def on_algorithm_status_change(self, data: Dict) -> None:
+    def on_algorithm_status_change(self, data: dict) -> None:
         """
-        An algorithm container has changed its status.
-
-        This status change may be that the algorithm has finished, crashed,
-        etc. Here we notify the collaboration of the change.
+        An algorithm container has changed its status. This status change may
+        be that the algorithm has finished, crashed, etc. Here we notify the
+        collaboration of the change.
 
         Parameters
         ----------
         data: Dict
             Dictionary containing parameters on the updated algorithm status.
-            It should contain:
-            node_id : int
-                node_id where the algorithm container was running
-            status : int
-                New status of the algorithm container
-            result_id : int
-                result_id for which the algorithm was running
-            collaboration_id : int
-                collaboration for which the algorithm was running
+            It should look as follows:
+
+            {
+                # node_id where algorithm container was running
+                "node_id": 1,
+                # new status of algorithm container
+                "status": "active",
+                # result_id for which the algorithm was running
+                "result_id": 1,
+                # collaboration_id for which the algorithm was running
+                "collaboration_id": 1
+            }
         """
-        result_id = data.get('result_id')
+        run_id = data.get('run_id')
         task_id = data.get('task_id')
         collaboration_id = data.get('collaboration_id')
         status = data.get('status')
@@ -211,10 +238,10 @@ class DefaultSocketNamespace(Namespace):
         organization_id = data.get('organization_id')
         parent_id = data.get('parent_id')
 
-        run_id = db.Result.get(result_id).task.run_id
+        job_id = db.Run.get(run_id).task.job_id
 
         # log event in server logs
-        msg = (f"A container for run_id={run_id} and result_id={result_id} "
+        msg = (f"A container for job_id={job_id} and run_id={run_id} "
                f"in collaboration_id={collaboration_id} on node_id={node_id}")
         if has_task_failed(status):
             self.log.critical(f"{msg} exited with status={status}.")
@@ -225,15 +252,52 @@ class DefaultSocketNamespace(Namespace):
         emit(
             "algorithm_status_change", {
                 "status": status,
-                "result_id": result_id,
-                "task_id": task_id,
                 "run_id": run_id,
+                "task_id": task_id,
+                "job_id": job_id,
                 "collaboration_id": collaboration_id,
                 "node_id": node_id,
                 "organization_id": organization_id,
                 "parent_id": parent_id,
             }, room=f"collaboration_{collaboration_id}"
         )
+
+        # cleanup (e.g. database session)
+        self.__cleanup()
+
+    def on_node_info_update(self, node_config: dict) -> None:
+        """
+        A node sends information about its configuration and other properties.
+        Store this in the database for the duration of the node's session.
+
+        Parameters
+        ----------
+        node_config: dict
+            Dictionary containing the node's configuration.
+        """
+        node = db.Node.get(session.auth_id)
+
+        # delete any old data that may be present (if cleanup on disconnect
+        # failed)
+        self.__clean_node_data(node=node)
+
+        # store (new) node config
+        to_store = []
+        for k, v in node_config.items():
+            # add single item or list of items
+            if not isinstance(v, list):
+                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
+            else:
+                to_store.extend([
+                    db.NodeConfig(node_id=node.id, key=k, value=i)
+                    for i in v
+                ])
+
+        node.config = to_store
+        node.save()
+
+        # cleanup (e.g. database session)
+        self.__cleanup()
 
     def __join_room_and_notify(self, room: str) -> None:
         """
@@ -298,3 +362,34 @@ class DefaultSocketNamespace(Namespace):
                 namespace='/tasks',
                 room=room
             )
+
+    @staticmethod
+    def __is_identified_client() -> bool:
+        """
+        Check if client has been identified as an authenticated user or node
+
+        Returns
+        -------
+        bool
+            True if client has been identified, False otherwise
+        """
+        return hasattr(session, 'auth_id')
+
+    @staticmethod
+    def __clean_node_data(node: db.Node) -> None:
+        """
+        Remove any information from the database that the node shared about
+        e.g. its configuration
+
+        Parameters
+        ----------
+        node: db.Node
+            The node SQLALchemy object
+        """
+        for conf in node.config:
+            conf.delete()
+
+    @staticmethod
+    def __cleanup() -> None:
+        """ Cleanup database connections """
+        DatabaseSessionManager.clear_session()

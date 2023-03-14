@@ -11,14 +11,16 @@ from http import HTTPStatus
 from unittest.mock import patch
 from flask import Response as BaseResponse
 from flask.testing import FlaskClient
+from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.common.task_status import TaskStatus
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp, session
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
-                                   Collaboration, Task, Result)
+                                   Collaboration, Task, Run)
 from vantage6.server.model.rule import Scope, Operation
 from vantage6.server import context
 from vantage6.server._version import __version__
@@ -51,10 +53,13 @@ class TestResources(unittest.TestCase):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
 
-        ctx = context.TestContext.from_external_config_file(
-            "unittest_config.yaml")
+        ctx = context.TestContext.from_external_config_file()
 
-        server = ServerApp(ctx)
+        # create server instance. Patch the start_background_task method
+        # to prevent the server from starting a ping/pong thread that will
+        # prevent the tests from starting
+        with patch.object(SocketIO, 'start_background_task'):
+            server = ServerApp(ctx)
         cls.server = server
 
         file_ = str(PACKAGE_FOLDER / APPNAME / "server" / "_data" /
@@ -118,7 +123,7 @@ class TestResources(unittest.TestCase):
     def create_user(self, organization=None, rules=[], password="password"):
 
         if not organization:
-            organization = Organization(name="some-organization")
+            organization = Organization(name=str(uuid.uuid1()))
             organization.save()
 
         # user details
@@ -139,10 +144,10 @@ class TestResources(unittest.TestCase):
 
     def create_node(self, organization=None, collaboration=None):
         if not organization:
-            organization = Organization()
+            organization = Organization(name=str(uuid.uuid1()))
 
         if not collaboration:
-            collaboration = Collaboration()
+            collaboration = Collaboration(name=str(uuid.uuid1()))
 
         api_key = str(uuid1())
         node = Node(
@@ -173,9 +178,9 @@ class TestResources(unittest.TestCase):
                         node=None, task=None, api_key=None):
         if not node:
             if not collaboration:
-                collaboration = Collaboration()
+                collaboration = Collaboration(name=str(uuid.uuid1()))
             if not organization:
-                organization = Organization()
+                organization = Organization(name=str(uuid.uuid1()))
             api_key = str(uuid1())
             node = Node(organization=organization, collaboration=collaboration,
                         api_key=api_key)
@@ -186,7 +191,7 @@ class TestResources(unittest.TestCase):
 
         if not task:
             task = Task(image="some-image", collaboration=collaboration,
-                        results=[Result()])
+                        runs=[Run(status=TaskStatus.PENDING)])
             task.save()
 
         headers = self.login_node(api_key)
@@ -325,7 +330,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # succesfully create a node
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
         col.save()
 
@@ -365,31 +370,31 @@ class TestResources(unittest.TestCase):
 
     def test_result_with_id(self):
         headers = self.login("root")
-        result = self.app.get("/api/result/1", headers=headers)
-        self.assertEqual(result.status_code, 200)
+        run = self.app.get("/api/run/1", headers=headers)
+        self.assertEqual(run.status_code, 200)
 
-        result = self.app.get("/api/result/1?include=task", headers=headers)
-        self.assertEqual(result.status_code, 200)
+        run = self.app.get("/api/run/1?include=task", headers=headers)
+        self.assertEqual(run.status_code, 200)
 
-    def test_result_without_id(self):
+    def test_run_without_id(self):
         headers = self.login("root")
-        result1 = self.app.get("/api/result", headers=headers)
+        result1 = self.app.get("/api/run", headers=headers)
         self.assertEqual(result1.status_code, 200)
 
-        result2 = self.app.get("/api/result?state=open&&node_id=1",
+        result2 = self.app.get("/api/run?state=open&&node_id=1",
                                headers=headers)
         self.assertEqual(result2.status_code, 200)
 
-        result3 = self.app.get("/api/result?task_id=1", headers=headers)
+        result3 = self.app.get("/api/run?task_id=1", headers=headers)
         self.assertEqual(result3.status_code, 200)
 
-        result4 = self.app.get("/api/result?task_id=1&&node_id=1",
+        result4 = self.app.get("/api/run?task_id=1&&node_id=1",
                                headers=headers)
         self.assertEqual(result4.status_code, 200)
 
     def test_stats(self):
         headers = self.login("root")
-        result = self.app.get("/api/result", headers=headers)
+        result = self.app.get("/api/run", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_task_with_id(self):
@@ -402,9 +407,9 @@ class TestResources(unittest.TestCase):
         result = self.app.get("/api/task", headers=headers)
         self.assertEqual(result.status_code, 200)
 
-    def test_task_including_results(self):
+    def test_task_including_runs(self):
         headers = self.login("root")
-        result = self.app.get("/api/task?include=results", headers=headers)
+        result = self.app.get("/api/task?include=runs", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_task_unknown(self):
@@ -1421,9 +1426,9 @@ class TestResources(unittest.TestCase):
     def test_organization_view_nodes(self):
 
         # create organization, collaboration and node
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         org.save()
-        col = Collaboration(organizations=[org])
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         col.save()
         node = Node(organization=org, collaboration=col)
         node.save()
@@ -1738,8 +1743,8 @@ class TestResources(unittest.TestCase):
 
     def test_view_collaboration_node_permissions(self):
 
-        org = Organization()
-        col = Collaboration(organizations=[org])
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         node = Node(collaboration=col, organization=org)
         node.save()
 
@@ -1991,9 +1996,9 @@ class TestResources(unittest.TestCase):
 
     def test_create_node_permissions(self):
 
-        org = Organization()
+        org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
-        org2 = Organization()
+        org2 = Organization(name=str(uuid.uuid1()))
         org2.save()
 
         # test non existing collaboration
@@ -2061,8 +2066,8 @@ class TestResources(unittest.TestCase):
 
     def test_delete_node_permissions(self):
 
-        org = Organization()
-        col = Collaboration(organizations=[org])
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         node = Node(organization=org, collaboration=col)
         node.save()
 
@@ -2084,7 +2089,8 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # global permission
-        node2 = Node(organization=org, collaboration=col)
+        org2 = Organization(name=str(uuid.uuid1()))
+        node2 = Node(organization=org2, collaboration=col)
         node2.save()
         rule = Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
@@ -2217,7 +2223,7 @@ class TestResources(unittest.TestCase):
         col.save()
         task = Task(collaboration=col, image="some-image")
         task.save()
-        res = Result(task=task)
+        res = Run(task=task, status=TaskStatus.PENDING)
         res.save()
 
         headers = self.create_node_and_login(organization=org)
@@ -2323,7 +2329,8 @@ class TestResources(unittest.TestCase):
         col = Collaboration(organizations=[org])
         parent_task = Task(collaboration=col, image="some-image")
         parent_task.save()
-        parent_res = Result(organization=org, task=parent_task)
+        parent_res = Run(organization=org, task=parent_task,
+                         status=TaskStatus.PENDING)
         parent_res.save()
 
         # test wrong image name
@@ -2358,7 +2365,17 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
         # test already completed task
-        parent_res.finished_at = datetime.date(2020, 1, 1)
+        parent_res.status = TaskStatus.COMPLETED
+        parent_res.save()
+        results = self.app.post('/api/task', headers=headers, json={
+            "organizations": [{'id': org.id}],
+            'collaboration_id': col.id,
+            'image': 'some-image'
+        })
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test a failed task
+        parent_res.status = TaskStatus.FAILED
         parent_res.save()
         results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
@@ -2402,18 +2419,18 @@ class TestResources(unittest.TestCase):
 
         # test that all results are also deleted
         task = Task(collaboration=col)
-        res = Result(task=task)
-        res.save()
-        result_id = res.id  # cannot access this after deletion
+        run = Run(task=task)
+        run.save()
+        run_id = run.id  # cannot access this after deletion
         results = self.app.delete(f'/api/task/{task.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertIsNone(Task.get(result_id))
+        self.assertIsNone(Task.get(run_id))
 
     def test_view_task_result_permissions_as_user(self):
 
         # non-existing task
         headers = self.create_user_and_login()
-        result = self.app.get('/api/task/9999/result', headers=headers)
+        result = self.app.get('/api/task/9999/run', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # test with organization permissions from other organization
@@ -2422,38 +2439,38 @@ class TestResources(unittest.TestCase):
         task = Task(collaboration=col)
         # NB: node is used implicitly in task/{id}/result schema
         node = Node(organization=org, collaboration=col)
-        res = Result(task=task, organization=org)
+        res = Run(task=task, organization=org)
         res.save()
 
-        rule = Rule.get_by_("result", Scope.ORGANIZATION, Operation.VIEW)
+        rule = Rule.get_by_("run", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        result = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        result = self.app.get(f'/api/task/{task.id}/run', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with organization permission
         headers = self.create_user_and_login(org, [rule])
-        result = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        result = self.app.get(f'/api/task/{task.id}/run', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # test with global permission
-        rule = Rule.get_by_("result", Scope.GLOBAL, Operation.VIEW)
+        rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        result = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        result = self.app.get(f'/api/task/{task.id}/run', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # cleanup
         node.delete()
 
-    def test_view_task_result_permissions_as_container(self):
+    def test_view_task_run_permissions_as_container(self):
         # test if container can
         org = Organization()
         col = Collaboration(organizations=[org])
         task = Task(collaboration=col, image="some-image")
         task.save()
-        res = Result(task=task, organization=org)
+        res = Run(task=task, organization=org, status=TaskStatus.PENDING)
         res.save()
 
         headers = self.login_container(collaboration=col, organization=org,
                                        task=task)
-        results = self.app.get(f'/api/task/{task.id}/result', headers=headers)
+        results = self.app.get(f'/api/task/{task.id}/run', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)

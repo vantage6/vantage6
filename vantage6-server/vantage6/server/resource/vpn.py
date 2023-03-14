@@ -5,12 +5,12 @@ import json
 import base64
 import hashlib
 import re
-from typing import Dict, Tuple
 import urllib.parse as urlparse
 
 from http import HTTPStatus
 from flask.globals import g
 from flask import request
+from flask_restful import Api
 import requests
 from requests_oauthlib import OAuth2Session
 
@@ -25,7 +25,19 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the collaboration resource.
+
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -407,7 +419,7 @@ class EduVPNConnector:
         parsed_url = urlparse.urlparse(redirected_uri)
         self.code = urlparse.parse_qs(parsed_url.query)['code']
 
-    def _get_token(self) -> Dict:
+    def _get_token(self) -> dict:
         """
         Use authorization code to obtain a token from the EduVPN portal
 
@@ -488,7 +500,7 @@ class EduVPNConnector:
             ovpn_config[end_remove_pos+len(end_key):]
         )
 
-    def get_profile(self) -> Dict:
+    def get_profile(self) -> dict:
         """
         Call the profile_list route of EduVPN API
 
@@ -521,7 +533,7 @@ class EduVPNConnector:
         )
         return response_config.content.decode('utf-8')
 
-    def get_key_pair(self) -> Tuple[str, str]:
+    def get_key_pair(self) -> tuple[str, str]:
         """
         Call the create_keypair route of EduVPN API
 

@@ -1,19 +1,56 @@
+from __future__ import annotations
+
 import math
 import logging
+import flask
+import sqlalchemy
 
 from urllib.parse import urlencode
-import sqlalchemy
 
 from vantage6.common import logger_name
 from vantage6.server.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
+from vantage6.server import db
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
 class Page:
+    """
+    Definition of a page of items return by the API.
 
-    def __init__(self, items, page, page_size, total):
+    Parameters
+    ----------
+    items : list[db.Base]
+        List of database resources on this page
+    page : int
+        Current page number
+    page_size : int
+        Number of items per page
+    total : int
+        Total number of items
+
+    Attributes
+    ----------
+    current_page : int
+        Current page number
+    items : list[db.Base]
+        List of resources on the current page
+    previous_page : int
+        Page number of the previous page
+    next_page : int
+        Page number of the next page
+    has_previous : bool
+        True if there is a previous page, False otherwise
+    has_next : bool
+        True if there is a next page, False otherwise
+    total : int
+        Total number of items
+    pages : int
+        Total number of pages
+    """
+    def __init__(self, items: list[db.Base], page: int, page_size: int,
+                 total: int) -> None:
         self.current_page = page
         self.items = items
         self.previous_page = None
@@ -30,19 +67,58 @@ class Page:
 
 
 class Pagination:
+    """
+    Class that handles pagination of a query.
 
-    def __init__(self, items, page: int, page_size, total, request):
+    Parameters
+    ----------
+    items : list[db.Base]
+        List of database resources to paginate
+    page : int
+        Current page number
+    page_size : int
+        Number of items per page
+    total : int
+        Total number of items
+    request : flask.Request
+        Request object
+
+    Attributes
+    ----------
+    page : Page
+        Page object
+    request : flask.Request
+        Request object
+    """
+    def __init__(self, items: list[db.Base], page: int, page_size: int,
+                 total: int, request: flask.Request) -> None:
         self.page = Page(items, page, page_size, total)
         self.request = request
 
     @property
     def link_header(self) -> str:
+        """
+        Puts links to other pages in the response header.
+
+        Returns
+        -------
+        str
+            Link header
+        """
         link_strs = [f'<{url}>; rel={rel}' for rel, url in
                      self.metadata_links.items()]
         return ','.join(link_strs)
 
     @property
-    def headers(self):
+    def headers(self) -> dict:
+        """
+        Set the headers for the response.
+
+        Returns
+        -------
+        dict
+            Response headers
+        """
         return {
             'total-count': self.page.total,
             'Link': self.link_header
@@ -50,6 +126,14 @@ class Pagination:
 
     @property
     def metadata_links(self) -> dict:
+        """
+        Construct links to other pages.
+
+        Returns
+        -------
+        dict
+            Links to other pages
+        """
         url = self.request.path
         args = self.request.args.copy()
 
@@ -70,7 +154,23 @@ class Pagination:
         return links
 
     @classmethod
-    def from_query(cls, query: sqlalchemy.orm.query, request):
+    def from_query(cls, query: sqlalchemy.orm.query,
+                   request: flask.Request) -> Pagination:
+        """
+        Create a Pagination object from a query.
+
+        Parameters
+        ----------
+        query : sqlalchemy.orm.query
+            Query to paginate
+        request : flask.Request
+            Request object
+
+        Returns
+        -------
+        Pagination
+            Pagination object
+        """
         # Get the total number of records. We remove the ordering of the query
         # since it doesn't matter for getting a count and might have
         # performance implications as discussed on this Flask-SqlAlchemy issue:
@@ -138,7 +238,23 @@ class Pagination:
 
     # TODO in v4+, remove this method if also removing the double endpoints
     @classmethod
-    def from_list(cls, items: list, request):
+    def from_list(cls, items: list[db.Base],
+                  request: flask.Request) -> Pagination:
+        """
+        Create a Pagination object from a list of database objects.
+
+        Parameters
+        ----------
+        items : list[db.Base]
+            List of database objects to paginate
+        request : flask.Request
+            Request object
+
+        Returns
+        -------
+        Pagination
+            Pagination object
+        """
         page_id = int(request.args.get('page', DEFAULT_PAGE))
         per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
         total = len(items)

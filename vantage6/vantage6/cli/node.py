@@ -12,8 +12,6 @@ commands are available:
     * vnode remove
     * vnode version
     * vnode create-private-key
-
-
 """
 import click
 import sys
@@ -23,14 +21,15 @@ import time
 import os.path
 import itertools
 
-from typing import Iterable, Tuple, List
+from typing import Iterable
 from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_config_writeable
+    bytes_to_base64s, check_config_writeable,
+    get_database_config
 )
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -299,11 +298,11 @@ def cli_node_start(name: str, config: str, environment: str,
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
-            question = (f"Configuration '{name}' using environment "
-                        "'{environment}' does not exist.\n  Do you want to "
-                        "create this config now?")
+            warning(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} "
+                    f"using environment {Fore.RED}{environment}"
+                    f"{Style.RESET_ALL} does not exist. ")
 
-            if q.confirm(question).ask():
+            if q.confirm("Create this configuration now?").ask():
                 configuration_wizard("node", name, environment, system_folders)
 
             else:
@@ -438,11 +437,26 @@ def cli_node_start(name: str, config: str, environment: str,
 
     # only mount the DB if it is a file
     info("Setting up databases")
-    db_labels = ctx.databases.keys()
+
+    # Check wether the new or old database configuration is used
+    # TODO: remove this in version v4+
+    old_format = isinstance(ctx.databases, dict)
+    if old_format:
+        db_labels = ctx.databases.keys()
+        warning('Using the old database configuration format. Please update.')
+        debug('You are using the db config old format, algorithms using the '
+              'auto wrapper will not work!')
+    else:
+        db_labels = [db['label'] for db in ctx.databases]
+
     for label in db_labels:
 
-        uri = ctx.databases[label]
-        info(f"  Processing database '{label}:{uri}'")
+        db_config = get_database_config(ctx.databases, label)
+        uri = db_config['uri']
+        db_type = db_config['type']
+
+        info(f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
+             f"{Fore.GREEN}{label}:{uri}{Style.RESET_ALL}")
         label_capitals = label.upper()
 
         try:
@@ -945,9 +959,21 @@ def cli_node_version(name: str, system_folders: bool) -> None:
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_set_api_key(name, api_key, environment, system_folders):
+def cli_node_set_api_key(name: str, api_key: str, environment: str,
+                         system_folders: bool) -> None:
     """
     Put a new API key into the node configuration file
+
+    Parameters
+    ----------
+    name : str
+        Node configuration name
+    api_key : str
+        New API key
+    environment : str
+        DTAP environment
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
     """
     # select name and environment
     name, environment = select_node(name, environment, system_folders)
@@ -983,7 +1009,6 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
     logs_stream : Iterable[bytes]
         Output of the container.attach() method
     """
-
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
 
@@ -1024,14 +1049,14 @@ def create_client_and_authenticate(ctx: NodeContext) -> Client:
 
 
 def select_node(name: str, environment: str, system_folders: bool) \
-        -> Tuple[str, str]:
+        -> tuple[str, str]:
     """
     Let user select node through questionnaire if name/environment is not
     given.
 
     Returns
     -------
-    Tuple[str, str]
+    tuple[str, str]
         name, environment of the configuration file
     """
     name, environment = (name, environment) if name else \
@@ -1048,7 +1073,7 @@ def select_node(name: str, environment: str, system_folders: bool) \
     return name, environment
 
 
-def find_running_node_names(client: docker.DockerClient) -> List[str]:
+def find_running_node_names(client: docker.DockerClient) -> list[str]:
     """
     Returns a list of names of running nodes.
 
@@ -1059,7 +1084,7 @@ def find_running_node_names(client: docker.DockerClient) -> List[str]:
 
     Returns
     -------
-    List[str]
+    list[str]
         List of names of running nodes
     """
     running_nodes = client.containers.list(

@@ -1,4 +1,4 @@
-FROM python:3.7-slim-buster
+FROM python:3.10-slim-buster
 
 LABEL version="3"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"

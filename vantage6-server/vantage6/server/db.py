@@ -10,7 +10,7 @@ import sqlalchemy as sql
 from vantage6.server.model import (
     Base,
     Task,
-    Result,
+    Run,
     Organization,
     User,
     Node,
@@ -22,7 +22,8 @@ from vantage6.server.model import (
     Rule,
     UserPermission,
     role_rule_association,
-    AlgorithmPort
+    AlgorithmPort,
+    NodeConfig
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
@@ -32,8 +33,25 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def jsonable(value):
-    """Convert a (list of) SQLAlchemy instance(s) to native Python objects."""
+def jsonable(value: list[Base] | Base) -> list | dict:
+    """
+    Convert a (list of) SQLAlchemy instance(s) to native Python objects.
+
+    Parameters
+    ----------
+    value : list[Base] | Base
+        A single SQLAlchemy instance or a list of SQLAlchemy instances
+
+    Returns
+    -------
+    list | dict
+        A single Python object or a list of Python objects
+
+    Raises
+    ------
+    Exception
+        If the value is not an instance of db.Base or a list of db.Base
+    """
     if isinstance(value, list):
         return [jsonable(i) for i in value]
 
@@ -66,6 +84,18 @@ def jsonable(value):
     raise Exception('value should be instance of db.Base or list!')
 
 
-def jsonify(value):
-    """Convert a (list of) SQLAlchemy instance(s) to a JSON (string)."""
+def jsonify(value: list[Base] | Base) -> str:
+    """
+    Convert a (list of) SQLAlchemy instance(s) to a JSON (string).
+
+    Parameters
+    ----------
+    value : list[Base] | Base
+        A single SQLAlchemy instance or a list of SQLAlchemy instances
+
+    Returns
+    -------
+    str
+        A JSON string
+    """
     return json.dumps(jsonable(value))
