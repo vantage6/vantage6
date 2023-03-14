@@ -13,6 +13,7 @@ export interface Node {
   is_online: boolean;
   last_seen: Date | null;
   api_key?: string;
+  config: { [key: string]: string[] };
 }
 
 export interface NodeWithOrg extends Node {
@@ -29,6 +30,7 @@ export const EMPTY_NODE: Node = {
   ip: '',
   last_seen: null,
   is_online: false,
+  config: {},
 };
 
 export function getEmptyNode(): Node {

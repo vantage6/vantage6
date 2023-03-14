@@ -8,6 +8,7 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { ExitMode } from 'src/app/shared/enum';
 import { environment } from 'src/environments/environment';
 import { BaseViewComponent } from '../base-view/base-view.component';
+import { dictEmpty } from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-node-view',
@@ -101,5 +102,9 @@ export class NodeViewComponent extends BaseViewComponent implements OnInit {
           this.modalService.openErrorModal(error.error.msg);
         }
       );
+  }
+
+  hasNodeConfig(): boolean {
+    return !dictEmpty(this.node.config);
   }
 }
