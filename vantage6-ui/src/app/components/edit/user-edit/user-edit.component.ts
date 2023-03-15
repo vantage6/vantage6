@@ -80,7 +80,7 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
 
   async setupCreate() {
     // collect roles and rules (which is required to collect users)
-    await this.setAssignableRoles();
+    await this.setRoles();
     if (!this.organization_id) {
       (await this.orgDataService.list(false, allPages())).subscribe(
         (orgs: Organization[]) => {
@@ -94,8 +94,14 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     }
   }
 
-  async setRoles(org_id: number): Promise<void> {
-    (await this.roleDataService.org_list(org_id)).subscribe((roles: Role[]) => {
+  async setRoles(org_id: number | null = null): Promise<void> {
+    let request;
+    if (org_id === null) {
+      request = await this.roleDataService.list();
+    } else {
+      request = await this.roleDataService.org_list(org_id);
+    }
+    request.subscribe((roles: Role[]) => {
       this.roles_all = roles;
       this.setAssignableRoles();
     });
