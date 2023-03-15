@@ -4,5 +4,5 @@ export interface Port {
   type: string;
   port: number;
   label: string;
-  result_id: number; // TODO necessary?
+  run_id: number; // TODO necessary?
 }

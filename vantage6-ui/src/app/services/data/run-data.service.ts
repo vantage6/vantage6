@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Result } from 'src/app/interfaces/result';
+import { Run } from 'src/app/interfaces/run';
 import { TaskStatus } from 'src/app/shared/enum';
 import { filterArrayByProperty } from 'src/app/shared/utils';
-import { ResultApiService } from '../api/result-api.service';
+import { RunApiService } from '../api/run-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { SocketioConnectService } from '../common/socketio-connect.service';
 import { BaseDataService } from './base-data.service';
@@ -11,13 +11,13 @@ import { BaseDataService } from './base-data.service';
 @Injectable({
   providedIn: 'root',
 })
-export class ResultDataService extends BaseDataService {
+export class RunDataService extends BaseDataService {
   queried_task_ids: number[] = [];
-  resources_per_task: { [task_id: number]: BehaviorSubject<Result[]> } = {};
+  resources_per_task: { [task_id: number]: BehaviorSubject<Run[]> } = {};
 
-  // TODO update on result updates
+  // TODO update on run updates
   constructor(
-    protected apiService: ResultApiService,
+    protected apiService: RunApiService,
     protected convertJsonService: ConvertJsonService,
     private socketConnectService: SocketioConnectService
   ) {
@@ -26,16 +26,16 @@ export class ResultDataService extends BaseDataService {
     this.socketConnectService
       .getAlgorithmStatusUpdates()
       .subscribe((update) => {
-        this.updateResultOnSocketEvent(update);
+        this.updateRunOnSocketEvent(update);
       });
     this.resource_list.subscribe((resources) => {
       // When the list of all resources is updated, ensure that observables
       // by task id
-      this.updateObsPerTask(resources as Result[]);
+      this.updateObsPerTask(resources as Run[]);
     });
   }
 
-  updateObsPerTask(resources: Result[]): void {
+  updateObsPerTask(resources: Run[]): void {
     if (this.queried_task_ids.length === 0) return;
     for (let task_id of this.queried_task_ids) {
       if (task_id in this.resources_per_task) {
@@ -43,7 +43,7 @@ export class ResultDataService extends BaseDataService {
           filterArrayByProperty(resources, 'task_id', task_id)
         );
       } else {
-        this.resources_per_task[task_id] = new BehaviorSubject<Result[]>(
+        this.resources_per_task[task_id] = new BehaviorSubject<Run[]>(
           filterArrayByProperty(resources, 'task_id', task_id)
         );
       }
@@ -53,45 +53,49 @@ export class ResultDataService extends BaseDataService {
   async get_by_task_id(
     task_id: number,
     force_refresh: boolean = false
-  ): Promise<Observable<Result[]>> {
+  ): Promise<Observable<Run[]>> {
     // get resources by task ID
     if (force_refresh || !this.queried_task_ids.includes(task_id)) {
       if (!(task_id in this.resources_per_task)) {
         // create empty observable as task id had not yet been queried
-        this.resources_per_task[task_id] = new BehaviorSubject<Result[]>([]);
+        this.resources_per_task[task_id] = new BehaviorSubject<Run[]>([]);
       }
       if (!this.queried_task_ids.includes(task_id)) {
         this.queried_task_ids.push(task_id);
       }
-      let results = await this.apiService.getResourcesByTaskId(task_id);
-      this.saveMultiple(results);
+      let runs = await this.apiService.getResourcesByTaskId(task_id);
+      this.saveMultiple(runs);
     }
     return this.resources_per_task[task_id].asObservable();
   }
 
-  save(result: Result) {
-    // don't save organization along with result as this can lead to loop
-    // of saves when then the organization is updated, then result again, etc
-    if (result.organization) result.organization = undefined;
-    super.save(result);
+  save(run: Run) {
+    // don't save organization along with run as this can lead to loop
+    // of saves when then the organization is updated, then run again, etc
+    if (run.organization) run.organization = undefined;
+    super.save(run);
   }
 
-  updateResultOnSocketEvent(data: any): void {
+  updateRunOnSocketEvent(data: any): void {
     if (data.status === TaskStatus.COMPLETED) {
       // TODO improve this code: now we wait for 5 seconds to retrieve results
       // when we get a socket update says result is finished, so that we are
       // 'sure' the results are updated in the database
       setTimeout(() => {
-        this.get_base(data.result_id, this.convertJsonService.getResult, true);
+        this.get_base(
+          data.run_id,
+          this.convertJsonService.getAlgorithmRun,
+          true
+        );
       }, 5000);
     }
-    let results = this.resource_list.value;
-    for (let result of results as Result[]) {
-      if (result.id === data.result_id) {
-        result.status = data.status;
+    let runs = this.resource_list.value;
+    for (let run of runs as Run[]) {
+      if (run.id === data.run_id) {
+        run.status = data.status;
         break;
       }
     }
-    this.resource_list.next(results);
+    this.resource_list.next(runs);
   }
 }

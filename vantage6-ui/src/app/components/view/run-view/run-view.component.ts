@@ -1,37 +1,34 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Result, getEmptyResult } from 'src/app/interfaces/result';
-import { ResultApiService } from 'src/app/services/api/result-api.service';
+import { Run, getEmptyRun } from 'src/app/interfaces/run';
+import { RunApiService } from 'src/app/services/api/run-api.service';
 import { FileService } from 'src/app/services/common/file.service';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ResultDataService } from 'src/app/services/data/result-data.service';
+import { RunDataService } from 'src/app/services/data/run-data.service';
 import { BaseViewComponent } from '../base-view/base-view.component';
 
 @Component({
-  selector: 'app-result-view',
-  templateUrl: './result-view.component.html',
-  styleUrls: [
-    '../../../shared/scss/buttons.scss',
-    './result-view.component.scss',
-  ],
+  selector: 'app-run-view',
+  templateUrl: './run-view.component.html',
+  styleUrls: ['../../../shared/scss/buttons.scss', './run-view.component.scss'],
 })
-export class ResultViewComponent extends BaseViewComponent implements OnInit {
-  @Input() result: Result = getEmptyResult();
+export class RunViewComponent extends BaseViewComponent implements OnInit {
+  @Input() run: Run = getEmptyRun();
 
   constructor(
-    protected resultApiService: ResultApiService,
-    protected resultDataService: ResultDataService,
+    protected RunApiService: RunApiService,
+    protected RunDataService: RunDataService,
     protected modalService: ModalService,
     private fileService: FileService
   ) {
-    super(resultApiService, resultDataService, modalService);
+    super(RunApiService, RunDataService, modalService);
   }
 
   ngOnInit(): void {}
 
   downloadLog(): void {
-    if (this.result.log) {
-      const filename = `vantage6_logs_result_${this.result.id}.txt`;
-      this.fileService.downloadTxtFile(this.result.log, filename);
+    if (this.run.log) {
+      const filename = `vantage6_logs_run_${this.run.id}.txt`;
+      this.fileService.downloadTxtFile(this.run.log, filename);
     } else {
       this.modalService.openMessageModal([
         'Sorry, the log is empty, nothing to download!',
@@ -41,14 +38,14 @@ export class ResultViewComponent extends BaseViewComponent implements OnInit {
 
   getResultDisplay(): string {
     let MAX_DISPLAY_LEN = 2000;
-    if (!this.result.decrypted_result) {
+    if (!this.run.decrypted_result) {
       return '';
-    } else if (this.result.decrypted_result?.length < MAX_DISPLAY_LEN) {
-      return this.result.decrypted_result;
+    } else if (this.run.decrypted_result?.length < MAX_DISPLAY_LEN) {
+      return this.run.decrypted_result;
     } else {
-      let len_not_shown = this.result.decrypted_result.length - MAX_DISPLAY_LEN;
+      let len_not_shown = this.run.decrypted_result.length - MAX_DISPLAY_LEN;
       return (
-        this.result.decrypted_result.slice(0, MAX_DISPLAY_LEN) +
+        this.run.decrypted_result.slice(0, MAX_DISPLAY_LEN) +
         ` (${len_not_shown} characters shown)...`
       );
     }
@@ -56,16 +53,13 @@ export class ResultViewComponent extends BaseViewComponent implements OnInit {
 
   downloadResult(): void {
     /// TODO if collaboration is encrypted, take that into account here
-    if (this.result.result) {
-      const filename = `vantage6_results_${this.result.id}.txt`;
-      if (this.result.decrypted_result) {
+    if (this.run.result) {
+      const filename = `vantage6_results_${this.run.id}.txt`;
+      if (this.run.decrypted_result) {
         // TODO call result file JSON if we get here?
-        this.fileService.downloadTxtFile(
-          this.result.decrypted_result,
-          filename
-        );
+        this.fileService.downloadTxtFile(this.run.decrypted_result, filename);
       } else {
-        this.fileService.downloadTxtFile(this.result.result, filename);
+        this.fileService.downloadTxtFile(this.run.result, filename);
         this.modalService.openMessageModal([
           'We could not decode your results here. Please execute the two steps' +
             ' below to decode them yourself',

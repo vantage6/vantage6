@@ -15,7 +15,7 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { ResultDataService } from 'src/app/services/data/result-data.service';
+import { RunDataService } from 'src/app/services/data/run-data.service';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
 import {
   addOrReplace,
@@ -28,7 +28,7 @@ import {
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
 import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
-import { Result } from 'src/app/interfaces/result';
+import { Run } from 'src/app/interfaces/run';
 
 @Component({
   selector: 'app-task-create',
@@ -62,7 +62,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     protected utilsService: UtilsService,
     private collabDataService: CollabDataService,
     private orgDataService: OrgDataService,
-    private resultDataService: ResultDataService
+    private runDataService: RunDataService
   ) {
     super(
       router,
@@ -169,22 +169,23 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.task = task;
     this.selectCollab(getById(this.collaborations, task.collaboration_id));
 
-    // Get also the task results as this includes the input and the organization
-    (await this.resultDataService.get_by_task_id(this.task.id)).subscribe(
-      (results) => {
-        if (results.length > 0) this.addPreviousTaskFields(results);
+    // Get also the task's algorithm runs as this includes the input and the
+    // organization
+    (await this.runDataService.get_by_task_id(this.task.id)).subscribe(
+      (runs) => {
+        if (runs.length > 0) this.addPreviousTaskFields(runs);
       }
     );
   }
 
-  addPreviousTaskFields(results: Result[]) {
+  addPreviousTaskFields(runs: Run[]) {
     // set organizations
-    for (let r of results) {
+    for (let r of runs) {
       this.addOrg(getById(this.organizations, r.organization_id));
     }
     // set input
-    let first_result = results[0];
-    let input = JSON.parse(atob(first_result.input));
+    let first_run = runs[0];
+    let input = JSON.parse(atob(first_run.input));
     this.task_input.master = input.master;
     this.task_input.method = input.method;
     if (input.args) {

@@ -122,12 +122,12 @@ export class SocketioMessageService {
     let collab_name = this.getCollabName(data.collaboration_id);
     if (status === TaskStatus.ACTIVE) {
       return (
-        `An algorithm (result_id ${data.result_id}) was just started on ` +
+        `An algorithm (run_id ${data.run_id}) was just started on ` +
         `a node of organization ${org_name} in collaboration ${collab_name}`
       );
     } else if (status === TaskStatus.COMPLETED) {
       return (
-        `An algorithm (result_id ${data.result_id}) just finished for collaboration` +
+        `An algorithm (run_id ${data.run_id}) just finished for collaboration` +
         ` ${collab_name} (organization ${org_name})`
       );
     } else if (
@@ -135,7 +135,7 @@ export class SocketioMessageService {
       status !== TaskStatus.INITIALIZING
     ) {
       return (
-        `An algorithm (result_id ${data.result_id}) just failed for collaboration` +
+        `An algorithm (run_id ${data.run_id}) just failed for collaboration` +
         ` ${collab_name} (organization ${org_name}) with status: ${status}`
       );
     }
