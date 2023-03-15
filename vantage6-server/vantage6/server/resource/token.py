@@ -5,7 +5,7 @@ Resources below '/<api_base>/token'
 import logging
 import pyotp
 
-from flask import request, g, render_template
+from flask import request, g
 from flask_jwt_extended import (
     jwt_required,
     create_access_token,
