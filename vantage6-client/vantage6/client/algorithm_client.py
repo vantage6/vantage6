@@ -52,6 +52,14 @@ class AlgorithmClient(ClientBase):
             f"Can only use image={self.image}"
         )
 
+        # attach sub-clients
+        self.result = self.Result(self)
+        self.task = self.Task(self)
+        self.vpn = self.VPN(self)
+        self.organization = self.Organization(self)
+        self.collaboration = self.Collaboration(self)
+        self.node = self.Node(self)
+
         self._access_token = token
 
     def request(self, *args, **kwargs) -> dict:

@@ -46,6 +46,7 @@ setup(
         'gevent==22.10.2',
         'ipython==8.10.0',
         'jinja2==3.1.2',
+        'kombu==5.2.4',
         'marshmallow==2.16.3',
         'marshmallow-sqlalchemy==0.15.0',
         'pyotp==2.8.0',

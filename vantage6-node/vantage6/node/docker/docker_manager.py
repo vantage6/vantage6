@@ -489,7 +489,7 @@ class DockerManager(DockerBaseManager):
 
             # remove the VPN ports of this run from the database
             self.client.request(
-                'port', params={'result_id': finished_task.result_id},
+                'port', params={'run_id': finished_task.run_id},
                 method="DELETE"
             )
         else:

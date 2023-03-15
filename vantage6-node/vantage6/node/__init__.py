@@ -246,7 +246,9 @@ class Node(object):
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        tasks = self.server_io.get_results(state="open", include_task=True)
+        # TODO take pagination into account: not all results may be returned
+        # on the first request
+        tasks = self.server_io.run.get_open()
         self.log.debug(tasks)
         for task in tasks:
             self.queue.put(task)
@@ -305,8 +307,8 @@ class Node(object):
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
             update['finished_at'] = datetime.datetime.now().isoformat()
-        self.server_io.patch_results(
-            id_=task_incl_run['id'], result=update
+        self.server_io.run.patch(
+            id_=task_incl_run['id'], data=update
         )
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
@@ -415,14 +417,14 @@ class Node(object):
 
                 response = self.server_io.request(f"task/{task_id}")
 
-                init_org_id = response.get("initiator")
+                init_org_id = response.get("init_org")
                 if not init_org_id:
                     self.log.error(
-                        f"Initiator organization from task (id={task_id})could"
-                        " not be retrieved!"
+                        f"Initiator organization from task (id={task_id}) "
+                        "could not be retrieved!"
                     )
 
-                self.server_io.patch_results(
+                self.server_io.run.patch(
                     id_=results.run_id,
                     data={
                         'result': results.data,
@@ -809,11 +811,7 @@ class Node(object):
             Task identifier
         """
         # fetch (open) algorithm run for the node with the task_id
-        tasks = self.server_io.get_results(
-            include_task=True,
-            state='open',
-            task_id=task_id
-        )
+        tasks = self.server_io.run.get_open(task_id=task_id)
         for task in tasks:
             self.queue.put(task)
 
@@ -888,7 +886,7 @@ class Node(object):
         )
         # update status of killed tasks
         for killed_algo in killed_algos:
-            self.server_io.patch_results(
+            self.server_io.run.patch(
                 id_=killed_algo.run_id, data={'status': TaskStatus.KILLED}
             )
         return killed_algos

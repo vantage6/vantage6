@@ -16,9 +16,13 @@ the Python client talks to the server API to achieve this.
 Requirements
 ^^^^^^^^^^^^
 
-You need Python to use the Python client. We recommend using Python 3.7, as
+You need Python to use the Python client. We recommend using Python 3.10, as
 the client has been tested with this version. For higher versions, it may be
 difficult to install the dependencies.
+
+.. warning::
+    If you use a vantage6 version older than 3.8.0, you should use Python 3.7
+    instead of Python 3.10.
 
 Install
 ^^^^^^^

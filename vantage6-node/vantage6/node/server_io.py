@@ -23,6 +23,8 @@ class NodeClient(ClientBase):
         self.collaboration_id = None
         self.whoami = None
 
+        self.run = self.Run(self)
+
     def authenticate(self, api_key: str) -> None:
         """
         Nodes authentication at the central server.
@@ -111,39 +113,117 @@ class NodeClient(ClientBase):
             "image": image
         })
 
-    def get_results(
-        self, id_: int = None, state: str = None, include_task: bool = False,
-        task_id: int = None
-    ) -> dict:
-        """
-        Obtain the results for a specific task.
+    class Run(ClientBase.SubClient):
+        """ Subclient for the run endpoint. """
+        def get(
+            self, state: str, include_task: bool, task_id: int = None
+        ) -> dict | list:
+            """
+            Obtain algorithm runs.
 
-        Overload the definition of the parent by entering the
-        task_id automatically.
+            Parameters
+            ----------
+            state : str
+                State of the desired algorithm runs.
+            include_task : bool, optional
+                Include the task
+            task_id : int, optional
+                ID of the task, by default None. If None, all tasks are
+                returned.
 
-        Parameters
-        ----------
-        id_ : int, optional
-            ID of the result, by default None
-        state : str, optional
-            State of the result, by default None
-        include_task : bool, optional
-            Include the task in the result, by default False
-        task_id : int, optional
-            ID of the task, by default None
+            Returns
+            -------
+            dict | list
+                The algorithm runs as json.
+            """
+            params = {
+                'state': state,
+                'node_id': self.parent.whoami.id_
+            }
+            if include_task:
+                params['include'] = 'task'
+            if task_id:
+                params['task_id'] = task_id
+            run_data = self.parent.request(endpoint='run', params=params)
 
-        Returns
-        -------
-        dict
-            The results.
-        """
-        return super().get_results(
-            id=id_,
-            state=state,
-            include_task=include_task,
-            task_id=task_id,
-            node_id=self.whoami.id_
-        )
+            if isinstance(run_data, str):
+                self.parent.log.warn("Requesting algorithm runs failed")
+                self.parent.log.debug(f"Fail message: {run_data}")
+                return {}
+
+            # TODO Fix when pagination is default in v4+
+            # hack: in the case that the pagination metadata is included we
+            # need to strip that for decrypting
+            if isinstance(run_data, dict) and 'data' in run_data:
+                run_data = run_data['data']
+
+            # Multiple runs
+            for run in run_data:
+                run['input'] = self.parent._decrypt_input(run['input'])
+
+            return run_data
+
+        def get_open(self, task_id: int = None) -> dict:
+            """
+            Obtain the open results for a specific task.
+
+            Parameters
+            ----------
+            task_id : int | None
+                ID of the task. All open algorithm runs are returned if None.
+
+            Returns
+            -------
+            dict
+                The open algorithm run(s).
+            """
+            return self.get(
+                state="open", include_task=True, task_id=task_id
+            )
+
+        def patch(self, id_: int, data: dict, init_org_id: int = None) -> None:
+            """
+            Update the algorithm run data at the central server.
+
+            Typically used for task status updates (started, finished, etc)
+
+            Parameters
+            ----------
+            id_: int
+                ID of the run to patch
+            data: Dict
+                Dictionary of fields that are to be patched
+            init_org_id: int, optional
+                Organization id of the origin of the task. This is required
+                when the run dict includes results, because then results have
+                to be encrypted specifically for them
+            """
+            if "result" in data:
+                if not init_org_id:
+                    self.parent.log.critical(
+                        "Organization id is not provided: cannot send results "
+                        "to server as they cannot be encrypted"
+                    )
+                msg = f"Retrieving public key from organization={init_org_id}"
+                self.parent.log.debug(msg)
+
+                org = self.parent.request(f"organization/{init_org_id}")
+                public_key = None
+                try:
+                    public_key = org["public_key"]
+                except KeyError:
+                    self.parent.log.critical(
+                        'Public key could not be retrieved... Does the '
+                        'initiating organization belong to your organization?'
+                    )
+
+                data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
+                    data["result"],
+                    public_key
+                )
+
+            self.parent.log.debug("Sending algorithm run update to server")
+            return self.parent.request(f"run/{id_}", json=data, method='patch')
 
     def is_encrypted_collaboration(self) -> bool:
         """
