@@ -65,3 +65,29 @@
     Generate new API key
   </button>
 </div>
+<div *ngIf="hasNodeConfig()">
+  <br/>
+  <h4>Configuration</h4>
+  <p>
+    The node has shared part of its configuration has been shared with the
+    central server:
+  </p>
+  <table style="width: 100%;">
+    <tr>
+        <th>Key</th>
+        <th>Value(s)</th>
+    </tr>
+    <tr *ngFor="let item of node.config | keyvalue">
+
+      <td>{{item.key | titlecase}}</td>
+      <td>{{item.value.join(", ")}}</td>
+    </tr>
+    <!-- <ng-container *ngFor="let item of node.config | keyvalue">
+      <tr *ngFor="let val of item.value">
+
+        <td>{{item.key | titlecase}}</td>
+        <td>{{val}}</td>
+      </tr>
+    </ng-container> -->
+  </table>
+</div>

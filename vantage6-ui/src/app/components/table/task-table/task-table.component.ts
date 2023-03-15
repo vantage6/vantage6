@@ -21,8 +21,6 @@ import { TaskApiService } from 'src/app/services/api/task-api.service';
 import { Resource } from 'src/app/shared/types';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { User } from 'src/app/interfaces/user';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
-import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 
@@ -77,8 +75,6 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     private taskDataService: TaskDataService,
     private taskApiService: TaskApiService,
     private userDataService: UserDataService,
-    private ruleDataService: RuleDataService,
-    private roleDataService: RoleDataService,
     protected modalService: ModalService
   ) {
     super(activatedRoute, userPermission, modalService);

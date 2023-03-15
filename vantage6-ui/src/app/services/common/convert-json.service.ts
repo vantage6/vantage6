@@ -139,6 +139,23 @@ export class ConvertJsonService {
   }
 
   getNode(node_json: any): Node {
+    let config: { [key: string]: string[] } = {};
+    if (node_json.config && node_json.config.length > 0) {
+      for (let c of node_json.config) {
+        c.key = c.key.replace(/_/g, ' '); // replace underscore with space
+        // replace numerical values with their boolean representation
+        if (c.key === 'encryption') {
+          c.value = c.value === '0' ? false : true;
+        }
+        // add configuration key/value
+        if (!(c.key in config)) {
+          config[c.key] = [c.value];
+        } else {
+          config[c.key].push(c.value);
+        }
+      }
+    }
+
     return {
       id: node_json.id,
       type: ResType.NODE,
@@ -148,6 +165,7 @@ export class ConvertJsonService {
       ip: node_json.ip,
       is_online: node_json.status === 'online' ? true : false,
       last_seen: node_json.last_seen ? new Date(node_json.last_seen) : null,
+      config: config,
     };
   }
 
@@ -165,7 +183,7 @@ export class ConvertJsonService {
       description: json.description,
       image: json.image,
       collaboration_id: json.collaboration.id,
-      initiator_id: json.initiator,
+      initiator_id: json.init_org,
       init_user_id: json.init_user,
       job_id: json.job_id,
       parent_id: json.parent ? json.parent.id : null,
