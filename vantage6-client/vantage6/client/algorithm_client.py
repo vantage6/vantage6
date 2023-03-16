@@ -102,7 +102,7 @@ class AlgorithmClient(ClientBase):
                 List of results. The type of the results depends on the
                 algorithm.
             """
-            results = self.request(
+            results = self.parent.request(
                 f"task/{task_id}/result"
             )
 
@@ -116,8 +116,8 @@ class AlgorithmClient(ClientBase):
                     for result in results if result.get("result")
                 ]
             except Exception as e:
-                self.log.error('Unable to unpickle result')
-                self.log.debug(e)
+                self.parent.log.error('Unable to unpickle result')
+                self.parent.log.debug(e)
 
             return decoded_results
 
@@ -141,7 +141,7 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing the task information
             """
-            return self.request(
+            return self.parent.request(
                 f"task/{task_id}"
             )
 
@@ -174,15 +174,16 @@ class AlgorithmClient(ClientBase):
             """
             if organization_ids is None:
                 organization_ids = []
-            self.log.debug(f"Creating new subtask for {organization_ids}")
+            self.parent.log.debug(
+                f"Creating new subtask for {organization_ids}")
 
             description = (
                 description or
-                f"task from container on node_id={self.host_node_id}"
+                f"task from container on node_id={self.parent.host_node_id}"
             )
 
             # serializing input. Note that the input is not encrypted here, but
-            # in the proxy server (self.request())
+            # in the proxy server (self.parent.request())
             serialized_input = bytes_to_base64s(pickle.dumps(input_))
             organization_json_list = []
             for org_id in organization_ids:
@@ -193,13 +194,13 @@ class AlgorithmClient(ClientBase):
                     }
                 )
 
-            return self.request('task', method='post', json={
+            return self.parent.request('task', method='post', json={
                 "name": name,
-                "image": self.image,
-                "collaboration_id": self.collaboration_id,
+                "image": self.parent.image,
+                "collaboration_id": self.parent.collaboration_id,
                 "description": description,
                 "organizations": organization_json_list,
-                "database": self.database
+                "database": self.parent.database
             })
 
     class VPN(ClientBase.SubClient):
@@ -238,7 +239,7 @@ class AlgorithmClient(ClientBase):
                 the VPN addresses from the server fails, a dictionary with a
                 'message' key is returned instead.
             """
-            results = self.request("vpn/algorithm/addresses", params={
+            results = self.parent.request("vpn/algorithm/addresses", params={
                 "include_children": include_children,
                 "include_parent": include_parent,
                 "label": label
@@ -262,7 +263,7 @@ class AlgorithmClient(ClientBase):
             id: int
                 ID of the organization to retrieve
             """
-            return self.request(f"organization/{id_}")
+            return self.parent.request(f"organization/{id_}")
 
         def list(self) -> List[dict]:
             """
@@ -278,9 +279,9 @@ class AlgorithmClient(ClientBase):
             List[dict]
                 List of organizations in the collaboration.
             """
-            organizations = self.request(
+            organizations = self.parent.request(
                 "organization",
-                params={"collaboration_id": self.collaboration_id}
+                params={"collaboration_id": self.parent.collaboration_id}
             )
             return organizations
 
@@ -297,7 +298,8 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing the collaboration data.
             """
-            return self.request(f"collaboration/{self.collaboration_id}")
+            return self.parent.request(
+                f"collaboration/{self.parent.collaboration_id}")
 
     class Node(ClientBase.SubClient):
         """
@@ -312,4 +314,4 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing the node data.
             """
-            return self.request(f"node/{self.host_node_id}")
+            return self.parent.request(f"node/{self.parent.host_node_id}")
