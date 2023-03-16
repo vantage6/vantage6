@@ -26,6 +26,7 @@ from vantage6.common import WhoAmI
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import print_qr_code, LogLevel
+from vantage6.common.task_status import TaskStatus
 
 
 module_name = __name__.split('.')[1]
@@ -779,7 +780,7 @@ class UserClient(ClientBase):
         animation = itertools.cycle(['|', '/', '-', '\\'])
         t = time.time()
 
-        while not self.task.get(task_id)['complete']:
+        while self.task.get(task_id)['status'] != TaskStatus.COMPLETED.value:
             frame = next(animation)
             sys.stdout.write(
                 f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
@@ -794,7 +795,9 @@ class UserClient(ClientBase):
         elif isinstance(self.log, UserClient.Log):
             self.log.enabled = prev_level
 
-        return self.request('result', params={'task_id': task_id})
+        result = self.request('result', params={'task_id': task_id})
+        result = self.result._decrypt_result(result, is_single_result=False)
+        return result
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
