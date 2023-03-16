@@ -254,59 +254,9 @@ class NodeClient(ClientBase):
         id_ : int
             ID of the task.
         """
-        self.patch_results(id_, data={
+        self.run.patch(id_, data={
             "started_at": datetime.datetime.now().isoformat()
         })
-
-    def patch_results(self, id_: int, data: dict,
-                      init_org_id: int = None) -> None:
-        """
-        Update the algorithm run data at the central server.
-
-        Typically used when to algorithm container is finished or
-        when a status-update is posted (started, finished)
-
-        Parameters
-        ----------
-        id_: int
-            ID of the run to patch
-        data: Dict
-            Dictionary of fields that are to be patched
-        init_org_id: int, optional
-            Organization id of the origin of the task. This is required
-            when the run dict includes results, because then results have
-            to be encrypted specifically for them
-        """
-        # TODO: the key `result` is not always present, e.g. when
-        #     only the timestamps are updated
-        # FIXME: public keys should be cached
-        if "result" in data:
-            if not init_org_id:
-                self.log.critical(
-                    "Organization id is not provided: cannot send results to "
-                    "server as they cannot be encrypted")
-            msg = f"Retrieving public key from organization={init_org_id}"
-            self.log.debug(msg)
-
-            org = self.request(f"organization/{init_org_id}")
-            public_key = None
-            try:
-                public_key = org["public_key"]
-            except KeyError:
-                self.log.critical('Public key could not be retrieved...')
-                self.log.critical('Does the initiating organization belong to '
-                                  'your organization?')
-
-            data["result"] = self.cryptor.encrypt_bytes_to_str(
-                data["result"],
-                public_key
-            )
-
-            self.log.debug("Sending results to server")
-        else:
-            self.log.debug("Just patchin'")
-
-        return self.request(f"run/{id_}", json=data, method='patch')
 
     def get_vpn_config(self) -> tuple[bool, str]:
         """

@@ -276,7 +276,7 @@ def proxy_task():
 
 
 @app.route('/task/<int:id>/run', methods=["GET"])
-def proxy_task_result(id: int) -> Response:
+def proxy_task_run(id: int) -> Response:
     """
     Obtain and decrypt all results to belong to a certain task
 
@@ -311,13 +311,12 @@ def proxy_task_result(id: int) -> Response:
     for run in runs:
         run = decrypt_result(run)
         unencrypted.append(run)
-    print('runs', runs)
 
     return jsonify(unencrypted), HTTPStatus.OK
 
 
 @app.route('/run/<int:id>', methods=["GET"])
-def proxy_results(id: int) -> Response:
+def proxy_runs(id: int) -> Response:
     """
     Obtain and decrypt the algorithm run from the vantage6 server to be used by
     an algorithm container.
@@ -349,7 +348,6 @@ def proxy_results(id: int) -> Response:
     # Try to decrypt the results
     run = get_response_json_and_handle_exceptions(response)
     run = decrypt_result(run)
-    print('run', run)
 
     return run, HTTPStatus.OK
 
