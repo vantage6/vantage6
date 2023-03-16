@@ -185,8 +185,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     }
     // set input
     let first_run = runs[0];
-    // let input = JSON.parse(atob(first_run.input));
-    let input = JSON.parse(atob(first_run.input).slice(5));
+    let input = JSON.parse(atob(first_run.input));
     this.task_input.master = input.master;
     this.task_input.method = input.method;
     if (input.args) {
