@@ -71,7 +71,8 @@ export class TaskViewComponent
       }
       //decrypt the result
       if (r.result) {
-        r.decrypted_result = atob(r.result);
+        // r.decrypted_result = atob(r.result);
+        r.decrypted_result = atob(r.result).slice(5);
       }
     }
   }
