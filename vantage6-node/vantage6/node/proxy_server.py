@@ -316,14 +316,14 @@ def proxy_task_run(id: int) -> Response:
 
 
 @app.route('/run/<int:id>', methods=["GET"])
-def proxy_runs(id: int) -> Response:
+def proxy_runs(id_: int) -> Response:
     """
     Obtain and decrypt the algorithm run from the vantage6 server to be used by
     an algorithm container.
 
     Parameters
     ----------
-    id : int
+    id_ : int
         Id of the run to be obtained
 
     Returns
@@ -339,7 +339,7 @@ def proxy_runs(id: int) -> Response:
 
     # Make the proxied request
     try:
-        response: Response = make_proxied_request(f"run/{id}")
+        response: Response = make_proxied_request(f"run/{id_}")
     except Exception:
         log.exception('Error on /run/<int:id>')
         return {'msg': 'Request failed, see node logs...'},\
