@@ -3,7 +3,7 @@ import { ResType } from '../shared/enum';
 import { deepcopy } from '../shared/utils';
 import { Organization } from './organization';
 
-export interface Result {
+export interface Run {
   id: number;
   type: string;
   input: string;
@@ -21,9 +21,9 @@ export interface Result {
   decrypted_result?: string;
 }
 
-export const EMPTY_RESULT: Result = {
+export const EMPTY_RUN: Run = {
   id: -1,
-  type: ResType.RESULT,
+  type: ResType.RUN,
   input: '',
   result: '',
   status: '',
@@ -36,6 +36,6 @@ export const EMPTY_RESULT: Result = {
   finished_at: null,
 };
 
-export function getEmptyResult(): Result {
-  return deepcopy(EMPTY_RESULT);
+export function getEmptyRun(): Run {
+  return deepcopy(EMPTY_RUN);
 }

@@ -45,6 +45,7 @@ export class TaskApiService extends BaseApiService {
       org_input.push({
         id: org.id,
         input: btoa('json.' + JSON.stringify(input)),
+        // input: btoa(JSON.stringify(input)),
       });
     }
 

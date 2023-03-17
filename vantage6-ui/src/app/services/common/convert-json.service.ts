@@ -9,7 +9,7 @@ import { Organization } from 'src/app/interfaces/organization';
 import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { ResType } from 'src/app/shared/enum';
-import { Result } from 'src/app/interfaces/result';
+import { Run } from 'src/app/interfaces/run';
 
 @Injectable({
   providedIn: 'root',
@@ -183,9 +183,9 @@ export class ConvertJsonService {
       description: json.description,
       image: json.image,
       collaboration_id: json.collaboration.id,
-      initiator_id: json.initiator,
+      initiator_id: json.init_org,
       init_user_id: json.init_user,
-      run_id: json.run_id,
+      job_id: json.job_id,
       parent_id: json.parent ? json.parent.id : null,
       database: json.database,
       complete: json.complete,
@@ -194,7 +194,7 @@ export class ConvertJsonService {
     };
   }
 
-  getResult(json: any): Result {
+  getAlgorithmRun(json: any): Run {
     let port_ids = [];
     if (json.port_ids) {
       for (let port of json.port_ids) {
@@ -217,7 +217,7 @@ export class ConvertJsonService {
 
     return {
       id: json.id,
-      type: ResType.RESULT,
+      type: ResType.RUN,
       input: json.input,
       result: json.result,
       log: json.log,

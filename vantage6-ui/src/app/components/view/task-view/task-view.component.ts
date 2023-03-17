@@ -6,8 +6,8 @@ import { TaskDataService } from 'src/app/services/data/task-data.service';
 import { BaseViewComponent } from '../base-view/base-view.component';
 import { Task, getEmptyTask, EMPTY_TASK } from 'src/app/interfaces/task';
 import { ResType, OpsType, ExitMode } from 'src/app/shared/enum';
-import { Result } from 'src/app/interfaces/result';
-import { ResultDataService } from 'src/app/services/data/result-data.service';
+import { Run } from 'src/app/interfaces/run';
+import { RunDataService } from 'src/app/services/data/run-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
@@ -26,14 +26,14 @@ export class TaskViewComponent
 {
   @Input() task: Task = getEmptyTask();
   @Input() org_id: number = -1;
-  results: Result[] = [];
+  runs: Run[] = [];
 
   constructor(
     public userPermission: UserPermissionService,
     protected taskApiService: TaskApiService,
     protected taskDataService: TaskDataService,
     protected modalService: ModalService,
-    private resultDataService: ResultDataService,
+    private RunDataService: RunDataService,
     private orgDataService: OrgDataService,
     private http: HttpClient
   ) {
@@ -42,41 +42,37 @@ export class TaskViewComponent
 
   ngOnChanges() {
     if (this.task.id !== EMPTY_TASK.id) {
-      this.setResults();
+      this.setAlgorithmRuns();
     }
   }
 
-  async setResults(): Promise<void> {
-    (await this.resultDataService.get_by_task_id(this.task.id, true)).subscribe(
-      (results) => {
+  async setAlgorithmRuns(): Promise<void> {
+    (await this.RunDataService.get_by_task_id(this.task.id, true)).subscribe(
+      (runs) => {
         // TODO the check below shouldn't be necessary but is added because
         // when switching back and forth between task pages 1, then 2, then 1,
         // and the observables of 2 are updated when we're back on page for task
         // 1, the values of 2 are showing (while we want to show 1)
         // The observables by task_id in the taskDataService however are fine...
         // I think it has to do with component loading, which is cached partially?
-        if (results.length > 0 && this.task.id !== results[0].task_id) return;
-        this.results = results;
+        if (runs.length > 0 && this.task.id !== runs[0].task_id) return;
+        this.runs = runs;
         this.setResultOrganizations();
       }
     );
   }
 
   async setResultOrganizations(): Promise<void> {
-    for (let r of this.results) {
+    for (let r of this.runs) {
       if (r.organization_id) {
         (await this.orgDataService.get(r.organization_id)).subscribe((org) => {
           r.organization = org;
         });
       }
-      // try to decrypt the result
-      try {
-        let decrypted_result = atob(r.result);
-        if (decrypted_result.startsWith('json.')) {
-          r.decrypted_result = decrypted_result.slice(5);
-        }
-      } catch {
-        // ignore: could not read result
+      //decrypt the result
+      if (r.result) {
+        // r.decrypted_result = atob(r.result);
+        r.decrypted_result = atob(r.result).slice(5);
       }
     }
   }
@@ -107,9 +103,9 @@ export class TaskViewComponent
     return this.task.database ? this.task.database : 'default';
   }
 
-  getResultPanelTitle(result: Result): string {
-    let title = result.id.toString();
-    if (result.organization) title += ` (${result.organization.name})`;
+  getRunPanelTitle(run: Run): string {
+    let title = run.id.toString();
+    if (run.organization) title += ` (${run.organization.name})`;
     return title;
   }
 
