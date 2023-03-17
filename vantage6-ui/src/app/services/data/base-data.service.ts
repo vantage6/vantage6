@@ -127,13 +127,15 @@ export abstract class BaseDataService {
 
   protected async list_base(
     convertJsonFunc: Function,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    additional_params: any = {}
   ): Promise<Observable<Resource[]>> {
     if (force_refresh || !this.has_queried_list) {
       let additional_resources = await this.getDependentResources();
       const resources = await this.apiService.getResources(
         convertJsonFunc,
-        additional_resources
+        additional_resources,
+        additional_params
       );
       this.has_queried_list = true;
       this.saveMultiple(resources);

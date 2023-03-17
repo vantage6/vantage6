@@ -46,7 +46,9 @@ export class TaskDataService extends BaseDataService {
   async list(force_refresh: boolean = false): Promise<Observable<Task[]>> {
     return (await super.list_base(
       this.convertJsonService.getTask,
-      force_refresh
+      force_refresh,
+      // only show top-level tasks (i.e. not subtasks) created by user
+      { is_user_created: 1 }
     )) as Observable<Task[]>;
   }
 
