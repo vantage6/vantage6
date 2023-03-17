@@ -687,7 +687,7 @@ class ClientBase(object):
         cryptor = self.cryptor
         try:
             self.log.info('Decrypting result')
-            result = cryptor.decrypt_str_to_bytes(run["result"])
+            result = cryptor.decrypt_str_to_bytes(result["result"])
 
         except ValueError as e:
             self.log.error("Could not decrypt/decode result.")
