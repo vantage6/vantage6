@@ -3,10 +3,9 @@
 Resources below '/<api_base>/token'
 """
 import logging
-import datetime as dt
 import pyotp
 
-from flask import request, g, render_template
+from flask import request, g
 from flask_jwt_extended import (
     jwt_required,
     create_access_token,
@@ -137,8 +136,7 @@ class UserToken(ServicesResources):
             log.error(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        user, code = user_login(self.config.get("password_policy", {}),
-                                username, password)
+        user, code = user_login(self.config, username, password, self.mail)
         if code != HTTPStatus.OK:  # login failed
             log.error(f"Failed to login for user='{username}'")
             return user, code
@@ -168,62 +166,6 @@ class UserToken(ServicesResources):
 
         log.info(f"Succesfull login from {username}")
         return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
-
-    def user_login(self, username: str, password: str) -> dict | db.User:
-        """Returns user a message in case of failed login attempt."""
-        log.info(f"Trying to login '{username}'")
-        failed_login_msg = "Failed to login"
-        if db.User.username_exists(username):
-            user = db.User.get_by_username(username)
-            pw_policy = self.config.get('password_policy', {})
-            max_failed_attempts = pw_policy.get('max_failed_attempts', 5)
-            inactivation_time = pw_policy.get('inactivation_minutes', 15)
-
-            is_blocked, min_rem = user.is_blocked(max_failed_attempts,
-                                                  inactivation_time)
-            if is_blocked:
-                self.notify_user_blocked(user, max_failed_attempts, min_rem)
-                return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
-            elif user.check_password(password):
-                user.failed_login_attempts = 0
-                user.save()
-                return user, HTTPStatus.OK
-            else:
-                # update the number of failed login attempts
-                user.failed_login_attempts = 1 \
-                    if (
-                        not user.failed_login_attempts or
-                        user.failed_login_attempts >= max_failed_attempts
-                    ) else user.failed_login_attempts + 1
-                user.last_login_attempt = dt.datetime.now()
-                user.save()
-
-        return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
-
-    def notify_user_blocked(self, user: db.User, max_n_attempts: int,
-                            min_rem: int) -> None:
-        """Sends an email to the user when his or her account is locked"""
-        if not user.email:
-            log.warning(f'User {user.username} is locked, but does not have'
-                        'an email registered. So no message has been sent.')
-
-        log.info(f'User {user.username} is locked')
-
-        template_vars = {'firstname': user.firstname,
-                         'number_of_allowed_attempts': max_n_attempts,
-                         'ip': request.access_route[-1],
-                         'time': dt.datetime.now(dt.timezone.utc),
-                         'time_remaining': min_rem}
-
-        self.mail.send_email(
-            "Your account has been temporary suspended",
-            sender="support@vantage6.ai",
-            recipients=[user.email],
-            text_body=render_template("mail/blocked_account.txt",
-                                      **template_vars),
-            html_body=render_template("mail/blocked_account.html",
-                                      **template_vars)
-        )
 
     @staticmethod
     def validate_2fa_token(user: User, mfa_code: int | str) -> bool:

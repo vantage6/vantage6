@@ -164,7 +164,7 @@ class RunSchema(HATEOASModelSchema):
     task = fields.Method("task")
     # TODO Fix this before v4+ is released. We should call this field 'result'
     # but that is not possible because of the 'result' field in the Run model.
-    result_link = fields.Method("result")
+    results = fields.Method("result")
     node = fields.Function(
         func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
     )

@@ -46,8 +46,7 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
-def auto_wrapper(module: str, load_data: bool = True,
-                 use_new_client: bool = False) -> None:
+def auto_wrapper(module: str, load_data: bool = True) -> None:
     """
     Wrap an algorithm module to provide input and output handling for the
     vantage6 infrastructure. This function will automatically select the
@@ -59,8 +58,6 @@ def auto_wrapper(module: str, load_data: bool = True,
         Python module name of the algorithm to wrap.
     load_data : bool, optional
         Wether to load the data or not, by default True
-    use_new_client : bool, optional
-        Wether to use the new client or not, by default False
     """
 
     # Get the database label from the environment variable, this variable is
@@ -95,11 +92,10 @@ def auto_wrapper(module: str, load_data: bool = True,
         return
 
     # Execute the algorithm with the correct data wrapper
-    wrapper.wrap_algorithm(module, load_data, use_new_client)
+    wrapper.wrap_algorithm(module, load_data)
 
 
-def docker_wrapper(module: str, load_data: bool = True,
-                   use_new_client: bool = False) -> None:
+def docker_wrapper(module: str, load_data: bool = True) -> None:
     """
     Specific wrapper for CSV only data sources. Use the ``auto_wrapper``
     to automatically select the correct wrapper based on the database type.
@@ -111,14 +107,12 @@ def docker_wrapper(module: str, load_data: bool = True,
     load_data : bool, optional
         Whether to load the data into a pandas DataFrame or not, by default
         True
-    use_new_client : bool, optional
-        Whether to use the new or old client, by default False
     """
     wrapper = DockerWrapper()
-    wrapper.wrap_algorithm(module, load_data, use_new_client)
+    wrapper.wrap_algorithm(module, load_data)
 
 
-def sparql_wrapper(module: str, use_new_client: bool = False) -> None:
+def sparql_wrapper(module: str) -> None:
     """
     Specific wrapper for SPARQL only data sources. Use the ``auto_wrapper``
     to automatically select the correct wrapper based on the database type.
@@ -127,14 +121,12 @@ def sparql_wrapper(module: str, use_new_client: bool = False) -> None:
     ----------
     module : str
         Module name of the algorithm package.
-    use_new_client : bool, optional
-        Whether to use the new or old client, by default False
     """
     wrapper = SparqlDockerWrapper()
-    wrapper.wrap_algorithm(module, use_new_client)
+    wrapper.wrap_algorithm(module)
 
 
-def parquet_wrapper(module: str, use_new_client: bool = False) -> None:
+def parquet_wrapper(module: str) -> None:
     """
     Specific wrapper for Parquet only data sources. Use the ``auto_wrapper``
     to automatically select the correct wrapper based on the database type.
@@ -143,14 +135,12 @@ def parquet_wrapper(module: str, use_new_client: bool = False) -> None:
     ----------
     module : str
         Module name of the algorithm package.
-    use_new_client : bool, optional
-        Whether to use the new or old client, by default False
     """
     wrapper = ParquetWrapper()
-    wrapper.wrap_algorithm(module, use_new_client)
+    wrapper.wrap_algorithm(module)
 
 
-def multidb_wrapper(module: str, use_new_client: bool = False) -> None:
+def multidb_wrapper(module: str) -> None:
     """
     Specific wrapper for multiple data sources.
 
@@ -158,17 +148,14 @@ def multidb_wrapper(module: str, use_new_client: bool = False) -> None:
     ----------
     module : str
         Module name of the algorithm package.
-    use_new_client : bool, optional
-        Whether to use the new or old client, by default False
     """
     wrapper = MultiDBWrapper()
-    wrapper.wrap_algorithm(module, use_new_client)
+    wrapper.wrap_algorithm(module)
 
 
 class WrapperBase(ABC):
 
-    def wrap_algorithm(self, module: str, load_data: bool = True,
-                       use_new_client: bool = False) -> None:
+    def wrap_algorithm(self, module: str, load_data: bool = True) -> None:
         """
         Wrap an algorithm module to provide input and output handling for the
         vantage6 infrastructure.
@@ -241,7 +228,7 @@ class WrapperBase(ABC):
 
         # make the actual call to the method/function
         info("Dispatching ...")
-        output = dispatch_rpc(data, input_data, module, token, use_new_client)
+        output = dispatch_rpc(data, input_data, module, token)
 
         # write output from the method to mounted output file. Which will be
         # transferred back to the server by the node-instance.

@@ -35,13 +35,15 @@ from flask_restful import Api
 from flask_mail import Mail
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
+from threading import Thread
 
+from vantage6.common import logger_name
+from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
 from vantage6.cli.globals import DEFAULT_SERVER_ENVIRONMENT
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common._schema import HATEOASModelSchema
-from vantage6.common import logger_name
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
@@ -51,7 +53,6 @@ from vantage6.server.globals import (
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE_HOURS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    MAX_RESPONSE_TIME_PING,
     MIN_TOKEN_VALIDITY_SECONDS,
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
 )
@@ -122,9 +123,9 @@ class ServerApp:
         self.__version__ = __version__
 
         # set up socket ping/pong
-        log.debug(
-            "Starting thread for socket ping/pong between server and nodes")
-        self.socketio.start_background_task(self.__socket_pingpong_worker)
+        log.debug("Starting thread to set node status")
+        t = Thread(target=self.__node_status_worker, daemon=True)
+        t.start()
 
         log.info("Initialization done")
 
@@ -353,30 +354,29 @@ class ServerApp:
         hours_expire = self.ctx.config.get(config_key)
         if hours_expire is None:
             # No value is present in the config file, use default
-            refresh_expire = int(float(default_hours) * 3600)
+            seconds_expire = int(float(default_hours) * 3600)
         elif isinstance(hours_expire, (int, float)) or \
-                hours_expire.is_numeric():
+                hours_expire.replace(".", "").isnumeric():
             # Numeric value is present in the config file
-            refresh_expire = int(float(hours_expire) * 3600)
-            if refresh_expire < longer_than:
+            seconds_expire = int(float(hours_expire) * 3600)
+            if seconds_expire < longer_than:
                 log.warning(
                     f"Invalid value for '{config_key}': {hours_expire}. Tokens"
                     f" must be valid for at least {longer_than} seconds. Using"
-                    f" default value: {REFRESH_TOKENS_EXPIRE_HOURS} hours")
+                    f" default value: {default_hours} hours")
                 if is_refresh:
                     log.warning("Note that refresh tokens should be valid at "
                                 f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
                                 "seconds longer than access tokens.")
-                refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+                seconds_expire = int(float(default_hours) * 3600)
         else:
             # Non-numeric value is present in the config file. Warn and use
             # default
-            log.warning("Invalid value for 'refresh_token_expires_hours':"
-                        f" {hours_expire}. Using default value: "
-                        f"{REFRESH_TOKENS_EXPIRE_HOURS} hours")
-            refresh_expire = int(float(REFRESH_TOKENS_EXPIRE_HOURS) * 3600)
+            log.error(f"Invalid value for '{config_key}': {hours_expire}. "
+                      f"Using default value: {default_hours} hours")
+            seconds_expire = int(float(default_hours) * 3600)
 
-        return refresh_expire
+        return seconds_expire
 
     def configure_api(self) -> None:
         """Define global API output and its structure."""
@@ -631,51 +631,33 @@ class ServerApp:
             user.save()
         return self
 
-    def __socket_pingpong_worker(self) -> None:
+    def __node_status_worker(self) -> None:
         """
-        Send ping messages periodically to nodes over the socketIO connection
-        and set node status online/offline depending on whether they respond
-        or not.
+        Set node status to offline if they haven't send a ping message in a
+        while.
         """
-        # when starting up the server, wait a few seconds to allow nodes that
-        # are already online to connect back to the server (otherwise they
-        # would be incorrectly set to offline for one period)
-        time.sleep(5)
-
         # start periodic check if nodes are responsive
         while True:
             # Send ping event
             try:
-                ping_time = dt.datetime.utcnow()
-                self.socketio.emit(
-                    'ping', namespace='/tasks', room='all_nodes',
-                    callback=self.__pong_response
-                )
+                before_wait = dt.datetime.utcnow()
 
-                # Wait a while to give nodes opportunity to pong
-                time.sleep(MAX_RESPONSE_TIME_PING)
+                # Wait a while to give nodes opportunity to pong. This interval
+                # is a bit longer than the interval at which the nodes ping,
+                # because we want to make sure that the nodes have had time to
+                # respond.
+                time.sleep(PING_INTERVAL_SECONDS + 5)
 
                 # Check for each node that is online if they have responded.
                 # Otherwise set them to offline.
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
-                    if node.last_seen < ping_time:
+                    if node.last_seen < before_wait:
                         node.status = 'offline'
                         node.save()
-
-                # we need to sleep here for a bit to make sure that there is a
-                # delay between setting nodes offline and pinging again - this
-                # prevents a racing condition in setting status
-                time.sleep(5)
             except Exception:
-                log.exception('Pingpong thread had an exception')
-                time.sleep(MAX_RESPONSE_TIME_PING)
-
-    def __pong_response(self, node_id) -> None:
-        node = db.Node.get(node_id)
-        node.status = 'online'
-        node.last_seen = dt.datetime.utcnow()
-        node.save()
+                log.exception('Node-status thread had an exception')
+                time.sleep(PING_INTERVAL_SECONDS)
 
 
 def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,

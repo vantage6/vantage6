@@ -43,7 +43,7 @@ from vantage6.common import logger_name
 from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
-from vantage6.common.globals import VPN_CONFIG_FILE
+from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
@@ -246,7 +246,9 @@ class Node(object):
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        tasks = self.server_io.get_results(state="open", include_task=True)
+        # TODO take pagination into account: not all results may be returned
+        # on the first request
+        tasks = self.server_io.run.get_open()
         self.log.debug(tasks)
         for task in tasks:
             self.queue.put(task)
@@ -305,8 +307,8 @@ class Node(object):
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
             update['finished_at'] = datetime.datetime.now().isoformat()
-        self.server_io.patch_results(
-            id_=task_incl_run['id'], result=update
+        self.server_io.run.patch(
+            id_=task_incl_run['id'], data=update
         )
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
@@ -415,14 +417,14 @@ class Node(object):
 
                 response = self.server_io.request(f"task/{task_id}")
 
-                init_org_id = response.get("initiator")
+                init_org_id = response.get("init_org")
                 if not init_org_id:
                     self.log.error(
-                        f"Initiator organization from task (id={task_id})could"
-                        " not be retrieved!"
+                        f"Initiator organization from task (id={task_id}) "
+                        "could not be retrieved!"
                     )
 
-                self.server_io.patch_results(
+                self.server_io.run.patch(
                     id_=results.run_id,
                     data={
                         'result': results.data,
@@ -798,6 +800,23 @@ class Node(object):
         self.log.info(f'Connected to host={self.server_io.host} on port='
                       f'{self.server_io.port}')
 
+        self.log.debug("Starting thread for to ping the server to notify this"
+                       " node is online.")
+        self.socketIO.start_background_task(self.__socket_ping_worker)
+
+    def __socket_ping_worker(self) -> None:
+        """
+        Send ping messages periodically to the server over the socketIO
+        connection to notify the server that this node is online
+        """
+        while True:
+            try:
+                self.socketIO.emit('ping', namespace='/tasks')
+            except Exception:
+                self.log.exception('Ping thread had an exception')
+            # Wait before sending next ping
+            time.sleep(PING_INTERVAL_SECONDS)
+
     def get_task_and_add_to_queue(self, task_id: int) -> None:
         """
         Fetches (open) task with task_id from the server. The `task_id` is
@@ -809,11 +828,7 @@ class Node(object):
             Task identifier
         """
         # fetch (open) algorithm run for the node with the task_id
-        tasks = self.server_io.get_results(
-            include_task=True,
-            state='open',
-            task_id=task_id
-        )
+        tasks = self.server_io.run.get_open(task_id=task_id)
         for task in tasks:
             self.queue.put(task)
 
@@ -888,7 +903,7 @@ class Node(object):
         )
         # update status of killed tasks
         for killed_algo in killed_algos:
-            self.server_io.patch_results(
+            self.server_io.run.patch(
                 id_=killed_algo.run_id, data={'status': TaskStatus.KILLED}
             )
         return killed_algos

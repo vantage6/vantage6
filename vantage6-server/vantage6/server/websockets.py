@@ -1,5 +1,6 @@
 import logging
 import jwt
+import datetime as dt
 
 from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
@@ -298,6 +299,16 @@ class DefaultSocketNamespace(Namespace):
 
         # cleanup (e.g. database session)
         self.__cleanup()
+
+    def on_ping(self) -> None:
+        """
+        A client sends a ping to the server. The server detects who sent the
+        ping and sets them as online.
+        """
+        auth = db.Authenticatable.get(session.auth_id)
+        auth.status = 'online'
+        auth.last_seen = dt.datetime.utcnow()
+        auth.save()
 
     def __join_room_and_notify(self, room: str) -> None:
         """

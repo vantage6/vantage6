@@ -5,13 +5,13 @@ import jwt
 from types import ModuleType
 from typing import Any
 
-from vantage6.client import ContainerClient
 from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.tools.util import info, warn, error
 
 
-def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
-                 use_new_client: bool = False) -> Any:
+def dispatch_rpc(
+    data: Any, input_data: dict, module: ModuleType, token: str,
+) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
@@ -29,8 +29,6 @@ def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
     token : str
         The JWT token that is used to authenticate from the algorithm container
         to the server.
-    use_new_client : bool, optional
-        Whether to use the new client or the old client, by default False
 
     Returns
     -------
@@ -55,13 +53,8 @@ def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
         api_path = os.environ["API_PATH"]
 
         # init Docker Client
-        # TODO In v4+ we should always use the new client, delete option then
-        if use_new_client:
-            client = AlgorithmClient(token=token, host=host, port=port,
-                                     path=api_path)
-        else:
-            client = ContainerClient(token=token, host=host, port=port,
-                                     path=api_path)
+        client = AlgorithmClient(token=token, host=host, port=port,
+                                 path=api_path)
 
         # read JWT token, to log te collaboration id. The
         # ContainerClient automatically sets the collaboration_id

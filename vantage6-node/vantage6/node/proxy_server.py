@@ -311,6 +311,7 @@ def proxy_task_result(id: int) -> Response:
     for run in runs:
         run = decrypt_result(run)
         unencrypted.append(run)
+    print('runs', runs)
 
     return jsonify(unencrypted), HTTPStatus.OK
 
