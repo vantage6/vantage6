@@ -1842,13 +1842,14 @@ class UserClient(ClientBase):
             return self.parent.request(f'task/{id_}', params=params)
 
         @post_filtering()
-        def list(self, initiating_org: int = None, initiating_user: int = None,
-                 collaboration: int = None, image: str = None,
-                 parent: int = None, job: int = None,
-                 name: str = None, include_results: bool = False,
-                 description: str = None, database: str = None,
-                 run: int = None, status: str = None, page: int = 1,
-                 per_page: int = 20, include_metadata: bool = True) -> dict:
+        def list(
+            self, initiating_org: int = None, initiating_user: int = None,
+            collaboration: int = None, image: str = None, parent: int = None,
+            job: int = None, name: str = None, include_results: bool = False,
+            description: str = None, database: str = None, run: int = None,
+            status: str = None, user_created: bool = None, page: int = 1,
+            per_page: int = 20, include_metadata: bool = True
+        ) -> dict:
             """List tasks
 
             Parameters
@@ -1881,6 +1882,9 @@ class UserClient(ClientBase):
             status: str, optional
                 Filter by task status (e.g. 'active', 'pending', 'completed',
                 'crashed')
+            user_created: bool, optional
+                If True, show only top-level tasks created by users. If False,
+                show only subtasks created by algorithm containers.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1923,6 +1927,8 @@ class UserClient(ClientBase):
             if include_metadata:
                 includes.append('metadata')
             params['include'] = includes
+            if user_created is not None:
+                params['is_user_created'] = 1 if user_created else 0
 
             return self.parent.request('task', params=params)
 
