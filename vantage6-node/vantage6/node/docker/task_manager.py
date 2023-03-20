@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import docker.errors
+from docker.types import DeviceRequest
 import json
 
 from typing import Dict, List, Union
@@ -283,7 +284,10 @@ class DockerTaskManager(DockerBaseManager):
                 network='container:' + self.helper_container.id,
                 volumes=self.volumes,
                 name=container_name,
-                labels=self.labels
+                labels=self.labels,
+                device_requests=[
+                  DeviceRequest(count=-1, capabilities=[['gpu']])
+                ] 
             )
 
         except Exception as e:
