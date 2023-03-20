@@ -121,7 +121,10 @@ class Pagination:
         """
         return {
             'total-count': self.page.total,
-            'Link': self.link_header
+            'Link': self.link_header,
+            # indicate that these headers are allowed to be exposed to scripts
+            # running in a browser
+            'access-control-expose-headers': 'total-count, Link',
         }
 
     @property
