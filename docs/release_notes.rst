@@ -10,23 +10,23 @@ Release notes
 - **Feature**
 
  - Location of the server configuration file in server shell script can now be
-   specified as an argument (`PR#604 <https://github.com/vantage6/vantage6/pull/604>`)
+   specified as an environment variable (`PR#604 <https://github.com/vantage6/vantage6/pull/604>`_)
 
 - **Change**
 
  - Changed ping/pong mechanism over socket connection between server and nodes,
    as it did not function properly in combination with RabbitMQ. Now, the node
    pushes a ping and the server periodically checks if the node is still alive
-   (`PR#593 <https://github.com/vantage6/vantage6/pull/593>`)
+   (`PR#593 <https://github.com/vantage6/vantage6/pull/593>`_)
 
 - **Bugfix**
 
  - For ``vnode files``, take the new formatting of the databases in the node
-   configuration file into account (`PR#600 <https://github.com/vantage6/vantage6/pull/600>`)
+   configuration file into account (`PR#600 <https://github.com/vantage6/vantage6/pull/600>`_)
  - Fix bugs in new algorithm client where class attributes were improperly
-   referred to (`PR#596 <https://github.com/vantage6/vantage6/pull/596>`)
+   referred to (`PR#596 <https://github.com/vantage6/vantage6/pull/596>`_)
  - Fixed broken links in Discord notification
-   (`PR#591 <https://github.com/vantage6/vantage6/pull/591>`)
+   (`PR#591 <https://github.com/vantage6/vantage6/pull/591>`_)
 
 3.8.1
 -----
