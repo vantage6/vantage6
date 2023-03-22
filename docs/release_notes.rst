@@ -1,6 +1,33 @@
 Release notes
 =============
 
+3.8.2
+-----
+
+*22 march 2023*
+
+
+- **Feature**
+
+ - Location of the server configuration file in server shell script can now be
+   specified as an argument (`PR#604 <https://github.com/vantage6/vantage6/pull/604>`)
+
+- **Change**
+
+ - Changed ping/pong mechanism over socket connection between server and nodes,
+   as it did not function properly in combination with RabbitMQ. Now, the node
+   pushes a ping and the server periodically checks if the node is still alive
+   (`PR#593 <https://github.com/vantage6/vantage6/pull/593>`)
+
+- **Bugfix**
+
+ - For ``vnode files``, take the new formatting of the databases in the node
+   configuration file into account (`PR#600 <https://github.com/vantage6/vantage6/pull/600>`)
+ - Fix bugs in new algorithm client where class attributes were improperly
+   referred to (`PR#596 <https://github.com/vantage6/vantage6/pull/596>`)
+ - Fixed broken links in Discord notification
+   (`PR#591 <https://github.com/vantage6/vantage6/pull/591>`)
+
 3.8.1
 -----
 
