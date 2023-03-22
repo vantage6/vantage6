@@ -15,6 +15,6 @@ uwsgi \
     --http-websockets \
     --master --callable app --disable-logging \
     --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py \
-    --pyargv ${VANTAGE6_CONFIG_LOCATION}
+    --pyargv "${VANTAGE6_CONFIG_LOCATION}"
 
 echo "[server.sh exit]"
