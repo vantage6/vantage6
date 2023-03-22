@@ -4,7 +4,6 @@ import logging
 import os
 import pickle
 import docker.errors
-from docker.types import DeviceRequest
 import json
 
 from typing import Dict, List, Union
@@ -42,7 +41,8 @@ class DockerTaskManager(DockerBaseManager):
                  result_id: int, task_info: Dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: Union[str, None] = None):
+                 alpine_image: Union[str, None] = None,
+                 device_requests: Union[List, None] = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -101,6 +101,12 @@ class DockerTaskManager(DockerBaseManager):
 
         # keep track of the task status
         self.status: TaskStatus = TaskStatus.INITIALIZING
+
+        # set device requests
+        self.device_requests = []
+        if device_requests is not None:
+            self.device_requests = device_requests
+
 
     def is_finished(self) -> bool:
         """
@@ -285,9 +291,7 @@ class DockerTaskManager(DockerBaseManager):
                 volumes=self.volumes,
                 name=container_name,
                 labels=self.labels,
-                device_requests=[
-                  DeviceRequest(count=-1, capabilities=[['gpu']])
-                ] 
+                device_requests=self.device_requests
             )
 
         except Exception as e:

@@ -137,6 +137,7 @@ class DockerManager(DockerBaseManager):
         # name of the container that is running the node
         self.node_container_name = ctx.docker_container_name
 
+
         # login to the registries
         docker_registries = ctx.config.get("docker_registries", [])
         self.login_to_registries(docker_registries)
@@ -147,8 +148,13 @@ class DockerManager(DockerBaseManager):
         # keep track of linked docker services
         self.linked_services: List[str] = []
 
+        # set algorithm device requests
+        self.algorithm_device_requests = []
+        if config.get('algorithm_device_requests', False):
+            self._set_algorithm_device_requests(config['algorithm_device_requests'])
+
     def _set_database(self, databases: Union[Dict, List]) -> None:
-        """"
+        """
         Set database location and whether or not it is a file
 
         Parameters
@@ -199,6 +205,12 @@ class DockerManager(DockerBaseManager):
             self.databases[label] = {'uri': uri, 'is_file': db_is_file,
                                      'type': db_type}
         self.log.debug(f"Databases: {self.databases}")
+
+    def _set_algorithm_device_access(self, device_requests_config: Dict):
+        device_requests = []
+        if device_requests_config.get('gpu', False):
+            device_requests.append(docker.types.DeviceRequest(count=-1, capabilities=[['gpu']]))
+        self.algorithm_device_requests = device_requests
 
     def create_volume(self, volume_name: str) -> None:
         """
@@ -414,7 +426,8 @@ class DockerManager(DockerBaseManager):
             isolated_network_mgr=self.isolated_network_mgr,
             databases=self.databases,
             docker_volume_name=self.data_volume_name,
-            alpine_image=self.alpine_image
+            alpine_image=self.alpine_image,
+            device_requests=self.algorithm_device_requests
         )
         database = database if (database and len(database)) else 'default'
 
