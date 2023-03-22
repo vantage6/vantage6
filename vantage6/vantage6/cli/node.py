@@ -627,6 +627,10 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
 
     running_node_names = find_running_node_names(client)
 
+    if not running_node_names:
+        warning("No nodes are currently running. Cannot show any logs!")
+        return
+
     if not name:
         name = q.select("Select the node you wish to inspect:",
                         choices=running_node_names).ask()
