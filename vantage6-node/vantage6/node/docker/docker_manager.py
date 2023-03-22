@@ -211,7 +211,7 @@ class DockerManager(DockerBaseManager):
 
         Parameters
         ----------
-        device_requests_config: Dict
+        device_requests_config: dict
            A dictionary containing configuration options for device access. Supported keys:
            - 'gpu': A boolean value indicating whether GPU access is required.
         """
