@@ -124,7 +124,7 @@ efforts. Anyone is welcome to join although they are mainly intended for
 infrastructure and algorithm developers. There is an opportunity to present
 what your team is working on an find collaboration partners.
 
-Community meetings are usually held on the third Thursday of the month at 10:00
+Community meetings are usually held on the third Thursday of the month at 11:00
 AM CET on Microsoft Teams. Reach out on `Discord <https://discord.gg/yAyFf6Y>`_
 if you want to join the community meeting.
 
