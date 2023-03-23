@@ -6,7 +6,7 @@ from flask_restful import reqparse, Api
 from http import HTTPStatus
 
 from vantage6.server import db
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,

@@ -21,7 +21,7 @@ from vantage6.server.resource.common._schema import (
     TaskIncludedSchema,
     TaskRunSchema
 )
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.event import kill_task
 
 

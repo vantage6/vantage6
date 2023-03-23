@@ -18,7 +18,7 @@ from marshmallow_sqlalchemy import ModelSchema
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.permission import PermissionManager
-from vantage6.server.resource.pagination import Page
+from vantage6.server.resource.common.pagination import Page
 
 log = logging.getLogger(logger_name(__name__))
 

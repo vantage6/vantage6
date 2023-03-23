@@ -248,7 +248,7 @@ class Node(object):
         # request open tasks from the server
         # TODO take pagination into account: not all results may be returned
         # on the first request
-        tasks = self.server_io.run.get_open()
+        tasks = self.server_io.run.list_open()
         self.log.debug(tasks)
         for task in tasks:
             self.queue.put(task)
@@ -828,7 +828,7 @@ class Node(object):
             Task identifier
         """
         # fetch (open) algorithm run for the node with the task_id
-        tasks = self.server_io.run.get_open(task_id=task_id)
+        tasks = self.server_io.run.list_open(task_id=task_id)
         for task in tasks:
             self.queue.put(task)
 

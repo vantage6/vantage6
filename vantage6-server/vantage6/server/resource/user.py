@@ -17,7 +17,7 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources
 )
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common._schema import UserSchema
 
 
