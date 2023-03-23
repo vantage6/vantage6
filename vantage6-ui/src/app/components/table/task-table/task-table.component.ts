@@ -23,7 +23,11 @@ import { UserDataService } from 'src/app/services/data/user-data.service';
 import { User } from 'src/app/interfaces/user';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
-import { allPages } from 'src/app/interfaces/utils';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 export enum TaskInitator {
   ALL = 'All',
@@ -78,7 +82,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     private userDataService: UserDataService,
     protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, modalService);
+    super(activatedRoute, userPermission, modalService, taskDataService);
   }
 
   async init(): Promise<void> {
@@ -169,7 +173,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       for (let collab_id of (this.current_organization as Organization)
         .collaboration_ids) {
         (
-          await this.taskDataService.collab_list(collab_id, force_refresh)
+          await this.taskDataService.collab_list(
+            collab_id,
+            force_refresh,
+            this.page
+          )
         ).subscribe((tasks) => {
           this.resources = filterArrayByProperty(
             this.resources,
@@ -184,13 +192,14 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       (
         await this.taskDataService.collab_list(
           this.route_org_id as number,
-          force_refresh
+          force_refresh,
+          this.page
         )
       ).subscribe((tasks) => {
         this.resources = tasks;
       });
     } else {
-      (await this.taskDataService.list(force_refresh)).subscribe(
+      (await this.taskDataService.list(force_refresh, this.page)).subscribe(
         (tasks: Task[]) => {
           this.resources = tasks;
         }

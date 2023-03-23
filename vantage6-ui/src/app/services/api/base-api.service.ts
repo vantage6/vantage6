@@ -16,6 +16,7 @@ export abstract class BaseApiService {
   resource_type: ResType;
   resource_single = new BehaviorSubject<Resource | null>(null);
   resource_list = new BehaviorSubject<Resource[]>([]);
+  total_resource_count = new BehaviorSubject<number>(0);
 
   constructor(
     resource_type: ResType,
@@ -28,6 +29,7 @@ export abstract class BaseApiService {
   protected list(params: any = {}): any {
     return this.http.get(environment.api_url + '/' + this.resource_type, {
       params: params,
+      observe: 'response',
     });
   }
 
@@ -58,6 +60,10 @@ export abstract class BaseApiService {
 
   abstract get_data(resource: any): any;
 
+  get_total_number_resources(): number {
+    return this.total_resource_count.value;
+  }
+
   async getResource(
     id: number,
     convertJsonFunc: Function,
@@ -86,21 +92,28 @@ export abstract class BaseApiService {
     if (pagination.page) request_params['page'] = pagination.page;
     if (pagination.page_size) request_params['per_page'] = pagination.page_size;
 
-    let json_data = await this.list(request_params).toPromise();
+    let response = await this.list(request_params).toPromise();
 
+    // get total count of resources from the headers (not just for current page)
+    this.total_resource_count.next(response.headers.get('total-count'));
+
+    // convert json to Resource[]
+    let json_data = response.body;
+    // console.log(json_data.data[0]);
     let resources = [];
-    for (let dic of json_data['data']) {
+    for (let dic of json_data.data) {
       resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
     }
 
     // if all pages are requested, get data of all pages
     if (pagination.all_pages) {
       let page = pagination.page ? pagination.page : 1;
-      while (json_data['links']['next']) {
+      while (json_data.links['next']) {
         page = page + 1;
         request_params['page'] = page;
-        json_data = await this.list(request_params).toPromise();
-        for (let dic of json_data['data']) {
+        response = await this.list(request_params).toPromise();
+        json_data = response.body;
+        for (let dic of json_data.data) {
           resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
         }
       }

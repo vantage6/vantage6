@@ -43,7 +43,8 @@ export class RunApiService extends BaseApiService {
 
   async getResourcesByTaskId(task_id: number): Promise<Run[]> {
     // get data of resources that logged-in user is allowed to view
-    let json_data: any = await this.get_by_task_id(task_id).toPromise();
+    let response: any = await this.get_by_task_id(task_id).toPromise();
+    let json_data = response.data;
 
     let runs: Run[] = [];
     for (let dic of json_data) {

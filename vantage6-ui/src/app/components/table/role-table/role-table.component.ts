@@ -6,7 +6,12 @@ import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { TableComponent } from 'src/app/components/table/base-table/table.component';
 import { ModalService } from 'src/app/services/common/modal.service';
-import { allPages } from 'src/app/interfaces/utils';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
+import { RoleApiService } from 'src/app/services/api/role-api.service';
 
 @Component({
   selector: 'app-role-table',
@@ -33,7 +38,7 @@ export class RoleTableComponent
     private orgDataService: OrgDataService,
     protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, modalService);
+    super(activatedRoute, userPermission, modalService, roleDataService);
   }
 
   ngAfterViewInit(): void {
@@ -59,18 +64,27 @@ export class RoleTableComponent
     this.readRoute();
   }
 
-  protected async setResources() {
+  protected async setResources(
+    force_refresh: boolean = false,
+    pagination: Pagination = defaultFirstPage()
+  ): Promise<void> {
     // TODO update other things when resources are updated?
     if (this.isShowingSingleOrg()) {
       (
-        await this.roleDataService.org_list(this.route_org_id as number)
+        await this.roleDataService.org_list(
+          this.route_org_id as number,
+          force_refresh,
+          pagination
+        )
       ).subscribe((roles) => {
         this.resources = roles;
       });
     } else {
-      (await this.roleDataService.list()).subscribe((roles: Role[]) => {
-        this.resources = roles;
-      });
+      (await this.roleDataService.list(force_refresh, pagination)).subscribe(
+        (roles: Role[]) => {
+          this.resources = roles;
+        }
+      );
     }
   }
 

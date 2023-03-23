@@ -1,16 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { Role } from 'src/app/interfaces/role';
-import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
-import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { TableComponent } from '../base-table/table.component';
-import { allPages } from 'src/app/interfaces/utils';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-user-table',
@@ -34,13 +34,11 @@ export class UserTableComponent extends TableComponent implements OnInit {
   constructor(
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    private roleDataService: RoleDataService,
-    private ruleDataService: RuleDataService,
     private userDataService: UserDataService,
     private orgDataService: OrgDataService,
     protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, modalService);
+    super(activatedRoute, userPermission, modalService, userDataService);
   }
 
   ngAfterViewInit(): void {
@@ -65,19 +63,25 @@ export class UserTableComponent extends TableComponent implements OnInit {
     this.readRoute();
   }
 
-  protected async setResources() {
+  protected async setResources(force_refresh: boolean = false) {
     if (this.isShowingSingleOrg()) {
       (
-        await this.userDataService.org_list(this.route_org_id as number)
+        await this.userDataService.org_list(
+          this.route_org_id as number,
+          force_refresh,
+          this.page
+        )
       ).subscribe((users) => {
         this.resources = users;
         this.renewTable();
       });
     } else {
-      (await this.userDataService.list()).subscribe((users: User[]) => {
-        this.resources = users;
-        this.renewTable();
-      });
+      (await this.userDataService.list(this.page, force_refresh)).subscribe(
+        (users: User[]) => {
+          this.resources = users;
+          this.renewTable();
+        }
+      );
     }
   }
 }
