@@ -13,7 +13,7 @@ import {
 } from 'src/app/shared/utils';
 import { BaseApiService } from '../api/base-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
-import { Pagination, getPageId } from 'src/app/interfaces/utils';
+import { Pagination, getPageId, getPageSize } from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -32,6 +32,8 @@ export abstract class BaseDataService {
   requested_org_lists: number[] = [];
   requested_col_pages: Pagination[] = [];
   requested_org_pages: Pagination[] = [];
+  // track total number of resources
+  total_resource_count: number = 0;
 
   constructor(
     protected apiService: BaseApiService,
@@ -56,7 +58,14 @@ export abstract class BaseDataService {
   }
 
   get_total_number_resources(): number {
-    return this.apiService.get_total_number_resources();
+    // TODO I think this goes wrong if someone creates resources and then
+    // deletes all of them: the count would be 0 again, but not in the API
+    // service. Find a way around this.
+    if (this.total_resource_count === 0) {
+      // get the total number of resources from API service
+      this.total_resource_count = this.apiService.get_total_number_resources();
+    }
+    return this.total_resource_count;
   }
 
   async getDependentResources(): Promise<Resource[][]> {
@@ -304,13 +313,45 @@ export abstract class BaseDataService {
     // update general list
     let updated_list = [...this.resource_list.value];
     updated_list = addOrReplace(updated_list, resource);
+    if (updated_list.length > this.resource_list.value.length) {
+      // if this is new resource, increase the count
+      this.total_resource_count += 1;
+    }
     this.resource_list.next(updated_list);
+    // update pagination lists
+    for (let page_id in this.resources_by_pagination) {
+      let page_resources = this.resources_by_pagination[page_id];
+      if (arrayContainsObjWithId(resource.id, page_resources.value)) {
+        let updated_page_resources = [...page_resources.value];
+        updated_page_resources = addOrReplace(updated_page_resources, resource);
+        this.resources_by_pagination[page_id].next(updated_page_resources);
+      } else if (page_resources.value.length < getPageSize(page_id)) {
+        let updated_page_resources = [...page_resources.value];
+        updated_page_resources = addOrReplace(updated_page_resources, resource);
+        this.resources_by_pagination[page_id].next(updated_page_resources);
+      }
+    }
   }
 
   public remove(resource: Resource): void {
+    // remove from general list
     this.resource_list.next(
       removeMatchedIdFromArray(this.resource_list.value, resource.id)
     );
+    // decrease count of resources
+    this.total_resource_count -= 1;
+    // remove from pagination lists
+    for (let page_id in this.resources_by_pagination) {
+      let page_resources = this.resources_by_pagination[page_id];
+      if (arrayContainsObjWithId(resource.id, page_resources.value)) {
+        this.resources_by_pagination[page_id].next(
+          removeMatchedIdFromArray(
+            this.resources_by_pagination[page_id].value,
+            resource.id
+          )
+        );
+      }
+    }
   }
 
   public clear(): void {

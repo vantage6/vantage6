@@ -27,3 +27,7 @@ export function getPageId(page: Pagination) {
   if (page.organization_id) page_id += `_org_${page.organization_id}`;
   return page_id;
 }
+
+export function getPageSize(page_id: string): number {
+  return parseInt(page_id.split('_')[2]);
+}
