@@ -115,7 +115,7 @@ class NodeClient(ClientBase):
 
     class Run(ClientBase.SubClient):
         """ Subclient for the run endpoint. """
-        def get(
+        def list(
             self, state: str, include_task: bool, task_id: int = None
         ) -> dict | list:
             """
@@ -163,7 +163,7 @@ class NodeClient(ClientBase):
 
             return run_data
 
-        def get_open(self, task_id: int = None) -> dict:
+        def list_open(self, task_id: int = None) -> dict:
             """
             Obtain the open results for a specific task.
 
