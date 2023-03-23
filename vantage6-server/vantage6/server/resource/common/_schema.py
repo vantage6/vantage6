@@ -3,7 +3,7 @@ import logging
 import base64
 
 from marshmallow import fields
-from marshmallow_sqlalchemy import ModelSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from flask import url_for
 
 from vantage6.server import db
@@ -14,7 +14,7 @@ from vantage6.server.model import Organization
 log = logging.getLogger(logger_name(__name__))
 
 
-class HATEOASModelSchema(ModelSchema):
+class HATEOASModelSchema(SQLAlchemyAutoSchema):
     """
     This class is used to convert foreign-key fields to HATEOAS specification.
     """
@@ -22,7 +22,6 @@ class HATEOASModelSchema(ModelSchema):
     api = None
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
         # to one relationship
         setattr(self, "node", lambda obj: self.hateos("node", obj))
@@ -56,6 +55,10 @@ class HATEOASModelSchema(ModelSchema):
                 ))
         setattr(self, "rules", lambda obj: self.hateos_list("rule", obj))
         setattr(self, "roles", lambda obj: self.hateos_list("role", obj))
+
+        # call super class. Do this after setting the attributes above, because
+        # the super class initializer will call the attributes.
+        super().__init__(*args, **kwargs)
 
     def many_hateos_from_secondary(self, first, second, obj):
         # TODO this function doesn't appear to be used. Remove in v4+?
@@ -124,7 +127,7 @@ class HATEOASModelSchema(ModelSchema):
         return {'data': data, 'links': pagination.metadata_links}
 
     def default_dump(self, pagination):
-        return self.dump(pagination.page.items, many=True).data
+        return self.dump(pagination.page.items, many=True)
 
 
 # /task/{id}

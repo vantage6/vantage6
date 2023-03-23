@@ -12,7 +12,7 @@ from flask_jwt_extended import (
     get_jwt, get_jwt_identity, jwt_required
 )
 from flask_socketio import SocketIO
-from marshmallow_sqlalchemy import ModelSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 
 from vantage6.common import logger_name
@@ -68,7 +68,7 @@ class ServicesResources(Resource):
         """
         return field in request.args.getlist('include')
 
-    def dump(self, page: Page, schema: ModelSchema) -> dict:
+    def dump(self, page: Page, schema: SQLAlchemyAutoSchema) -> dict:
         """
         Dump based on the request context (to paginate or not)
 
@@ -76,7 +76,7 @@ class ServicesResources(Resource):
         ----------
         page : Page
             Page object to dump
-        schema : ModelSchema
+        schema : SQLAlchemyAutoSchema
             Schema to use for dumping
 
         Returns
@@ -89,7 +89,7 @@ class ServicesResources(Resource):
         else:
             return schema.default_dump(page)
 
-    def response(self, page: Page, schema: ModelSchema):
+    def response(self, page: Page, schema: SQLAlchemyAutoSchema):
         """
         Prepare a valid HTTP OK response from a page object
 
@@ -97,7 +97,7 @@ class ServicesResources(Resource):
         ----------
         page : Page
             Page object to dump
-        schema : ModelSchema
+        schema : SQLAlchemyAutoSchema
             Schema to use for dumping
 
         Returns
