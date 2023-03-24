@@ -483,7 +483,7 @@ class Run(SingleRunBase):
         s = run_inc_schema if request.args.get('include') == 'task' \
             else run_schema
 
-        return s.dump(run, many=False).data, HTTPStatus.OK
+        return s.dump(run, many=False), HTTPStatus.OK
 
     @with_node
     def patch(self, id):
@@ -571,7 +571,7 @@ class Run(SingleRunBase):
         run.status = data.get("status", run.status)
         run.save()
 
-        return run_schema.dump(run, many=False).data, HTTPStatus.OK
+        return run_schema.dump(run, many=False), HTTPStatus.OK
 
 
 class Result(SingleRunBase):
@@ -623,4 +623,4 @@ class Result(SingleRunBase):
         if not isinstance(run, db_Run):
             return run
 
-        return result_schema.dump(run, many=False).data, HTTPStatus.OK
+        return result_schema.dump(run, many=False), HTTPStatus.OK

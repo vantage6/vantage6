@@ -154,10 +154,10 @@ class TaskRunSchema(HATEOASModelSchema):
         model = db.Run
 
     node = fields.Function(
-        func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
+        serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
     )
     ports = fields.Function(
-        func=lambda obj: RunPortSchema().dump(obj.ports, many=True).data
+        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
     )
 
 
@@ -172,10 +172,10 @@ class RunSchema(HATEOASModelSchema):
     # but that is not possible because of the 'result' field in the Run model.
     results = fields.Method("result")
     node = fields.Function(
-        func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
+        serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
     )
     ports = fields.Function(
-        func=lambda obj: RunPortSchema().dump(obj.ports, many=True).data
+        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
     )
 
     @staticmethod
@@ -235,7 +235,7 @@ class OrganizationSchema(HATEOASModelSchema):
     collaborations = fields.Method("collaborations")
     nodes = fields.Method("nodes")
     users = fields.Method("users")
-    created_tasks = fields.Method("tasks")
+    tasks = fields.Method("tasks")
     runs = fields.Method("runs")
 
     # make sure
@@ -283,7 +283,7 @@ class NodeSchema(HATEOASModelSchema):
     organization = fields.Method("organization")
     collaboration = fields.Method("collaboration")
     config = fields.Nested('NodeConfigSchema', many=True,
-                           exclude=['id', 'node'])
+                           exclude=['id'])
 
     class Meta:
         model = db.Node
@@ -297,41 +297,11 @@ class NodeConfigSchema(HATEOASModelSchema):
 
 # ------------------------------------------------------------------------------
 class NodeSchemaSimple(HATEOASModelSchema):
-
-    # collaboration = fields.Nested(
-    #     'CollaborationSchema',
-    #     many=False,
-    #     exclude=['organizations', 'nodes', 'tasks']
-    # )
-
-    # organization = fields.Nested(
-    #     'OrganizationSchema',
-    #     many=False,
-    #     exclude=[
-    #         '_id',
-    #         'id',
-    #         'domain',
-    #         'address1',
-    #         'address2',
-    #         'zipcode',
-    #         'country',
-    #         'nodes',
-    #         'collaborations',
-    #         'users',
-    #         'runs'
-    #         ]
-    # )
     organization = fields.Method("organization")
 
     class Meta:
         model = db.Node
-        exclude = [
-            # 'id',
-            # 'organization',
-            'collaboration',
-            'api_key',
-            'type',
-        ]
+        exclude = ('collaboration', 'api_key', 'type',)
 
 
 # ------------------------------------------------------------------------------
@@ -360,9 +330,8 @@ class RoleSchema(HATEOASModelSchema):
 # ------------------------------------------------------------------------------
 class RuleSchema(HATEOASModelSchema):
 
-    scope = fields.Function(func=lambda obj: obj.scope.name)
-    operation = fields.Function(func=lambda obj: obj.operation.name)
-    # roles = fields.Method("roles")
+    scope = fields.Function(serialize=lambda obj: obj.scope.name)
+    operation = fields.Function(serialize=lambda obj: obj.operation.name)
     users = fields.Method("users")
 
     class Meta:

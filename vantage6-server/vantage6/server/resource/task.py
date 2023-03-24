@@ -503,7 +503,7 @@ class Tasks(TaskBase):
         log.debug(f" name: '{task.name}'")
         log.debug(f" image: '{task.image}'")
 
-        return task_schema.dump(task, many=False).data, HTTPStatus.CREATED
+        return task_schema.dump(task, many=False), HTTPStatus.CREATED
 
     @staticmethod
     def __verify_container_permissions(container, image, collaboration_id):
@@ -637,7 +637,7 @@ class Task(TaskBase):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return schema.dump(task, many=False).data, HTTPStatus.OK
+        return schema.dump(task, many=False), HTTPStatus.OK
 
     @with_user
     def delete(self, id):

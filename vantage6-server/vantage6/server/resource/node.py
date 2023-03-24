@@ -330,7 +330,7 @@ class Nodes(NodeBase):
 
         # Return the node information to the user. Manually return the api_key
         # to the user as the hashed key is not returned
-        node_json = node_schema.dump(node).data
+        node_json = node_schema.dump(node)
         node_json['api_key'] = api_key
         return node_json, HTTPStatus.CREATED  # 201
 
@@ -392,7 +392,7 @@ class Node(NodeBase):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return node_schema.dump(node, many=False).data, HTTPStatus.OK
+        return node_schema.dump(node, many=False), HTTPStatus.OK
 
     @with_user
     def delete(self, id):
@@ -576,4 +576,4 @@ class Node(NodeBase):
             node.ip = ip
 
         node.save()
-        return node_schema.dump(node).data, HTTPStatus.OK
+        return node_schema.dump(node), HTTPStatus.OK

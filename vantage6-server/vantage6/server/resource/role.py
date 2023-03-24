@@ -368,7 +368,7 @@ class Roles(RoleBase):
                        rules=rules, organization_id=organization_id)
         role.save()
 
-        return role_schema.dump(role, many=False).data, HTTPStatus.CREATED
+        return role_schema.dump(role, many=False), HTTPStatus.CREATED
 
 
 class Role(RoleBase):
@@ -423,7 +423,7 @@ class Role(RoleBase):
                 return {"msg": "You do not have permission to view this."},\
                      HTTPStatus.UNAUTHORIZED
 
-        return role_schema.dump(role, many=False).data, HTTPStatus.OK
+        return role_schema.dump(role, many=False), HTTPStatus.OK
 
     @with_user
     def patch(self, id):
@@ -529,7 +529,7 @@ class Role(RoleBase):
             role.rules = rules
         role.save()
 
-        return role_schema.dump(role, many=False).data, HTTPStatus.OK
+        return role_schema.dump(role, many=False), HTTPStatus.OK
 
     @with_user
     def delete(self, id):
@@ -732,8 +732,7 @@ class RoleRules(RoleBase):
         role.rules.append(rule)
         role.save()
 
-        return rule_schema.dump(role.rules, many=False).data, \
-            HTTPStatus.CREATED
+        return rule_schema.dump(role.rules, many=False), HTTPStatus.CREATED
 
     @with_user
     def delete(self, id, rule_id):
@@ -802,5 +801,4 @@ class RoleRules(RoleBase):
         # Ok jumped all hoopes, remove it..
         role.rules.remove(rule)
 
-        return rule_schema.dump(role.rules, many=False).data, \
-            HTTPStatus.OK
+        return rule_schema.dump(role.rules, many=False), HTTPStatus.OK

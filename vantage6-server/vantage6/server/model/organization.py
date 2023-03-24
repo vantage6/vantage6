@@ -42,7 +42,7 @@ class Organization(Base):
         List of nodes that are part of this organization
     users : list[User]
         List of users that are part of this organization
-    created_tasks : list[Task]
+    tasks : list[Task]
         List of tasks that are created by this organization
     roles : list[Role]
 
@@ -62,7 +62,7 @@ class Organization(Base):
     runs = relationship("Run", back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
-    created_tasks = relationship("Task", back_populates="init_org")
+    tasks = relationship("Task", back_populates="init_org")
     roles = relationship("Role", back_populates="organization")
 
     def get_run_ids(self):

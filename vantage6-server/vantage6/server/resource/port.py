@@ -259,7 +259,7 @@ class Ports(PortBase):
         )
         port.save()
 
-        return port_schema.dump(port, many=False).data, HTTPStatus.CREATED
+        return port_schema.dump(port, many=False), HTTPStatus.CREATED
 
     @with_node
     def delete(self):
@@ -377,7 +377,7 @@ class Port(PortBase):
         # serialize
         s = port_schema
 
-        return s.dump(port, many=False).data, HTTPStatus.OK
+        return s.dump(port, many=False), HTTPStatus.OK
 
 
 class VPNAddress(ServicesResources):

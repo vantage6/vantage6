@@ -64,7 +64,7 @@ class Task(Base):
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
     runs = relationship("Run", back_populates="task")
-    init_org = relationship("Organization", back_populates="created_tasks")
+    init_org = relationship("Organization", back_populates="tasks")
     init_user = relationship("User", back_populates="created_tasks")
 
     @hybrid_property
