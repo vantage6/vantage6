@@ -168,12 +168,12 @@ class Roles(RoleBase):
               name: rule_id
               schema:
                 type: integer
-              description: Rule that is part of a role
+              description: Get roles that this role id is part of
             - in: query
               name: user_id
               schema:
                 type: integer
-              description: get roles for this user id
+              description: Get roles for this user id
             - in: query
               name: include_root
               schema:

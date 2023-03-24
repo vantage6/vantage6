@@ -91,6 +91,11 @@ class Rules(ServicesResources):
                 type: integer
               description: Get rules for a specific role
             - in: query
+              name: user_id
+              schema:
+                type: integer
+              description: Get extra rules assigned to specific user
+            - in: query
               name: include
               schema:
                 type: string (can be multiple)
@@ -129,6 +134,10 @@ class Rules(ServicesResources):
         if 'role_id' in args:
             q = q.join(db.role_rule_association).join(db.Role)\
                  .filter(db.Role.id == args['role_id'])
+
+        if 'user_id' in args:
+            q = q.join(db.UserPermission).join(db.User)\
+                 .filter(db.User.id == args['user_id'])
 
         # paginate results
         page = Pagination.from_query(q, request)

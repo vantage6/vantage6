@@ -85,7 +85,7 @@ class ServicesResources(Resource):
             Dumped page
         """
         if self.is_included('metadata'):
-            return schema.meta_dump(page)
+            return schema.page_dump(page)
         else:
             return schema.default_dump(page)
 
