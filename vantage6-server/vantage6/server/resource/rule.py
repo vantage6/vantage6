@@ -5,6 +5,7 @@ from http import HTTPStatus
 from flask.globals import request
 from flask import g
 from flask_restful import Api
+from sqlalchemy import or_
 
 from vantage6.server.resource import (
     with_user,
@@ -91,6 +92,12 @@ class Rules(ServicesResources):
                 type: integer
               description: Get rules for a specific role
             - in: query
+              name: user_id
+              schema:
+                type: integer
+              description: Get rules for a specific user. This includes the
+                rules that are part of the user's roles.
+            - in: query
               name: page
               schema:
                 type: integer
@@ -107,6 +114,12 @@ class Rules(ServicesResources):
               description: >-
                 Sort by one or more fields, separated by a comma. Use a minus
                 sign (-) in front of the field to sort in descending order.
+            - in: query
+              name: no_pagination
+              schema:
+                type: int
+              description: >-
+                If set to 1, pagination is disabled and all items are returned.
 
         responses:
           200:
@@ -133,9 +146,28 @@ class Rules(ServicesResources):
             q = q.join(db.role_rule_association).join(db.Role)\
                  .filter(db.Role.id == args['role_id'])
 
+        # find all rules of a specific user. This is done by first joining all
+        # tables to find all rules originating from a user's roles. Then, we
+        # do an outer join to find all rules that are directly assigned to the
+        # user.
+        if 'user_id' in args:
+            q = q.join(db.role_rule_association).join(db.Role)\
+                 .join(db.Permission).join(db.User)\
+                 .outerjoin(db.UserPermission,
+                            db.Rule.id == db.UserPermission.c.rule_id)\
+                 .filter(or_(
+                    db.User.id == args['user_id'],
+                    db.UserPermission.c.user_id == args['user_id']
+                 ))
+
+        # check if pagination is disabled
+        paginate = True
+        if 'no_pagination' in args and args['no_pagination'] == '1':
+            paginate = False
+
         # paginate results
         try:
-            page = Pagination.from_query(q, request)
+            page = Pagination.from_query(q, request, paginate=paginate)
         except ValueError as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 

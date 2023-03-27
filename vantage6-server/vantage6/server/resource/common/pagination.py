@@ -157,8 +157,10 @@ class Pagination:
         return links
 
     @classmethod
-    def from_query(cls, query: sqlalchemy.orm.query,
-                   request: flask.Request) -> Pagination:
+    def from_query(
+        cls, query: sqlalchemy.orm.query, request: flask.Request,
+        paginate: bool = True
+    ) -> Pagination:
         """
         Create a Pagination object from a query.
 
@@ -168,6 +170,8 @@ class Pagination:
             Query to paginate
         request : flask.Request
             Request object
+        paginate : bool
+            Whether to paginate the query or not, default True
 
         Returns
         -------
@@ -181,25 +185,19 @@ class Pagination:
         total = query.distinct().order_by(None).count()
 
         # Get the page and page size from the request
-        try:
-            page_id = int(request.args.get('page', DEFAULT_PAGE))
-        except ValueError:
-            raise ValueError("The 'page' parameter should be an integer")
-        try:
-            per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
-        except ValueError:
-            raise ValueError("The 'per_page' parameter should be an integer")
+        if paginate:
+            page_id = cls._get_page_id(request)
+            per_page = cls._get_per_page(request)
 
-        # Check if the page and page size are valid
-        if page_id <= 0:
-            raise ValueError("The 'page' parameter should be >= 1")
-        elif per_page <= 0:
-            raise ValueError("The 'per_page' parameter should be >= 1")
-        elif total < (page_id-1) * per_page:
-            raise ValueError(
-                "The 'page' and/or 'per_page' parameter values are too large: "
-                "there are no records present on this page"
-            )
+            # Check if combination of the page and page size are valid
+            if total < (page_id-1) * per_page:
+                raise ValueError(
+                    "The 'page' and/or 'per_page' parameter values are too "
+                    "large: there are no records present on this page"
+                )
+        else:
+            page_id = 1
+            per_page = total
 
         # FIXME BvB 2020-02-09 good error handling if sort is not a valid
         #  field
@@ -212,6 +210,62 @@ class Pagination:
             .all()
 
         return cls(items, page_id, per_page, total, request)
+
+    @staticmethod
+    def _get_page_id(request: flask.Request) -> int:
+        """
+        Get the page id from the request.
+
+        Parameters
+        ----------
+        request : flask.Request
+            Request object
+
+        Returns
+        -------
+        int
+            Page id
+
+        Raises
+        ------
+        ValueError
+            If the page id is not an integer or is less than 1
+        """
+        try:
+            page_id = int(request.args.get('page', DEFAULT_PAGE))
+        except ValueError:
+            raise ValueError("The 'page' parameter should be an integer")
+        if page_id <= 0:
+            raise ValueError("The 'page' parameter should be >= 1")
+        return page_id
+
+    @staticmethod
+    def _get_per_page(request: flask.Request) -> int:
+        """
+        Get the number of items per page from the request.
+
+        Parameters
+        ----------
+        request : flask.Request
+            Request object
+
+        Returns
+        -------
+        int
+            Number of items per page
+
+        Raises
+        ------
+        ValueError
+            If the number of items per page is not an integer or is less than 1
+        """
+        try:
+            per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
+        except ValueError:
+            raise ValueError("The 'per_page' parameter should be an integer")
+        if per_page <= 0:
+            raise ValueError("The 'per_page' parameter should be >= 1")
+        return per_page
 
     @staticmethod
     def _add_sorting(query: sqlalchemy.orm.query, sort_string: str
