@@ -292,11 +292,27 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of organizations in the collaboration.
             """
+            page = 1
             organizations = self.parent.request(
                 "organization",
-                params={"collaboration_id": self.parent.collaboration_id}
+                params={
+                    "collaboration_id": self.parent.collaboration_id,
+                    "page": page,
+                }
             )
-            return organizations
+            links = organizations.get("links")
+            while links and links.get("next"):
+                page += 1
+                organizations["data"] += self.parent.request(
+                    "organization",
+                    params={
+                        "collaboration_id": self.parent.collaboration_id,
+                        "page": page,
+                    }
+                )["data"]
+                links = organizations.get("links")
+
+            return organizations['data']
 
     class Collaboration(ClientBase.SubClient):
         """
