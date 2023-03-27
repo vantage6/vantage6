@@ -151,11 +151,19 @@ class NodeClient(ClientBase):
                 self.parent.log.debug(f"Fail message: {run_data}")
                 return {}
 
-            # TODO Fix when pagination is default in v4+
-            # hack: in the case that the pagination metadata is included we
-            # need to strip that for decrypting
-            if isinstance(run_data, dict) and 'data' in run_data:
-                run_data = run_data['data']
+            # if there are multiple pages of algorithm runs, get them all
+            links = run_data.get('links')
+            page = 1
+            while links and links.get('next'):
+                page += 1
+                run_data['data'] += self.parent.request(
+                    endpoint='run',
+                    params={**params, 'page': page}
+                )['data']
+                links = run_data.get('links')
+
+            # strip pagination links
+            run_data = run_data['data']
 
             # Multiple runs
             for run in run_data:
@@ -177,7 +185,7 @@ class NodeClient(ClientBase):
             dict
                 The open algorithm run(s).
             """
-            return self.get(
+            return self.list(
                 state="open", include_task=True, task_id=task_id
             )
 
