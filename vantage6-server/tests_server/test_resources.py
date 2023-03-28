@@ -252,7 +252,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(rules=[rule])
 
         # First retrieve a list of all organizations
-        response, orgs = self.paginated_list('/api/organization', headers)
+        _response, orgs = self.paginated_list('/api/organization', headers)
         self.assertEqual(len(orgs), len(Organization.get()))
 
         attrs = [
