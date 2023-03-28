@@ -48,6 +48,10 @@ native to your OS and/or distribution.
     versions (3.8 or 3.9). However, we develop and test vantage6 on version
     3.10, so that is the safest choice.
 
+.. warning::
+    Note that Python 3.10 is only used in vantage6 versions 3.8.0 and higher.
+    In lower versions, Python 3.7 is required.
+
 .. _docker:
 
 Docker

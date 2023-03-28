@@ -89,7 +89,7 @@ class PostUpdates(commands.Cog):
             ':triangular_flag_on_post:\n\n'
             f'{summary}'
             '\nSee the complete release notes [here]('
-            'https://docs.vantage6.ai/about-background/release-notes)\n\n'
+            'https://docs.vantage6.ai/en/main/release_notes.html)\n\n'
             'To upgrade:'
             '```'
             f'pip install vantage6=={version}'
@@ -105,11 +105,9 @@ class PostUpdates(commands.Cog):
         documentation = (
             '[Latest release notes](https://docs.vantage6.ai/en/main/'
             'release_notes.html)\n'
-            '[Installation instructions](https://docs.vantage6.ai/en/main/'
-            'install/index.html)\n'
+            '[Documentation](https://docs.vantage6.ai/en/main/index.html\n'
             '[How to contribute](https://docs.vantage6.ai/en/main/devops/'
             'contribute.html)\n'
-            '[Discourse](https://vantage6.discourse.group/)\n'
         )
 
         links = (

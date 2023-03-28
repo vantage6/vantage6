@@ -5,6 +5,7 @@ from socketio import ClientNamespace
 from vantage6.common import logger_name
 from vantage6.common.task_status import TaskStatus, has_task_failed
 
+
 class NodeTaskNamespace(ClientNamespace):
     """Class that handles incoming websocket events."""
 
@@ -39,17 +40,6 @@ class NodeTaskNamespace(ClientNamespace):
         """ Actions to be taken on socket disconnect event. """
         # self.node_worker_ref.socketIO.disconnect()
         self.log.info('Disconnected from the server')
-
-    def on_ping(self) -> int:
-        """
-        Actions to be taken when server pings the nodes
-
-        Returns
-        -------
-        int
-            The id of this node so that server knows it is online
-        """
-        return self.node_worker_ref.server_io.whoami.id_
 
     def on_new_task(self, task_id: int):
         """
