@@ -284,7 +284,7 @@ class AlgorithmClient(ClientBase):
             """
             return self.get_addresses(only_parent=True)
 
-        def get_child_addresses(self) -> List[dict]:
+        def get_child_addresses(self) -> list[dict]:
             """
             Get the IP addresses and port numbers of the children of the
             current task.
