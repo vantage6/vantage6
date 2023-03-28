@@ -226,8 +226,13 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
     info(f"Log file           = {ctx.log_file}")
     info(f"data folders       = {ctx.data_dir}")
     info("Database labels and files")
-    for label, path in ctx.databases.items():
-        info(f" - {label:15} = {path}")
+    # TODO in v4+, this will always be a list so remove next few lines
+    if isinstance(ctx.databases, dict):
+        for label, path in ctx.databases.items():
+            info(f" - {label:15} = {path}")
+    else:
+        for db in ctx.databases:
+            info(f" - {db['label']:15} = {db['uri']} (type: {db['type']})")
 
 
 #
@@ -621,6 +626,10 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
     check_docker_running()
 
     running_node_names = find_running_node_names(client)
+
+    if not running_node_names:
+        warning("No nodes are currently running. Cannot show any logs!")
+        return
 
     if not name:
         name = q.select("Select the node you wish to inspect:",
