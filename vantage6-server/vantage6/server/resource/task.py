@@ -154,6 +154,14 @@ class Tasks(TaskBase):
               type: int
             description: The collaboration id to which the task belongs
           - in: query
+            name: is_user_created
+            schema:
+              type: int
+            description: >-
+              If larger than 0, returns tasks created by a user (top-level
+              tasks). If equal to 0, returns subtask created by an algorithm.
+              If not specified, both are returned.
+          - in: query
             name: image
             schema:
               type: str
@@ -269,6 +277,18 @@ class Tasks(TaskBase):
                 q = q.filter(getattr(db.Task, param).like(args[param]))
         if 'run_id' in args:
             q = q.join(db.Run).filter(db.Run.id == args['run_id'])
+        if 'is_user_created' in args:
+            try:
+                user_created = int(args['is_user_created'])
+                if user_created == 0:
+                    q = q.filter(db.Task.parent_id.isnot(None))
+                else:
+                    q = q.filter(db.Task.parent_id.is_(None))
+            except ValueError:
+                return {"msg": (
+                    "Invalid value for 'is_user_created' provided: "
+                    f"'{args['is_user_created']}'. Should be an integer."
+                )}, HTTPStatus.BAD_REQUEST
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
