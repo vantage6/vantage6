@@ -5,7 +5,6 @@ import json
 import base64
 import hashlib
 import re
-from typing import Dict, Tuple
 import urllib.parse as urlparse
 
 from http import HTTPStatus
@@ -420,7 +419,7 @@ class EduVPNConnector:
         parsed_url = urlparse.urlparse(redirected_uri)
         self.code = urlparse.parse_qs(parsed_url.query)['code']
 
-    def _get_token(self) -> Dict:
+    def _get_token(self) -> dict:
         """
         Use authorization code to obtain a token from the EduVPN portal
 
@@ -501,7 +500,7 @@ class EduVPNConnector:
             ovpn_config[end_remove_pos+len(end_key):]
         )
 
-    def get_profile(self) -> Dict:
+    def get_profile(self) -> dict:
         """
         Call the profile_list route of EduVPN API
 
@@ -534,7 +533,7 @@ class EduVPNConnector:
         )
         return response_config.content.decode('utf-8')
 
-    def get_key_pair(self) -> Tuple[str, str]:
+    def get_key_pair(self) -> tuple[str, str]:
         """
         Call the create_keypair route of EduVPN API
 

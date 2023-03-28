@@ -35,11 +35,11 @@ import requests.exceptions
 
 from pathlib import Path
 from threading import Thread
-from typing import Dict, List, Union, Type
 from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
+from vantage6.common import logger_name
 from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
@@ -55,7 +55,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -78,11 +78,11 @@ class Node(object):
 
     Parameters
     ----------
-    ctx: Union[NodeContext, DockerNodeContext]
+    ctx: NodeContext | DockerNodeContext
         Application context object.
 
     """
-    def __init__(self, ctx: Union[NodeContext, DockerNodeContext]):
+    def __init__(self, ctx: NodeContext | DockerNodeContext):
 
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
@@ -306,7 +306,7 @@ class Node(object):
             # never finish and hence not be set to finished)
             update['finished_at'] = datetime.datetime.now().isoformat()
         self.server_io.patch_results(
-            id=taskresult['id'], result=update
+            id_=taskresult['id'], result=update
         )
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
@@ -423,7 +423,7 @@ class Node(object):
                     )
 
                 self.server_io.patch_results(
-                    id=results.result_id,
+                    id_=results.result_id,
                     result={
                         'result': results.data,
                         'log': results.logs,
@@ -574,8 +574,8 @@ class Node(object):
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_ssh_tunnels(self, isolated_network_mgr: Type[NetworkManager]) \
-            -> List[SSHTunnel]:
+    def setup_ssh_tunnels(self, isolated_network_mgr: NetworkManager) \
+            -> list[SSHTunnel]:
         """
         Create a SSH tunnels when they are defined in the configuration file.
         For each tunnel a new container is created. The image used can be
@@ -597,7 +597,7 @@ class Node(object):
         configs = self.config['ssh-tunnels']
         self.log.info(f"Setting up {len(configs)} SSH tunnels")
 
-        tunnels: List[SSHTunnel] = []
+        tunnels: list[SSHTunnel] = []
         for config in configs:
             self.log.debug(f"SSH tunnel config: {config}")
 
@@ -633,7 +633,7 @@ class Node(object):
         return tunnels
 
     def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
-                             ctx: Union[DockerNodeContext, NodeContext]
+                             ctx: DockerNodeContext | NodeContext
                              ) -> VPNManager:
         """
         Setup container which has a VPN connection
@@ -642,7 +642,7 @@ class Node(object):
         ----------
         isolated_network_mgr: NetworkManager
             Manager for the isolated Docker network
-        ctx: NodeContext
+        ctx: DockerNodeContext | NodeContext
             Context object for the node
 
         Returns
@@ -873,19 +873,19 @@ class Node(object):
             self.cleanup()
             sys.exit()
 
-    def kill_containers(self, kill_info: Dict) -> List[Dict]:
+    def kill_containers(self, kill_info: dict) -> list[dict]:
         """
         Kill containers on instruction from socket event
 
         Parameters
         ----------
-        kill_info: Dict
+        kill_info: dict
             Dictionary received over websocket with instructions for which
             tasks to kill
 
         Returns
         -------
-        List[Dict]:
+        list[dict]:
             List of dictionaries with information on killed task (keys:
             result_id, task_id and parent_id)
         """
@@ -909,7 +909,7 @@ class Node(object):
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.server_io.patch_results(
-                id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+                id_=killed_algo.result_id, result={'status': TaskStatus.KILLED}
             )
         return killed_algos
 

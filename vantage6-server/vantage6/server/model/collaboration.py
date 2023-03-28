@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List, Union
 from sqlalchemy import Column, String, Boolean, exists
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
@@ -43,7 +42,7 @@ class Collaboration(Base):
     nodes = relationship("Node", back_populates="collaboration")
     tasks = relationship("Task", back_populates="collaboration")
 
-    def get_organization_ids(self) -> List[int]:
+    def get_organization_ids(self) -> list[int]:
         """
         Returns a list of organization ids that are part of this collaboration.
 
@@ -54,7 +53,7 @@ class Collaboration(Base):
         """
         return [organization.id for organization in self.organizations]
 
-    def get_task_ids(self) -> List[int]:
+    def get_task_ids(self) -> list[int]:
         """
         Returns a list of task ids that are part of this collaboration.
 
@@ -65,7 +64,7 @@ class Collaboration(Base):
         """
         return [task.id for task in self.tasks]
 
-    def get_nodes_from_organizations(self, ids: List[int]) -> List[Node]:
+    def get_nodes_from_organizations(self, ids: list[int]) -> list[Node]:
         """
         Returns a subset of nodes that are part of the given organizations.
 
@@ -82,7 +81,7 @@ class Collaboration(Base):
         return [n for n in self.nodes if n.organization.id in ids]
 
     def get_node_from_organization(
-            self, organization: Organization) -> Union[Node, None]:
+            self, organization: Organization) -> Node | None:
         """
         Returns the node that is part of the given :class:`.Organization`.
 
@@ -103,7 +102,7 @@ class Collaboration(Base):
         return None
 
     @classmethod
-    def find_by_name(cls, name: str) -> Union[Collaboration, None]:
+    def find_by_name(cls, name: str) -> Collaboration | None:
         """
         Find :class:`.Collaboration` by its name.
 

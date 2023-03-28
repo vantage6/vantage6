@@ -1,7 +1,6 @@
 import logging
 import os
 import inspect as class_inspect
-from typing import List
 from flask.globals import g
 
 from sqlalchemy import Column, Integer, inspect, Table
@@ -154,7 +153,7 @@ class Database(metaclass=Singleton):
                 )
 
     def get_non_existing_columns(self, table_cls: Table,
-                                 table_name: str) -> List[Column]:
+                                 table_name: str) -> list[Column]:
         """
         Return a list of columns that are defined in the SQLAlchemy model, but
         are not present in the database
@@ -168,7 +167,7 @@ class Database(metaclass=Singleton):
 
         Returns
         -------
-        List[Column]
+        list[Column]
             List of SQLAlchemy Column objects that are present in the model,
             but not in the database
         """
@@ -209,7 +208,7 @@ class Database(metaclass=Singleton):
         )
 
     @staticmethod
-    def is_column_missing(column: Column, column_names: List[str],
+    def is_column_missing(column: Column, column_names: list[str],
                           table_name: str) -> bool:
         """ Check if column is missing in the table
 
