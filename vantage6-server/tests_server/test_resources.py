@@ -208,7 +208,24 @@ class TestResources(unittest.TestCase):
         }
         return headers
 
-    def paginated_list(self, url, headers=None):
+    def paginated_list(
+        self, url: str, headers: dict = None
+    ) -> tuple[Response, list]:
+        """
+        Get all resources of a list endpoint by browsing through all pages
+
+        Parameters
+        ----------
+        url: str
+            The url of the list endpoint
+        headers: dict
+            The headers to use for the request
+
+        Returns
+        -------
+        tuple[flask.Response, list]
+            The response and the list of all resources
+        """
         result = self.app.get(url, headers=headers)
         links = result.json.get('links')
         page = 1

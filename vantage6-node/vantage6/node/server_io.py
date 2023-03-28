@@ -171,24 +171,6 @@ class NodeClient(ClientBase):
 
             return run_data
 
-        def list_open(self, task_id: int = None) -> dict:
-            """
-            Obtain the open results for a specific task.
-
-            Parameters
-            ----------
-            task_id : int | None
-                ID of the task. All open algorithm runs are returned if None.
-
-            Returns
-            -------
-            dict
-                The open algorithm run(s).
-            """
-            return self.list(
-                state="open", include_task=True, task_id=task_id
-            )
-
         def patch(self, id_: int, data: dict, init_org_id: int = None) -> None:
             """
             Update the algorithm run data at the central server.
