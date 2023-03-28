@@ -115,7 +115,7 @@ class NodeClient(ClientBase):
 
     class Run(ClientBase.SubClient):
         """ Subclient for the run endpoint. """
-        def get(
+        def list(
             self, state: str, include_task: bool, task_id: int = None
         ) -> dict | list:
             """
@@ -151,35 +151,25 @@ class NodeClient(ClientBase):
                 self.parent.log.debug(f"Fail message: {run_data}")
                 return {}
 
-            # TODO Fix when pagination is default in v4+
-            # hack: in the case that the pagination metadata is included we
-            # need to strip that for decrypting
-            if isinstance(run_data, dict) and 'data' in run_data:
-                run_data = run_data['data']
+            # if there are multiple pages of algorithm runs, get them all
+            links = run_data.get('links')
+            page = 1
+            while links and links.get('next'):
+                page += 1
+                run_data['data'] += self.parent.request(
+                    endpoint='run',
+                    params={**params, 'page': page}
+                )['data']
+                links = run_data.get('links')
+
+            # strip pagination links
+            run_data = run_data['data']
 
             # Multiple runs
             for run in run_data:
                 run['input'] = self.parent._decrypt_input(run['input'])
 
             return run_data
-
-        def get_open(self, task_id: int = None) -> dict:
-            """
-            Obtain the open results for a specific task.
-
-            Parameters
-            ----------
-            task_id : int | None
-                ID of the task. All open algorithm runs are returned if None.
-
-            Returns
-            -------
-            dict
-                The open algorithm run(s).
-            """
-            return self.get(
-                state="open", include_task=True, task_id=task_id
-            )
 
         def patch(self, id_: int, data: dict, init_org_id: int = None) -> None:
             """

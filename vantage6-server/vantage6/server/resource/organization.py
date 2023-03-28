@@ -7,7 +7,7 @@ from http import HTTPStatus
 
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -158,27 +158,30 @@ class Organizations(OrganizationBase):
               type: integer
             description: Collaboration id
           - in: query
-            name: include
-            schema:
-              type: string (can be multiple)
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
             description: Ok
           401:
             description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
           - bearerAuth: []
@@ -228,7 +231,10 @@ class Organizations(OrganizationBase):
                 HTTPStatus.UNAUTHORIZED
 
         # paginate the results
-        page = Pagination.from_query(query=q, request=request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of DB model
         return self.response(page, org_schema)

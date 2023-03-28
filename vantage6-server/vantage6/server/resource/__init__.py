@@ -18,7 +18,7 @@ from marshmallow_sqlalchemy import ModelSchema
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.permission import PermissionManager
-from vantage6.server.resource.pagination import Page
+from vantage6.server.resource.common.pagination import Page
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -84,10 +84,7 @@ class ServicesResources(Resource):
         dict
             Dumped page
         """
-        if self.is_included('metadata'):
-            return schema.meta_dump(page)
-        else:
-            return schema.default_dump(page)
+        return schema.meta_dump(page)
 
     def response(self, page: Page, schema: ModelSchema):
         """

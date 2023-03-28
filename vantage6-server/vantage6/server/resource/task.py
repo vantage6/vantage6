@@ -21,7 +21,7 @@ from vantage6.server.resource.common._schema import (
     TaskIncludedSchema,
     TaskRunSchema
 )
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.event import kill_task
 
 
@@ -219,9 +219,7 @@ class Tasks(TaskBase):
               type: array
               items:
                 type: string
-            description: Include 'results' to get task results. Include
-              'metadata' to get pagination metadata. Note that this will
-              put the actual data in an envelope.
+            description: Include 'results' to get task results.
           - in: query
             name: status
             schema:
@@ -232,12 +230,19 @@ class Tasks(TaskBase):
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
@@ -292,7 +297,10 @@ class Tasks(TaskBase):
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
         # TODO BvB 2023-02-08: does this work?
@@ -758,21 +766,22 @@ class TaskRun(ServicesResources):
             description: Task id
             required: true
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:

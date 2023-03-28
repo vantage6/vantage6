@@ -50,3 +50,7 @@ DEFAULT_SUPPORT_EMAIL_ADDRESS = 'support@vantage6.ai'
 
 # default time that token is valid in minutes
 DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
+
+# pagination settings
+DEFAULT_PAGE = 1
+DEFAULT_PAGE_SIZE = 10
