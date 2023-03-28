@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import datetime
 from uuid import uuid1
 import yaml
 import unittest
@@ -209,6 +208,20 @@ class TestResources(unittest.TestCase):
         }
         return headers
 
+    def paginated_list(self, url, headers=None):
+        result = self.app.get(url, headers=headers)
+        links = result.json.get('links')
+        page = 1
+        json_data = result.json['data']
+        while links and links.get('next'):
+            page += 1
+            new_response = self.app.get(
+                links.get('next'), headers=headers
+            )
+            json_data += new_response.json.get('data')
+            links = new_response.json.get('links')
+        return result, json_data
+
     def create_node_and_login(self, *args, **kwargs):
         node, api_key = self.create_node(*args, **kwargs)
         return self.login_node(api_key)
@@ -239,7 +252,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(rules=[rule])
 
         # First retrieve a list of all organizations
-        orgs = self.app.get('/api/organization', headers=headers).json
+        response, orgs = self.paginated_list('/api/organization', headers)
         self.assertEqual(len(orgs), len(Organization.get()))
 
         attrs = [
@@ -293,14 +306,14 @@ class TestResources(unittest.TestCase):
         )
         self.assertEqual(collaborations.status_code, HTTPStatus.OK)
         db_cols = Collaboration.get()
-        self.assertEqual(len(collaborations.json), len(db_cols))
+        self.assertEqual(len(collaborations.json['data']), len(db_cols))
 
     def test_node_without_id(self):
 
         # GET
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        nodes = self.app.get("/api/node", headers=headers).json
+        nodes = self.app.get("/api/node", headers=headers).json['data']
         expected_fields = [
             'name',
             'collaboration',
@@ -585,7 +598,7 @@ class TestResources(unittest.TestCase):
         result = self.app.get("/api/role", headers=headers)
         self.assertEqual(result.status_code, 200)
 
-        body = result.json
+        body = result.json['data']
         expected_fields = ['organization', 'name', 'description', 'users']
         for field in expected_fields:
             self.assertIn(field, body[0])
@@ -594,7 +607,8 @@ class TestResources(unittest.TestCase):
         headers = self.login("root")
 
         # obtain available rules
-        rules = self.app.get("/api/rule", headers=headers).json
+        rules = self.app.get("/api/rule", headers=headers,
+                             query_string={'no_pagination': 1}).json['data']
         rule_ids = [rule.get("id") for rule in rules]
 
         # assign first two rules to role
@@ -619,8 +633,8 @@ class TestResources(unittest.TestCase):
         headers = self.login("root")
 
         # obtain available rules
-        rules = self.app.get("/api/rule", headers=headers).json
-
+        rules = self.app.get("/api/rule", headers=headers,
+                             query_string={'no_pagination': 1}).json['data']
         # create new organization, so we're sure that the current user
         # is not assigned to the same organization
         org = Organization(name="Some-random-organization")
@@ -774,9 +788,11 @@ class TestResources(unittest.TestCase):
         headers = self.login('root')
         role = Role.get()[0]
 
-        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        result, json_data = self.paginated_list(
+            f'/api/role/{role.id}/rule', headers=headers
+        )
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(role.rules), len(result.json))
+        self.assertEqual(len(role.rules), len(json_data))
 
         result = self.app.get('/api/role/9999/rule', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
@@ -791,7 +807,7 @@ class TestResources(unittest.TestCase):
         result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
 
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json), 0)
+        self.assertEqual(len(result.json['data']), 0)
 
         rule = Rule.get()[0]
 
@@ -813,7 +829,7 @@ class TestResources(unittest.TestCase):
         # check that the role now has one rule
         result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json), 1)
+        self.assertEqual(len(result.json['data']), 1)
 
     def test_remove_single_rule_from_role(self):
         headers = self.login('root')
@@ -834,7 +850,7 @@ class TestResources(unittest.TestCase):
 
         result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json), 1)
+        self.assertEqual(len(result.json['data']), 1)
 
         result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
                                  headers=headers)
@@ -964,17 +980,17 @@ class TestResources(unittest.TestCase):
 
         # root user can view all users
         headers = self.login('root')
-        result = self.app.get('/api/user', headers=headers)
+        result, json_data = self.paginated_list('/api/user', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json), len(User.get()))
+        self.assertEqual(len(json_data), len(User.get()))
 
         # view users of your organization
         rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.VIEW)
         org = Organization.get(1)
         headers = self.create_user_and_login(org, rules=[rule])
-        result = self.app.get('/api/user', headers=headers)
+        result, json_data = self.paginated_list('/api/user', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json), len(org.users))
+        self.assertEqual(len(json_data), len(org.users))
 
         # view a single user of your organization
         user_id = org.users[0].id
@@ -985,6 +1001,7 @@ class TestResources(unittest.TestCase):
         user = self.create_user(rules=[])
         headers = self.login(user.username)
         result = self.app.get(f'/api/user/{user.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
 
     def test_bounce_existing_username_and_email(self):
         headers = self.create_user_and_login()
@@ -1324,7 +1341,7 @@ class TestResources(unittest.TestCase):
         # test list organization with only your organization
         result = self.app.get('/api/organization', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json[0]['id'], node.organization.id)
+        self.assertEqual(result.json['data'][0]['id'], node.organization.id)
 
         # test list organization
         result = self.app.get(
@@ -1353,7 +1370,7 @@ class TestResources(unittest.TestCase):
             headers=headers
         )
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertIsInstance(result.json, list)
+        self.assertIsInstance(result.json['data'], list)
 
         # cleanup
         node.delete()
@@ -1773,7 +1790,7 @@ class TestResources(unittest.TestCase):
         results = self.app.get(f"/api/collaboration/{col.id}/node",
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json), len(col.nodes))
+        self.assertEqual(len(results.json['data']), len(col.nodes))
 
         # try to view from your organization
         rule = Rule.get_by_("collaboration", Scope.ORGANIZATION,
@@ -1900,7 +1917,7 @@ class TestResources(unittest.TestCase):
         results = self.app.get(f'/api/collaboration/{col.id}/task',
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json), len(col.tasks))
+        self.assertEqual(len(results.json['data']), len(col.tasks))
 
         # view with global permissions
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
@@ -1908,7 +1925,7 @@ class TestResources(unittest.TestCase):
         results = self.app.get(f'/api/collaboration/{col.id}/task',
                                headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json), len(col.tasks))
+        self.assertEqual(len(results.json['data']), len(col.tasks))
 
     def test_view_collaboration_task_permissions_as_node(self):
 
@@ -1963,13 +1980,13 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(organization=org, rules=[rule1])
         results = self.app.get('/api/node', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json), len(col.nodes))
+        self.assertEqual(len(results.json['data']), len(col.nodes))
 
         # list global permissions
         headers = self.create_user_and_login(rules=[rule2])
-        results = self.app.get('/api/node', headers=headers)
+        results, json_data = self.paginated_list('/api/node', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json), len(Node.get()))
+        self.assertEqual(len(json_data), len(Node.get()))
 
         # cleanup
         node.delete()
@@ -1989,7 +2006,7 @@ class TestResources(unittest.TestCase):
         # list organization permissions
         results = self.app.get('/api/node', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json), len(org.nodes))
+        self.assertEqual(len(results.json['data']), len(org.nodes))
 
         # cleanup
         node.delete()
