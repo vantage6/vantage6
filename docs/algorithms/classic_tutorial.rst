@@ -370,16 +370,7 @@ For our average algorithm the implementation will look as follows:
        # also possible to subscribe to a websocket channel to get status
        # updates.
        info("Waiting for results")
-       task_id = task.get("id")
-       task = client.get_task(task_id)
-       while not task.get("complete"):
-           task = client.get_task(task_id)
-           info("Waiting for results")
-           time.sleep(1)
-
-       # Once we now the partials are complete, we can collect them.
-       info("Obtaining results")
-       results = client.get_results(task_id=task.get("id"))
+       results = client.wait_for_results(task_id=task.get("id"))
 
        # Now we can combine the partials to a global average.
        global_sum = 0
@@ -468,7 +459,7 @@ Then create a script to test the algorithm:
 
    # You can directly obtain the result (we dont have to wait for nodes to
    # complete the tasks)
-   results = client.get_results(average_partial_task.get("id"))
+   results = client.result.from_task(average_partial_task.get("id"))
    print(results)
 
    # To trigger the master method you also need to supply the `master`-flag
@@ -485,7 +476,7 @@ Then create a script to test the algorithm:
        },
        organization_ids=[org_ids[0]]
    )
-   results = client.get_results(average_task.get("id"))
+   results = client.result.from_task(average_task.get("id"))
    print(results)
 
 Building and Distributing

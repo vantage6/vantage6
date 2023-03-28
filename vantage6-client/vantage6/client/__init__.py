@@ -26,6 +26,7 @@ from vantage6.common import WhoAmI
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import print_qr_code, LogLevel
+from vantage6.common.task_status import TaskStatus
 
 
 module_name = __name__.split('.')[1]
@@ -513,122 +514,6 @@ class ClientBase(object):
             'database': database
         })
 
-    # TODO BvB 23-01-23 remove this method in v4+ (or make it private?). It is
-    # only here for backwards compatibility.
-    def get_results(self, id: int = None, state: str = None,
-                    include_task: bool = False, task_id: int = None,
-                    node_id: int = None, params: dict = {}) -> dict:
-        """Get task's algorithm run(s) from the central server
-
-        Depending if a `id` is specified or not, either a single or a
-        list of runs is returned. The input and result field of the
-        run are attempted to be decrypted. This fails if the public
-        key at the server is not derived from the currently private key
-        or when the run is not from your organization.
-
-        Parameters
-        ----------
-        id : int, optional
-            Id of the algorithm run, by default None
-        state : str, optional
-            The state of the task (e.g. `open`), by default None
-        include_task : bool, optional
-            Whenever to include the orginating task, by default False
-        task_id : int, optional
-            The id of the originating task, this will return all runs
-            belonging to this task, by default None
-        node_id : int, optional
-            The id of the node at which this run has been produced,
-            this will return all runs from this node, by default None
-        params : dict, optional
-            Additional query parameters, by default {}
-
-        Returns
-        -------
-        dict
-            Containing data on the algorithm run(s)
-        """
-        # Determine endpoint and create dict with query parameters
-        endpoint = 'run' if not id else f'run/{id}'
-
-        if state:
-            params['state'] = state
-        if include_task:
-            params['include'] = 'task'
-        if task_id:
-            params['task_id'] = task_id
-        if node_id:
-            params['node_id'] = node_id
-
-        # self.log.debug(f"Retrieving results using query parameters:{params}")
-        run_data = self.request(endpoint=endpoint, params=params)
-
-        if isinstance(run_data, str):
-            self.log.warn("Requesting results failed")
-            self.log.debug(f"Results message: {run_data}")
-            return {}
-
-        # hack: in the case that the pagination metadata is included we
-        # need to strip that for decrypting
-        if isinstance(run_data, dict) and 'data' in run_data:
-            wrapper = run_data
-            run_data = run_data['data']
-
-        if id:
-            # Single run
-            run_data['input'] = self._decrypt_input(run_data['input'])
-        else:
-            # Multiple runs
-            for run in run_data:
-                run['input'] = self._decrypt_input(run['input'])
-
-        if 'wrapper' in locals():
-            wrapper['data'] = run_data
-            run_data = wrapper
-
-        return run_data
-
-    # TODO I think this method will be superfluous as the result is now
-    # in a separate endpoint
-    def _decrypt_run(self, run):
-        """Helper to decrypt the keys 'input' and 'result' in dict.
-
-        Keys are replaced, but object reference remains intact: changes are
-        made *in-place*.
-
-        Parameters
-        ----------
-        run : dict
-            The result dict to decrypt
-
-        Raises
-        ------
-        AssertionError
-            Encryption has not been initialized
-        """
-        assert self.cryptor, "Encryption has not been initialized"
-        cryptor = self.cryptor
-        try:
-            self.log.info('Decrypting input')
-            # TODO this only works when the runs belong to the
-            # same organization... We should make different implementation
-            # of get_results
-            run["input"] = cryptor.decrypt_str_to_bytes(run["input"])
-
-        except Exception as e:
-            self.log.debug(e)
-
-        try:
-            if run["result"]:
-                self.log.info('Decrypting result')
-                run["run"] = \
-                    cryptor.decrypt_str_to_bytes(run["result"])
-
-        except ValueError as e:
-            self.log.error("Could not decrypt/decode result.")
-            self.log.error(e)
-            # raise
-
     def _decrypt_input(self, input_: str) -> bytes:
         """Helper to decrypt the input of an algorithm run
 
@@ -653,7 +538,6 @@ class ClientBase(object):
         assert self.cryptor, "Encryption has not been initialized"
         cryptor = self.cryptor
         try:
-            self.log.info('Decrypting input')
             # TODO this only works when the runs belong to the
             # same organization... We should make different implementation
             # of get_results
@@ -664,35 +548,53 @@ class ClientBase(object):
 
         return input_
 
-    def _decrypt_result(self, result: str) -> bytes:
+    def _decrypt_field(self, data: dict, field: str,
+                       is_single_resource: bool) -> dict:
         """
-        Helper to decrypt an algorithm's result
+        Wrapper function to decrypt and deserialize the a field of one or more
+        resources
+
+        This can be used to decrypt and deserialize input and results of
+        algorithm runs.
 
         Parameters
         ----------
-        result : str
-            The encrypted algorithm result
+        run_data : dict
+            The data of which to decrypt a field
+        field : str
+            The field to decrypt and deserialize
+        is_single_resource : bool
+            Whether the data is of a single resource or a list of resources
 
         Returns
         -------
-        bytes
-            The decrypted algorithm result
-
-        Raises
-        ------
-        AssertionError
-            Encryption has not been initialized
+        dict
+            Data on the algorithm run(s) with decrypted input
         """
-        assert self.cryptor, "Encryption has not been initialized"
-        cryptor = self.cryptor
-        try:
-            self.log.info('Decrypting result')
-            result = cryptor.decrypt_str_to_bytes(result["result"])
+        # TODO change in v4+ when pagination is default
+        # hack: in the case that the pagination metadata is included we
+        # need to strip that for decrypting
+        if isinstance(data, dict) and 'data' in data:
+            wrapper = data
+            data = data['data']
 
-        except ValueError as e:
-            self.log.error("Could not decrypt/decode result.")
-            self.log.error(e)
-        return result
+        if is_single_resource:
+            data[field] = deserialization.load_data(
+                self._decrypt_input(
+                    data[field]
+                )
+            )
+        else:
+            for resource in data:
+                resource[field] = deserialization.load_data(
+                    self._decrypt_input(resource[field])
+                )
+
+        if 'wrapper' in locals():
+            wrapper['data'] = data
+            data = wrapper
+
+        return data
 
     class SubClient:
         """
@@ -878,7 +780,7 @@ class UserClient(ClientBase):
         animation = itertools.cycle(['|', '/', '-', '\\'])
         t = time.time()
 
-        while not self.task.get(task_id)['complete']:
+        while self.task.get(task_id)['status'] != TaskStatus.COMPLETED:
             frame = next(animation)
             sys.stdout.write(
                 f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
@@ -893,7 +795,9 @@ class UserClient(ClientBase):
         elif isinstance(self.log, UserClient.Log):
             self.log.enabled = prev_level
 
-        return self.get_results(task_id=task_id)
+        result = self.request('result', params={'task_id': task_id})
+        result = self.result._decrypt_result(result, is_single_result=False)
+        return result
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
@@ -2027,15 +1931,12 @@ class UserClient(ClientBase):
             """
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            # get_results also handles decryption
-            run = self.parent.get_results(id=id_, include_task=include_task)
-            result_data = run.get('result')
-            if result_data:
-                try:
-                    run['result'] = deserialization.load_data(result_data)
-                except Exception as e:
-                    self.parent.log.warn('--> Failed to deserialize')
-                    self.parent.log.debug(e)
+            # get run from the API
+            params = {'include': 'task'} if include_task else {}
+            run = self.parent.request(endpoint=f'run/{id_}', params=params)
+
+            # decrypt input
+            run = self._decrypt_input(run_data=run, is_single_run=True)
 
             return run
 
@@ -2107,33 +2008,13 @@ class UserClient(ClientBase):
                 'port': port
             }
 
-            runs = self.parent.get_results(params=params)
+            # get runs from the API
+            runs = self.parent.request(endpoint='run', params=params)
 
-            if isinstance(runs, dict):
-                wrapper = runs
-                runs = runs['data']
+            # decrypt input data
+            runs = self._decrypt_input(run_data=runs, is_single_run=False)
 
-            cleaned_runs = []
-            for run in runs:
-                if run.get('result'):
-                    try:
-                        des_res = deserialization.load_data(
-                            run.get('result')
-                        )
-                    except Exception as e:
-                        id_ = run.get('id')
-                        self.parent.log.warn('Could not deserialize run id='
-                                             f'{id_}')
-                        self.parent.log.debug(e)
-                        continue
-                    run['result'] = des_res
-                cleaned_runs.append(run)
-
-            if 'wrapper' in locals():
-                wrapper['data'] = cleaned_runs
-                cleaned_runs = wrapper
-
-            return cleaned_runs
+            return runs
 
         # note: using typing.List instead of `list` to prevent referring
         # to the list() function in an incorrect manner
@@ -2141,7 +2022,7 @@ class UserClient(ClientBase):
             self, task_id: int, include_task: bool = False
         ) -> typing.List[dict]:
             """
-            Get all results from a specific task
+            Get all algorithm runs from a specific task
 
             Parameters
             ----------
@@ -2157,23 +2038,44 @@ class UserClient(ClientBase):
             """
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            # get_results also handles decryption
-            runs = self.parent.get_results(task_id=task_id,
-                                           include_task=include_task)
-            cleaned_runs = []
-            for run in runs:
-                if run.get('result'):
-                    des_res = deserialization.load_data(run.get('result'))
-                    run['result'] = des_res
-                cleaned_runs.append(run)
+            # get all algorithm runs from a specific task
+            params = {}
+            if include_task:
+                params['include'] = 'task'
+            if task_id:
+                params['task_id'] = task_id
+            runs = self.parent.request(endpoint='run', params=params)
 
-            return cleaned_runs
+            # decrypt input data
+            runs = self._decrypt_input(run_data=runs, is_single_run=False)
+
+            return runs
+
+        def _decrypt_input(self, run_data: dict, is_single_run: bool) -> dict:
+            """
+            Wrapper function to decrypt and deserialize the input of one or
+            more runs
+
+            Parameters
+            ----------
+            run_data : dict
+                The data of the run(s) to decrypt
+            is_single_run : bool
+                Whether the run_data is a single run or a list of runs
+
+            Returns
+            -------
+            dict
+                Data on the algorithm run(s) with decrypted input
+            """
+            return self.parent._decrypt_field(
+                data=run_data, field='input', is_single_resource=is_single_run
+            )
 
     class Result(ClientBase.SubClient):
         """
         Client to get the results of one or multiple algorithm runs
         """
-
         @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
             """View a specific result
@@ -2190,30 +2092,42 @@ class UserClient(ClientBase):
             """
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            # get_results also handles decryption
-            run = self.parent.get_results(id=id_)
-            result_data = run.get('result')
-            if result_data:
-                try:
-                    run['result'] = deserialization.load_data(result_data)
-                except Exception as e:
-                    self.parent.log.warn('--> Failed to deserialize')
-                    self.parent.log.debug(e)
+            result = self.parent.request(endpoint=f'result/{id_}')
+            result = self._decrypt_result(
+                result_data=result, is_single_result=True
+            )
 
-            return run['result']
+            return result['result']
 
         def from_task(self, task_id: int):
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            # get_results also handles decryption
-            runs = self.parent.get_results(task_id=task_id)
-            cleaned_results = []
-            for run in runs:
-                if run.get('result'):
-                    des_res = deserialization.load_data(run.get('result'))
-                    run['result'] = des_res
-                    cleaned_results.append(run['result'])
-            return cleaned_results
+            results = self.parent.request('result', {'task_id': task_id})
+            results = self._decrypt_result(results, False)
+            return results
+
+        def _decrypt_result(self, result_data: dict,
+                            is_single_result: bool) -> dict:
+            """
+            Wrapper function to decrypt and deserialize the input of one or
+            more runs
+
+            Parameters
+            ----------
+            result_data : dict
+                The data of the run(s) to decrypt
+            is_single_result : bool
+                Whether the result_data is a single result or a list of results
+
+            Returns
+            -------
+            dict
+                Data on the algorithm run(s) with decrypted input
+            """
+            return self.parent._decrypt_field(
+                data=result_data, field='result',
+                is_single_resource=is_single_result
+            )
 
     class Rule(ClientBase.SubClient):
 
