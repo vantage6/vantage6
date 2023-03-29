@@ -16,7 +16,9 @@ from vantage6.common._version import __version__
 
 
 class AppContext(metaclass=Singleton):
-
+    """
+    Base class from which to create Node and Server context classes.
+    """
     # FIXME: drop the prefix "INST_": a *class* is assigned.
     # FIXME: this does not need to be a class attribute, but ~~can~~_should_
     #        be set in __init__
