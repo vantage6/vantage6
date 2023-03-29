@@ -11,3 +11,6 @@ Technical Docs
    features/index
    api/node
    api/server
+   api/cli
+   api/client
+   api/common
