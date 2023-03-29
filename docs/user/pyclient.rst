@@ -376,7 +376,8 @@ i.e. this collaboration consists of the organizations ``example_org1``
 
 Now, we have two options: create a task that will run the master
 algorithm (which runs on one node and may spawns subtasks on other nodes),
-or create a task that will (only) run the RPC methods (which are run
+or create a task that will (only) run the so-called Remote Procedure Call (RPC)
+methods (which are run
 on each node). Typically, the RPC methods only run the node local analysis
 (e.g. compute the averages per node), whereas the master algorithms
 performs aggregation of those results as well (e.g. starts the node
