@@ -219,7 +219,8 @@ class Node(object):
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
-            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app)
+            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app,
+                                     log=None)
 
             try:
                 http_server.serve_forever()
