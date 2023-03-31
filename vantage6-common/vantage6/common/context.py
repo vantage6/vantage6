@@ -289,7 +289,14 @@ class AppContext(metaclass=Singleton):
         return configs, failed
 
     @property
-    def log_file(self):
+    def log_file(self) -> Path:
+        """Return the path to the log file.
+
+        Returns
+        -------
+        Path
+            Path to the log file
+        """
         return self.log_file_name(type_=self.instance_type)
 
     def log_file_name(self, type_: str) -> Path:
