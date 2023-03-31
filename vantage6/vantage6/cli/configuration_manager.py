@@ -39,9 +39,9 @@ class NodeConfiguration(Configuration):
         "databases": Or([Use(dict)], dict, None),
         "api_path": Use(str),
         "logging": {
-            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING",
-                                                   "ERROR", "CRITICAL")),
-            "file": Use(str),
+            "level": And(Use(str), lambda lvl: lvl in (
+                "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+            )),
             "use_console": Use(bool),
             "backup_count": And(Use(int), lambda n: n > 0),
             "max_size": And(Use(int), lambda b: b > 16),

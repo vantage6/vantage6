@@ -87,7 +87,6 @@ def node_configuration_questionaire(dirs, instance_name):
 
     config["logging"] = {
         "level": res,
-        "file": f"{instance_name}.log",
         "use_console": True,
         "backup_count": 5,
         "max_size": 1024,

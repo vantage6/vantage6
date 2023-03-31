@@ -192,16 +192,32 @@ class AppContext(metaclass=Singleton):
 
     @property
     def log_file(self):
+        return self.log_file_name(type_="node")
+
+    def log_file_name(self, type_: str) -> Path:
+        """
+        Return a path to a log file for a given log file type
+
+        Parameters
+        ----------
+        type_: str
+            The type of log file to return.
+
+        Returns
+        -------
+        Path
+            The path to the log file.
+
+        Raises
+        ------
+        AssertionError
+            If the configuration manager is not initialized.
+        """
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
+        file_ = (Path(self.config_manager.name) /
+                 f"{type_}_{self.environment}_{self.scope}.log")
 
-        # check if the configuration file contains a logging file setting
-        if self.config.get("logging"):
-            if self.config.get("logging").get("file"):
-                return self.log_dir / self.config.get("logging").get("file")
-
-        file_ = f"{self.config_manager.name}-{self.environment}"\
-                f"-{self.scope}.log"
         return self.log_dir / file_
 
     @property
@@ -299,6 +315,8 @@ class AppContext(metaclass=Singleton):
 
     def setup_logging(self):
         """Setup a basic logging mechanism."""
+        # TODO BvB 2023-03-31: would be nice to refactor this with the other
+        # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
         level = getattr(logging, log_config["level"].upper())

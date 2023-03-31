@@ -380,6 +380,10 @@ class NodeContext(AppContext):
             f"{self.docker_container_name}-ssh-vol"
         )
 
+    @property
+    def proxy_log_file(self):
+        return self.log_file_name(type_="proxy_server")
+
     def docker_temporary_volume_name(self, run_id: int) -> str:
         """
         Docker volume in which temporary data is stored. Temporary data is
