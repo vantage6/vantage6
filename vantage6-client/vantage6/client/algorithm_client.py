@@ -218,7 +218,8 @@ class AlgorithmClient(ClientBase):
         It provides functions to obtain the IP addresses of other containers.
         """
         def get_addresses(
-            self, include_children: bool = False, include_parent: bool = False,
+            self, only_children: bool = False, only_parent: bool = False,
+            include_children: bool = False, include_parent: bool = False,
             label: str = None
         ) -> list[dict] | dict:
             """
@@ -228,12 +229,20 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
+            only_children : bool, optional
+                Only return the IP addresses of the children of the current
+                task, by default False. Incompatible with only_parent.
+            only_parent : bool, optional
+                Only return the IP address of the parent of the current task,
+                by default False. Incompatible with only_children.
             include_children : bool, optional
                 Include the IP addresses of the children of the current task,
-                by default False.
+                by default False. Incompatible with only_parent, superseded
+                by only_children.
             include_parent : bool, optional
                 Include the IP address of the parent of the current task, by
-                default False.
+                default False. Incompatible with only_children, superseded by
+                only_parent.
             label : str, optional
                 The label of the port you are interested in, which is set
                 in the algorithm Dockerfile. If this parameter is set, only
@@ -248,6 +257,8 @@ class AlgorithmClient(ClientBase):
                 'message' key is returned instead.
             """
             results = self.parent.request("vpn/algorithm/addresses", params={
+                "only_children": only_children,
+                "only_parent": only_parent,
                 "include_children": include_children,
                 "include_parent": include_parent,
                 "label": label
@@ -257,6 +268,36 @@ class AlgorithmClient(ClientBase):
                 return {'message': 'Obtaining VPN addresses failed!'}
 
             return results['addresses']
+
+        def get_parent_address(self) -> dict:
+            """
+            Get the IP address and port number of the parent of the current
+            task.
+
+            Returns
+            -------
+            dict
+                Dictionary containing the IP address and port number, and other
+                information to identify the containers. If obtaining the VPN
+                addresses from the server fails, a dictionary with a 'message'
+                key is returned instead.
+            """
+            return self.get_addresses(only_parent=True)
+
+        def get_child_addresses(self) -> list[dict]:
+            """
+            Get the IP addresses and port numbers of the children of the
+            current task.
+
+            Returns
+            -------
+            List[dict]
+                List of dictionaries containing the IP address and port number,
+                and other information to identify the containers. If obtaining
+                the VPN addresses from the server fails, a dictionary with a
+                'message' key is returned instead.
+            """
+            return self.get_addresses(only_children=True)
 
     class Organization(ClientBase.SubClient):
         """

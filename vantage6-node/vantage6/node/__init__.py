@@ -811,6 +811,9 @@ class Node(object):
         Send ping messages periodically to the server over the socketIO
         connection to notify the server that this node is online
         """
+        # Wait for the socket to be connected to the namespaces on startup
+        time.sleep(5)
+
         while True:
             try:
                 self.socketIO.emit('ping', namespace='/tasks')
