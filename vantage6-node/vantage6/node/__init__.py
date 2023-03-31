@@ -47,6 +47,7 @@ from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
+from vantage6.common.log import get_file_logger
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -215,12 +216,18 @@ class Node(object):
         proxy_server.app.config["SERVER_IO"] = self.server_io
         proxy_server.server_url = self.server_io.base_path
 
+        # set up proxy server logging
+        log_level = getattr(logging, self.config["logging"]["level"].upper())
+        self.proxy_log = get_file_logger(
+            'proxy_server', self.ctx.proxy_log_file, log_level_file=log_level
+        )
+
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
             http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app,
-                                     log=None)
+                                     log=self.proxy_log)
 
             try:
                 http_server.serve_forever()
