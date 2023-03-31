@@ -133,9 +133,6 @@ application:
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
     level:        DEBUG
 
-    # Filename of the log-file, used by RotatingFileHandler
-    file:         my_node.log
-
     # whenever the output needs to be shown in the console
     use_console:  true
 
