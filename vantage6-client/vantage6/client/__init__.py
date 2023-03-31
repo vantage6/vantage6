@@ -4,6 +4,8 @@ vantage6 clients
 This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
+from __future__ import annotations
+
 import logging
 import pickle
 import time
@@ -26,6 +28,7 @@ from vantage6.common import WhoAmI
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import print_qr_code, LogLevel
+from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.common.task_status import TaskStatus
 
 
@@ -602,11 +605,11 @@ class ClientBase(object):
 
         Parameters
         ----------
-        parent : UserClient
+        parent : UserClient | AlgorithmClient
             The parent client
         """
-        def __init__(self, parent) -> None:
-            self.parent: UserClient = parent
+        def __init__(self, parent: UserClient | AlgorithmClient) -> None:
+            self.parent = parent
 
 
 class UserClient(ClientBase):

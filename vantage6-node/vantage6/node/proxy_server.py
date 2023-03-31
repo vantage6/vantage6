@@ -147,6 +147,7 @@ def decrypt_result(run: dict) -> dict:
     dict
         Run dict with the `result` decrypted
     """
+    # FIXME check if this function is not implemented in several places
     server_io: NodeClient = app.config.get('SERVER_IO')
 
     # if the result is a None, there is no need to decrypt that..
