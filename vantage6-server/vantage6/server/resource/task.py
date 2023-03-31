@@ -99,7 +99,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 task_schema = TaskSchema()
-task_run_schema = TaskIncludedSchema()
+task_result_schema = TaskIncludedSchema()
 
 
 class TaskBase(ServicesResources):
@@ -295,7 +295,7 @@ class Tasks(TaskBase):
 
         # serialization schema
         # TODO BvB 2023-02-08: does this work?
-        schema = task_run_schema if self.is_included('result') else\
+        schema = task_result_schema if self.is_included('result') else\
             task_schema
 
         return self.response(page, schema)
@@ -646,7 +646,7 @@ class Task(TaskBase):
         auth_org = self.obtain_auth_organization()
 
         # obtain schema
-        schema = task_run_schema if request.args.get('include') == \
+        schema = task_result_schema if request.args.get('include') == \
             'results' else task_schema
 
         # check permissions
