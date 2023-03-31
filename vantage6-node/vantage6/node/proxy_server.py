@@ -275,9 +275,11 @@ def proxy_task():
 
     return response.json(), HTTPStatus.OK
 
-
-@app.route('/task/<int:id>/run', methods=["GET"])
-def proxy_task_run(id: int) -> Response:
+# TODO test whether this function is accessed from the algorithm client's
+# result.get() function. It may not be because now we call a different path
+# on the server, that includes the ID as parameter instead of part of the URL.
+@app.route('/result?task_id=<int:id_>', methods=["GET"])
+def proxy_result(id_: int) -> Response:
     """
     Obtain and decrypt all results to belong to a certain task
 
@@ -299,9 +301,9 @@ def proxy_task_run(id: int) -> Response:
 
     # Forward the request
     try:
-        response: Response = make_proxied_request(f"task/{id}/run")
+        response: Response = make_proxied_request(f"result?task_id={id_}")
     except Exception:
-        log.exception('Error on "task/<id>/run"')
+        log.exception(f'Error on "result?task_id={id_}"')
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 

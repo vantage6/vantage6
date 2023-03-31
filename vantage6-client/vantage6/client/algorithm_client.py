@@ -146,7 +146,9 @@ class AlgorithmClient(ClientBase):
             # TODO do we need this function? It may be used to collect data
             # on subtasks but usually only the results are accessed, which is
             # done with the function below.
-            return self.parent.multi_page_request(f"run?task_id={task_id}")
+            return self.parent.multi_page_request(
+                "run", params={"task_id": task_id}
+            )
 
     class Result(ClientBase.SubClient):
         """
@@ -177,7 +179,7 @@ class AlgorithmClient(ClientBase):
                 algorithm.
             """
             results = self.parent.multi_page_request(
-                endpoint=f"result?task_id={task_id}"
+                "result", params={"task_id": task_id}
             )
 
             decoded_results = []
