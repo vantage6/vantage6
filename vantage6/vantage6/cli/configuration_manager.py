@@ -7,7 +7,10 @@ from vantage6.common.configuration_manager import (
 
 
 class ServerConfiguration(Configuration):
-
+    """
+    Stores the server's configuration and defines a set of server-specific
+    validators.
+    """
     VALIDATORS = {
         "description": Use(str),
         "ip": Use(str),
@@ -16,8 +19,9 @@ class ServerConfiguration(Configuration):
         "uri": Use(str),
         "allow_drop_all": Use(bool),
         "logging": {
-            "level": And(Use(str), lambda l: l in ("DEBUG", "INFO", "WARNING",
-                                                   "ERROR", "CRITICAL")),
+            "level": And(Use(str), lambda lvl: lvl in (
+                "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+            )),
             "file": Use(str),
             "use_console": Use(bool),
             "backup_count": And(Use(int), lambda n: n > 0),
@@ -29,6 +33,10 @@ class ServerConfiguration(Configuration):
 
 
 class NodeConfiguration(Configuration):
+    """
+    Stores the node's configuration and defines a set of node-specific
+    validators.
+    """
 
     VALIDATORS = {
         "api_key": Use(str),
@@ -55,21 +63,77 @@ class NodeConfiguration(Configuration):
     }
 
 
-class NodeConfigurationManager(ConfigurationManager):
+class TestConfiguration(Configuration):
+    VALIDATORS = {}
 
-    def __init__(self, name, *args, **kwargs):
+
+class NodeConfigurationManager(ConfigurationManager):
+    """
+    Maintains the node's configuration.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    """
+    def __init__(self, name, *args, **kwargs) -> None:
         super().__init__(conf_class=NodeConfiguration, name=name)
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path: str) -> 'NodeConfigurationManager':
+        """
+        Create a new instance of the NodeConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str
+            Path to the configuration file.
+
+        Returns
+        -------
+        NodeConfigurationManager
+            A new instance of the NodeConfigurationManager.
+        """
         return super().from_file(path, conf_class=NodeConfiguration)
 
 
 class ServerConfigurationManager(ConfigurationManager):
+    """
+    Maintains the server's configuration.
 
-    def __init__(self, name, *args, **kwargs):
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    """
+    def __init__(self, name, *args, **kwargs) -> None:
         super().__init__(conf_class=ServerConfiguration, name=name)
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path) -> 'ServerConfigurationManager':
+        """
+        Create a new instance of the ServerConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str
+            Path to the configuration file.
+
+        Returns
+        -------
+        ServerConfigurationManager
+            A new instance of the ServerConfigurationManager.
+        """
         return super().from_file(path, conf_class=ServerConfiguration)
+
+
+class TestingConfigurationManager(ConfigurationManager):
+
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(conf_class=TestConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path):
+        return super().from_file(path, conf_class=TestConfiguration)

@@ -1,11 +1,9 @@
 import logging
 
 from socketio import ClientNamespace
-from typing import Dict
 
+from vantage6.common import logger_name
 from vantage6.common.task_status import TaskStatus, has_task_failed
-from vantage6.node.util import logger_name
-
 
 
 class NodeTaskNamespace(ClientNamespace):
@@ -102,12 +100,12 @@ class NodeTaskNamespace(ClientNamespace):
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
 
-    def on_kill_containers(self, kill_info: Dict):
+    def on_kill_containers(self, kill_info: dict):
         """
         Action to be taken when nodes are instructed by server to kill one or
         more tasks
 
-        kill_info: Dict
+        kill_info: dict
             A dictionary that contains information on which tasks should be
             killed. This information may instruct a node to kill all its tasks
             or include a list of which tasks should be killed.

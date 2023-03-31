@@ -7,7 +7,6 @@ import hashlib
 import time
 
 from pathlib import Path
-from typing import Dict
 
 from vantage6.common.globals import APPNAME
 from vantage6.common import debug, info, error
@@ -26,19 +25,18 @@ RABBIT_DIR = 'rabbitmq'
 class RabbitMQManager:
     """
     Manages the RabbitMQ docker container
+
+    Parameters
+    ----------
+    ctx: ServerContext
+        Configuration object
+    queue_uri: str
+        URI where the RabbitMQ instance should be running
+    network_mgr: NetworkManager
+        Network manager for network in which server container resides
     """
     def __init__(self, ctx: ServerContext, network_mgr: NetworkManager,
                  image: str = None) -> None:
-        """
-        Parameters
-        ----------
-        ctx: ServerContext
-            Configuration object
-        queue_uri: str
-            URI where the RabbitMQ instance should be running
-        network_mgr: NetworkManager
-            Network manager for network in which server container resides
-        """
         self.ctx = ctx
         self.queue_uri = self.ctx.config.get('rabbitmq_uri')
         rabbit_splitted = split_rabbitmq_uri(self.queue_uri)
@@ -129,11 +127,16 @@ class RabbitMQManager:
         )
         return response.exit_code == 0
 
-    def _get_volumes(self) -> Dict:
+    def _get_volumes(self) -> dict:
         """
         Prepare the volumes for the RabbitMQ container. The RabbitMQ should
         set up the right vhost and users to allow the server to communicate
         with RabbitMQ as configured.
+
+        Returns
+        -------
+        dict
+            Dictionary with the volumes to mount in the RabbitMQ container
         """
         # default RabbitMQ configuration: replace the user/password with the
         # credentials from the configuraiton
@@ -166,7 +169,7 @@ class RabbitMQManager:
             }
         }
 
-    def _get_rabbitmq_definitions(self) -> Dict:
+    def _get_rabbitmq_definitions(self) -> dict:
         """
         Get startup definitions (users/vhosts etc) for RabbitMQ container
 

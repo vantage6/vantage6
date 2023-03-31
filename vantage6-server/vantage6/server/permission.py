@@ -2,7 +2,6 @@ import logging
 import importlib
 
 from collections import namedtuple
-from typing import Callable, List, Union
 from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.globals import RESOURCES
@@ -199,7 +198,7 @@ class PermissionManager:
 
         self.collection(resource).add(rule.scope, rule.operation)
 
-    def appender(self, name: str) -> Callable:
+    def appender(self, name: str) -> callable:
         """
         Add a module's rules to the rule collection
 
@@ -296,9 +295,9 @@ class PermissionManager:
         return result
 
     @staticmethod
-    def verify_user_rules(rules: List[Rule]) -> Union[dict, bool]:
+    def check_user_rules(rules: list[Rule]) -> dict | bool:
         """
-        Check if an user, node or container has all the `rules`
+        Check if a user, node or container has all the `rules` in a list
 
         Parameters
         ----------
@@ -308,7 +307,7 @@ class PermissionManager:
         Returns
         -------
         Union[dict, bool]
-            False if user has all rules, else a dict with a message
+            Dict with a message which rule is missing, else None
         """
         for rule in rules:
             requires = RuleNeed(rule.name, rule.scope, rule.operation)
@@ -317,4 +316,4 @@ class PermissionManager:
             except PermissionDenied:
                 return {"msg": f"You don't have the rule ({rule.name}, "
                         f"{rule.scope}, {rule.operation})"}
-        return False
+        return None

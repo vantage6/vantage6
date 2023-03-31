@@ -6,9 +6,9 @@ import pickle
 import docker.errors
 import json
 
-from typing import Dict, List, Union
 from pathlib import Path
 
+from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
@@ -16,7 +16,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -38,10 +38,10 @@ class DockerTaskManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, task_info: Dict, tasks_dir: Path,
+                 result_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: Union[str, None] = None):
+                 alpine_image: str | None = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -55,17 +55,17 @@ class DockerTaskManager(DockerBaseManager):
             Name of the node, to track running algorithms
         result_id: int
             Server result identifier
-        task_info: Dict
+        task_info: dict
             Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
         isolated_network_mgr: NetworkManager
             Manager of isolated network to which algorithm needs to connect
-        databases: Dict
+        databases: dict
             List of databases
         docker_volume_name: str
             Name of the docker volume
-        alpine_image: str or None
+        alpine_image: str | None
             Name of alternative Alpine image to be used
         """
         super().__init__(isolated_network_mgr)
@@ -167,7 +167,7 @@ class DockerTaskManager(DockerBaseManager):
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: Dict, database: str) -> List[Dict]:
+            algorithm_env: dict, database: str) -> list[dict]:
         """
         Runs the docker-image in detached mode.
 
@@ -182,12 +182,12 @@ class DockerTaskManager(DockerBaseManager):
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
@@ -213,7 +213,7 @@ class DockerTaskManager(DockerBaseManager):
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
-    def _run_algorithm(self) -> List[Dict]:
+    def _run_algorithm(self) -> list[dict]:
         """
         Run the algorithm container
 
@@ -222,7 +222,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] or None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is inactive
         """
@@ -294,20 +294,22 @@ class DockerTaskManager(DockerBaseManager):
         return vpn_ports
 
     @staticmethod
-    def _printable_input(input_: str) -> str:
+    def _printable_input(input_: str | dict) -> str:
         """
         Return a version of the input with limited number of characters
 
         Parameters
         ----------
-        input: str
-            Input of a task
+        input: str | dict
+            Deserialized input of a task
 
         Returns
         -------
         str
             Input with limited number of characters, to be printed to logs
         """
+        if isinstance(input_, dict):
+            input_ = str(input_)
         if len(input_) > 550:
             return f'{input_[:500]}... ({len(input_)-500} characters omitted)'
         return input_
@@ -333,7 +335,7 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> Dict:
+    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> dict:
         """
         Generate docker volumes required to run the algorithm
 
@@ -346,7 +348,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        Dict:
+        dict:
             Volumes to support running the algorithm
         """
         if isinstance(self.docker_input, str):
@@ -378,19 +380,21 @@ class DockerTaskManager(DockerBaseManager):
                 {"bind": self.data_folder, "mode": "rw"}
         return volumes
 
-    def _setup_environment_vars(self, algorithm_env: Dict = {},
-                                database: str = 'default') -> Dict:
+    def _setup_environment_vars(self, algorithm_env: dict,
+                                database: str = 'default') -> dict:
         """"
         Set environment variables required to run the algorithm
 
         Parameters
         ----------
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
+        database: str
+            Label of the database to use
 
         Returns
         -------
-        Dict:
+        dict:
             Environment variables required to run algorithm
         """
         try:
