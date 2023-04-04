@@ -608,7 +608,7 @@ class ClientBase(object):
         parent : UserClient | AlgorithmClient
             The parent client
         """
-        def __init__(self, parent: UserClient | AlgorithmClient) -> None:
+        def __init__(self, parent) -> None:
             self.parent = parent
 
 

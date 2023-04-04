@@ -81,7 +81,7 @@ class AlgorithmClient(ClientBase):
         """
         return super().request(*args, **kwargs, retry=False)
 
-    def multi_page_request(self, endpoint: str, params: dict = {}) -> dict:
+    def multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """
         Make multiple requests to the central server to get all pages of a list
         of results.
@@ -98,6 +98,8 @@ class AlgorithmClient(ClientBase):
         dict
             Response from the central server.
         """
+        if params is None:
+            params = {}
         # get first page
         page = 1
         params["page"] = page
