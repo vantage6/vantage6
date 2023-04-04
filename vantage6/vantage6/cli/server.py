@@ -107,7 +107,7 @@ def click_insert_context(func: callable) -> callable:
                 error("No configurations could be found!")
                 exit(1)
 
-        ctx = get_server_context(name, environment, system_folders)
+        ctx = _get_server_context(name, environment, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context
@@ -288,7 +288,7 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
 
     if attach:
         logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -567,7 +567,7 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
         tty=True
     )
     logs = container.logs(stream=True, stdout=True)
-    Thread(target=print_log_worker, args=(logs,), daemon=False).start()
+    Thread(target=_print_log_worker, args=(logs,), daemon=False).start()
 
     info(f"Success! container id = {container.id}")
 
@@ -703,7 +703,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     if name in running_server_names:
         container = client.containers.get(name)
         logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -766,7 +766,7 @@ def cli_server_version(name: str, system_folders: bool) -> None:
 #
 # helper functions
 #
-def get_server_context(name: str, environment: str, system_folders: bool) \
+def _get_server_context(name: str, environment: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
@@ -860,7 +860,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = get_server_context(config_name, environment, system_folders)
+    ctx = _get_server_context(config_name, environment, system_folders)
 
     # delete the server network
     network_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
@@ -881,7 +881,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
                  f"{Style.RESET_ALL} container.")
 
 
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     Print the logs from the docker container to the terminal.
 
