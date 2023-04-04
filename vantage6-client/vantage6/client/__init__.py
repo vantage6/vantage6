@@ -21,14 +21,12 @@ import traceback
 from pathlib import Path
 
 from vantage6.common.exceptions import AuthenticationException
-from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common import WhoAmI
 from vantage6.client import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import print_qr_code, LogLevel
-from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.common.task_status import TaskStatus
 
 
