@@ -2479,7 +2479,7 @@ class TestResources(unittest.TestCase):
         rule = Rule.get_by_("run", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(len(result.json['data']), 0)
 
         # test with organization permission
         headers = self.create_user_and_login(org, [rule])
@@ -2497,7 +2497,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(
             f'/api/result?task_id={task.id}', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(len(result.json['data']), 0)
 
         # test with organization permission
         headers = self.create_user_and_login(org, [rule])
@@ -2526,5 +2526,5 @@ class TestResources(unittest.TestCase):
 
         headers = self.login_container(collaboration=col, organization=org,
                                        task=task)
-        results = self.app.get(f'/api/task/{task.id}/run', headers=headers)
+        results = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
