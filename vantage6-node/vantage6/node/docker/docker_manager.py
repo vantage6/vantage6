@@ -207,6 +207,15 @@ class DockerManager(DockerBaseManager):
         self.log.debug(f"Databases: {self.databases}")
 
     def _set_algorithm_device_access(self, device_requests_config: Dict):
+        """
+        Configure device access for the algorithm container.
+
+        Parameters
+        ----------
+        device_requests_config: Dict
+           A dictionary containing configuration options for device access. Supported keys:
+           - 'gpu': A boolean value indicating whether GPU access is required.
+        """
         device_requests = []
         if device_requests_config.get('gpu', False):
             device_requests.append(docker.types.DeviceRequest(count=-1, capabilities=[['gpu']]))

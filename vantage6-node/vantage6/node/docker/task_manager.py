@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import docker.errors
+from docker.types import DeviceRequest
 import json
 
 from typing import Dict, List, Union
@@ -42,7 +43,7 @@ class DockerTaskManager(DockerBaseManager):
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: Union[str, None] = None,
-                 device_requests: Union[List, None] = None):
+                 device_requests: Union[List[DeviceRequest], None] = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -68,6 +69,9 @@ class DockerTaskManager(DockerBaseManager):
             Name of the docker volume
         alpine_image: str or None
             Name of alternative Alpine image to be used
+        device_requests: List or None
+            List of DeviceRequest objects to be passed to the algorithm
+            container
         """
         super().__init__(isolated_network_mgr)
         self.image = image
