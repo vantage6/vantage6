@@ -121,8 +121,6 @@ class DockerManager(DockerBaseManager):
         self.failed_tasks: list[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these regex
-        # TODO remove in v4+ as it is supersed by the 'policies' block
-        self._allowed_images = config.get("allowed_images")
         self._policies = config.get("policies", {})
 
         # node name is used to identify algorithm containers belonging
@@ -277,23 +275,11 @@ class DockerManager(DockerBaseManager):
                     " does not allow to start tasks.")
                 return False
 
-        # --------------------------------------------------------------------
-        # TODO in v4+, remove part below as it is superseded by the 'policies'
-        # block
-        # --------------------------------------------------------------------
-        # if no limits are declared
-        if not self._allowed_images:
+        # if no limits are declared, log warning
+        if not self._policies:
             self.log.warn("All docker images are allowed on this Node!")
-            return True
 
-        # check if it matches any of the regex cases
-        for regex_expr in self._allowed_images:
-            expr_ = re.compile(regex_expr)
-            if expr_.match(docker_image_name):
-                return True
-
-        # if not, it is considered an illegal image
-        return False
+        return True
 
     def is_running(self, run_id: int) -> bool:
         """

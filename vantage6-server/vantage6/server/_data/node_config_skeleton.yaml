@@ -9,7 +9,10 @@ application:
     private_key:
   databases:
     default:
-  allowed_images:
+  policies:
+    allowed_algorithms:
+    allowed_organizations:
+    allowed_users:
   docker_registries:
     - registry: harbor.vantage6.ai
       username: tester

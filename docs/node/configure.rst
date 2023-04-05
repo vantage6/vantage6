@@ -120,9 +120,9 @@ Once you approved the algorithm, it is important that you can verify
 that the approved algorithm is the algorithm that runs on your data.
 There are two important steps to be taken to accomplish this:
 
--  Set the (optional) ``allowed_images`` option in the
-   node-configuration file. You can specify a list of regex expressions here.
-   Some examples of what you could define:
+-  Set the (optional) ``allowed_algorithms`` option in the ``policies`` section
+   of the node-configuration file. You can specify a list of regex expressions
+   here. Some examples of what you could define:
 
    1. ``^harbor2.vantage6.ai/[a-zA-Z]+/[a-zA-Z]+``: allow all images
       from the vantage6 registry
