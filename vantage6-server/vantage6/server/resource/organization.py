@@ -14,14 +14,9 @@ from vantage6.server.permission import (
     PermissionManager
 )
 from vantage6.server.resource import (
-    with_user_or_node, only_for, with_user, ServicesResources
+    only_for, with_user, ServicesResources
 )
-from vantage6.server.resource.common._schema import (
-    OrganizationSchema,
-    CollaborationSchema,
-    NodeSchema
-)
-
+from vantage6.server.resource.common._schema import OrganizationSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -55,20 +50,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         path + '/<int:id>',
         endpoint='organization_with_id',
         methods=('GET', 'PATCH'),
-        resource_class_kwargs=services
-    )
-    api.add_resource(
-        OrganizationCollaboration,
-        path + '/<int:id>/collaboration',
-        endpoint='organization_collaboration',
-        methods=('GET',),
-        resource_class_kwargs=services
-    )
-    api.add_resource(
-        OrganizationNode,
-        path + '/<int:id>/node',
-        endpoint='organization_node',
-        methods=('GET',),
         resource_class_kwargs=services
     )
 
@@ -453,132 +434,4 @@ class Organization(OrganizationBase):
 
         organization.save()
         return org_schema.dump(organization, many=False).data, \
-            HTTPStatus.OK
-
-
-class OrganizationCollaboration(ServicesResources):
-    """Collaborations for a specific organization."""
-
-    col_schema = CollaborationSchema()
-
-    @only_for(("user", "node"))
-    def get(self, id):
-        """Get collaborations from organization
-        ---
-        description: >-
-          Returns a list of collaborations in which the organization is a
-          participant of.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Collaboration|Global|View|❌|❌|View all collaborations|\n
-          |Collaboration|Organization|View|✅|✅|View a list of collaborations
-          that the organization is a part of|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Organization id
-            required: true
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Organization not found
-          401:
-            description: Unauthorized
-
-        security:
-          - bearerAuth: []
-
-        tags: ["Organization"]
-        """
-        organization = db.Organization.get(id)
-        if not organization:
-            return {"msg": f"organization id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
-
-        if g.node:
-            auth_org_id = g.node.organization.id
-        else:  # g.user:
-            auth_org_id = g.user.organization.id
-
-        if not self.permissions.collaboration.v_glo.can():
-            if not (self.permissions.collaboration.v_org.can() and
-                    auth_org_id == id):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        return self.col_schema.dump(
-            organization.collaborations,
-            many=True
-        ).data, HTTPStatus.OK
-
-
-class OrganizationNode(ServicesResources):
-    """Resource for /api/organization/<int:id>/node."""
-
-    nod_schema = NodeSchema()
-
-    @with_user_or_node
-    def get(self, id):
-        """Return a list of nodes.
-        ---
-        description: >-
-          Returns a list of nodes which are from the organization.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Organization|Global|View|❌|❌|View any node|\n
-          |Organization|Organization|View|✅|✅|View a list of nodes that
-          belong to your organization|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Organization id
-            required: true
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Organization not found
-          401:
-            description: Unauthorized
-
-        security:
-          - bearerAuth: []
-
-        tags: ["Organization"]
-        """
-        organization = db.Organization.get(id)
-        if not organization:
-            return {"msg": f"organization id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
-
-        if g.user:
-            auth_org_id = g.user.organization.id
-        else:  # g.node
-            auth_org_id = g.node.organization.id
-
-        if not self.permissions.node.v_glo.can():
-            if not (self.permissions.node.v_org.can() and id == auth_org_id):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        return self.nod_schema.dump(organization.nodes, many=True).data, \
             HTTPStatus.OK
