@@ -163,17 +163,11 @@ object, and authenticating
    import config
 
    # Initialize the client object, and run the authentication
-   client = Client(config.server_url, config.server_port, config.server_api,
-                   verbose=True)
+   client = Client(config.server_url, config.server_port, config.server_api)
    client.authenticate(config.username, config.password)
 
    # Optional: setup the encryption, if you have an organization_key
    client.setup_encryption(config.organization_key)
-
-.. note::
-    Above, we have added ``verbose=True`` as additional argument when creating
-    the Client(…) object. This will print much more information that can be
-    used to debug the issue.
 
 .. _creating-organization:
 
