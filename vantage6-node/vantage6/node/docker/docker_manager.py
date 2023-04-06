@@ -206,7 +206,7 @@ class DockerManager(DockerBaseManager):
                                      'type': db_type}
         self.log.debug(f"Databases: {self.databases}")
 
-    def _set_algorithm_device_access(self, device_requests_config: Dict):
+    def _set_algorithm_device_requests(self, device_requests_config: Dict):
         """
         Configure device access for the algorithm container.
 

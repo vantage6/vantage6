@@ -43,7 +43,7 @@ class DockerTaskManager(DockerBaseManager):
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: Union[str, None] = None,
-                 device_requests: Union[List[DeviceRequest], None] = None):
+                 device_requests: Union[List, None] = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -439,7 +439,7 @@ class DockerTaskManager(DockerBaseManager):
                              "exist. Available databases are: "
                              f"{self.databases.keys()}. This is likely to "
                              "result in an algorithm crash.")
-            self.debug(f"User specified database: {database}")
+            self.log.debug(f"User specified database: {database}")
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
