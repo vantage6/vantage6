@@ -4,7 +4,6 @@ import logging
 import os
 import pickle
 import docker.errors
-from docker.types import DeviceRequest
 import json
 
 from typing import Dict, List, Union
