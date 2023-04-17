@@ -40,9 +40,7 @@ def dummy_data(node_name: str) -> Path:
     return dir_data
 
 
-def create_node_config_file(org_id: int,
-                            server_url: str,
-                            port: int) -> dict:
+def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
     """Create a node configuration file (YAML).
 
     Creates a node configuration for a simulated organization. Organization ID
@@ -62,11 +60,12 @@ def create_node_config_file(org_id: int,
     Returns
     -------
     dict
-        Dictionairy of organization_name, node_name and api_key to
+        Dictionairy of `organization_name`, `node_name` and `api_key` to
         be imported by `vserver import`.
     """
     template_location = jinja2.FileSystemLoader(searchpath="./")
-    template_env = jinja2.Environment(loader=template_location)
+    template_env = jinja2.Environment(loader=template_location,
+                                      trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template("node_config.j2")
 
     node_name = f"node_{org_id}"
@@ -137,7 +136,8 @@ def create_vserver_import_config(node_configs: list[dict],
         Path object where the server import configuration is stored.
     """
     template_location = jinja2.FileSystemLoader(searchpath="./")
-    template_env = jinja2.Environment(loader=template_location)
+    template_env = jinja2.Environment(loader=template_location,
+                                      trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template("server_import_config.j2")
     organizations = []
     collaboration = {'name': 'demo', 'participants': []}
@@ -174,9 +174,11 @@ def create_vserver_config(server_name: str, port: int) -> Path:
         Path object where server configuration is stored.
     """
     template_location = jinja2.FileSystemLoader(searchpath="./")
-    template_env = jinja2.Environment(loader=template_location)
+    template_env = jinja2.Environment(loader=template_location,
+                                      trim_blocks=True, lstrip_blocks=True)
     template = template_env.get_template("server_config.j2")
     server_config = template.render(data={'port': port})
+    server_config.lstrip("blocks")
 
     with open(f'{server_name}.yaml', 'w') as f:
         f.write(server_config)
@@ -220,7 +222,7 @@ def demo_collab(num_configs: int, server_url: str, server_port: str,
 server_name = "default_server"
 server_url = "http:/host.docker.internal"
 server_port = 5000
-create_vserver_import_config(generate_node_configs(num_configs=5,
+create_vserver_import_config(generate_node_configs(num_configs=1,
                                                    server_url=server_url,
                                                    port=server_port),
                              server_name=server_name)
