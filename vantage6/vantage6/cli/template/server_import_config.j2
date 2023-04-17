@@ -26,7 +26,7 @@ collaborations:
   {% if collaboration['participants'] %}
   {% for party in collaboration['participants'] %}
     - name: {{ party['name'] }}
-    api_key: {{ party['api_key'] }}
+      api_key: {{ party['api_key'] }}
   {% endfor %}
   {% endif %}
   tasks: ['hello-world']
