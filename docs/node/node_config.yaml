@@ -127,6 +127,19 @@ application:
             ip: 127.0.0.1
             port: 8000
 
+  # Whitelist URLs and/or IP addresses that the algorithm containers are
+  # allowed to reach using the http protocol.
+  whitelist:
+    domains:
+      - google.com
+      - github.com
+      - host.docker.internal # docker host ip (windows/mac)
+    ips:
+      - 172.17.0.1 # docker bridge ip (linux)
+      - 8.8.8.8
+    ports:
+      - 443
+
   # Settings for the logger
   logging:
     # Controls the logging output level. Could be one of the following
