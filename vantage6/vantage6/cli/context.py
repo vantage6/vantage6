@@ -372,11 +372,26 @@ class NodeContext(AppContext):
         Returns
         -------
         str
-            Docker voluem name
+            Docker volume name
         """
         return os.environ.get(
             'SSH_TUNNEL_VOLUME_NAME',
             f"{self.docker_container_name}-ssh-vol"
+        )
+
+    @property
+    def docker_squid_volume_name(self) -> str:
+        """
+        Docker volume in which the SSH configuration is stored.
+
+        Returns
+        -------
+        str
+            Docker volume name
+        """
+        return os.environ.get(
+            'SSH_SQUID_VOLUME_NAME',
+            f"{self.docker_container_name}-squid-vol"
         )
 
     @property

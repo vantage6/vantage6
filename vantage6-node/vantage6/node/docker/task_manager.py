@@ -19,6 +19,7 @@ from vantage6.common.task_status import TaskStatus
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.docker.squid import Squid
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
@@ -41,7 +42,7 @@ class DockerTaskManager(DockerBaseManager):
                  result_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: str | None = None):
+                 alpine_image: str | None = None, proxy: Squid | None = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -80,6 +81,7 @@ class DockerTaskManager(DockerBaseManager):
         self.node_name = node_name
         self.alpine_image = ALPINE_IMAGE if alpine_image is None \
             else alpine_image
+        self.proxy = proxy
 
         self.container = None
         self.status_code = None
@@ -406,7 +408,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.debug(os.environ)
             proxy_host = 'host.docker.internal'
 
-        # define enviroment variables for the docker-container, the
+        # define environment variables for the docker-container, the
         # host, port and api_path are from the local proxy server to
         # facilitate indirect communication with the central server
         # FIXME: we should only prepend data_folder if database_uri is a
@@ -421,6 +423,13 @@ class DockerTaskManager(DockerBaseManager):
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
+
+        # Add squid proxy environment variables
+        if self.proxy:
+            environment_variables["HTTP_PROXY"] = self.proxy.address
+            environment_variables["HTTPS_PROXY"] = self.proxy.address
+            environment_variables["NO_PROXY"] = \
+                f"localhost, http://{proxy_host}"
 
         if database in self.databases:
             environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
