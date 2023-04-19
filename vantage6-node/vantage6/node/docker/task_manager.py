@@ -5,6 +5,7 @@ import os
 import pickle
 import docker.errors
 import json
+import ipaddress
 
 from pathlib import Path
 
@@ -427,9 +428,23 @@ class DockerTaskManager(DockerBaseManager):
         # Add squid proxy environment variables
         if self.proxy:
             environment_variables["HTTP_PROXY"] = self.proxy.address
+            environment_variables["http_proxy"] = self.proxy.address
             environment_variables["HTTPS_PROXY"] = self.proxy.address
-            environment_variables["NO_PROXY"] = \
-                f"localhost, http://{proxy_host}"
+            environment_variables["https_proxy"] = self.proxy.address
+
+            no_proxy = []
+            if self.__vpn_manager:
+                # network = ipaddress.IPv4Network(
+                #     self.__vpn_manager.subnet,
+                #     strict=False
+                # )
+                # no_proxy = [str(ip) for ip in network.hosts()]
+                no_proxy.append(self.__vpn_manager.subnet)
+            no_proxy.append("localhost")
+            no_proxy.append(proxy_host)
+
+            environment_variables["NO_PROXY"] = ', '.join(no_proxy)
+            environment_variables["no_proxy"] = ', '.join(no_proxy)
 
         if database in self.databases:
             environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
