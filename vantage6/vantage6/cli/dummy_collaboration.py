@@ -1,12 +1,12 @@
 import pandas as pd
 import uuid
-import appdirs
 import click
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 from vantage6.common.globals import APPNAME
 from vantage6.cli.globals import PACKAGE_FOLDER
+from vantage6.common.context import AppContext
 
 
 def generate_apikey() -> str:
@@ -67,13 +67,17 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-        trim_blocks=True, lstrip_blocks=True)
+        trim_blocks=True, lstrip_blocks=True, autoescape=True)
 
     template = environment.get_template("node_config.j2")
 
     node_name = f"node_{org_id}"
     dir_data = dummy_data(node_name)
-    app_data_dir = Path(appdirs.AppDirs().user_data_dir)
+    app_data_dir = \
+        AppContext.instance_folders('node', node_name, False)['data']
+    path_to_data_dir = Path(app_data_dir)
+    path_to_data_dir.mkdir(parents=True, exist_ok=True)
+    full_path = str(path_to_data_dir.parent / f'demo_{node_name}.yaml')
     api_key = generate_apikey()
 
     node_config = template.render({
@@ -86,10 +90,10 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
         },
         "port": port,
         "server_url": server_url,
-        "task_dir": str(app_data_dir / node_name)
+        "task_dir": str(app_data_dir)
     })
 
-    with open(f'{node_name}.yaml', 'w') as f:
+    with open(full_path, 'x') as f:
         f.write(node_config)
 
     return {"org_id": org_id, "node_name": node_name, "api_key": api_key}
@@ -123,7 +127,8 @@ def generate_node_configs(num_configs: int, server_url: str,
 
 def create_vserver_import_config(node_configs: list[dict],
                                  server_name: str) -> Path:
-    """Creates vserver configuration file (YAML).
+    """Creates vserver configuration import file (YAML).
+    Utilized by the `vserverimport` command.
 
     Parameters
     ----------
@@ -140,7 +145,7 @@ def create_vserver_import_config(node_configs: list[dict],
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-        trim_blocks=True, lstrip_blocks=True)
+        trim_blocks=True, lstrip_blocks=True, autoescape=True)
     template = environment.get_template("server_import_config.j2")
     organizations = []
     collaboration = {'name': 'demo', 'participants': []}
@@ -155,14 +160,20 @@ def create_vserver_import_config(node_configs: list[dict],
                                               'api_key': config['api_key']})
     server_import_config = template.render(organizations=organizations,
                                            collaboration=collaboration)
-
-    with open(f'{server_name}_import.yaml', 'w') as f:
+    server_data_dir = \
+        AppContext.instance_folders(instance_type="server",
+                                    instance_name=server_name,
+                                    system_folders=False)['demo']
+    path_to_data_dir = Path(server_data_dir)
+    path_to_data_dir.mkdir(parents=True, exist_ok=True)
+    full_path = str(path_to_data_dir / f'{server_name}.yaml')
+    with open(full_path, 'x') as f:
         f.write(server_import_config)
-    return Path(f'{server_name}_import.yaml')
+    return Path(full_path)
 
 
 def create_vserver_config(server_name: str, port: int) -> Path:
-    """Creates vserver configuration yaml file
+    """Creates vserver configuration file (YAML).
 
     Parameters
     ----------
@@ -178,14 +189,20 @@ def create_vserver_config(server_name: str, port: int) -> Path:
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-        trim_blocks=True, lstrip_blocks=True)
+        trim_blocks=True, lstrip_blocks=True, autoescape=True)
     template = environment.get_template("server_config.j2")
     server_config = template.render(port=port)
-    server_config.lstrip("blocks")
-
-    with open(f'{server_name}.yaml', 'w') as f:
+    server_config_dir = \
+        AppContext.instance_folders(instance_type='server',
+                                    instance_name=server_name,
+                                    system_folders=True)['config']
+    path_to_server_config_dir = Path(server_config_dir / server_name)
+    path_to_server_config_dir.mkdir(parents=True, exist_ok=True)
+    full_path = \
+        str(path_to_server_config_dir.parent / f'{server_name}.yaml')
+    with open(full_path, 'x') as f:
         f.write(server_config)
-    return Path(f'{server_name}.yaml')
+    return Path(full_path)
 
 
 @click.command()
@@ -196,7 +213,7 @@ def create_vserver_config(server_name: str, port: int) -> Path:
 @click.option('--server-port', 'server_port', default=5000, help='server port')
 @click.option('--server-name', 'server_name', default='default_server',
               help='')
-def demo_collab(num_configs: int, server_url: str, server_port: str,
+def demo_collab(num_configs: int, server_url: str, server_port: int,
                 server_name: str) -> dict:
     """Click command to generate `num_configs` node configuration files as well
     as server configuration instance.
@@ -216,17 +233,7 @@ def demo_collab(num_configs: int, server_url: str, server_port: str,
                                          server_name)
     server_import_config = create_vserver_import_config(node_configs,
                                                         server_name)
-    server_config = create_vserver_config(server_name)
+    server_config = create_vserver_config(server_name, server_port)
     return {'node_configs': node_configs,
             'server_import_config': server_import_config,
             'server_config': server_config}
-
-
-server_name = "default_server"
-server_url = "http:/host.docker.internal"
-server_port = 5000
-create_vserver_import_config(generate_node_configs(num_configs=5,
-                                                   server_url=server_url,
-                                                   port=server_port),
-                             server_name=server_name)
-create_vserver_config(server_name, server_port)
