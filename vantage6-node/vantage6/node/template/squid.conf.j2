@@ -5,17 +5,18 @@ acl allowed_ports port {{ port }}
 
 # allowed domains
 {% for domain in domains %}
-acl whitelist dstdomain {{ domain }}
+acl whitelist_domain dstdomain {{ domain }}
 {% endfor %}
 
 # allowed ips
 {% for ip in ips %}
-acl whitelist dst {{ ip }}
+acl whitelist_ip dst {{ ip }}
 {% endfor %}
 
 http_access deny !allowed_ports
 http_access deny CONNECT !allowed_ports
-http_access allow whitelist
+http_access allow whitelist_domain
+http_access allow whitelist_ip
 http_access deny all
 
 # port of the squid proxy

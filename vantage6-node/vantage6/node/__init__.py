@@ -164,6 +164,7 @@ class Node(object):
             vpn_manager=self.vpn_manager,
             tasks_dir=self.__tasks_dir,
             client=self.server_io,
+            proxy=self.squid
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
@@ -591,7 +592,7 @@ class Node(object):
         """
 
         """
-        if 'squid' not in self.config:
+        if 'whitelist' not in self.config:
             self.log.info("No squid proxy configured")
             return
 
@@ -599,16 +600,16 @@ class Node(object):
             if 'images' in self.config else None
 
         self.log.info("Setting up squid proxy")
-        config = self.config['squid']
+        config = self.config['whitelist']
 
-        volume = self.ctx.docker_ssh_volume_name if self.ctx.running_in_docker\
-            else self.ctx.data_dir
+        volume = self.ctx.docker_squid_volume_name if \
+            self.ctx.running_in_docker else self.ctx.data_dir
 
         try:
             squid = Squid(isolated_network_mgr, config, self.ctx.name, volume,
                           custom_squid_image)
         except Exception as e:
-            self.log.error("Error setting up SSH tunnel")
+            self.log.error("Error setting up Squid proxy")
             self.log.debug(e, exc_info=True)
             squid = None
 

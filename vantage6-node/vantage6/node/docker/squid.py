@@ -19,7 +19,8 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     remove_container,
     running_in_docker,
-    remove_container_if_exists
+    remove_container_if_exists,
+    pull_if_newer
 )
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
@@ -92,6 +93,7 @@ class Squid(DockerBaseManager):
 
         # The image is overridable by the user configuration
         self.image = squid_image if squid_image else SQUID_IMAGE
+        pull_if_newer(self.docker, self.image)
         log.debug(f"Squid image: {self.image}")
 
         # Create the SSH configuration files
@@ -156,7 +158,7 @@ class Squid(DockerBaseManager):
             ),
             autoescape=True
         )
-        template = environment.get_template("squid_config.j2")
+        template = environment.get_template("squid.conf.j2")
 
         # inject template with vars
         squid_config = template.render(**config._asdict())
@@ -176,7 +178,7 @@ class Squid(DockerBaseManager):
 
         # Contains the (ssh) config and known_hosts file
         mounts = {
-            self.config_volume: {'bind': '/etc/squid/', 'mode': 'rw'},
+            self.config_volume: {'bind': '/etc/squid/conf.d/', 'mode': 'rw'},
         }
 
         # Start the SSH tunnel container. We can do this prior connecting it
@@ -190,6 +192,7 @@ class Squid(DockerBaseManager):
             volumes=mounts,
             detach=True,
             name=self.container_name,
+            restart_policy={"Name": "always"},
             auto_remove=False
         )
 
