@@ -91,6 +91,9 @@ class Squid(DockerBaseManager):
             # parent class should handle this
             raise KeyError(f"Invalid Squid configuration: {e}")
 
+        # Check if the whitelist is safe, if not, log a warning
+        self.check_safety_of_whitelist(self.squid_config)
+
         # The image is overridable by the user configuration
         self.image = squid_image if squid_image else SQUID_IMAGE
         pull_if_newer(self.docker, self.image)
@@ -106,8 +109,39 @@ class Squid(DockerBaseManager):
     def address(self) -> str:
         return f"http://{self.hostname}:{self.port}"
 
+    def check_safety_of_whitelist(self, whitelist: SquidConfig) -> bool:
+        """
+        Check if the whitelist is safe
+
+        Returns
+        -------
+        bool
+            True if the whitelist is safe, False otherwise
+        """
+        safe = True
+
+        has_domains = len(whitelist.domains) > 0
+        non_https_ports = len([p for p in whitelist.ports if p != 443]) > 0
+        if has_domains and non_https_ports:
+            log.warning("Whitelist contains domains and non-https ports!")
+            log.warning("This is not safe!")
+            log.debug(f"ports: {whitelist.ports}")
+            safe = False
+
+        # check that only internal IP addresses are whitelisted
+        safe_ips = ["10.", "192.168."]
+        safe_ips = safe_ips + ["172." + str(i) + "." for i in range(16, 32)]
+        for ip in whitelist.ips:
+            if not any(ip.startswith(safe_ip) for safe_ip in safe_ips):
+                log.warning("Whitelist contains non-internal IP addresses!")
+                log.warning("This is not safe!")
+                log.debug(f"Whitelisted IP: {ip}")
+                safe = False
+
+        return safe
+
     @staticmethod
-    def read_config(config: dict) -> tuple[SquidConfig]:
+    def read_config(config: dict) -> SquidConfig:
         """
         Read the Squid configuration from the config
 

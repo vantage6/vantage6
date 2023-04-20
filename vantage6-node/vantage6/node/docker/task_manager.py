@@ -5,7 +5,6 @@ import os
 import pickle
 import docker.errors
 import json
-import ipaddress
 
 from pathlib import Path
 
@@ -434,6 +433,10 @@ class DockerTaskManager(DockerBaseManager):
 
             no_proxy = []
             if self.__vpn_manager:
+                # This computes all ips in the vpn network, however the
+                # environment variable will be too long for the container
+                # to start. So we only add the net + mask. For some
+                # applications and libraries this is not sufficient
                 # network = ipaddress.IPv4Network(
                 #     self.__vpn_manager.subnet,
                 #     strict=False
