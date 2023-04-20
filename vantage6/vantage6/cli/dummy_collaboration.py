@@ -1,9 +1,16 @@
+"""
+The vdev module contains the CLI commands for generating dummy server and node
+instance(s). The following commands are available:
+
+    * vdev create-collaboration
+"""
 import pandas as pd
 import uuid
 import click
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
+from vantage6.common import info
 from vantage6.common.globals import APPNAME
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.common.context import AppContext
@@ -205,7 +212,13 @@ def create_vserver_config(server_name: str, port: int) -> Path:
     return Path(full_path)
 
 
-@click.command()
+@click.group(name="dev")
+def cli_dev() -> None:
+    """Subcommand `vdev`."""
+    pass
+
+
+@cli_dev.command(name="create-collaboration")
 @click.option('--num-configs', 'num_configs', type=int, default=3,
               help='generate N node-configuration files')
 @click.option('--server-url', 'server_url', type=str,
@@ -213,8 +226,8 @@ def create_vserver_config(server_name: str, port: int) -> Path:
 @click.option('--server-port', 'server_port', default=5000, help='server port')
 @click.option('--server-name', 'server_name', default='default_server',
               help='')
-def demo_collab(num_configs: int, server_url: str, server_port: int,
-                server_name: str) -> dict:
+def create_collaboration(num_configs: int, server_url: str,
+                         server_port: int, server_name: str) -> dict:
     """Click command to generate `num_configs` node configuration files as well
     as server configuration instance.
 
@@ -229,11 +242,14 @@ def demo_collab(num_configs: int, server_url: str, server_port: int,
         dictionairy with `num_configs` node configurations and single server
         configuration instance.
     """
-    node_configs = generate_node_configs(num_configs, server_url, server_port,
-                                         server_name)
+    node_configs = generate_node_configs(num_configs, server_url, server_port)
     server_import_config = create_vserver_import_config(node_configs,
                                                         server_name)
     server_config = create_vserver_config(server_name, server_port)
+
+    info(f"Created {num_configs} node configuration(s), attaching them to \
+         {server_name}.")
+
     return {'node_configs': node_configs,
             'server_import_config': server_import_config,
             'server_config': server_config}
