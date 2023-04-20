@@ -5,16 +5,14 @@ The following pages each describe one feature of the vantage6 node.
 
 
 ** Under construction **
-..
-    ..  toctree::
-..    :maxdepth: 1
-..    :caption: Contents:
 
-..    feature1
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
 
+   whitelisting
+   ssh_tunnel
 .. TODO
-.. Node
-.. ====
 .. Overview
 .. Core
 .. Containers
