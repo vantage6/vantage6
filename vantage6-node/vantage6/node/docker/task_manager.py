@@ -42,7 +42,8 @@ class DockerTaskManager(DockerBaseManager):
                  result_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: str | None = None, proxy: Squid | None = None):
+                 alpine_image: str | None = None, proxy: Squid | None = None,
+                 device_requests: list | None = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -68,6 +69,9 @@ class DockerTaskManager(DockerBaseManager):
             Name of the docker volume
         alpine_image: str | None
             Name of alternative Alpine image to be used
+        device_requests: list | None
+            List of DeviceRequest objects to be passed to the algorithm
+            container
         """
         super().__init__(isolated_network_mgr)
         self.image = image
@@ -102,6 +106,12 @@ class DockerTaskManager(DockerBaseManager):
 
         # keep track of the task status
         self.status: TaskStatus = TaskStatus.INITIALIZING
+
+        # set device requests
+        self.device_requests = []
+        if device_requests:
+            self.device_requests = device_requests
+
 
     def is_finished(self) -> bool:
         """
@@ -285,7 +295,8 @@ class DockerTaskManager(DockerBaseManager):
                 network='container:' + self.helper_container.id,
                 volumes=self.volumes,
                 name=container_name,
-                labels=self.labels
+                labels=self.labels,
+                device_requests=self.device_requests
             )
 
         except Exception as e:
@@ -458,7 +469,7 @@ class DockerTaskManager(DockerBaseManager):
                              "exist. Available databases are: "
                              f"{self.databases.keys()}. This is likely to "
                              "result in an algorithm crash.")
-            self.debug(f"User specified database: {database}")
+            self.log.debug(f"User specified database: {database}")
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
