@@ -91,12 +91,14 @@ class Squid(DockerBaseManager):
             # parent class should handle this
             raise KeyError(f"Invalid Squid configuration: {e}")
 
+        log.debug(f"Squid configuration: {self.squid_config}")
+
         # Check if the whitelist is safe, if not, log a warning
         self.check_safety_of_whitelist(self.squid_config)
 
         # The image is overridable by the user configuration
         self.image = squid_image if squid_image else SQUID_IMAGE
-        pull_if_newer(self.docker, self.image)
+        pull_if_newer(self.docker, self.image, log)
         log.debug(f"Squid image: {self.image}")
 
         # Create the SSH configuration files
