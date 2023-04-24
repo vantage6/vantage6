@@ -10,10 +10,11 @@ import click
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
-from vantage6.common import info
+from colorama import (Fore, Style)
 from vantage6.common.globals import APPNAME
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.common.context import AppContext
+from vantage6.common import info, warning, error
 
 
 def generate_apikey() -> str:
@@ -46,6 +47,8 @@ def dummy_data(node_name: str) -> Path:
                        'weapon': ['sai', 'bo staff']})
     dir_data = cwd / f"df_{node_name}.csv"
     df.to_csv(dir_data)
+    info(f"Spawned dataset for {Fore.GREEN}{node_name}, writing to \
+         {Fore.GREEN}{dir_data}")
     return dir_data
 
 
@@ -103,6 +106,8 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
     with open(full_path, 'x') as f:
         f.write(node_config)
 
+    info(f"Spawned node for organization {Fore.GREEN}{org_id}")
+
     return {"org_id": org_id, "node_name": node_name, "api_key": api_key}
 
 
@@ -117,7 +122,7 @@ def generate_node_configs(num_configs: int, server_url: str,
         create.
     server_url : str
         Specify server url, for instance localhost in which case revert to
-        default which is 'http:/host.docker.internal'
+        default which is 'http:/host.docker.internal'.
     port : int
         Port to access, default reverts to '5000'
 
@@ -161,6 +166,7 @@ def create_vserver_import_config(node_configs: list[dict],
         org_data = {'name': f"org_{org_id}"}
         if org_id == 0:
             org_data['make_admin'] = True
+            info(f"Organization {Fore.GREEN}{org_id} is the admin")
 
         organizations.append(org_data)
         collaboration['participants'].append({'name': f"org_{org_id}",
@@ -176,6 +182,8 @@ def create_vserver_import_config(node_configs: list[dict],
     full_path = str(path_to_data_dir / f'{server_name}.yaml')
     with open(full_path, 'x') as f:
         f.write(server_import_config)
+        info(f"Server import configuration ready, writing to \
+              {Fore.GREEN}{full_path}")
     return Path(full_path)
 
 
@@ -185,9 +193,9 @@ def create_vserver_config(server_name: str, port: int) -> Path:
     Parameters
     ----------
     server_name : str
-        Server name
+        Server name.
     port : int
-        Port to access, default reverts to '5000'
+        Port to access, default reverts to '5000'.
 
     Returns
     -------
@@ -209,6 +217,7 @@ def create_vserver_config(server_name: str, port: int) -> Path:
         str(path_to_server_config_dir.parent / f'{server_name}.yaml')
     with open(full_path, 'x') as f:
         f.write(server_config)
+        info(f"Server configuration read, writing to {Fore.GREEN}{full_path}")
     return Path(full_path)
 
 
@@ -218,7 +227,7 @@ def cli_dev() -> None:
     pass
 
 
-@cli_dev.command(name="create-collaboration")
+@cli_dev.command(name="create-demo-network")
 @click.option('--num-configs', 'num_configs', type=int, default=3,
               help='generate N node-configuration files')
 @click.option('--server-url', 'server_url', type=str,
@@ -226,8 +235,8 @@ def cli_dev() -> None:
 @click.option('--server-port', 'server_port', default=5000, help='server port')
 @click.option('--server-name', 'server_name', default='default_server',
               help='')
-def create_collaboration(num_configs: int, server_url: str,
-                         server_port: int, server_name: str) -> dict:
+def create_demo_network(num_configs: int, server_url: str,
+                        server_port: int, server_name: str) -> dict:
     """Click command to generate `num_configs` node configuration files as well
     as server configuration instance.
 
@@ -235,6 +244,13 @@ def create_collaboration(num_configs: int, server_url: str,
     ----------
     num_configs : int
         Number of node configuration files to generate.
+    server_url : str
+        Specify server url, for instance localhost in which case revert to
+        default which is 'http:/host.docker.internal'.
+    server_port : int
+        Port to access, default reverts to '5000'
+    server_name : str
+        Server name.
 
     Returns
     -------
@@ -242,14 +258,19 @@ def create_collaboration(num_configs: int, server_url: str,
         dictionairy with `num_configs` node configurations and single server
         configuration instance.
     """
-    node_configs = generate_node_configs(num_configs, server_url, server_port)
-    server_import_config = create_vserver_import_config(node_configs,
-                                                        server_name)
-    server_config = create_vserver_config(server_name, server_port)
-
-    info(f"Created {num_configs} node configuration(s), attaching them to \
-         {server_name}.")
-
+    try:
+        node_configs = generate_node_configs(num_configs, server_url,
+                                             server_port)
+        server_import_config = create_vserver_import_config(node_configs,
+                                                            server_name)
+        server_config = create_vserver_config(server_name, server_port)
+        info(f"Created {Fore.GREEN}{num_configs} node configuration(s), \
+             attaching them to {Fore.GREEN}{server_name}.")
+    except FileExistsError as e:
+        warning(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} \
+                already exists!")
+        error(e)
+        exit(1)
     return {'node_configs': node_configs,
             'server_import_config': server_import_config,
             'server_config': server_config}
