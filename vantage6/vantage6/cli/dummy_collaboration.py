@@ -7,10 +7,11 @@ instance(s). The following commands are available:
 import pandas as pd
 import uuid
 import click
+import questionary as q
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
-from colorama import (Fore, Style)
+from colorama import Fore, Style
 from vantage6.common.globals import APPNAME
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.common.context import AppContext
@@ -81,13 +82,13 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
 
     template = environment.get_template("node_config.j2")
 
-    node_name = f"node_{org_id}"
+    node_name = f"demo_node_{org_id}"
     dir_data = dummy_data(node_name)
     app_data_dir = \
         AppContext.instance_folders('node', node_name, False)['data']
     path_to_data_dir = Path(app_data_dir)
     path_to_data_dir.mkdir(parents=True, exist_ok=True)
-    full_path = str(path_to_data_dir.parent / f'demo_{node_name}.yaml')
+    full_path = str(path_to_data_dir.parent / f'{node_name}.yaml')
     api_key = generate_apikey()
 
     node_config = template.render({
@@ -111,15 +112,16 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
     return {"org_id": org_id, "node_name": node_name, "api_key": api_key}
 
 
-def generate_node_configs(num_configs: int, server_url: str,
+def generate_node_configs(num_configs: int | list[int], server_url: str,
                           port: int) -> list[dict]:
     """Generates `num_configs` node configuration files.
 
     Parameters
     ----------
-    num_configs : int
-        Scalar integer to determine how many configurations to
-        create.
+    num_configs : int | list[int]
+        If int, scalar integer to determine how many configurations to
+        create. Else it is a list of integers corresponding, length of which
+        matches how many nodes to spawn.
     server_url : str
         Specify server url, for instance localhost in which case revert to
         default which is 'http:/host.docker.internal'.
@@ -132,7 +134,14 @@ def generate_node_configs(num_configs: int, server_url: str,
         List of dictionairies containing node configurations.
     """
     configs = []
-    for i in range(num_configs):
+    if isinstance(num_configs, int):
+        rng = range(num_configs)
+    elif isinstance(num_configs, list):
+        rng = num_configs
+    else:
+        error('num_configs needs to be an integer corresponding to `N` \
+              configs to be spawned OR list of integers.')
+    for i in rng:
         configs.append(create_node_config_file(i, server_url, port))
     return configs
 
@@ -221,6 +230,36 @@ def create_vserver_config(server_name: str, port: int) -> Path:
     return Path(full_path)
 
 
+def demo_network(num_configs: int | list[int], server_url: str,
+                 server_port: int, server_name: str) -> list:
+    """Generates the demo network.
+
+    Parameters
+    ----------
+    num_configs : int | list[int]
+        If int, scalar integer to determine how many configurations to
+        create. Else it is a list of integers corresponding, length of which
+        matches how many nodes to spawn.
+    server_url : str
+        Specify server url, for instance localhost in which case revert to
+        default which is 'http:/host.docker.internal'.
+    server_port : int
+        Port to access, default reverts to '5000'
+    server_name : str
+        Server name.
+
+    Returns
+    -------
+    list
+        List containing node, server import and server configurations.
+    """
+    node_configs = generate_node_configs(num_configs, server_url, server_port)
+    server_import_config = create_vserver_import_config(node_configs,
+                                                        server_name)
+    server_config = create_vserver_config(server_name, server_port)
+    return [node_configs, server_import_config, server_config]
+
+
 @click.group(name="dev")
 def cli_dev() -> None:
     """Subcommand `vdev`."""
@@ -259,18 +298,35 @@ def create_demo_network(num_configs: int, server_url: str,
         configuration instance.
     """
     try:
-        node_configs = generate_node_configs(num_configs, server_url,
-                                             server_port)
-        server_import_config = create_vserver_import_config(node_configs,
-                                                            server_name)
-        server_config = create_vserver_config(server_name, server_port)
-        info(f"Created {Fore.GREEN}{num_configs} node configuration(s), \
+        demo = demo_network(num_configs, server_url, server_port, server_name)
+        info(f"Created {Fore.GREEN}{demo[0]} node configuration(s), \
              attaching them to {Fore.GREEN}{server_name}.")
     except FileExistsError as e:
         warning(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} \
                 already exists!")
-        error(e)
+        warning(' ... Configuration already exists:')
+        warning(f"     {e}")
+        new_server_name = q.text("Please supply a new unique server \
+                                  name:").ask()
+        if new_server_name.count(" ") > 0:
+            new_server_name = new_server_name.replace(" ", "-")
+            info(f"Replaced spaces from configuration name: {new_server_name}")
+        new_configs = []
+        for number in range(num_configs):
+            try:
+                num = q.text("Please supply a new unique node id:").ask()
+            except FileExistsError as e:
+                warning(' ... Configuration already exists:')
+                warning(f"     {e}")
+                exit(0)
+            new_configs.append(num)
+        num_configs = new_configs
+        demo = demo_network(num_configs, server_url, server_port,
+                            new_server_name)
+        info(f"Created {Fore.GREEN}{demo[0]} node configuration(s), \
+             attaching them to {Fore.GREEN}{server_name}.")
+    else:
         exit(1)
-    return {'node_configs': node_configs,
-            'server_import_config': server_import_config,
-            'server_config': server_config}
+    return {'node_configs': demo[0],
+            'server_import_config': demo[1],
+            'server_config': demo[2]}
