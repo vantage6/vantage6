@@ -70,7 +70,7 @@ configuration file.
 There are a few things to note about the SSH tunnel configuration:
 
 1. You can provide multiple SSH tunnels in the ``ssh-tunnels`` list, by simply
-   specifying more blocks of the same format.
+   extending the list.
 2. The hostname of each tunnel should come back in one of the databases, so
    that they may be accessible to the algorithms.
 3. The ``host`` is the address at which the remote server can be reached. This
