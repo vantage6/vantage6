@@ -1,6 +1,15 @@
 Release notes
 =============
 
+3.8.3
+-----
+*25 april 2023*
+
+- **Bugfix**
+
+ - Fixed bug where a missing container lead to a complete node crash
+   (`PR#628  <https://github.com/vantage6/vantage6/pull/628>`_).
+
 3.8.2
 -----
 
