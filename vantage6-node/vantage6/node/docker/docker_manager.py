@@ -152,8 +152,13 @@ class DockerManager(DockerBaseManager):
         # keep track of linked docker services
         self.linked_services: list[str] = []
 
+        # set algorithm device requests
+        self.algorithm_device_requests = []
+        if config.get('algorithm_device_requests', False):
+            self._set_algorithm_device_requests(config['algorithm_device_requests'])
+
     def _set_database(self, databases: dict | list) -> None:
-        """"
+        """
         Set database location and whether or not it is a file
 
         Parameters
@@ -204,6 +209,21 @@ class DockerManager(DockerBaseManager):
             self.databases[label] = {'uri': uri, 'is_file': db_is_file,
                                      'type': db_type}
         self.log.debug(f"Databases: {self.databases}")
+
+    def _set_algorithm_device_requests(self, device_requests_config: dict) -> None:
+        """
+        Configure device access for the algorithm container.
+
+        Parameters
+        ----------
+        device_requests_config: dict
+           A dictionary containing configuration options for device access. Supported keys:
+           - 'gpu': A boolean value indicating whether GPU access is required.
+        """
+        device_requests = []
+        if device_requests_config.get('gpu', False):
+            device_requests.append(docker.types.DeviceRequest(count=-1, capabilities=[['gpu']]))
+        self.algorithm_device_requests = device_requests
 
     def create_volume(self, volume_name: str) -> None:
         """
@@ -421,6 +441,7 @@ class DockerManager(DockerBaseManager):
             docker_volume_name=self.data_volume_name,
             alpine_image=self.alpine_image,
             proxy=self.proxy
+            device_requests=self.algorithm_device_requests
         )
         database = database if (database and len(database)) else 'default'
 
