@@ -16,3 +16,10 @@ class PermanentAlgorithmStartFail(Exception):
        again.
     """
     pass
+
+
+class AlgorithmContainerNotFound(Exception):
+    """Algorithm container was lost. Potentially running it again would
+       resolve the issue.
+    """
+    pass
