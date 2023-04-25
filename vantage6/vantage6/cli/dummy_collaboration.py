@@ -313,15 +313,13 @@ def create_demo_network(num_configs: int, server_url: str,
             info(f"Replaced spaces from configuration name: {new_server_name}")
         new_configs = []
         for number in range(num_configs):
-            try:
-                num = q.text("Please supply a new unique node id:").ask()
-            except FileExistsError as e:
-                warning(' ... Configuration already exists:')
-                warning(f"     {e}")
-                exit(0)
-            new_configs.append(num)
-        num_configs = new_configs
-        demo = demo_network(num_configs, server_url, server_port,
+            num = q.text("Please supply a new unique node id:").ask()
+            if num == number:
+                num = q.text(f"The node id: {num} already exists, please \
+                             supply another:").ask()
+            else:
+                new_configs.append(num)
+        demo = demo_network(new_configs, server_url, server_port,
                             new_server_name)
         info(f"Created {Fore.GREEN}{demo[0]} node configuration(s), \
              attaching them to {Fore.GREEN}{server_name}.")
