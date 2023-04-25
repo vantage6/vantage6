@@ -22,7 +22,8 @@ from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
-    PermanentAlgorithmStartFail
+    PermanentAlgorithmStartFail,
+    AlgorithmContainerNotFound
 )
 
 
@@ -117,7 +118,8 @@ class DockerTaskManager(DockerBaseManager):
             self.log.debug(f"- task id: {self.task_id}")
             self.log.debug(f"- result id: {self.task_id}")
             self.status = TaskStatus.UNKNOWN_ERROR
-            return True
+            raise AlgorithmContainerNotFound
+
         return self.container.status == 'exited'
 
     def report_status(self) -> str:
