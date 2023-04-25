@@ -110,7 +110,14 @@ class DockerTaskManager(DockerBaseManager):
         bool:
             True if algorithm container is finished
         """
-        self.container.reload()
+        try:
+            self.container.reload()
+        except docker.errors.NotFound:
+            self.log.error("Container not found")
+            self.log.debug(f"- task id: {self.task_id}")
+            self.log.debug(f"- result id: {self.task_id}")
+            self.status = TaskStatus.UNKNOWN_ERROR
+            return True
         return self.container.status == 'exited'
 
     def report_status(self) -> str:
