@@ -35,7 +35,7 @@ setup(
     install_requires=[
         'bcrypt==4.0.1',
         'flasgger==0.9.5',
-        'Flask==2.1.1',
+        'Flask==2.3.2',
         'Flask-Cors==3.0.10',
         'Flask-JWT-Extended==4.4.4',
         'Flask-Mail==0.9.1',
