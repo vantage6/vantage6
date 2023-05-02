@@ -11,6 +11,8 @@ Release notes
    (`PR#628  <https://github.com/vantage6/vantage6/pull/628>`_,
     `PR#629 <https://github.com/vantage6/vantage6/pull/629>`_,
     `PR#632 <https://github.com/vantage6/vantage6/pull/632>`_).
+ - Restored algorithm wrapper namespace for backward compatibility8 (
+   `PR#618 <https://github.com/vantage6/vantage6/pull/618>`_)
 
 3.8.2
 -----
