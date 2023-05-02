@@ -473,14 +473,13 @@ class DockerManager(DockerBaseManager):
                     if task.is_finished():
                         finished_tasks.append(task)
                         self.active_tasks.remove(task)
+                        break
                 except AlgorithmContainerNotFound:
                     self.log.exception(f'Failed to find container for '
                                        f'result {task.result_id}')
                     self.failed_tasks.append(task)
                     self.active_tasks.remove(task)
-
-                # when we found the first task we start processing it
-                break
+                    break
 
             # sleep for a second before checking again
             time.sleep(1)
