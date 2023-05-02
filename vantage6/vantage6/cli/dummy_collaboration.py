@@ -66,7 +66,7 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
         Organization ID.
     server_url : str
         Specify server url, for instance localhost in which case revert to
-        default which is 'http:/host.docker.internal'
+        default which is 'http://host.docker.internal'
     port : int
         Port to access, default reverts to '5000'
 
@@ -124,7 +124,7 @@ def generate_node_configs(num_configs: int | list[int], server_url: str,
         matches how many nodes to spawn.
     server_url : str
         Specify server url, for instance localhost in which case revert to
-        default which is 'http:/host.docker.internal'.
+        default which is 'http://host.docker.internal'.
     port : int
         Port to access, default reverts to '5000'
 
@@ -242,7 +242,7 @@ def demo_network(num_configs: int | list[int], server_url: str,
         matches how many nodes to spawn.
     server_url : str
         Specify server url, for instance localhost in which case revert to
-        default which is 'http:/host.docker.internal'.
+        default which is 'http://host.docker.internal'.
     server_port : int
         Port to access, default reverts to '5000'
     server_name : str
@@ -266,11 +266,13 @@ def cli_dev() -> None:
     pass
 
 
+# TODO: import automatically, automatically run vserver-import, not through cli
+# command rather through a python function...
 @cli_dev.command(name="create-demo-network")
 @click.option('--num-configs', 'num_configs', type=int, default=3,
               help='generate N node-configuration files')
 @click.option('--server-url', 'server_url', type=str,
-              default='http:/host.docker.internal', help='server url')
+              default='http://host.docker.internal', help='server url')
 @click.option('--server-port', 'server_port', default=5000, help='server port')
 @click.option('--server-name', 'server_name', default='default_server',
               help='')
@@ -285,7 +287,7 @@ def create_demo_network(num_configs: int, server_url: str,
         Number of node configuration files to generate.
     server_url : str
         Specify server url, for instance localhost in which case revert to
-        default which is 'http:/host.docker.internal'.
+        default which is 'http://host.docker.internal'.
     server_port : int
         Port to access, default reverts to '5000'
     server_name : str
@@ -311,14 +313,7 @@ def create_demo_network(num_configs: int, server_url: str,
         if new_server_name.count(" ") > 0:
             new_server_name = new_server_name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {new_server_name}")
-        new_configs = []
-        for number in range(num_configs):
-            num = q.text("Please supply a new unique node id:").ask()
-            if num == number:
-                num = q.text(f"The node id: {num} already exists, please \
-                             supply another:").ask()
-            else:
-                new_configs.append(num)
+        new_configs = [f"{new_server_name}_{id}" for id in range(num_configs)]
         demo = demo_network(new_configs, server_url, server_port,
                             new_server_name)
         info(f"Created {Fore.GREEN}{demo[0]} node configuration(s), \
@@ -328,3 +323,5 @@ def create_demo_network(num_configs: int, server_url: str,
     return {'node_configs': demo[0],
             'server_import_config': demo[1],
             'server_config': demo[2]}
+
+# TODO: start demo network click command
