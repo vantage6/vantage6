@@ -275,9 +275,6 @@ def proxy_task():
 
     return response.json(), HTTPStatus.OK
 
-# TODO test whether this function is accessed from the algorithm client's
-# result.get() function. It may not be because now we call a different path
-# on the server, that includes the ID as parameter instead of part of the URL.
 @app.route('/result?task_id=<int:id_>', methods=["GET"])
 def proxy_result(id_: int) -> Response:
     """
