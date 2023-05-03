@@ -195,7 +195,14 @@ class Nodes(NodeBase):
         auth_org_id = self.obtain_organization_id()
         args = request.args
 
-        for param in ['organization_id', 'collaboration_id', 'status', 'ip']:
+        if 'organization_id' in args:
+            if not self.r.v_glo.can() and \
+                    args['organization_id'] != str(auth_org_id):
+                return {'msg': "You are not allowed to view nodes of other "
+                        "organizations"}, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Node.organization_id == args['organization_id'])
+
+        for param in ['status', 'ip']:
             if param in args:
                 q = q.filter(getattr(db.Node, param) == args[param])
         if 'name' in args:

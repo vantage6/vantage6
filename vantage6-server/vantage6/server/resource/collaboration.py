@@ -124,7 +124,7 @@ class CollaborationBase(ServicesResources):
 
 class Collaborations(CollaborationBase):
 
-    @with_user
+    @only_for(['user', 'node'])
     def get(self):
         """Returns a list of collaborations
         ---
