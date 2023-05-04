@@ -112,7 +112,6 @@ class DockerTaskManager(DockerBaseManager):
         if device_requests:
             self.device_requests = device_requests
 
-
     def is_finished(self) -> bool:
         """
         Checks if algorithm container is finished
