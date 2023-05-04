@@ -16,6 +16,9 @@ different protocol, please look at `SSH Tunnel`.
     sure you understand the implications of whitelisting before enabling this
     feature.
 
+    Be aware that when a port is whitelisted it is whitelisted for all domains
+    and ips.
+
 Setting up whitelisting
 +++++++++++++++++++++++
 

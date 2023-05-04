@@ -590,7 +590,32 @@ class Node(object):
     def setup_squid_proxy(self, isolated_network_mgr: NetworkManager) \
             -> Squid:
         """
+        Initiates a Squid proxy if configured in the config.yml
 
+        Expects the configuration in the following format:
+
+        ```yaml
+        whitelist:
+            domains:
+                - domain1
+                - domain2
+            ips:
+                - ip1
+                - ip2
+            ports:
+                - port1
+                - port2
+        ```
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Network manager for isolated network
+
+        Returns
+        -------
+        Squid
+            Squid proxy instance
         """
         if 'whitelist' not in self.config:
             self.log.info("No squid proxy configured")
@@ -609,7 +634,8 @@ class Node(object):
             squid = Squid(isolated_network_mgr, config, self.ctx.name, volume,
                           custom_squid_image)
         except Exception as e:
-            self.log.error("Error setting up Squid proxy")
+            self.log.critical("Squid proxy failed to initialize. "
+                              "Continuing without.")
             self.log.debug(e, exc_info=True)
             squid = None
 

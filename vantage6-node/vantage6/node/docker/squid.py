@@ -1,11 +1,10 @@
 """
-This module contains the SSH tunnel class. It is responsible for creating
-an SSH configuration file and starting an SSH tunnel container.
+This module contains the Squid class. It is responsible for creating
+an Squid forward proxy container.
 
-The SSH tunnel container is used to create a secure connection between the
-private network of the node and an external data source. This can then be used
-by the algorithm containers to access the data source. Multiple SSH tunnels
-can be created, each with a different configuration.
+The Squid container is used to whitelist ips, domains and ports for the
+algorithm container. This can then be used by the algorithm containers to
+access the data sources or other services.
 """
 import logging
 import os
@@ -80,6 +79,8 @@ class Squid(DockerBaseManager):
 
         # hostname of the squid which can be used by the algorithm containers
         self.hostname = 'squid'
+        # This is the default port of the squid container, which is exposed
+        # to the algorithm containers.
         self.port = 3128
         log.debug(f"Squid hostname: {self.hostname}, port: {self.port}")
 
@@ -109,11 +110,24 @@ class Squid(DockerBaseManager):
 
     @property
     def address(self) -> str:
+        """
+        Address of the Squid container
+
+        Returns
+        -------
+        str
+            Address of the Squid container
+        """
+
         return f"http://{self.hostname}:{self.port}"
 
     def check_safety_of_whitelist(self, whitelist: SquidConfig) -> bool:
         """
-        Check if the whitelist is safe
+        Check if the whitelist is safe.
+
+        The whitelist not considered safe if it contains domains and non-https
+        ports. Also, the whitelist is not considered safe if it contains
+        non-internal IP addresses.
 
         Returns
         -------
@@ -130,7 +144,10 @@ class Squid(DockerBaseManager):
             log.debug(f"ports: {whitelist.ports}")
             safe = False
 
-        # check that only internal IP addresses are whitelisted
+        # check that only internal IP addresses are whitelisted. Internal
+        # refers to the dedicated ip ranges for internal networks. Note that
+        # the VPN traffic is not routed through the proxy, as it is set in the
+        # NO_PROXY environment variable inside the algorithm container.
         safe_ips = ["10.", "192.168."]
         safe_ips = safe_ips + ["172." + str(i) + "." for i in range(16, 32)]
         for ip in whitelist.ips:

@@ -437,6 +437,10 @@ class DockerTaskManager(DockerBaseManager):
 
         # Add squid proxy environment variables
         if self.proxy:
+            # applications/libraries in the algorithm container need to adhere
+            # to the proxy settings. Because we are not sure which application
+            # is used for the request we both set HTTP_PROXY and http_proxy and
+            # HTTPS_PROXY and https_proxy for the secure connection.
             environment_variables["HTTP_PROXY"] = self.proxy.address
             environment_variables["http_proxy"] = self.proxy.address
             environment_variables["HTTPS_PROXY"] = self.proxy.address
@@ -444,19 +448,15 @@ class DockerTaskManager(DockerBaseManager):
 
             no_proxy = []
             if self.__vpn_manager:
-                # This computes all ips in the vpn network, however the
-                # environment variable will be too long for the container
-                # to start. So we only add the net + mask. For some
-                # applications and libraries this is not sufficient
-                # network = ipaddress.IPv4Network(
-                #     self.__vpn_manager.subnet,
-                #     strict=False
-                # )
-                # no_proxy = [str(ip) for ip in network.hosts()]
+                # Computing all ips in the vpn network is not feasible as the
+                # no_proxy environment variable will be too long for the
+                # container to start. So we only add the net + mask. For some
+                # applications and libraries this is format is ignored.
                 no_proxy.append(self.__vpn_manager.subnet)
             no_proxy.append("localhost")
             no_proxy.append(proxy_host)
 
+            # Add the NO_PROXY and no_proxy environment variable.
             environment_variables["NO_PROXY"] = ', '.join(no_proxy)
             environment_variables["no_proxy"] = ', '.join(no_proxy)
 
