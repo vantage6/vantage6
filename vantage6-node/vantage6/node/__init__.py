@@ -246,10 +246,17 @@ class Node(object):
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        tasks = self.server_io.get_results(state="open", include_task=True)
-        self.log.debug(tasks)
-        for task in tasks:
-            self.queue.put(task)
+        task_results = self.server_io.get_results(state="open",
+                                                  include_task=True)
+        self.log.debug(task_results)
+        for task_result in task_results:
+            if not self.__docker.is_running(task_result['id']):
+                self.queue.put(task_result)
+            else:
+                self.log.info(
+                    f"Not starting task {task_result['task']['id']} - "
+                    f"{task_result['task']['name']} as it is already running"
+                )
 
         self.log.info(f"received {self.queue._qsize()} tasks")
 
@@ -308,7 +315,12 @@ class Node(object):
         self.server_io.patch_results(
             id=taskresult['id'], result=update
         )
+
         # send socket event to alert everyone of task status change
+        # TODO wait for socket (re)connect? This function is called very
+        # quickly after socket re-connection is established, which could yield:
+        # socketio.exceptions.BadNamespaceError: /tasks is not a connected
+        # namespace.
         self.socketIO.emit(
             'algorithm_status_change',
             data={
@@ -828,8 +840,11 @@ class Node(object):
         task_id : int
             Task identifier
         """
+        # FIXME BvB 2023-05-04: this method is very similar to
+        # sync_task_queue_with_server, refactor!
+
         # fetch (open) result for the node with the task_id
-        tasks = self.server_io.get_results(
+        task_results = self.server_io.get_results(
             include_task=True,
             state='open',
             task_id=task_id
@@ -837,8 +852,14 @@ class Node(object):
 
         # in the current setup, only a single result for a single node
         # in a task exists.
-        for task in tasks:
-            self.queue.put(task)
+        for task_result in task_results:
+            if not self.__docker.is_running(task_result['id']):
+                self.queue.put(task_result)
+            else:
+                self.log.info(
+                    f"Not starting task {task_result['task']['id']} - "
+                    f"{task_result['task']['name']} as it is already running"
+                )
 
     def run_forever(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
@@ -851,7 +872,7 @@ class Node(object):
 
                 while not kill_listener.kill_now:
                     try:
-                        task = self.queue.get(timeout=1)
+                        taskresult = self.queue.get(timeout=1)
                         # if no item is returned, the Empty exception is
                         # triggered, thus break statement is not reached
                         break
@@ -867,7 +888,7 @@ class Node(object):
 
                 # if task comes available, attempt to execute it
                 try:
-                    self.__start_task(task)
+                    self.__start_task(taskresult)
                 except Exception as e:
                     self.log.exception(e)
 
