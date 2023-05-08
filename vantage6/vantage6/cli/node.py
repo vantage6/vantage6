@@ -369,6 +369,7 @@ def cli_node_start(name: str, config: str, environment: str,
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
     ssh_volume = docker_client.volumes.create(ctx.docker_ssh_volume_name)
+    squid_volume = docker_client.volumes.create(ctx.docker_squid_volume_name)
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
@@ -378,6 +379,7 @@ def cli_node_start(name: str, config: str, environment: str,
         ("/mnt/data", data_volume.name),
         ("/mnt/vpn", vpn_volume.name),
         ("/mnt/ssh", ssh_volume.name),
+        ("/mnt/squid", squid_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]

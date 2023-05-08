@@ -27,6 +27,7 @@ from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
+from vantage6.node.docker.squid import Squid
 from vantage6.node.server_io import NodeClient
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
@@ -86,8 +87,9 @@ class DockerManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, ctx: DockerNodeContext | NodeContext,
-                 isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
-                 tasks_dir: Path, client: NodeClient) -> None:
+                 isolated_network_mgr: NetworkManager,
+                 vpn_manager: VPNManager, tasks_dir: Path, client: NodeClient,
+                 proxy: Squid | None = None) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -103,6 +105,8 @@ class DockerManager(DockerBaseManager):
                 Directory in which this task's data are stored
             client: NodeClient
                 Client object to communicate with the server
+            proxy: Squid | None
+                Squid proxy object
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)
@@ -114,6 +118,7 @@ class DockerManager(DockerBaseManager):
         self.client = client
         self.__tasks_dir = tasks_dir
         self.alpine_image = config.get('alpine')
+        self.proxy = proxy
 
         # keep track of the running containers
         self.active_tasks: list[DockerTaskManager] = []
@@ -149,8 +154,10 @@ class DockerManager(DockerBaseManager):
 
         # set algorithm device requests
         self.algorithm_device_requests = []
-        if config.get('algorithm_device_requests', False):
-            self._set_algorithm_device_requests(config['algorithm_device_requests'])
+        if 'algorithm_device_requests' in config:
+            self._set_algorithm_device_requests(
+                config['algorithm_device_requests']
+            )
 
     def _set_database(self, databases: dict | list) -> None:
         """
@@ -205,19 +212,23 @@ class DockerManager(DockerBaseManager):
                                      'type': db_type}
         self.log.debug(f"Databases: {self.databases}")
 
-    def _set_algorithm_device_requests(self, device_requests_config: dict) -> None:
+    def _set_algorithm_device_requests(self, device_requests_config: dict) \
+            -> None:
         """
         Configure device access for the algorithm container.
 
         Parameters
         ----------
         device_requests_config: dict
-           A dictionary containing configuration options for device access. Supported keys:
+           A dictionary containing configuration options for device access.
+           Supported keys:
            - 'gpu': A boolean value indicating whether GPU access is required.
         """
         device_requests = []
         if device_requests_config.get('gpu', False):
-            device_requests.append(docker.types.DeviceRequest(count=-1, capabilities=[['gpu']]))
+            device = docker.types.DeviceRequest(count=-1,
+                                                capabilities=[['gpu']])
+            device_requests.append(device)
         self.algorithm_device_requests = device_requests
 
     def create_volume(self, volume_name: str) -> None:
@@ -435,6 +446,7 @@ class DockerManager(DockerBaseManager):
             databases=self.databases,
             docker_volume_name=self.data_volume_name,
             alpine_image=self.alpine_image,
+            proxy=self.proxy,
             device_requests=self.algorithm_device_requests
         )
         database = database if (database and len(database)) else 'default'

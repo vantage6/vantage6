@@ -2,6 +2,9 @@
 This module contains a proxy server implementation that the node uses to
 communicate with the server. It contains general methods for any routes, and
 methods to handle tasks and results, including their encryption and decryption.
+
+(!) Not to be confused with the squid proxy that allows algorithm containers
+to access other places in the network.
 """
 import requests
 import logging
