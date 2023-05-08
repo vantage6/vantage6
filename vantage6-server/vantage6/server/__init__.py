@@ -79,6 +79,10 @@ class ServerApp:
         """Create a vantage6-server application."""
 
         self.ctx = ctx
+        self.debug = self.ctx.config.get("debug", {})
+        # make specific log settings (muting etc)
+        self.configure_logging()
+        self.debug_loggers()
 
         # initialize, configure Flask
         self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
@@ -114,9 +118,6 @@ class ServerApp:
         self.configure_api()
         self.load_resources()
 
-        # make specific log settings (muting etc)
-        self.configure_logging()
-
         # set the server version
         self.__version__ = __version__
 
@@ -126,6 +127,22 @@ class ServerApp:
         t.start()
 
         log.info("Initialization done")
+
+    def debug_loggers(self) -> None:
+
+        # mute by default
+        default_muted = ["urllib3", "socketIO-client", "engineio.server",
+                         "socketio.server", "sqlalchemy.engine",
+                         "requests_oauthlib.oauth2_session"]
+        for logger in default_muted:
+            logging.getLogger(logger).setLevel(logging.WARNING)
+
+        # unmute specific loggers, defined in the config file
+        loggers = self.debug.get("loggers", [])
+        for logger in loggers:
+            self.log.debug(f"Setting logger {logger} to DEBUG")
+            logger = logging.getLogger(logger)
+            logger.setLevel(logging.DEBUG)
 
     def setup_socket_connection(self):
 
@@ -159,19 +176,6 @@ class ServerApp:
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
-
-    @staticmethod
-    def configure_logging():
-        """Set third party loggers to a warning level"""
-
-        # Prevent logging from urllib3
-        logging.getLogger("urllib3").setLevel(logging.WARNING)
-        logging.getLogger("socketIO-client").setLevel(logging.WARNING)
-        logging.getLogger("engineio.server").setLevel(logging.WARNING)
-        logging.getLogger("socketio.server").setLevel(logging.WARNING)
-        logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
-        logging.getLogger('requests_oauthlib.oauth2_session')\
-            .setLevel(logging.WARNING)
 
     def configure_flask(self):
         """Configure the Flask settings of the vantage6 server."""
