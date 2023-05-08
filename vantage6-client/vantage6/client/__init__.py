@@ -4,6 +4,8 @@ vantage6 clients
 This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
+from __future__ import annotations
+
 import logging
 import pickle
 import time
@@ -19,7 +21,6 @@ import traceback
 from pathlib import Path
 
 from vantage6.common.exceptions import AuthenticationException
-from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common import WhoAmI
@@ -602,11 +603,11 @@ class ClientBase(object):
 
         Parameters
         ----------
-        parent : UserClient
+        parent : UserClient | AlgorithmClient
             The parent client
         """
         def __init__(self, parent) -> None:
-            self.parent: UserClient = parent
+            self.parent = parent
 
 
 class UserClient(ClientBase):
