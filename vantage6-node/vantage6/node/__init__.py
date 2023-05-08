@@ -353,11 +353,18 @@ class Node(object):
             id=taskresult['id'], result=update
         )
 
+        # ensure that the /tasks namespace is connected. This may take a while
+        # (usually < 5s) when the socket just (re)connected
+        MAX_ATTEMPTS = 30
+        retries = 0
+        while '/tasks' not in self.socketIO.namespaces and \
+                retries < MAX_ATTEMPTS:
+            retries += 1
+            time.sleep(1)
+        # in case the namespace is still not connected, the socket notification
+        # will not be sent to other nodes, but the task will still be processed
+
         # send socket event to alert everyone of task status change
-        # TODO wait for socket (re)connect? This function is called very
-        # quickly after socket re-connection is established, which could yield:
-        # socketio.exceptions.BadNamespaceError: /tasks is not a connected
-        # namespace.
         self.socketIO.emit(
             'algorithm_status_change',
             data={
