@@ -5,8 +5,6 @@ from pathlib import Path
 #
 STRING_ENCODING = "utf-8"
 
-DEFAULT_ENVIRONMENT = "application"
-
 APPNAME = "vantage6"
 
 MAIN_VERSION_NAME = "petronas"

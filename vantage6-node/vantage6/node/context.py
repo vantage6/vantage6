@@ -63,8 +63,7 @@ class TestContext(AppContext):
     @classmethod
     def from_external_config_file(cls, path):
         return super().from_external_config_file(
-            cls.test_config_location(),
-            "unittest", "application", True
+            cls.test_config_location(), "unittest", True
         )
 
     @staticmethod

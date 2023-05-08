@@ -6,9 +6,6 @@ from vantage6.common.globals import APPNAME
 #
 DEFAULT_NODE_SYSTEM_FOLDERS = False
 
-DEFAULT_NODE_ENVIRONMENT = "application"
-
-
 #
 #   INSTALLATION SETTINGS
 #

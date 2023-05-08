@@ -28,8 +28,7 @@ from vantage6.common.globals import (
 )
 from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
-from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
-                                  DEFAULT_SERVER_SYSTEM_FOLDERS)
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.context import ServerContext
 from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
@@ -59,15 +58,12 @@ def click_insert_context(func: callable) -> callable:
                   help="name of the configuration you want to use.")
     @click.option('-c', '--config', default=None,
                   help='absolute path to configuration-file; overrides NAME')
-    @click.option('-e', '--environment',
-                  default=DEFAULT_SERVER_ENVIRONMENT,
-                  help='configuration environment to use')
     @click.option('--system', 'system_folders', flag_value=True)
     @click.option('--user', 'system_folders', flag_value=False,
                   default=DEFAULT_SERVER_SYSTEM_FOLDERS)
     @wraps(func)
-    def func_with_context(name: str, config: str, environment: str,
-                          system_folders: bool, *args, **kwargs) -> callable:
+    def func_with_context(name: str, config: str, system_folders: bool, *args,
+                          **kwargs) -> callable:
         """
         Decorator function that adds the context to the function.
 
@@ -77,8 +73,6 @@ def click_insert_context(func: callable) -> callable:
             name of the configuration you want to use.
         config : str
             path to configuration file, overrides name
-        environment : str
-            DTAP environment to use
         system_folders : bool
             Wether to use system folders or not
 
@@ -91,7 +85,6 @@ def click_insert_context(func: callable) -> callable:
         if config:
             ctx = ServerContext.from_external_config_file(
                 config,
-                environment,
                 system_folders
             )
             return func(ctx, *args, **kwargs)
@@ -100,14 +93,14 @@ def click_insert_context(func: callable) -> callable:
         if not name:
             try:
                 # select configuration if none supplied
-                name, environment = select_configuration_questionaire(
+                name = select_configuration_questionaire(
                     "server", system_folders
                 )
             except Exception:
                 error("No configurations could be found!")
                 exit(1)
 
-        ctx = get_server_context(name, environment, system_folders)
+        ctx = get_server_context(name, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context
@@ -318,7 +311,6 @@ def cli_server_configuration_list() -> None:
 
     header = \
         "\nName"+(21*" ") + \
-        "Environments"+(20*" ") + \
         "Status"+(10*" ") + \
         "System/User"
 
@@ -329,26 +321,22 @@ def cli_server_configuration_list() -> None:
     stopped = Fore.RED + "Offline" + Style.RESET_ALL
 
     # system folders
-    configs, f1 = ServerContext.available_configurations(
-        system_folders=True)
+    configs, f1 = ServerContext.available_configurations(system_folders=True)
     for config in configs:
         status = running if f"{APPNAME}-{config.name}-system-server" in \
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
-            f"{str(config.available_environments):32}"
             f"{status:25} System "
         )
 
     # user folders
-    configs, f2 = ServerContext.available_configurations(
-        system_folders=False)
+    configs, f2 = ServerContext.available_configurations(system_folders=False)
     for config in configs:
         status = running if f"{APPNAME}-{config.name}-user-server" in \
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
-            f"{str(config.available_environments):32}"
             f"{status:25} User   "
         )
 
@@ -383,12 +371,10 @@ def cli_server_files(ctx: ServerContext) -> None:
 @cli_server.command(name='new')
 @click.option('-n', '--name', default=None,
               help="name of the configuration you want to use.")
-@click.option('-e', '--environment', default=DEFAULT_SERVER_ENVIRONMENT,
-              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
+def cli_server_new(name: str, system_folders: bool) -> None:
     """
     Create a new server configuration.
 
@@ -396,8 +382,6 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     ----------
     name : str
         name of the new configuration
-    environment : str
-        DTAP environment you want to configure
     system_folders : bool
         Wether to use system folders or not
     """
@@ -412,12 +396,9 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
 
     # check that this config does not exist
     try:
-        if ServerContext.config_exists(name, environment, system_folders):
-            error(
-                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                f"environment {Fore.RED}{environment}{Style.RESET_ALL} "
-                f"already exists!"
-            )
+        if ServerContext.config_exists(name, system_folders):
+            error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already "
+                  "exists!")
             exit(1)
     except Exception as e:
         error(e)
@@ -431,8 +412,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard("server", name, environment=environment,
-                                    system_folders=system_folders)
+    cfg_file = configuration_wizard("server", name, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # info(f"root user created.")
@@ -547,8 +527,8 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
         info("Consider using the docker-compose method to start a server")
 
     drop_all_ = "--drop-all" if drop_all else ""
-    cmd = f'vserver-local import -c /mnt/config.yaml -e {ctx.environment} ' \
-          f'{drop_all_} /mnt/import.yaml'
+    cmd = (f'vserver-local import -c /mnt/config.yaml {drop_all_} '
+           '/mnt/import.yaml')
 
     info(cmd)
 
@@ -611,14 +591,11 @@ def cli_server_shell(ctx: ServerContext) -> None:
 #
 @cli_server.command(name='stop')
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('-e', '--environment', default=DEFAULT_SERVER_ENVIRONMENT,
-              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 @click.option('--all', 'all_servers', flag_value=True, help="Stop all servers")
-def cli_server_stop(name: str, environment: str, system_folders: bool,
-                    all_servers: bool):
+def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
     """
     Stop one or all running server(s).
 
@@ -626,8 +603,6 @@ def cli_server_stop(name: str, environment: str, system_folders: bool,
     ----------
     name : str
         Name of the server to stop
-    environment : str
-        DTAP environment to use
     system_folders : bool
         Wether to use system folders or not
     all_servers : bool
@@ -647,8 +622,7 @@ def cli_server_stop(name: str, environment: str, system_folders: bool,
 
     if all_servers:
         for container_name in running_server_names:
-            _stop_server_containers(client, container_name, environment,
-                                    system_folders)
+            _stop_server_containers(client, container_name, system_folders)
         return
 
     # make sure we have a configuration name to work with
@@ -663,8 +637,7 @@ def cli_server_stop(name: str, environment: str, system_folders: bool,
         error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
         return
 
-    _stop_server_containers(client, container_name, environment,
-                            system_folders)
+    _stop_server_containers(client, container_name, system_folders)
 
 
 #
@@ -766,7 +739,7 @@ def cli_server_version(name: str, system_folders: bool) -> None:
 #
 # helper functions
 #
-def get_server_context(name: str, environment: str, system_folders: bool) \
+def get_server_context(name: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
@@ -775,8 +748,6 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ----------
     name : str
         Name of the server to inspect
-    environment : str
-        DTAP environment to use
     system_folders : bool
         Wether to use system folders or if False, the user folders
 
@@ -785,13 +756,12 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ServerContext
         Server context object
     """
-    if not ServerContext.config_exists(name, environment, system_folders):
+    if not ServerContext.config_exists(name, system_folders):
         scope = "system" if system_folders else "user"
         error(
-                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
-                f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
-            )
+            f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not "
+            f"exist in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
+        )
         exit(1)
 
     # We do not want to log this here, we do this in the container and not on
@@ -799,8 +769,7 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ServerContext.LOGGING_ENABLED = False
 
     # create server context, and initialize db
-    ctx = ServerContext(name, environment=environment,
-                        system_folders=system_folders)
+    ctx = ServerContext(name, system_folders=system_folders)
 
     return ctx
 
@@ -834,7 +803,7 @@ def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
 
 
 def _stop_server_containers(client: DockerClient, container_name: str,
-                            environment: str, system_folders: bool) -> None:
+                            system_folders: bool) -> None:
     """
     Given a server's name, kill its docker container and related (RabbitMQ)
     containers.
@@ -845,8 +814,6 @@ def _stop_server_containers(client: DockerClient, container_name: str,
         Docker client
     container_name : str
         Name of the server to stop
-    environment : str
-        DTAP environment to use
     system_folders : bool
         Wether to use system folders or not
     """
@@ -860,7 +827,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = get_server_context(config_name, environment, system_folders)
+    ctx = get_server_context(config_name, system_folders)
 
     # delete the server network
     network_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-network"

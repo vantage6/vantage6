@@ -49,8 +49,11 @@ You can download this file here: :download:`node_config.yaml`
     :language: yaml
 
 .. note::
-    We use `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
-    In short:
+    Before version 4.0, we used `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
+    One of these keys had to be provided at the highest level in the
+    configuration file. From version 4.0 onwards, this key is no longer allowed.
+
+    The deprecated environments in short:
 
     - ``dev``: Development environment. It is ok to break things here
     - ``test``: Testing environment. Here, you can verify that everything
@@ -63,9 +66,8 @@ You can download this file here: :download:`node_config.yaml`
     - ``prod``: Production environment. The version of the proposed solution
       where the final analyses are executed.
 
-    You can also specify the key ``application`` if you do not want to specify
-    one of the environments. This is also done in the example configuration
-    shown above.
+    You may also specify the key ``application`` if you do not want to specify
+    one of the environments.
 
 .. _node-configure-location:
 
