@@ -86,7 +86,6 @@ class ServerApp:
         # initialize, configure Flask
         self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
         self.debug: dict = self.ctx.config.get('debug', {})
-        self.app.debug = self.debug.get('flask', False)
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
@@ -135,13 +134,18 @@ class ServerApp:
         if msg_queue:
             log.debug(f'Connecting to msg queue: {msg_queue}')
 
+        debug_mode = self.debug.get('socketio', False)
+        if debug_mode:
+            log.debug("SocketIO debug mode enabled")
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode='gevent_uwsgi',
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*'
+                cors_allowed_origins='*',
+                logger=debug_mode,
+                engineio_logger=debug_mode
             )
         except Exception as e:
             log.warning('Default socketio settings failed, attempt to run '
@@ -153,7 +157,9 @@ class ServerApp:
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*'
+                cors_allowed_origins='*',
+                logger=debug_mode,
+                engineio_logger=debug_mode
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
@@ -224,6 +230,10 @@ class ServerApp:
                                                           True)
         self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL",
                                                           False)
+        debug_mode = self.debug.get('flask', False)
+        if debug_mode:
+            log.debug("Flask debug mode enabled")
+        self.app.debug = debug_mode
 
         def _get_request_path(request: Request) -> str:
             """
