@@ -98,7 +98,7 @@ class Node:
     def initialize(self) -> None:
         """Initialization of the node"""
         # get the debug settings
-        self.debug = self.ctx.config.get("debug")
+        self.debug = self.ctx.config.get("debug", {})
         # apply debug logging settings
         self.debug_loggers()
 
@@ -193,6 +193,13 @@ class Node:
         self.log.info('Init complete')
 
     def debug_loggers(self) -> None:
+
+        # mute by default
+        default_muted = ["urllib3", "requests", "engineio.client"]
+        for logger in default_muted:
+            logging.getLogger(logger).setLevel(logging.WARNING)
+
+        # set debug loggers defined in the config file
         loggers = self.debug.get("loggers", [])
         for logger in loggers:
             self.log.debug(f"Setting logger {logger} to DEBUG")
@@ -991,9 +998,6 @@ class Node:
 # ------------------------------------------------------------------------------
 def run(ctx):
     """ Start the node."""
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("engineio.client").setLevel(logging.WARNING)
 
     # initialize node, connect to the server using websockets
     node = Node(ctx)
