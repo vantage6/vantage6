@@ -35,11 +35,11 @@ import requests.exceptions
 
 from pathlib import Path
 from threading import Thread
-from typing import Dict, List, Union, Type
 from socketio import Client as SocketIO
 from gevent.pywsgi import WSGIServer
 from enum import Enum
 
+from vantage6.common import logger_name
 from vantage6.common.docker.addons import (
     ContainerKillListener, check_docker_running, running_in_docker
 )
@@ -47,6 +47,7 @@ from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
+from vantage6.common.log import get_file_logger
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -55,7 +56,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.server_io import NodeClient
 from vantage6.node import proxy_server
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -78,11 +79,11 @@ class Node:
 
     Parameters
     ----------
-    ctx: Union[NodeContext, DockerNodeContext]
+    ctx: NodeContext | DockerNodeContext
         Application context object.
 
     """
-    def __init__(self, ctx: Union[NodeContext, DockerNodeContext]):
+    def __init__(self, ctx: NodeContext | DockerNodeContext):
 
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
@@ -219,11 +220,18 @@ class Node:
         proxy_server.app.config["SERVER_IO"] = self.server_io
         proxy_server.server_url = self.server_io.base_path
 
+        # set up proxy server logging
+        log_level = getattr(logging, self.config["logging"]["level"].upper())
+        self.proxy_log = get_file_logger(
+            'proxy_server', self.ctx.proxy_log_file, log_level_file=log_level
+        )
+
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
-            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app)
+            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app,
+                                     log=self.proxy_log)
 
             try:
                 http_server.serve_forever()
@@ -310,7 +318,7 @@ class Node:
             # never finish and hence not be set to finished)
             update['finished_at'] = datetime.datetime.now().isoformat()
         self.server_io.patch_results(
-            id=taskresult['id'], result=update
+            id_=taskresult['id'], result=update
         )
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
@@ -427,7 +435,7 @@ class Node:
                     )
 
                 self.server_io.patch_results(
-                    id=results.result_id,
+                    id_=results.result_id,
                     result={
                         'result': results.data,
                         'log': results.logs,
@@ -578,8 +586,8 @@ class Node:
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_ssh_tunnels(self, isolated_network_mgr: Type[NetworkManager]) \
-            -> List[SSHTunnel]:
+    def setup_ssh_tunnels(self, isolated_network_mgr: NetworkManager) \
+            -> list[SSHTunnel]:
         """
         Create a SSH tunnels when they are defined in the configuration file.
         For each tunnel a new container is created. The image used can be
@@ -601,7 +609,7 @@ class Node:
         configs = self.config['ssh-tunnels']
         self.log.info(f"Setting up {len(configs)} SSH tunnels")
 
-        tunnels: List[SSHTunnel] = []
+        tunnels: list[SSHTunnel] = []
         for config in configs:
             self.log.debug(f"SSH tunnel config: {config}")
 
@@ -637,7 +645,7 @@ class Node:
         return tunnels
 
     def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
-                             ctx: Union[DockerNodeContext, NodeContext]
+                             ctx: DockerNodeContext | NodeContext
                              ) -> VPNManager:
         """
         Setup container which has a VPN connection
@@ -646,7 +654,7 @@ class Node:
         ----------
         isolated_network_mgr: NetworkManager
             Manager for the isolated Docker network
-        ctx: NodeContext
+        ctx: DockerNodeContext | NodeContext
             Context object for the node
 
         Returns
@@ -884,19 +892,19 @@ class Node:
             self.cleanup()
             sys.exit()
 
-    def kill_containers(self, kill_info: Dict) -> List[Dict]:
+    def kill_containers(self, kill_info: dict) -> list[dict]:
         """
         Kill containers on instruction from socket event
 
         Parameters
         ----------
-        kill_info: Dict
+        kill_info: dict
             Dictionary received over websocket with instructions for which
             tasks to kill
 
         Returns
         -------
-        List[Dict]:
+        list[dict]:
             List of dictionaries with information on killed task (keys:
             result_id, task_id and parent_id)
         """
@@ -920,7 +928,7 @@ class Node:
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.server_io.patch_results(
-                id=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+                id_=killed_algo.result_id, result={'status': TaskStatus.KILLED}
             )
         return killed_algos
 

@@ -17,7 +17,9 @@ from vantage6.common._version import __version__
 
 
 class AppContext(metaclass=Singleton):
-
+    """
+    Base class from which to create Node and Server context classes.
+    """
     # FIXME: drop the prefix "INST_": a *class* is assigned.
     # FIXME: this does not need to be a class attribute, but ~~can~~_should_
     #        be set in __init__
@@ -25,24 +27,33 @@ class AppContext(metaclass=Singleton):
     INST_CONFIG_MANAGER = ConfigurationManager
     LOGGING_ENABLED = True
 
-    def __init__(self, instance_type, instance_name,
-                 environment=DEFAULT_ENVIRONMENT, system_folders=False,
-                 config_file=None):
+    def __init__(
+        self, instance_type: str, instance_name: str,
+        environment: str = DEFAULT_ENVIRONMENT, system_folders: bool = False,
+        config_file: Path | str = None
+    ) -> None:
         """
         Create a new AppContext instance.
 
-        Args:
-            instance_type (str): 'server' or 'node'
-            instance_name (str): name of the configuration
-            system_folders (bool): use system folders instead of user folders
-            environment (str): Environment within the config file to use. Can
-                be any of 'application', 'dev', 'test', 'acc' or 'prod'.
-            config_file (str): Path to a specific config file. If left as None,
-                OS specific folder will be used to find the configuration file
-                specified by `instance_name`.
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        instance_name: str
+            Name of the configuration
+        system_folders: bool
+            Use system folders instead of user folders
+        environment: str
+            Environment within the config file to use. Can be any of
+            'application', 'dev', 'test', 'acc' or 'prod'.
+        config_file: str
+            Path to a specific config file. If left as None, OS specific folder
+            will be used to find the configuration file specified by
+            `instance_name`.
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
+        self.instance_type = instance_type
 
         # configuration environment, load a single configuration from
         # entire confiration file (which can contain multiple environments)
@@ -99,9 +110,30 @@ class AppContext(metaclass=Singleton):
         self.log.info(f"Common package version '{__version__}'")
 
     @classmethod
-    def from_external_config_file(cls, path, instance_type,
-                                  environment=DEFAULT_ENVIRONMENT,
-                                  system_folders=False):
+    def from_external_config_file(
+        cls, path: Path | str, instance_type: str,
+        environment: str = DEFAULT_ENVIRONMENT, system_folders: bool = False
+    ) -> "AppContext":
+        """
+        Create a new AppContext instance from an external config file.
+
+        Parameters
+        ----------
+        path: str
+            Path to the config file
+        instance_type: str
+            'server' or 'node'
+        environment: str
+            Environment within the config file to use. Can be any of
+            'application', 'dev', 'test', 'acc' or 'prod'.
+        system_folders: bool
+            Use system folders rather than user folders
+
+        Returns
+        -------
+        AppContext
+            A new AppContext instance
+        """
         instance_name = Path(path).stem
 
         self_ = cls.__new__(cls)
@@ -119,9 +151,29 @@ class AppContext(metaclass=Singleton):
         return self_
 
     @classmethod
-    def config_exists(cls, instance_type, instance_name,
-                      environment=DEFAULT_ENVIRONMENT, system_folders=False):
+    def config_exists(
+        cls, instance_type: str, instance_name: str,
+        environment: str = DEFAULT_ENVIRONMENT, system_folders: bool = False
+    ) -> bool:
+        """Check if a config file exists for the given instance type and name.
 
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        instance_name: str
+            Name of the configuration
+        environment: str
+            Environment within the config file to use. Can be any of
+            'application', 'dev', 'test', 'acc' or 'prod'.
+        system_folders: bool
+            Use system folders rather than user folders
+
+        Returns
+        -------
+        bool
+            True if the config file exists, False otherwise
+        """
         try:
             config_file = cls.find_config_file(
                 instance_type,
@@ -138,8 +190,22 @@ class AppContext(metaclass=Singleton):
         return bool(getattr(config_manager, environment))
 
     @staticmethod
-    def type_data_folder(instance_type, system_folders):
-        """Return OS specific data folder."""
+    def type_data_folder(instance_type: str, system_folders: bool) -> Path:
+        """
+        Return OS specific data folder.
+
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        system_folders: bool
+            Use system folders rather than user folders
+
+        Returns
+        -------
+        Path
+            Path to the data folder
+        """
         d = appdirs.AppDirs(APPNAME, "")
 
         if system_folders:
@@ -149,9 +215,26 @@ class AppContext(metaclass=Singleton):
             return Path(d.user_data_dir) / instance_type
 
     @staticmethod
-    def instance_folders(instance_type, instance_name, system_folders):
-        """Return OS and instance specific folders for storing logs, data and
-            config files.
+    def instance_folders(instance_type: str, instance_name: str,
+                         system_folders: bool) -> dict:
+        """
+        Return OS and instance specific folders for storing logs, data and
+        config files.
+
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        instance_name: str
+            Name of the configuration
+        system_folders: bool
+            Use system folders rather than user folders
+
+        Returns
+        -------
+        dict
+            Dictionary with Paths to the folders of the log, data and config
+            files.
         """
         d = appdirs.AppDirs(APPNAME, "")
 
@@ -169,9 +252,26 @@ class AppContext(metaclass=Singleton):
             }
 
     @classmethod
-    def available_configurations(cls, instance_type, system_folders):
-        """Returns a list of configuration managers."""
+    def available_configurations(
+        cls, instance_type: str, system_folders: bool
+    ) -> tuple[list[ConfigurationManager], list[Path]]:
+        """
+        Returns a list of configuration managers and a list of paths to
+        configuration files that could not be loaded.
 
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        system_folders: bool
+            Use system folders rather than user folders
+
+        Returns
+        -------
+        list[ConfigurationManager], list[Path]
+            A list of configuration managers and a list of paths to
+            configuration files that could not be loaded.
+        """
         folders = cls.instance_folders(instance_type, "", system_folders)
 
         # potential configuration files
@@ -192,39 +292,110 @@ class AppContext(metaclass=Singleton):
         return configs, failed
 
     @property
-    def log_file(self):
+    def log_file(self) -> Path:
+        """Return the path to the log file.
+
+        Returns
+        -------
+        Path
+            Path to the log file
+        """
+        return self.log_file_name(type_=self.instance_type)
+
+    def log_file_name(self, type_: str) -> Path:
+        """
+        Return a path to a log file for a given log file type
+
+        Parameters
+        ----------
+        type_: str
+            The type of log file to return.
+
+        Returns
+        -------
+        Path
+            The path to the log file.
+
+        Raises
+        ------
+        AssertionError
+            If the configuration manager is not initialized.
+        """
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
+        file_ = (Path(self.config_manager.name) /
+                 f"{type_}_{self.environment}_{self.scope}.log")
 
-        # check if the configuration file contains a logging file setting
-        if self.config.get("logging"):
-            if self.config.get("logging").get("file"):
-                return self.log_dir / self.config.get("logging").get("file")
-
-        file_ = f"{self.config_manager.name}-{self.environment}"\
-                f"-{self.scope}.log"
         return self.log_dir / file_
 
     @property
-    def config_file_name(self):
+    def config_file_name(self) -> str:
+        """Return the name of the configuration file.
+
+        Returns
+        -------
+        str
+            Name of the configuration file
+        """
         return self.__config_file.stem
 
     @property
-    def config_file(self):
+    def config_file(self) -> Path:
+        """Return the path to the configuration file.
+
+        Returns
+        -------
+        Path
+            Path to the configuration file
+        """
         return self.__config_file
 
     @config_file.setter
-    def config_file(self, path):
+    def config_file(self, path: str) -> None:
+        """
+        Set the path to the configuration file.
+
+        Parameters
+        ----------
+        path: str
+            Path to the configuration file
+
+        Raises
+        ------
+        AssertionError
+            If the configuration file does not exist
+        """
         assert Path(path).exists(), f"config {path} not found"
         self.__config_file = Path(path)
         self.config_manager = self.INST_CONFIG_MANAGER.from_file(path)
 
     @property
-    def environment(self):
+    def environment(self) -> str:
+        """Return the environment.
+
+        Returns
+        -------
+        str
+            Environment
+        """
         return self.__environment
 
     @environment.setter
-    def environment(self, env):
+    def environment(self, env) -> None:
+        """
+        Set the environment.
+
+        Parameters
+        ----------
+        env: str
+            Environment
+
+        Raises
+        ------
+        AssertionError
+            If the environment is not found in the configuration or the
+            configuration manager is not initialized.
+        """
         assert self.config_manager, \
             "Environment set before ConfigurationManager is initialized..."
         assert env in self.config_manager.available_environments, \
@@ -233,9 +404,37 @@ class AppContext(metaclass=Singleton):
         self.config: dict = self.config_manager.get(env)
 
     @classmethod
-    def find_config_file(cls, instance_type, instance_name, system_folders,
-                         config_file=None, verbose=True):
-        """Find a configuration file."""
+    def find_config_file(
+        cls, instance_type: str, instance_name: str, system_folders: bool,
+        config_file: str | None = None, verbose: bool = True
+    ) -> str:
+        """
+        Find a configuration file.
+
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        instance_name: str
+            Name of the configuration
+        system_folders: bool
+            Use system folders rather than user folders
+        config_file: str | None
+            Name of the configuration file. If None, the name of the
+            configuration is used.
+        verbose: bool
+            Print the directories that are searched for the configuration file.
+
+        Returns
+        -------
+        str
+            Path to the configuration file
+
+        Raises
+        ------
+        Exception
+            If the configuration file is not found
+        """
 
         if config_file is None:
             config_file = f"{instance_name}.yaml"
@@ -268,15 +467,40 @@ class AppContext(metaclass=Singleton):
 
         raise Exception(msg)
 
-    def get_data_file(self, filename):
-        """Return the path to a data file."""
+    def get_data_file(self, filename: str) -> str:
+        """
+        Return the path to a data file.
+
+        Parameters
+        ----------
+        filename: str
+            Name of the data file
+
+        Returns
+        -------
+        str
+            Path to the data file
+        """
         # If filename is an absolute path `os.path.join()` ignores
         # `self.data_dir`.
         if not filename:
             raise Exception('Argument "filename" should be provided!')
         return os.path.join(self.data_dir, filename)
 
-    def set_folders(self, instance_type, instance_name, system_folders):
+    def set_folders(self, instance_type: str, instance_name: str,
+                    system_folders: bool) -> None:
+        """
+        Set the folders where the configuration, data and log files are stored.
+
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        instance_name: str
+            Name of the configuration
+        system_folders: bool
+            Whether to use system folders rather than user folders
+        """
         dirs = self.instance_folders(
             instance_type,
             instance_name,
@@ -298,8 +522,14 @@ class AppContext(metaclass=Singleton):
         # config dir could be different if the --config option is used
         self.config_dir = self.config_file.parent
 
-    def setup_logging(self):
-        """Setup a basic logging mechanism."""
+    def setup_logging(self) -> None:
+        """
+        Setup a basic logging mechanism.
+
+        Exits if the log file can't be created.
+        """
+        # TODO BvB 2023-03-31: would be nice to refactor this with the other
+        # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
         format_ = log_config["format"]

@@ -5,7 +5,7 @@ import os
 import time
 import subprocess
 
-from typing import Callable, Type, Iterable
+from typing import Iterable
 from threading import Thread
 from functools import wraps
 from colorama import (Fore, Style)
@@ -40,7 +40,7 @@ from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
 
 
-def click_insert_context(func: Callable) -> Callable:
+def click_insert_context(func: callable) -> callable:
     """
     Supply the Click function with additional context parameters. The context
     is then passed to the function as the first argument.
@@ -67,7 +67,7 @@ def click_insert_context(func: Callable) -> Callable:
                   default=DEFAULT_SERVER_SYSTEM_FOLDERS)
     @wraps(func)
     def func_with_context(name: str, config: str, environment: str,
-                          system_folders: bool, *args, **kwargs) -> Callable:
+                          system_folders: bool, *args, **kwargs) -> callable:
         """
         Decorator function that adds the context to the function.
 
@@ -107,7 +107,7 @@ def click_insert_context(func: Callable) -> Callable:
                 error("No configurations could be found!")
                 exit(1)
 
-        ctx = get_server_context(name, environment, system_folders)
+        ctx = _get_server_context(name, environment, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context
@@ -134,7 +134,7 @@ def cli_server() -> None:
 @click.option('--attach/--detach', default=False,
               help="Attach server logs to the console after start")
 @click_insert_context
-def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
+def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
                      rabbitmq_image: str, keep: bool, mount_src: str,
                      attach: bool) -> None:
     """
@@ -142,7 +142,7 @@ def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
 
     Parameters
     ----------
-    ctx : Type[ServerContext]
+    ctx : ServerContext
         Server context object
     ip : str
         ip interface to listen on
@@ -288,7 +288,7 @@ def cli_server_start(ctx: Type[ServerContext], ip: str, port: int, image: str,
 
     if attach:
         logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -363,7 +363,7 @@ def cli_server_configuration_list() -> None:
 #
 @cli_server.command(name='files')
 @click_insert_context
-def cli_server_files(ctx: Type[ServerContext]) -> None:
+def cli_server_files(ctx: ServerContext) -> None:
     """
     List files locations of a server instance.
 
@@ -454,14 +454,14 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click_insert_context
-def cli_server_import(ctx: Type[ServerContext], file_: str, drop_all: bool,
+def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
                       image: str, mount_src: str, keep: bool) -> None:
     """
     Batch import organizations/collaborations/users and tasks.
 
     Parameters
     ----------
-    ctx : Type[ServerContext]
+    ctx : ServerContext
         Server context object
     file_ : str
         Yaml file containing the vantage6 formatted data to import
@@ -567,7 +567,7 @@ def cli_server_import(ctx: Type[ServerContext], file_: str, drop_all: bool,
         tty=True
     )
     logs = container.logs(stream=True, stdout=True)
-    Thread(target=print_log_worker, args=(logs,), daemon=False).start()
+    Thread(target=_print_log_worker, args=(logs,), daemon=False).start()
 
     info(f"Success! container id = {container.id}")
 
@@ -577,7 +577,7 @@ def cli_server_import(ctx: Type[ServerContext], file_: str, drop_all: bool,
 #
 @cli_server.command(name='shell')
 @click_insert_context
-def cli_server_shell(ctx: Type[ServerContext]) -> None:
+def cli_server_shell(ctx: ServerContext) -> None:
     """
     Run an iPython shell in the server container and attach the ORM. This
     can be used to modify the database.
@@ -703,7 +703,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     if name in running_server_names:
         container = client.containers.get(name)
         logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -724,7 +724,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_server_version(name: str, system_folders: bool):
+def cli_server_version(name: str, system_folders: bool) -> None:
     """
     Print the version of the vantage6 services.
 
@@ -766,10 +766,19 @@ def cli_server_version(name: str, system_folders: bool):
 #
 # helper functions
 #
-def get_server_context(name: str, environment: str, system_folders: bool) \
+def _get_server_context(name: str, environment: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
+
+    Parameters
+    ----------
+    name : str
+        Name of the server to inspect
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or if False, the user folders
 
     Returns
     -------
@@ -851,7 +860,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = get_server_context(config_name, environment, system_folders)
+    ctx = _get_server_context(config_name, environment, system_folders)
 
     # delete the server network
     network_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
@@ -872,7 +881,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
                  f"{Style.RESET_ALL} container.")
 
 
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     Print the logs from the docker container to the terminal.
 

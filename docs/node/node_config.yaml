@@ -14,6 +14,10 @@ application:
   # subnet of the VPN server
   vpn_subnet: 10.76.0.0/16
 
+  # set the devices the algorithm container is allowed to request.
+  algorithm_device_requests:
+    gpu: false
+
   # add additional environment variables to the algorithm containers.
   # this could be usefull for passwords or other things that algorithms
   # need to know about the node it is running on
@@ -132,9 +136,6 @@ application:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
     level:        DEBUG
-
-    # Filename of the log-file, used by RotatingFileHandler
-    file:         my_node.log
 
     # whenever the output needs to be shown in the console
     use_console:  true

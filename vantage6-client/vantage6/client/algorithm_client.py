@@ -1,8 +1,6 @@
 import jwt
 import pickle
 
-from typing import List, Union
-
 from vantage6.client import ClientBase
 from vantage6.client import base64s_to_bytes, bytes_to_base64s
 
@@ -30,7 +28,7 @@ class AlgorithmClient(ClientBase):
         Arguments passed to the parent ClientBase class.
     """
 
-    def __init__(self, token: str, *args, **kwargs):
+    def __init__(self, token: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
@@ -69,6 +67,16 @@ class AlgorithmClient(ClientBase):
         Make a request to the central server. This overwrites the parent
         function so that containers will not try to refresh their token, which
         they would be unable to do.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments passed to the parent ClientBase.request function.
+
+        Returns
+        -------
+        dict
+            Response from the central server.
         """
         return super().request(*args, **kwargs, retry=False)
 
@@ -80,7 +88,7 @@ class AlgorithmClient(ClientBase):
         from the central server.
         """
 
-        def get(self, task_id: int) -> List:
+        def get(self, task_id: int) -> list:
             """
             Obtain results from a specific task at the server.
 
@@ -98,7 +106,7 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List
+            list
                 List of results. The type of the results depends on the
                 algorithm.
             """
@@ -146,7 +154,7 @@ class AlgorithmClient(ClientBase):
             )
 
         def create(
-            self, input_: bytes, organization_ids: List[int] = None,
+            self, input_: bytes, organization_ids: list[int] = None,
             name: str = "subtask", description: str = None
         ) -> dict:
             """
@@ -160,8 +168,8 @@ class AlgorithmClient(ClientBase):
             ----------
             input_ : bytes
                 Input to the task. Should be b64 encoded.
-            organization_ids : List[int], optional
-                List of organization IDs that should execute the task
+            organization_ids : list[int]
+                List of organization IDs that should execute the task.
             name: str, optional
                 Name of the subtask
             description : str, optional
@@ -210,9 +218,10 @@ class AlgorithmClient(ClientBase):
         It provides functions to obtain the IP addresses of other containers.
         """
         def get_addresses(
-            self, include_children: bool = False, include_parent: bool = False,
+            self, only_children: bool = False, only_parent: bool = False,
+            include_children: bool = False, include_parent: bool = False,
             label: str = None
-        ) -> Union[List[dict], dict]:
+        ) -> list[dict] | dict:
             """
             Get information about the VPN IP addresses and ports of other
             algorithm containers involved in the current task. These addresses
@@ -220,12 +229,20 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
+            only_children : bool, optional
+                Only return the IP addresses of the children of the current
+                task, by default False. Incompatible with only_parent.
+            only_parent : bool, optional
+                Only return the IP address of the parent of the current task,
+                by default False. Incompatible with only_children.
             include_children : bool, optional
                 Include the IP addresses of the children of the current task,
-                by default False.
+                by default False. Incompatible with only_parent, superseded
+                by only_children.
             include_parent : bool, optional
                 Include the IP address of the parent of the current task, by
-                default False.
+                default False. Incompatible with only_children, superseded by
+                only_parent.
             label : str, optional
                 The label of the port you are interested in, which is set
                 in the algorithm Dockerfile. If this parameter is set, only
@@ -233,13 +250,15 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List[dict] or dict
+            list[dict] | dict
                 List of dictionaries containing the IP address and port number,
                 and other information to identify the containers. If obtaining
                 the VPN addresses from the server fails, a dictionary with a
                 'message' key is returned instead.
             """
             results = self.parent.request("vpn/algorithm/addresses", params={
+                "only_children": only_children,
+                "only_parent": only_parent,
                 "include_children": include_children,
                 "include_parent": include_parent,
                 "label": label
@@ -249,6 +268,36 @@ class AlgorithmClient(ClientBase):
                 return {'message': 'Obtaining VPN addresses failed!'}
 
             return results['addresses']
+
+        def get_parent_address(self) -> dict:
+            """
+            Get the IP address and port number of the parent of the current
+            task.
+
+            Returns
+            -------
+            dict
+                Dictionary containing the IP address and port number, and other
+                information to identify the containers. If obtaining the VPN
+                addresses from the server fails, a dictionary with a 'message'
+                key is returned instead.
+            """
+            return self.get_addresses(only_parent=True)
+
+        def get_child_addresses(self) -> list[dict]:
+            """
+            Get the IP addresses and port numbers of the children of the
+            current task.
+
+            Returns
+            -------
+            List[dict]
+                List of dictionaries containing the IP address and port number,
+                and other information to identify the containers. If obtaining
+                the VPN addresses from the server fails, a dictionary with a
+                'message' key is returned instead.
+            """
+            return self.get_addresses(only_children=True)
 
     class Organization(ClientBase.SubClient):
         """
@@ -262,10 +311,15 @@ class AlgorithmClient(ClientBase):
             ----------
             id: int
                 ID of the organization to retrieve
+
+            Returns
+            -------
+            dict
+                Dictionary containing the organization data.
             """
             return self.parent.request(f"organization/{id_}")
 
-        def list(self) -> List[dict]:
+        def list(self) -> list[dict]:
             """
             Obtain all organization in the collaboration.
 
@@ -276,7 +330,7 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List[dict]
+            list[dict]
                 List of organizations in the collaboration.
             """
             organizations = self.parent.request(
@@ -312,6 +366,7 @@ class AlgorithmClient(ClientBase):
             Returns
             -------
             dict
-                Dictionary containing the node data.
+                Dictionary containing data on the node this algorithm is
+                running on.
             """
             return self.parent.request(f"node/{self.parent.host_node_id}")

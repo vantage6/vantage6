@@ -1,6 +1,4 @@
 """
-Wrapper
-
 This module contains algorithm wrappers. These wrappers are used to provide
 different data adapters to the algorithms. This way we ony need to write the
 algorithm once and can use it with different data adapters.
@@ -177,6 +175,7 @@ class WrapperBase(ABC):
 
         Data is received in the form of files, whose location should be
         specified in the following environment variables:
+
         - ``INPUT_FILE``: input arguments for the algorithm
         - ``OUTPUT_FILE``: location where the results of the algorithm should
           be stored
@@ -291,6 +290,7 @@ class CSVWrapper(WrapperBase):
 
 
 # for backwards compatibility
+# TODO BvB 2023-03-02 remove in v5+?
 CsvWrapper = CSVWrapper
 DockerWrapper = CSVWrapper
 
@@ -345,6 +345,22 @@ class SparqlDockerWrapper(WrapperBase):
 
     @staticmethod
     def _query_triplestore(endpoint: str, query: str) -> pandas.DataFrame:
+        """
+        Send a query to a triplestore and return the result as a pandas
+        DataFrame.
+
+        Parameters
+        ----------
+        endpoint : str
+            URI of the triplestore
+        query : str
+            The query to send to the triplestore
+
+        Returns
+        -------
+        pandas.DataFrame
+            The result of the query
+        """
         sparql = SPARQLWrapper(endpoint, returnFormat=_SPARQL_RETURN_FORMAT)
         sparql.setQuery(query)
 
@@ -513,6 +529,19 @@ def load_input(input_file: str) -> Any:
 
 
 def _read_formatted(file: BinaryIO) -> Any:
+    """
+    Try to read the prescribed data format.
+
+    Parameters
+    ----------
+    file : BinaryIO
+        Input file received from the user.
+
+    Returns
+    -------
+    Any
+        Deserialized input data
+    """
     data_format = str.join('', list(_read_data_format(file)))
     data_format = DataFormat(data_format.lower())
     return deserialization.deserialize(file, data_format)

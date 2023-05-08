@@ -8,16 +8,11 @@ import logging
 
 from http import HTTPStatus
 from requests import Response
-from typing import Callable, Union
 
 from flask import Flask, request, jsonify
 
+from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.node.server_io import NodeClient
-from vantage6.node.util import (
-    logger_name,
-    base64s_to_bytes,
-    bytes_to_base64s
-)
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -31,7 +26,7 @@ server_url = None
 RETRY = 3
 
 
-def get_method(method: str) -> Callable:
+def get_method(method: str) -> callable:
     """
     Obtain http method based on string identifier
 
@@ -170,7 +165,7 @@ def decrypt_result(result: dict) -> dict:
 
 
 def get_response_json_and_handle_exceptions(
-        response: Response) -> Union[dict, None]:
+        response: Response) -> dict | None:
     """
     Obtain json content from request response
 
@@ -181,7 +176,7 @@ def get_response_json_and_handle_exceptions(
 
     Returns
     -------
-    dict or None
+    dict | None
         Dict containing the json body
     """
     try:

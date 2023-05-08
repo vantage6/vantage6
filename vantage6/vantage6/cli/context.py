@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import os.path
 
-from typing import Tuple
 from pathlib import Path
 
 from sqlalchemy.engine.url import make_url
@@ -91,12 +90,12 @@ class ServerContext(AppContext):
     @property
     def docker_container_name(self) -> str:
         """
-        Unique name of the docker container.
+        Name of the docker container that the server is running in.
 
         Returns
         -------
         str
-            Unique docker container name
+            Server's docker container name
         """
         return f"{APPNAME}-{self.name}-{self.scope}-server"
 
@@ -159,7 +158,7 @@ class ServerContext(AppContext):
 
     @classmethod
     def available_configurations(cls, system_folders: bool = S_FOL) \
-            -> Tuple[list, list]:
+            -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -170,7 +169,7 @@ class ServerContext(AppContext):
 
         Returns
         -------
-        Tuple[List, List]
+        tuple[list, list]
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
@@ -263,7 +262,7 @@ class NodeContext(AppContext):
 
     @classmethod
     def available_configurations(cls, system_folders: bool = N_FOL) \
-            -> Tuple[list, list]:
+            -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -274,7 +273,7 @@ class NodeContext(AppContext):
 
         Returns
         -------
-        Tuple[List, List]
+        tuple[list, list]
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
@@ -288,7 +287,7 @@ class NodeContext(AppContext):
         Parameters
         ----------
         system_folders : bool, optional
-            System wide or user configuration, by default N_FOL
+            System wide or user configuration
 
         Returns
         -------
@@ -298,7 +297,7 @@ class NodeContext(AppContext):
         return AppContext.type_data_folder("node", system_folders)
 
     @property
-    def databases(self):
+    def databases(self) -> dict:
         """
         Dictionary of local databases that are available for this node.
 
@@ -313,12 +312,12 @@ class NodeContext(AppContext):
     @property
     def docker_container_name(self) -> str:
         """
-        Unique Docker container name of the node.
+        Docker container name of the node.
 
         Returns
         -------
         str
-            Unique Docker container name
+            Node's Docker container name
         """
         return f"{APPNAME}-{self.name}-{self.scope}"
 
@@ -379,6 +378,10 @@ class NodeContext(AppContext):
             'SSH_TUNNEL_VOLUME_NAME',
             f"{self.docker_container_name}-ssh-vol"
         )
+
+    @property
+    def proxy_log_file(self):
+        return self.log_file_name(type_="proxy_server")
 
     def docker_temporary_volume_name(self, run_id: int) -> str:
         """
