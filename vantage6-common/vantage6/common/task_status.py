@@ -24,6 +24,8 @@ class TaskStatus(str, Enum):
     KILLED = 'killed by user'
     # Task was not allowed by node policies
     NOT_ALLOWED = 'not allowed'
+    # Task failed without exit code
+    UNKNOWN_ERROR = 'unknown error'
 
 
 def has_task_failed(status: TaskStatus) -> bool:
