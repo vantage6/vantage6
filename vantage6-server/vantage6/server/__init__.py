@@ -82,7 +82,6 @@ class ServerApp:
         self.debug = self.ctx.config.get("debug", {})
         # make specific log settings (muting etc)
         self.configure_logging()
-        self.debug_loggers()
 
         # initialize, configure Flask
         self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
@@ -127,22 +126,6 @@ class ServerApp:
         t.start()
 
         log.info("Initialization done")
-
-    def debug_loggers(self) -> None:
-
-        # mute by default
-        default_muted = ["urllib3", "socketIO-client", "engineio.server",
-                         "socketio.server", "sqlalchemy.engine",
-                         "requests_oauthlib.oauth2_session"]
-        for logger in default_muted:
-            logging.getLogger(logger).setLevel(logging.WARNING)
-
-        # unmute specific loggers, defined in the config file
-        loggers = self.debug.get("loggers", [])
-        for logger in loggers:
-            self.log.debug(f"Setting logger {logger} to DEBUG")
-            logger = logging.getLogger(logger)
-            logger.setLevel(logging.DEBUG)
 
     def setup_socket_connection(self):
 

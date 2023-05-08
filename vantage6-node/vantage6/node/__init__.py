@@ -97,11 +97,6 @@ class Node:
 
     def initialize(self) -> None:
         """Initialization of the node"""
-        # get the debug settings
-        self.debug = self.ctx.config.get("debug", {})
-        # apply debug logging settings
-        self.debug_loggers()
-
         # check if docker is running, otherwise exit with error
         check_docker_running()
 
@@ -191,20 +186,6 @@ class Node:
         t.start()
 
         self.log.info('Init complete')
-
-    def debug_loggers(self) -> None:
-
-        # mute by default
-        default_muted = ["urllib3", "requests", "engineio.client"]
-        for logger in default_muted:
-            logging.getLogger(logger).setLevel(logging.WARNING)
-
-        # set debug loggers defined in the config file
-        loggers = self.debug.get("loggers", [])
-        for logger in loggers:
-            self.log.debug(f"Setting logger {logger} to DEBUG")
-            logger = logging.getLogger(logger)
-            logger.setLevel(logging.DEBUG)
 
     def __proxy_server_worker(self) -> None:
         """

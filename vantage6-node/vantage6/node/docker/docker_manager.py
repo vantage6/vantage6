@@ -260,7 +260,7 @@ class DockerManager(DockerBaseManager):
                     found = True
             if not found:
                 self.log.warn("A task was sent with a docker image that this"
-                               " node does not allow to run.")
+                              " node does not allow to run.")
                 return False
 
         # check if user or their organization is allowed
