@@ -149,6 +149,30 @@ application:
     format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
     datefmt:      "%Y-%m-%d %H:%M:%S"
 
+    # (optional) set the individual log levels per logger name, for example
+    # mute some loggers that are too verbose.
+    loggers:
+      - name: urllib
+        level: warning
+      - name: requests
+        level: warning
+      - name: engineio.client
+        level: warning
+      - name: docker.utils.config
+        level: warning
+      - name: docker.auth
+        level: warning
+
+  # some additional debug flags
+  debug:
+
+    # sets the socketio client into debug mode
+    socketio: true
+
+    # sets the Flask app used for the LOCAL proxy service into debug mode
+    proxy_server: true
+
+
   # directory where local task files (input/output) are stored
   task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\mydir
 

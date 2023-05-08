@@ -67,6 +67,31 @@ environments:
       format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
       datefmt:      "%Y-%m-%d %H:%M:%S"
 
+    # (optional) set the individual log levels per logger name, for example
+    # mute some loggers that are too verbose.
+      loggers:
+        - name: urllib3
+          level: warning
+        - name: socketIO-client
+          level: warning
+        - name: engineio.server
+          level: warning
+        - name: socketio.server
+          level: warning
+        - name: sqlalchemy.engine
+          level: warning
+        - name: requests_oauthlib.oauth2_session
+          level: warning
+
+    # some additional debug flags
+    debug:
+
+      # sets the socketio server into debug mode
+      socketio: true
+
+      # sets the Flask app in debug mode
+      flask: true
+
     # Configure a smtp mail server for the server to use for administrative
     # purposes. e.g. allowing users to reset their password.
     # OPTIONAL
