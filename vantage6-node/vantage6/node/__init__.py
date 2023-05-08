@@ -69,7 +69,7 @@ class VPNConnectMode(Enum):
 
 
 # ------------------------------------------------------------------------------
-class Node(object):
+class Node:
     """
     Authenticates to the central server, setup encryption, a
     websocket connection, retrieving task that were posted while
@@ -97,10 +97,16 @@ class Node(object):
 
     def initialize(self) -> None:
         """Initialization of the node"""
+        # get the debug settings
+        self.debug = self.ctx.config.get("debug")
+        # apply debug logging settings
+        self.debug_loggers()
+
         # check if docker is running, otherwise exit with error
         check_docker_running()
 
         self.config = self.ctx.config
+        # specific debug configuration
         self.queue = queue.Queue()
         self._using_encryption = None
 
@@ -186,6 +192,13 @@ class Node(object):
 
         self.log.info('Init complete')
 
+    def debug_loggers(self) -> None:
+        loggers = self.debug.get("loggers", [])
+        for logger in loggers:
+            self.log.debug(f"Setting logger {logger} to DEBUG")
+            logger = logging.getLogger(logger)
+            logger.setLevel(logging.DEBUG)
+
     def __proxy_server_worker(self) -> None:
         """
         Proxy algorithm container communcation.
@@ -211,7 +224,7 @@ class Node(object):
         proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
 
         # 'app' is defined in vantage6.node.proxy_server
-        # app.debug = True
+        proxy_server.app.debug = self.debug.get("proxy_server", False)
         proxy_server.app.config["SERVER_IO"] = self.server_io
         proxy_server.server_url = self.server_io.base_path
 
@@ -773,7 +786,9 @@ class Node(object):
         Create long-lasting websocket connection with the server. The
         connection is used to receive status updates, such as new tasks.
         """
-        self.socketIO = SocketIO(request_timeout=60)
+        debug = self.debug.get('socketio', False)
+        self.socketIO = SocketIO(request_timeout=60, logger=debug,
+                                 engineio_logger=debug)
 
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
         NodeTaskNamespace.node_worker_ref = self
