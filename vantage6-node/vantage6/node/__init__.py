@@ -101,6 +101,7 @@ class Node:
         check_docker_running()
 
         self.config = self.ctx.config
+        self.debug: dict = self.config.get('debug', {})
         self.queue = queue.Queue()
         self._using_encryption = None
 
@@ -211,7 +212,10 @@ class Node:
         proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
 
         # 'app' is defined in vantage6.node.proxy_server
-        proxy_server.app.debug = self.debug.get("proxy_server", False)
+        debug_mode = self.debug.get("proxy_server", False)
+        if debug_mode:
+            self.log.debug("Debug mode enabled for proxy server")
+            proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.server_io
         proxy_server.server_url = self.server_io.base_path
 
@@ -773,9 +777,11 @@ class Node:
         Create long-lasting websocket connection with the server. The
         connection is used to receive status updates, such as new tasks.
         """
-        debug = self.debug.get('socketio', False)
-        self.socketIO = SocketIO(request_timeout=60, logger=debug,
-                                 engineio_logger=debug)
+        debug_mode = self.debug.get('socketio', False)
+        if debug_mode:
+            self.log.debug("Debug mode enabled for socketio")
+        self.socketIO = SocketIO(request_timeout=60, logger=debug_mode,
+                                 engineio_logger=debug_mode)
 
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
         NodeTaskNamespace.node_worker_ref = self

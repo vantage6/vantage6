@@ -363,4 +363,6 @@ class AppContext(metaclass=Singleton):
             The logger object and the logging level that was set.
         """
         logger = logging.getLogger(name)
-        logger.setLevel(getattr(logging, level.upper()))
+        level_ = getattr(logging, level.upper())
+        logger.setLevel(level_)
+        return logger, level
