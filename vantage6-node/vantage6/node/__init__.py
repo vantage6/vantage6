@@ -249,16 +249,53 @@ class Node(object):
         task_results = self.server_io.get_results(state="open",
                                                   include_task=True)
         self.log.debug(task_results)
-        for task_result in task_results:
-            if not self.__docker.is_running(task_result['id']):
-                self.queue.put(task_result)
-            else:
-                self.log.info(
-                    f"Not starting task {task_result['task']['id']} - "
-                    f"{task_result['task']['name']} as it is already running"
-                )
 
-        self.log.info(f"received {self.queue._qsize()} tasks")
+        # add the tasks to the queue
+        self.__add_tasks_to_queue(task_results)
+        self.log.info(f"Received {self.queue._qsize()} tasks")
+
+    def get_task_and_add_to_queue(self, task_id: int) -> None:
+        """
+        Fetches (open) task with task_id from the server. The `task_id` is
+        delivered by the websocket-connection.
+
+        Parameters
+        ----------
+        task_id : int
+            Task identifier
+        """
+        # fetch (open) result for the node with the task_id
+        task_results = self.server_io.get_results(
+            include_task=True,
+            state='open',
+            task_id=task_id
+        )
+
+        # add the tasks to the queue
+        self.__add_tasks_to_queue(task_results)
+
+    def __add_tasks_to_queue(self, task_results: list[dict]) -> None:
+        """
+        Add a task to the queue.
+
+        Parameters
+        ----------
+        taskresult : list[dict]
+            A list of dictionaries with information required to run the
+            algorithm
+        """
+        for task_result in task_results:
+            try:
+                if not self.__docker.is_running(task_result['id']):
+                    self.queue.put(task_result)
+                else:
+                    self.log.info(
+                        f"Not starting task {task_result['task']['id']} - "
+                        f"{task_result['task']['name']} as it is already "
+                        "running"
+                    )
+            except Exception:
+                self.log.exception("Error while syncing task queue")
 
     def __start_task(self, taskresult: dict) -> None:
         """
@@ -829,37 +866,6 @@ class Node(object):
                 self.log.exception('Ping thread had an exception')
             # Wait before sending next ping
             time.sleep(PING_INTERVAL_SECONDS)
-
-    def get_task_and_add_to_queue(self, task_id: int) -> None:
-        """
-        Fetches (open) task with task_id from the server. The `task_id` is
-        delivered by the websocket-connection.
-
-        Parameters
-        ----------
-        task_id : int
-            Task identifier
-        """
-        # FIXME BvB 2023-05-04: this method is very similar to
-        # sync_task_queue_with_server, refactor!
-
-        # fetch (open) result for the node with the task_id
-        task_results = self.server_io.get_results(
-            include_task=True,
-            state='open',
-            task_id=task_id
-        )
-
-        # in the current setup, only a single result for a single node
-        # in a task exists.
-        for task_result in task_results:
-            if not self.__docker.is_running(task_result['id']):
-                self.queue.put(task_result)
-            else:
-                self.log.info(
-                    f"Not starting task {task_result['task']['id']} - "
-                    f"{task_result['task']['name']} as it is already running"
-                )
 
     def run_forever(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
