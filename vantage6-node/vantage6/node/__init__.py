@@ -101,7 +101,6 @@ class Node:
         check_docker_running()
 
         self.config = self.ctx.config
-        # specific debug configuration
         self.queue = queue.Queue()
         self._using_encryption = None
 

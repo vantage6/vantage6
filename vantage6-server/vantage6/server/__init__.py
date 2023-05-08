@@ -79,12 +79,14 @@ class ServerApp:
         """Create a vantage6-server application."""
 
         self.ctx = ctx
-        self.debug = self.ctx.config.get("debug", {})
+
         # make specific log settings (muting etc)
         self.configure_logging()
 
         # initialize, configure Flask
         self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
+        self.debug: dict = self.ctx.config.get('debug', {})
+        self.app.debug = self.debug.get('flask', False)
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
