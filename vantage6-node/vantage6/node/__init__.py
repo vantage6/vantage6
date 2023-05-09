@@ -127,10 +127,6 @@ class Node(object):
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
 
-        # Create a long-lasting websocket connection.
-        self.log.debug("Creating websocket connection with the server")
-        self.connect_to_socket()
-
         # setup docker isolated network manager
         internal_ = running_in_docker()
         if not internal_:
@@ -160,6 +156,10 @@ class Node(object):
             tasks_dir=self.__tasks_dir,
             client=self.server_io,
         )
+
+        # Create a long-lasting websocket connection.
+        self.log.debug("Creating websocket connection with the server")
+        self.connect_to_socket()
 
         # Connect the node to the isolated algorithm network *only* if we're
         # running in a docker container.
