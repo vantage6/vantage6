@@ -360,7 +360,9 @@ class Node(object):
         while '/tasks' not in self.socketIO.namespaces and \
                 retries < MAX_ATTEMPTS:
             retries += 1
+            self.log.debug('Waiting for /tasks namespace to connect...')
             time.sleep(1)
+        self.log.debug('Connected to /tasks namespace')
         # in case the namespace is still not connected, the socket notification
         # will not be sent to other nodes, but the task will still be processed
 
