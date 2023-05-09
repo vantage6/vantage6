@@ -183,7 +183,7 @@ jobs:
 
       - # we only release a new base image if it is a major or minor release
         name: Build Docker base image
-        if: ${{ env.patch == 0 && env.stage == '' }}
+        if: ${{ env.patch == 0 }}
         run: make base-image TAG=${major}.${minor}
 
       - # build the actual infrastructure images
