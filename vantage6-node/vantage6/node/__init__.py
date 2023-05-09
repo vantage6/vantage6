@@ -246,12 +246,56 @@ class Node(object):
         assert self.server_io.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        tasks = self.server_io.get_results(state="open", include_task=True)
-        self.log.debug(tasks)
-        for task in tasks:
-            self.queue.put(task)
+        task_results = self.server_io.get_results(state="open",
+                                                  include_task=True)
+        self.log.debug(task_results)
 
-        self.log.info(f"received {self.queue._qsize()} tasks")
+        # add the tasks to the queue
+        self.__add_tasks_to_queue(task_results)
+        self.log.info(f"Received {self.queue._qsize()} tasks")
+
+    def get_task_and_add_to_queue(self, task_id: int) -> None:
+        """
+        Fetches (open) task with task_id from the server. The `task_id` is
+        delivered by the websocket-connection.
+
+        Parameters
+        ----------
+        task_id : int
+            Task identifier
+        """
+        # fetch (open) result for the node with the task_id
+        task_results = self.server_io.get_results(
+            include_task=True,
+            state='open',
+            task_id=task_id
+        )
+
+        # add the tasks to the queue
+        self.__add_tasks_to_queue(task_results)
+
+    def __add_tasks_to_queue(self, task_results: list[dict]) -> None:
+        """
+        Add a task to the queue.
+
+        Parameters
+        ----------
+        taskresult : list[dict]
+            A list of dictionaries with information required to run the
+            algorithm
+        """
+        for task_result in task_results:
+            try:
+                if not self.__docker.is_running(task_result['id']):
+                    self.queue.put(task_result)
+                else:
+                    self.log.info(
+                        f"Not starting task {task_result['task']['id']} - "
+                        f"{task_result['task']['name']} as it is already "
+                        "running"
+                    )
+            except Exception:
+                self.log.exception("Error while syncing task queue")
 
     def __start_task(self, taskresult: dict) -> None:
         """
@@ -308,6 +352,20 @@ class Node(object):
         self.server_io.patch_results(
             id=taskresult['id'], result=update
         )
+
+        # ensure that the /tasks namespace is connected. This may take a while
+        # (usually < 5s) when the socket just (re)connected
+        MAX_ATTEMPTS = 30
+        retries = 0
+        while '/tasks' not in self.socketIO.namespaces and \
+                retries < MAX_ATTEMPTS:
+            retries += 1
+            self.log.debug('Waiting for /tasks namespace to connect...')
+            time.sleep(1)
+        self.log.debug('Connected to /tasks namespace')
+        # in case the namespace is still not connected, the socket notification
+        # will not be sent to other nodes, but the task will still be processed
+
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
             'algorithm_status_change',
@@ -818,28 +876,6 @@ class Node(object):
             # Wait before sending next ping
             time.sleep(PING_INTERVAL_SECONDS)
 
-    def get_task_and_add_to_queue(self, task_id: int) -> None:
-        """
-        Fetches (open) task with task_id from the server. The `task_id` is
-        delivered by the websocket-connection.
-
-        Parameters
-        ----------
-        task_id : int
-            Task identifier
-        """
-        # fetch (open) result for the node with the task_id
-        tasks = self.server_io.get_results(
-            include_task=True,
-            state='open',
-            task_id=task_id
-        )
-
-        # in the current setup, only a single result for a single node
-        # in a task exists.
-        for task in tasks:
-            self.queue.put(task)
-
     def run_forever(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
         kill_listener = ContainerKillListener()
@@ -851,7 +887,7 @@ class Node(object):
 
                 while not kill_listener.kill_now:
                     try:
-                        task = self.queue.get(timeout=1)
+                        taskresult = self.queue.get(timeout=1)
                         # if no item is returned, the Empty exception is
                         # triggered, thus break statement is not reached
                         break
@@ -867,7 +903,7 @@ class Node(object):
 
                 # if task comes available, attempt to execute it
                 try:
-                    self.__start_task(task)
+                    self.__start_task(taskresult)
                 except Exception as e:
                     self.log.exception(e)
 

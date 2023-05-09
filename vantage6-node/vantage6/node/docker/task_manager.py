@@ -91,7 +91,7 @@ class DockerTaskManager(DockerBaseManager):
             "node": node_name,
             "result_id": str(result_id)
         }
-        self.helper_labels = self.labels
+        self.helper_labels = self.labels.copy()
         self.helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
 
         # FIXME: these values should be retrieved from DockerNodeContext
