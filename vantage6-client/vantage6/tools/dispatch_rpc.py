@@ -1,24 +1,17 @@
-import os
 import importlib
-import jwt
 
 from types import ModuleType
 from typing import Any
 
-from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.tools.util import info, warn, error
 
 
-def dispatch_rpc(
-    data: Any, input_data: dict, module: ModuleType, token: str,
-) -> Any:
+def dispatch_rpc(input_data: dict, module: ModuleType) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
     Parameters
     ----------
-    data : Any
-        The data that is passed to the algorithm.
     input_data : dict
         The input data that is passed to the algorithm. This should at least
         contain the key 'method' which is the name of the method that should be
@@ -26,9 +19,6 @@ def dispatch_rpc(
         container is a master container. Other keys depend on the algorithm.
     module : ModuleType
         The module that contains the algorithm.
-    token : str
-        The JWT token that is used to authenticate from the algorithm container
-        to the server.
 
     Returns
     -------
@@ -44,37 +34,13 @@ def dispatch_rpc(
         exit(1)
 
     # in case of a master container, we have to do a little extra
-    master = input_data.get("master")
-    if master:
-        info("Running a master-container")
-        # read env
-        host = os.environ["HOST"]
-        port = os.environ["PORT"]
-        api_path = os.environ["API_PATH"]
-
-        # init Docker Client
-        client = AlgorithmClient(token=token, host=host, port=port,
-                                 path=api_path)
-
-        # read JWT token, to log te collaboration id. The
-        # ContainerClient automatically sets the collaboration_id
-        id_ = jwt.decode(
-            token, options={"verify_signature": False}
-        )['sub']['collaboration_id']
-
-        info(f"Working with collaboration_id <{id_}>")
-
-        method_name = input_data["method"]
-
-    else:
-        info("Running a regular container")
-        method_name = f"RPC_{input_data['method']}"
+    method_name = input_data["method"]
 
     # attempt to load the method
     try:
         method = getattr(lib, method_name)
     except AttributeError:
-        warn(f"method '{method_name}' not found!\n")
+        warn(f"Method '{method_name}' not found!\n")
         exit(1)
 
     # get the args and kwargs input for this function.
@@ -83,8 +49,7 @@ def dispatch_rpc(
 
     # try to run the method
     try:
-        result = method(client, data, *args, **kwargs) if master else \
-                 method(data, *args, **kwargs)
+        result = method(*args, **kwargs)
     except Exception as e:
         warn(f"Error encountered while calling {method_name}: {e}")
         exit(1)

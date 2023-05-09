@@ -46,198 +46,71 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
-def auto_wrapper(module: str, load_data: bool = True) -> None:
+def wrap_algorithm(module: str) -> None:
     """
     Wrap an algorithm module to provide input and output handling for the
-    vantage6 infrastructure. This function will automatically select the
-    correct wrapper based on the database type.
+    vantage6 infrastructure.
+
+    Data is received in the form of files, whose location should be
+    specified in the following environment variables:
+    - ``INPUT_FILE``: input arguments for the algorithm
+    - ``OUTPUT_FILE``: location where the results of the algorithm should
+        be stored
+    - ``TOKEN_FILE``: access token for the vantage6 server REST api
+    - ``DATABASE_URI``: either a database endpoint or path to a csv file.
+
+    The wrapper is able to parse a number of input file formats. The
+    available formats can be found in
+    `vantage6.tools.data_format.DataFormat`. When the input is not pickle
+    (legacy), the format should be specified in the first bytes of the
+    input file, followed by a '.'.
+
+    It is also possible to specify the desired output format. This is done
+    by including the parameter 'output_format' in the input parameters.
+    Again, the list of possible output formats can be found in
+    `vantage6.tools.data_format.DataFormat`.
+
+    It is still possible that output serialization will fail even if the
+    specified format is listed in the DataFormat enum. Algorithms can in
+    principle return any python object, but not every serialization format
+    will support arbitrary python objects. When dealing with unsupported
+    algorithm output, the user should use 'pickle' as output format, which
+    is the default.
+
+    The other serialization formats support the following algorithm output:
+    - built-in primitives (int, float, str, etc.)
+    - built-in collections (list, dict, tuple, etc.)
+    - pandas DataFrames
 
     Parameters
     ----------
     module : str
         Python module name of the algorithm to wrap.
     load_data : bool, optional
-        Wether to load the data or not, by default True
-    """
-
-    # Get the database label from the environment variable, this variable is
-    # set by the client/user/researcher.
-    try:
-        label = os.environ["USER_REQUESTED_DATABASE_LABEL"]
-    except KeyError:
-        error("No database label found, are you using an outdated node?")
-        return
-
-    # Get the database type from the environment variable, this variable is
-    # set by the vantage6 node based on its configuration file.
-    database_type = os.environ.get(f"{label.upper()}_DATABASE_TYPE", "csv")\
-        .lower()
-
-    # Create the correct wrapper based on the database type, note that the
-    # multi database wrapper is not available.
-    if database_type == "csv":
-        wrapper = CSVWrapper()
-    if database_type == "excel":
-        wrapper = ExcelWrapper()
-    elif database_type == "sparql":
-        wrapper = SparqlDockerWrapper()
-    elif database_type == "parquet":
-        wrapper = ParquetWrapper()
-    elif database_type == "sql":
-        wrapper = SQLWrapper()
-    elif database_type == "omop":
-        wrapper = OMOPWrapper()
-    else:
-        error(f"Unknown database type: {database_type}")
-        return
-
-    # Execute the algorithm with the correct data wrapper
-    wrapper.wrap_algorithm(module, load_data)
-
-
-def docker_wrapper(module: str, load_data: bool = True) -> None:
-    """
-    Specific wrapper for CSV only data sources. Use the ``auto_wrapper``
-    to automatically select the correct wrapper based on the database type.
-
-    Parameters
-    ----------
-    module : str
-        Module name of the algorithm package.
-    load_data : bool, optional
         Whether to load the data into a pandas DataFrame or not, by default
         True
     """
-    wrapper = DockerWrapper()
-    wrapper.wrap_algorithm(module, load_data)
+    info(f"wrapper for {module}")
 
+    # read input from the mounted input file.
+    input_file = os.environ["INPUT_FILE"]
+    info(f"Reading input file {input_file}")
+    input_data = load_input(input_file)
 
-def sparql_wrapper(module: str) -> None:
-    """
-    Specific wrapper for SPARQL only data sources. Use the ``auto_wrapper``
-    to automatically select the correct wrapper based on the database type.
+    # make the actual call to the method/function
+    info("Dispatching ...")
+    output = dispatch_rpc(input_data, module)
 
-    Parameters
-    ----------
-    module : str
-        Module name of the algorithm package.
-    """
-    wrapper = SparqlDockerWrapper()
-    wrapper.wrap_algorithm(module)
+    # write output from the method to mounted output file. Which will be
+    # transferred back to the server by the node-instance.
+    output_file = os.environ["OUTPUT_FILE"]
+    info(f"Writing output to {output_file}")
 
-
-def parquet_wrapper(module: str) -> None:
-    """
-    Specific wrapper for Parquet only data sources. Use the ``auto_wrapper``
-    to automatically select the correct wrapper based on the database type.
-
-    Parameters
-    ----------
-    module : str
-        Module name of the algorithm package.
-    """
-    wrapper = ParquetWrapper()
-    wrapper.wrap_algorithm(module)
-
-
-def multidb_wrapper(module: str) -> None:
-    """
-    Specific wrapper for multiple data sources.
-
-    Parameters
-    ----------
-    module : str
-        Module name of the algorithm package.
-    """
-    wrapper = MultiDBWrapper()
-    wrapper.wrap_algorithm(module)
+    output_format = input_data.get('output_format', None)
+    write_output(output_format, output, output_file)
 
 
 class WrapperBase(ABC):
-
-    def wrap_algorithm(self, module: str, load_data: bool = True) -> None:
-        """
-        Wrap an algorithm module to provide input and output handling for the
-        vantage6 infrastructure.
-
-        Data is received in the form of files, whose location should be
-        specified in the following environment variables:
-        - ``INPUT_FILE``: input arguments for the algorithm
-        - ``OUTPUT_FILE``: location where the results of the algorithm should
-          be stored
-        - ``TOKEN_FILE``: access token for the vantage6 server REST api
-        - ``DATABASE_URI``: either a database endpoint or path to a csv file.
-
-        The wrapper is able to parse a number of input file formats. The
-        available formats can be found in
-        `vantage6.tools.data_format.DataFormat`. When the input is not pickle
-        (legacy), the format should be specified in the first bytes of the
-        input file, followed by a '.'.
-
-        It is also possible to specify the desired output format. This is done
-        by including the parameter 'output_format' in the input parameters.
-        Again, the list of possible output formats can be found in
-        `vantage6.tools.data_format.DataFormat`.
-
-        It is still possible that output serialization will fail even if the
-        specified format is listed in the DataFormat enum. Algorithms can in
-        principle return any python object, but not every serialization format
-        will support arbitrary python objects. When dealing with unsupported
-        algorithm output, the user should use 'pickle' as output format, which
-        is the default.
-
-        The other serialization formats support the following algorithm output:
-        - built-in primitives (int, float, str, etc.)
-        - built-in collections (list, dict, tuple, etc.)
-        - pandas DataFrames
-
-        Parameters
-        ----------
-        module : str
-            Python module name of the algorithm to wrap.
-        load_data : bool, optional
-            Whether to load the data into a pandas DataFrame or not, by default
-            True
-        """
-        info(f"wrapper for {module}")
-
-        # read input from the mounted input file.
-        input_file = os.environ["INPUT_FILE"]
-        info(f"Reading input file {input_file}")
-
-        input_data = load_input(input_file)
-
-        # all containers receive a token, however this is usually only
-        # used by the master method. But can be used by regular containers also
-        # for example to find out the node_id.
-        token_file = os.environ["TOKEN_FILE"]
-        info(f"Reading token file '{token_file}'")
-        with open(token_file) as fp:
-            token = fp.read().strip()
-
-        # TODO in v4+, we should work with multiple databases instead of this
-        # default one
-        label = os.environ["USER_REQUESTED_DATABASE_LABEL"]
-        database_uri = os.environ[f"{label.upper()}_DATABASE_URI"]
-        info(f"Using '{database_uri}' as database")
-
-        if load_data:
-            data = self.load_data(database_uri, input_data)
-        else:
-            data = None
-
-        # make the actual call to the method/function
-        info("Dispatching ...")
-        output = dispatch_rpc(data, input_data, module, token)
-
-        # write output from the method to mounted output file. Which will be
-        # transferred back to the server by the node-instance.
-        output_file = os.environ["OUTPUT_FILE"]
-        info(f"Writing output to {output_file}")
-
-        output_format = input_data.get('output_format', None)
-        write_output(output_format, output, output_file)
-
     @staticmethod
     @abstractmethod
     def load_data(database_uri: str, input_data: dict):
