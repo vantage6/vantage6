@@ -106,7 +106,7 @@ class ConfigurationManager(object):
         Raises
         ------
         AssertionError
-            If the environment is not valid.
+            If the configuration is not valid.
         """
         configuration = self.conf_class(config)
         if configuration.is_valid:
