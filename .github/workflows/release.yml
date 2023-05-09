@@ -47,8 +47,7 @@ jobs:
          # get the branch on which the tag is based
          raw=$(git branch -r --contains ${{ github.ref }})
          # delete the name of the branch up to and including 'origin/'
-         branch=${echo $raw | sed 's/.*origin\///'}
-         echo $branch
+         branch=$(echo $raw | sed 's/.*origin\///')
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
