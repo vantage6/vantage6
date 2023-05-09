@@ -100,7 +100,7 @@ def cli_node_list() -> None:
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
-            f"{status:25} System "
+            f"{status:25}System "
         )
 
     # user folders
@@ -111,7 +111,7 @@ def cli_node_list() -> None:
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
-            f"{status:25} User   "
+            f"{status:25}User   "
         )
 
     click.echo("-"*53)

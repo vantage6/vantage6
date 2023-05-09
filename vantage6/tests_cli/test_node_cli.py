@@ -80,8 +80,8 @@ class NodeCLITest(unittest.TestCase):
             result.output,
             "\nName                     Status          System/User\n"
             "-----------------------------------------------------\n"
-            "iknl                     Offline          System \n"
-            "iknl                     Online           User   \n"
+            "iknl                     Offline         System \n"
+            "iknl                     Online          User   \n"
             "-----------------------------------------------------\n"
         )
 
