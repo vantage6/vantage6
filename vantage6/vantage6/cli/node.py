@@ -114,7 +114,7 @@ def cli_node_list() -> None:
             f"{status:25} User   "
         )
 
-    click.echo("-"*85)
+    click.echo("-"*53)
     if len(f1)+len(f2):
         warning(
              f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
