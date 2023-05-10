@@ -148,11 +148,11 @@ def run_docker_wrapper_with_echo_db(input_file, tmp_path):
     return output_file
 
 
-@patch('vantage6.tools.docker_wrapper.dispatch_rpc')
+@patch('vantage6.tools.wrap._run_algorithm_method')
 @patch('vantage6.tools.docker_wrapper.os')
 @patch('vantage6.tools.docker_wrapper.SPARQLWrapper')
 def test_sparql_docker_wrapper_passes_dataframe(
-    SPARQLWrapper: MagicMock, os: MagicMock, dispatch_rpc: MagicMock,
+    SPARQLWrapper: MagicMock, os: MagicMock, _run_algorithm_method: MagicMock,
     tmp_path: Path
 ):
     input_file = tmp_path / 'input_file.pkl'
@@ -174,13 +174,13 @@ def test_sparql_docker_wrapper_passes_dataframe(
     with token_file.open('w') as f:
         f.write(TOKEN)
 
-    dispatch_rpc.return_value = pd.DataFrame()
+    _run_algorithm_method.return_value = pd.DataFrame()
     SPARQLWrapper.return_value.query.return_value.convert.return_value = \
         DATA.encode()
 
     wrapper.sparql_wrapper(MODULE_NAME)
 
-    dispatch_rpc.assert_called_once()
+    _run_algorithm_method.assert_called_once()
 
     target_df = pd.DataFrame([[1, 2]], columns=['column1', 'column2'])
     pd.testing.assert_frame_equal(target_df, dispatch_rpc.call_args[0][0])

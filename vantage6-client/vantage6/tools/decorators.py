@@ -1,15 +1,12 @@
 import os
 
 from vantage6.client.algorithm_client import AlgorithmClient
-from vantage6.tools.wrapper import (
-    load_input, CSVWrapper, ExcelWrapper, SparqlDockerWrapper, ParquetWrapper,
+from vantage6.tools.wrappers import (
+    CSVWrapper, ExcelWrapper, SparqlDockerWrapper, ParquetWrapper,
     SQLWrapper, OMOPWrapper
 )
+from vantage6.tools.wrap import load_input
 from vantage6.tools.util import info, error
-
-# TODO clean up dispatch_rpc and wrapper functions with what now happens inside
-# the decorators
-
 
 def algorithm_client(func: callable) -> callable:
     """
