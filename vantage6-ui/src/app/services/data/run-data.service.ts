@@ -80,7 +80,8 @@ export class RunDataService extends BaseDataService {
     if (data.status === TaskStatus.COMPLETED) {
       // TODO improve this code: now we wait for 5 seconds to retrieve results
       // when we get a socket update says result is finished, so that we are
-      // 'sure' the results are updated in the database
+      // 'sure' the results are updated in the
+      // TODO add collection of the result here -> that is not properly done for v4
       setTimeout(() => {
         this.get_base(
           data.run_id,

@@ -33,7 +33,7 @@ export class TaskViewComponent
     protected taskApiService: TaskApiService,
     protected taskDataService: TaskDataService,
     protected modalService: ModalService,
-    private RunDataService: RunDataService,
+    private runDataService: RunDataService,
     private orgDataService: OrgDataService,
     private http: HttpClient
   ) {
@@ -47,7 +47,7 @@ export class TaskViewComponent
   }
 
   async setAlgorithmRuns(): Promise<void> {
-    (await this.RunDataService.get_by_task_id(this.task.id, true)).subscribe(
+    (await this.runDataService.get_by_task_id(this.task.id, true)).subscribe(
       (runs) => {
         // TODO the check below shouldn't be necessary but is added because
         // when switching back and forth between task pages 1, then 2, then 1,

@@ -162,7 +162,8 @@ export abstract class BaseDataService {
   protected async list_base(
     convertJsonFunc: Function,
     pagination: Pagination,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    additional_params: any = {}
   ): Promise<Observable<Resource[]>> {
     let page_id = getPageId(pagination);
     if (
@@ -174,7 +175,8 @@ export abstract class BaseDataService {
       const resources = await this.apiService.getResources(
         convertJsonFunc,
         pagination,
-        additional_resources
+        additional_resources,
+        additional_params
       );
       if (pagination.all_pages) {
         this.has_queried_list = true;
