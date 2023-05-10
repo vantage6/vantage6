@@ -8,6 +8,7 @@ from vantage6.tools.wrappers import (
 from vantage6.tools.wrap import load_input
 from vantage6.tools.util import info, error
 
+
 def algorithm_client(func: callable) -> callable:
     """
     Decorator that adds an algorithm client object to a function
