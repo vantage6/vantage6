@@ -82,7 +82,7 @@ def data(func: callable) -> callable:
         # multi database wrapper is not available.
         if database_type == "csv":
             wrapper = CSVWrapper()
-        if database_type == "excel":
+        elif database_type == "excel":
             wrapper = ExcelWrapper()
         elif database_type == "sparql":
             wrapper = SparqlDockerWrapper()

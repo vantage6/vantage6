@@ -2,7 +2,7 @@ import jwt
 import pickle
 
 from vantage6.client import ClientBase
-from vantage6.client import base64s_to_bytes, bytes_to_base64s
+from vantage6.common import base64s_to_bytes, bytes_to_base64s
 
 
 class AlgorithmClient(ClientBase):
