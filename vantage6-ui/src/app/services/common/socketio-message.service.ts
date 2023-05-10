@@ -12,6 +12,7 @@ import { Sentiment, TaskStatus } from 'src/app/shared/enum';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { TaskDataService } from '../data/task-data.service';
 import { take } from 'rxjs/operators';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -56,12 +57,14 @@ export class SocketioMessageService {
   }
 
   async setupResources() {
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
-    (await this.collabDataService.list()).subscribe((collabs) => {
-      this.collaborations = collabs;
-    });
+    (await this.collabDataService.list(false, allPages())).subscribe(
+      (collabs) => {
+        this.collaborations = collabs;
+      }
+    );
   }
 
   getSocketMessages() {

@@ -6,6 +6,11 @@ import { ConvertJsonService } from 'src/app/services/common/convert-json.service
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Node, NodeWithOrg } from 'src/app/interfaces/node';
 import { SocketioConnectService } from '../common/socketio-connect.service';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -33,31 +38,39 @@ export class NodeDataService extends BaseDataService {
     )) as Observable<Node>;
   }
 
-  async list(force_refresh: boolean = false): Promise<Observable<Node[]>> {
+  async list(
+    force_refresh: boolean = false,
+    pagination: Pagination = defaultFirstPage()
+  ): Promise<Observable<Node[]>> {
     return (await super.list_base(
       this.convertJsonService.getNode,
+      pagination,
       force_refresh
     )) as Observable<Node[]>;
   }
 
   async org_list(
     organization_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<Node[]>> {
     return (await this.org_list_base(
       organization_id,
       this.convertJsonService.getNode,
+      pagination,
       force_refresh
     )) as Observable<Node[]>;
   }
 
   async collab_list(
     collaboration_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<Node[]>> {
     return (await super.collab_list_base(
       collaboration_id,
       this.convertJsonService.getNode,
+      pagination,
       force_refresh
     )) as Observable<Node[]>;
   }

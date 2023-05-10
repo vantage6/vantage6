@@ -15,6 +15,11 @@ import { OpsType, ResType } from 'src/app/shared/enum';
 import { NodeDataService } from './node-data.service';
 import { OrgDataService } from './org-data.service';
 import { Resource } from 'src/app/shared/types';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -47,11 +52,13 @@ export class CollabDataService extends BaseDataService {
   }
 
   async getDependentResources() {
-    (await this.nodeDataService.list()).subscribe((nodes) => {
+    // TODO don't get all nodes and organizations, but only those that are
+    // needed for the current list of collaborations
+    (await this.nodeDataService.list(false, allPages())).subscribe((nodes) => {
       this.nodes = nodes;
       this.updateNodes();
     });
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
       this.updateOrganizations();
     });
@@ -101,10 +108,12 @@ export class CollabDataService extends BaseDataService {
   }
 
   async list(
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = defaultFirstPage()
   ): Promise<Observable<Collaboration[]>> {
     let collaborations = (await super.list_base(
       this.convertJsonService.getCollaboration,
+      pagination,
       force_refresh
     )) as Observable<Collaboration[]>;
     return collaborations;
@@ -112,7 +121,8 @@ export class CollabDataService extends BaseDataService {
 
   async org_list(
     organization_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<Collaboration[]>> {
     // TODO when is following if statement necessary?
     if (
@@ -127,6 +137,7 @@ export class CollabDataService extends BaseDataService {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getCollaboration,
+      pagination,
       force_refresh
     )) as Observable<Collaboration[]>;
   }

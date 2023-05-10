@@ -11,6 +11,7 @@ import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { SocketioConnectService } from 'src/app/services/common/socketio-connect.service';
+import { allPages } from 'src/app/interfaces/utils';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -38,7 +39,7 @@ export class UserPermissionService {
 
   async setup(): Promise<void> {
     // request rules and roles
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
+    (await this.ruleDataService.list(allPages())).subscribe((rules: Rule[]) => {
       this.all_rules = rules;
     });
 

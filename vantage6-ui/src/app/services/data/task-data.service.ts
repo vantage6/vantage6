@@ -9,6 +9,11 @@ import {
   removeValueFromArray,
 } from 'src/app/shared/utils';
 import { SocketioConnectService } from 'src/app/services/common/socketio-connect.service';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -43,9 +48,13 @@ export class TaskDataService extends BaseDataService {
     )) as Observable<Task>;
   }
 
-  async list(force_refresh: boolean = false): Promise<Observable<Task[]>> {
+  async list(
+    force_refresh: boolean = false,
+    pagination: Pagination = defaultFirstPage()
+  ): Promise<Observable<Task[]>> {
     return (await super.list_base(
       this.convertJsonService.getTask,
+      pagination,
       force_refresh,
       // only show top-level tasks (i.e. not subtasks) created by user
       { is_user_created: 1 }
@@ -54,22 +63,26 @@ export class TaskDataService extends BaseDataService {
 
   async org_list(
     organization_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<Task[]>> {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getTask,
+      pagination,
       force_refresh
     )) as Observable<Task[]>;
   }
 
   async collab_list(
     collaboration_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<Task[]>> {
     return (await super.collab_list_base(
       collaboration_id,
       this.convertJsonService.getTask,
+      pagination,
       force_refresh
     )) as Observable<Task[]>;
   }

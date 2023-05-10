@@ -28,6 +28,7 @@ import {
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
 import { ExitMode, OpsType, ResType, ScopeType } from 'src/app/shared/enum';
+import { allPages } from 'src/app/interfaces/utils';
 import { Run } from 'src/app/interfaces/run';
 
 @Component({
@@ -85,7 +86,8 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    // TODO get only organizations that are part of collaborations with the logged-in user?
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
     (await this.collabDataService.org_list(this.logged_in_org_id)).subscribe(
@@ -104,7 +106,9 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
 
     // set previous tasks, so user can create tasks they have done before.
     // Only include task for the logged-in user, and no subtasks
-    (await this.taskDataService.list()).subscribe((tasks) => {
+    // TODO create a function to get all tasks for a user, and without the
+    // subtasks, and use that here
+    (await this.taskDataService.list(false, allPages())).subscribe((tasks) => {
       tasks = filterArrayByProperty(
         tasks,
         'init_user_id',
