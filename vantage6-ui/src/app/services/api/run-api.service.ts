@@ -20,7 +20,9 @@ export class RunApiService extends BaseApiService {
   }
 
   get_by_task_id(task_id: number) {
-    return this.http.get(environment.api_url + '/task/' + task_id + '/run');
+    return this.http.get(environment.api_url + '/run', {
+      params: { task_id: task_id },
+    });
   }
 
   // TODO this function is only required when creating/updating resources, so
