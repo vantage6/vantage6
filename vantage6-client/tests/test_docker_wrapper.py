@@ -183,4 +183,5 @@ def test_sparql_docker_wrapper_passes_dataframe(
     _run_algorithm_method.assert_called_once()
 
     target_df = pd.DataFrame([[1, 2]], columns=['column1', 'column2'])
-    pd.testing.assert_frame_equal(target_df, dispatch_rpc.call_args[0][0])
+    pd.testing.assert_frame_equal(target_df,
+                                  _run_algorithm_method.call_args[0][0])
