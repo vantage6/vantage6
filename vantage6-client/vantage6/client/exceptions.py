@@ -1,3 +1,5 @@
 class DeserializationException(Exception):
-    """ Raised when result deserialization fails. """
+    """
+    Exception raised when deserialization of algorithm input or result fails.
+    """
     pass

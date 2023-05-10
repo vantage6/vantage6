@@ -6,6 +6,7 @@ from typing import Any
 from vantage6.tools.util import info, warn, error
 
 
+# TODO reorder these functions and rename them (or even the files)
 def dispatch_rpc(input_data: dict, module: ModuleType) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.

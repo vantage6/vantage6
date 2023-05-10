@@ -39,7 +39,9 @@ def algorithm_client(func: callable) -> callable:
 
         client = AlgorithmClient(token=token, host=host, port=port,
                                  path=api_path)
+        print(client)
         return func(client, *args, **kwargs)
+    return wrap_function
 
 # usage of the above is something like:
 # @algorithm_client
@@ -105,3 +107,4 @@ def data(func: callable) -> callable:
         data_ = wrapper.load_data(database_uri, input_data)
 
         return func(data_, *args, **kwargs)
+    return wrap_function
