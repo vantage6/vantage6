@@ -74,8 +74,10 @@
   </mat-table>
 
   <mat-paginator [pageSizeOptions]="[10, 5, 20]"
-                  showFirstLastButtons
-                  aria-label="Select page">
+    (page)="getPage($event)"
+    [length]="dataService.get_total_number_resources()"
+    showFirstLastButtons
+    aria-label="Select page">
   </mat-paginator>
 </div>
 

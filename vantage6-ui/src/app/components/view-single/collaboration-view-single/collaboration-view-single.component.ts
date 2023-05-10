@@ -17,6 +17,7 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { ResType } from 'src/app/shared/enum';
 import { BaseSingleViewComponent } from '../base-single-view/base-single-view.component';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-collaboration-view-single',
@@ -66,10 +67,12 @@ export class CollaborationViewSingleComponent
   }
 
   async setOrganizations(): Promise<void> {
-    // TODO use a - to-be-implemented - collab_list() function here
-    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-      this.organizations = orgs;
-    });
+    // TODO only get organizations that belong to this collab
+    (await this.orgDataService.list(false, allPages())).subscribe(
+      (orgs: Organization[]) => {
+        this.organizations = orgs;
+      }
+    );
   }
 
   async setNodes(): Promise<void> {

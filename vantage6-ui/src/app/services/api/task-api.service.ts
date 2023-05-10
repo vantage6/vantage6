@@ -4,7 +4,6 @@ import { BaseApiService } from './base-api.service';
 import { Task } from 'src/app/interfaces/task';
 import { HttpClient } from '@angular/common/http';
 import { ModalService } from '../common/modal.service';
-import { getIdsFromArray } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',

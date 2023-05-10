@@ -25,6 +25,7 @@ import {
   removeValueFromArray,
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-collaboration-edit',
@@ -71,10 +72,12 @@ export class CollaborationEditComponent
 
   async init(): Promise<void> {
     // first obtain organizations, which are required to get the collaboration
-    (await this.orgDataService.list()).subscribe((organizations) => {
-      this.all_organizations = organizations;
-      this.organizations_not_in_collab = deepcopy(organizations);
-    });
+    (await this.orgDataService.list(false, allPages())).subscribe(
+      (organizations) => {
+        this.all_organizations = organizations;
+        this.organizations_not_in_collab = deepcopy(organizations);
+      }
+    );
 
     this.readRoute();
   }

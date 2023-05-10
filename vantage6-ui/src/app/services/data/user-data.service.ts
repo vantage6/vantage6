@@ -9,6 +9,11 @@ import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 import { RoleDataService } from './role-data.service';
 import { RuleDataService } from './rule-data.service';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -27,10 +32,11 @@ export class UserDataService extends BaseDataService {
   }
 
   async getDependentResources(): Promise<Resource[][]> {
-    (await this.ruleDataService.list()).subscribe((rules) => {
+    // TODO is this required? It seems more data may be collected than is needed
+    (await this.ruleDataService.list(allPages())).subscribe((rules) => {
       this.rules = rules;
     });
-    (await this.roleDataService.list()).subscribe((roles) => {
+    (await this.roleDataService.list(false, allPages())).subscribe((roles) => {
       this.roles = roles;
     });
     return [this.roles, this.rules];
@@ -47,19 +53,25 @@ export class UserDataService extends BaseDataService {
     )) as Observable<User>;
   }
 
-  async list(force_refresh: boolean = false): Promise<Observable<User[]>> {
+  async list(
+    pagination: Pagination = defaultFirstPage(),
+    force_refresh: boolean = false
+  ): Promise<Observable<User[]>> {
     return (await super.list_base(
       this.convertJsonService.getUser,
+      pagination,
       force_refresh
     )) as Observable<User[]>;
   }
 
   async list_with_params(
     request_params: any = {},
-    save: boolean = true
+    save: boolean = true,
+    pagination: Pagination = allPages()
   ): Promise<User[]> {
     return (await super.list_with_params_base(
       this.convertJsonService.getUser,
+      pagination,
       request_params,
       save
     )) as User[];
@@ -67,11 +79,13 @@ export class UserDataService extends BaseDataService {
 
   async org_list(
     organization_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<User[]>> {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getUser,
+      pagination,
       force_refresh
     )) as Observable<User[]>;
   }

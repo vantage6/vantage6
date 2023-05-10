@@ -10,10 +10,10 @@ import { UserPermissionService } from 'src/app/auth/services/user-permission.ser
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UtilsService } from 'src/app/services/common/utils.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { Organization } from 'src/app/interfaces/organization';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-role-edit',
@@ -24,7 +24,6 @@ import { Organization } from 'src/app/interfaces/organization';
   ],
 })
 export class RoleEditComponent extends BaseEditComponent implements OnInit {
-  rules: Rule[] = [];
   mode: OpsType = OpsType.EDIT;
   role: Role = getEmptyRole();
   role_orig_name: string = '';
@@ -38,7 +37,6 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
     protected roleDataService: RoleDataService,
     protected modalService: ModalService,
     protected utilsService: UtilsService,
-    private ruleDataService: RuleDataService,
     private orgDataService: OrgDataService
   ) {
     super(
@@ -53,18 +51,17 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
   }
 
   async init(): Promise<void> {
-    // subscribe to rule data service to have all rules available
-    await this.setRules();
-
     // subscribe to id parameter in route to change edited role if required
     this.readRoute();
   }
 
   async setupCreate() {
     if (!this.organization_id) {
-      (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-        this.organizations = orgs;
-      });
+      (await this.orgDataService.list(false, allPages())).subscribe(
+        (orgs: Organization[]) => {
+          this.organizations = orgs;
+        }
+      );
     }
   }
 
@@ -74,12 +71,6 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
         this.role = role;
         this.role_orig_name = this.role.name;
       }
-    });
-  }
-
-  async setRules(): Promise<void> {
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
-      this.rules = rules;
     });
   }
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Rule, RuleGroup } from 'src/app/interfaces/rule';
+import { Pagination, allPages } from 'src/app/interfaces/utils';
 import { RuleApiService } from 'src/app/services//api/rule-api.service';
 import { ConvertJsonService } from 'src/app/services//common/convert-json.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
@@ -20,9 +21,13 @@ export class RuleDataService extends BaseDataService {
     super(apiService, convertJsonService);
   }
 
-  async list(force_refresh: boolean = false): Promise<Observable<Rule[]>> {
+  async list(
+    pagination: Pagination = allPages(),
+    force_refresh: boolean = false
+  ): Promise<Observable<Rule[]>> {
     return (await super.list_base(
       this.convertJsonService.getRule,
+      pagination,
       force_refresh
     )) as Observable<Rule[]>;
   }
