@@ -47,6 +47,7 @@ from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
+from vantage6.common.log import get_file_logger
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
@@ -60,6 +61,7 @@ from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.docker.ssh_tunnel import SSHTunnel
+from vantage6.node.docker.squid import Squid
 
 
 class VPNConnectMode(Enum):
@@ -151,6 +153,9 @@ class Node(object):
         # Create SSH tunnel according to the node configuration
         self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
 
+        # Create Squid proxy server
+        self.squid = self.setup_squid_proxy(isolated_network_mgr)
+
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
@@ -159,6 +164,7 @@ class Node(object):
             vpn_manager=self.vpn_manager,
             tasks_dir=self.__tasks_dir,
             client=self.server_io,
+            proxy=self.squid
         )
 
         # Connect the node to the isolated algorithm network *only* if we're
@@ -215,11 +221,18 @@ class Node(object):
         proxy_server.app.config["SERVER_IO"] = self.server_io
         proxy_server.server_url = self.server_io.base_path
 
+        # set up proxy server logging
+        log_level = getattr(logging, self.config["logging"]["level"].upper())
+        self.proxy_log = get_file_logger(
+            'proxy_server', self.ctx.proxy_log_file, log_level_file=log_level
+        )
+
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
-            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app)
+            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app,
+                                     log=self.proxy_log)
 
             try:
                 http_server.serve_forever()
@@ -577,6 +590,60 @@ class Node(object):
         else:
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
+
+    def setup_squid_proxy(self, isolated_network_mgr: NetworkManager) \
+            -> Squid:
+        """
+        Initiates a Squid proxy if configured in the config.yml
+
+        Expects the configuration in the following format:
+
+        ```yaml
+        whitelist:
+            domains:
+                - domain1
+                - domain2
+            ips:
+                - ip1
+                - ip2
+            ports:
+                - port1
+                - port2
+        ```
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Network manager for isolated network
+
+        Returns
+        -------
+        Squid
+            Squid proxy instance
+        """
+        if 'whitelist' not in self.config:
+            self.log.info("No squid proxy configured")
+            return
+
+        custom_squid_image = self.config.get('images', {}).get('squid') \
+            if 'images' in self.config else None
+
+        self.log.info("Setting up squid proxy")
+        config = self.config['whitelist']
+
+        volume = self.ctx.docker_squid_volume_name if \
+            self.ctx.running_in_docker else self.ctx.data_dir
+
+        try:
+            squid = Squid(isolated_network_mgr, config, self.ctx.name, volume,
+                          custom_squid_image)
+        except Exception as e:
+            self.log.critical("Squid proxy failed to initialize. "
+                              "Continuing without.")
+            self.log.debug(e, exc_info=True)
+            squid = None
+
+        return squid
 
     def setup_ssh_tunnels(self, isolated_network_mgr: NetworkManager) \
             -> list[SSHTunnel]:

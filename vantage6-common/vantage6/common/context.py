@@ -16,7 +16,9 @@ from vantage6.common._version import __version__
 
 
 class AppContext(metaclass=Singleton):
-
+    """
+    Base class from which to create Node and Server context classes.
+    """
     # FIXME: drop the prefix "INST_": a *class* is assigned.
     # FIXME: this does not need to be a class attribute, but ~~can~~_should_
     #        be set in __init__
@@ -50,6 +52,7 @@ class AppContext(metaclass=Singleton):
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
+        self.instance_type = instance_type
 
         # configuration environment, load a single configuration from
         # entire confiration file (which can contain multiple environments)
@@ -295,22 +298,33 @@ class AppContext(metaclass=Singleton):
         -------
         Path
             Path to the log file
+        """
+        return self.log_file_name(type_=self.instance_type)
+
+    def log_file_name(self, type_: str) -> Path:
+        """
+        Return a path to a log file for a given log file type
+
+        Parameters
+        ----------
+        type_: str
+            The type of log file to return.
+
+        Returns
+        -------
+        Path
+            The path to the log file.
 
         Raises
         ------
         AssertionError
-            If the configuration manager is not initialized
+            If the configuration manager is not initialized.
         """
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
+        file_ = (Path(self.config_manager.name) /
+                 f"{type_}_{self.environment}_{self.scope}.log")
 
-        # check if the configuration file contains a logging file setting
-        if self.config.get("logging"):
-            if self.config.get("logging").get("file"):
-                return self.log_dir / self.config.get("logging").get("file")
-
-        file_ = f"{self.config_manager.name}-{self.environment}"\
-                f"-{self.scope}.log"
         return self.log_dir / file_
 
     @property
@@ -513,6 +527,8 @@ class AppContext(metaclass=Singleton):
 
         Exits if the log file can't be created.
         """
+        # TODO BvB 2023-03-31: would be nice to refactor this with the other
+        # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
         level = getattr(logging, log_config["level"].upper())

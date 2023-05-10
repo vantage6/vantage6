@@ -64,8 +64,8 @@ def click_insert_context(func: callable) -> callable:
     @click.option('--system', 'system_folders', flag_value=True)
     @click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
     @wraps(func)
-    def func_with_context(name, config, environment, system_folders,
-                          *args, **kwargs):
+    def func_with_context(name: str, config: str, environment: str,
+                          system_folders: bool, *args, **kwargs) -> callable:
 
         # select configuration if none supplied
         if config:
