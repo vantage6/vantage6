@@ -4,6 +4,8 @@ Release notes
 3.8.7
 -----
 
+*10 May 2023*
+
 - **Bugfix**
   - Socket did connect before Docker was initialized, resulting in an exception
     at startup (`PR#644 <https://github.com/vantage6/vantage6/pull/644>`_)
@@ -11,7 +13,7 @@ Release notes
 3.8.6
 -----
 
-*9 May 2023 *
+*9 May 2023*
 
 - **Bugfix**
 
