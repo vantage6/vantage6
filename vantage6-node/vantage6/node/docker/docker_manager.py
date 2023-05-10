@@ -30,7 +30,8 @@ from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.server_io import NodeClient
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
-    PermanentAlgorithmStartFail
+    PermanentAlgorithmStartFail,
+    AlgorithmContainerNotFound
 )
 
 log = logging.getLogger(logger_name(__name__))
@@ -466,7 +467,21 @@ class DockerManager(DockerBaseManager):
         # this is blocking
         finished_tasks = []
         while (not finished_tasks) and (not self.failed_tasks):
-            finished_tasks = [t for t in self.active_tasks if t.is_finished()]
+            for task in self.active_tasks:
+
+                try:
+                    if task.is_finished():
+                        finished_tasks.append(task)
+                        self.active_tasks.remove(task)
+                        break
+                except AlgorithmContainerNotFound:
+                    self.log.exception(f'Failed to find container for '
+                                       f'result {task.result_id}')
+                    self.failed_tasks.append(task)
+                    self.active_tasks.remove(task)
+                    break
+
+            # sleep for a second before checking again
             time.sleep(1)
 
         if finished_tasks:
@@ -484,9 +499,6 @@ class DockerManager(DockerBaseManager):
             # Retrieve results from file
             results = finished_task.get_results()
 
-            # remove finished tasks from active task list
-            self.active_tasks.remove(finished_task)
-
             # remove the VPN ports of this run from the database
             self.client.request(
                 'port', params={'run_id': finished_task.run_id},
@@ -495,7 +507,7 @@ class DockerManager(DockerBaseManager):
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()
-            logs = 'Container failed to start'
+            logs = 'Container failed'
             results = b''
 
         return Result(
