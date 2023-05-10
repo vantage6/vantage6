@@ -1,15 +1,23 @@
 Release notes
 =============
 
+3.8.7
+-----
+
+- **Bugfix**
+  - Socket did connect before Docker was initialized, resulting in an exception
+    at startup (`PR#644 <https://github.com/vantage6/vantage6/pull/644>`_)
+
 3.8.6
 -----
 
 *9 May 2023 *
 
 - **Bugfix**
+
   - Fixed bug that resulted in broken algorithm networks when the socket
     connection was lost (`PR#640 <https://github.com/vantage6/vantage6/pull/640>`_,
-    `Issue#637 <https://github.com/vantage6/vantage6/issues/637>`_).
+    `Issue#637 <https://github.com/vantage6/vantage6/issues/637>`_)
 
 3.8.3 - 3.8.5
 -------------
