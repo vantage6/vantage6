@@ -209,6 +209,8 @@ class NodeContext(AppContext):
         super().__init__("node", instance_name, environment, system_folders,
                          config_file)
         self.log.info(f"vantage6 version '{__version__}'")
+        print(f"This is isntance name: {instance_name}")
+        print(f"This is environment: {environment}")
 
     @classmethod
     def from_external_config_file(cls, path: str, environment: str = N_ENV,

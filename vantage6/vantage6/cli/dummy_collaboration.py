@@ -8,14 +8,26 @@ import pandas as pd
 import uuid
 import click
 import questionary as q
+import subprocess
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
+
 from vantage6.common.globals import APPNAME
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.common.context import AppContext
 from vantage6.common import info, warning, error
+from vantage6.cli.context import ServerContext
+from vantage6.cli.globals import DEFAULT_SERVER_ENVIRONMENT
+from vantage6.cli.server import (
+    click_insert_context,
+    vserver_import,
+    vserver_start,
+    vserver_stop
+)
+
+from vantage6.cli.node import vnode_stop
 
 
 def generate_apikey() -> str:
@@ -266,38 +278,52 @@ def cli_dev() -> None:
     pass
 
 
-# TODO: import automatically, automatically run vserver-import, not through cli
-# command rather through a python function...
 @cli_dev.command(name="create-demo-network")
 @click.option('--num-configs', 'num_configs', type=int, default=3,
               help='generate N node-configuration files')
-@click.option('--server-url', 'server_url', type=str,
-              default='http://host.docker.internal', help='server url')
-@click.option('--server-port', 'server_port', default=5000, help='server port')
-@click.option('--server-name', 'server_name', default='default_server',
-              help='')
-def create_demo_network(num_configs: int, server_url: str,
-                        server_port: int, server_name: str) -> dict:
-    """Click command to generate `num_configs` node configuration files as well
-    as server configuration instance.
+@click_insert_context
+def create_demo_network(ctx: ServerContext, num_configs: int,
+                        server_url: str = 'http://host.docker.internal',
+                        server_port: int = 5000,
+                        server_name: str = 'default_server',
+                        drop_all: bool = False, image: str = None,
+                        mount_src: str = '', keep: bool = False) -> dict:
+    """Synthesizes a demo network. Creates server instance as well as its
+    import configuration file. Server name is set by default to
+    'default_server'. Generates `N` node configurations, but by default this is
+    set to 3. Then runs a Batch import of organizations/collaborations/users
+    and tasks.
 
     Parameters
     ----------
+    ctx : ServerContext
+        Server context object
     num_configs : int
-        Number of node configuration files to generate.
-    server_url : str
-        Specify server url, for instance localhost in which case revert to
-        default which is 'http://host.docker.internal'.
-    server_port : int
-        Port to access, default reverts to '5000'
-    server_name : str
-        Server name.
+        Number of node configurations to spawn, by default 3.
+    server_url : _type_, fixed
+        Specify server url, for instance localhost in which case revert to,
+        by default 'http://host.docker.internal'
+    server_port : int, fixed
+        Port to access, by default 5000
+    server_name : str, fixed
+        Name of server instance, by default 'default_server'
+    drop_all : bool, fixed
+        Wether to drop all data before importing, by default False
+    image : str, fixed
+        Node Docker image to use which contains the import script,
+        by default None
+    mount_src : str, fixed
+        Vantage6 source location, this will overwrite the source code in the
+        container. Useful for debugging/development., by default ''
+    keep : bool, fixed
+        Wether to keep the image after finishing/crashing. Useful for
+        debugging., by default False
 
     Returns
     -------
     dict
-        dictionairy with `num_configs` node configurations and single server
-        configuration instance.
+        Dictionairy containing the locations of the node configurations,
+        server import configuration and server configuration (YAML).
     """
     try:
         demo = demo_network(num_configs, server_url, server_port, server_name)
@@ -318,10 +344,90 @@ def create_demo_network(num_configs: int, server_url: str,
                             new_server_name)
         info(f"Created {Fore.GREEN}{demo[0]} node configuration(s), \
              attaching them to {Fore.GREEN}{server_name}.")
-    else:
-        exit(1)
-    return {'node_configs': demo[0],
-            'server_import_config': demo[1],
-            'server_config': demo[2]}
+    node_config = demo[0]
+    server_import_config = demo[1]
+    server_config = demo[2]
+    vserver_import(ctx, server_import_config, drop_all, image, mount_src, keep)
+    return {
+        "node_configs": node_config,
+        "server_import_config": server_import_config,
+        "server_config": server_config
+    }
 
-# TODO: start demo network click command
+
+@cli_dev.command(name="start-demo-network")
+@click_insert_context
+def start_demo_network(ctx: ServerContext, ip: str = None, port: int = None,
+                       image: str = None, rabbitmq_image: str = None,
+                       keep: bool = False, mount_src: str = '',
+                       attach: bool = False) -> None:
+    """Starts currently running demo-network, it once run as
+    `start-demo-network`, it will display a list of available configurations
+    to run, select the correct option, if using default settings it should be
+    'default_server'.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context import
+    ip : str, fixed
+        ip interface to listen on, by default None
+    port : int, fixed
+        port to listen on, by default None
+    image : str, fixed
+        Server Docker image to use, by default None
+    rabbitmq_image : str, fixed
+        RabbitMQ docker image to use, by default None
+    keep : bool, fixed
+        Wether to keep the image after the server has finished, useful for
+        debugging, by default False
+    mount_src : str, fixed
+        Path to the vantage6 package source, this overrides the source code in
+        the container. This is useful when developing and testing the server.
+        , by default ''
+    attach : bool, fixed
+        Wether to attach the server logs to the console after starting the
+        server., by default False
+    """
+    handle_ = 'demo_'
+    app_context = AppContext.available_configurations('node', False)[0]
+    node_names = [x.name for x in app_context if handle_ in x.name]
+    configs = [AppContext.instance_folders('node', name, False)['config'] for
+               name in node_names]
+    len_configs = len(configs)
+    vserver_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src, attach
+                  )
+    for index in range(len_configs):
+        name = node_names[index]
+        subprocess.run(["vnode", "start", "--name", name], shell=True)
+
+
+@cli_dev.command(name="stop-demo-network")
+@click.option("-n", "--name", default="default_server",
+              help="Configuration name")
+def stop_demo_network(name: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
+                      system_folders: bool = True,
+                      all_servers: bool = False) -> None:
+    """Stops currently running demo-network. Defaults names for the server is
+    'default_server', if run as `vdev stop-demo-network`. Defaults to stopping
+    all the nodes spawned with the 'demo_' handle.
+
+    Parameters
+    ----------
+    name : str
+        Name of the spawned server executed from `vdev start-demo-network`
+    environment : str, fixed
+        DTAP environment to use, by default DEFAULT_SERVER_ENVIRONMENT
+    system_folders : bool, fixed
+        Wether to use system folders or not, by default True
+    all_servers : bool, fixed
+        Wether to stop all servers or not, by default False
+    """
+    vserver_stop(name=name, environment=environment,
+                 system_folders=system_folders, all_servers=all_servers)
+    app_context = AppContext.available_configurations('node', False)[0]
+    handle_ = 'demo_'
+    node_names = [x.name for x in app_context if handle_ in x.name]
+    for name in node_names:
+        vnode_stop(name, system_folders=False, all_nodes=False,
+                   force=False)
