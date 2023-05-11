@@ -81,10 +81,18 @@ class ServerContext(AppContext):
         uri = os.environ.get("VANTAGE6_DB_URI") or self.config['uri']
         url = make_url(uri)
 
-        if (url.host is None) and (not os.path.isabs(url.database)):
-            # We're dealing with a relative path here.
-            url.database = str(self.data_dir / url.database)
-            uri = str(url)
+        if url.host is None and not os.path.isabs(url.database):
+            # We're dealing with a relative path here of a local database, when
+            # we're running the server outside of docker. Therefore we need to
+            # prepend the data directory to the database name, but after the
+            # driver name (e.g. sqlite:////db.sqlite ->
+            # sqlite:////data_dir>/db.sqlite)
+
+            # find index of database name
+            idx_db_name = str(url).find(url.database)
+
+            # add the datadir to the right location in the database uri
+            return str(url)[:idx_db_name] + str(self.data_dir / url.database)
 
         return uri
 
