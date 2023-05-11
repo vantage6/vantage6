@@ -427,7 +427,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(f"Create a new server using '{Fore.GREEN}vserver new "
-             "--user{Style.RESET_ALL}' instead!")
+             f"--user{Style.RESET_ALL}' instead!")
         exit(1)
 
     # create config in ctx location
