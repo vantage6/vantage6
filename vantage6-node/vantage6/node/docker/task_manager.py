@@ -439,9 +439,9 @@ class DockerTaskManager(DockerBaseManager):
             # the DATABASE_LABEL environment variable
             self.log.warning("A user specified a database that does not "
                              "exist. Available databases are: "
-                             f"{self.databases.keys()}. This is likely to "
-                             "result in an algorithm crash.")
-            self.debug(f"User specified database: {database}")
+                             f"{', '.join(list(self.databases.keys()))}. This "
+                             "is likely to result in an algorithm crash.")
+            self.log.debug(f"User specified database: {database}")
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
