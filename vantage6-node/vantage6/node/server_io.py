@@ -117,7 +117,7 @@ class NodeClient(ClientBase):
             task_id automatically.
         """
         return super().get_results(
-            id=id,
+            id_=id,
             state=state,
             include_task=include_task,
             task_id=task_id,
