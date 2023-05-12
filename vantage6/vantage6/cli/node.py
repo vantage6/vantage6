@@ -517,76 +517,7 @@ def cli_node_clean() -> None:
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
-    """
-    Delete a node permanently
-
-    * if the node is still running, exit and tell user to run vnode stop first
-    * remove configuration file
-    * remove log file
-    * remove docker volumes attached to the node
-
-    Parameters
-    ----------
-    name : str
-        Configuration name
-    environment : str
-        DTAP environment, note that regardless of the environment, the entire
-        configuration is deleted
-    system_folders : bool
-        If True, use system folders, otherwise use user folders
-    """
-    # select configuration name if none supplied
-    name, environment = select_node(name, environment, system_folders)
-
-    client = docker.from_env()
-    check_if_docker_daemon_is_running(client)
-
-    # check if node is still running, otherwise don't allow deleting it
-    running_node_names = find_running_node_names(client)
-
-    post_fix = "system" if system_folders else "user"
-    node_container_name = f"{APPNAME}-{name}-{post_fix}"
-    if node_container_name in running_node_names:
-        error(f"Node {name} is still running! Please stop the node before "
-              "deleting it.")
-        exit(1)
-
-    if not q.confirm(
-        "This node will be deleted permanently including its configuration. "
-        "Are you sure?", default=False
-    ).ask():
-        info("Node will not be deleted")
-        exit(0)
-
-    # create node context
-    ctx = NodeContext(name, environment=environment,
-                      system_folders=system_folders)
-
-    # remove the docker volume and any temporary volumes
-    debug("Deleting docker volumes")
-    volumes = client.volumes.list()
-    for vol in volumes:
-        if vol.name.startswith(ctx.docker_volume_name):  # includes tmp volumes
-            info(f"Deleting docker volume {vol.name}")
-            vol.remove()
-        # remove docker vpn volume
-        if vol.name == ctx.docker_vpn_volume_name:
-            info(f"Deleting VPN docker volume {vol.name}")
-            vol.remove()
-
-    # remove the VPN configuration file
-    vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
-    remove_file(vpn_config_file, 'VPN configuration')
-
-    # remove the config file
-    remove_file(ctx.config_file, 'configuration')
-
-    # remove the log file. As this process opens the log file above, the log
-    # handlers need to be closed before deleting
-    info(f"Removing log file {ctx.log_file}")
-    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
-        handler.close()
-    remove_file(ctx.log_file, 'log')
+    vnode_remove(name, environment, system_folders)
 
 
 #
@@ -1127,3 +1058,75 @@ def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
+
+
+def vnode_remove(name: str, environment: str, system_folders: bool):
+    """
+    Delete a node permanently
+
+    * if the node is still running, exit and tell user to run vnode stop first
+    * remove configuration file
+    * remove log file
+    * remove docker volumes attached to the node
+
+    Parameters
+    ----------
+    name : str
+        Configuration name
+    environment : str
+        DTAP environment, note that regardless of the environment, the entire
+        configuration is deleted
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
+    """
+    # select configuration name if none supplied
+    name, environment = select_node(name, environment, system_folders)
+    client = docker.from_env()
+    check_if_docker_daemon_is_running(client)
+
+    # check if node is still running, otherwise don't allow deleting it
+    running_node_names = find_running_node_names(client)
+
+    post_fix = "system" if system_folders else "user"
+    node_container_name = f"{APPNAME}-{name}-{post_fix}"
+    if node_container_name in running_node_names:
+        error(f"Node {name} is still running! Please stop the node before "
+              "deleting it.")
+        exit(1)
+
+    if not q.confirm(
+        "This node will be deleted permanently including its configuration. "
+        "Are you sure?", default=False
+    ).ask():
+        info("Node will not be deleted")
+        exit(0)
+
+    # create node context
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+
+    # remove the docker volume and any temporary volumes
+    debug("Deleting docker volumes")
+    volumes = client.volumes.list()
+    for vol in volumes:
+        if vol.name.startswith(ctx.docker_volume_name):  # includes tmp volumes
+            info(f"Deleting docker volume {vol.name}")
+            vol.remove()
+        # remove docker vpn volume
+        if vol.name == ctx.docker_vpn_volume_name:
+            info(f"Deleting VPN docker volume {vol.name}")
+            vol.remove()
+
+    # remove the VPN configuration file
+    vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
+    remove_file(vpn_config_file, 'VPN configuration')
+
+    # remove the config file
+    remove_file(ctx.config_file, 'configuration')
+
+    # remove the log file. As this process opens the log file above, the log
+    # handlers need to be closed before deleting
+    info(f"Removing log file {ctx.log_file}")
+    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+        handler.close()
+    remove_file(ctx.log_file, 'log')

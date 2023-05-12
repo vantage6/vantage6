@@ -19,13 +19,16 @@ from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.common.context import AppContext
 from vantage6.common import info, warning, error
 from vantage6.cli.context import ServerContext
-from vantage6.cli.globals import DEFAULT_SERVER_ENVIRONMENT
+from vantage6.cli.globals import (
+    DEFAULT_SERVER_ENVIRONMENT
+)
 from vantage6.cli.server import (
     click_insert_context,
     vserver_import,
     vserver_start,
     vserver_stop
 )
+from vantage6.cli.context import NodeContext
 
 from vantage6.cli.node import vnode_stop
 
@@ -389,15 +392,12 @@ def start_demo_network(ctx: ServerContext, ip: str = None, port: int = None,
         Wether to attach the server logs to the console after starting the
         server., by default False
     """
+    configs, f1 = NodeContext.available_configurations(system_folders=False)
     handle_ = 'demo_'
-    app_context = AppContext.available_configurations('node', False)[0]
-    node_names = [x.name for x in app_context if handle_ in x.name]
-    configs = [AppContext.instance_folders('node', name, False)['config'] for
-               name in node_names]
-    len_configs = len(configs)
-    vserver_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src, attach
-                  )
-    for index in range(len_configs):
+    node_names = [config.name for config in configs if handle_ in config.name]
+    vserver_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
+                  attach)
+    for index in range(len(node_names)):
         name = node_names[index]
         subprocess.run(["vnode", "start", "--name", name], shell=True)
 
@@ -425,9 +425,9 @@ def stop_demo_network(name: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
     """
     vserver_stop(name=name, environment=environment,
                  system_folders=system_folders, all_servers=all_servers)
-    app_context = AppContext.available_configurations('node', False)[0]
+    configs, f1 = NodeContext.available_configurations(system_folders=False)
     handle_ = 'demo_'
-    node_names = [x.name for x in app_context if handle_ in x.name]
+    node_names = [config.name for config in configs if handle_ in config.name]
     for name in node_names:
         vnode_stop(name, system_folders=False, all_nodes=False,
                    force=False)

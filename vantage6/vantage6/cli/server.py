@@ -967,3 +967,26 @@ def vserver_stop(name: str, environment: str, system_folders: bool,
 
     _stop_server_containers(client, container_name, environment,
                             system_folders)
+# docker.client.VolumeCollection.prune
+
+
+def vserver_remove(name: str, environment: str, system_folders: bool,
+                   all_servers: bool):
+    client = docker.from_env()
+    check_docker_running()
+
+    running_servers = client.containers.list(
+        filters={"label": f"{APPNAME}-type=server"})
+
+    if not running_servers:
+        warning("No servers are currently running.")
+        return
+
+    running_server_names = [server.name for server in running_servers]
+
+    if all_servers:
+        for container_name in running_server_names:
+            _stop_server_containers(client, container_name, environment,
+                                    system_folders)
+        return
+    return None
