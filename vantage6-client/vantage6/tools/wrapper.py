@@ -80,7 +80,7 @@ def auto_wrapper(module: str, load_data: bool = True,
     # multi database wrapper is not available.
     if database_type == "csv":
         wrapper = CSVWrapper()
-    if database_type == "excel":
+    elif database_type == "excel":
         wrapper = ExcelWrapper()
     elif database_type == "sparql":
         wrapper = SparqlDockerWrapper()

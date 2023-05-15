@@ -1,6 +1,40 @@
 Release notes
 =============
 
+3.8.7
+-----
+
+*10 May 2023*
+
+- **Bugfix**
+  - Socket did connect before Docker was initialized, resulting in an exception
+    at startup (`PR#644 <https://github.com/vantage6/vantage6/pull/644>`_)
+
+3.8.6
+-----
+
+*9 May 2023*
+
+- **Bugfix**
+
+  - Fixed bug that resulted in broken algorithm networks when the socket
+    connection was lost (`PR#640 <https://github.com/vantage6/vantage6/pull/640>`_,
+    `Issue#637 <https://github.com/vantage6/vantage6/issues/637>`_)
+
+3.8.3 - 3.8.5
+-------------
+
+*25 April 2023 - 2 May 2023*
+
+- **Bugfix**
+
+ - Fixed bug where a missing container lead to a complete node crash
+   (`PR#628  <https://github.com/vantage6/vantage6/pull/628>`_,
+    `PR#629 <https://github.com/vantage6/vantage6/pull/629>`_,
+    `PR#632 <https://github.com/vantage6/vantage6/pull/632>`_).
+ - Restored algorithm wrapper namespace for backward compatibility (
+   `PR#618 <https://github.com/vantage6/vantage6/pull/618>`_)
+
 3.8.2
 -----
 
