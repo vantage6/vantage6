@@ -39,9 +39,9 @@ swagger_template = {
                             "for"
                         )
                     },
-                    "database": {
-                        "type": "string",
-                        "description": "Database to use for this task"
+                    "databases": {
+                        "type": "array",
+                        "description": "Databases to use for this task"
                     },
                     "master": {
                         "type": "boolean",

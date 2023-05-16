@@ -442,7 +442,7 @@ class ClientBase(object):
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_='', description='',
                   organization_ids: list = None,
-                  data_format=LEGACY, database: str = 'default') -> dict:
+                  data_format=LEGACY, databases: list[str] = None) -> dict:
         """Post a new task at the server
 
         It will also encrypt `input_` for each receiving organization.
@@ -468,8 +468,8 @@ class ClientBase(object):
             data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
             will use pickle serialization. Default is 'legacy'., by default
             LEGACY
-        database : str, optional
-            Database label to use for the task, by default 'default'
+        databases : list[str], optional
+            Database labels to use for the task, by default ['default']
 
         Returns
         -------
@@ -485,6 +485,12 @@ class ClientBase(object):
 
         if organization_ids is None:
             organization_ids = []
+        if databases is None:
+            databases = ['default']
+        elif isinstance(databases, str):
+            # it is not unlikely that users specify a single database as a str,
+            # in that case we convert it to a list
+            databases = [databases]
 
         if data_format == LEGACY:
             serialized_input = pickle.dumps(input_)
@@ -512,7 +518,7 @@ class ClientBase(object):
             "collaboration_id": collaboration_id,
             "description": description,
             "organizations": organization_json_list,
-            'database': database
+            'databases': databases
         })
 
     def _decrypt_input(self, input_: str) -> bytes:
@@ -1841,7 +1847,7 @@ class UserClient(ClientBase):
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
                    data_format: str = LEGACY,
-                   database: str = 'default') -> dict:
+                   databases: list[str] = None) -> dict:
             """Create a new task
 
             Parameters
@@ -1861,17 +1867,19 @@ class UserClient(ClientBase):
                 Algorithm input
             data_format : str, optional
                 IO data format used, by default LEGACY
-            database: str, optional
-                Database name to be used at the node
+            databases: list[str], optional
+                Database names to be used at the node
 
             Returns
             -------
             dict
                 [description]
             """
+            if databases is None:
+                databases = ['default']
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
-                                         data_format, database)
+                                         data_format, databases)
 
         def delete(self, id_: int) -> dict:
             """Delete a task

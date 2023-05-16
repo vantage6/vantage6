@@ -43,7 +43,7 @@ class AlgorithmClient(ClientBase):
             container_identity = jwt_payload['identity']
 
         self.image = container_identity.get("image")
-        self.database = container_identity.get('database')
+        self.databases = container_identity.get('databases', [])
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.log.info(
@@ -279,7 +279,7 @@ class AlgorithmClient(ClientBase):
                 "collaboration_id": self.parent.collaboration_id,
                 "description": description,
                 "organizations": organization_json_list,
-                "database": self.parent.database
+                "databases": self.parent.databases
             })
 
     class VPN(ClientBase.SubClient):

@@ -394,7 +394,8 @@ class DockerManager(DockerBaseManager):
         self.isolated_network_mgr.delete(kill_containers=True)
 
     def run(self, run_id: int, task_info: dict, image: str,
-            docker_input: bytes, tmp_vol_name: str, token: str, database: str
+            docker_input: bytes, tmp_vol_name: str, token: str,
+            databases_to_use: list[str]
             ) -> tuple[TaskStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -414,8 +415,8 @@ class DockerManager(DockerBaseManager):
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        database: str
-            Name of the Database to use
+        databases_to_use: list[str]
+            Labels of the databases to use
 
         Returns
         -------
@@ -450,7 +451,6 @@ class DockerManager(DockerBaseManager):
             proxy=self.proxy,
             device_requests=self.algorithm_device_requests
         )
-        database = database if (database and len(database)) else 'default'
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
         # again. If it fails permanently we add it to the failed tasks to be
@@ -461,7 +461,7 @@ class DockerManager(DockerBaseManager):
                 vpn_ports = task.run(
                     docker_input=docker_input, tmp_vol_name=tmp_vol_name,
                     token=token, algorithm_env=self.algorithm_env,
-                    database=database
+                    databases_to_use=databases_to_use
                 )
 
             except UnknownAlgorithmStartFail:

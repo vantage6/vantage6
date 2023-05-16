@@ -155,7 +155,7 @@ class ServicesResources(Resource):
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types: tuple[str] = ('user', 'node', 'container')):
+def only_for(types: tuple[str] = ('user', 'node', 'container')) -> callable:
     """
     JWT endpoint protection decorator
 
