@@ -32,7 +32,7 @@ class ClientMockProtocol:
     # in calling this function with 0 organizations as the task will never
     # be executed in that case.
     def create_new_task(self, input_: dict,
-                        organization_ids: list[int] = []) -> int:
+                        organization_ids: list[int] = None) -> int:
         """
         Create a new task with the MockProtocol and return the task id.
 
@@ -52,6 +52,8 @@ class ClientMockProtocol:
         int
             The id of the task.
         """
+        if organization_ids is None:
+            organization_ids = []
 
         # extract method from lib and input
         master = input_.get("master")
