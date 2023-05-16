@@ -187,7 +187,7 @@ export class ConvertJsonService {
       init_user_id: json.init_user,
       job_id: json.job_id,
       parent_id: json.parent ? json.parent.id : null,
-      database: json.database,
+      databases: json.databases,
       complete: json.complete,
       children_ids: child_ids,
       status: json.status,
