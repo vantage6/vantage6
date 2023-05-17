@@ -57,7 +57,7 @@ from vantage6.cli.configuration_wizard import (
     NodeConfigurationManager
 )
 from vantage6.cli.utils import (
-    check_config_name_allowed, check_if_docker_daemon_is_running
+    check_config_name_allowed, check_if_docker_daemon_is_running, remove_file
 )
 from vantage6.cli import __version__
 
@@ -704,28 +704,6 @@ def find_running_node_names(client: docker.DockerClient) -> list[str]:
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
     return [node.name for node in running_nodes]
-
-
-def remove_file(file: str, file_type: str) -> None:
-    """
-    Remove a file if it exists.
-
-    Parameters
-    ----------
-    file : str
-        absolute path to the file to be deleted
-    file_type : str
-        type of file, used for logging
-    """
-    if os.path.isfile(file):
-        info(f"Removing {file_type} file: {file}")
-        try:
-            os.remove(file)
-        except Exception as e:
-            error(f"Could not delete file: {file}")
-            error(e)
-    else:
-        warning(f"Could not remove {file_type} file: {file} does not exist")
 
 
 def vnode_start(name: str, config: str, environment: str, system_folders: bool,

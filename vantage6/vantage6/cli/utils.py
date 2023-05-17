@@ -5,8 +5,9 @@ from __future__ import annotations
 
 import re
 import docker
+import os
 
-from vantage6.common import error
+from vantage6.common import error, warning, info
 
 
 def check_config_name_allowed(name: str) -> None:
@@ -41,3 +42,25 @@ def check_if_docker_daemon_is_running(
     except Exception:
         error("Docker socket can not be found. Make sure Docker is running.")
         exit(1)
+
+
+def remove_file(file: str, file_type: str) -> None:
+    """
+    Remove a file if it exists.
+
+    Parameters
+    ----------
+    file : str
+        absolute path to the file to be deleted
+    file_type : str
+        type of file, used for logging
+    """
+    if os.path.isfile(file):
+        info(f"Removing {file_type} file: {file}")
+        try:
+            os.remove(file)
+        except Exception as e:
+            error(f"Could not delete file: {file}")
+            error(e)
+    else:
+        warning(f"Could not remove {file_type} file: {file} does not exist")

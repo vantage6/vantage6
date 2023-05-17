@@ -35,7 +35,7 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
-from vantage6.cli.utils import check_config_name_allowed
+from vantage6.cli.utils import check_config_name_allowed, remove_file
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
 
@@ -970,23 +970,42 @@ def vserver_stop(name: str, environment: str, system_folders: bool,
 # docker.client.VolumeCollection.prune
 
 
-def vserver_remove(name: str, environment: str, system_folders: bool,
-                   all_servers: bool):
+def select_server(name: str, environment: str, system_folders: bool) \
+        -> tuple[str, str]:
+    name, environment = (name, environment) if name else \
+        select_configuration_questionaire("server", system_folders)
+    if not ServerContext.config_exists(name, environment, system_folders):
+        error(
+            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
+            f"not be found."
+        )
+        exit(1)
+    return name, environment
+
+
+def vserver_remove(ctx: ServerContext, name: str, environment: str,
+                   system_folders: bool, file_type: str) -> None:
     client = docker.from_env()
     check_docker_running()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
 
-    if not running_servers:
-        warning("No servers are currently running.")
-        return
-
     running_server_names = [server.name for server in running_servers]
 
-    if all_servers:
-        for container_name in running_server_names:
-            _stop_server_containers(client, container_name, environment,
-                                    system_folders)
-        return
-    return None
+    if not q.confirm(
+        "This server will be deleted permanently including its configuration. "
+        "Are you sure?", default=False
+    ).ask():
+        info("Server will not be deleted")
+        exit(0)
+
+    if name in running_server_names:
+        _stop_server_containers(client, name, environment, system_folders)
+    folder = ctx.instance_folders('server', name, system_folders)['data']
+    info("Removing files...")
+    try:
+        remove_file(file=f"{folder}.yaml", file_type=file_type)
+    except Exception as e:
+        info(e)

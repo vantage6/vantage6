@@ -9,6 +9,8 @@ import uuid
 import click
 import questionary as q
 import subprocess
+import shutil
+import itertools
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
@@ -20,17 +22,21 @@ from vantage6.common.context import AppContext
 from vantage6.common import info, warning, error
 from vantage6.cli.context import ServerContext
 from vantage6.cli.globals import (
-    DEFAULT_SERVER_ENVIRONMENT
+    DEFAULT_SERVER_ENVIRONMENT as S_ENV,
+    DEFAULT_NODE_ENVIRONMENT as N_ENV
 )
 from vantage6.cli.server import (
     click_insert_context,
     vserver_import,
     vserver_start,
-    vserver_stop
+    vserver_stop,
+    vserver_remove,
+    select_server,
+    get_server_context
 )
 from vantage6.cli.context import NodeContext
 
-from vantage6.cli.node import vnode_stop
+from vantage6.cli.node import vnode_stop, vnode_remove, select_node
 
 
 def generate_apikey() -> str:
@@ -284,8 +290,8 @@ def cli_dev() -> None:
 @cli_dev.command(name="create-demo-network")
 @click.option('--num-configs', 'num_configs', type=int, default=3,
               help='generate N node-configuration files')
-@click_insert_context
-def create_demo_network(ctx: ServerContext, num_configs: int,
+# @click_insert_context
+def create_demo_network(num_configs: int,
                         server_url: str = 'http://host.docker.internal',
                         server_port: int = 5000,
                         server_name: str = 'default_server',
@@ -347,9 +353,12 @@ def create_demo_network(ctx: ServerContext, num_configs: int,
                             new_server_name)
         info(f"Created {Fore.GREEN}{demo[0]} node configuration(s), \
              attaching them to {Fore.GREEN}{server_name}.")
+        server_name = new_server_name
     node_config = demo[0]
     server_import_config = demo[1]
     server_config = demo[2]
+    ctx = get_server_context(name=server_name, environment=S_ENV,
+                             system_folders=True)
     vserver_import(ctx, server_import_config, drop_all, image, mount_src, keep)
     return {
         "node_configs": node_config,
@@ -405,7 +414,7 @@ def start_demo_network(ctx: ServerContext, ip: str = None, port: int = None,
 @cli_dev.command(name="stop-demo-network")
 @click.option("-n", "--name", default="default_server",
               help="Configuration name")
-def stop_demo_network(name: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
+def stop_demo_network(name: str, environment: str = S_ENV,
                       system_folders: bool = True,
                       all_servers: bool = False) -> None:
     """Stops currently running demo-network. Defaults names for the server is
@@ -417,7 +426,7 @@ def stop_demo_network(name: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
     name : str
         Name of the spawned server executed from `vdev start-demo-network`
     environment : str, fixed
-        DTAP environment to use, by default DEFAULT_SERVER_ENVIRONMENT
+        DTAP environment to use, by default S_ENV
     system_folders : bool, fixed
         Wether to use system folders or not, by default True
     all_servers : bool, fixed
@@ -431,3 +440,58 @@ def stop_demo_network(name: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
     for name in node_names:
         vnode_stop(name, system_folders=False, all_nodes=False,
                    force=False)
+
+
+def inner_remove_network(name: str, system_folders: bool) -> None:
+    handle_ = 'demo_'
+    server_configs, server_f1 = ServerContext.available_configurations(
+        system_folders=system_folders
+    )
+    n = tuple(config.name for config in server_configs if config.name == name)
+    if len(n):
+        (server_name,) = n
+        ctx = get_server_context(server_name, S_ENV, system_folders)
+        for handler in itertools.chain(ctx.log.handlers,
+                                       ctx.log.root.handlers):
+            handler.close()
+        vserver_remove(ctx, server_name, S_ENV, system_folders,
+                       'configuration')
+        server_path = Path(f"{ctx.config_file.parent}\\{server_name}")
+        print(server_path)
+        if server_path.is_dir():
+            shutil.rmtree(server_path)
+    else:
+        warning(f"There is no such configuration with system_folders \
+                == {system_folders}")
+    configs, f1 = NodeContext.available_configurations(
+        system_folders=system_folders
+    )
+    node_names = [config.name for config in configs if handle_ in config.name]
+    print(node_names)
+    if system_folders:
+        target = "--system"
+    else:
+        target = "--user"
+    if len(node_names):
+        for name in node_names:
+            node_ctx = NodeContext(name, environment=N_ENV,
+                                   system_folders=system_folders)
+            for handler in itertools.chain(node_ctx.log.handlers,
+                                           node_ctx.log.root.handlers):
+                handler.close()
+            subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
+                            target], shell=True)
+            shutil.rmtree(f"{node_ctx.config_dir}\\{name}")
+
+
+@cli_dev.command(name="remove-demo-network")
+@click.option("-n", "--name", default="default_server",
+              help="Configuration name")
+def remove_demo_network(name: str) -> None:
+    try:
+        inner_remove_network(name, True)
+    except Exception as e:
+        print(e)
+    else:
+        inner_remove_network(name, False)
+    return None
