@@ -870,7 +870,10 @@ class Node(object):
 
         while True:
             try:
-                self.socketIO.emit('ping', namespace='/tasks')
+                if self.socketIO.connected:
+                    self.socketIO.emit('ping', namespace='/tasks')
+                else:
+                    self.log.debug('SocketIO is not connected, skipping ping')
             except Exception:
                 self.log.exception('Ping thread had an exception')
             # Wait before sending next ping
