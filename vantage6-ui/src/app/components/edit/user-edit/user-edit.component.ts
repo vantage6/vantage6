@@ -109,7 +109,7 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
 
   async setupEdit(id: number) {
     // collect roles and rules (which is required to collect users)
-    (await this.userDataService.get(id)).subscribe((user) => {
+    (await this.userDataService.get(id, false, true)).subscribe((user) => {
       if (user) {
         this.user = user;
         this.user_orig_name = this.user.username;

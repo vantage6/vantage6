@@ -140,8 +140,10 @@ export abstract class BaseDataService {
   protected async get_base(
     id: number,
     convertJsonFunc: Function,
-    force_refresh: boolean = false
-  ): Promise<Observable<Resource | null>> {
+    force_refresh: boolean = false,
+    as_observable: boolean = true
+  ): Promise<Observable<Resource | null> | BehaviorSubject<Resource | null>> {
+    // TODO consider always returning BehaviorSubjects, in base functions?
     if (force_refresh || !(id in this.resources_by_id)) {
       let additional_resources = await this.getDependentResources();
       let resource = await this.apiService.getResource(
@@ -156,7 +158,9 @@ export abstract class BaseDataService {
         this.resources_by_id[id] = new BehaviorSubject<Resource | null>(null);
       }
     }
-    return this.resources_by_id[id].asObservable();
+    return as_observable
+      ? this.resources_by_id[id].asObservable()
+      : this.resources_by_id[id];
   }
 
   protected async list_base(
@@ -165,6 +169,8 @@ export abstract class BaseDataService {
     force_refresh: boolean = false,
     additional_params: any = {}
   ): Promise<Observable<Resource[]>> {
+    // FIXME this function does not work properly when the list is requested
+    // several times with different additional_params and force_refresh=false
     let page_id = getPageId(pagination);
     if (
       force_refresh ||

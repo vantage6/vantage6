@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
@@ -44,13 +44,39 @@ export class UserDataService extends BaseDataService {
 
   async get(
     id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    include_dependents: boolean = false
   ): Promise<Observable<User>> {
-    return (await super.get_base(
+    let as_observable = !include_dependents;
+    let user: any = await super.get_base(
       id,
       this.convertJsonService.getUser,
-      force_refresh
-    )) as Observable<User>;
+      force_refresh,
+      as_observable
+    );
+    if (!as_observable) {
+      let user_value = (user as BehaviorSubject<User>).value;
+      console.log('user_obs', user);
+      console.log('user_value', user_value);
+      // // if (user_obs.value === null) return user_obs as Observable<User>;
+      if (include_dependents) {
+        // request the rules for the current user
+        user_value.rules = await this.ruleDataService.list_with_params(
+          allPages(),
+          { user_id: user_value.id }
+        );
+        // add roles to the user
+        user_value.roles = await this.roleDataService.list_with_params(
+          allPages(),
+          { user_id: user_value.id }
+        );
+        user.next(user_value);
+      }
+    }
+    // return observable. If required, convert to observable first.
+    return as_observable
+      ? (user as Observable<User>)
+      : (user as BehaviorSubject<User>).asObservable();
   }
 
   async list(

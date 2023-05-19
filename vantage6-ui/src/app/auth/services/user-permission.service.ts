@@ -176,31 +176,15 @@ export class UserPermissionService {
       return;
     }
 
-    // request the rules for the current user
-    (await this.userDataService.get(user_id)).subscribe((user) => {
+    // request the current user
+    (await this.userDataService.get(user_id, false, true)).subscribe((user) => {
       this.user = user;
       this.user.is_logged_in = true;
     });
 
-    await this._setPermissions(this.user);
+    await this.savePermissions(this.user.rules);
 
     this.userBhs.next(this.user);
-  }
-
-  private async _setPermissions(user: User) {
-    // remove any existing rules that may be present
-    this.userRules = [];
-
-    // add rules from the user rules and roles
-    this.userRules.push(...deepcopy(user.rules));
-    for (let role of user.roles) {
-      this.userRules.push(...role.rules);
-    }
-    // remove double rules
-    this.userRules = [...new Set(this.userRules)];
-
-    // save permissions
-    await this.savePermissions(this.userRules);
   }
 
   canAssignRole(role: Role): boolean {

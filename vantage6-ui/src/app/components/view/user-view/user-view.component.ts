@@ -6,6 +6,9 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { ResType } from 'src/app/shared/enum';
 import { BaseViewComponent } from '../base-view/base-view.component';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
+import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-user-view',
@@ -22,9 +25,26 @@ export class UserViewComponent extends BaseViewComponent implements OnInit {
     public userPermission: UserPermissionService,
     protected userApiService: UserApiService,
     protected userDataService: UserDataService,
-    protected modalService: ModalService
+    protected modalService: ModalService,
+    private ruleDataService: RuleDataService,
+    private roleDataService: RoleDataService
   ) {
     super(userApiService, userDataService, modalService);
+    this.addRolesAndRules();
+  }
+
+  private async addRolesAndRules(): Promise<void> {
+    // TODO while this is busy, change text that no roles/rules are assigned yet
+    if (this.user.rules.length === 0 && this.user.roles.length === 0) {
+      this.user.rules = await this.ruleDataService.list_with_params(
+        allPages(),
+        { user_id: this.user.id }
+      );
+      this.user.roles = await this.roleDataService.list_with_params(
+        allPages(),
+        { user_id: this.user.id }
+      );
+    }
   }
 
   askConfirmDelete(): void {

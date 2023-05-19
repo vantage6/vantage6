@@ -381,7 +381,7 @@ const routes: Routes = [
     component: SocketMessagesComponent,
     data: {
       requiresLogin: true,
-      permissionType: OpsType.VIEW,
+      permissionType: OpsType.RECEIVE,
       permissionResource: ResType.EVENT,
     },
   },

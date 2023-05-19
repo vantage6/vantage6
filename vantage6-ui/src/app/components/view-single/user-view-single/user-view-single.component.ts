@@ -28,6 +28,7 @@ export class UserViewSingleComponent
     protected modalService: ModalService,
     private orgDataService: OrgDataService
   ) {
+    console.log('UserViewSingleComponent');
     super(
       activatedRoute,
       userPermission,
@@ -44,11 +45,11 @@ export class UserViewSingleComponent
   }
 
   async setUser() {
-    (await this.userDataService.get(this.route_id as number)).subscribe(
-      (user) => {
-        this.user = user;
-      }
-    );
+    (
+      await this.userDataService.get(this.route_id as number, false, true)
+    ).subscribe((user) => {
+      this.user = user;
+    });
   }
 
   async setOrganization() {
