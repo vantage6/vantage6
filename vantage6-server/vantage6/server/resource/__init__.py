@@ -84,10 +84,7 @@ class ServicesResources(Resource):
         dict
             Dumped page
         """
-        if self.is_included('metadata'):
-            return schema.page_dump(page)
-        else:
-            return schema.default_dump(page)
+        return schema.meta_dump(page)
 
     def response(self, page: Page, schema: HATEOASModelSchema):
         """

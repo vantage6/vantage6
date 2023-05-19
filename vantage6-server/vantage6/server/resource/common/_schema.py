@@ -10,7 +10,7 @@ from vantage6.server import db
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.server.model import Base
-from vantage6.server.resource.common.pagination import Page
+from vantage6.server.resource.common.pagination import Pagination
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -138,7 +138,7 @@ class HATEOASModelSchema(SQLAlchemyAutoSchema):
         else:
             log.error("No API found?")
 
-    def page_dump(self, pagination: Page) -> dict:
+    def meta_dump(self, pagination: Pagination) -> dict:
         """
         Dump paginated database resources to a dictionary that has links
         to additional pages.
@@ -154,11 +154,8 @@ class HATEOASModelSchema(SQLAlchemyAutoSchema):
             Dictionary with paginated database resources and links to
             additional pages.
         """
-        data = self.default_dump(pagination)
+        data = self.dump(pagination.page.items, many=True)
         return {'data': data, 'links': pagination.metadata_links}
-
-    def default_dump(self, pagination):
-        return self.dump(pagination.page.items, many=True)
 
 
 # /task/{id}
