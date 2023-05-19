@@ -10,7 +10,7 @@ from vantage6.server import db
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.server.model import Base
-from vantage6.server.resource.pagination import Page
+from vantage6.server.resource.common.pagination import Page
 
 log = logging.getLogger(logger_name(__name__))
 
