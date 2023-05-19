@@ -17,7 +17,7 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources
 )
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common._schema import UserSchema
 
 
@@ -186,21 +186,22 @@ class Users(UserBase):
               type: date (yyyy-mm-dd)
             description: Show only users last seen before this date
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
@@ -244,7 +245,10 @@ class Users(UserBase):
                     HTTPStatus.UNAUTHORIZED
 
         # paginate results
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, user_schema)
@@ -365,7 +369,7 @@ class Users(UserBase):
             for role in potential_roles:
                 role_ = db.Role.get(role)
                 if role_:
-                    denied = self.permissions.verify_user_rules(role_.rules)
+                    denied = self.permissions.check_user_rules(role_.rules)
                     if denied:
                         return denied, HTTPStatus.UNAUTHORIZED
                     roles.append(role_)
@@ -385,7 +389,7 @@ class Users(UserBase):
         if potential_rules:
             rules = [db.Rule.get(rule) for rule in potential_rules
                      if db.Rule.get(rule)]
-            denied = self.permissions.verify_user_rules(rules)
+            denied = self.permissions.check_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
 
@@ -621,7 +625,7 @@ class User(UserBase):
 
             # validate that user can assign these
             for role in roles:
-                denied = self.permissions.verify_user_rules(role.rules)
+                denied = self.permissions.check_user_rules(role.rules)
                 if denied:
                     return denied, HTTPStatus.UNAUTHORIZED
 
@@ -638,7 +642,7 @@ class User(UserBase):
             # e.g. an organization admin is not allowed to delete a root role
             deleted_roles = [r for r in user.roles if r not in roles]
             for role in deleted_roles:
-                denied = self.permissions.verify_user_rules(role.rules)
+                denied = self.permissions.check_user_rules(role.rules)
                 if denied:
                     return {"msg": (
                         f"You are trying to delete the role {role.name} from "
@@ -665,14 +669,14 @@ class User(UserBase):
                     HTTPStatus.UNAUTHORIZED
 
             # validate that user can assign these
-            denied = self.permissions.verify_user_rules(rules)
+            denied = self.permissions.check_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
 
             # validate that user is not deleting rules they do not have
             # themselves
             deleted_rules = [r for r in user.rules if r not in rules]
-            denied = self.permissions.verify_user_rules(deleted_rules)
+            denied = self.permissions.check_user_rules(deleted_rules)
             if denied:
                 return {"msg": (
                     f"{denied['msg']}. You can't delete permissions for "

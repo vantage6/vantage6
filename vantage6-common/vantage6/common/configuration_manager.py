@@ -83,6 +83,7 @@ class ConfigurationManager(object):
     A configuration file contains at top level an `application` and/or
     `environments` key. The `environments` key can contain up to four
     keys: `dev`, `test`, `acc`, `prod`. e.g.:
+
     application:
         ...
     environments:

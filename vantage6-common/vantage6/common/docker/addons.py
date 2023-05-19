@@ -116,7 +116,7 @@ def registry_basic_auth_header(
 def inspect_remote_image_timestamp(
     docker_client: DockerClient, image: str,
     log: logging.Logger | ClickLogger = ClickLogger
-) -> datetime | None:
+) -> tuple[datetime, str] | None:
     """
     Obtain creation timestamp object from remote image.
 
@@ -131,9 +131,9 @@ def inspect_remote_image_timestamp(
 
     Returns
     -------
-    datetime | None
-        Timestamp containing the creation date and time of the image, or None
-        if the remote image could not be found.
+    tuple[datetime, str] | None
+        Timestamp containing the creation date of the image and its digest, or
+        None if the remote image could not be found.
     """
     # check if a tag has been profided
 
@@ -149,7 +149,7 @@ def inspect_remote_image_timestamp(
         log.warn("Or an image from docker hub?")
         log.warn("We'll make a final attempt when running the image to pull"
                  " it without any checks...")
-        return
+        return None, None
 
     # figure out API of the docker repo
     v1_check = requests.get(f"https://{reg}/api/health")
@@ -163,7 +163,7 @@ def inspect_remote_image_timestamp(
         log.error(f"Could not determine version of the registry! {reg}")
         log.error("Is this a Harbor registry?")
         log.error("Or is the harbor server offline?")
-        return
+        return None, None
 
     if v1:
         image = f"https://{reg}/api/repositories/{rep}/{img_}/tags/{tag}"
@@ -179,24 +179,26 @@ def inspect_remote_image_timestamp(
     # verify that we got an result
     if result.status_code == 404:
         log.warn(f"Remote image not found! {image}")
-        return
+        return None, None
 
     if result.status_code != 200:
         log.warn(f"Remote info could not be fetched! ({result.status_code}) "
                  f"{image}")
-        return
+        return None, None
 
     if v1:
         timestamp = parse(result.json().get("created"))
+        digest = None
     else:
         timestamp = parse(result.json().get("push_time"))
-    return timestamp
+        digest = result.json().get("digest")
+    return timestamp, digest
 
 
 def inspect_local_image_timestamp(
     docker_client: DockerClient, image: str,
     log: logging.Logger | ClickLogger = ClickLogger
-) -> datetime | None:
+) -> tuple[datetime, str] | None:
     """
     Obtain creation timestamp object from local image.
 
@@ -211,26 +213,26 @@ def inspect_local_image_timestamp(
 
     Returns
     -------
-    datetime | None
-        Timestamp containing the creation date and time of the local image. If
-        the image does not exist, None is returned.
+    tuple[datetime, str] | None
+        Timestamp containing the creation date and time of the local image and
+        the image digest. If the image does not exist, None is returned.
     """
-    # p = re.split(r"[/:]", image)
-    # if len(p) == 4:
-    #     image = f"{p[0]}/{p[1]}/{p[2]}:{p[3]}"
-
     try:
         img = docker_client.images.get(image)
     except docker.errors.ImageNotFound:
         log.debug(f"Local image does not exist! {image}")
-        return None
+        return None, None
     except docker.errors.APIError:
         log.debug(f"Local info not available! {image}")
-        return None
+        return None, None
 
+    try:
+        digest = img.attrs.get("RepoDigests")[0].split("@")[1]
+    except Exception:
+        digest = None
     timestamp = img.attrs.get("Created")
     timestamp = parse(timestamp)
-    return timestamp
+    return timestamp, digest
 
 
 def pull_if_newer(
@@ -254,23 +256,29 @@ def pull_if_newer(
     docker.errors.APIError
         If the image cannot be pulled
     """
-    local_ = inspect_local_image_timestamp(docker_client, image, log=log)
-    remote_ = inspect_remote_image_timestamp(docker_client, image, log=log)
+    local_time, local_digest = inspect_local_image_timestamp(
+        docker_client, image, log=log
+    )
+    remote_time, remote_digest = inspect_remote_image_timestamp(
+        docker_client, image, log=log
+    )
     pull = False
-    if local_ and remote_:
-        if remote_ > local_:
+    if local_time and remote_time:
+        if remote_digest == local_digest:
+            log.debug(f"Local image is up-to-date: {image}")
+        elif remote_time > local_time:
             log.debug(f"Remote image is newer: {image}")
             pull = True
-        elif remote_ == local_:
+        elif remote_time == local_time:
             log.debug(f"Local image is up-to-date: {image}")
-        elif remote_ < local_:
+        elif remote_time < local_time:
             log.warn(f"Local image is newer! Are you testing? {image}")
-    elif local_:
+    elif local_time:
         log.warn(f"Only a local image has been found! {image}")
-    elif remote_:
+    elif remote_time:
         log.debug("No local image found, pulling from remote!")
         pull = True
-    elif not local_ and not remote_:
+    elif not local_time and not remote_time:
         log.warn(f"Cannot locate image {image} locally or remotely. Will try "
                  "to pull it from Docker Hub...")
         # we will try to pull it from the docker hub

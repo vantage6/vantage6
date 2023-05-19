@@ -18,7 +18,7 @@ from vantage6.server.resource import (
     ServicesResources
 )
 from vantage6.server import db
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common._schema import PortSchema
 from vantage6.server.model import (
     Run,
@@ -141,27 +141,30 @@ class Ports(PortBase):
               type: integer
             description: Run id
           - in: query
-            name: include
-            schema:
-              type: string (can be multiple)
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
             description: Ok
           401:
             description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
         - bearerAuth: []
@@ -195,7 +198,10 @@ class Ports(PortBase):
 
         # query the DB and paginate
         q = q.order_by(desc(AlgorithmPort.id))
-        page = Pagination.from_query(query=q, request=request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of the models
         s = port_schema
@@ -410,19 +416,37 @@ class VPNAddress(ServicesResources):
               type: string
             description: Algorithm port label to filter by
           - in: path
+            name: only_children
+            schema:
+              type: boolean
+            description: Only include the addresses of subtasks, not those at
+              the same level. Incompatible with 'only_parent'.
+          - in: path
+            name: only_parent
+            schema:
+              type: boolean
+            description: Only send the address of the parent task, not those at
+              the same level. Incompatible with 'only_children'.
+          - in: path
             name: include_children
             schema:
               type: boolean
-            description: Include the addresses of subtasks
+            description: Include the addresses of subtasks. Ignored if
+              'only_children' is True. Incompatible with 'only_parent',
+              superseded by 'only_children'.
           - in: path
             name: include_parent
             schema:
               type: boolean
-            description: Include the addresses of parent tasks
+            description: Include the addresses of parent tasks. Ignored if
+              'only_parent' is True. Incopatible with 'only_children',
+              superseded by 'only_parent'.
 
         responses:
           200:
             description: Ok
+          400:
+            description: Incompatible arguments specified
 
         security:
         - bearerAuth: []
@@ -434,20 +458,47 @@ class VPNAddress(ServicesResources):
 
         task = db.Task.get(task_id)
 
+        include_children = request.args.get('include_children', False)
+        include_parent = request.args.get('include_parent', False)
+        only_children = request.args.get('only_children', False)
+        only_parent = request.args.get('only_parent', False)
+
+        if only_children and only_parent:
+            return {
+                'msg': 'Using only_children and only_parent simultaneously is '
+                'not possible! Specify one or the other.'
+            }, HTTPStatus.BAD_REQUEST
+        elif only_children and include_parent:
+            return {
+                'msg': 'Using only_children and include_parent simultaneously '
+                'is not possible! Specify one or the other.'
+            }, HTTPStatus.BAD_REQUEST
+        elif only_parent and include_children:
+            return {
+                'msg': 'Using only_parent and include_children simultaneously '
+                'is not possible! Specify one or the other.'
+            }, HTTPStatus.BAD_REQUEST
+
         # include child tasks if requested
-        if request.args.get('include_children', False):
+        if include_children or only_children:
             subtasks = g.session.query(db.Task).filter(
                 db.Task.parent_id == task_id
             ).all()
-            task_ids.extend([t.id for t in subtasks])
+            if only_children:
+                task_ids = [t.id for t in subtasks]
+            else:
+                task_ids.extend([t.id for t in subtasks])
 
         # include parent task if requested
-        if request.args.get('include_parent', False):
+        if include_parent or only_parent:
             parent = g.session.query(db.Task).filter(
                 db.Task.id == task.parent_id
             ).one_or_none()
             if parent:
-                task_ids.append(parent.id)
+                if only_parent:
+                    task_ids = [parent.id]
+                else:
+                    task_ids.append(parent.id)
 
         # get all ports for the tasks requested
         q = g.session.query(AlgorithmPort)\
@@ -469,7 +520,8 @@ class VPNAddress(ServicesResources):
                 'label': port.label,
                 'ip': port.result.node.ip,
                 'organization_id': port.result.organization_id,
-                'task_id': port.result.task_id
+                'task_id': port.result.task_id,
+                'parent_id': port.result.task.parent_id,
             }
             addresses.append(d)
 

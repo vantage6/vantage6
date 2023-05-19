@@ -9,7 +9,7 @@ from flask_restful import reqparse, Api
 
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
 from vantage6.server import db
@@ -160,27 +160,31 @@ class Nodes(NodeBase):
               type: date (yyyy-mm-dd)
             description: Show only nodes last seen before this date
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
             200:
                 description: Ok
             401:
                 description: Unauthorized
+            400:
+                description: Improper values for pagination or sorting
+                  parameters
 
         security:
             - bearerAuth: []
@@ -211,7 +215,10 @@ class Nodes(NodeBase):
                     HTTPStatus.UNAUTHORIZED
 
         # paginate results
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(q, request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, node_schema)

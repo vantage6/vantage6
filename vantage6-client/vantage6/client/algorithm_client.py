@@ -54,6 +54,7 @@ class AlgorithmClient(ClientBase):
 
         # attach sub-clients
         self.run = self.Run(self)
+        self.result = self.Result(self)
         self.task = self.Task(self)
         self.vpn = self.VPN(self)
         self.organization = self.Organization(self)
@@ -79,6 +80,40 @@ class AlgorithmClient(ClientBase):
             Response from the central server.
         """
         return super().request(*args, **kwargs, retry=False)
+
+    def multi_page_request(self, endpoint: str, params: dict = None) -> dict:
+        """
+        Make multiple requests to the central server to get all pages of a list
+        of results.
+
+        Parameters
+        ----------
+        endpoint: str
+            Endpoint to which the request should be made.
+        params: dict
+            Parameters to be passed to the request.
+
+        Returns
+        -------
+        dict
+            Response from the central server.
+        """
+        if params is None:
+            params = {}
+        # get first page
+        page = 1
+        params["page"] = page
+        response = self.request(endpoint, params=params)
+
+        # append next pages (if any)
+        links = response.get("links")
+        while links and links.get("next"):
+            page += 1
+            params["page"] = page
+            response["data"] += self.request(endpoint, params=params)["data"]
+            links = response.get("links")
+
+        return response['data']
 
     class Run(ClientBase.SubClient):
         """
@@ -110,18 +145,54 @@ class AlgorithmClient(ClientBase):
                 List of algorithm run data. The type of the results depends on
                 the algorithm.
             """
-            runs = self.parent.request(
-                f"task/{task_id}/run"
+            # TODO do we need this function? It may be used to collect data
+            # on subtasks but usually only the results are accessed, which is
+            # done with the function below.
+            return self.parent.multi_page_request(
+                "run", params={"task_id": task_id}
+            )
+
+    class Result(ClientBase.SubClient):
+        """
+        Result client for the algorithm container.
+
+        This client is used to get results from the central server.
+        """
+        def get(self, task_id: int) -> list:
+            """
+            Obtain results from a specific task at the server.
+
+            Containers are allowed to obtain the results of their children
+            (having the same job_id at the server). The permissions are checked
+            at te central server.
+
+            Results are decrypted by the proxy server and decoded here before
+            returning them to the algorithm.
+
+            Parameters
+            ----------
+            task_id: int
+                ID of the task from which you want to obtain the results
+
+            Returns
+            -------
+            list
+                List of results. The type of the results depends on the
+                algorithm.
+            """
+            results = self.parent.multi_page_request(
+                "result", params={"task_id": task_id}
             )
 
             decoded_results = []
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
             # FIXME Are we completely sure that the format is always a pickle?
+            # TODO update with v4+ changes
             try:
                 decoded_results = [
-                    pickle.loads(base64s_to_bytes(run.get("result")))
-                    for run in runs if run.get("result")
+                    pickle.loads(base64s_to_bytes(result.get("result")))
+                    for result in results if result.get("result")
                 ]
             except Exception as e:
                 self.parent.log.error('Unable to unpickle result')
@@ -218,7 +289,8 @@ class AlgorithmClient(ClientBase):
         It provides functions to obtain the IP addresses of other containers.
         """
         def get_addresses(
-            self, include_children: bool = False, include_parent: bool = False,
+            self, only_children: bool = False, only_parent: bool = False,
+            include_children: bool = False, include_parent: bool = False,
             label: str = None
         ) -> list[dict] | dict:
             """
@@ -228,12 +300,20 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
+            only_children : bool, optional
+                Only return the IP addresses of the children of the current
+                task, by default False. Incompatible with only_parent.
+            only_parent : bool, optional
+                Only return the IP address of the parent of the current task,
+                by default False. Incompatible with only_children.
             include_children : bool, optional
                 Include the IP addresses of the children of the current task,
-                by default False.
+                by default False. Incompatible with only_parent, superseded
+                by only_children.
             include_parent : bool, optional
                 Include the IP address of the parent of the current task, by
-                default False.
+                default False. Incompatible with only_children, superseded by
+                only_parent.
             label : str, optional
                 The label of the port you are interested in, which is set
                 in the algorithm Dockerfile. If this parameter is set, only
@@ -248,6 +328,8 @@ class AlgorithmClient(ClientBase):
                 'message' key is returned instead.
             """
             results = self.parent.request("vpn/algorithm/addresses", params={
+                "only_children": only_children,
+                "only_parent": only_parent,
                 "include_children": include_children,
                 "include_parent": include_parent,
                 "label": label
@@ -257,6 +339,36 @@ class AlgorithmClient(ClientBase):
                 return {'message': 'Obtaining VPN addresses failed!'}
 
             return results['addresses']
+
+        def get_parent_address(self) -> dict:
+            """
+            Get the IP address and port number of the parent of the current
+            task.
+
+            Returns
+            -------
+            dict
+                Dictionary containing the IP address and port number, and other
+                information to identify the containers. If obtaining the VPN
+                addresses from the server fails, a dictionary with a 'message'
+                key is returned instead.
+            """
+            return self.get_addresses(only_parent=True)
+
+        def get_child_addresses(self) -> list[dict]:
+            """
+            Get the IP addresses and port numbers of the children of the
+            current task.
+
+            Returns
+            -------
+            List[dict]
+                List of dictionaries containing the IP address and port number,
+                and other information to identify the containers. If obtaining
+                the VPN addresses from the server fails, a dictionary with a
+                'message' key is returned instead.
+            """
+            return self.get_addresses(only_children=True)
 
     class Organization(ClientBase.SubClient):
         """
@@ -292,11 +404,11 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of organizations in the collaboration.
             """
-            organizations = self.parent.request(
-                "organization",
-                params={"collaboration_id": self.parent.collaboration_id}
+            return self.parent.multi_page_request(
+                endpoint="organization", params={
+                    "collaboration_id": self.parent.collaboration_id
+                }
             )
-            return organizations
 
     class Collaboration(ClientBase.SubClient):
         """

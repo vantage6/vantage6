@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 import logging
 import flask
@@ -6,6 +8,7 @@ import sqlalchemy
 from urllib.parse import urlencode
 
 from vantage6.common import logger_name
+from vantage6.server.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 from vantage6.server import db
 
 module_name = logger_name(__name__)
@@ -118,7 +121,10 @@ class Pagination:
         """
         return {
             'total-count': self.page.total,
-            'Link': self.link_header
+            'Link': self.link_header,
+            # indicate that these headers are allowed to be exposed to scripts
+            # running in a browser
+            'access-control-expose-headers': 'total-count, Link',
         }
 
     @property
@@ -151,8 +157,10 @@ class Pagination:
         return links
 
     @classmethod
-    def from_query(cls, query: sqlalchemy.orm.query,
-                   request: flask.Request) -> 'Pagination':
+    def from_query(
+        cls, query: sqlalchemy.orm.query, request: flask.Request,
+        paginate: bool = True
+    ) -> Pagination:
         """
         Create a Pagination object from a query.
 
@@ -162,40 +170,133 @@ class Pagination:
             Query to paginate
         request : flask.Request
             Request object
+        paginate : bool
+            Whether to paginate the query or not, default True
 
         Returns
         -------
         Pagination
             Pagination object
         """
-        # We remove the ordering of the query since it doesn't matter for
-        # getting a count and might have performance implications as discussed
-        # on this Flask-SqlAlchemy issue
+        # Get the total number of records. We remove the ordering of the query
+        # since it doesn't matter for getting a count and might have
+        # performance implications as discussed on this Flask-SqlAlchemy issue:
         # https://github.com/mitsuhiko/flask-sqlalchemy/issues/100
         total = query.distinct().order_by(None).count()
 
-        # check if pagination is desired, else return all records
-        page_id = request.args.get('page')
-        if not page_id:
-            page_id = 1
-            per_page = total or 1
+        # Get the page and page size from the request
+        if paginate:
+            page_id = cls._get_page_id(request)
+            per_page = cls._get_per_page(request)
+
+            # Check if combination of the page and page size are valid
+            if total < (page_id-1) * per_page:
+                raise ValueError(
+                    "The 'page' and/or 'per_page' parameter values are too "
+                    "large: there are no records present on this page"
+                )
         else:
-            page_id = int(page_id)
-            per_page = int(request.args.get('per_page', 10))
+            page_id = 1
+            per_page = total
 
-        if page_id <= 0:
-            raise AttributeError('page needs to be >= 1')
-        if per_page <= 0:
-            raise AttributeError('per_page needs to be >= 1')
+        # FIXME BvB 2020-02-09 good error handling if sort is not a valid
+        #  field
+        if request.args.get('sort', False):
+            query = cls._add_sorting(query, request.args.get('sort'))
 
-        items = query.distinct().limit(per_page).offset((page_id-1)*per_page)\
+        items = query.distinct()\
+            .limit(per_page)\
+            .offset((page_id-1)*per_page)\
             .all()
 
         return cls(items, page_id, per_page, total, request)
 
+    @staticmethod
+    def _get_page_id(request: flask.Request) -> int:
+        """
+        Get the page id from the request.
+
+        Parameters
+        ----------
+        request : flask.Request
+            Request object
+
+        Returns
+        -------
+        int
+            Page id
+
+        Raises
+        ------
+        ValueError
+            If the page id is not an integer or is less than 1
+        """
+        try:
+            page_id = int(request.args.get('page', DEFAULT_PAGE))
+        except ValueError:
+            raise ValueError("The 'page' parameter should be an integer")
+        if page_id <= 0:
+            raise ValueError("The 'page' parameter should be >= 1")
+        return page_id
+
+    @staticmethod
+    def _get_per_page(request: flask.Request) -> int:
+        """
+        Get the number of items per page from the request.
+
+        Parameters
+        ----------
+        request : flask.Request
+            Request object
+
+        Returns
+        -------
+        int
+            Number of items per page
+
+        Raises
+        ------
+        ValueError
+            If the number of items per page is not an integer or is less than 1
+        """
+        try:
+            per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
+        except ValueError:
+            raise ValueError("The 'per_page' parameter should be an integer")
+        if per_page <= 0:
+            raise ValueError("The 'per_page' parameter should be >= 1")
+        return per_page
+
+    @staticmethod
+    def _add_sorting(query: sqlalchemy.orm.query, sort_string: str
+                     ) -> sqlalchemy.orm.query:
+        """
+        Add sorting to a query.
+
+        Parameters
+        ----------
+        query : sqlalchemy.orm.query
+            The query to add sorting to.
+        sort : str
+            The sorting to add. This can be a comma separated list of fields to
+            sort on. The fields can be prefixed with a '-' to indicate a
+            descending sort.
+        """
+        sort_list = sort_string.split(',')
+        for sorter in sort_list:
+            sorter = sorter.strip()
+            if sorter.startswith('-'):
+                query = query.order_by(sqlalchemy.desc(sorter[1:]))
+            else:
+                if sorter.startswith('+'):
+                    sorter = sorter[1:]
+                query = query.order_by(sorter)
+        return query
+
+    # TODO in v4+, remove this method if also removing the double endpoints
     @classmethod
     def from_list(cls, items: list[db.Base],
-                  request: flask.Request) -> 'Pagination':
+                  request: flask.Request) -> Pagination:
         """
         Create a Pagination object from a list of database objects.
 
@@ -211,14 +312,9 @@ class Pagination:
         Pagination
             Pagination object
         """
-        page_id = request.args.get('page')
+        page_id = int(request.args.get('page', DEFAULT_PAGE))
+        per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
         total = len(items)
-        if not page_id:
-            page_id = 1
-            per_page = total or 1
-        else:
-            page_id = int(page_id)
-            per_page = int(request.args.get('per_page', 10))
 
         if page_id <= 0:
             raise AttributeError('page needs to be >= 1')

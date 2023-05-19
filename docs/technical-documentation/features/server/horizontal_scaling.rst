@@ -33,13 +33,11 @@ How to use
 If you use multiple server instances, you should always connect them to the same
 RabbitMQ instance. You can achieve this by adding your RabbitMQ server when you
 create a new server with :code:`vserver new`, or you can add it later to your
-server configuration file with the flag :code:`rabbitmq_uri: <your URI>`.
+server configuration file as follows:
 
-A RabbitMQ URI is set up in the following way:
+.. code:: yaml
 
-::
-
-  amqp://$user:$password@$host:$port/$vhost
+  rabbitmq_uri: amqp://$user:$password@$host:$port/$vhost
 
 Where :code:`$user` is the username, :code:`$password` is the password,
 :code:`$host` is the URL where your RabbitMQ service is running, :code:`$port` is
@@ -48,6 +46,12 @@ the queue's port (which is 5672 if you are using the RabbitMQ Docker image), and
 `virtual host <https://www.rabbitmq.com/vhosts.html>`_ (you could e.g. run one
 instance group per vhost).
 
-We recommend running the `Docker implementation <https://hub.docker.com/_/rabbitmq>`_
-of RabbitMQ. Optionally, use the 'management' container that provides a user
-interface to manage your connections on port 15672.
+Deploy
+++++++
+
+If you are running a test server with ``vserver start``, a RabbitMQ docker
+container will be started automatically for you. This docker container contains
+a management interface which will be available on port 15672.
+
+For deploying a production server, there are several options to run RabbitMQ.
+For instance, you can install `RabbitMQ on Azure <https://www.golinuxcloud.com/install-rabbitmq-on-azure/>_`.

@@ -277,7 +277,8 @@ class SSHTunnel(DockerBaseManager):
             detach=True,
             name=self.container_name,
             command=self.ssh_tunnel_config.hostname,
-            auto_remove=False
+            auto_remove=False,
+            restart_policy={"Name": "always"}
         )
 
         # Connect to both the internal network and make an alias (=hostname).

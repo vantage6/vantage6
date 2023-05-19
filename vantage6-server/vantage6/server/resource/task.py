@@ -19,9 +19,8 @@ from vantage6.server.resource import only_for, ServicesResources, with_user
 from vantage6.server.resource.common._schema import (
     TaskSchema,
     TaskIncludedSchema,
-    TaskRunSchema
 )
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.event import kill_task
 
 
@@ -57,13 +56,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         path + '/<int:id>',
         endpoint='task_with_id',
         methods=('GET', 'DELETE'),
-        resource_class_kwargs=services
-    )
-    api.add_resource(
-        TaskRun,
-        path + '/<int:id>/run',
-        endpoint='task_run',
-        methods=('GET',),
         resource_class_kwargs=services
     )
 
@@ -107,8 +99,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 task_schema = TaskSchema()
-task_run_schema = TaskIncludedSchema()
-task_run_schema2 = TaskRunSchema()
+task_result_schema = TaskIncludedSchema()
 
 
 class TaskBase(ServicesResources):
@@ -153,6 +144,14 @@ class Tasks(TaskBase):
             schema:
               type: int
             description: The collaboration id to which the task belongs
+          - in: query
+            name: is_user_created
+            schema:
+              type: int
+            description: >-
+              If larger than 0, returns tasks created by a user (top-level
+              tasks). If equal to 0, returns subtask created by an algorithm.
+              If not specified, both are returned.
           - in: query
             name: image
             schema:
@@ -211,9 +210,7 @@ class Tasks(TaskBase):
               type: array
               items:
                 type: string
-            description: Include 'results' to get task results. Include
-              'metadata' to get pagination metadata. Note that this will
-              put the actual data in an envelope.
+            description: Include 'results' to get task results.
           - in: query
             name: status
             schema:
@@ -224,12 +221,19 @@ class Tasks(TaskBase):
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
@@ -269,14 +273,29 @@ class Tasks(TaskBase):
                 q = q.filter(getattr(db.Task, param).like(args[param]))
         if 'run_id' in args:
             q = q.join(db.Run).filter(db.Run.id == args['run_id'])
+        if 'is_user_created' in args:
+            try:
+                user_created = int(args['is_user_created'])
+                if user_created == 0:
+                    q = q.filter(db.Task.parent_id.isnot(None))
+                else:
+                    q = q.filter(db.Task.parent_id.is_(None))
+            except ValueError:
+                return {"msg": (
+                    "Invalid value for 'is_user_created' provided: "
+                    f"'{args['is_user_created']}'. Should be an integer."
+                )}, HTTPStatus.BAD_REQUEST
 
         q = q.order_by(desc(db.Task.id))
         # paginate tasks
-        page = Pagination.from_query(q, request)
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
         # TODO BvB 2023-02-08: does this work?
-        schema = task_run_schema if self.is_included('result') else\
+        schema = task_result_schema if self.is_included('result') else\
             task_schema
 
         return self.response(page, schema)
@@ -627,7 +646,7 @@ class Task(TaskBase):
         auth_org = self.obtain_auth_organization()
 
         # obtain schema
-        schema = task_run_schema if request.args.get('include') == \
+        schema = task_result_schema if request.args.get('include') == \
             'results' else task_schema
 
         # check permissions
@@ -704,84 +723,3 @@ class Task(TaskBase):
 
         return {"msg": f"task id={id} and its algorithm run data have been "
                        "successfully deleted"}, HTTPStatus.OK
-
-
-class TaskRun(ServicesResources):
-    """Resource for /api/task/<int:id>/run"""
-
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, "run")
-
-    @only_for(['user', 'container'])
-    def get(self, id):
-        """Return the algorithm runs for a specific task
-        ---
-        description: >-
-          Returns the task's algorithm runs specified by the task id.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Run|Global|View|❌|❌|View any run|\n
-          |Run|Organization|View|✅|✅|View runs for the
-          collaborations in which your organization participates with|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Task id
-            required: true
-          - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Task not found
-          401:
-            description: Unauthorized
-
-        security:
-            - bearerAuth: []
-
-        tags: ["Task"]
-        """
-        task = db.Task.get(id)
-        if not task:
-            return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
-
-        # obtain organization model
-        org = self.obtain_auth_organization()
-
-        if not self.r.v_glo.can():
-            c_orgs = task.collaboration.organizations
-            if not (self.r.v_org.can() and org in c_orgs):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # pagination
-        page = Pagination.from_list(task.runs, request)
-
-        # model serialization
-        return self.response(page, task_run_schema2)

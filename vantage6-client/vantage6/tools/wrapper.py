@@ -162,6 +162,7 @@ class WrapperBase(ABC):
 
         Data is received in the form of files, whose location should be
         specified in the following environment variables:
+
         - ``INPUT_FILE``: input arguments for the algorithm
         - ``OUTPUT_FILE``: location where the results of the algorithm should
           be stored

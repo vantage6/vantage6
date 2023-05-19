@@ -18,7 +18,7 @@ from vantage6.server.permission import (
 )
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.resource.common._schema import RoleSchema, RuleSchema
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.default_roles import DefaultRole
 
 module_name = logger_name(__name__)
@@ -178,29 +178,32 @@ class Roles(RoleBase):
               name: include_root
               schema:
                  type: boolean
-              description: Whether or not to include root role
-            - in: query
-              name: include
-              schema:
-                type: string (can be multiple)
-              description: Include 'metadata' to get pagination metadata. Note
-                that this will put the actual data in an envelope.
+              description: Whether or not to include root role (default=False)
             - in: query
               name: page
               schema:
                 type: integer
-              description: Page number for pagination
+              description: Page number for pagination (default=1)
             - in: query
               name: per_page
               schema:
                 type: integer
-              description: Number of items per page
+              description: Number of items per page (default=10)
+            - in: query
+              name: sort
+              schema:
+                type: string
+              description: >-
+                Sort by one or more fields, separated by a comma. Use a minus
+                sign (-) in front of the field to sort in descending order.
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
             - bearerAuth: []
@@ -255,7 +258,11 @@ class Roles(RoleBase):
                 # allow users without permission to view only their own roles
                 q = q.filter(db.Role.id.in_(own_role_ids))
 
-        page = Pagination.from_query(query=q, request=request)
+        # paginate results
+        try:
+            page = Pagination.from_query(query=q, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         return self.response(page, role_schema)
 
@@ -339,7 +346,7 @@ class Roles(RoleBase):
                 rules.append(rule)
 
         # And check that this used has the rules he is trying to assign
-        denied = self.permissions.verify_user_rules(rules)
+        denied = self.permissions.check_user_rules(rules)
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
@@ -523,7 +530,7 @@ class Role(RoleBase):
                     return {'msg': f'rule with id={rule_id} not found!'}, \
                         HTTPStatus.NOT_FOUND
                 rules.append(rule)
-            denied = self.permissions.verify_user_rules(rules)
+            denied = self.permissions.check_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
             role.rules = rules
@@ -616,21 +623,22 @@ class RoleRules(RoleBase):
               description: Role id
               required: true
             - in: query
-              name: include
-              schema:
-                type: string (can be multiple)
-              description: Include 'metadata' to get pagination metadata. Note
-                that this will put the actual data in an envelope.
-            - in: query
               name: page
               schema:
                 type: integer
-              description: Page number for pagination
+              description: Page number for pagination (default=1)
             - in: query
               name: per_page
               schema:
                 type: integer
-              description: Number of items per page
+              description: Number of items per page (default=10)
+            - in: query
+              name: sort
+              schema:
+                type: string
+              description: >-
+                Sort by one or more fields, separated by a comma. Use a minus
+                sign (-) in front of the field to sort in descending order.
 
         responses:
             200:
@@ -724,7 +732,7 @@ class RoleRules(RoleBase):
                     HTTPStatus.UNAUTHORIZED
 
         # user needs to role to assign it
-        denied = self.permissions.verify_user_rules([rule])
+        denied = self.permissions.check_user_rules([rule])
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
@@ -790,7 +798,7 @@ class RoleRules(RoleBase):
                     HTTPStatus.UNAUTHORIZED
 
         # user needs to role to remove it
-        denied = self.permissions.verify_user_rules([rule])
+        denied = self.permissions.check_user_rules([rule])
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
