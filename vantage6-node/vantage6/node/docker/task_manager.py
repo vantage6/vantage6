@@ -37,7 +37,6 @@ class DockerTaskManager(DockerBaseManager):
     docker container. Finally, it monitors the container state and can return
     it's results when the algorithm finished.
     """
-    log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
                  result_id: int, task_info: dict, tasks_dir: Path,
@@ -74,11 +73,13 @@ class DockerTaskManager(DockerBaseManager):
             List of DeviceRequest objects to be passed to the algorithm
             container
         """
+        self.task_id = task_info['id']
+        self.log = logging.getLogger(f"task ({self.task_id})")
+
         super().__init__(isolated_network_mgr)
         self.image = image
         self.__vpn_manager = vpn_manager
         self.result_id = result_id
-        self.task_id = task_info['id']
         self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
         self.databases = databases
@@ -97,7 +98,7 @@ class DockerTaskManager(DockerBaseManager):
             "node": node_name,
             "result_id": str(result_id)
         }
-        self.helper_labels = self.labels
+        self.helper_labels = self.labels.copy()
         self.helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
 
         # FIXME: these values should be retrieved from DockerNodeContext
@@ -254,6 +255,7 @@ class DockerTaskManager(DockerBaseManager):
         self.pull()
 
         # remove algorithm containers if they were already running
+        self.log.debug("Check if algorithm container is already running")
         remove_container_if_exists(
             docker_client=self.docker, name=container_name
         )
@@ -266,6 +268,7 @@ class DockerTaskManager(DockerBaseManager):
             # First, start a container that runs indefinitely. The algorithm
             # container will run in the same network and network exceptions
             # will therefore also affect the algorithm.
+            self.log.debug("Start helper container to setup VPN network")
             self.helper_container = self.docker.containers.run(
                 command='sleep infinity',
                 image=self.alpine_image,
@@ -276,6 +279,7 @@ class DockerTaskManager(DockerBaseManager):
             )
             # setup forwarding of traffic via VPN client to and from the
             # algorithm container:
+            self.log.debug("Setup port forwarder")
             vpn_ports = self.__vpn_manager.forward_vpn_traffic(
                 helper_container=self.helper_container,
                 algo_image_name=self.image
@@ -284,6 +288,7 @@ class DockerTaskManager(DockerBaseManager):
         # try reading docker input
         deserialized_input = None
         if self.docker_input:
+            self.log.debug("Deserialize input")
             try:
                 deserialized_input = pickle.loads(self.docker_input)
             except Exception:
