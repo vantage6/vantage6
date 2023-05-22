@@ -16,8 +16,8 @@ Release notes
      `PR#676 <https://github.com/vantage6/vantage6/pull/676>`_)
    - Fixed database label logging
      (`PR#674 <https://github.com/vantage6/vantage6/pull/664>`_)
-   - Fixed a bug where VPN messages to the originating node where not always
-     send/received
+   - Fixed a bug were VPN messages to the originating node where not always
+     sent/received
      (`Issue#671 <https://github.com/vantage6/vantage6/issues/671>`_,
       `PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
    - Fixed a bug where an exceptions is raised when the websocket
