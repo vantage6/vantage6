@@ -8,9 +8,16 @@ Release notes
 
 - **Bugfix**
 
+   - Fixed a bug where VPN messages to the originating node where not always
+     send/received (`PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
+   - Fixed a bug where an exceptions is raised when the websocket
+     connection was lost and a ping was attempted to be send
+     (`PR#674 <https://github.com/vantage6/vantage6/pull/674>`_)
+   - Fixed a formatting in CLI print statement
+     (`PR#661 <https://github.com/vantage6/vantage6/pull/661>`_)
    - Fixed bug where '/mnt/' was erroneously prepended to non-file based
      databases (`PR#658 <https://github.com/vantage6/vantage6/pull/658>`_)
-   - Fix in autowrapper for algorithms with CSV input
+   - Fix in ``autowrapper`` for algorithms with CSV input
      (`PR#655 <https://github.com/vantage6/vantage6/pull/655>`_)
    - Fixed a bug in syncing tasks from the server to the node, when the node
      lost socket connection and then reconnected
