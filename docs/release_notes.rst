@@ -8,11 +8,22 @@ Release notes
 
 - **Bugfix**
 
+   - Fixed a bug that prevented the node from shutting down properly
+     (`Issue#649 <https://github.com/vantage6/vantage6/issues/649>`_,
+     `PR#677 <https://github.com/vantage6/vantage6/pull/677>`_)
+   - Fixed a bug where the node did not await the VPN client to be ready
+     (`Issue#656 <https://github.com/vantage6/vantage6/issues/656>`_,
+     `PR#676 <https://github.com/vantage6/vantage6/pull/676>`_)
+   - Fixed database label logging
+     (`PR#674 <https://github.com/vantage6/vantage6/pull/664>`_)
    - Fixed a bug where VPN messages to the originating node where not always
-     send/received (`PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
+     send/received
+     (`Issue#671 <https://github.com/vantage6/vantage6/issues/671>`_,
+      `PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
    - Fixed a bug where an exceptions is raised when the websocket
      connection was lost and a ping was attempted to be send
-     (`PR#674 <https://github.com/vantage6/vantage6/pull/674>`_)
+     (`Issue#672 <https://github.com/vantage6/vantage6/issues/672>`_,
+      `PR#674 <https://github.com/vantage6/vantage6/pull/674>`_)
    - Fixed a formatting in CLI print statement
      (`PR#661 <https://github.com/vantage6/vantage6/pull/661>`_)
    - Fixed bug where '/mnt/' was erroneously prepended to non-file based
@@ -21,9 +32,11 @@ Release notes
      (`PR#655 <https://github.com/vantage6/vantage6/pull/655>`_)
    - Fixed a bug in syncing tasks from the server to the node, when the node
      lost socket connection and then reconnected
-     (`PR#657 <https://github.com/vantage6/vantage6/pull/657>`_)
+     (`Issue#654 <https://github.com/vantage6/vantage6/issues/654>`_,
+     `PR#657 <https://github.com/vantage6/vantage6/pull/657>`_)
    - Fix construction of database URI in ``vserver files``
-     (`PR#659 <https://github.com/vantage6/vantage6/pull/659>`_)
+     (`Issue#650 <https://github.com/vantage6/vantage6/issues/650>`_,
+     `PR#659 <https://github.com/vantage6/vantage6/pull/659>`_)
 
 
 3.8.7
