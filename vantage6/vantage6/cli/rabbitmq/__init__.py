@@ -1,11 +1,11 @@
 """RabbitMQ utilities."""
-from typing import Dict
 
 from vantage6.common import is_ip_address
 
 
-def split_rabbitmq_uri(rabbit_uri: str) -> Dict:
-    """Get details (user, pass, host, vhost, port) from a RabbitMQ uri.
+def split_rabbitmq_uri(rabbit_uri: str) -> dict:
+    """
+    Get details (user, pass, host, vhost, port) from a RabbitMQ uri.
 
     Parameters
     ----------
@@ -14,7 +14,7 @@ def split_rabbitmq_uri(rabbit_uri: str) -> Dict:
 
     Returns
     -------
-    Dict[str]
+    dict[str]
         The vhost defined in the RabbitMQ URI
     """
     (user_details, location_details) = rabbit_uri.split('@', 1)

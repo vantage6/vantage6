@@ -339,7 +339,7 @@ class Roles(RoleBase):
                 rules.append(rule)
 
         # And check that this used has the rules he is trying to assign
-        denied = self.permissions.verify_user_rules(rules)
+        denied = self.permissions.check_user_rules(rules)
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
@@ -523,7 +523,7 @@ class Role(RoleBase):
                     return {'msg': f'rule with id={rule_id} not found!'}, \
                         HTTPStatus.NOT_FOUND
                 rules.append(rule)
-            denied = self.permissions.verify_user_rules(rules)
+            denied = self.permissions.check_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
             role.rules = rules
@@ -724,7 +724,7 @@ class RoleRules(RoleBase):
                     HTTPStatus.UNAUTHORIZED
 
         # user needs to role to assign it
-        denied = self.permissions.verify_user_rules([rule])
+        denied = self.permissions.check_user_rules([rule])
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 
@@ -791,7 +791,7 @@ class RoleRules(RoleBase):
                     HTTPStatus.UNAUTHORIZED
 
         # user needs to role to remove it
-        denied = self.permissions.verify_user_rules([rule])
+        denied = self.permissions.check_user_rules([rule])
         if denied:
             return denied, HTTPStatus.UNAUTHORIZED
 

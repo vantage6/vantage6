@@ -44,8 +44,10 @@ jobs:
       - name: Get branch on which the tag is based
         id: branchname
         run: |
+         # get the branch on which the tag is based
          raw=$(git branch -r --contains ${{ github.ref }})
-         branch=${raw##*/}
+         # delete the name of the branch up to and including 'origin/'
+         branch=$(echo $raw | sed 's/.*origin\///')
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
@@ -181,7 +183,7 @@ jobs:
 
       - # we only release a new base image if it is a major or minor release
         name: Build Docker base image
-        if: ${{ env.patch == 0 && env.stage == '' }}
+        if: ${{ env.patch == 0 }}
         run: make base-image TAG=${major}.${minor}
 
       - # build the actual infrastructure images

@@ -1,5 +1,4 @@
 import logging
-from typing import Dict
 import jwt
 import datetime as dt
 
@@ -205,7 +204,7 @@ class DefaultSocketNamespace(Namespace):
         """
         self.log.error(e)
 
-    def on_algorithm_status_change(self, data: Dict) -> None:
+    def on_algorithm_status_change(self, data: dict) -> None:
         """
         An algorithm container has changed its status. This status change may
         be that the algorithm has finished, crashed, etc. Here we notify the
@@ -228,6 +227,12 @@ class DefaultSocketNamespace(Namespace):
                 "collaboration_id": 1
             }
         """
+        # only allow nodes to send this event
+        if session.type != 'node':
+            self.log.warn('Only nodes can send algorithm status changes! '
+                          f'{session.type} {session.auth_id} is not allowed.')
+            return
+
         result_id = data.get('result_id')
         task_id = data.get('task_id')
         collaboration_id = data.get('collaboration_id')
@@ -273,6 +278,12 @@ class DefaultSocketNamespace(Namespace):
         node_config: dict
             Dictionary containing the node's configuration.
         """
+        # only allow nodes to send this event
+        if session.type != 'node':
+            self.log.warn('Only nodes can send node configuration updates! '
+                          f'{session.type} {session.auth_id} is not allowed.')
+            return
+
         node = db.Node.get(session.auth_id)
 
         # delete any old data that may be present (if cleanup on disconnect

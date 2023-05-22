@@ -28,36 +28,30 @@ comprise the node. A few that we would like to highlight:
 
 .. _node-class:
 
-``Node`` class
---------------
+vantage6.node.Node
+------------------
+
 .. autoclass:: vantage6.node.Node
    :members:
    :private-members: __proxy_server_worker, __start_task, __listening_worker,
      __speaking_worker
 
-.. _node-context-class:
-
-``NodeContext`` class
----------------------
-.. autoclass:: vantage6.cli.context.NodeContext
-   :members:
-
 .. _docker-node-context-class:
 
-``DockerNodeContext`` class
----------------------------
 .. autoclass:: vantage6.node.context.DockerNodeContext
    :members:
 
-``DockerBaseManager`` class
----------------------------
+vantage6.node.docker.docker_base
+--------------------------------
+
 .. autoclass:: vantage6.node.docker.docker_base.DockerBaseManager
    :members:
 
 .. _docker-manager-class:
 
-``DockerManager`` class
----------------------------
+vantage6.node.docker.docker_manager
+----------------------------------
+
 .. autoclass:: vantage6.node.docker.docker_manager.DockerManager
    :members:
    :show-inheritance:
@@ -68,37 +62,40 @@ comprise the node. A few that we would like to highlight:
 
 .. _task-manager-class:
 
-``DockerTaskManager`` class
----------------------------
+vantage6.node.docker.task_manager
+---------------------------------
+
 .. autoclass:: vantage6.node.docker.task_manager.DockerTaskManager
    :members:
    :show-inheritance:
 
 .. _vpn-manager-class:
 
-``VPNManager`` class
---------------------
+vantage6.node.docker.vpn_manager
+--------------------------------
+
 .. autoclass:: vantage6.node.docker.vpn_manager.VPNManager
    :members:
    :show-inheritance:
 
 
-Algorithm execution exceptions
------------------
+vantage6.node.docker.exceptions
+-------------------------------
+
 .. automodule:: vantage6.node.docker.exceptions
     :members:
 
 
-Proxy server
-------------
+vantage6.node.proxy_server
+--------------------------
 
 .. automodule:: vantage6.node.proxy_server
     :members:
 
 .. _vnode-local-module:
 
-``vnode-local`` commands
-------------------------
+vantage6.node.cli.node
+----------------------
 
 .. automodule:: vantage6.node.cli.node
 

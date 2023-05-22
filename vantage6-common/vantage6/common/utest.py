@@ -9,6 +9,7 @@ import logging
 import unittest
 from datetime import datetime
 
+
 class TestResult(unittest.TextTestResult):
 
     def __init__(self, stream, descriptions, verbosity, log):

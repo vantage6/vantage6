@@ -6,9 +6,9 @@ import pickle
 import docker.errors
 import json
 
-from typing import Dict, List, Union
 from pathlib import Path
 
+from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
@@ -16,9 +16,10 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
-from vantage6.node.util import logger_name, get_parent_id
+from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.docker.squid import Squid
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
@@ -38,10 +39,11 @@ class DockerTaskManager(DockerBaseManager):
     """
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, task_info: Dict, tasks_dir: Path,
+                 result_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: Union[str, None] = None):
+                 alpine_image: str | None = None, proxy: Squid | None = None,
+                 device_requests: list | None = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -55,18 +57,21 @@ class DockerTaskManager(DockerBaseManager):
             Name of the node, to track running algorithms
         result_id: int
             Server result identifier
-        task_info: Dict
+        task_info: dict
             Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
         isolated_network_mgr: NetworkManager
             Manager of isolated network to which algorithm needs to connect
-        databases: Dict
+        databases: dict
             List of databases
         docker_volume_name: str
             Name of the docker volume
-        alpine_image: str or None
+        alpine_image: str | None
             Name of alternative Alpine image to be used
+        device_requests: list | None
+            List of DeviceRequest objects to be passed to the algorithm
+            container
         """
         self.task_id = task_info['id']
         self.log = logging.getLogger(f"task ({self.task_id})")
@@ -82,6 +87,7 @@ class DockerTaskManager(DockerBaseManager):
         self.node_name = node_name
         self.alpine_image = ALPINE_IMAGE if alpine_image is None \
             else alpine_image
+        self.proxy = proxy
 
         self.container = None
         self.status_code = None
@@ -102,6 +108,11 @@ class DockerTaskManager(DockerBaseManager):
 
         # keep track of the task status
         self.status: TaskStatus = TaskStatus.INITIALIZING
+
+        # set device requests
+        self.device_requests = []
+        if device_requests:
+            self.device_requests = device_requests
 
     def is_finished(self) -> bool:
         """
@@ -177,7 +188,7 @@ class DockerTaskManager(DockerBaseManager):
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: Dict, database: str) -> List[Dict]:
+            algorithm_env: dict, database: str) -> list[dict]:
         """
         Runs the docker-image in detached mode.
 
@@ -192,12 +203,12 @@ class DockerTaskManager(DockerBaseManager):
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
@@ -223,7 +234,7 @@ class DockerTaskManager(DockerBaseManager):
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
-    def _run_algorithm(self) -> List[Dict]:
+    def _run_algorithm(self) -> list[dict]:
         """
         Run the algorithm container
 
@@ -232,7 +243,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] or None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is inactive
         """
@@ -297,7 +308,8 @@ class DockerTaskManager(DockerBaseManager):
                 network='container:' + self.helper_container.id,
                 volumes=self.volumes,
                 name=container_name,
-                labels=self.labels
+                labels=self.labels,
+                device_requests=self.device_requests
             )
 
         except Exception as e:
@@ -308,20 +320,22 @@ class DockerTaskManager(DockerBaseManager):
         return vpn_ports
 
     @staticmethod
-    def _printable_input(input_: str) -> str:
+    def _printable_input(input_: str | dict) -> str:
         """
         Return a version of the input with limited number of characters
 
         Parameters
         ----------
-        input: str
-            Input of a task
+        input: str | dict
+            Deserialized input of a task
 
         Returns
         -------
         str
             Input with limited number of characters, to be printed to logs
         """
+        if isinstance(input_, dict):
+            input_ = str(input_)
         if len(input_) > 550:
             return f'{input_[:500]}... ({len(input_)-500} characters omitted)'
         return input_
@@ -347,7 +361,7 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> Dict:
+    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> dict:
         """
         Generate docker volumes required to run the algorithm
 
@@ -360,7 +374,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        Dict:
+        dict:
             Volumes to support running the algorithm
         """
         if isinstance(self.docker_input, str):
@@ -392,19 +406,21 @@ class DockerTaskManager(DockerBaseManager):
                 {"bind": self.data_folder, "mode": "rw"}
         return volumes
 
-    def _setup_environment_vars(self, algorithm_env: Dict = {},
-                                database: str = 'default') -> Dict:
+    def _setup_environment_vars(self, algorithm_env: dict,
+                                database: str = 'default') -> dict:
         """"
         Set environment variables required to run the algorithm
 
         Parameters
         ----------
-        algorithm_env: Dict
+        algorithm_env: dict
             Dictionary with additional environment variables to set
+        database: str
+            Label of the database to use
 
         Returns
         -------
-        Dict:
+        dict:
             Environment variables required to run algorithm
         """
         try:
@@ -416,7 +432,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.debug(os.environ)
             proxy_host = 'host.docker.internal'
 
-        # define enviroment variables for the docker-container, the
+        # define environment variables for the docker-container, the
         # host, port and api_path are from the local proxy server to
         # facilitate indirect communication with the central server
         # FIXME: we should only prepend data_folder if database_uri is a
@@ -432,6 +448,31 @@ class DockerTaskManager(DockerBaseManager):
             "API_PATH": "",
         }
 
+        # Add squid proxy environment variables
+        if self.proxy:
+            # applications/libraries in the algorithm container need to adhere
+            # to the proxy settings. Because we are not sure which application
+            # is used for the request we both set HTTP_PROXY and http_proxy and
+            # HTTPS_PROXY and https_proxy for the secure connection.
+            environment_variables["HTTP_PROXY"] = self.proxy.address
+            environment_variables["http_proxy"] = self.proxy.address
+            environment_variables["HTTPS_PROXY"] = self.proxy.address
+            environment_variables["https_proxy"] = self.proxy.address
+
+            no_proxy = []
+            if self.__vpn_manager:
+                # Computing all ips in the vpn network is not feasible as the
+                # no_proxy environment variable will be too long for the
+                # container to start. So we only add the net + mask. For some
+                # applications and libraries this is format is ignored.
+                no_proxy.append(self.__vpn_manager.subnet)
+            no_proxy.append("localhost")
+            no_proxy.append(proxy_host)
+
+            # Add the NO_PROXY and no_proxy environment variable.
+            environment_variables["NO_PROXY"] = ', '.join(no_proxy)
+            environment_variables["no_proxy"] = ', '.join(no_proxy)
+
         if database in self.databases:
             environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
         else:
@@ -441,7 +482,7 @@ class DockerTaskManager(DockerBaseManager):
                              "exist. Available databases are: "
                              f"{self.databases.keys()}. This is likely to "
                              "result in an algorithm crash.")
-            self.debug(f"User specified database: {database}")
+            self.log.debug(f"User specified database: {database}")
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the

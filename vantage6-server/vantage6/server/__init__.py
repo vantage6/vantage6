@@ -20,11 +20,13 @@ import time
 import datetime as dt
 import traceback
 
+from typing import Any
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
 from flask import (
-    Flask, make_response, current_app, request, send_from_directory, Request
+    Flask, make_response, current_app, request, send_from_directory, Request,
+    Response
 )
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -75,7 +77,7 @@ class ServerApp:
         Context object that contains the configuration of the server.
     """
 
-    def __init__(self, ctx: ServerContext):
+    def __init__(self, ctx: ServerContext) -> None:
         """Create a vantage6-server application."""
 
         self.ctx = ctx
@@ -127,7 +129,17 @@ class ServerApp:
 
         log.info("Initialization done")
 
-    def setup_socket_connection(self):
+    def setup_socket_connection(self) -> SocketIO:
+        """
+        Setup a socket connection. If a message queue is defined, connect the
+        socket to the message queue. Otherwise, use the default socketio
+        settings.
+
+        Returns
+        -------
+        SocketIO
+            SocketIO object
+        """
 
         msg_queue = self.ctx.config.get('rabbitmq_uri')
         if msg_queue:
@@ -161,7 +173,7 @@ class ServerApp:
         return socketio
 
     @staticmethod
-    def configure_logging():
+    def configure_logging() -> None:
         """Set third party loggers to a warning level"""
 
         # Prevent logging from urllib3
@@ -173,7 +185,7 @@ class ServerApp:
         logging.getLogger('requests_oauthlib.oauth2_session')\
             .setLevel(logging.WARNING)
 
-    def configure_flask(self):
+    def configure_flask(self) -> None:
         """Configure the Flask settings of the vantage6 server."""
 
         # let us handle exceptions
@@ -311,7 +323,6 @@ class ServerApp:
             return send_from_directory(self.app.static_folder,
                                        request.path[1:])
 
-
     def _get_jwt_expiration_seconds(
         self, config_key: str, default_hours: int,
         longer_than: int = MIN_TOKEN_VALIDITY_SECONDS,
@@ -367,8 +378,7 @@ class ServerApp:
 
         return seconds_expire
 
-
-    def configure_api(self):
+    def configure_api(self) -> None:
         """Define global API output and its structure."""
 
         # helper to create HATEOAS schemas
@@ -376,7 +386,22 @@ class ServerApp:
 
         # whatever you get try to json it
         @self.api.representation('application/json')
-        def output_json(data, code, headers=None):
+        # pylint: disable=unused-argument
+        def output_json(
+            data: Any, code: HTTPStatus, headers: dict = None
+        ) -> Response:
+            """
+            Return jsonified data for request responses.
+
+            Parameters
+            ----------
+            data: Any
+                The data to be jsonified
+            code: HTTPStatus
+                The HTTP status code of the response
+            headers: dict
+                Additional headers to be added to the response
+            """
 
             if isinstance(data, db.Base):
                 data = db.jsonable(data)
@@ -392,7 +417,23 @@ class ServerApp:
         """Configure JWT authentication."""
 
         @self.jwt.additional_claims_loader
-        def additional_claims_loader(identity):
+        # pylint: disable=unused-argument
+        def additional_claims_loader(
+                identity: db.Authenticatable | dict) -> dict:
+            """
+            Create additional claims for JWT tokens: set user type and for
+            users, set their roles.
+
+            Parameters
+            ----------
+            identity: db.Authenticatable | dict
+                The identity for which to create the claims
+
+            Returns
+            -------
+            dict:
+                The claims to be added to the JWT token
+            """
             roles = []
             if isinstance(identity, db.User):
                 type_ = 'user'
@@ -414,8 +455,23 @@ class ServerApp:
             return claims
 
         @self.jwt.user_identity_loader
-        def user_identity_loader(identity):
-            """"JSON serializing identity to be used by create_access_token."""
+        # pylint: disable=unused-argument
+        def user_identity_loader(
+                identity: db.Authenticatable | dict) -> str | dict:
+            """"
+            JSON serializing identity to be used by create_access_token.
+
+            Parameters
+            ----------
+            identity: db.Authenticatable | dict
+                The identity to be serialized
+
+            Returns
+            -------
+            str | dict:
+                The serialized identity. For a node or user, this is the id;
+                for a container, it is a dict.
+            """
             if isinstance(identity, db.Authenticatable):
                 return identity.id
             if isinstance(identity, dict):
@@ -425,7 +481,26 @@ class ServerApp:
                         from '{str(identity)}'")
 
         @self.jwt.user_lookup_loader
-        def user_lookup_loader(jwt_payload, jwt_headers):
+        # pylint: disable=unused-argument
+        def user_lookup_loader(
+            jwt_payload: dict, jwt_headers: dict
+        ) -> db.Authenticatable | dict:
+            """
+            Load the user, node or container instance from the JWT payload.
+
+            Parameters
+            ----------
+            jwt_payload: dict
+                The JWT payload
+            jwt_headers: dict
+                The JWT headers
+
+            Returns
+            -------
+            db.Authenticatable | dict:
+                The user, node or container identity. If the identity is a
+                container, a dict is returned.
+            """
             identity = jwt_headers['sub']
             auth_identity = Identity(identity)
 
@@ -475,6 +550,7 @@ class ServerApp:
 
                 return auth
             else:
+                # container identity
 
                 for rule in db.Role.get_by_name(DefaultRole.CONTAINER).rules:
                     auth_identity.provides.add(
@@ -489,7 +565,7 @@ class ServerApp:
                 log.debug(identity)
                 return identity
 
-    def load_resources(self):
+    def load_resources(self) -> None:
         """Import the modules containing API resources."""
 
         # make services available to the endpoints, this way each endpoint can
@@ -510,7 +586,7 @@ class ServerApp:
     # moment because of the circular import issue with `db`, see
     # https://github.com/vantage6/vantage6/issues/53
     @staticmethod
-    def _add_default_roles():
+    def _add_default_roles() -> None:
         for role in get_default_roles(db):
             if not db.Role.get_by_name(role['name']):
                 log.warn(f"Creating new default role {role['name']}...")
@@ -521,7 +597,7 @@ class ServerApp:
                 )
                 new_role.save()
 
-    def start(self):
+    def start(self) -> None:
         """
         Start the server.
 
