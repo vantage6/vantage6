@@ -145,7 +145,7 @@ class NodeClient(ClientBase):
             The results.
         """
         return super().get_results(
-            id=id_,
+            id_=id_,
             state=state,
             include_task=include_task,
             task_id=task_id,

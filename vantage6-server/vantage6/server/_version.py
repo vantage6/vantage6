@@ -7,11 +7,7 @@ with open(os.path.join(here, '__build__')) as fp:
     __build__ = json.load(fp)
 
 # Module version
-<<<<<<< HEAD
-version_info = ((( 3, 8, 8, 'candidate', __build__, 0)))
-=======
 version_info = (3, 9, 0, 'candidate', __build__, 0)
->>>>>>> release/3.9
 
 # Module version stage suffix map
 _specifier_ = {'alpha': 'a', 'beta': 'b', 'candidate': 'rc', 'final': ''}
