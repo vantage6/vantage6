@@ -187,7 +187,7 @@ class DockerTaskManager(DockerBaseManager):
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: dict, database: str) -> list[dict]:
+            algorithm_env: dict, database: str) -> list[dict] | None:
         """
         Runs the docker-image in detached mode.
 

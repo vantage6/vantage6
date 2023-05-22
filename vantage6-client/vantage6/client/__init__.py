@@ -1964,7 +1964,8 @@ class UserClient(ClientBase):
             self.parent.log.info('--> Attempting to decrypt results!')
 
             # get_results also handles decryption
-            result = self.parent.get_results(id_=id_, include_task=include_task)
+            result = self.parent.get_results(id_=id_,
+                                             include_task=include_task)
             result_data = result.get('result')
             if result_data:
                 try:
@@ -1982,7 +1983,7 @@ class UserClient(ClientBase):
                  assigned: tuple[str, str] = None,
                  finished: tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
-                 include_metadata: bool = True) -> list:
+                 include_metadata: bool = True) -> dict | list[dict]:
             """List results
 
             Parameters
@@ -2071,11 +2072,9 @@ class UserClient(ClientBase):
 
             return cleaned_results
 
-        # note: using typing.List instead of `list` to prevent referring
-        # to the list() function in an incorrect manner
         def from_task(
             self, task_id: int, include_task: bool = False
-        ) -> typing.List[dict]:
+        ) -> list[dict]:
             """
             Get all results from a specific task
 
