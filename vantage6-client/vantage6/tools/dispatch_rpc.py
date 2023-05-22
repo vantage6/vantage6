@@ -1,13 +1,16 @@
 import os
 import importlib
 import jwt
+import traceback
 
 from vantage6.client import ContainerClient
 from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.tools.util import info, warn, error
 
 
-def dispatch_rpc(data, input_data, module, token, use_new_client=False):
+# TODO in v4+, set print_full_error to True, and remove use_new_client option
+def dispatch_rpc(data, input_data, module, token, use_new_client=False,
+                 print_full_error=False):
 
     # import algorithm module
     try:
@@ -69,7 +72,9 @@ def dispatch_rpc(data, input_data, module, token, use_new_client=False):
         result = method(client, data, *args, **kwargs) if master else \
                  method(data, *args, **kwargs)
     except Exception as e:
-        warn(f"Error encountered while calling {method_name}: {e}")
+        error(f"Error encountered while calling {method_name}: {e}")
+        if print_full_error:
+            error(traceback.print_exc())
         exit(1)
 
     return result
