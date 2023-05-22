@@ -18,6 +18,7 @@ from vantage6.common.task_status import TaskStatus
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE
 from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.docker.squid import Squid
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
@@ -40,7 +41,8 @@ class DockerTaskManager(DockerBaseManager):
                  result_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
-                 alpine_image: str | None = None):
+                 alpine_image: str | None = None, proxy: Squid | None = None,
+                 device_requests: list | None = None):
         """
         Initialization creates DockerTaskManager instance
 
@@ -66,6 +68,9 @@ class DockerTaskManager(DockerBaseManager):
             Name of the docker volume
         alpine_image: str | None
             Name of alternative Alpine image to be used
+        device_requests: list | None
+            List of DeviceRequest objects to be passed to the algorithm
+            container
         """
         self.task_id = task_info['id']
         self.log = logging.getLogger(f"task ({self.task_id})")
@@ -81,6 +86,7 @@ class DockerTaskManager(DockerBaseManager):
         self.node_name = node_name
         self.alpine_image = ALPINE_IMAGE if alpine_image is None \
             else alpine_image
+        self.proxy = proxy
 
         self.container = None
         self.status_code = None
@@ -101,6 +107,11 @@ class DockerTaskManager(DockerBaseManager):
 
         # keep track of the task status
         self.status: TaskStatus = TaskStatus.INITIALIZING
+
+        # set device requests
+        self.device_requests = []
+        if device_requests:
+            self.device_requests = device_requests
 
     def is_finished(self) -> bool:
         """
@@ -296,7 +307,8 @@ class DockerTaskManager(DockerBaseManager):
                 network='container:' + self.helper_container.id,
                 volumes=self.volumes,
                 name=container_name,
-                labels=self.labels
+                labels=self.labels,
+                device_requests=self.device_requests
             )
 
         except Exception as e:
@@ -419,7 +431,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.debug(os.environ)
             proxy_host = 'host.docker.internal'
 
-        # define enviroment variables for the docker-container, the
+        # define environment variables for the docker-container, the
         # host, port and api_path are from the local proxy server to
         # facilitate indirect communication with the central server
         # FIXME: we should only prepend data_folder if database_uri is a
@@ -435,6 +447,31 @@ class DockerTaskManager(DockerBaseManager):
             "API_PATH": "",
         }
 
+        # Add squid proxy environment variables
+        if self.proxy:
+            # applications/libraries in the algorithm container need to adhere
+            # to the proxy settings. Because we are not sure which application
+            # is used for the request we both set HTTP_PROXY and http_proxy and
+            # HTTPS_PROXY and https_proxy for the secure connection.
+            environment_variables["HTTP_PROXY"] = self.proxy.address
+            environment_variables["http_proxy"] = self.proxy.address
+            environment_variables["HTTPS_PROXY"] = self.proxy.address
+            environment_variables["https_proxy"] = self.proxy.address
+
+            no_proxy = []
+            if self.__vpn_manager:
+                # Computing all ips in the vpn network is not feasible as the
+                # no_proxy environment variable will be too long for the
+                # container to start. So we only add the net + mask. For some
+                # applications and libraries this is format is ignored.
+                no_proxy.append(self.__vpn_manager.subnet)
+            no_proxy.append("localhost")
+            no_proxy.append(proxy_host)
+
+            # Add the NO_PROXY and no_proxy environment variable.
+            environment_variables["NO_PROXY"] = ', '.join(no_proxy)
+            environment_variables["no_proxy"] = ', '.join(no_proxy)
+
         if database in self.databases:
             environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
         else:
@@ -444,7 +481,7 @@ class DockerTaskManager(DockerBaseManager):
                              "exist. Available databases are: "
                              f"{self.databases.keys()}. This is likely to "
                              "result in an algorithm crash.")
-            self.debug(f"User specified database: {database}")
+            self.log.debug(f"User specified database: {database}")
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the

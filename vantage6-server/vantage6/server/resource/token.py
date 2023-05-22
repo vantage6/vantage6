@@ -5,6 +5,7 @@ Resources below '/<api_base>/token'
 import logging
 import pyotp
 
+from typing import Union
 from flask import request, g
 from flask_jwt_extended import (
     jwt_required,
@@ -167,7 +168,7 @@ class UserToken(ServicesResources):
         return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
 
     @staticmethod
-    def validate_2fa_token(user: User, mfa_code: int | str) -> bool:
+    def validate_2fa_token(user: User, mfa_code: Union[int, str]) -> bool:
         """
         Check whether the 6-digit two-factor authentication code is valid
 
