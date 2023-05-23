@@ -17,7 +17,6 @@ import os
 import logging
 
 from pathlib import Path
-from typing import Any
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization

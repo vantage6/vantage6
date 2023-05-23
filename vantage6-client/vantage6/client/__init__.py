@@ -14,6 +14,7 @@ import pyfiglet
 import json as json_lib
 import itertools
 import sys
+import typing
 import traceback
 
 from pathlib import Path
@@ -2074,7 +2075,7 @@ class UserClient(ClientBase):
 
         def from_task(
             self, task_id: int, include_task: bool = False
-        ) -> list[dict]:
+        ) -> typing.List[dict]:
             """
             Get all results from a specific task
 
