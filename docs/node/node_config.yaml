@@ -161,7 +161,7 @@ application:
     # Size kb of a single log file, used by RotatingFileHandler
     max_size:     1024
 
-    # format: input for logging.Formatter,
+    # Format: input for logging.Formatter,
     format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
     datefmt:      "%Y-%m-%d %H:%M:%S"
 
@@ -179,14 +179,15 @@ application:
       - name: docker.auth
         level: warning
 
-  # some additional debug flags
+  # Additional debug flags
   debug:
 
-    # sets the socketio client into debug mode
-    socketio: true
+    # Set to `true` to enable the Flask/socketio into debug mode.
+    socketio: false
 
-    # sets the Flask app used for the LOCAL proxy service into debug mode
-    proxy_server: true
+    # Set to `true` to set the Flask app used for the LOCAL proxy service
+    # into debug mode
+    proxy_server: false
 
 
   # directory where local task files (input/output) are stored

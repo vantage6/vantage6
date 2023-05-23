@@ -83,14 +83,14 @@ environments:
         - name: requests_oauthlib.oauth2_session
           level: warning
 
-    # some additional debug flags
+    # Additional debug flags
     debug:
 
-      # sets the socketio server into debug mode
-      socketio: true
+      # Set to `true` to enable debug mode for the socketio server
+      socketio: false
 
-      # sets the Flask app in debug mode
-      flask: true
+      # Set to `true` to enable debug mode in the Flask app
+      flask: false
 
     # Configure a smtp mail server for the server to use for administrative
     # purposes. e.g. allowing users to reset their password.
