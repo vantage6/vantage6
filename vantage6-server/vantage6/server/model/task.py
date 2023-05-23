@@ -1,4 +1,3 @@
-from typing import List
 from sqlalchemy import Column, String, ForeignKey, Integer, sql
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -114,7 +113,7 @@ class Task(Base):
         else:
             return TaskStatus.COMPLETED.value
 
-    def results_for_node(self, node: Node) -> List:
+    def results_for_node(self, node: Node) -> list:
         """
         Get all results for a given node.
 
