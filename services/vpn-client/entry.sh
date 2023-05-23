@@ -14,16 +14,16 @@ iptables -A FORWARD -i eth1 -o eth1 -j ACCEPT
 iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
 
 # Check isolated network interface. Wait until it is up.
-eth1_interface=""
-
-while [ "$eth1_interface" = "" ];do
+isolated_subnet=""
+while [ "$isolated_subnet" = "" ];do
   eth1_interface=$(ip addr show eth1)
   echo "eth1 interface: " "$eth1_interface"
+
+  # Extract ip range from string
+  isolated_subnet=$(echo "$eth1_interface" | sed -En -e 's/.*inet ([0-9./]+).*/\1/p')
+  echo "Isolated subnet is " "$isolated_subnet"
 done
 
-# Extract ip range from string
-isolated_subnet=$(echo "$eth1_interface" | sed -En -e 's/.*inet ([0-9./]+).*/\1/p')
-echo "Isolated subnet is " "$isolated_subnet"
 
 iptables -t nat -A POSTROUTING -o eth1 -s "$isolated_subnet" -d "$isolated_subnet" -j MASQUERADE
 # Run vpn

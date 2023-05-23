@@ -1,14 +1,53 @@
 Release notes
 =============
 
+3.8.8
+-----
+
+*11 May 2023*
+
+- **Bugfix**
+
+   - Fixed a bug that prevented the node from shutting down properly
+     (`Issue#649 <https://github.com/vantage6/vantage6/issues/649>`_,
+     `PR#677 <https://github.com/vantage6/vantage6/pull/677>`_)
+   - Fixed a bug where the node did not await the VPN client to be ready
+     (`Issue#656 <https://github.com/vantage6/vantage6/issues/656>`_,
+     `PR#676 <https://github.com/vantage6/vantage6/pull/676>`_)
+   - Fixed database label logging
+     (`PR#674 <https://github.com/vantage6/vantage6/pull/664>`_)
+   - Fixed a bug were VPN messages to the originating node where not always
+     sent/received
+     (`Issue#671 <https://github.com/vantage6/vantage6/issues/671>`_,
+      `PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
+   - Fixed a bug where an exceptions is raised when the websocket
+     connection was lost and a ping was attempted to be send
+     (`Issue#672 <https://github.com/vantage6/vantage6/issues/672>`_,
+      `PR#674 <https://github.com/vantage6/vantage6/pull/674>`_)
+   - Fixed a formatting in CLI print statement
+     (`PR#661 <https://github.com/vantage6/vantage6/pull/661>`_)
+   - Fixed bug where '/mnt/' was erroneously prepended to non-file based
+     databases (`PR#658 <https://github.com/vantage6/vantage6/pull/658>`_)
+   - Fix in ``autowrapper`` for algorithms with CSV input
+     (`PR#655 <https://github.com/vantage6/vantage6/pull/655>`_)
+   - Fixed a bug in syncing tasks from the server to the node, when the node
+     lost socket connection and then reconnected
+     (`Issue#654 <https://github.com/vantage6/vantage6/issues/654>`_,
+     `PR#657 <https://github.com/vantage6/vantage6/pull/657>`_)
+   - Fix construction of database URI in ``vserver files``
+     (`Issue#650 <https://github.com/vantage6/vantage6/issues/650>`_,
+     `PR#659 <https://github.com/vantage6/vantage6/pull/659>`_)
+
+
 3.8.7
 -----
 
 *10 May 2023*
 
 - **Bugfix**
-  - Socket did connect before Docker was initialized, resulting in an exception
-    at startup (`PR#644 <https://github.com/vantage6/vantage6/pull/644>`_)
+
+   - Socket did connect before Docker was initialized, resulting in an exception
+     at startup (`PR#644 <https://github.com/vantage6/vantage6/pull/644>`_)
 
 3.8.6
 -----
@@ -17,9 +56,9 @@ Release notes
 
 - **Bugfix**
 
-  - Fixed bug that resulted in broken algorithm networks when the socket
-    connection was lost (`PR#640 <https://github.com/vantage6/vantage6/pull/640>`_,
-    `Issue#637 <https://github.com/vantage6/vantage6/issues/637>`_)
+   - Fixed bug that resulted in broken algorithm networks when the socket
+     connection was lost (`PR#640 <https://github.com/vantage6/vantage6/pull/640>`_,
+     `Issue#637 <https://github.com/vantage6/vantage6/issues/637>`_)
 
 3.8.3 - 3.8.5
 -------------
@@ -30,8 +69,8 @@ Release notes
 
  - Fixed bug where a missing container lead to a complete node crash
    (`PR#628  <https://github.com/vantage6/vantage6/pull/628>`_,
-    `PR#629 <https://github.com/vantage6/vantage6/pull/629>`_,
-    `PR#632 <https://github.com/vantage6/vantage6/pull/632>`_).
+   `PR#629 <https://github.com/vantage6/vantage6/pull/629>`_,
+   `PR#632 <https://github.com/vantage6/vantage6/pull/632>`_).
  - Restored algorithm wrapper namespace for backward compatibility (
    `PR#618 <https://github.com/vantage6/vantage6/pull/618>`_)
 
