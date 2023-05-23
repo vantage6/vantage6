@@ -14,7 +14,6 @@ import pyfiglet
 import json as json_lib
 import itertools
 import sys
-import typing
 import traceback
 
 from pathlib import Path
