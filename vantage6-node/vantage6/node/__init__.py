@@ -71,7 +71,7 @@ class VPNConnectMode(Enum):
 
 
 # ------------------------------------------------------------------------------
-class Node(object):
+class Node:
     """
     Authenticates to the central server, setup encryption, a
     websocket connection, retrieving task that were posted while
@@ -103,6 +103,7 @@ class Node(object):
         check_docker_running()
 
         self.config = self.ctx.config
+        self.debug: dict = self.config.get('debug', {})
         self.queue = queue.Queue()
         self._using_encryption = None
 
@@ -217,7 +218,10 @@ class Node(object):
         proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
 
         # 'app' is defined in vantage6.node.proxy_server
-        # app.debug = True
+        debug_mode = self.debug.get("proxy_server", False)
+        if debug_mode:
+            self.log.debug("Debug mode enabled for proxy server")
+            proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.server_io
         proxy_server.server_url = self.server_io.base_path
 
@@ -898,7 +902,11 @@ class Node(object):
         Create long-lasting websocket connection with the server. The
         connection is used to receive status updates, such as new tasks.
         """
-        self.socketIO = SocketIO(request_timeout=60)
+        debug_mode = self.debug.get('socketio', False)
+        if debug_mode:
+            self.log.debug("Debug mode enabled for socketio")
+        self.socketIO = SocketIO(request_timeout=60, logger=debug_mode,
+                                 engineio_logger=debug_mode)
 
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
         NodeTaskNamespace.node_worker_ref = self
@@ -1079,9 +1087,6 @@ class Node(object):
 # ------------------------------------------------------------------------------
 def run(ctx):
     """ Start the node."""
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("engineio.client").setLevel(logging.WARNING)
 
     # initialize node, connect to the server using websockets
     node = Node(ctx)

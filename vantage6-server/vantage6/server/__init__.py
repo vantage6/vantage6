@@ -84,6 +84,7 @@ class ServerApp:
 
         # initialize, configure Flask
         self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
+        self.debug: dict = self.ctx.config.get('debug', {})
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
@@ -116,9 +117,6 @@ class ServerApp:
         self.configure_api()
         self.load_resources()
 
-        # make specific log settings (muting etc)
-        self.configure_logging()
-
         # set the server version
         self.__version__ = __version__
 
@@ -145,13 +143,18 @@ class ServerApp:
         if msg_queue:
             log.debug(f'Connecting to msg queue: {msg_queue}')
 
+        debug_mode = self.debug.get('socketio', False)
+        if debug_mode:
+            log.debug("SocketIO debug mode enabled")
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode='gevent_uwsgi',
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*'
+                cors_allowed_origins='*',
+                logger=debug_mode,
+                engineio_logger=debug_mode
             )
         except Exception as e:
             log.warning('Default socketio settings failed, attempt to run '
@@ -163,7 +166,9 @@ class ServerApp:
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*'
+                cors_allowed_origins='*',
+                logger=debug_mode,
+                engineio_logger=debug_mode
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
@@ -171,19 +176,6 @@ class ServerApp:
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
-
-    @staticmethod
-    def configure_logging() -> None:
-        """Set third party loggers to a warning level"""
-
-        # Prevent logging from urllib3
-        logging.getLogger("urllib3").setLevel(logging.WARNING)
-        logging.getLogger("socketIO-client").setLevel(logging.WARNING)
-        logging.getLogger("engineio.server").setLevel(logging.WARNING)
-        logging.getLogger("socketio.server").setLevel(logging.WARNING)
-        logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
-        logging.getLogger('requests_oauthlib.oauth2_session')\
-            .setLevel(logging.WARNING)
 
     def configure_flask(self) -> None:
         """Configure the Flask settings of the vantage6 server."""
@@ -247,6 +239,10 @@ class ServerApp:
                                                           True)
         self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL",
                                                           False)
+        debug_mode = self.debug.get('flask', False)
+        if debug_mode:
+            log.debug("Flask debug mode enabled")
+        self.app.debug = debug_mode
 
         def _get_request_path(request: Request) -> str:
             """
