@@ -81,7 +81,12 @@ class ServerApp:
         self.ctx = ctx
 
         # initialize, configure Flask
-        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
+        print(APPNAME)
+        print(os.path.dirname(__file__))
+        from pathlib import Path
+        print(Path(__file__).parent)
+        # self.app = Flask(APPNAME)
+        self.app = Flask(APPNAME, root_path=Path(__file__).parent)
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
