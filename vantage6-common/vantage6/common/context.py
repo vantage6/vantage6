@@ -381,7 +381,7 @@ class AppContext(metaclass=Singleton):
         return self.__environment
 
     @environment.setter
-    def environment(self, env) -> None:
+    def environment(self, env: str) -> None:
         """
         Set the environment.
 

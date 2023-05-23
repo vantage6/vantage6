@@ -1,7 +1,6 @@
 import pandas
 import pickle
 
-from types import ModuleType
 from importlib import import_module
 
 
@@ -14,10 +13,10 @@ class ClientMockProtocol:
     ----------
     datasets : list[str]
         A list of paths to the datasets that are used in the algorithm.
-    module : ModuleType
-        The module that contains the algorithm.
+    module : str
+        The name of the module that contains the algorithm.
     """
-    def __init__(self, datasets: list[str], module: ModuleType) -> None:
+    def __init__(self, datasets: list[str], module: str) -> None:
         self.n = len(datasets)
         self.datasets = []
         for dataset in datasets:
@@ -130,7 +129,7 @@ class ClientMockProtocol:
 
         return results
 
-    def get_organizations_in_my_collaboration(self):
+    def get_organizations_in_my_collaboration(self) -> list[dict]:
         """
         Get mocked organizations.
 

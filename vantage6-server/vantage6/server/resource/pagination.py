@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 import logging
 import flask
@@ -152,7 +154,7 @@ class Pagination:
 
     @classmethod
     def from_query(cls, query: sqlalchemy.orm.query,
-                   request: flask.Request) -> 'Pagination':
+                   request: flask.Request) -> Pagination:
         """
         Create a Pagination object from a query.
 
@@ -195,7 +197,7 @@ class Pagination:
 
     @classmethod
     def from_list(cls, items: list[db.Base],
-                  request: flask.Request) -> 'Pagination':
+                  request: flask.Request) -> Pagination:
         """
         Create a Pagination object from a list of database objects.
 
