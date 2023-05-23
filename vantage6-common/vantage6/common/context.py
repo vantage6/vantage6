@@ -141,6 +141,7 @@ class AppContext(metaclass=Singleton):
         self_.config_dir = Path(path).parent
         self_.config_file = path
         self_.environment = environment
+        self_.instance_type = instance_type
         self_.set_folders(instance_type, instance_name, system_folders)
         module_name = logger_name(__name__)
         self_.log = logging.getLogger(module_name)
@@ -380,7 +381,7 @@ class AppContext(metaclass=Singleton):
         return self.__environment
 
     @environment.setter
-    def environment(self, env) -> None:
+    def environment(self, env: str) -> None:
         """
         Set the environment.
 

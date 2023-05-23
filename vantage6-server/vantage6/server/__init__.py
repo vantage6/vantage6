@@ -388,14 +388,15 @@ class ServerApp:
         @self.api.representation('application/json')
         # pylint: disable=unused-argument
         def output_json(
-            data: Any, code: HTTPStatus, headers: dict = None
+            data: db.Base | list[db.Base], code: HTTPStatus,
+            headers: dict = None
         ) -> Response:
             """
             Return jsonified data for request responses.
 
             Parameters
             ----------
-            data: Any
+            data: db.Base | list[db.Base]
                 The data to be jsonified
             code: HTTPStatus
                 The HTTP status code of the response
@@ -459,7 +460,7 @@ class ServerApp:
         def user_identity_loader(
                 identity: db.Authenticatable | dict) -> str | dict:
             """"
-            JSON serializing identity to be used by create_access_token.
+            JSON serializing identity to be used by ``create_access_token``.
 
             Parameters
             ----------

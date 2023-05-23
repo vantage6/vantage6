@@ -8,7 +8,6 @@ import json
 
 from pathlib import Path
 
-from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
@@ -188,7 +187,7 @@ class DockerTaskManager(DockerBaseManager):
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: dict, database: str) -> list[dict]:
+            algorithm_env: dict, database: str) -> list[dict] | None:
         """
         Runs the docker-image in detached mode.
 

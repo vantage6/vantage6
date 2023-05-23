@@ -114,7 +114,7 @@ def update_build(build: int) -> None:
             f.write(build)
 
 
-def update_post(post: str):
+def update_post(post: str) -> None:
     """ Update post release version in all instances of _version.py
 
     Parameters
@@ -146,7 +146,7 @@ def update_post(post: str):
 @click.option('--build', default="0",
               help="build number for non-final versions")
 @click.option('--post', default="0", help=".postN")
-def set_version(spec: str, version: str, build: int, post: int):
+def set_version(spec: str, version: str, build: int, post: int) -> None:
     """
     Update version information in all instances of _version.py and __build__
 
