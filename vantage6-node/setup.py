@@ -49,7 +49,7 @@ setup(
             'schema==0.7.5',
             'appdirs==1.4.4',
             'PyJWT==2.6.0',
-            'Flask==1.1.1'
+            'flask==2.2.5'
         ]
     },
     package_data={

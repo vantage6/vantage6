@@ -36,6 +36,7 @@ from flask_mail import Mail
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
+from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
@@ -55,6 +56,7 @@ from vantage6.server.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     MIN_TOKEN_VALIDITY_SECONDS,
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
+    SERVER_MODULE_NAME
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
@@ -83,7 +85,11 @@ class ServerApp:
         self.ctx = ctx
 
         # initialize, configure Flask
-        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
+        self.app = Flask(
+            SERVER_MODULE_NAME, root_path=Path(__file__),
+            template_folder=Path(__file__).parent / 'templates',
+            static_folder=Path(__file__).parent / 'static'
+        )
         self.debug: dict = self.ctx.config.get('debug', {})
         self.configure_flask()
 
