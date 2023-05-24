@@ -12,7 +12,7 @@ from vantage6.tools.util import info, warn, error
 
 
 def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
-                 use_new_client: bool = False, print_full_error=False) -> Any:
+                 use_new_client: bool = False, log_traceback=False) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
@@ -32,7 +32,7 @@ def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
         to the server.
     use_new_client : bool, optional
         Whether to use the new client or the old client, by default False
-    print_full_error: bool, optional
+    log_traceback: bool, optional
         Whether to print the full error message from algorithms or not, by
         default False. Algorithm developers should only use this option if
         they are sure that the error message does not contain any sensitive
@@ -104,7 +104,7 @@ def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
                  method(data, *args, **kwargs)
     except Exception as e:
         error(f"Error encountered while calling {method_name}: {e}")
-        if print_full_error:
+        if log_traceback:
             error(traceback.print_exc())
         exit(1)
 
