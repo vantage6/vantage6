@@ -199,9 +199,12 @@ class DockerManager(DockerBaseManager):
             else:
                 uri = db_config['uri']
 
-            db_is_file = Path(uri).exists()
-            if running_in_docker() and db_is_file:
-                uri = f'/mnt/{uri}'
+            if running_in_docker():
+                db_is_file = Path(f'/mnt/{uri}').exists()
+                if db_is_file:
+                    uri = f'/mnt/{uri}'
+            else:
+                db_is_file = Path(uri).exists()
 
             if db_is_file:
                 # We'll copy the file to the folder `data` in our task_dir.
