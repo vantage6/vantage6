@@ -1,6 +1,7 @@
 import os
 import importlib
 import jwt
+import traceback
 
 from typing import Any
 
@@ -10,7 +11,7 @@ from vantage6.tools.util import info, warn, error
 
 
 def dispatch_rpc(data: Any, input_data: dict, module: str, token: str,
-                 use_new_client: bool = False) -> Any:
+                 use_new_client: bool = False, log_traceback=False) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
@@ -30,6 +31,11 @@ def dispatch_rpc(data: Any, input_data: dict, module: str, token: str,
         to the server.
     use_new_client : bool, optional
         Whether to use the new client or the old client, by default False
+    log_traceback: bool, optional
+        Whether to print the full error message from algorithms or not, by
+        default False. Algorithm developers should only use this option if
+        they are sure that the error message does not contain any sensitive
+        information. By default False.
 
     Returns
     -------
@@ -96,7 +102,9 @@ def dispatch_rpc(data: Any, input_data: dict, module: str, token: str,
         result = method(client, data, *args, **kwargs) if master else \
                  method(data, *args, **kwargs)
     except Exception as e:
-        warn(f"Error encountered while calling {method_name}: {e}")
+        error(f"Error encountered while calling {method_name}: {e}")
+        if log_traceback:
+            error(traceback.print_exc())
         exit(1)
 
     return result
