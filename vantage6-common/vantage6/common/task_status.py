@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class TaskStatus(str, Enum):
+    """ Enum to represent the status of a task """
     # Task has not yet been started (usually, node is offline)
     PENDING = 'pending'
     # Task is being started

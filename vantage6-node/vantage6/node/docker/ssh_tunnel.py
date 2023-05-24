@@ -10,7 +10,7 @@ can be created, each with a different configuration.
 import logging
 import os
 
-from typing import Union, NamedTuple, Tuple
+from typing import NamedTuple
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -80,7 +80,7 @@ class SSHTunnel(DockerBaseManager):
 
     def __init__(self, isolated_network_mgr: NetworkManager, config: dict,
                  node_name: str, config_volume: str,
-                 tunnel_image: Union[str, None] = None) -> None:
+                 tunnel_image: str | None = None) -> None:
         """
         Create a tunnel from the isolated network to a remote machine and
         bind the remote port to a local ssh-tunnel container to be used by
@@ -96,7 +96,7 @@ class SSHTunnel(DockerBaseManager):
             Node name to derive the ssh tunnel container name
         config_volume : str
             Name of the ssh config volume (or local path)
-        tunnel_image : Union[str, None], optional
+        tunnel_image : str | None, optional
             User defined image to use for the tunnel, by default None
 
         Raises
@@ -145,8 +145,7 @@ class SSHTunnel(DockerBaseManager):
         log.info(f"SSH tunnel {self.hostname} started")
 
     @staticmethod
-    def read_config(config: dict) \
-            -> Tuple[SSHTunnelConfig, KnownHostsConfig]:
+    def read_config(config: dict) -> tuple[SSHTunnelConfig, KnownHostsConfig]:
         """
         Read the SSH configuration from the config
 
@@ -278,7 +277,8 @@ class SSHTunnel(DockerBaseManager):
             detach=True,
             name=self.container_name,
             command=self.ssh_tunnel_config.hostname,
-            auto_remove=False
+            auto_remove=False,
+            restart_policy={"Name": "always"}
         )
 
         # Connect to both the internal network and make an alias (=hostname).

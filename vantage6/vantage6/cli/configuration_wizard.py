@@ -11,9 +11,22 @@ from vantage6.cli.configuration_manager import (
 )
 
 
-def node_configuration_questionaire(dirs, instance_name):
-    """Questionary to generate a config file for the node instance."""
+def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
+    """
+    Questionary to generate a config file for the node instance.
 
+    Parameters
+    ----------
+    dirs : dict
+        Dictionary with the directories of the node instance.
+    instance_name : str
+        Name of the node instance.
+
+    Returns
+    -------
+    dict
+        Dictionary with the new node configuration
+    """
     config = q.prompt([
         {
             "type": "text",
@@ -87,12 +100,18 @@ def node_configuration_questionaire(dirs, instance_name):
 
     config["logging"] = {
         "level": res,
-        "file": f"{instance_name}.log",
         "use_console": True,
         "backup_count": 5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
-        "datefmt": "%Y-%m-%d %H:%M:%S"
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+        "loggers": [
+            {"name": "urllib3", "level": "warning"},
+            {"name": "requests", "level": "warning"},
+            {"name": "engineio.client", "level": "warning"},
+            {"name": "docker.utils.config", "level": "warning"},
+            {"name": "docker.auth", "level": "warning"},
+        ]
     }
 
     encryption = q.confirm("Enable encryption?", default=True).ask()
@@ -108,8 +127,20 @@ def node_configuration_questionaire(dirs, instance_name):
     return config
 
 
-def server_configuration_questionaire(dirs, instance_name):
-    """Questionary to generate a config file for the node instance."""
+def server_configuration_questionaire(instance_name: str) -> dict:
+    """
+    Questionary to generate a config file for the node instance.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the node instance.
+
+    Returns
+    -------
+    dict
+        Dictionary with the new server configuration
+    """
 
     config = q.prompt([
         {
@@ -216,14 +247,41 @@ def server_configuration_questionaire(dirs, instance_name):
         "backup_count": 5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
-        "datefmt": "%Y-%m-%d %H:%M:%S"
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+        "loggers": [
+            {"name": "urllib3", "level": "warning"},
+            {"name": "socketIO-client", "level": "warning"},
+            {"name": "socketio.server", "level": "warning"},
+            {"name": "engineio.server", "level": "warning"},
+            {"name": "sqlalchemy.engine", "level": "warning"},
+            {"name": "requests_oauthlib.oauth2_session", "level": "warning"},
+        ]
     }
 
     return config
 
 
-def configuration_wizard(type_, instance_name, environment, system_folders):
+def configuration_wizard(type_: str, instance_name: str, environment: str,
+                         system_folders: bool) -> Path:
+    """
+    Create a configuration file for a node or server instance.
 
+    Parameters
+    ----------
+    type_ : str
+        Type of the instance. Either "node" or "server"
+    instance_name : str
+        Name of the instance
+    environment : str
+        Name of the environment
+    system_folders : bool
+        Whether to use the system folders or not
+
+    Returns
+    -------
+    Path
+        Path to the configuration file
+    """
     # for defaults and where to save the config
     dirs = NodeContext.instance_folders(type_, instance_name, system_folders)
 
@@ -233,7 +291,7 @@ def configuration_wizard(type_, instance_name, environment, system_folders):
         config = node_configuration_questionaire(dirs, instance_name)
     else:
         conf_manager = ServerConfigurationManager
-        config = server_configuration_questionaire(dirs, instance_name)
+        config = server_configuration_questionaire(instance_name)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this
@@ -251,10 +309,23 @@ def configuration_wizard(type_, instance_name, environment, system_folders):
     return config_file
 
 
-def select_configuration_questionaire(type_, system_folders):
-    """Ask which configuration the user wants to use
+def select_configuration_questionaire(
+        type_: str, system_folders: bool) -> tuple[str, str]:
+    """
+    Ask which configuration the user wants to use. It shows only configurations
+    that are in the default folder.
 
-    It shows only configurations that are in the default folder.
+    Parameters
+    ----------
+    type_ : str
+        Type of the instance. Either "node" or "server"
+    system_folders : bool
+        Whether to use the system folders or not
+
+    Returns
+    -------
+    tuple[str, str]
+        Name of the configuration and the environment
     """
     context = NodeContext if type_ == "node" else ServerContext
     configs, f = context.available_configurations(system_folders)

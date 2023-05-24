@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Union
 from sqlalchemy import Column, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
@@ -18,11 +17,11 @@ class Role(Base):
         Description of the role
     organization_id : int
         Id of the organization this role belongs to
-    rules : List[Rule]
+    rules : list[Rule]
         List of rules that belong to this role
     organization : Organization
         Organization this role belongs to
-    users : List[User]
+    users : list[User]
         List of users that belong to this role
     """
 
@@ -39,7 +38,7 @@ class Role(Base):
                          secondary="Permission")
 
     @classmethod
-    def get_by_name(cls, name: str) -> Union[Role, None]:
+    def get_by_name(cls, name: str) -> Role | None:
         """
         Get a role by its name.
 

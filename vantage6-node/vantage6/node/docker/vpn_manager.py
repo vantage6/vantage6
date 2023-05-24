@@ -5,14 +5,13 @@ import time
 import ipaddress
 
 from json.decoder import JSONDecodeError
-from typing import List, Union, Dict
 from docker.models.containers import Container
 
+from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer
 )
-from vantage6.node.util import logger_name
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
     FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT, ALPINE_IMAGE
@@ -30,9 +29,9 @@ class VPNManager(DockerBaseManager):
 
     def __init__(self, isolated_network_mgr: NetworkManager,
                  node_name: str, vpn_volume_name: str, vpn_subnet: str,
-                 alpine_image: Union[str, None] = None,
-                 vpn_client_image: Union[str, None] = None,
-                 network_config_image: Union[str, None] = None) -> None:
+                 alpine_image: str | None = None,
+                 vpn_client_image: str | None = None,
+                 network_config_image: str | None = None) -> None:
         """
         Initializes a VPN manager instance
 
@@ -46,8 +45,12 @@ class VPNManager(DockerBaseManager):
             The name of the volume in which the VPN data resides
         vpn_subnet: str
             The IP mask of the VPN subnet
-        alpine_image: str or None
+        alpine_image: str | None
             Name of alternative Alpine image to be used
+        vpn_client_image: str | None
+            Name of alternative VPN client image to be used
+        network_config_image: str | None
+            Name of alternative network config image to be used
         """
         super().__init__(isolated_network_mgr)
 
@@ -156,7 +159,14 @@ class VPNManager(DockerBaseManager):
         self._configure_host_network()
 
     def has_connection(self) -> bool:
-        """ Return True if VPN connection is active """
+        """
+        Return True if VPN connection is active
+
+        Returns
+        -------
+        bool
+            True if VPN connection is active, False otherwise
+        """
         self.log.debug("Waiting for VPN connection. This may take a minute...")
         n_attempt = 0
         self.has_vpn = False
@@ -237,7 +247,7 @@ class VPNManager(DockerBaseManager):
         return vpn_interface[0]['addr_info'][0]['local']
 
     def forward_vpn_traffic(self, helper_container: Container,
-                            algo_image_name: str) -> List[Dict]:
+                            algo_image_name: str) -> list[dict] | None:
         """
         Setup rules so that traffic is properly forwarded between the VPN
         container and the algorithm container (and its helper container)
@@ -251,7 +261,7 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
@@ -292,8 +302,9 @@ class VPNManager(DockerBaseManager):
             remove=True
         )
 
-    def _forward_traffic_to_algorithm(self, algo_helper_container: Container,
-                                      algo_image_name: str) -> List[Dict]:
+    def _forward_traffic_to_algorithm(
+        self, algo_helper_container: Container, algo_image_name: str
+    ) -> list[dict] | None:
         """
         Forward incoming traffic from the VPN client container to the
         algorithm container
@@ -307,7 +318,7 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
@@ -379,7 +390,7 @@ class VPNManager(DockerBaseManager):
             ipaddress.ip_address(vpn_ip) in ipaddress.ip_network(self.subnet)
         )
 
-    def _find_exposed_ports(self, image: str) -> List[Dict]:
+    def _find_exposed_ports(self, image: str) -> list[dict]:
         """
         Find which ports were exposed via the EXPOSE keyword in the dockerfile
         of the algorithm image. This port will be used for VPN traffic. If no
@@ -392,7 +403,7 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict]:
+        list[dict]:
             List of ports forward VPN traffic to. For each port, a dictionary
             containing port number and label is given
         """
@@ -444,7 +455,7 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        string
+        str
             The name of the network interface in the host namespace
         """
         # Get the isolated network interface and extract its link index
@@ -463,7 +474,8 @@ class VPNManager(DockerBaseManager):
         )
         host_interfaces = json.loads(host_interfaces)
 
-        linked_interface = self._get_if(host_interfaces, link_index)
+        linked_interface = \
+            self._get_interface_from_idx(host_interfaces, link_index)
         bridge_interface = linked_interface['master']
         return bridge_interface
 
@@ -485,8 +497,9 @@ class VPNManager(DockerBaseManager):
                 isolated_interface = ip_interface
         return isolated_interface
 
-    def is_isolated_interface(self, ip_interface: Dict,
-                              vpn_ip_isolated_netw: str):
+    @staticmethod
+    def is_isolated_interface(ip_interface: dict,
+                              vpn_ip_isolated_netw: str) -> bool:
         """
         Return True if a network interface is the isolated network
         interface. Identify this based on the IP address of the VPN client in
@@ -501,7 +514,7 @@ class VPNManager(DockerBaseManager):
 
         Returns
         -------
-        boolean:
+        bool
             True if this is the interface describing the isolated network
         """
         # check if attributes exist in json: if not then it is not the right
@@ -540,15 +553,45 @@ class VPNManager(DockerBaseManager):
             remove=True,
         )
 
-    def _get_if(self, interfaces, index) -> Union[Dict, None]:
-        """ Get interface configuration based on interface index """
+    @staticmethod
+    def _get_interface_from_idx(interfaces: list[dict],
+                                index: int) -> dict | None:
+        """
+        Get interface configuration based on interface index
+
+        Parameters
+        ----------
+        interfaces: list
+            List of interfaces as returned by `ip --json addr`
+        index: int
+            Interface index
+
+        Returns
+        -------
+        dict | None
+            Interface configuration or None if not found
+        """
         for interface in interfaces:
             if int(interface['ifindex']) == index:
                 return interface
 
         return None
 
-    def _get_link_index(self, if_json: Union[Dict, List]) -> int:
+    @staticmethod
+    def _get_link_index(if_json: dict | list) -> int:
+        """
+        Get the link index of an interface
+
+        Parameters
+        ----------
+        if_json: dict | list
+            Interface configuration as returned by `ip --json addr`
+
+        Returns
+        -------
+        int
+            Link index of the interface
+        """
         if isinstance(if_json, list):
             if_json = if_json[-1]
         return int(if_json['link_index'])
@@ -556,6 +599,16 @@ class VPNManager(DockerBaseManager):
     def _is_ipv4_subnet(self, subnet: str) -> bool:
         """
         Validate if subnet has format '12.34.56.78/16'
+
+        Parameters
+        ----------
+        subnet: str
+            Subnet to validate
+
+        Returns
+        -------
+        bool
+            True if subnet is valid
         """
         parts = subnet.split('/')
         if len(parts) != 2:

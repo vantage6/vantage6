@@ -2,7 +2,6 @@
 import logging
 
 from http import HTTPStatus
-from sqlalchemy.exc import InvalidRequestError
 from flask.globals import g
 from flask_restful import Api
 
@@ -34,13 +33,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Health,
         path,
         endpoint='health',
-        methods=('GET',),
-        resource_class_kwargs=services
-    )
-
-    api.add_resource(
-        Fix,
-        path + "/fix",
         methods=('GET',),
         resource_class_kwargs=services
     )
@@ -78,21 +70,3 @@ class Health(ServicesResources):
             log.debug(e)
 
         return {'database': db_ok}, HTTPStatus.OK
-
-
-class Fix(ServicesResources):
-
-    def get(self):
-        """Experimental switch to fix db errors"""
-
-        try:
-            g.session.execute('SELECT 1')
-
-        except (InvalidRequestError, Exception) as e:
-            log.error("DB nudge... Does this work?")
-            log.debug(e)
-            # session.invalidate()
-            # session.rollback()
-
-        # finally:
-        #     session.close()

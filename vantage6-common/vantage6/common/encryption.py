@@ -11,9 +11,8 @@ private key.
 In the case we are sending messages (input/results) we need to encrypt
 it using the public key of the receiving organization. (retreiving
 these public keys is outside the scope of this module).
-
-TODO handle no public key from other organization (should that happen here)
 """
+# TODO handle no public key from other organization (should that happen here?)
 import os
 import logging
 
@@ -23,6 +22,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric.types import PRIVATE_KEY_TYPES
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     load_pem_public_key
@@ -49,20 +49,74 @@ class CryptorBase(metaclass=Singleton):
 
     @staticmethod
     def bytes_to_str(data: bytes) -> str:
-        """Encode bytes as base64 encoded string."""
+        """
+        Encode bytes as base64 encoded string.
+
+        Parameters
+        ----------
+        data: bytes
+            The data to encode.
+
+        Returns
+        -------
+        str
+            The base64 encoded string.
+        """
         return bytes_to_base64s(data)
 
     @staticmethod
     def str_to_bytes(data: str) -> bytes:
-        """Decode base64 encoded string to bytes."""
+        """
+        Decode base64 encoded string to bytes.
+
+        Parameters
+        ----------
+        data: str
+            The base64 encoded string.
+
+        Returns
+        -------
+        bytes
+            The encoded string converted to bytes.
+        """
         return base64s_to_bytes(data)
 
     def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str) -> str:
-        """Encrypt bytes in `data` using a (base64 encoded) public key."""
+        """
+        Encrypt bytes in `data` using a (base64 encoded) public key.
+
+        Note that the public key is ignored in this base class. If you want
+        to encode your data with a public key, use the `RSACryptor` class.
+
+        Parameters
+        ----------
+        data: bytes
+            The data to encrypt.
+        pubkey_base64: str
+            The public key to use for encryption. This is ignored in this
+            base class.
+
+        Returns
+        -------
+        str
+            The encrypted data encoded as base64 string.
+        """
         return self.bytes_to_str(data)
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
-        """Decrypt base64 encoded *string* `data."""
+        """
+        Decrypt base64 encoded *string* data.
+
+        Parameters
+        ----------
+        data: str
+            The data to decrypt.
+
+        Returns
+        -------
+        bytes
+            The decrypted data.
+        """
         return self.str_to_bytes(data)
 
 
@@ -70,36 +124,66 @@ class CryptorBase(metaclass=Singleton):
 # DummyCryptor
 # ------------------------------------------------------------------------------
 class DummyCryptor(CryptorBase):
-    """Does absolutely nothing."""
+    """Does absolutely nothing to encrypt the data."""
 
 
 # ------------------------------------------------------------------------------
 # RSACryptor
 # ------------------------------------------------------------------------------
 class RSACryptor(CryptorBase):
-    """Wrapper class for the cryptography package.
+    """
+    Wrapper class for the cryptography package.
 
-        It loads the private key, and has an interface to encrypt en decrypt
-        messages. If no private key is found, it can generate one, and store
-        it at the default location. The encrpytion can be done via a public
-        key from another organization, make sure the key is in the right
-        data-type.
+    It loads the private key, and has an interface to encrypt en decrypt
+    messages. If no private key is found, it can generate one, and store
+    it at the default location. The encrpytion can be done via a public
+    key from another organization, make sure the key is in the right
+    data-type.
 
-        Communication between node and server requires serialization (and
-        deserialization) of the encrypted messages (which are in bytes).
-        The API can not communicate bytes, therefore a base64 conversion
-        needs to be executed (and also a utf-8 encoding needs to be applied
-        because of the way python implemented base64). The same goed for
-        sending and receiving the public_key.
+    Communication between node and server requires serialization (and
+    deserialization) of the encrypted messages (which are in bytes).
+    The API can not communicate bytes, therefore a base64 conversion
+    needs to be executed (and also a utf-8 encoding needs to be applied
+    because of the way python implemented base64). The same goes for
+    sending and receiving the public_key.
+
+    Parameters
+    ----------
+    private_key_file: Path
+        The path to the private key file.
     """
 
-    def __init__(self, private_key_file):
-        """Create a new RSACryptor instance."""
+    def __init__(self, private_key_file: Path) -> None:
+        """
+        Create a new RSACryptor instance.
+
+        Parameters
+        ----------
+        private_key_file: Path
+            The path to the private key file.
+        """
         super().__init__()
         self.private_key = self.__load_private_key(private_key_file)
 
-    def __load_private_key(self, private_key_file):
-        """ Load a private key file into this instance."""
+    def __load_private_key(self, private_key_file: Path) -> PRIVATE_KEY_TYPES:
+        """
+        Load a private key file into this instance.
+
+        Parameters
+        ----------
+        private_key_file: Path
+            The path to the private key file.
+
+        Returns
+        -------
+        Any
+            The loaded private key.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the private key file does not exist.
+        """
 
         if not private_key_file.exists():
             raise FileNotFoundError(
@@ -114,8 +198,19 @@ class RSACryptor(CryptorBase):
         )
 
     @staticmethod
-    def create_new_rsa_key(path: Path):
-        """ Creates a new RSA key for E2EE.
+    def create_new_rsa_key(path: Path) -> rsa.RSAPrivateKey:
+        """
+        Creates a new RSA key for E2EE.
+
+        Parameters
+        ----------
+        path: Path
+            The path to the private key file.
+
+        Returns
+        -------
+        RSAPrivateKey
+            The newly created private key.
         """
         private_key = rsa.generate_private_key(
             backend=default_backend(),
@@ -133,24 +228,65 @@ class RSACryptor(CryptorBase):
         return private_key
 
     @property
-    def public_key_bytes(self):
-        """ Returns the public key bytes from the organization."""
+    def public_key_bytes(self) -> bytes:
+        """
+        Returns the public key bytes from the organization.
+
+        Returns
+        -------
+        bytes
+            The public key as bytes.
+        """
         return self.create_public_key_bytes(self.private_key)
 
     @staticmethod
-    def create_public_key_bytes(private_key):
+    def create_public_key_bytes(private_key: rsa.RSAPrivateKey) -> bytes:
+        """
+        Create a public key from a private key.
+
+        Parameters
+        ----------
+        private_key: RSAPrivateKey
+            The private key to use.
+
+        Returns
+        -------
+        bytes
+            The public key as bytes.
+        """
         return private_key.public_key().public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
 
     @property
-    def public_key_str(self):
-        """ Returns a JSON safe public key, used for the API."""
+    def public_key_str(self) -> str:
+        """
+        Returns a JSON safe public key, used for the API.
+
+        Returns
+        -------
+        str
+            The public key as base64 encoded string.
+        """
         return bytes_to_base64s(self.public_key_bytes)
 
     def encrypt_bytes_to_str(self, data: bytes, pubkey_base64s: str) -> str:
-        """Encrypt bytes in `data` using a (base64 encoded) public key."""
+        """
+        Encrypt bytes in `data` using a (base64 encoded) public key.
+
+        Parameters
+        ----------
+        data: bytes
+            The data to encrypt.
+        pubkey_base64s: str
+            The public key to use for encryption.
+
+        Returns
+        -------
+        str
+            The encrypted data encoded as base64 string.
+        """
 
         # Use the shared key for symmetric encryption/decryption of the payload
         shared_key = os.urandom(32)
@@ -183,7 +319,19 @@ class RSACryptor(CryptorBase):
         return SEPARATOR.join([encrypted_key, iv, encrypted_msg])
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
-        """Decrypt base64 encoded *string* `data."""
+        """
+        Decrypt base64 encoded *string* data.
+
+        Parameters
+        ----------
+        data: str
+            The data to decrypt.
+
+        Returns
+        -------
+        bytes
+            The decrypted data.
+        """
 
         (encrypted_key, iv, encrypted_msg) = data.split(SEPARATOR)
 
@@ -212,16 +360,24 @@ class RSACryptor(CryptorBase):
 
         return result
 
-    def verify_public_key(self, pubkey_base64) -> bool:
-        """Verifies the public key.
+    def verify_public_key(self, pubkey_base64: str) -> bool:
+        """
+        Verifies the public key.
 
-            Compare a public key with the generated public key from
-            the private key that is stored in this instance. This is
-            usefull for verifying that the public key stored on the
-            server is derived from the currently used private key.
+        Compare a public key with the generated public key from the private key
+        that is stored in this instance. This is usefull for verifying that the
+        public key stored on the server is derived from the currently used
+        private key.
 
-            :param pubkey_base64: public_key as returned from the
-                server (still base64 encoded)
+        Parameters
+        ----------
+        pubkey_base64: str
+            The public key to verify as returned from the server.
+
+        Returns
+        -------
+        bool
+            True if the public key is valid, False otherwise.
         """
         public_key_server = base64s_to_bytes(pubkey_base64)
         return self.public_key_bytes == public_key_server

@@ -45,5 +45,10 @@ DEFAULT_ALGO_VPN_PORT = '8888'  # default VPN port for algorithm container
 #
 SSH_TUNNEL_IMAGE = "harbor2.vantage6.ai/infrastructure/ssh-tunnel"
 
+#
+#   SQUID RELATED CONSTANTS
+#
+SQUID_IMAGE = "harbor2.vantage6.ai/infrastructure/squid"
+
 # start trying to refresh the JWT token 10 minutes before it expires.
 REFRESH_BEFORE_EXPIRES_SECONDS = 600
