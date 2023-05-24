@@ -37,7 +37,7 @@ setup(
         'docker==6.1.2',
         'gevent==22.10.2',
         'python-socketio==5.7.2',
-        'requests==2.28.2',
+        'requests==2.31.0',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
     ],
