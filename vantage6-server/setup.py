@@ -51,7 +51,7 @@ setup(
         'marshmallow-sqlalchemy==0.15.0',
         'pyotp==2.8.0',
         'questionary==1.10.0',
-        'requests==2.28.2',
+        'requests==2.31.0',
         'requests-oauthlib==1.3.1',
         'schema==0.7.5',
         'SQLAlchemy==1.4.46',
