@@ -161,9 +161,34 @@ application:
     # Size kb of a single log file, used by RotatingFileHandler
     max_size:     1024
 
-    # format: input for logging.Formatter,
+    # Format: input for logging.Formatter,
     format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
     datefmt:      "%Y-%m-%d %H:%M:%S"
+
+    # (optional) set the individual log levels per logger name, for example
+    # mute some loggers that are too verbose.
+    loggers:
+      - name: urllib
+        level: warning
+      - name: requests
+        level: warning
+      - name: engineio.client
+        level: warning
+      - name: docker.utils.config
+        level: warning
+      - name: docker.auth
+        level: warning
+
+  # Additional debug flags
+  debug:
+
+    # Set to `true` to enable the Flask/socketio into debug mode.
+    socketio: false
+
+    # Set to `true` to set the Flask app used for the LOCAL proxy service
+    # into debug mode
+    proxy_server: false
+
 
   # directory where local task files (input/output) are stored
   task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\mydir

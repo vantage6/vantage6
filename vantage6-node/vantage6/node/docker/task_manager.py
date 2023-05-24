@@ -8,7 +8,6 @@ import json
 
 from pathlib import Path
 
-from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
@@ -188,7 +187,7 @@ class DockerTaskManager(DockerBaseManager):
             raise PermanentAlgorithmStartFail
 
     def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: dict, database: str) -> list[dict]:
+            algorithm_env: dict, database: str) -> list[dict] | None:
         """
         Runs the docker-image in detached mode.
 
@@ -480,8 +479,8 @@ class DockerTaskManager(DockerBaseManager):
             # the DATABASE_LABEL environment variable
             self.log.warning("A user specified a database that does not "
                              "exist. Available databases are: "
-                             f"{self.databases.keys()}. This is likely to "
-                             "result in an algorithm crash.")
+                             f"{', '.join(list(self.databases.keys()))}. This "
+                             "is likely to result in an algorithm crash.")
             self.log.debug(f"User specified database: {database}")
 
         # Only prepend the data_folder is it is a file-based database

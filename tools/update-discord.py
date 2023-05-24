@@ -145,9 +145,18 @@ class PostUpdates(commands.Cog):
 @click.option('--version', default=None, help="major.minor.patch.specBuild")
 @click.option('--notes', default=None)
 @click.option('--post-notes', default=None)
-def update_the_community(version: str, notes: str, post_notes):
+def update_the_community(version: str, notes: str, post_notes: str) -> None:
     """
     Send a message to the discord channel.
+
+    Parameters
+    ----------
+    version : str
+        The version of the release.
+    notes : str
+        Any additional notes on the release.
+    post_notes : str
+        Any additional notes on the post.
     """
     bot.add_cog(PostUpdates(bot, version, notes, post_notes))
     bot.run(TOKEN)

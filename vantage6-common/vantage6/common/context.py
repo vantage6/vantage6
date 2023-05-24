@@ -5,6 +5,7 @@ import logging
 import logging.handlers
 
 from pathlib import Path
+from typing import Tuple
 
 from vantage6.common import Singleton, error, Fore, Style, logger_name
 from vantage6.common.colors import ColorStreamHandler
@@ -141,6 +142,7 @@ class AppContext(metaclass=Singleton):
         self_.config_dir = Path(path).parent
         self_.config_file = path
         self_.environment = environment
+        self_.instance_type = instance_type
         self_.set_folders(instance_type, instance_name, system_folders)
         module_name = logger_name(__name__)
         self_.log = logging.getLogger(module_name)
@@ -380,7 +382,7 @@ class AppContext(metaclass=Singleton):
         return self.__environment
 
     @environment.setter
-    def environment(self, env) -> None:
+    def environment(self, env: str) -> None:
         """
         Set the environment.
 
@@ -531,7 +533,6 @@ class AppContext(metaclass=Singleton):
         # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
-        level = getattr(logging, log_config["level"].upper())
         format_ = log_config["format"]
         datefmt = log_config.get("datefmt", "")
 
@@ -539,8 +540,7 @@ class AppContext(metaclass=Singleton):
         os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
 
         # Create the root logger
-        logger = logging.getLogger()
-        logger.setLevel(level)
+        logger, level = self.configure_logger(None, log_config["level"])
 
         # Create RotatingFileHandler
         try:
@@ -565,5 +565,35 @@ class AppContext(metaclass=Singleton):
             ch.setFormatter(logging.Formatter(format_, datefmt))
             logger.addHandler(ch)
 
+        # control individual loggers
+        loggers = log_config.get("loggers", [])
+        for logger in loggers:
+            self.configure_logger(logger["name"], logger["level"])
+
         # Finally, capture all warnings using the logging mechanism.
         logging.captureWarnings(True)
+
+    @staticmethod
+    def configure_logger(name: str | None, level: str) \
+            -> Tuple[logging.Logger, int]:
+        """
+        Set the logging level of a logger.
+
+        Parameters
+        ----------
+        name : str
+            Name of the logger to configure. If `None`, the root logger is
+            configured.
+        level : str
+            Logging level to set. Must be one of 'debug', 'info', 'warning',
+            'error', 'critical'.
+
+        Returns
+        -------
+        Tuple[Logger, int]
+            The logger object and the logging level that was set.
+        """
+        logger = logging.getLogger(name)
+        level_ = getattr(logging, level.upper())
+        logger.setLevel(level_)
+        return logger, level
