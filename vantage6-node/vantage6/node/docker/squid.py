@@ -9,7 +9,7 @@ access the data sources or other services.
 import logging
 import os
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -221,7 +221,7 @@ class Squid(DockerBaseManager):
         template = environment.get_template("squid.conf.j2")
 
         # inject template with vars
-        squid_config = template.render(**config._asdict())
+        squid_config = template.render(**asdict(config))
 
         with open(self.config_folder / "squid.conf", "w") as f:
             f.write(squid_config)
