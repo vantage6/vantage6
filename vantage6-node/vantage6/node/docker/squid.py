@@ -9,7 +9,7 @@ access the data sources or other services.
 import logging
 import os
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -30,9 +30,9 @@ log = logging.getLogger(logger_name(__name__))
 
 @dataclass
 class SquidConfig:
-    domains: list[str] = []
-    ips: list[str] = []
-    ports: list[int] = []
+    domains: list[str] = field(default_factory=lambda: [])
+    ips: list[str] = field(default_factory=lambda: [])
+    ports: list[int] = field(default_factory=lambda: [])
 
 
 class Squid(DockerBaseManager):
