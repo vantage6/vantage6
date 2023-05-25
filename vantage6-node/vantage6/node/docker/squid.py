@@ -159,10 +159,10 @@ class Squid(DockerBaseManager):
                 safe = False
 
         if not (has_domains or len(whitelist.ips) > 0):
-            log.error("No domains or IP addresses are whitelisted!")
+            log.critical("No domains or IP addresses are whitelisted!")
 
         if not len(whitelist.ports) > 0:
-            log.error("No ports are whitelisted!")
+            log.critical("No ports are whitelisted!")
 
         return safe
 

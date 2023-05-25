@@ -15,8 +15,12 @@ acl whitelist_ip dst {{ ip }}
 
 http_access deny !allowed_ports
 http_access deny CONNECT !allowed_ports
+{% if domains|length > 1 %}
 http_access allow whitelist_domain
+{% endif %}
+{% if ips|length > 1 %}
 http_access allow whitelist_ip
+{% endif %}
 http_access deny all
 
 # port of the squid proxy
