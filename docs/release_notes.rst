@@ -70,6 +70,9 @@ Release notes
      note that nothing harmful could be done but it should not be possible
      nevertheless (`Issue#615 <https://github.com/vantage6/vantage6/issues/615>`_,
      `PR#616 <https://github.com/vantage6/vantage6/pull/616>`_).
+   - Fixed bug with detecting if database was a file as '/mnt/' was not properly
+     prepended to the file path
+     (`PR#691 <https://github.com/vantage6/vantage6/pull/691>`_).
 
 3.8.8
 -----
