@@ -9,7 +9,7 @@ access the data sources or other services.
 import logging
 import os
 
-from typing import NamedTuple
+from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -28,10 +28,11 @@ from vantage6.node.globals import SQUID_IMAGE, PACKAGE_FOLDER
 log = logging.getLogger(logger_name(__name__))
 
 
-class SquidConfig(NamedTuple):
-    domains: list[str]
-    ips: list[str]
-    ports: list[int]
+@dataclass
+class SquidConfig:
+    domains: list[str] = []
+    ips: list[str] = []
+    ports: list[int] = []
 
 
 class Squid(DockerBaseManager):
@@ -85,8 +86,8 @@ class Squid(DockerBaseManager):
         log.debug(f"Squid hostname: {self.hostname}, port: {self.port}")
 
         try:
-            # Create the SSH configuration, which can later be mounted by the
-            # SSH tunnel container
+            # Create squid configuration, which can later be mounted by the
+            # squid container
             self.squid_config = self.read_config(config)
         except KeyError as e:
             # parent class should handle this
@@ -156,6 +157,12 @@ class Squid(DockerBaseManager):
                 log.warning("This is not safe!")
                 log.debug(f"Whitelisted IP: {ip}")
                 safe = False
+
+        if not (has_domains or len(whitelist.ips) > 0):
+            log.error("No domains or IP addresses are whitelisted!")
+
+        if not len(whitelist.ports) > 0:
+            log.error("No ports are whitelisted!")
 
         return safe
 
