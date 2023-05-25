@@ -1,6 +1,79 @@
 Release notes
 =============
 
+3.9.0
+-----
+
+*25 May 2023*
+
+- **Feature**
+
+  - Data sources may now be whitelisted by IP address, so that an
+    algorithm may access those IP addresses to obtain data. This is achieved
+    via a Squid proxy server
+    (`Issue#162 <https://github.com/vantage6/vantage6/issues/162>`_,
+    `PR#626 <https://github.com/vantage6/vantage6/pull/626>`_).
+  - There is a new configuration option to let algorithms access gpu's
+    (`Issue#597 <https://github.com/vantage6/vantage6/issues/597>`_,
+    `PR#623 <https://github.com/vantage6/vantage6/pull/623>`_).
+  - Added option to get VPN IP addresses and ports of just the children or
+    just the parent of an algorithm that is running. These options may be used
+    to simplify VPN communication between algorithms running on different nodes.
+    In the AlgorithmClient, the functions ``client.vpn.get_child_addresses()``
+    and ``client.vpn.get_parent_address()`` have been added
+    (`PR#610 <https://github.com/vantage6/vantage6/pull/610>`_).
+  - New option to print the full stack trace of algorithm errors. Note that
+    this option may leak sensitive information if used carelessly. The option
+    may be activated by setting ``log_traceback=True`` in the algorithm wrapper
+    (`Issue#675 <https://github.com/vantage6/vantage6/issues/675>`_,
+    `PR#680 <https://github.com/vantage6/vantage6/pull/680>`_).
+  - Configuration options to control the log levels of individual dependencies.
+    This allows easier debugging when a certain dependency is causing issues
+    (`Issue#641 <https://github.com/vantage6/vantage6/issues/641>`_,
+    `PR#642 <https://github.com/vantage6/vantage6/pull/642>`_).
+
+- **Change**
+
+ - Better error message for ``vnode attach`` when no nodes are running
+   (`Issue#606 <https://github.com/vantage6/vantage6/issues/606>`_,
+   `PR#607 <https://github.com/vantage6/vantage6/pull/607>`_).
+ - The number of characters of the task input printed to the logs is now limited
+   to prevent flooding the logs with very long input
+   (`Issue#549 <https://github.com/vantage6/vantage6/issues/549>`_,
+   `PR#550 <https://github.com/vantage6/vantage6/pull/550>`_).
+ - Node proxy logs are now written to a separate log file. This makes the
+   main node log more readable
+   (`Issue#546 <https://github.com/vantage6/vantage6/issues/546>`_,
+   `PR#619 <https://github.com/vantage6/vantage6/pull/619>`_).
+ - Update code in which the version is updated
+   (`PR#586 <https://github.com/vantage6/vantage6/pull/586>`_).
+ - Finished standardizing docstrings - note that this was already partially
+   done in earlier releases
+   (`Issue#255 <https://github.com/vantage6/vantage6/issues/255>`_).
+ - Cleanup and moving of unused code and duplicate code
+   (`PR#571 <https://github.com/vantage6/vantage6/pull/571>`_).
+ - It is now supported to run the release pipeline from ``release/v<x.y.z>``
+   branches (`Issue#467 <https://github.com/vantage6/vantage6/issues/467>`_,
+   `PR#488 <https://github.com/vantage6/vantage6/pull/488>`_).
+ - Replaced deprecated ``set-output`` method in Github actions release pipeline
+   (`Issue#474 <https://github.com/vantage6/vantage6/issues/474>`_,
+   `PR#601 <https://github.com/vantage6/vantage6/pull/601>`_).
+
+- **Bugfix**
+
+   - Fixed checking for newer images (node, server, and algorithms). Previously,
+     the dates used were not sufficient to check if an image was newer. Now,
+     we are also checking the image digest
+     (`Issue#507 <https://github.com/vantage6/vantage6/issues/507>`_,
+     `PR#602 <https://github.com/vantage6/vantage6/pull/602>`_).
+   - Users are prevented from posting socket events that are meant for nodes -
+     note that nothing harmful could be done but it should not be possible
+     nevertheless (`Issue#615 <https://github.com/vantage6/vantage6/issues/615>`_,
+     `PR#616 <https://github.com/vantage6/vantage6/pull/616>`_).
+   - Fixed bug with detecting if database was a file as '/mnt/' was not properly
+     prepended to the file path
+     (`PR#691 <https://github.com/vantage6/vantage6/pull/691>`_).
+
 3.8.8
 -----
 
@@ -73,6 +146,8 @@ Release notes
    `PR#632 <https://github.com/vantage6/vantage6/pull/632>`_).
  - Restored algorithm wrapper namespace for backward compatibility (
    `PR#618 <https://github.com/vantage6/vantage6/pull/618>`_)
+ - Prevent error with first socket ping on node startup by waiting a few
+   seconds (`PR#609 <https://github.com/vantage6/vantage6/pull/609>`_)
 
 3.8.2
 -----
