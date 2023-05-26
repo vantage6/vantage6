@@ -46,7 +46,7 @@ export class UserViewSingleComponent
 
   async setUser() {
     (
-      await this.userDataService.get(this.route_id as number, false, true)
+      await this.userDataService.get(this.route_id as number, true)
     ).subscribe((user) => {
       this.user = user;
     });

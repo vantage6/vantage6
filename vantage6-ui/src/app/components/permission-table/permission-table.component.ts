@@ -74,10 +74,21 @@ export class PermissionTableComponent implements OnInit, OnChanges {
     this.user_rules = [];
     this.current_role_ids = [];
     for (let role of this.given_roles) {
-      this.user_rules.push(...role.rules);
+      if (role.rules.length > 0) {
+        this.user_rules.push(...role.rules);
+      }
       this.current_role_ids.push(role.id);
     }
     this.user_rules = removeArrayDoubles(this.user_rules);
+
+    // remove any 'undefined' from array -> these can occur because this
+    // component is initialized simultaneously with getting the rules from the
+    // server
+    this.user_rules = this.user_rules.filter((rule) => rule !== undefined);
+
+    if (this.user_rules.length === 0) {
+      return; // probably still needs initialization, no use continuing
+    }
 
     // signal which rules have been added as part of role
     for (let rule of this.user_rules) {

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { getEmptyUser, User } from 'src/app/interfaces/user';
+import { EMPTY_USER, getEmptyUser, User } from 'src/app/interfaces/user';
 import { UserApiService } from 'src/app/services/api/user-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
@@ -9,6 +9,7 @@ import { BaseViewComponent } from '../base-view/base-view.component';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { allPages } from 'src/app/interfaces/utils';
+import { getIdsFromArray, removeMatchedIdsFromArray } from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-user-view',
@@ -30,20 +31,41 @@ export class UserViewComponent extends BaseViewComponent implements OnInit {
     private roleDataService: RoleDataService
   ) {
     super(userApiService, userDataService, modalService);
-    this.addRolesAndRules();
+    this.setUp();
   }
 
-  private async addRolesAndRules(): Promise<void> {
-    // TODO while this is busy, change text that no roles/rules are assigned yet
-    if (this.user.rules.length === 0 && this.user.roles.length === 0) {
-      this.user.rules = await this.ruleDataService.list_with_params(
+  ngOnChanges(): void {
+    this.setUp();
+  }
+
+  private async setUp(): Promise<void> {
+    if (this.user.id !== EMPTY_USER.id) {
+      await this.addRoles();
+      this.addRules();
+    }
+  }
+
+  private async addRoles(): Promise<void> {
+    if (this.user.roles.length === 0) {
+        this.user.roles = await this.roleDataService.list_with_params(
+          allPages(),
+          { user_id: this.user.id },
+          true
+        );
+    }
+  }
+
+  private async addRules(): Promise<void> {
+    if (this.user.rules.length === 0) {
+      let rules = await this.ruleDataService.list_with_params(
         allPages(),
         { user_id: this.user.id }
       );
-      this.user.roles = await this.roleDataService.list_with_params(
-        allPages(),
-        { user_id: this.user.id }
-      );
+      // remove rules that are already in roles
+      for (let role of this.user.roles) {
+        rules = removeMatchedIdsFromArray(rules, getIdsFromArray(role.rules));
+      }
+      this.user.rules = rules;
     }
   }
 

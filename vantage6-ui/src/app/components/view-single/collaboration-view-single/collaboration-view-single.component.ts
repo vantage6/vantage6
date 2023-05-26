@@ -59,7 +59,7 @@ export class CollaborationViewSingleComponent
   }
 
   async setCollaboration(): Promise<void> {
-    (await this.collabDataService.get(this.route_id as number)).subscribe(
+    (await this.collabDataService.get(this.route_id as number, true)).subscribe(
       (collab) => {
         this.collaboration = collab;
       }

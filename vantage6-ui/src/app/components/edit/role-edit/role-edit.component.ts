@@ -66,7 +66,7 @@ export class RoleEditComponent extends BaseEditComponent implements OnInit {
   }
 
   async setupEdit(id: number): Promise<void> {
-    (await this.roleDataService.get(id)).subscribe((role) => {
+    (await this.roleDataService.get(id, true)).subscribe((role) => {
       if (role) {
         this.role = role;
         this.role_orig_name = this.role.name;

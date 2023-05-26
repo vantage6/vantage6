@@ -140,9 +140,8 @@ export abstract class BaseDataService {
   protected async get_base(
     id: number,
     convertJsonFunc: Function,
-    force_refresh: boolean = false,
-    as_observable: boolean = true
-  ): Promise<Observable<Resource | null> | BehaviorSubject<Resource | null>> {
+    force_refresh: boolean = false
+  ): Promise<BehaviorSubject<Resource | null>> {
     // TODO consider always returning BehaviorSubjects, in base functions?
     if (force_refresh || !(id in this.resources_by_id)) {
       let additional_resources = await this.getDependentResources();
@@ -158,9 +157,7 @@ export abstract class BaseDataService {
         this.resources_by_id[id] = new BehaviorSubject<Resource | null>(null);
       }
     }
-    return as_observable
-      ? this.resources_by_id[id].asObservable()
-      : this.resources_by_id[id];
+    return this.resources_by_id[id];
   }
 
   protected async list_base(

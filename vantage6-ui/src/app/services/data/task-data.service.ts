@@ -41,11 +41,9 @@ export class TaskDataService extends BaseDataService {
     id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Task>> {
-    return (await super.get_base(
-      id,
-      this.convertJsonService.getTask,
-      force_refresh
-    )) as Observable<Task>;
+    return (
+      await super.get_base(id, this.convertJsonService.getTask, force_refresh)
+    ).asObservable() as Observable<Task>;
   }
 
   async list(

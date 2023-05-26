@@ -177,7 +177,7 @@ export class UserPermissionService {
     }
 
     // request the current user
-    (await this.userDataService.get(user_id, false, true)).subscribe((user) => {
+    (await this.userDataService.get(user_id, true)).subscribe((user) => {
       this.user = user;
       this.user.is_logged_in = true;
     });

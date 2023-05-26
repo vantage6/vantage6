@@ -68,13 +68,23 @@ export class RoleDataService extends BaseDataService {
 
   async get(
     id: number,
+    include_links: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<Role>> {
-    return (await super.get_base(
-      id,
-      this.convertJsonService.getRole,
-      force_refresh
-    )) as Observable<Role>;
+    let role = await super.get_base(
+			id, this.convertJsonService.getRole, force_refresh
+    );
+		if (include_links) {
+      // for single resource, include the internal resources
+      let role_value = (role as BehaviorSubject<Role>).value;
+      // request the rules for the current user
+      role_value.rules = await this.ruleDataService.list_with_params(
+        allPages(),
+        { role_id: role_value.id }
+      );
+			console.log(role_value);
+    }
+    return role.asObservable() as Observable<Role>;
   }
 
   async list(
@@ -90,13 +100,24 @@ export class RoleDataService extends BaseDataService {
 
   async list_with_params(
     pagination: Pagination = allPages(),
-    request_params: any = {}
+    request_params: any = {},
+    include_rules: boolean = false
   ): Promise<Role[]> {
-    return (await super.list_with_params_base(
+    let roles = (await super.list_with_params_base(
       this.convertJsonService.getRole,
       request_params,
       pagination
     )) as Role[];
+    if (include_rules) {
+      // request the rules for each role
+      for (let role of roles) {
+        role.rules = await this.ruleDataService.list_with_params(
+          allPages(),
+          { role_id: role.id }
+        );
+      }
+    }
+    return roles;
   }
 
   async org_list(

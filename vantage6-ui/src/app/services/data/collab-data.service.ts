@@ -98,13 +98,22 @@ export class CollabDataService extends BaseDataService {
 
   async get(
     id: number,
+    include_links: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration>> {
-    return (await super.get_base(
-      id,
-      this.convertJsonService.getCollaboration,
-      force_refresh
-    )) as Observable<Collaboration>;
+    let collab = (
+      await super.get_base(
+        id,
+        this.convertJsonService.getCollaboration,
+        force_refresh
+      )
+    )
+    if (include_links){
+        // include internal resources
+    }
+    console.log(collab.value)
+
+    return collab.asObservable() as Observable<Collaboration>;
   }
 
   async list(
