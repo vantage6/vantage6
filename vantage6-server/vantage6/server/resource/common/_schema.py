@@ -172,6 +172,8 @@ class TaskSchema(HATEOASModelSchema):
     children = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to="task", link_from="parent_id"
     ))
+    init_org = fields.Function(lambda obj: obj.init_org_id)
+    init_user = fields.Function(lambda obj: obj.init_user_id)
 
 
 class ResultSchema(HATEOASModelSchema):
