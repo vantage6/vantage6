@@ -34,7 +34,7 @@ export class RuleDataService extends BaseDataService {
       pagination,
       force_refresh,
       params
-    )) as Observable<Rule[]>;
+    )).asObservable() as Observable<Rule[]>;
   }
 
   async list_with_params(

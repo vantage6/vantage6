@@ -39,7 +39,7 @@ export class OrgDataService extends BaseDataService {
       this.convertJsonService.getOrganization,
       pagination,
       force_refresh
-    )) as Observable<Organization[]>;
+    )).asObservable() as Observable<Organization[]>;
   }
 
   async list_with_params(

@@ -86,8 +86,10 @@ export class PermissionTableComponent implements OnInit, OnChanges {
     // server
     this.user_rules = this.user_rules.filter((rule) => rule !== undefined);
 
-    if (this.user_rules.length === 0) {
-      return; // probably still needs initialization, no use continuing
+    // check if role was fully initialized
+    if (this.given_roles.length > 0 && this.given_roles[0].rules.length > 0 &&
+        this.given_roles[0].rules[0] === undefined) {
+          return;
     }
 
     // signal which rules have been added as part of role

@@ -97,27 +97,33 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   async setRoles(org_id: number | null = null): Promise<void> {
     let request;
     if (org_id === null) {
-      request = await this.roleDataService.list();
+      request = await this.roleDataService.list(allPages(), true);
     } else {
-      request = await this.roleDataService.org_list(org_id);
+      request = await this.roleDataService.org_list(org_id, true);
     }
-    request.subscribe((roles: Role[]) => {
+    request.subscribe(async (roles: Role[]) => {
       this.roles_all = roles;
-      this.setAssignableRoles();
+      await this.setAssignableRoles();
     });
   }
 
   async setupEdit(id: number) {
     // collect roles and rules (which is required to collect users)
-    (await this.userDataService.get(id, true)).subscribe((user) => {
+    (await this.userDataService.get(id, true, true)).subscribe((user) => {
       if (user) {
         this.user = user;
         this.user_orig_name = this.user.username;
         this.organization_id = this.user.organization_id;
-        this.setRoles(this.organization_id);
-        this.setOrganization();
+        this.setupEditSecondaryResources();
       }
     });
+  }
+
+  private async setupEditSecondaryResources(): Promise<void> {
+    await Promise.all([
+      this.setRoles(this.organization_id),
+      this.setOrganization(),
+    ]);
   }
 
   async setOrganization() {

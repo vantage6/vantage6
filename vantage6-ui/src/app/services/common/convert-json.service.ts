@@ -170,12 +170,6 @@ export class ConvertJsonService {
   }
 
   getTask(json: any): Task {
-    let child_ids = [];
-    if (json.children) {
-      for (let child of json.children) {
-        child_ids.push(child.id);
-      }
-    }
     return {
       id: json.id,
       type: ResType.TASK,
@@ -189,7 +183,7 @@ export class ConvertJsonService {
       parent_id: json.parent ? json.parent.id : null,
       database: json.database,
       complete: json.complete,
-      children_ids: child_ids,
+      children_ids: [],
       status: json.status,
     };
   }

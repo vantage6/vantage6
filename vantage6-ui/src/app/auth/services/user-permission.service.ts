@@ -21,7 +21,6 @@ const PERMISSION_KEY = 'permissions-user';
 export class UserPermissionService {
   user: User = EMPTY_USER;
   userBhs = new BehaviorSubject<User>(this.user);
-  userRules: Rule[] = [];
   userExtraRules: Rule[] = [];
   all_rules: Rule[] = [];
   ready = new BehaviorSubject<boolean>(false);
@@ -204,7 +203,7 @@ export class UserPermissionService {
   }
 
   canAssignRule(rule: Rule): boolean {
-    return arrayContainsObjWithId(rule.id, this.userRules);
+    return arrayContainsObjWithId(rule.id, this.user.rules);
   }
 
   async getAssignableRoles(available_roles: Role[]): Promise<Role[]> {
@@ -235,7 +234,6 @@ export class UserPermissionService {
   clear(): void {
     this.user = EMPTY_USER;
     this.userBhs.next(this.user);
-    this.userRules = [];
     this.userExtraRules = [];
     this.ready.next(false);
   }

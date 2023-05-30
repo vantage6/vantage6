@@ -14,6 +14,7 @@ import {
   allPages,
   defaultFirstPage,
 } from 'src/app/interfaces/utils';
+import { getIdsFromArray, removeMatchedIdsFromArray } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -36,7 +37,7 @@ export class UserDataService extends BaseDataService {
     (await this.ruleDataService.list(allPages())).subscribe((rules) => {
       this.rules = rules;
     });
-    (await this.roleDataService.list(false, allPages())).subscribe((roles) => {
+    (await this.roleDataService.list(allPages())).subscribe((roles) => {
       this.roles = roles;
     });
     return [this.roles, this.rules];
@@ -45,6 +46,7 @@ export class UserDataService extends BaseDataService {
   async get(
     id: number,
     include_links: boolean = false,
+    only_extra_rules: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<User>> {
     let user: any = await super.get_base(
@@ -63,8 +65,17 @@ export class UserDataService extends BaseDataService {
       // add roles to the user
       user_value.roles = await this.roleDataService.list_with_params(
         allPages(),
-        { user_id: user_value.id }
+        { user_id: user_value.id },
+        true
       );
+      if (only_extra_rules) {
+        // remove rules that are already included in the roles
+        for (let role of user_value.roles) {
+          user_value.rules = removeMatchedIdsFromArray(
+            user_value.rules, getIdsFromArray(role.rules)
+          );
+        }
+      }
       user.next(user_value);
     }
     // return observable. If required, convert to observable first.
@@ -79,7 +90,7 @@ export class UserDataService extends BaseDataService {
       this.convertJsonService.getUser,
       pagination,
       force_refresh
-    )) as Observable<User[]>;
+    )).asObservable() as Observable<User[]>;
   }
 
   async list_with_params(
@@ -105,7 +116,7 @@ export class UserDataService extends BaseDataService {
       this.convertJsonService.getUser,
       pagination,
       force_refresh
-    )) as Observable<User[]>;
+    )).asObservable() as Observable<User[]>;
   }
 
   save(user: User) {

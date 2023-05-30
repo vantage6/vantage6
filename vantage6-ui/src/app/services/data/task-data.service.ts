@@ -56,7 +56,7 @@ export class TaskDataService extends BaseDataService {
       force_refresh,
       // only show top-level tasks (i.e. not subtasks) created by user
       { is_user_created: 1 }
-    )) as Observable<Task[]>;
+    )).asObservable() as Observable<Task[]>;
   }
 
   async org_list(
@@ -69,7 +69,7 @@ export class TaskDataService extends BaseDataService {
       this.convertJsonService.getTask,
       pagination,
       force_refresh
-    )) as Observable<Task[]>;
+    )).asObservable() as Observable<Task[]>;
   }
 
   async collab_list(
@@ -83,6 +83,17 @@ export class TaskDataService extends BaseDataService {
       pagination,
       force_refresh
     )) as Observable<Task[]>;
+  }
+
+  async list_with_params(
+    pagination: Pagination = allPages(),
+    request_params: any = {}
+  ): Promise<Task[]> {
+    return await super.list_with_params_base(
+      this.convertJsonService.getTask,
+      request_params,
+      pagination,
+    ) as Task[];
   }
 
   save(task: Task) {

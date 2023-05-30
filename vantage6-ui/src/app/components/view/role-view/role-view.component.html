@@ -36,7 +36,7 @@ This role gives the following permissions:
 <app-permission-table
   [given_roles]="[role]"
   [given_rules]="[]"
-  [loggedin_user_rules]="userPermission.userRules"
+  [loggedin_user_rules]="userPermission.user.rules"
   [is_edit_mode]="false"
 ></app-permission-table>
 <div *ngIf="!isDefaultRole(); else defaultRoleMsg">

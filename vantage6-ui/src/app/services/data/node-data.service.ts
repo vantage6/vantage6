@@ -44,7 +44,7 @@ export class NodeDataService extends BaseDataService {
       this.convertJsonService.getNode,
       pagination,
       force_refresh
-    )) as Observable<Node[]>;
+    )).asObservable() as Observable<Node[]>;
   }
 
   async org_list(
@@ -57,7 +57,7 @@ export class NodeDataService extends BaseDataService {
       this.convertJsonService.getNode,
       pagination,
       force_refresh
-    )) as Observable<Node[]>;
+    )).asObservable() as Observable<Node[]>;
   }
 
   async collab_list(
