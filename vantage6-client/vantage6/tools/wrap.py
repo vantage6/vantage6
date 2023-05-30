@@ -2,8 +2,6 @@ import os
 import pickle
 import importlib
 
-from types import ModuleType
-
 from typing import BinaryIO, Any, Generator
 
 from vantage6.tools import deserialization, serialization
@@ -79,7 +77,7 @@ def wrap_algorithm(module: str) -> None:
     _write_output(output_format, output, output_file)
 
 
-def _run_algorithm_method(input_data: dict, module: ModuleType) -> Any:
+def _run_algorithm_method(input_data: dict, module: str) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
@@ -90,7 +88,7 @@ def _run_algorithm_method(input_data: dict, module: ModuleType) -> Any:
         contain the key 'method' which is the name of the method that should be
         called. Another often used key is 'master' which indicates that this
         container is a master container. Other keys depend on the algorithm.
-    module : ModuleType
+    module : str
         The module that contains the algorithm.
 
     Returns

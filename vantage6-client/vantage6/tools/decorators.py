@@ -62,7 +62,7 @@ def data(number_of_databases: int = 1) -> callable:
 
     Parameters
     ----------
-    num: int
+    number_of_databases: int
         Number of data sources to load. These will be loaded in order by which
         the user provided them. Default is 1.
 
@@ -73,7 +73,7 @@ def data(number_of_databases: int = 1) -> callable:
 
     Examples
     --------
-    >>> @data(num=2)
+    >>> @data(number_of_databases=2)
     >>> def my_algorithm(first_df: pd.DataFrame, second_df: pd.DataFrame,
     >>>                  <other arguments>):
     >>>     pass

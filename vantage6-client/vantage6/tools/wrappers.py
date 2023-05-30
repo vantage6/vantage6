@@ -220,31 +220,3 @@ class OMOPWrapper(WrapperBase):
         """
         # TODO: parse the OMOP json and convert to SQL
         return pandas.read_sql(database_uri, input_data['query'])
-
-
-class MultiDBWrapper(WrapperBase):
-    @staticmethod
-    def load_data(database_uri: str, input_data: dict) -> dict:
-        """
-        Supply the all URI's to the algorithm. Note that this does not load
-        the data from the database, but only the URI's. So the algorithm
-        needs to load the data itself.
-
-        Parameters
-        ----------
-        database_uri : str
-            Unused, as all databases URI are passed on to the algorithm.
-        input_data : dict
-            Unused
-
-        Returns
-        -------
-        dict
-            A dictionary with the database label as key and the URI as value
-        """
-        db_labels = json.loads(os.environ.get("DB_LABELS"))
-        databases = {}
-        for db_label in db_labels:
-            db_env_var = f'{db_label.upper()}_DATABASE_URI'
-            databases[db_label] = os.environ.get(db_env_var)
-        return databases
