@@ -15,7 +15,7 @@ from vantage6.server.resource.common.pagination import Pagination
 log = logging.getLogger(logger_name(__name__))
 
 
-def create_one_to_many_link(obj: Base, link_to: str, link_from: str):
+def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:
     """
     Create an API link to get objects related to a given object.
 
