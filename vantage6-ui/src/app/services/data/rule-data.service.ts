@@ -27,7 +27,10 @@ export class RuleDataService extends BaseDataService {
     user_id: number | null = null
   ): Promise<Observable<Rule[]>> {
     // only get rules for specific user if requested
-    let params = user_id === null ? {} : { user_id: user_id };
+    let params: any = user_id === null ? {} : { user_id: user_id };
+    if (pagination.all_pages === true) {
+      params = { ...params, no_pagination: 1 };
+    }
     // get rules
     return (await super.list_base(
       this.convertJsonService.getRule,
@@ -41,6 +44,9 @@ export class RuleDataService extends BaseDataService {
     pagination: Pagination = allPages(),
     request_params: any = {}
   ): Promise<Rule[]> {
+    if (pagination.all_pages === true) {
+      request_params = { ...request_params, no_pagination: 1 };
+    }
     return (await super.list_with_params_base(
       this.convertJsonService.getRule,
       request_params,
