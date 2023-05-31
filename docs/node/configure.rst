@@ -66,8 +66,8 @@ You can download this file here: :download:`node_config.yaml`
     - ``prod``: Production environment. The version of the proposed solution
       where the final analyses are executed.
 
-    You may also specify the key ``application`` if you do not want to specify
-    one of the environments.
+    Before v4.0, you can also specify the key ``application`` if you do not
+    want to specify one of the environments.
 
 .. _node-configure-location:
 

@@ -76,9 +76,8 @@ You can download this file here: :download:`server_config.yaml <yaml/server_conf
     - ``prod`` Production environment. The version of the proposed solution
       where the final analyses are executed.
 
-    You may also specify the key ``application`` if you do not want to specify
-    one of the environments.
-
+    Before v4.0, you can also specify the key ``application`` if you do not
+    want to specify one of the environments.
 
 .. todo this section is close duplicate of docs/node/configure -- merge?
 
