@@ -8,29 +8,29 @@ Release notes
 
 - **Feature**
 
-  - Data sources may now be whitelisted by IP address, so that an
-    algorithm may access those IP addresses to obtain data. This is achieved
-    via a Squid proxy server
-    (`Issue#162 <https://github.com/vantage6/vantage6/issues/162>`_,
-    `PR#626 <https://github.com/vantage6/vantage6/pull/626>`_).
-  - There is a new configuration option to let algorithms access gpu's
-    (`Issue#597 <https://github.com/vantage6/vantage6/issues/597>`_,
-    `PR#623 <https://github.com/vantage6/vantage6/pull/623>`_).
-  - Added option to get VPN IP addresses and ports of just the children or
-    just the parent of an algorithm that is running. These options may be used
-    to simplify VPN communication between algorithms running on different nodes.
-    In the AlgorithmClient, the functions ``client.vpn.get_child_addresses()``
-    and ``client.vpn.get_parent_address()`` have been added
-    (`PR#610 <https://github.com/vantage6/vantage6/pull/610>`_).
-  - New option to print the full stack trace of algorithm errors. Note that
-    this option may leak sensitive information if used carelessly. The option
-    may be activated by setting ``log_traceback=True`` in the algorithm wrapper
-    (`Issue#675 <https://github.com/vantage6/vantage6/issues/675>`_,
-    `PR#680 <https://github.com/vantage6/vantage6/pull/680>`_).
-  - Configuration options to control the log levels of individual dependencies.
-    This allows easier debugging when a certain dependency is causing issues
-    (`Issue#641 <https://github.com/vantage6/vantage6/issues/641>`_,
-    `PR#642 <https://github.com/vantage6/vantage6/pull/642>`_).
+ - Data sources may now be whitelisted by IP address, so that an
+   algorithm may access those IP addresses to obtain data. This is achieved
+   via a Squid proxy server
+   (`Issue#162 <https://github.com/vantage6/vantage6/issues/162>`_,
+   `PR#626 <https://github.com/vantage6/vantage6/pull/626>`_).
+ - There is a new configuration option to let algorithms access gpu's
+   (`Issue#597 <https://github.com/vantage6/vantage6/issues/597>`_,
+   `PR#623 <https://github.com/vantage6/vantage6/pull/623>`_).
+ - Added option to get VPN IP addresses and ports of just the children or
+   just the parent of an algorithm that is running. These options may be used
+   to simplify VPN communication between algorithms running on different nodes.
+   In the AlgorithmClient, the functions ``client.vpn.get_child_addresses()``
+   and ``client.vpn.get_parent_address()`` have been added
+   (`PR#610 <https://github.com/vantage6/vantage6/pull/610>`_).
+ - New option to print the full stack trace of algorithm errors. Note that
+   this option may leak sensitive information if used carelessly. The option
+   may be activated by setting ``log_traceback=True`` in the algorithm wrapper
+   (`Issue#675 <https://github.com/vantage6/vantage6/issues/675>`_,
+   `PR#680 <https://github.com/vantage6/vantage6/pull/680>`_).
+ - Configuration options to control the log levels of individual dependencies.
+   This allows easier debugging when a certain dependency is causing issues
+   (`Issue#641 <https://github.com/vantage6/vantage6/issues/641>`_,
+   `PR#642 <https://github.com/vantage6/vantage6/pull/642>`_).
 
 - **Change**
 
@@ -92,11 +92,11 @@ Release notes
    - Fixed a bug were VPN messages to the originating node where not always
      sent/received
      (`Issue#671 <https://github.com/vantage6/vantage6/issues/671>`_,
-      `PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
+     `PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
    - Fixed a bug where an exceptions is raised when the websocket
      connection was lost and a ping was attempted to be send
      (`Issue#672 <https://github.com/vantage6/vantage6/issues/672>`_,
-      `PR#674 <https://github.com/vantage6/vantage6/pull/674>`_)
+     `PR#674 <https://github.com/vantage6/vantage6/pull/674>`_)
    - Fixed a formatting in CLI print statement
      (`PR#661 <https://github.com/vantage6/vantage6/pull/661>`_)
    - Fixed bug where '/mnt/' was erroneously prepended to non-file based
