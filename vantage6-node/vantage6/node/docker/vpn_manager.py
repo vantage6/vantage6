@@ -231,10 +231,14 @@ class VPNManager(DockerBaseManager):
             IP address assigned to VPN client container by VPN server
         """
         try:
-            _, vpn_interface = self.vpn_client_container.exec_run(
-                'ip --json addr show dev tun0'
-            )
-            vpn_interface = json.loads(vpn_interface)
+            # use has_connection() to check if VPN is active. This function
+            # also waits for a connection to be established, which is helpful
+            # for unstable connections
+            if self.has_connection():
+                _, vpn_interface = self.vpn_client_container.exec_run(
+                    'ip --json addr show dev tun0'
+                )
+                vpn_interface = json.loads(vpn_interface)
         except (JSONDecodeError, docker.errors.APIError):
             # JSONDecodeError if VPN is not setup yet, APIError if VPN
             # container is restarting (e.g. due to connection errors)

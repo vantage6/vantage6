@@ -159,7 +159,6 @@ class Pagination:
     @classmethod
     def from_query(
         cls, query: sqlalchemy.orm.query, request: flask.Request,
-        paginate: bool = True
     ) -> Pagination:
         """
         Create a Pagination object from a query.
@@ -178,35 +177,27 @@ class Pagination:
         Pagination
             Pagination object
         """
-        # Get the total number of records. We remove the ordering of the query
-        # since it doesn't matter for getting a count and might have
-        # performance implications as discussed on this Flask-SqlAlchemy issue:
+        # We remove the ordering of the query since it doesn't matter for
+        # getting a count and might have performance implications as discussed
+        # on this Flask-SqlAlchemy issue
         # https://github.com/mitsuhiko/flask-sqlalchemy/issues/100
         total = query.distinct().order_by(None).count()
 
-        # Get the page and page size from the request
-        if paginate:
-            page_id = cls._get_page_id(request)
-            per_page = cls._get_per_page(request)
-
-            # Check if combination of the page and page size are valid
-            if total < (page_id-1) * per_page:
-                raise ValueError(
-                    "The 'page' and/or 'per_page' parameter values are too "
-                    "large: there are no records present on this page"
-                )
-        else:
+        # check if pagination is desired, else return all records
+        page_id = request.args.get('page')
+        if not page_id:
             page_id = 1
-            per_page = total
+            per_page = total or 1
+        else:
+            page_id = int(page_id)
+            per_page = int(request.args.get('per_page', 10))
 
-        # FIXME BvB 2020-02-09 good error handling if sort is not a valid
-        #  field
-        if request.args.get('sort', False):
-            query = cls._add_sorting(query, request.args.get('sort'))
+        if page_id <= 0:
+            raise AttributeError('page needs to be >= 1')
+        if per_page <= 0:
+            raise AttributeError('per_page needs to be >= 1')
 
-        items = query.distinct()\
-            .limit(per_page)\
-            .offset((page_id-1)*per_page)\
+        items = query.distinct().limit(per_page).offset((page_id-1)*per_page)\
             .all()
 
         return cls(items, page_id, per_page, total, request)

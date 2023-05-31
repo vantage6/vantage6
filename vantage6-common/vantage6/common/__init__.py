@@ -121,7 +121,7 @@ def base64s_to_bytes(bytes_string: str) -> bytes:
 #
 # CLI prints
 #
-def echo(msg: str, level="info") -> None:
+def echo(msg: str, level: str = "info") -> None:
     """
     Print a message to the CLI.
 
