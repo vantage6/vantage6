@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from flask import request
-from flask_restful import reqparse
+from flask import request, g
+from flask_restful import reqparse, Api
 from http import HTTPStatus
 
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
@@ -31,7 +30,19 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the collaboration resource.
+
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -82,7 +93,15 @@ node_schema = NodeSchemaSimple()
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
 
     add = permissions.appender(module_name)
 
@@ -185,7 +204,7 @@ class Collaborations(CollaborationBase):
 
         # obtain organization from authenticated
         auth_org_id = self.obtain_organization_id()
-        q = DatabaseSessionManager.get_session().query(db.Collaboration)
+        q = g.session.query(db.Collaboration)
         args = request.args
 
         # filter by a field of this endpoint
@@ -305,7 +324,7 @@ class Collaborations(CollaborationBase):
 
 class Collaboration(CollaborationBase):
 
-    @only_for(['user', 'node', 'container'])
+    @only_for(('user', 'node', 'container'))
     def get(self, id):
         """ Get collaboration
         ---
@@ -506,7 +525,7 @@ class CollaborationOrganization(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
-    @only_for(["node", "user", "container"])
+    @only_for(("node", "user", "container"))
     def get(self, id):
         """ Returns organizations that participate in the collaboration
         ---

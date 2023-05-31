@@ -12,8 +12,6 @@ commands are available:
     * vnode remove
     * vnode version
     * vnode create-private-key
-
-
 """
 import click
 import sys
@@ -23,14 +21,15 @@ import time
 import os.path
 import itertools
 
-from typing import Iterable, Tuple, List
+from typing import Iterable
 from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
 
 from vantage6.common import (
     warning, error, info, debug,
-    bytes_to_base64s, check_config_writeable
+    bytes_to_base64s, check_config_writeable,
+    get_database_config
 )
 from vantage6.common.globals import (
     STRING_ENCODING,
@@ -81,7 +80,7 @@ def cli_node_list() -> None:
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     header = \
         "\nName"+(21*" ") + \
@@ -216,7 +215,7 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
     system_folders : bool
         Is this configuration stored in the system or in the user folders.
     """
-    name, environment = select_node(name, environment, system_folders)
+    name, environment = _select_node(name, environment, system_folders)
 
     # create node context
     ctx = NodeContext(name, environment=environment,
@@ -227,8 +226,13 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
     info(f"Log file           = {ctx.log_file}")
     info(f"data folders       = {ctx.data_dir}")
     info("Database labels and files")
-    for label, path in ctx.databases.items():
-        info(f" - {label:15} = {path}")
+    # TODO in v4+, this will always be a list so remove next few lines
+    if isinstance(ctx.databases, dict):
+        for label, path in ctx.databases.items():
+            info(f" - {label:15} = {path}")
+    else:
+        for db in ctx.databases:
+            info(f" - {db['label']:15} = {db['uri']} (type: {db['type']})")
 
 
 #
@@ -299,11 +303,11 @@ def cli_node_start(name: str, config: str, environment: str,
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, environment, system_folders):
-            question = (f"Configuration '{name}' using environment "
-                        "'{environment}' does not exist.\n  Do you want to "
-                        "create this config now?")
+            warning(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} "
+                    f"using environment {Fore.RED}{environment}"
+                    f"{Style.RESET_ALL} does not exist. ")
 
-            if q.confirm(question).ask():
+            if q.confirm("Create this configuration now?").ask():
                 configuration_wizard("node", name, environment, system_folders)
 
             else:
@@ -365,6 +369,7 @@ def cli_node_start(name: str, config: str, environment: str,
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
     ssh_volume = docker_client.volumes.create(ctx.docker_ssh_volume_name)
+    squid_volume = docker_client.volumes.create(ctx.docker_squid_volume_name)
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
@@ -374,6 +379,7 @@ def cli_node_start(name: str, config: str, environment: str,
         ("/mnt/data", data_volume.name),
         ("/mnt/vpn", vpn_volume.name),
         ("/mnt/ssh", ssh_volume.name),
+        ("/mnt/squid", squid_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
@@ -438,11 +444,26 @@ def cli_node_start(name: str, config: str, environment: str,
 
     # only mount the DB if it is a file
     info("Setting up databases")
-    db_labels = ctx.databases.keys()
+
+    # Check wether the new or old database configuration is used
+    # TODO: remove this in version v4+
+    old_format = isinstance(ctx.databases, dict)
+    if old_format:
+        db_labels = ctx.databases.keys()
+        warning('Using the old database configuration format. Please update.')
+        debug('You are using the db config old format, algorithms using the '
+              'auto wrapper will not work!')
+    else:
+        db_labels = [db['label'] for db in ctx.databases]
+
     for label in db_labels:
 
-        uri = ctx.databases[label]
-        info(f"  Processing database '{label}:{uri}'")
+        db_config = get_database_config(ctx.databases, label)
+        uri = db_config['uri']
+        db_type = db_config['type']
+
+        info(f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
+             f"{Fore.GREEN}{label}:{uri}{Style.RESET_ALL}")
         label_capitals = label.upper()
 
         try:
@@ -504,7 +525,7 @@ def cli_node_start(name: str, config: str, environment: str,
 
     if attach:
         logs = container.attach(stream=True, logs=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -544,7 +565,7 @@ def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     if not running_node_names:
         warning("No nodes are currently running.")
@@ -606,7 +627,11 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
+
+    if not running_node_names:
+        warning("No nodes are currently running. Cannot show any logs!")
+        return
 
     if not name:
         name = q.select("Select the node you wish to inspect:",
@@ -618,7 +643,7 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
     if name in running_node_names:
         container = client.containers.get(name)
         logs = container.attach(stream=True, logs=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -676,7 +701,7 @@ def cli_node_create_private_key(
         ctx = NodeContext(name, environment, system_folders, config)
     else:
         # retrieve context
-        name, environment = select_node(name, environment, system_folders)
+        name, environment = _select_node(name, environment, system_folders)
 
         # raise error if config could not be found
         if not NodeContext.config_exists(name, environment, system_folders):
@@ -693,7 +718,7 @@ def cli_node_create_private_key(
     # Authenticate with the server to obtain organization name if it wasn't
     # provided
     if organization_name is None:
-        client = create_client_and_authenticate(ctx)
+        client = _create_client_and_authenticate(ctx)
         organization_name = client.whoami.organization_name
 
     # create directory where private key goes if it doesn't exist yet
@@ -753,7 +778,7 @@ def cli_node_create_private_key(
         )
 
         if 'client' not in locals():
-            client = create_client_and_authenticate(ctx)
+            client = _create_client_and_authenticate(ctx)
 
         # TODO what happens if the user doesn't have permission to upload key?
         # Does that lead to an exception or not?
@@ -839,13 +864,13 @@ def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
         If True, use system folders, otherwise use user folders
     """
     # select configuration name if none supplied
-    name, environment = select_node(name, environment, system_folders)
+    name, environment = _select_node(name, environment, system_folders)
 
     client = docker.from_env()
     check_if_docker_daemon_is_running(client)
 
     # check if node is still running, otherwise don't allow deleting it
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     post_fix = "system" if system_folders else "user"
     node_container_name = f"{APPNAME}-{name}-{post_fix}"
@@ -879,17 +904,17 @@ def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
 
     # remove the VPN configuration file
     vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
-    remove_file(vpn_config_file, 'VPN configuration')
+    _remove_file(vpn_config_file, 'VPN configuration')
 
     # remove the config file
-    remove_file(ctx.config_file, 'configuration')
+    _remove_file(ctx.config_file, 'configuration')
 
     # remove the log file. As this process opens the log file above, the log
     # handlers need to be closed before deleting
     info(f"Removing log file {ctx.log_file}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    remove_file(ctx.log_file, 'log')
+    _remove_file(ctx.log_file, 'log')
 
 
 #
@@ -913,7 +938,7 @@ def cli_node_version(name: str, system_folders: bool) -> None:
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     if not name:
         if not running_node_names:
@@ -945,12 +970,24 @@ def cli_node_version(name: str, system_folders: bool) -> None:
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_set_api_key(name, api_key, environment, system_folders):
+def cli_node_set_api_key(name: str, api_key: str, environment: str,
+                         system_folders: bool) -> None:
     """
     Put a new API key into the node configuration file
+
+    Parameters
+    ----------
+    name : str
+        Node configuration name
+    api_key : str
+        New API key
+    environment : str
+        DTAP environment
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
     """
     # select name and environment
-    name, environment = select_node(name, environment, system_folders)
+    name, environment = _select_node(name, environment, system_folders)
 
     # Check that we can write in the config folder
     if not check_config_writeable(system_folders):
@@ -974,7 +1011,7 @@ def cli_node_set_api_key(name, api_key, environment, system_folders):
 
 
 #  helper functions
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     Print the logs from the logs stream.
 
@@ -983,12 +1020,11 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
     logs_stream : Iterable[bytes]
         Output of the container.attach() method
     """
-
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def create_client_and_authenticate(ctx: NodeContext) -> Client:
+def _create_client_and_authenticate(ctx: NodeContext) -> Client:
     """
     Generate a client and authenticate with the server.
 
@@ -1023,15 +1059,15 @@ def create_client_and_authenticate(ctx: NodeContext) -> Client:
     return client
 
 
-def select_node(name: str, environment: str, system_folders: bool) \
-        -> Tuple[str, str]:
+def _select_node(name: str, environment: str, system_folders: bool) \
+        -> tuple[str, str]:
     """
     Let user select node through questionnaire if name/environment is not
     given.
 
     Returns
     -------
-    Tuple[str, str]
+    tuple[str, str]
         name, environment of the configuration file
     """
     name, environment = (name, environment) if name else \
@@ -1048,7 +1084,7 @@ def select_node(name: str, environment: str, system_folders: bool) \
     return name, environment
 
 
-def find_running_node_names(client: docker.DockerClient) -> List[str]:
+def _find_running_node_names(client: docker.DockerClient) -> list[str]:
     """
     Returns a list of names of running nodes.
 
@@ -1059,7 +1095,7 @@ def find_running_node_names(client: docker.DockerClient) -> List[str]:
 
     Returns
     -------
-    List[str]
+    list[str]
         List of names of running nodes
     """
     running_nodes = client.containers.list(
@@ -1067,7 +1103,7 @@ def find_running_node_names(client: docker.DockerClient) -> List[str]:
     return [node.name for node in running_nodes]
 
 
-def remove_file(file: str, file_type: str) -> None:
+def _remove_file(file: str, file_type: str) -> None:
     """
     Remove a file if it exists.
 

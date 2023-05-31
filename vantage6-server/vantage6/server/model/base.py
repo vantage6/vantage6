@@ -1,13 +1,12 @@
 import logging
 import os
 import inspect as class_inspect
-from typing import List
 from flask.globals import g
 
 from sqlalchemy import Column, Integer, inspect, Table
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.ext.declarative.clsregistry import _ModuleMarker
+from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
@@ -22,10 +21,13 @@ log = logging.getLogger(module_name)
 
 
 class Database(metaclass=Singleton):
-    """A singleton we can destroy, a module we cannot.
+    """
+    Database class that is used to connect to the database and create the
+    database session.
 
-        Thats why we want a singlton. This is especially usefull when creating
-        unit test in which we want fresh databases every now and then.
+    The database is created as a singleton, so that it can be destroyed (as
+    opposed to a module). This is especially useful when creating unit tests
+    in which we want fresh databases every now and then.
     """
 
     def __init__(self):
@@ -35,6 +37,9 @@ class Database(metaclass=Singleton):
         self.allow_drop_all = False
 
     def drop_all(self):
+        """
+        Drop all tables in the database.
+        """
         if self.allow_drop_all:
             Base.metadata.drop_all(bind=self.engine)
             # Base.metadata.create_all(bind=self.engine)
@@ -43,6 +48,9 @@ class Database(metaclass=Singleton):
             log.error("Cannot drop tables, configuration does not allow this!")
 
     def clear_data(self):
+        """
+        Clear all data from the database.
+        """
         meta = Base.metadata
         session = DatabaseSessionManager.get_session()
         for table in reversed(meta.sorted_tables):
@@ -51,6 +59,10 @@ class Database(metaclass=Singleton):
         DatabaseSessionManager.clear_session()
 
     def close(self):
+        """
+        Delete all tables and close the database connection. Only used for
+        unit testing.
+        """
         self.drop_all()
         self.engine = None
         self.Session = None
@@ -59,7 +71,16 @@ class Database(metaclass=Singleton):
         self.URI = None
 
     def connect(self, uri='sqlite:////tmp/test.db', allow_drop_all=False):
+        """
+        Connect to the database.
 
+        Parameters
+        ----------
+        uri : str
+            URI of the database. Defaults to a sqlite database in /tmp.
+        allow_drop_all : bool, optional
+            If True, the database can be dropped. Defaults to False.
+        """
         self.allow_drop_all = allow_drop_all
         self.URI = uri
 
@@ -75,8 +96,7 @@ class Database(metaclass=Singleton):
         if URL.host is None and URL.database:
             os.makedirs(os.path.dirname(URL.database), exist_ok=True)
 
-        self.engine = create_engine(uri, convert_unicode=True,
-                                    pool_pre_ping=True)
+        self.engine = create_engine(uri, pool_pre_ping=True)
 
         # we can call Session() to create a session, if a session already
         # exists it will return the same session (!). implicit access to the
@@ -115,7 +135,7 @@ class Database(metaclass=Singleton):
         table_names = self.__iengine.get_table_names()
 
         # go through all SQLAlchemy models
-        for _, table_cls in Base._decl_class_registry.items():
+        for table_cls in Base.registry._class_registry.values():
             if isinstance(table_cls, _ModuleMarker):
                 continue  # skip, not a model
 
@@ -133,7 +153,7 @@ class Database(metaclass=Singleton):
                 )
 
     def get_non_existing_columns(self, table_cls: Table,
-                                 table_name: str) -> List[Column]:
+                                 table_name: str) -> list[Column]:
         """
         Return a list of columns that are defined in the SQLAlchemy model, but
         are not present in the database
@@ -147,7 +167,7 @@ class Database(metaclass=Singleton):
 
         Returns
         -------
-        List[Column]
+        list[Column]
             List of SQLAlchemy Column objects that are present in the model,
             but not in the database
         """
@@ -168,7 +188,7 @@ class Database(metaclass=Singleton):
 
     def add_col_to_table(self, column: Column, table_cls: Table) -> None:
         """
-        Database operation to add column to the table
+        Database operation to add column to `Table`
 
         Parameters
         ----------
@@ -188,7 +208,7 @@ class Database(metaclass=Singleton):
         )
 
     @staticmethod
-    def is_column_missing(column: Column, column_names: List[str],
+    def is_column_missing(column: Column, column_names: list[str],
                           table_name: str) -> bool:
         """ Check if column is missing in the table
 
@@ -215,24 +235,41 @@ class Database(metaclass=Singleton):
 
 
 class DatabaseSessionManager:
-    """Class to manage DB sessions from.
+    """
+    Class to manage DB sessions.
 
     There are 2 different ways a session can be obtained. Either a session used
-    within a request or a session used else where (e.g. iPython or within the
-    application itself).
+    within a request or a session used elsewhere (e.g. socketIO event, iPython
+    or within the application itself).
 
-    In case of the flask-request the session is stored in the flask global `g`.
-    So that it can be accessed in every endpoint.
+    In case of the Flask request, the session is stored in the flask global
+    `g`. Then, it can be accessed in every endpoint.
 
     In all other cases the session is attached to the db module.
     """
 
     @staticmethod
-    def in_flask_request():
+    def in_flask_request() -> bool:
+        """
+        Check if we are in a flask request.
+
+        Returns
+        -------
+        boolean
+            True if we are in a flask request, False otherwise
+        """
         return True if g else False
 
     @staticmethod
-    def get_session():
+    def get_session() -> Session:
+        """
+        Get a session. Creates a new session if none exists.
+
+        Returns
+        -------
+        Session
+            A database session
+        """
         if DatabaseSessionManager.in_flask_request():
 
             # needed for SocketIO requests
@@ -241,18 +278,20 @@ class DatabaseSessionManager:
 
             return g.session
         else:
-            # log.critical('Obtaining non flask session')
             if not session.session:
                 DatabaseSessionManager.new_session()
-                # log.critical('WE NEED TO MAKE A NEW ONE')
 
             return session.session
 
     @staticmethod
-    def new_session():
+    def new_session() -> None:
+        """
+        Create a new session. If we are in a flask request, the session is
+        stored in the flask global `g`. Otherwise, the session is stored in
+        the db module.
+        """
         # log.critical('Create new DB session')
         if DatabaseSessionManager.in_flask_request():
-
             g.session = Database().session_a
 
             # g.session.refresh()
@@ -261,7 +300,12 @@ class DatabaseSessionManager:
             session.session = Database().session_b
 
     @staticmethod
-    def clear_session():
+    def clear_session() -> None:
+        """
+        Clear the session. If we are in a flask request, the session is
+        cleared from the flask global `g`. Otherwise, the session is removed
+        from the db module.
+        """
         if DatabaseSessionManager.in_flask_request():
             # print(f"gsession: {g.session}")
             g.session.remove()
@@ -275,7 +319,10 @@ class DatabaseSessionManager:
 
 
 class ModelBase:
-    """Declarative base that defines default attributes."""
+    """
+    Declarative base that defines default attributes. All data models inherit
+    from this class.
+    """
     _hidden_attributes = []
 
     @declared_attr
@@ -286,8 +333,16 @@ class ModelBase:
     id = Column(Integer, primary_key=True)
 
     @classmethod
-    def get(cls, id_=None):
+    def get(cls, id_: int = None):
+        """
+        Get a single object by its id, or a list of objects when no id is
+        specified.
 
+        Parameters
+        ----------
+        id_: int, optional
+            The id of the object to get. If not specified, return all.
+        """
         session = DatabaseSessionManager.get_session()
 
         result = None
@@ -300,10 +355,15 @@ class ModelBase:
             except NoResultFound:
                 result = None
 
+        # Always commit to avoid that transaction is not ended in Postgres
+        session.commit()
+
         return result
 
     def save(self) -> None:
-
+        """
+        Save the object to the database.
+        """
         session = DatabaseSessionManager.get_session()
 
         # new objects do not have an `id`
@@ -313,14 +373,19 @@ class ModelBase:
         session.commit()
 
     def delete(self) -> None:
-
+        """
+        Delete the object from the database.
+        """
         session = DatabaseSessionManager.get_session()
 
         session.delete(self)
         session.commit()
 
     @classmethod
-    def help(cls) -> str:
+    def help(cls) -> None:
+        """
+        Print a help message for the class.
+        """
         i = inspect(cls)
         properties = ''.join([f' ->{a.key}\n' for a in i.mapper.column_attrs])
         relations = ''.join([f' ->{a[0]}\n' for a in i.relationships.items()])

@@ -8,23 +8,23 @@ node and server with naming conventions, standard file locations, and in the
 case of the node with a local database URIs.
 
 *Server Context*
-    In case the server is run in development mode, the context will also used
-    the server package. Normally the server uses the
-    `vantage6.server.context.DockerServerContext` which provides the same
-    functionality but is tailored to the Docker environment.
+    A class to provide context for the server, both for development mode as
+    for production.
 
 *Node Context*
-    In case the node is run in development mode, the context will also used by
+    In case the node is run in development mode, this context will also used by
     the node package. Normally the node uses the
     `vantage6.node.context.DockerNodeContext` which provides the same
     functionality but is tailored to the Docker environment.
 -------------------------------------------------------------------------------
 """
+# TODO BvB 2023-01-10 we should have a look at all context classes and define
+# them in the same place. Now the DockerNodeContext is defined in the node, but
+# the server only has a TestServerContext there. This should be made consistent
 from __future__ import annotations
 
 import os.path
 
-from typing import Tuple
 from pathlib import Path
 
 from sqlalchemy.engine.url import make_url
@@ -80,22 +80,30 @@ class ServerContext(AppContext):
         uri = os.environ.get("VANTAGE6_DB_URI") or self.config['uri']
         url = make_url(uri)
 
-        if (url.host is None) and (not os.path.isabs(url.database)):
-            # We're dealing with a relative path here.
-            url.database = str(self.data_dir / url.database)
-            uri = str(url)
+        if url.host is None and not os.path.isabs(url.database):
+            # We're dealing with a relative path here of a local database, when
+            # we're running the server outside of docker. Therefore we need to
+            # prepend the data directory to the database name, but after the
+            # driver name (e.g. sqlite:////db.sqlite ->
+            # sqlite:////data_dir>/db.sqlite)
+
+            # find index of database name
+            idx_db_name = str(url).find(url.database)
+
+            # add the datadir to the right location in the database uri
+            return str(url)[:idx_db_name] + str(self.data_dir / url.database)
 
         return uri
 
     @property
     def docker_container_name(self) -> str:
         """
-        Unique name of the docker container.
+        Name of the docker container that the server is running in.
 
         Returns
         -------
         str
-            Unique docker container name
+            Server's docker container name
         """
         return f"{APPNAME}-{self.name}-{self.scope}-server"
 
@@ -158,7 +166,7 @@ class ServerContext(AppContext):
 
     @classmethod
     def available_configurations(cls, system_folders: bool = S_FOL) \
-            -> Tuple[list, list]:
+            -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -169,7 +177,7 @@ class ServerContext(AppContext):
 
         Returns
         -------
-        Tuple[List, List]
+        tuple[list, list]
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
@@ -262,7 +270,7 @@ class NodeContext(AppContext):
 
     @classmethod
     def available_configurations(cls, system_folders: bool = N_FOL) \
-            -> Tuple[list, list]:
+            -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -273,7 +281,7 @@ class NodeContext(AppContext):
 
         Returns
         -------
-        Tuple[List, List]
+        tuple[list, list]
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
@@ -287,7 +295,7 @@ class NodeContext(AppContext):
         Parameters
         ----------
         system_folders : bool, optional
-            System wide or user configuration, by default N_FOL
+            System wide or user configuration
 
         Returns
         -------
@@ -297,7 +305,7 @@ class NodeContext(AppContext):
         return AppContext.type_data_folder("node", system_folders)
 
     @property
-    def databases(self):
+    def databases(self) -> dict:
         """
         Dictionary of local databases that are available for this node.
 
@@ -312,12 +320,12 @@ class NodeContext(AppContext):
     @property
     def docker_container_name(self) -> str:
         """
-        Unique Docker container name of the node.
+        Docker container name of the node.
 
         Returns
         -------
         str
-            Unique Docker container name
+            Node's Docker container name
         """
         return f"{APPNAME}-{self.name}-{self.scope}"
 
@@ -372,12 +380,31 @@ class NodeContext(AppContext):
         Returns
         -------
         str
-            Docker voluem name
+            Docker volume name
         """
         return os.environ.get(
             'SSH_TUNNEL_VOLUME_NAME',
             f"{self.docker_container_name}-ssh-vol"
         )
+
+    @property
+    def docker_squid_volume_name(self) -> str:
+        """
+        Docker volume in which the SSH configuration is stored.
+
+        Returns
+        -------
+        str
+            Docker volume name
+        """
+        return os.environ.get(
+            'SSH_SQUID_VOLUME_NAME',
+            f"{self.docker_container_name}-squid-vol"
+        )
+
+    @property
+    def proxy_log_file(self):
+        return self.log_file_name(type_="proxy_server")
 
     def docker_temporary_volume_name(self, run_id: int) -> str:
         """

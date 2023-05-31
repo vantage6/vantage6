@@ -8,7 +8,9 @@ Technical Docs
    :caption: Contents:
 
    architecture
-   node/node
-   server/server
+   features/index
    api/node
    api/server
+   api/cli
+   api/client
+   api/common

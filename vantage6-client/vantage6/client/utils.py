@@ -1,10 +1,9 @@
 import qrcode
 
 from enum import Enum
-from typing import Dict
 
 
-def print_qr_code(json_data: Dict) -> None:
+def print_qr_code(json_data: dict) -> None:
     """
     Print the QR code for 2fa with additional info of how to use it.
 
@@ -13,7 +12,7 @@ def print_qr_code(json_data: Dict) -> None:
 
     Parameters
     ----------
-    json_data: Dict
+    json_data: dict
         A dictionary containing the secret and URI to generate the QR code
     """
     print("This server has obligatory two-factor authentication. Please scan "
@@ -47,6 +46,22 @@ def show_qr_code_image(qr_uri: str) -> None:
 
 
 class LogLevel(Enum):
+    """
+    Enum for the different log levels
+
+    Attributes
+    ----------
+    DEBUG: str
+        The debug log level
+    INFO: str
+        The info log level
+    WARN: str
+        The warn log level
+    ERROR: str
+        The error log level
+    CRITICAL: str
+        The critical log level
+    """
     DEBUG = 'DEBUG'
     INFO = 'INFO'
     WARN = 'WARN'

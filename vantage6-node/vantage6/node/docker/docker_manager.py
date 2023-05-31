@@ -13,9 +13,11 @@ import docker
 import re
 import shutil
 
-from typing import Dict, List, NamedTuple, Union
+from typing import NamedTuple
 from pathlib import Path
 
+from vantage6.common import logger_name
+from vantage6.common import get_database_config
 from vantage6.common.docker.addons import get_container, running_in_docker
 from vantage6.common.globals import APPNAME
 from vantage6.common.task_status import TaskStatus, has_task_failed
@@ -25,12 +27,12 @@ from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
-from vantage6.node.util import logger_name
-
-
+from vantage6.node.docker.squid import Squid
+from vantage6.node.server_io import NodeClient
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
-    PermanentAlgorithmStartFail
+    PermanentAlgorithmStartFail,
+    AlgorithmContainerNotFound
 )
 
 log = logging.getLogger(logger_name(__name__))
@@ -57,7 +59,7 @@ class Result(NamedTuple):
     logs: str
     data: str
     status: str
-    parent_id: Union[int, None]
+    parent_id: int | None
 
 
 class ToBeKilled(NamedTuple):
@@ -85,15 +87,16 @@ class DockerManager(DockerBaseManager):
     """
     log = logging.getLogger(logger_name(__name__))
 
-    def __init__(self, ctx: Union[DockerNodeContext, NodeContext],
-                 isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
-                 tasks_dir: Path) -> None:
+    def __init__(self, ctx: DockerNodeContext | NodeContext,
+                 isolated_network_mgr: NetworkManager,
+                 vpn_manager: VPNManager, tasks_dir: Path, client: NodeClient,
+                 proxy: Squid | None = None) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
             Parameters
             ----------
-            ctx: DockerNodeContext or NodeContext
+            ctx: DockerNodeContext | NodeContext
                 Context object from which some settings are obtained
             isolated_network_mgr: NetworkManager
                 Manager for the isolated network
@@ -101,6 +104,10 @@ class DockerManager(DockerBaseManager):
                 VPN Manager object
             tasks_dir: Path
                 Directory in which this task's data are stored
+            client: NodeClient
+                Client object to communicate with the server
+            proxy: Squid | None
+                Squid proxy object
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)
@@ -109,17 +116,21 @@ class DockerManager(DockerBaseManager):
         config = ctx.config
         self.algorithm_env = config.get('algorithm_env', {})
         self.vpn_manager = vpn_manager
+        self.client = client
         self.__tasks_dir = tasks_dir
         self.alpine_image = config.get('alpine')
+        self.proxy = proxy
 
         # keep track of the running containers
-        self.active_tasks: List[DockerTaskManager] = []
+        self.active_tasks: list[DockerTaskManager] = []
 
         # keep track of the containers that have failed to start
-        self.failed_tasks: List[DockerTaskManager] = []
+        self.failed_tasks: list[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these regex
+        # TODO remove in v4+ as it is supersed by the 'policies' block
         self._allowed_images = config.get("allowed_images")
+        self._policies = config.get("policies", {})
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at
@@ -137,24 +148,39 @@ class DockerManager(DockerBaseManager):
         self.login_to_registries(docker_registries)
 
         # set database uri and whether or not it is a file
-        self._set_database(config)
+        self._set_database(ctx.databases)
 
         # keep track of linked docker services
-        self.linked_services: List[str] = []
+        self.linked_services: list[str] = []
 
-    def _set_database(self, config: Dict) -> None:
-        """"
+        # set algorithm device requests
+        self.algorithm_device_requests = []
+        if 'algorithm_device_requests' in config:
+            self._set_algorithm_device_requests(
+                config['algorithm_device_requests']
+            )
+
+    def _set_database(self, databases: dict | list) -> None:
+        """
         Set database location and whether or not it is a file
 
         Parameters
         ----------
-        config: Dict
-            Configuration of the app
+        databases: dict | list
+            databases as specified in the config file
         """
+
+        # Check wether the new or old database config is used.
+        # TODO: we should remove the old way in v4+
+        old_format = isinstance(databases, dict)
 
         # Check that the `default` database label is present. If this is
         # not the case, older algorithms will break
-        db_labels = config['databases'].keys()
+        if old_format:
+            db_labels = databases.keys()
+        else:
+            db_labels = [db['label'] for db in databases]
+
         if 'default' not in db_labels:
             self.log.error("'default' database not specified in the config!")
             self.log.debug(f'databases in config={db_labels}')
@@ -167,21 +193,47 @@ class DockerManager(DockerBaseManager):
         self.databases = {}
         for label in db_labels:
             label_upper = label.upper()
+            db_config = get_database_config(databases, label)
             if running_in_docker():
-                uri_env = os.environ[f'{label_upper}_DATABASE_URI']
-                uri = f'/mnt/{uri_env}'
+                uri = os.environ[f'{label_upper}_DATABASE_URI']
             else:
-                uri = config['databases'][label]
+                uri = db_config['uri']
 
-            db_is_file = Path(uri).exists()
+            if running_in_docker():
+                db_is_file = Path(f'/mnt/{uri}').exists()
+                if db_is_file:
+                    uri = f'/mnt/{uri}'
+            else:
+                db_is_file = Path(uri).exists()
+
             if db_is_file:
                 # We'll copy the file to the folder `data` in our task_dir.
                 self.log.info(f'Copying {uri} to {self.__tasks_dir}')
                 shutil.copy(uri, self.__tasks_dir)
                 uri = self.__tasks_dir / os.path.basename(uri)
 
-            self.databases[label] = {'uri': uri, 'is_file': db_is_file}
+            self.databases[label] = {'uri': uri, 'is_file': db_is_file,
+                                     'type': db_config['type']}
         self.log.debug(f"Databases: {self.databases}")
+
+    def _set_algorithm_device_requests(self, device_requests_config: dict) \
+            -> None:
+        """
+        Configure device access for the algorithm container.
+
+        Parameters
+        ----------
+        device_requests_config: dict
+           A dictionary containing configuration options for device access.
+           Supported keys:
+           - 'gpu': A boolean value indicating whether GPU access is required.
+        """
+        device_requests = []
+        if device_requests_config.get('gpu', False):
+            device = docker.types.DeviceRequest(count=-1,
+                                                capabilities=[['gpu']])
+            device_requests.append(device)
+        self.algorithm_device_requests = device_requests
 
     def create_volume(self, volume_name: str) -> None:
         """
@@ -204,7 +256,9 @@ class DockerManager(DockerBaseManager):
             self.log.debug(f"Creating volume {volume_name}")
             self.docker.volumes.create(volume_name)
 
-    def is_docker_image_allowed(self, docker_image_name: str) -> bool:
+    def is_docker_image_allowed(
+        self, docker_image_name: str, task_info: dict
+    ) -> bool:
         """
         Checks the docker image name.
 
@@ -215,13 +269,54 @@ class DockerManager(DockerBaseManager):
         ----------
         docker_image_name: str
             uri to the docker image
+        task_info: dict
+            Dictionary with information about the task
 
         Returns
         -------
         bool
             Whether docker image is allowed or not
         """
+        # in case of subtasks, don't check anymore, as parent has already
+        # been checked
+        if task_info['parent'] is not None:
+            return True
 
+        # check if algorithm matches any of the regex cases
+        allowed_algorithms = self._policies.get('allowed_algorithms')
+        if allowed_algorithms:
+            if isinstance(allowed_algorithms, str):
+                allowed_algorithms = [allowed_algorithms]
+            found = False
+            for regex_expr in allowed_algorithms:
+                expr_ = re.compile(regex_expr)
+                if expr_.match(docker_image_name):
+                    found = True
+            if not found:
+                self.log.warn("A task was sent with a docker image that this"
+                              " node does not allow to run.")
+                return False
+
+        # check if user or their organization is allowed
+        allowed_users = self._policies.get('allowed_users', [])
+        allowed_orgs = self._policies.get('allowed_organizations', [])
+        if allowed_users or allowed_orgs:
+            # TODO in v4+, simpify this logic when part below is removed (
+            # simply return the result of the check_user_allowed_to_send_task)
+            is_allowed = self.client.check_user_allowed_to_send_task(
+                allowed_users, allowed_orgs, task_info['initiator'],
+                task_info['init_user']
+            )
+            if not is_allowed:
+                self.log.warn(
+                    "A task was sent by a user or organization that this node"
+                    " does not allow to start tasks.")
+                return False
+
+        # --------------------------------------------------------------------
+        # TODO in v4+, remove part below as it is superseded by the 'policies'
+        # block
+        # --------------------------------------------------------------------
         # if no limits are declared
         if not self._allowed_images:
             self.log.warn("All docker images are allowed on this Node!")
@@ -259,13 +354,13 @@ class DockerManager(DockerBaseManager):
         })
         return bool(running_containers)
 
-    def cleanup_tasks(self) -> List[KilledResult]:
+    def cleanup_tasks(self) -> list[KilledResult]:
         """
         Stop all active tasks
 
         Returns
         -------
-        List[KilledResult]:
+        list[KilledResult]:
             List of information on tasks that have been killed
         """
         result_ids_killed = []
@@ -302,9 +397,9 @@ class DockerManager(DockerBaseManager):
         # remove the connected containers and the network
         self.isolated_network_mgr.delete(kill_containers=True)
 
-    def run(self, result_id: int, task_info: Dict, image: str,
+    def run(self, result_id: int, task_info: dict, image: str,
             docker_input: bytes, tmp_vol_name: str, token: str, database: str
-            ) -> Union[List[Dict], None]:
+            ) -> list[dict] | None:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
@@ -313,7 +408,7 @@ class DockerManager(DockerBaseManager):
         ----------
         result_id: int
             Server result identifier
-        task_info: Dict
+        task_info: dict
             Dictionary with task information
         image: str
             Docker image name
@@ -328,21 +423,21 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        List[Dict] or None
+        list[dict] | None
             Description of each port on the VPN client that forwards traffic to
             the algo container. None if VPN is not set up.
         """
         # Verify that an allowed image is used
-        if not self.is_docker_image_allowed(image):
+        if not self.is_docker_image_allowed(image, task_info):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
-            return None
+            return TaskStatus.NOT_ALLOWED,  None
 
         # Check that this task is not already running
         if self.is_running(result_id):
             self.log.warn("Task is already being executed, discarding task")
             self.log.debug(f"result_id={result_id} is discarded")
-            return None
+            return TaskStatus.ACTIVE, None
 
         task = DockerTaskManager(
             image=image,
@@ -354,7 +449,9 @@ class DockerManager(DockerBaseManager):
             isolated_network_mgr=self.isolated_network_mgr,
             databases=self.databases,
             docker_volume_name=self.data_volume_name,
-            alpine_image=self.alpine_image
+            alpine_image=self.alpine_image,
+            proxy=self.proxy,
+            device_requests=self.algorithm_device_requests
         )
         database = database if (database and len(database)) else 'default'
 
@@ -406,7 +503,21 @@ class DockerManager(DockerBaseManager):
         # this is blocking
         finished_tasks = []
         while (not finished_tasks) and (not self.failed_tasks):
-            finished_tasks = [t for t in self.active_tasks if t.is_finished()]
+            for task in self.active_tasks:
+
+                try:
+                    if task.is_finished():
+                        finished_tasks.append(task)
+                        self.active_tasks.remove(task)
+                        break
+                except AlgorithmContainerNotFound:
+                    self.log.exception(f'Failed to find container for '
+                                       f'result {task.result_id}')
+                    self.failed_tasks.append(task)
+                    self.active_tasks.remove(task)
+                    break
+
+            # sleep for a second before checking again
             time.sleep(1)
 
         if finished_tasks:
@@ -424,13 +535,15 @@ class DockerManager(DockerBaseManager):
             # Retrieve results from file
             results = finished_task.get_results()
 
-            # remove finished tasks from active task list
-            self.active_tasks.remove(finished_task)
-
+            # remove the VPN ports of this run from the database
+            self.client.request(
+                'port', params={'result_id': finished_task.result_id},
+                method="DELETE"
+            )
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()
-            logs = 'Container failed to start'
+            logs = 'Container failed'
             results = b''
 
         return Result(
@@ -491,8 +604,8 @@ class DockerManager(DockerBaseManager):
         self.linked_services.append(container_name)
 
     def kill_selected_tasks(
-        self, org_id: int, kill_list: List[ToBeKilled] = None
-    ) -> List[KilledResult]:
+        self, org_id: int, kill_list: list[ToBeKilled] = None
+    ) -> list[KilledResult]:
         """
         Kill tasks specified by a kill list, if they are currently running on
         this node
@@ -501,12 +614,12 @@ class DockerManager(DockerBaseManager):
         ----------
         org_id: int
             The organization id of this node
-        kill_list: List[ToBeKilled]
+        kill_list: list[ToBeKilled]
             A list of info about tasks that should be killed.
 
         Returns
         -------
-        List[KilledResult]
+        list[KilledResult]
             List with information on killed tasks
         """
         killed_list = []
@@ -536,7 +649,7 @@ class DockerManager(DockerBaseManager):
         return killed_list
 
     def kill_tasks(self, org_id: int,
-                   kill_list: List[ToBeKilled] = None) -> List[KilledResult]:
+                   kill_list: list[ToBeKilled] = None) -> list[KilledResult]:
         """
         Kill tasks currently running on this node.
 
@@ -544,13 +657,13 @@ class DockerManager(DockerBaseManager):
         ----------
         org_id: int
             The organization id of this node
-        kill_list: List[ToBeKilled] (optional)
+        kill_list: list[ToBeKilled] (optional)
             A list of info on tasks that should be killed. If the list
             is not specified, all running algorithm containers will be killed.
 
         Returns
         -------
-        List[KilledResult]
+        list[KilledResult]
             List of dictionaries with information on killed tasks
         """
         if kill_list:

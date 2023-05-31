@@ -2,6 +2,7 @@
 import logging
 
 from flask import g, request
+from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
 
@@ -16,6 +17,7 @@ from vantage6.server.resource import (
     only_for,
     ServicesResources
 )
+from vantage6.server import db
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.resource.common._schema import PortSchema
 from vantage6.server.model import (
@@ -24,15 +26,25 @@ from vantage6.server.model import (
     Collaboration,
     Task
 )
-from vantage6.server.model.base import DatabaseSessionManager
-
+from vantage6.server.resource import with_container
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the port resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -50,6 +62,13 @@ def setup(api, api_base, services):
         methods=('GET',),
         resource_class_kwargs=services
     )
+    api.add_resource(
+        VPNAddress,
+        api_base + '/vpn/algorithm/addresses',
+        endpoint='vpn_address',
+        methods=('GET',),
+        resource_class_kwargs=services
+    )
 
 
 # Schemas
@@ -59,7 +78,15 @@ port_schema = PortSchema()
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any port")
@@ -79,7 +106,7 @@ class PortBase(ServicesResources):
 
 class Ports(PortBase):
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self):
         """ Returns a list of ports
         ---
@@ -144,7 +171,7 @@ class Ports(PortBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(AlgorithmPort)
+        q = g.session.query(AlgorithmPort)
 
         # relation filters
         if 'result_id' in args:
@@ -220,8 +247,9 @@ class Ports(PortBase):
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
         result_id = data.get('result_id', '')
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
+        linked_result = g.session.query(Result)\
+                         .filter(Result.id == result_id)\
+                         .one()
         if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
@@ -280,18 +308,18 @@ class Ports(PortBase):
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
         result_id = args['result_id']
-        linked_result = DatabaseSessionManager.get_session().query(
-            Result).filter(Result.id == result_id).one()
+        linked_result = g.session.query(Result)\
+                         .filter(Result.id == result_id)\
+                         .one()
         if g.node.id != linked_result.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
-        session = DatabaseSessionManager.get_session()
-        session.query(AlgorithmPort).filter(
+        g.session.query(AlgorithmPort).filter(
             AlgorithmPort.result_id == result_id
         ).delete()
-        session.commit()
+        g.session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
 
@@ -299,7 +327,7 @@ class Ports(PortBase):
 class Port(PortBase):
     """Resource for /api/port"""
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self, id):
         """ Get a single port
         ---
@@ -354,3 +382,145 @@ class Port(PortBase):
         s = port_schema
 
         return s.dump(port, many=False).data, HTTPStatus.OK
+
+
+class VPNAddress(ServicesResources):
+
+    @with_container
+    def get(self):
+        """
+        Get a list of the addresses (IP + port) and labels of algorithm
+        containers in the same task as the authenticating container.
+        ---
+
+        description: >-
+          Returns a dictionary of addresses of algorithm containers in the same
+          task.\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Port|Global|View|❌|❌|View any result|\n
+          |Port|Organization|View|❌|✅|View the ports of your
+          organizations collaborations|\n
+
+          Not accessible to users.
+
+        parameters:
+          - in: path
+            name: label
+            schema:
+              type: string
+            description: Algorithm port label to filter by
+          - in: path
+            name: only_children
+            schema:
+              type: boolean
+            description: Only include the addresses of subtasks, not those at
+              the same level. Incompatible with 'only_parent'.
+          - in: path
+            name: only_parent
+            schema:
+              type: boolean
+            description: Only send the address of the parent task, not those at
+              the same level. Incompatible with 'only_children'.
+          - in: path
+            name: include_children
+            schema:
+              type: boolean
+            description: Include the addresses of subtasks. Ignored if
+              'only_children' is True. Incompatible with 'only_parent',
+              superseded by 'only_children'.
+          - in: path
+            name: include_parent
+            schema:
+              type: boolean
+            description: Include the addresses of parent tasks. Ignored if
+              'only_parent' is True. Incopatible with 'only_children',
+              superseded by 'only_parent'.
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Incompatible arguments specified
+
+        security:
+        - bearerAuth: []
+
+        tags: ["VPN"]
+        """
+        task_id = g.container['task_id']
+        task_ids = [task_id]
+
+        task = db.Task.get(task_id)
+
+        include_children = request.args.get('include_children', False)
+        include_parent = request.args.get('include_parent', False)
+        only_children = request.args.get('only_children', False)
+        only_parent = request.args.get('only_parent', False)
+
+        if only_children and only_parent:
+            return {
+                'msg': 'Using only_children and only_parent simultaneously is '
+                'not possible! Specify one or the other.'
+            }, HTTPStatus.BAD_REQUEST
+        elif only_children and include_parent:
+            return {
+                'msg': 'Using only_children and include_parent simultaneously '
+                'is not possible! Specify one or the other.'
+            }, HTTPStatus.BAD_REQUEST
+        elif only_parent and include_children:
+            return {
+                'msg': 'Using only_parent and include_children simultaneously '
+                'is not possible! Specify one or the other.'
+            }, HTTPStatus.BAD_REQUEST
+
+        # include child tasks if requested
+        if include_children or only_children:
+            subtasks = g.session.query(db.Task).filter(
+                db.Task.parent_id == task_id
+            ).all()
+            if only_children:
+                task_ids = [t.id for t in subtasks]
+            else:
+                task_ids.extend([t.id for t in subtasks])
+
+        # include parent task if requested
+        if include_parent or only_parent:
+            parent = g.session.query(db.Task).filter(
+                db.Task.id == task.parent_id
+            ).one_or_none()
+            if parent:
+                if only_parent:
+                    task_ids = [parent.id]
+                else:
+                    task_ids.append(parent.id)
+
+        # get all ports for the tasks requested
+        q = g.session.query(AlgorithmPort)\
+                     .join(Result)\
+                     .filter(Result.task_id.in_(task_ids))\
+
+        # filter by label if requested
+        filter_label = request.args.get('label')
+        if filter_label:
+            q = q.filter(AlgorithmPort.label == filter_label)
+
+        ports = q.all()
+
+        # combine data from ports and nodes
+        addresses = []
+        for port in ports:
+            d = {
+                'port': port.port,
+                'label': port.label,
+                'ip': port.result.node.ip,
+                'organization_id': port.result.organization_id,
+                'task_id': port.result.task_id,
+                'parent_id': port.result.task.parent_id,
+            }
+            addresses.append(d)
+
+        return {'addresses': addresses}, HTTPStatus.OK

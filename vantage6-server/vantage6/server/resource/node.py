@@ -4,7 +4,7 @@ import uuid
 
 from http import HTTPStatus
 from flask import g, request
-from flask_restful import reqparse
+from flask_restful import reqparse, Api
 
 
 from vantage6.server.resource import with_user_or_node, with_user
@@ -12,7 +12,6 @@ from vantage6.server.resource import ServicesResources
 from vantage6.server.resource.pagination import Pagination
 from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server import db
 from vantage6.server.resource.common._schema import NodeSchema
 
@@ -21,7 +20,19 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the node resource.
+
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -44,8 +55,16 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permission: PermissionManager):
-    add = permission.appender("node")
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
+    add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any node")
     add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
@@ -168,7 +187,7 @@ class Nodes(NodeBase):
 
         tags: ["Node"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Node)
+        q = g.session.query(db.Node)
         auth_org_id = self.obtain_organization_id()
         args = request.args
 

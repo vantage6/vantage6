@@ -1,6 +1,6 @@
 import base64
 import json
-from typing import Dict
+
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
@@ -39,7 +39,7 @@ class TestClient(TestCase):
         assert results == [{'result': {'some_key': 'some_value'}}]
 
     @staticmethod
-    def post_task_on_mock_client(input_) -> Dict[str, any]:
+    def post_task_on_mock_client(input_) -> dict[str, any]:
         mock_requests = MagicMock()
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200

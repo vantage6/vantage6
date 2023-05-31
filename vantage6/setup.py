@@ -35,20 +35,19 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
-        'schema==0.7.1',
-        'click==8.0.3',
-        'SQLAlchemy==1.3.15',
-        'docker==5.0.3',
-        'colorama==0.4.5',
-        'questionary==1.5.2',
-        'iPython==7.16.3',
-        'SQLAlchemy==1.3.15',
+        'click==8.1.3',
+        'colorama==0.4.6',
+        'docker==6.1.2',
+        'ipython==8.10.0',
+        'questionary==1.10.0',
+        'schema==0.7.5',
+        'SQLAlchemy==1.4.46',
         f'vantage6-common == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
     ],
     extras_require={
         'dev': [
-            'coverage==4.5.4'
+            'coverage==6.4.4'
         ]
     },
     package_data={

@@ -3,13 +3,13 @@ import logging
 import json
 
 from flask import g, request, url_for
+from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
 
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.permission import (
     Scope as S,
     PermissionManager,
@@ -29,7 +29,19 @@ module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the task resource.
+
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -59,7 +71,15 @@ def setup(api, api_base, services):
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW,
@@ -100,7 +120,7 @@ class TaskBase(ServicesResources):
 
 class Tasks(TaskBase):
 
-    @only_for(['user', 'node', 'container'])
+    @only_for(("user", "node", "container"))
     def get(self):
         """List tasks
         ---
@@ -224,7 +244,7 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Task)
+        q = g.session.query(db.Task)
         args = request.args
 
         # obtain organization id
@@ -260,7 +280,7 @@ class Tasks(TaskBase):
 
         return self.response(page, schema)
 
-    @only_for(["user", "container"])
+    @only_for(("user", "container"))
     def post(self):
         """Adds new computation task
         ---
@@ -335,7 +355,7 @@ class Tasks(TaskBase):
             )}, HTTPStatus.BAD_REQUEST
 
         # check if all the organizations have a registered node
-        nodes = DatabaseSessionManager.get_session().query(db.Node)\
+        nodes = g.session.query(db.Node)\
             .filter(db.Node.organization_id.in_(org_ids))\
             .filter(db.Node.collaboration_id == collaboration_id)\
             .all()
@@ -346,6 +366,16 @@ class Tasks(TaskBase):
                 "Cannot create this task because there are no nodes registered"
                 f" for the following organization(s): {', '.join(missing)}."
             )}, HTTPStatus.BAD_REQUEST
+        # check if any of the nodes that are offline shared their configuration
+        # info and if this prevents this user from creating this task
+        if g.user:
+            for node in nodes:
+                if self._node_doesnt_allow_user_task(node.config):
+                    return {"msg": (
+                        "Cannot create this task because one of the nodes that"
+                        " you are trying to send this task to does not allow "
+                        "you to create tasks."
+                    )}, HTTPStatus.BAD_REQUEST
 
         # figure out the initiating organization of the task
         if g.user:
@@ -477,9 +507,8 @@ class Tasks(TaskBase):
     def __verify_container_permissions(container, image, collaboration_id):
         """Validates that the container is allowed to create the task."""
 
-        # check that the image is allowed
-        # if container["image"] != task.image:
-        # FIXME why?
+        # check that the image is allowed: algorithm containers can only
+        # create tasks with the same image
         if not image.endswith(container["image"]):
             log.warning((f"Container from node={container['node_id']} "
                         f"attempts to post a task using illegal image!?"))
@@ -507,11 +536,46 @@ class Tasks(TaskBase):
 
         return True
 
+    @staticmethod
+    def _node_doesnt_allow_user_task(
+        node_configs: list[db.NodeConfig]
+    ) -> bool:
+        """
+        Checks if the node allows user to create task.
+
+        Parameters
+        ----------
+        node_configs : list[db.NodeConfig]
+            List of node configurations.
+
+        Returns
+        -------
+        bool
+            True if the node doesn't allow the user to create task.
+        """
+        has_limitations = False
+        for config_option in node_configs:
+            if config_option.key == "allowed_users":
+                has_limitations = True
+                # TODO expand when we allow also usernames, like orgs below
+                if g.user.id == int(config_option.value):
+                    return False
+            elif config_option.key == "allowed_orgs":
+                has_limitations = True
+                if config_option.value.isdigit():
+                    if g.user.organization_id == int(config_option.value):
+                        return False
+                else:
+                    org = db.Organization.get_by_name(config_option.value)
+                    if org and g.user.organization_id == org.id:
+                        return False
+        return has_limitations
+
 
 class Task(TaskBase):
     """Resource for /api/task"""
 
-    @only_for(["user", "node", "container"])
+    @only_for(("user", "node", "container"))
     def get(self, id):
         """Get task
         ---

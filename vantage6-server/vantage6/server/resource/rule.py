@@ -3,6 +3,8 @@ import logging
 
 from http import HTTPStatus
 from flask.globals import request
+from flask import g
+from flask_restful import Api
 
 from vantage6.server.resource import (
     with_user,
@@ -10,7 +12,6 @@ from vantage6.server.resource import (
 )
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource.common._schema import RuleSchema
 from vantage6.server.resource.pagination import Pagination
 
@@ -20,8 +21,19 @@ log = logging.getLogger(module_name)
 rule_schema = RuleSchema()
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the rule resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -104,7 +116,7 @@ class Rules(ServicesResources):
 
         tags: ["Rule"]
         """
-        q = DatabaseSessionManager.get_session().query(db.Rule)
+        q = g.session.query(db.Rule)
 
         args = request.args
 

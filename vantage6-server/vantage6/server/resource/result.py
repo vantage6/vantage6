@@ -2,6 +2,7 @@
 import logging
 
 from flask import g, request
+from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
 
@@ -30,15 +31,24 @@ from vantage6.server.model import (
     Collaboration,
     Organization
 )
-from vantage6.server.model.base import DatabaseSessionManager
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the result resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -66,7 +76,15 @@ result_inc_schema = ResultTaskIncludedSchema()
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW,
@@ -88,7 +106,7 @@ class ResultBase(ServicesResources):
 
 class Results(ResultBase):
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self):
         """ Returns a list of results
         ---
@@ -194,7 +212,7 @@ class Results(ResultBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = DatabaseSessionManager.get_session().query(db_Result)
+        q = g.session.query(db_Result)
 
         # relation filters
         for param in ['task_id', 'organization_id', 'port']:
@@ -242,7 +260,7 @@ class Results(ResultBase):
 class Result(ResultBase):
     """Resource for /api/result"""
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self, id):
         """ Get a single result
         ---

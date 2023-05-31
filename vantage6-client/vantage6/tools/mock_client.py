@@ -7,10 +7,18 @@ from vantage6.tools import serialization
 
 
 class ClientMockProtocol:
+    """
+    The ClientMockProtocol is used to test your algorithm locally. It
+    mimics the behaviour of the client and its communication with the server.
 
-    def __init__(self, datasets, module):
-        """
-        """
+    Parameters
+    ----------
+    datasets : list[str]
+        A list of paths to the datasets that are used in the algorithm.
+    module : str
+        The name of the module that contains the algorithm.
+    """
+    def __init__(self, datasets: list[str], module: str) -> None:
         self.n = len(datasets)
         self.datasets = []
         for dataset in datasets:
@@ -21,9 +29,32 @@ class ClientMockProtocol:
         self.lib = import_module(module)
         self.tasks = []
 
-    def create_new_task(self, input_, organization_ids=[]):
+    # TODO in v4+, don't provide a default value for list? There is no use
+    # in calling this function with 0 organizations as the task will never
+    # be executed in that case.
+    def create_new_task(self, input_: dict,
+                        organization_ids: list[int] = None) -> int:
         """
+        Create a new task with the MockProtocol and return the task id.
+
+        Parameters
+        ----------
+        input_ : dict
+            The input data that is passed to the algorithm. This should at
+            least  contain the key 'method' which is the name of the method
+            that should be called. Another often used key is 'master' which
+            indicates that this container is a master container. Other keys
+            depend on the algorithm.
+        organization_ids : list[int], optional
+            A list of organization ids that should run the algorithm.
+
+        Returns
+        -------
+        int
+            The id of the task.
         """
+        if organization_ids is None:
+            organization_ids = []
 
         # extract method from lib and input
         master = input_.get("master")
@@ -61,11 +92,35 @@ class ClientMockProtocol:
         self.tasks.append(task)
         return task
 
-    def get_task(self, task_id):
+    def get_task(self, task_id: int) -> dict:
+        """
+        Return the task with the given id.
+
+        Parameters
+        ----------
+        task_id : int
+            The id of the task.
+
+        Returns
+        -------
+        dict
+            The task details.
+        """
         return self.tasks[task_id]
 
-    def get_results(self, task_id):
+    def get_results(self, task_id: int) -> list[dict]:
         """
+        Return the results of the task with the given id.
+
+        Parameters
+        ----------
+        task_id : int
+            The id of the task.
+
+        Returns
+        -------
+        list[dict]
+            The results of the task.
         """
         task = self.tasks[task_id]
         results = []
@@ -75,8 +130,15 @@ class ClientMockProtocol:
 
         return results
 
-    def get_organizations_in_my_collaboration(self):
+    def get_organizations_in_my_collaboration(self) -> list[dict]:
+        """
+        Get mocked organizations.
 
+        Returns
+        -------
+        list[dict]
+            A list of mocked organizations.
+        """
         organizations = []
         for i in range(self.n):
             organizations.append({

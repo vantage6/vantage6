@@ -1,21 +1,51 @@
+from __future__ import annotations
 import bcrypt
 import re
 import datetime as dt
 
-from typing import Union
 from sqlalchemy import Column, String, Integer, ForeignKey, exists, DateTime
 from sqlalchemy.orm import relationship, validates
 
 from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.model.authenticable import Authenticatable
+from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
 
 
 class User(Authenticatable):
-    """User (person) that can access the system.
+    """
+    Table to keep track of Users (persons) that can access the system.
 
     Users always belong to an organization and can have certain
     rights within an organization.
+
+    Attributes
+    ----------
+    username : str
+        Username of the user
+    password : str
+        Password of the user
+    firstname : str
+        First name of the user
+    lastname : str
+        Last name of the user
+    email : str
+        Email address of the user
+    organization_id : int
+        Foreign key to the organization to which the user belongs
+    failed_login_attempts : int
+        Number of failed login attempts
+    last_login_attempt : datetime.datetime
+        Date and time of the last login attempt
+    otp_secret : str
+        Secret key for one time passwords
+    organization : :class:`~.model.organization.Organization`
+        Organization to which the user belongs
+    roles : list[:class:`~.model.role.Role`]
+        Roles that the user has
+    rules : list[:class:`~.model.rule.Rule`]
+        Rules that the user has
+    created_tasks : list[:class:`~.model.task.Task`]
+        Tasks that the user has created
     """
     _hidden_attributes = ['password']
 
@@ -44,7 +74,15 @@ class User(Authenticatable):
                          secondary="UserPermission")
     created_tasks = relationship("Task", back_populates="init_user")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        String representation of the user.
+
+        Returns
+        -------
+        str
+            String representation of the user
+        """
         organization = self.organization.name if self.organization else "None"
         return (
             f"<User "
@@ -54,10 +92,26 @@ class User(Authenticatable):
         )
 
     @validates("password")
-    def _validate_password(self, key, password):
+    def _validate_password(self, key: str, password: str) -> str:
+        """
+        Validate the password of the user by hashing it, as it is also hashed
+        in the database.
+
+        Parameters
+        ----------
+        key: str
+            Name of the attribute (in this case 'password')
+        password: str
+            Password of the user
+
+        Returns
+        -------
+        str
+            Hashed password
+        """
         return self.hash(password)
 
-    def set_password(self, pw) -> Union[str, None]:
+    def set_password(self, pw: str) -> str | None:
         """
         Set the password of the current user. This function doesn't save the
         new password to the database
@@ -94,14 +148,27 @@ class User(Authenticatable):
         self.password = pw
         self.save()
 
-    def check_password(self, pw):
+    def check_password(self, pw: str) -> bool:
+        """
+        Check if the password is correct
+
+        Parameters
+        ----------
+        pw: str
+            Password to check
+
+        Returns
+        -------
+        bool
+            Whether or not the password is correct
+        """
         if self.password is not None:
             expected_hash = self.password.encode('utf8')
             return bcrypt.checkpw(pw.encode('utf8'), expected_hash)
         return False
 
     def is_blocked(self, max_failed_attempts: int,
-                   inactivation_in_minutes: int):
+                   inactivation_in_minutes: int) -> tuple[bool, str | None]:
         """
         Check if user can login or if they are temporarily blocked because they
         entered a wrong password too often
@@ -130,40 +197,103 @@ class User(Authenticatable):
         if has_max_attempts and td_last_login < td_max_blocked:
             minutes_remaining = \
                 (td_max_blocked - td_last_login).seconds // 60 + 1
-            return True, (
-                f"Your account is blocked for the next {minutes_remaining} "
-                "minutes due to failed login attempts. Please wait or "
-                "reactivate your account via email."
-            )
+            return True, minutes_remaining
         else:
             return False, None
 
     @classmethod
-    def get_by_username(cls, username):
+    def get_by_username(cls, username: str) -> User:
+        """
+        Get a user by their username
+
+        Parameters
+        ----------
+        username: str
+            Username of the user
+
+        Returns
+        -------
+        User
+            User with the given username
+
+        Raises
+        ------
+        NoResultFound
+            If no user with the given username exists
+        """
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(username=username).one()
+        result = session.query(cls).filter_by(username=username).one()
+        session.commit()
+        return result
 
     @classmethod
-    def get_by_email(cls, email):
+    def get_by_email(cls, email: str) -> User:
+        """
+        Get a user by their email
+
+        Parameters
+        ----------
+        email: str
+            Email of the user
+
+        Returns
+        -------
+        User
+            User with the given email
+
+        Raises
+        ------
+        NoResultFound
+            If no user with the given email exists
+        """
         session = DatabaseSessionManager.get_session()
-        return session.query(cls).filter_by(email=email).one()
+        result = session.query(cls).filter_by(email=email).one()
+        session.commit()
+        return result
 
     @classmethod
-    def get_user_list(cls, filters=None):
-        session = DatabaseSessionManager.get_session()
-        return session.query(cls).all()
+    def username_exists(cls, username: str) -> bool:
+        """
+        Checks if user with certain username exists
 
-    @classmethod
-    def username_exists(cls, username):
+        Parameters
+        ----------
+        username: str
+            Username to check
+
+        Returns
+        -------
+        bool
+            Whether or not user with given username exists
+        """
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(cls.username == username))\
+        result = session.query(exists().where(cls.username == username))\
             .scalar()
+        session.commit()
+        return result
 
     @classmethod
-    def exists(cls, field, value):
+    def exists(cls, field: str, value: str) -> bool:
+        """
+        Checks if user with certain key-value exists
+
+        Parameters
+        ----------
+        field: str
+            Name of the attribute to check
+        value: str
+            Value of the attribute to check
+
+        Returns
+        -------
+        bool
+            Whether or not user with given key-value exists
+        """
         session = DatabaseSessionManager.get_session()
-        return session.query(exists().where(getattr(cls, field) == value))\
+        result = session.query(exists().where(getattr(cls, field) == value))\
             .scalar()
+        session.commit()
+        return result
 
     def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
         """

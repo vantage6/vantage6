@@ -2,8 +2,8 @@
 import logging
 
 from http import HTTPStatus
-from sqlalchemy.exc import InvalidRequestError
 from flask.globals import g
+from flask_restful import Api
 
 from vantage6.server.resource import ServicesResources
 from vantage6.common import logger_name
@@ -13,8 +13,19 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the health resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -22,13 +33,6 @@ def setup(api, api_base, services):
         Health,
         path,
         endpoint='health',
-        methods=('GET',),
-        resource_class_kwargs=services
-    )
-
-    api.add_resource(
-        Fix,
-        path + "/fix",
         methods=('GET',),
         resource_class_kwargs=services
     )
@@ -66,21 +70,3 @@ class Health(ServicesResources):
             log.debug(e)
 
         return {'database': db_ok}, HTTPStatus.OK
-
-
-class Fix(ServicesResources):
-
-    def get(self):
-        """Experimental switch to fix db errors"""
-
-        try:
-            g.session.execute('SELECT 1')
-
-        except (InvalidRequestError, Exception) as e:
-            log.error("DB nudge... Does this work?")
-            log.debug(e)
-            # session.invalidate()
-            # session.rollback()
-
-        # finally:
-        #     session.close()

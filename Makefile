@@ -55,9 +55,9 @@ install:
 install-dev:
 	cd vantage6-common && pip install -e .
 	cd vantage6-client && pip install -e .
-	cd vantage6 && pip install -e .
-	cd vantage6-node && pip install -e .
-	cd vantage6-server && pip install -e .
+	cd vantage6 && pip install -e .[dev]
+	cd vantage6-node && pip install -e .[dev]
+	cd vantage6-server && pip install -e .[dev]
 
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
@@ -85,6 +85,16 @@ support-image:
 	make support-vpn-client-image
 	make support-vpn-configurator-image
 	make support-ssh-tunnel-image
+	make support-squid-image
+
+support-squid-image:
+	@echo "Building ${REGISTRY}/infrastructure/squid:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/squid:${TAG} \
+		--tag ${REGISTRY}/infrastructure/squid:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/squid.Dockerfile \
+		--push .
 
 support-alpine-image:
 	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"

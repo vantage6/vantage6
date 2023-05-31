@@ -1,6 +1,314 @@
 Release notes
 =============
 
+3.9.0
+-----
+
+*25 May 2023*
+
+- **Feature**
+
+  - Data sources may now be whitelisted by IP address, so that an
+    algorithm may access those IP addresses to obtain data. This is achieved
+    via a Squid proxy server
+    (`Issue#162 <https://github.com/vantage6/vantage6/issues/162>`_,
+    `PR#626 <https://github.com/vantage6/vantage6/pull/626>`_).
+  - There is a new configuration option to let algorithms access gpu's
+    (`Issue#597 <https://github.com/vantage6/vantage6/issues/597>`_,
+    `PR#623 <https://github.com/vantage6/vantage6/pull/623>`_).
+  - Added option to get VPN IP addresses and ports of just the children or
+    just the parent of an algorithm that is running. These options may be used
+    to simplify VPN communication between algorithms running on different nodes.
+    In the AlgorithmClient, the functions ``client.vpn.get_child_addresses()``
+    and ``client.vpn.get_parent_address()`` have been added
+    (`PR#610 <https://github.com/vantage6/vantage6/pull/610>`_).
+  - New option to print the full stack trace of algorithm errors. Note that
+    this option may leak sensitive information if used carelessly. The option
+    may be activated by setting ``log_traceback=True`` in the algorithm wrapper
+    (`Issue#675 <https://github.com/vantage6/vantage6/issues/675>`_,
+    `PR#680 <https://github.com/vantage6/vantage6/pull/680>`_).
+  - Configuration options to control the log levels of individual dependencies.
+    This allows easier debugging when a certain dependency is causing issues
+    (`Issue#641 <https://github.com/vantage6/vantage6/issues/641>`_,
+    `PR#642 <https://github.com/vantage6/vantage6/pull/642>`_).
+
+- **Change**
+
+ - Better error message for ``vnode attach`` when no nodes are running
+   (`Issue#606 <https://github.com/vantage6/vantage6/issues/606>`_,
+   `PR#607 <https://github.com/vantage6/vantage6/pull/607>`_).
+ - The number of characters of the task input printed to the logs is now limited
+   to prevent flooding the logs with very long input
+   (`Issue#549 <https://github.com/vantage6/vantage6/issues/549>`_,
+   `PR#550 <https://github.com/vantage6/vantage6/pull/550>`_).
+ - Node proxy logs are now written to a separate log file. This makes the
+   main node log more readable
+   (`Issue#546 <https://github.com/vantage6/vantage6/issues/546>`_,
+   `PR#619 <https://github.com/vantage6/vantage6/pull/619>`_).
+ - Update code in which the version is updated
+   (`PR#586 <https://github.com/vantage6/vantage6/pull/586>`_).
+ - Finished standardizing docstrings - note that this was already partially
+   done in earlier releases
+   (`Issue#255 <https://github.com/vantage6/vantage6/issues/255>`_).
+ - Cleanup and moving of unused code and duplicate code
+   (`PR#571 <https://github.com/vantage6/vantage6/pull/571>`_).
+ - It is now supported to run the release pipeline from ``release/v<x.y.z>``
+   branches (`Issue#467 <https://github.com/vantage6/vantage6/issues/467>`_,
+   `PR#488 <https://github.com/vantage6/vantage6/pull/488>`_).
+ - Replaced deprecated ``set-output`` method in Github actions release pipeline
+   (`Issue#474 <https://github.com/vantage6/vantage6/issues/474>`_,
+   `PR#601 <https://github.com/vantage6/vantage6/pull/601>`_).
+
+- **Bugfix**
+
+   - Fixed checking for newer images (node, server, and algorithms). Previously,
+     the dates used were not sufficient to check if an image was newer. Now,
+     we are also checking the image digest
+     (`Issue#507 <https://github.com/vantage6/vantage6/issues/507>`_,
+     `PR#602 <https://github.com/vantage6/vantage6/pull/602>`_).
+   - Users are prevented from posting socket events that are meant for nodes -
+     note that nothing harmful could be done but it should not be possible
+     nevertheless (`Issue#615 <https://github.com/vantage6/vantage6/issues/615>`_,
+     `PR#616 <https://github.com/vantage6/vantage6/pull/616>`_).
+   - Fixed bug with detecting if database was a file as '/mnt/' was not properly
+     prepended to the file path
+     (`PR#691 <https://github.com/vantage6/vantage6/pull/691>`_).
+
+3.8.8
+-----
+
+*11 May 2023*
+
+- **Bugfix**
+
+   - Fixed a bug that prevented the node from shutting down properly
+     (`Issue#649 <https://github.com/vantage6/vantage6/issues/649>`_,
+     `PR#677 <https://github.com/vantage6/vantage6/pull/677>`_)
+   - Fixed a bug where the node did not await the VPN client to be ready
+     (`Issue#656 <https://github.com/vantage6/vantage6/issues/656>`_,
+     `PR#676 <https://github.com/vantage6/vantage6/pull/676>`_)
+   - Fixed database label logging
+     (`PR#674 <https://github.com/vantage6/vantage6/pull/664>`_)
+   - Fixed a bug were VPN messages to the originating node where not always
+     sent/received
+     (`Issue#671 <https://github.com/vantage6/vantage6/issues/671>`_,
+      `PR#673 <https://github.com/vantage6/vantage6/pull/673>`_)
+   - Fixed a bug where an exceptions is raised when the websocket
+     connection was lost and a ping was attempted to be send
+     (`Issue#672 <https://github.com/vantage6/vantage6/issues/672>`_,
+      `PR#674 <https://github.com/vantage6/vantage6/pull/674>`_)
+   - Fixed a formatting in CLI print statement
+     (`PR#661 <https://github.com/vantage6/vantage6/pull/661>`_)
+   - Fixed bug where '/mnt/' was erroneously prepended to non-file based
+     databases (`PR#658 <https://github.com/vantage6/vantage6/pull/658>`_)
+   - Fix in ``autowrapper`` for algorithms with CSV input
+     (`PR#655 <https://github.com/vantage6/vantage6/pull/655>`_)
+   - Fixed a bug in syncing tasks from the server to the node, when the node
+     lost socket connection and then reconnected
+     (`Issue#654 <https://github.com/vantage6/vantage6/issues/654>`_,
+     `PR#657 <https://github.com/vantage6/vantage6/pull/657>`_)
+   - Fix construction of database URI in ``vserver files``
+     (`Issue#650 <https://github.com/vantage6/vantage6/issues/650>`_,
+     `PR#659 <https://github.com/vantage6/vantage6/pull/659>`_)
+
+
+3.8.7
+-----
+
+*10 May 2023*
+
+- **Bugfix**
+
+   - Socket did connect before Docker was initialized, resulting in an exception
+     at startup (`PR#644 <https://github.com/vantage6/vantage6/pull/644>`_)
+
+3.8.6
+-----
+
+*9 May 2023*
+
+- **Bugfix**
+
+   - Fixed bug that resulted in broken algorithm networks when the socket
+     connection was lost (`PR#640 <https://github.com/vantage6/vantage6/pull/640>`_,
+     `Issue#637 <https://github.com/vantage6/vantage6/issues/637>`_)
+
+3.8.3 - 3.8.5
+-------------
+
+*25 April 2023 - 2 May 2023*
+
+- **Bugfix**
+
+ - Fixed bug where a missing container lead to a complete node crash
+   (`PR#628  <https://github.com/vantage6/vantage6/pull/628>`_,
+   `PR#629 <https://github.com/vantage6/vantage6/pull/629>`_,
+   `PR#632 <https://github.com/vantage6/vantage6/pull/632>`_).
+ - Restored algorithm wrapper namespace for backward compatibility (
+   `PR#618 <https://github.com/vantage6/vantage6/pull/618>`_)
+ - Prevent error with first socket ping on node startup by waiting a few
+   seconds (`PR#609 <https://github.com/vantage6/vantage6/pull/609>`_)
+
+3.8.2
+-----
+
+*22 march 2023*
+
+
+- **Feature**
+
+ - Location of the server configuration file in server shell script can now be
+   specified as an environment variable (`PR#604 <https://github.com/vantage6/vantage6/pull/604>`_)
+
+- **Change**
+
+ - Changed ping/pong mechanism over socket connection between server and nodes,
+   as it did not function properly in combination with RabbitMQ. Now, the node
+   pushes a ping and the server periodically checks if the node is still alive
+   (`PR#593 <https://github.com/vantage6/vantage6/pull/593>`_)
+
+- **Bugfix**
+
+ - For ``vnode files``, take the new formatting of the databases in the node
+   configuration file into account (`PR#600 <https://github.com/vantage6/vantage6/pull/600>`_)
+ - Fix bugs in new algorithm client where class attributes were improperly
+   referred to (`PR#596 <https://github.com/vantage6/vantage6/pull/596>`_)
+ - Fixed broken links in Discord notification
+   (`PR#591 <https://github.com/vantage6/vantage6/pull/591>`_)
+
+3.8.1
+-----
+
+*8 march 2023*
+
+- **Bugfix**
+
+ - In 3.8.0, starting RabbitMQ for horizontal scaling caused a server crash
+   due to a missing ``kombu`` dependency. This dependency was wrongly removed
+   in updating all dependencies for python 3.10 (
+   `PR#585 <https://github.com/vantage6/vantage6/pull/585>`_).
+
+3.8.0
+-----
+
+*8 march 2023*
+
+- **Security**
+
+ - Refresh tokens are no longer indefinitely valid (
+   `CVE#CVE-2023-23929 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-23929>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/48ebfca42359e9a6743e9598684585e2522cdce8>`_).
+ - It was possible to obtain usernames by brute forcing the login since v3.3.0.
+   This was due to a change where users got to see a message their account was
+   blocked after N failed login attempts. Now, users get an email instead if
+   their account is blocked (
+   `CVE#CVE-2022-39228 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-39228>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/ab4381c35d24add06f75d5a8a284321f7a340bd2>`_
+   ).
+ - Assigning existing users to a different organizations was possible. This may
+   lead to unintended access: if a user from organization A is accidentally
+   assigned to organization B, they will retain their permissions and
+   therefore might be able to access resources they should not be allowed to
+   access (`CVE#CVE-2023-22738 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-22738>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/798aca1de142a4eca175ef51112e2235642f4f24>`_).
+
+- **Feature**
+
+ - Python version upgrade to 3.10 and many dependencies are upgraded (
+   `PR#513 <https://github.com/vantage6/vantage6/pull/513>`_,
+   `Issue#251 <https://github.com/vantage6/vantage6/issues/251>`_).
+ - Added ``AlgorithmClient`` which will replace ``ContainerClient`` in v4.0.
+   For now, the new ``AlgorithmClient`` can be used by specifying
+   ``use_new_client=True`` in the algorithm wrapper (
+   `PR#510 <https://github.com/vantage6/vantage6/pull/510>`_,
+   `Issue#493 <https://github.com/vantage6/vantage6/issues/493>`_).
+ - It is now possible to request some of the node configuration settings, e.g.
+   which algorithms they allow to be run (
+   `PR#523 <https://github.com/vantage6/vantage6/pull/523>`_,
+   `Issue#12 <https://github.com/vantage6/vantage6/issues/12>`_).
+ - Added ``auto_wrapper`` which detects the data source types and reads the
+   data accordingly. This removes the need to rebuild every algorithm for
+   every data source type (
+   `PR#555 <https://github.com/vantage6/vantage6/pull/555>`_,
+   `Issue#553 <https://github.com/vantage6/vantage6/issues/553>`_).
+ - New endpoint added ``/vpn/algorithm/addresses`` for algorithms to obtain
+   addresses for containers that are part of the same computation task (
+   `PR#501 <https://github.com/vantage6/vantage6/pull/501>`_,
+   `Issue#499 <https://github.com/vantage6/vantage6/issues/499>`_).
+ - Added the option to allow only allow certain organization and/or users
+   to run tasks on your node. This can be done by using the ``policies``
+   configuration option. Note that the ``allowed_images`` option is now
+   nested under the ``policies`` option (
+   `Issue#335 <https://github.com/vantage6/vantage6/issues/335>`_,
+   `PR#556 <https://github.com/vantage6/vantage6/pull/556>`_)
+
+- **Change**
+
+ - Some changes have been made to the release pipeline (
+   `PR#519 <https://github.com/vantage6/vantage6/pull/519>`_,
+   `PR#488 <https://github.com/vantage6/vantage6/pull/488>`_,
+   `PR#500 <https://github.com/vantage6/vantage6/pull/500>`_,
+   `Issue#485 <https://github.com/vantage6/vantage6/issues/485>`_).
+ - Removed unused script to start the shell (
+   `PR#494 <https://github.com/vantage6/vantage6/pull/494>`_).
+
+- **Bugfix**
+
+ - Algorithm containers running on the same node could not communicate with
+   each other through the VPN. This has been fixed (
+   `PR#532 <https://github.com/vantage6/vantage6/pull/532>`_,
+   `Issue#336 <https://github.com/vantage6/vantage6/issues/336>`_).
+
+
+3.7.3
+-----
+
+*22 february 2023*
+
+- **Bugfix**
+
+ -  A database commit in 3.7.2 was done on the wrong variable, this has been
+    corrected (`PR#547 <https://github.com/vantage6/vantage6/pull/547>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Delete entries in the VPN port table after the algorithm has completed
+    (`PR#548 <https://github.com/vantage6/vantage6/pull/548>`_).
+ -  Limit number of characters of the task input printed to the logs
+    (`PR#550 <https://github.com/vantage6/vantage6/pull/550>`_).
+
+3.7.2
+-----
+
+*20 february 2023*
+
+- **Bugfix**
+
+ -  In 3.7.1, some sessions were closed, but not all. Now, sessions are also
+    terminated in the socketIO events
+    (`PR#543 <https://github.com/vantage6/vantage6/pull/543>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+ -  Latest versions of VPN images were not automatically downloaded by node
+    on VPN connection startup. This has been corrected (
+    `PR#533 <https://github.com/vantage6/vantage6/pull/542>`_).
+
+3.7.1
+-----
+
+*16 february 2023*
+
+- **Change**
+
+ -  Some changes to the release pipeline.
+
+- **Bugfix**
+
+ -  ``iptables`` dependency was missing in the VPN client container (
+    `PR#533 <https://github.com/vantage6/vantage6/pull/533>`_
+    `Issue#518 <https://github.com/vantage6/vantage6/issues/518>`_).
+ -  Fixed a bug that did not close Postgres DB sessions, resulting in a dead
+    server (`PR#540 <https://github.com/vantage6/vantage6/pull/540>`_,
+    `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
+
+
 3.7.0
 -----
 

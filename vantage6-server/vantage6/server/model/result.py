@@ -11,19 +11,48 @@ from vantage6.server.model.base import Base
 from vantage6.server.model import (
     Node,
     Collaboration,
-    Task,
     Organization
 )
+from vantage6.server.model.task import Task
 from vantage6.server.model.base import DatabaseSessionManager
 
 log_ = logging.getLogger(logger_name(__name__))
 
 
 class Result(Base):
-    """Result of a Task as executed by a Node.
+    """
+    Table that describes which results are available. A Result is the
+    description of a Task as executed by a Node.
 
     The result (and the input) is encrypted and can be only read by the
     intended receiver of the message.
+
+    Attributes
+    ----------
+    input : str
+        Input data of the task
+    task_id : int
+        Id of the task that was executed
+    organization_id : int
+        Id of the organization that executed the task
+    result : str
+        Result of the task
+    assigned_at : datetime
+        Time when the task was assigned to the node
+    started_at : datetime
+        Time when the task was started
+    finished_at : datetime
+        Time when the task was finished
+    status : str
+        Status of the task
+    log : str
+        Log of the task
+    task : Task
+        Task that was executed
+    organization : Organization
+        Organization that executed the task
+    ports : list[AlgorithmPort]
+        List of ports that are part of this result
     """
 
     # fields
@@ -43,7 +72,15 @@ class Result(Base):
     ports = relationship("AlgorithmPort", back_populates="result")
 
     @property
-    def node(self):
+    def node(self) -> Node:
+        """
+        Returns the node that is associated with this result.
+
+        Returns
+        -------
+        model.node.Node
+            The node that is associated with this result.
+        """
         session = DatabaseSessionManager.get_session()
         try:
             node = session.query(Node)\
@@ -55,6 +92,7 @@ class Result(Base):
                 .filter(self.organization_id == Node.organization_id)\
                 .filter(Task.collaboration_id == Node.collaboration_id)\
                 .one()
+            session.commit()
         # FIXME 2022-03-03 BvB: the following errors are not currently
         # forwarded to the user as request response. Make that happen.
         except NoResultFound:
@@ -69,10 +107,26 @@ class Result(Base):
         return node
 
     @hybrid_property
-    def complete(self):
+    def complete(self) -> bool:
+        """
+        Returns whether the algorithm run has completed or not.
+
+        Returns
+        -------
+        bool
+            True if the algorithm run has completed, False otherwise.
+        """
         return self.finished_at is not None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the result.
+
+        Returns
+        -------
+        str
+            String representation of the result.
+        """
         return (
             "<Result "
             f"{self.id}: '{self.task.name}', "

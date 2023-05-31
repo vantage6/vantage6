@@ -54,10 +54,9 @@ Overview of this documentation
 This documentation space consists of the following main sections:
 
 * **Introduction** |rarr| *You are here now*
-* :doc:`/install/index` |rarr| *How to install vantage6 servers,
-  nodes and clients*
-* :doc:`/use/index` |rarr| *How to use vantage6 servers,
-  nodes and clients*
+* :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
+* :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
+* :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
 * :doc:`/technical-documentation/index` (Under construction) |rarr|
   *Implementation details of the vantage6 platform*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
@@ -93,7 +92,7 @@ This is a - non-exhaustive - list of vantage6 resources.
 
 * `Discord <https://discord.gg/yAyFf6Y>`_  |rarr| *Chat with the vantage6
   community*
-* :ref:`Community meetings <Community Planning>` |rarr| *Bi-monthly developer
+* :ref:`Community meetings <community-meetings>` |rarr| *Bi-monthly developer
   community meeting*
 
 
@@ -112,12 +111,13 @@ Index
    :numbered: 3
    :maxdepth: 4
 
-   install/index
-   use/index
+   user/index
+   node/index
+   server/index
    algorithms/index
+   technical-documentation/index
    devops/index
    glossary
-..  technical-documentation/index
 
 .. toctree::
    :maxdepth: 2

@@ -14,7 +14,20 @@ from vantage6.common.globals import STRING_ENCODING
 init()
 
 
-def logger_name(special__name__):
+def logger_name(special__name__: str):
+    """
+    Return the name of the logger.
+
+    Parameters
+    ----------
+    special__name__: str
+        The __name__ variable of a module.
+
+    Returns
+    -------
+    str
+        The name of the logger.
+    """
     log_name = special__name__.split('.')[-1]
     if len(log_name) > 14:
         log_name = log_name[:11] + ".."
@@ -22,7 +35,22 @@ def logger_name(special__name__):
 
 
 class WhoAmI(typing.NamedTuple):
-    """ Data-class to store Authenticatable information in."""
+    """
+    Data-class to store Authenticatable information in.
+
+    Attributes
+    ----------
+    type_: str
+        The type of the authenticatable (user or node).
+    id_: int
+        The id of the authenticatable.
+    name: str
+        The name of the authenticatable.
+    organization_name: str
+        The name of the organization of the authenticatable.
+    organization_id: int
+        The id of the organization of the authenticatable.
+    """
     type_: str
     id_: int
     name: str
@@ -39,51 +67,126 @@ class WhoAmI(typing.NamedTuple):
 
 
 class Singleton(type):
+    """
+    Singleton metaclass. It allows us to create just a single instance of a
+    class to which it is the metaclass.
+    """
     _instances = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args, **kwargs) -> object:
+        """
+        When the class is called, return an instance of the class. If the
+        instance already exists, return that instance.
+        """
         if cls not in cls._instances:
             instance = super(Singleton, cls).__call__(*args, **kwargs)
             cls._instances[cls] = instance
         return cls._instances[cls]
 
 
-def bytes_to_base64s(bytes_):
-    """Return bytes as base64 encoded string."""
+def bytes_to_base64s(bytes_: bytes) -> str:
+    """
+    Convert bytes into base64 encoded string.
+
+    Parameters
+    ----------
+    bytes_: bytes
+        The bytes to convert.
+
+    Returns
+    -------
+    str
+        The base64 encoded string.
+    """
     return base64.b64encode(bytes_).decode(STRING_ENCODING)
 
 
-def base64s_to_bytes(bytes_string):
-    """Return base64 encoded string as bytes."""
+def base64s_to_bytes(bytes_string: str) -> bytes:
+    """
+    Convert base64 encoded string to bytes.
+
+    Parameters
+    ----------
+    bytes_string: str
+        The base64 encoded string.
+
+    Returns
+    -------
+    bytes
+        The encoded string converted to bytes.
+    """
     return base64.b64decode(bytes_string.encode(STRING_ENCODING))
 
 
 #
 # CLI prints
 #
-def echo(msg, level="info"):
+def echo(msg: str, level: str = "info") -> None:
+    """
+    Print a message to the CLI.
+
+    Parameters
+    ----------
+    msg: str
+        The message to print.
+    level: str
+        The level of the message. Can be one of: "error", "warn", "info",
+        "debug".
+    """
     type_ = {
         "error": f"[{Fore.RED}error{Style.RESET_ALL}]",
-        "warn": f"[{Fore.YELLOW}warn{Style.RESET_ALL}]",
-        "info": f"[{Fore.GREEN}info{Style.RESET_ALL}]",
+        "warn": f"[{Fore.YELLOW}warn {Style.RESET_ALL}]",
+        "info": f"[{Fore.GREEN}info {Style.RESET_ALL}]",
         "debug": f"[{Fore.CYAN}debug{Style.RESET_ALL}]",
     }.get(level)
     click.echo(f"{type_:16} - {msg}")
 
 
-def info(msg):
+def info(msg: str) -> None:
+    """
+    Print an info message to the CLI.
+
+    Parameters
+    ----------
+    msg: str
+        The message to print.
+    """
     echo(msg, "info")
 
 
-def warning(msg):
+def warning(msg: str) -> None:
+    """
+    Print a warning message to the CLI.
+
+    Parameters
+    ----------
+    msg: str
+        The message to print.
+    """
     echo(msg, "warn")
 
 
-def error(msg):
+def error(msg: str) -> None:
+    """
+    Print an error message to the CLI.
+
+    Parameters
+    ----------
+    msg: str
+        The message to print.
+    """
     echo(msg, "error")
 
 
-def debug(msg):
+def debug(msg: str) -> None:
+    """
+    Print a debug message to the CLI.
+
+    Parameters
+    ----------
+    msg: str
+        The message to print.
+    """
     echo(msg, "debug")
 
 
@@ -91,23 +194,69 @@ class ClickLogger:
     """"Logs output to the click interface."""
 
     @staticmethod
-    def info(msg):
+    def info(msg: str) -> None:
+        """
+        Print an info message to the click interface.
+
+        Parameters
+        ----------
+        msg: str
+            The message to print.
+        """
         info(msg)
 
     @staticmethod
-    def warn(msg):
+    def warn(msg: str) -> None:
+        """
+        Print a warning message to the click interface.
+
+        Parameters
+        ----------
+        msg: str
+            The message to print.
+        """
         warning(msg)
 
     @staticmethod
-    def error(msg):
+    def error(msg: str) -> None:
+        """
+        Print an error message to the click interface.
+
+        Parameters
+        ----------
+        msg: str
+            The message to print.
+        """
         error(msg)
 
     @staticmethod
-    def debug(msg):
+    def debug(msg: str) -> None:
+        """
+        Print a debug message to the click interface.
+
+        Parameters
+        ----------
+        msg: str
+            The message to print.
+        """
         debug(msg)
 
 
-def check_config_writeable(system_folders=False):
+def check_config_writeable(system_folders: bool = False) -> bool:
+    """
+    Check if the user has write permissions to create the configuration file.
+
+    Parameters
+    ----------
+    system_folders: bool
+        Whether to check the system folders or the user folders.
+
+    Returns
+    -------
+    bool
+        Whether the user has write permissions to create the configuration
+        file or not.
+    """
     dirs = appdirs.AppDirs()
     if system_folders:
         dirs_to_check = [
@@ -130,17 +279,9 @@ def check_config_writeable(system_folders=False):
     return w_ok
 
 
-def check_write_permissions(folder):
-    w_ok = True
-    if not os.access(folder, os.W_OK):
-        warning(f"No write permissions at '{folder}'")
-        w_ok = False
-
-    return w_ok
-
-
 def is_ip_address(ip: str) -> bool:
-    """Test if input IP address is a valid IP address
+    """
+    Test if input IP address is a valid IP address
 
     Parameters
     ----------
@@ -156,3 +297,54 @@ def is_ip_address(ip: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def get_database_config(databases: list, label: str) -> dict | None:
+    """Get database configuration from config file
+
+    Parameters
+    ----------
+    databases: list[dict]
+        List of database configurations
+    label: str
+        Label of database configuration to retrieve
+
+    Returns
+    -------
+    Dict | None
+        Database configuration, or None if not found
+
+    Notes
+    -----
+    The ``databases`` configuration can be in two formats. The new format
+    allows for the specification of the database type. The structure of the
+    new format is as follows:
+
+    1. Old format:
+    {
+        "database_label": "database_uri",
+        ...
+    }
+
+    2. New format:
+    [
+        {
+            "label": "database_label",
+            "uri": "database_uri",
+            "db_type": "database_type"
+        }
+    ]
+
+    """
+    # FIXME The old format should be removed in v4+.
+    old_format = isinstance(databases, dict)
+    if old_format:
+        return {
+            "label": label,
+            "uri": databases[label],
+            "type": None
+        }
+    else:
+        for database in databases:
+            if database["label"] == label:
+                return database

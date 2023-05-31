@@ -19,8 +19,8 @@ from vantage6.cli.node import (
     cli_node_attach,
     cli_node_create_private_key,
     cli_node_clean,
-    print_log_worker,
-    create_client_and_authenticate,
+    _print_log_worker,
+    _create_client_and_authenticate,
 )
 
 
@@ -101,7 +101,7 @@ class NodeCLITest(unittest.TestCase):
         ])
 
         # check that info message is produced
-        self.assertEqual(result.output[:6], "[info]")
+        self.assertEqual(result.output[:7], "[info ]")
 
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
@@ -118,7 +118,7 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(
             result.output[:60],
-            "[info]  - Replaced spaces from configuration name: some-name"
+            "[info ] - Replaced spaces from configuration name: some-name"
         )
 
     @patch("vantage6.cli.node.NodeContext")
@@ -178,7 +178,7 @@ class NodeCLITest(unittest.TestCase):
         result = runner.invoke(cli_node_files, [])
 
         # we check that no warnings have been produced
-        self.assertEqual(result.output[:6], "[info]")
+        self.assertEqual(result.output[:7], "[info ]")
 
         # check status code is OK
         self.assertEqual(result.exit_code, 0)
@@ -244,13 +244,13 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(
             result.output,
-            "[info]  - Stopped the vantage6-iknl-user Node.\n"
+            "[info ] - Stopped the vantage6-iknl-user Node.\n"
         )
 
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.time")
-    @patch("vantage6.cli.node.print_log_worker")
+    @patch("vantage6.cli.node._print_log_worker")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.check_docker_running", return_value=True)
     def test_attach(self, check_docker, containers, log_worker, time_):
@@ -267,8 +267,8 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(
             result.output,
-            "[info]  - Closing log file. Keyboard Interrupt.\n"
-            "[info]  - Note that your node is still running! Shut it down "
+            "[info ] - Closing log file. Keyboard Interrupt.\n"
+            "[info ] - Note that your node is still running! Shut it down "
             "with 'vnode stop'\n"
         )
         self.assertEqual(result.exit_code, 0)
@@ -292,7 +292,7 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.create_client_and_authenticate")
+    @patch("vantage6.cli.node._create_client_and_authenticate")
     @patch("vantage6.cli.node.NodeContext")
     def test_create_private_key(self, context, client):
         context.config_exists.return_value = True
@@ -309,7 +309,7 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.RSACryptor")
-    @patch("vantage6.cli.node.create_client_and_authenticate")
+    @patch("vantage6.cli.node._create_client_and_authenticate")
     @patch("vantage6.cli.node.NodeContext")
     def test_create_private_key_overwite(self, context, client, cryptor):
         context.config_exists.return_value = True
@@ -381,11 +381,11 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 1)
 
-    def test_print_log_worker(self):
+    def test__print_log_worker(self):
         stream = BytesIO("Hello!".encode(STRING_ENCODING))
         temp_stdout = StringIO()
         with contextlib.redirect_stdout(temp_stdout):
-            print_log_worker(stream)
+            _print_log_worker(stream)
         output = temp_stdout.getvalue().strip()
         self.assertEqual(output, "Hello!")
 
@@ -406,14 +406,14 @@ class NodeCLITest(unittest.TestCase):
 
         # should not trigger an exception
         try:
-            create_client_and_authenticate(ctx)
+            _create_client_and_authenticate(ctx)
         except Exception:
             self.fail("Raised an exception!")
 
         # client raises exception
         client.side_effect = Exception("Boom!")
         with self.assertRaises(Exception):
-            create_client_and_authenticate(ctx)
+            _create_client_and_authenticate(ctx)
 
     # TODO this function has been moved to the common package. A test should
     # be added there instead of here

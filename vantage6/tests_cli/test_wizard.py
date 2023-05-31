@@ -34,7 +34,7 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [True, False, True]
+            q.confirm.return_value.ask.side_effect = [True, False, True, True]
             dirs = MagicMock(data="/")
             config = node_configuration_questionaire(dirs, "iknl")
 
@@ -49,7 +49,7 @@ class WizardTest(unittest.TestCase):
             q.prompt.side_effect = self.prompts
             q.confirm.return_value.ask.side_effect = [True, True, True, True]
 
-            config = server_configuration_questionaire("", "vantage6")
+            config = server_configuration_questionaire("vantage6")
 
             keys = ["description", "ip", "port", "api_path", "uri",
                     "allow_drop_all", "jwt_secret_key", "logging",
