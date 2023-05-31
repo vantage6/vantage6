@@ -1,5 +1,5 @@
-CLI
-===
+Command line interface
+======================
 
 This page contains the API reference of the functions in the vantage
 package. This package contains the Command-Line Interface (CLI) of the

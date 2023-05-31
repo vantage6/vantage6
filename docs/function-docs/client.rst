@@ -1,4 +1,4 @@
-Client
+Python client
 ======
 
 This page contains the API reference of the functions in the vantage-client
