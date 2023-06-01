@@ -11,6 +11,7 @@ import questionary as q
 import subprocess
 import shutil
 import itertools
+import traceback
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
@@ -31,12 +32,13 @@ from vantage6.cli.server import (
     vserver_start,
     vserver_stop,
     vserver_remove,
-    select_server,
     get_server_context
 )
 from vantage6.cli.context import NodeContext
 
-from vantage6.cli.node import vnode_stop, vnode_remove, select_node
+from vantage6.cli.node import vnode_stop
+
+from vantage6.cli.utils import remove_file
 
 
 def generate_apikey() -> str:
@@ -274,6 +276,7 @@ def demo_network(num_configs: int | list[int], server_url: str,
     list
         List containing node, server import and server configurations.
     """
+    # if not ServerContext.config_exists(server_name):
     node_configs = generate_node_configs(num_configs, server_url, server_port)
     server_import_config = create_vserver_import_config(node_configs,
                                                         server_name)
@@ -290,7 +293,6 @@ def cli_dev() -> None:
 @cli_dev.command(name="create-demo-network")
 @click.option('--num-configs', 'num_configs', type=int, default=3,
               help='generate N node-configuration files')
-# @click_insert_context
 def create_demo_network(num_configs: int,
                         server_url: str = 'http://host.docker.internal',
                         server_port: int = 5000,
@@ -334,15 +336,14 @@ def create_demo_network(num_configs: int,
         Dictionairy containing the locations of the node configurations,
         server import configuration and server configuration (YAML).
     """
-    try:
+    if not ServerContext.config_exists(server_name):
         demo = demo_network(num_configs, server_url, server_port, server_name)
         info(f"Created {Fore.GREEN}{demo[0]} node configuration(s), \
              attaching them to {Fore.GREEN}{server_name}.")
-    except FileExistsError as e:
+    else:
         warning(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} \
                 already exists!")
         warning(' ... Configuration already exists:')
-        warning(f"     {e}")
         new_server_name = q.text("Please supply a new unique server \
                                   name:").ask()
         if new_server_name.count(" ") > 0:
@@ -357,8 +358,7 @@ def create_demo_network(num_configs: int,
     node_config = demo[0]
     server_import_config = demo[1]
     server_config = demo[2]
-    ctx = get_server_context(name=server_name, environment=S_ENV,
-                             system_folders=True)
+    ctx = get_server_context(server_name, S_ENV, True)
     vserver_import(ctx, server_import_config, drop_all, image, mount_src, keep)
     return {
         "node_configs": node_config,
@@ -432,50 +432,62 @@ def stop_demo_network(name: str, environment: str = S_ENV,
     all_servers : bool, fixed
         Wether to stop all servers or not, by default False
     """
-    vserver_stop(name=name, environment=environment,
-                 system_folders=system_folders, all_servers=all_servers)
-    configs, f1 = NodeContext.available_configurations(system_folders=False)
+    vserver_stop(name, environment, system_folders, all_servers)
+    # TODO: This will need to be dynamic... what happens if a config exists in
+    # system?
+    configs, f1 = NodeContext.available_configurations(False)
     handle_ = 'demo_'
     node_names = [config.name for config in configs if handle_ in config.name]
     for name in node_names:
-        vnode_stop(name, system_folders=False, all_nodes=False,
-                   force=False)
+        vnode_stop(name, system_folders=False, all_nodes=False, force=False)
 
 
-def inner_remove_network(name: str, system_folders: bool) -> None:
+def inner_remove_network(server_name: str, system_folders: bool) -> None:
+    """This function does the bulk of removing the demo network. Removes all
+    folders and anything within that was spawned by the `create_demo_network`.
+
+    Parameters
+    ----------
+    server_name : str
+        Name of the spawned server executed from `vdev start-demo-network`
+    system_folders : bool
+        Wether to use system folders or not.
+    """
     handle_ = 'demo_'
-    server_configs, server_f1 = ServerContext.available_configurations(
-        system_folders=system_folders
-    )
-    n = tuple(config.name for config in server_configs if config.name == name)
-    if len(n):
-        (server_name,) = n
-        ctx = get_server_context(server_name, S_ENV, system_folders)
-        for handler in itertools.chain(ctx.log.handlers,
-                                       ctx.log.root.handlers):
-            handler.close()
-        vserver_remove(ctx, server_name, S_ENV, system_folders,
-                       'configuration')
-        server_path = Path(f"{ctx.config_file.parent}\\{server_name}")
-        print(server_path)
-        if server_path.is_dir():
-            shutil.rmtree(server_path)
-    else:
-        warning(f"There is no such configuration with system_folders \
-                == {system_folders}")
-    configs, f1 = NodeContext.available_configurations(
-        system_folders=system_folders
-    )
-    node_names = [config.name for config in configs if handle_ in config.name]
-    print(node_names)
     if system_folders:
         target = "--system"
     else:
         target = "--user"
+    server_configs = ServerContext.instance_folders("server", server_name,
+                                                    system_folders)
+    if ServerContext.config_exists(server_name, S_ENV, system_folders):
+        server_ctx = get_server_context(server_name, S_ENV, system_folders)
+        # first we want to shut all the log files and root handlers...
+        for handler in itertools.chain(server_ctx.log.handlers,
+                                       server_ctx.log.root.handlers):
+            handler.close()
+        # now run vserver remove
+        vserver_remove(server_ctx, server_name, S_ENV, system_folders)
+    else:
+        info(f"Skipping this configuration {server_name} in the {target[2:]} \
+             folders")
+        traceback.print_exc()
+    if 'demo' in server_configs:
+        info("Deleting demo import config file")
+        import_config_to_del = f"{server_configs['demo']}\\{server_name}.yaml"
+        remove_file(import_config_to_del, 'import_configuration')
+    # also want to remove the folder
+    server_folder = server_configs['data']
+    if server_folder.is_dir():
+        shutil.rmtree(server_folder)
+    # nodes
+    configs, f1 = NodeContext.available_configurations(
+        system_folders=system_folders
+        )
+    node_names = [config.name for config in configs if handle_ in config.name]
     if len(node_names):
         for name in node_names:
-            node_ctx = NodeContext(name, environment=N_ENV,
-                                   system_folders=system_folders)
+            node_ctx = NodeContext(name, N_ENV, system_folders)
             for handler in itertools.chain(node_ctx.log.handlers,
                                            node_ctx.log.root.handlers):
                 handler.close()
@@ -488,10 +500,20 @@ def inner_remove_network(name: str, system_folders: bool) -> None:
 @click.option("-n", "--name", default="default_server",
               help="Configuration name")
 def remove_demo_network(name: str) -> None:
+    """Wrapper function for`inner_remove_network`, removes demo network. If no
+    name is provided, the default option is chosen which is `default_server`.
+    This function tries to remove the demo_network in in `system` as well
+    as `user`system_folders.
+
+    Parameters
+    ----------
+    name : str
+        Name of the spawned server executed from `vdev start-demo-network`,
+        default `default_server`.
+    """
     try:
-        inner_remove_network(name, True)
+        inner_remove_network(server_name=name, system_folders=True)
     except Exception as e:
         print(e)
     else:
-        inner_remove_network(name, False)
-    return None
+        inner_remove_network(server_name=name, system_folders=False)

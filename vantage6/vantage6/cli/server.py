@@ -4,6 +4,7 @@ import docker
 import os
 import time
 import subprocess
+import itertools
 
 from typing import Iterable
 from threading import Thread
@@ -985,27 +986,32 @@ def select_server(name: str, environment: str, system_folders: bool) \
 
 
 def vserver_remove(ctx: ServerContext, name: str, environment: str,
-                   system_folders: bool, file_type: str) -> None:
+                   system_folders: bool) -> None:
     client = docker.from_env()
     check_docker_running()
-
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
-
+    # first stop server
     running_server_names = [server.name for server in running_servers]
-
+    if name in running_server_names:
+        vserver_stop(name, environment, system_folders, False)
+    # now check containers
+    info("Deleting Docker containers")
+    containers = client.containers.list()
+    for container in containers:
+        if container.name.startswith(ctx.docker_container_name):
+            info(f"Deleting docker container {container.name}")
+            container.remove()
     if not q.confirm(
         "This server will be deleted permanently including its configuration. "
         "Are you sure?", default=False
     ).ask():
         info("Server will not be deleted")
         exit(0)
-
-    if name in running_server_names:
-        _stop_server_containers(client, name, environment, system_folders)
-    folder = ctx.instance_folders('server', name, system_folders)['data']
-    info("Removing files...")
-    try:
-        remove_file(file=f"{folder}.yaml", file_type=file_type)
-    except Exception as e:
-        info(e)
+    # now remove the folders...
+    info(f"Removing configuration file {ctx.config_file}")
+    remove_file(ctx.config_file, 'configuration')
+    info(f"Removing log file {ctx.log_file}")
+    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+        handler.close()
+    remove_file(ctx.log_file, 'log')
