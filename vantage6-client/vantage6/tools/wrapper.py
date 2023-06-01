@@ -24,6 +24,7 @@ The ``multi_wrapper`` is used when multiple databases are connected to a single
 algorithm. This wrapper is separated from the other wrappers because it is not
 compatible with the ``smart_wrapper``.
 """
+from __future__ import annotations
 import os
 import pickle
 import io
@@ -45,6 +46,35 @@ _MAX_FORMAT_STRING_LENGTH = 10
 
 _SPARQL_RETURN_FORMAT = CSV
 
+
+def select_wrapper(database_type: str) -> WrapperBase:
+    """
+    Select the correct wrapper based on the database type.
+
+    Parameters
+    ----------
+    database_type : str
+        The database type to select the wrapper for.
+
+    Returns
+    -------
+    derivative of WrapperBase
+        The wrapper for the specified database type.
+    """
+    if database_type == "csv":
+        return CSVWrapper()
+    elif database_type == "excel":
+        return ExcelWrapper()
+    elif database_type == "sparql":
+        return SparqlDockerWrapper()
+    elif database_type == "parquet":
+        return ParquetWrapper()
+    elif database_type == "sql":
+        return SQLWrapper()
+    elif database_type == "omop":
+        return OMOPWrapper()
+    else:
+        return
 
 def auto_wrapper(module: str, load_data: bool = True,
                  use_new_client: bool = False,
@@ -84,21 +114,10 @@ def auto_wrapper(module: str, load_data: bool = True,
 
     # Create the correct wrapper based on the database type, note that the
     # multi database wrapper is not available.
-    if database_type == "csv":
-        wrapper = CSVWrapper()
-    elif database_type == "excel":
-        wrapper = ExcelWrapper()
-    elif database_type == "sparql":
-        wrapper = SparqlDockerWrapper()
-    elif database_type == "parquet":
-        wrapper = ParquetWrapper()
-    elif database_type == "sql":
-        wrapper = SQLWrapper()
-    elif database_type == "omop":
-        wrapper = OMOPWrapper()
-    else:
+    wrapper = select_wrapper(database_type)
+    if wrapper is None:
         error(f"Unknown database type: {database_type}")
-        return
+        return  # no wrapper
 
     # Execute the algorithm with the correct data wrapper
     wrapper.wrap_algorithm(module, load_data, use_new_client, log_traceback)

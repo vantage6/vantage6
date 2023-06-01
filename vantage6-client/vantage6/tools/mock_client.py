@@ -3,6 +3,8 @@ import pickle
 
 from importlib import import_module
 
+from vantage6.tools.wrapper import select_wrapper
+
 
 class ClientMockProtocol:
     """
@@ -157,24 +159,69 @@ class MockAlgorithmClient:
 
     Parameters
     ----------
-    datasets : list[str]
-        A list of paths to the datasets that are used in the algorithm.
+    datasets : list[dict]
+        A list of dictionaries that contain the datasets that are used in the
+        mocked algorithm. The dictionaries should contain the following:
+        {
+            "database": str,
+            "type": str,
+            "input_data": dict
+        }
+        where database is the path/URI to the database, type is the database
+        type (as listed in node configuration) and input_data contains
+        the input data that is normally passed to the algorithm wrapper.
     module : str
         The name of the module that contains the algorithm.
+    image : str, optional
+        The name of the algorith image, by default None
+    database : str, optional
+        The name of the database, by default None
+    host_node_id : int, optional
+        The id of the node that is used to run the algorithm, by default None
+    collaboration_id : int, optional
+        The id of the collaboration that is used to run the algorithm, by
+        default None
+    organization_id : int, optional
+        The id of the organization that is used to run the algorithm, by
+        default None
     """
     # TODO not only read CSVs but also data types
-    def __init__(self, datasets: list[str], module: str) -> None:
+    def __init__(
+        self, datasets: list[dict], module: str, image: str = None,
+        database: str = None, host_node_id: int = None,
+        collaboration_id: int = None, organization_id: int = None
+    ) -> None:
+        # use autowrapper to read in the databases
+        print(datasets)
+        # print current working directory
+        import os
+        print(os.getcwd())
+        print()
         self.n = len(datasets)
         self.datasets = []
         for dataset in datasets:
+            wrapper = select_wrapper(dataset["type"])
             self.datasets.append(
-                pandas.read_csv(dataset)
+                wrapper.load_data(
+                    dataset["database"],
+                    dataset["input_data"] if "input_data" in dataset else {}
+                )
             )
 
         self.lib = import_module(module)
         self.tasks = []
 
+        self.image = image
+        self.database = database
+        self.host_node_id = host_node_id
+        self.collaboration_id = collaboration_id
+        self.organization_id = organization_id
+
         self.task = self.Task(self)
+        self.result = self.Result(self)
+        self.organization = self.Organization(self)
+        self.collaboration = self.Collaboration(self)
+        self.node = self.Node(self)
 
     class SubClient:
         """
@@ -237,7 +284,7 @@ class MockAlgorithmClient:
             for org_id in organization_ids:
                 data = self.parent.datasets[org_id]
                 if master:
-                    result = method(self, data, *args, **kwargs)
+                    result = method(self.parent, data, *args, **kwargs)
                 else:
                     result = method(data, *args, **kwargs)
 
@@ -250,7 +297,8 @@ class MockAlgorithmClient:
             task = {
                 "id": id_,
                 "results": results,
-                "complete": "true"
+                "complete": "true",  # TODO remove in v4+.
+                "status": "completed",
             }
             self.parent.tasks.append(task)
             return task
@@ -275,7 +323,7 @@ class MockAlgorithmClient:
         """
         Result subclient for the MockAlgorithmClient
         """
-        def get_by_task_id(self, task_id: int) -> list[dict]:
+        def get(self, task_id: int) -> list[dict]:
             """
             Return the results of the task with the given id.
 
@@ -302,6 +350,26 @@ class MockAlgorithmClient:
         """
         Organization subclient for the MockAlgorithmClient
         """
+        def get(self, id_) -> dict:
+            """
+            Get mocked organization by ID
+
+            Parameters
+            ----------
+            id_ : int
+                The id of the organization.
+
+            Returns
+            -------
+            dict
+                A mocked organization.
+            """
+            return {
+                "id": id_,
+                "name": f"mock-{id_}",
+                "domain": f"mock-{id_}.org",
+            }
+
         def list(self) -> list[dict]:
             """
             Get mocked organizations in the collaboration.
@@ -319,3 +387,130 @@ class MockAlgorithmClient:
                     "domain": f"mock-{i}.org",
                 })
             return organizations
+
+    class Collaboration(SubClient):
+        """
+        Collaboration subclient for the MockAlgorithmClient
+        """
+        def get(self, is_encrypted: bool = True) -> dict:
+            """
+            Get mocked collaboration
+
+            Parameters
+            ----------
+            is_encrypted : bool
+                Whether the collaboration is encrypted or not. Default True.
+
+            Returns
+            -------
+            dict
+                A mocked collaboration.
+            """
+            return {
+                "id": (
+                    self.parent.collaboration_id
+                    if self.parent.collaboration_id else 1,
+                ),
+                "name": "mock-collaboration",
+                "encrypted": is_encrypted,
+            }
+
+    class Node(SubClient):
+        """
+        Node subclient for the MockAlgorithmClient
+        """
+        def get(self, is_online: bool = True) -> dict:
+            """
+            Get mocked node
+
+            Parameters
+            ----------
+            is_online : bool
+                Whether the node is online or not. Default True.
+
+            Returns
+            -------
+            dict
+                A mocked node.
+            """
+            return {
+                "id": (self.parent.host_node_id
+                       if self.parent.host_node_id else 1),
+                "name": "mock-node",
+                "status": "online" if is_online else "offline",
+            }
+
+    # TODO implement the get_addresses method before using this part
+    # class VPN(SubClient):
+    #     """
+    #     VPN subclient for the MockAlgorithmClient
+    #     """
+    #     def get_addresses(
+    #         self, only_children: bool = False, only_parent: bool = False,
+    #         include_children: bool = False, include_parent: bool = False,
+    #         label: str = None
+    #     ) -> list[dict] | dict:
+    #         """
+    #         Mock VPN IP addresses and ports of other algorithm containers in
+    #         the current task.
+
+    #         Parameters
+    #         ----------
+    #         only_children : bool, optional
+    #             Only return the IP addresses of the children of the current
+    #             task, by default False. Incompatible with only_parent.
+    #         only_parent : bool, optional
+    #             Only return the IP address of the parent of the current task,
+    #             by default False. Incompatible with only_children.
+    #         include_children : bool, optional
+    #             Include the IP addresses of the children of the current task,
+    #             by default False. Incompatible with only_parent, superseded
+    #             by only_children.
+    #         include_parent : bool, optional
+    #             Include the IP address of the parent of the current task, by
+    #             default False. Incompatible with only_children, superseded by
+    #             only_parent.
+    #         label : str, optional
+    #             The label of the port you are interested in, which is set
+    #             in the algorithm Dockerfile. If this parameter is set, only
+    #             the ports with this label will be returned.
+
+    #         Returns
+    #         -------
+    #         list[dict] | dict
+    #             List of dictionaries containing the IP address and port number,
+    #             and other information to identify the containers. If obtaining
+    #             the VPN addresses from the server fails, a dictionary with a
+    #             'message' key is returned instead.
+    #         """
+    #         pass
+
+    #     def get_parent_address(self) -> dict:
+    #         """
+    #         Get the IP address and port number of the parent of the current
+    #         task.
+
+    #         Returns
+    #         -------
+    #         dict
+    #             Dictionary containing the IP address and port number, and other
+    #             information to identify the containers. If obtaining the VPN
+    #             addresses from the server fails, a dictionary with a 'message'
+    #             key is returned instead.
+    #         """
+    #         return self.get_addresses(only_parent=True)
+
+    #     def get_child_addresses(self) -> list[dict]:
+    #         """
+    #         Get the IP addresses and port numbers of the children of the
+    #         current task.
+
+    #         Returns
+    #         -------
+    #         List[dict]
+    #             List of dictionaries containing the IP address and port number,
+    #             and other information to identify the containers. If obtaining
+    #             the VPN addresses from the server fails, a dictionary with a
+    #             'message' key is returned instead.
+    #         """
+    #         return self.get_addresses(only_children=True)
