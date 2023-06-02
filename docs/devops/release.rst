@@ -15,13 +15,17 @@ Version format
 **Major** releases update the first digit, e.g. ``1.2.3`` is updated to
 ``2.0.0``. This is used for releasing breaking changes: server and nodes of
 version 2.x.y are unlikely to be able to run an algorithm written for version
-1.x.y.
+1.x.y. Also, the responses of the central server API may change in a way that
+changes the response to client requests.
 
 **Minor** releases update the second digit, e.g. ``1.2.3`` to ``1.3.0``. This is
 used for releasing new features (e.g. a new endpoint), enhancements and other
-changes that are compatible with all other components. Algorithms written for version
-``1.x.y`` should run on any server of version ``1.z.a``. However, nodes and
-servers of different minor versions may not be able to communicate properly.
+changes that are compatible with all other components. Algorithms written for
+version``1.x.y`` should run on any server of version ``1.z.a``. Also, the
+central server API should be compatible with other minor versions - the same
+fields present before will be present in the new version, although new fields
+may be added. However, nodes and servers of different minor versions may not be
+able to communicate properly.
 
 **Patch** releases update the third digit, e.g. ``1.2.3`` to ``1.2.4``. This is
 used for bugfixes and other minor changes. Different patch releases should be
