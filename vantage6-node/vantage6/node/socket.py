@@ -93,7 +93,7 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.warning("Your token is no longer valid... reconnecting")
         self.node_worker_ref.socketIO.disconnect()
         self.log.debug("Old socket connection terminated")
-        self.node_worker_ref.server_io.refresh_token()
+        self.node_worker_ref.client.refresh_token()
         self.log.debug("Token refreshed")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
@@ -119,11 +119,11 @@ class NodeTaskNamespace(ClientNamespace):
                     'result_id': killed.result_id,
                     'task_id': killed.task_id,
                     'collaboration_id':
-                        self.node_worker_ref.server_io.collaboration_id,
-                    'node_id': self.node_worker_ref.server_io.whoami.id_,
+                        self.node_worker_ref.client.collaboration_id,
+                    'node_id': self.node_worker_ref.client.whoami.id_,
                     'status': TaskStatus.KILLED,
                     'organization_id':
-                        self.node_worker_ref.server_io.whoami.organization_id,
+                        self.node_worker_ref.client.whoami.organization_id,
                     'parent_id': killed.parent_id,
                 },
                 namespace='/tasks'
