@@ -8,7 +8,6 @@ instance(s). The following commands are available:
     * vdev ---
 """
 import pandas as pd
-import uuid
 import click
 import questionary as q
 import subprocess
@@ -457,7 +456,7 @@ def inner_remove_network(server_name: str, system_folders: bool) -> None:
     else:
         info(f"Skipping this configuration {server_name} in the {target[2:]} \
              folders")
-        traceback.print_exc()
+        # traceback.print_exc()
     if 'demo' in server_configs:
         info("Deleting demo import config file")
         import_config_to_del = f"{server_configs['demo']}\\{server_name}.yaml"

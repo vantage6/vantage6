@@ -4,6 +4,7 @@ import click
 import appdirs
 import ipaddress
 import typing
+import uuid
 
 from colorama import init, Fore, Style
 
