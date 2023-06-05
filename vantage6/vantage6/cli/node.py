@@ -355,14 +355,24 @@ def cli_node_start(name: str, config: str, environment: str,
         # if no custom image is specified, find the server version and use
         # the latest images from that minor version
         client = _create_client(ctx)
+        major_minor = None
         try:
             version = client.util.get_server_version()['version']
+            major_minor = '.'.join(version.split('.')[:2])
             image = (f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE_WO_TAG}"
-                     f":{version}")
+                     f":{major_minor}")
         except Exception:
             warning("Could not determine server version. Using default node "
                     "image")
             pass  # simply use the default image
+
+        if major_minor and not __version__.startswith(major_minor):
+            warning(
+                "Version mismatch between CLI and server/node. CLI is running "
+                f"on version {__version__}, while node and server are on "
+                f"version {major_minor}. This might cause unexpected issues; "
+                f"changing to {major_minor}.<latest> is recommended."
+            )
 
         if not image:
             image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
@@ -1053,6 +1063,10 @@ def _create_client(ctx: NodeContext) -> UserClient:
         vantage6 client
     """
     host = ctx.config['server_url']
+    # if the server is run locally, we need to use localhost here instead of
+    # the host address of docker
+    if host in ['http://host.docker.internal', 'http://172.17.0.1']:
+        host = 'http://localhost'
     port = ctx.config['port']
     api_path = ctx.config['api_path']
     info(f"Connecting to server at '{host}:{port}{api_path}'")
