@@ -60,7 +60,7 @@ setup(
         'console_scripts': [
             'vnode=vantage6.cli.node:cli_node',
             'vserver=vantage6.cli.server:cli_server',
-            'vdev=vantage6.cli.dummy_collaboration:cli_dev'
+            'vdev=vantage6.cli.dev:cli_dev'
         ]
     }
 )
