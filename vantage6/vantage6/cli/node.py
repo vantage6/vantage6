@@ -357,7 +357,10 @@ def cli_node_start(name: str, config: str, environment: str,
         client = _create_client(ctx)
         major_minor = None
         try:
-            version = client.util.get_server_version()['version']
+            # try to get server version, skip if can't get a connection
+            version = client.util.get_server_version(
+                attempts_on_timeout=3
+            )['version']
             major_minor = '.'.join(version.split('.')[:2])
             image = (f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE_WO_TAG}"
                      f":{major_minor}")
