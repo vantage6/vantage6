@@ -167,7 +167,7 @@ class Rules(ServicesResources):
 
         # paginate results
         try:
-            page = Pagination.from_query(q, request, paginate=paginate)
+            page = Pagination.from_query(q, request)
         except ValueError as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 

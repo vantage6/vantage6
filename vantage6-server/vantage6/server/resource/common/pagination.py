@@ -169,8 +169,6 @@ class Pagination:
             Query to paginate
         request : flask.Request
             Request object
-        paginate : bool
-            Whether to paginate the query or not, default True
 
         Returns
         -------
