@@ -11,7 +11,8 @@ from vantage6.server import db
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
-    PermissionManager
+    PermissionManager,
+    RuleCollection
 )
 from vantage6.server.resource import (
     with_user,
@@ -72,20 +73,27 @@ def permissions(permissions: PermissionManager) -> None:
     add = permissions.appender(module_name)
     add(S.GLOBAL, P.VIEW,
         description='View any user')
+    add(S.COLLABORATION, P.VIEW,
+        description='View users from your collaboration')
     add(S.ORGANIZATION, P.VIEW,
         description='View users from your organization')
     add(S.GLOBAL, P.CREATE,
         description='Create a new user for any organization')
+    add(S.COLLABORATION, P.CREATE,
+        description='Create a new user for organizations in your '
+                    'collaborations')
     add(S.ORGANIZATION, P.CREATE,
         description='Create a new user for your organization')
-    add(S.GLOBAL, P.EDIT,
-        description='Edit any user')
+    add(S.GLOBAL, P.EDIT, description='Edit any user')
+    add(S.COLLABORATION, P.EDIT,
+        description='Edit any user in your collaborations')
     add(S.ORGANIZATION, P.EDIT,
         description='Edit users from your organization')
     add(S.OWN, P.EDIT,
         description='Edit your own info')
-    add(S.GLOBAL, P.DELETE,
-        description='Delete any user')
+    add(S.GLOBAL, P.DELETE, description='Delete any user')
+    add(S.COLLABORATION, P.DELETE,
+        description='Delete any user in your collaborations')
     add(S.ORGANIZATION, P.DELETE,
         description='Delete users from your organization')
     add(S.OWN, P.DELETE,
@@ -102,7 +110,7 @@ class UserBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Users(UserBase):
@@ -119,6 +127,8 @@ class Users(UserBase):
             Description|\n
             |--|--|--|--|--|--|\n
             |User|Global|View|❌|❌|View any user details|\n
+            |User|Collaboration|View|❌|❌|View user details from your
+            collaborations|\n
             |User|Organization|View|❌|❌|View users from your organization|\n
 
             Accessible to users.
@@ -222,6 +232,12 @@ class Users(UserBase):
             if param in args:
                 q = q.filter(getattr(db.User, param).like(args[param]))
         if 'organization_id' in args:
+            if not self.r.can_by_org(P.VIEW, args['organization_id'],
+                                     g.user.organization):
+                return {
+                    'msg': 'You lack the permission view users from the '
+                    f'organization with id {args["organization_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.User.organization_id == args['organization_id'])
         if 'last_seen_till' in args:
             q = q.filter(db.User.last_seen <= args['last_seen_till'])
@@ -236,9 +252,18 @@ class Users(UserBase):
             q = q.join(db.UserPermission).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
 
+        # TODO should we create an option to see all users of a collaboration?
+        # this could be achieved with the logic below for r.v_col()
+
         # check permissions and apply filter if neccessary
         if not self.r.v_glo.can():
-            if self.r.v_org.can():
+            if self.r.v_col.can():
+                q = q.filter(db.User.organization_id.in_(
+                    [org.id
+                     for col in g.user.organization.collaborations
+                     for org in col.organizations]
+                ))
+            elif self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
             else:
                 return {'msg': 'You lack the permission to do that!'}, \
@@ -429,6 +454,8 @@ class User(UserBase):
             Description|\n
             |-- |--|--|--|--|--|\n
             |User|Global|View|❌|❌|View any user details|\n
+            |User|Collaboration|View|❌|❌|View users from your
+            collaborations|\n
             |User|Organization|View|❌|❌|View users from your
             organization|\n
             |User|Organization|Own|❌|❌|View details about your own user|\n
@@ -461,17 +488,12 @@ class User(UserBase):
             return {"msg": f"user id={id} is not found"}, HTTPStatus.NOT_FOUND
 
         same_user = g.user.id == user.id
-        same_org = g.user.organization.id == user.organization_id
 
-        # allow user to be returned if:
-        # 1. auth can see all users
-        # 2. auth can see organization users and user is within organization
-        # 3. auth is requesting own user details
-        if (
-            self.r.v_glo.can() or
-            (self.r.v_org.can() and same_org) or
-            same_user
-        ):
+        # allow user to be returned if authenticated user can view users from
+        # that organization or if the user is the same as the authenticated
+        # user.
+        if (same_user or self.r.can_by_org(P.VIEW, user.organization_id,
+                                           g.user.organization)):
             return user_schema.dump(user, many=False).data, HTTPStatus.OK
         else:
             return {'msg': 'You lack the permission to do that!'}, \
@@ -489,7 +511,8 @@ class User(UserBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |User|Global|Edit|❌|❌|Edit any user|\n
-          |User|Organization|Edit|❌|❌|Edit any user in your organization|\n
+          |User|Collaboration|Edit|❌|❌|Edit users in your collaborations|\n
+          |User|Organization|Edit|❌|❌|Edit users in your organization|\n
           |User|Own|Edit|❌|❌|Edit your own user account|\n
 
           Accessible to users.
@@ -552,12 +575,11 @@ class User(UserBase):
             return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.e_glo.can():
-            if not (self.r.e_org.can() and user.organization ==
-                    g.user.organization):
-                if not (self.r.e_own.can() and user == g.user):
-                    return {'msg': 'You lack the permission to do that!'}, \
-                        HTTPStatus.UNAUTHORIZED
+        if not (self.r.e_own.can() and user == g.user) and \
+                not self.r.can_by_org(P.EDIT, user.organization_id,
+                                      g.user.organization):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         parser = reqparse.RequestParser()
         parser.add_argument("username", type=str, required=False)
@@ -709,6 +731,8 @@ class User(UserBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |User|Global|Delete|❌|❌|Delete any user|\n
+          |User|Collaboration|Delete|❌|❌|Delete users from your
+          collaboration|\n
           |User|Organization|Delete|❌|❌|Delete users from your
           organization|\n
           |User|Own|Delete|❌|❌|Delete your own account|\n
@@ -741,12 +765,11 @@ class User(UserBase):
             return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.d_glo.can():
-            if not (self.r.d_org.can() and user.organization ==
-                    g.user.organization):
-                if not (self.r.d_own.can() and user == g.user):
-                    return {'msg': 'You lack the permission to do that!'}, \
-                        HTTPStatus.UNAUTHORIZED
+        if not (self.r.d_own.can() and user == g.user) and \
+                not self.r.can_by_org(P.DELETE, user.organization_id,
+                                      g.user.organization):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         user.delete()
         log.info(f"user id={id} is removed from the database")

@@ -9,6 +9,7 @@ from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.server.model.organization import Organization
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
@@ -17,7 +18,40 @@ log = logging.getLogger(module_name)
 RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
 
 
-class RuleCollection:
+# TODO document this function in the API reference
+def get_scopes_with_level(minimal_scope: Scope) -> list[Scope]:
+    """
+    Get scopes that are at least equal to a certain scope
+
+    Parameters
+    ----------
+    minimal_scope: Scope
+        Minimal scope
+
+    Returns
+    -------
+    list[Scope]
+        List of scopes that are at least equal to the minimal scope
+
+    Raises
+    ------
+    ValueError
+        If the minimal scope is not known
+    """
+    if minimal_scope == Scope.ORGANIZATION:
+        return [Scope.ORGANIZATION, Scope.COLLABORATION, Scope.GLOBAL]
+    elif minimal_scope == Scope.COLLABORATION:
+        return [Scope.COLLABORATION, Scope.GLOBAL]
+    elif minimal_scope == Scope.GLOBAL:
+        return [Scope.GLOBAL]
+    elif minimal_scope == Scope.OWN:
+        return [Scope.OWN, Scope.ORGANIZATION, Scope.COLLABORATION,
+                Scope.GLOBAL]
+    else:
+        raise ValueError(f"Unknown scope '{minimal_scope}'")
+
+
+class RuleCollection(dict):
     """
     Class that tracks a set of all rules for a certain resource name
 
@@ -43,6 +77,98 @@ class RuleCollection:
         """
         permission = Permission(RuleNeed(self.name, scope, operation))
         self.__setattr__(f'{operation.value}_{scope.value}', permission)
+
+    def can_by_org(self, operation: Operation, subject_org_id: int,
+                   own_org: Organization) -> bool:
+        """
+        Check if an operation is on a certain organization
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        subject_org_id: int
+            Organization id on which the operation should be allowed
+        own_org: Organization
+            Organization of the user/node/algorithm that is performing the
+            operation
+
+        Returns
+        -------
+        bool
+            True if the operation is allowed on the organization, False
+            otherwise
+        """
+        # check if the entity has global permission
+        global_perm = getattr(self, f'{operation.value}_{Scope.GLOBAL.value}')
+        if global_perm and global_perm.can():
+            return True
+
+        # check if the entity has organization permission and organization is
+        # the same as the subject organization
+        org_perm = getattr(self,
+                           f'{operation.value}_{Scope.ORGANIZATION.value}')
+        if own_org.id == subject_org_id and org_perm and org_perm.can():
+            return True
+
+        # check if the entity has collaboration permission and the subject
+        # organization is in the collaboration of the own organization
+        col_perm = getattr(self,
+                           f'{operation.value}_{Scope.COLLABORATION.value}')
+        if col_perm and col_perm.can():
+            for col in own_org.collaborations:
+                if subject_org_id in [org.id for org in col.organizations]:
+                    return True
+        # no permission found
+        return False
+
+    def _get_relevant_perms(self, operation: Operation,
+                            minimal_scope: Scope) -> list[Permission]:
+        """
+        Get permissions that are relevant for a certain operation with at least
+        the given scope
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        minimal_scope: Scope
+            Scope to check if allowed
+
+        Returns
+        -------
+        list[Permission]
+            List of permissions that are relevant for the operation and scope
+        """
+        perms = []
+        scopes = get_scopes_with_level(minimal_scope)
+        for scope in scopes:
+            perm = getattr(self, f'{operation.value}_{scope.value}')
+            if perm is not None:
+                perms.append(perm)
+        return perms
+
+    def has_minimal_scope(self, operation: Operation,
+                          minimal_scope: Scope) -> bool:
+        """
+        Check if a node/user/algorithm has at least the given scope for a
+        certain operation
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        minimal_scope: Scope
+            Minimal scope that user/node/algorithm should have
+
+        Returns
+        -------
+        bool
+            True if the entity is allowed to perform the operation on at least
+            the scope provided, False otherwise
+        """
+        perms = self._get_relevant_perms(operation, minimal_scope)
+        return any([perm.can() for perm in perms])
 
 
 class PermissionManager:
