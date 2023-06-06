@@ -1,4 +1,4 @@
-Vantage6-common
+Common functions (``vantage6-common``)
 ===============
 
 This page contains the API reference of the functions in the vantage-common

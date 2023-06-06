@@ -9,25 +9,34 @@ and distribution of a release.
 
 Version format
 --------------
-Semantic versioning is used: ``Major.Minor.Patch.Pre[N].Post<n>``.
+`Semantic versioning <https://semver.org/>`_ is used:
+``Major.Minor.Patch.Pre[N].Post<n>``.
 
-**Major** is used for releasing breaking changes. For example, when the database
-  model has changed, a new major version should be issued.
+**Major** releases update the first digit, e.g. ``1.2.3`` is updated to
+``2.0.0``. This is used for releasing breaking changes: server and nodes of
+version 2.x.y are unlikely to be able to run an algorithm written for version
+1.x.y.
 
-**Minor** is used for releasing new features, enhancements and other changes that
-  are compatible with all other components. An example is the release of a new endpoint.
+**Minor** releases update the second digit, e.g. ``1.2.3`` to ``1.3.0``. This is
+used for releasing new features (e.g. a new endpoint), enhancements and other
+changes that are compatible with all other components. Algorithms written for version
+``1.x.y`` should run on any server of version ``1.z.a``. However, nodes and
+servers of different minor versions may not be able to communicate properly.
 
-**Patch** is used for bugfixes and other minor changes
+**Patch** releases update the third digit, e.g. ``1.2.3`` to ``1.2.4``. This is
+used for bugfixes and other minor changes. Different patch releases should be
+compatible with each other, so a node of version ``1.2.3`` should be able to
+communicate with a server of version ``1.2.4``.
 
-**Pre[N]** is used for alpha (a), beta (b) and release candidates (rc) releases and the
-  build number is appended (e.g. ``2.0.1b1`` indicates the first beta-build of version ``2.0.1``)
+**Pre[N]** is used for alpha (a), beta (b) and release candidates (rc) releases
+and the build number is appended (e.g. ``2.0.1b1`` indicates the first
+beta-build of version ``2.0.1``). These releases are used for testing before
+the actual release is made.
 
-**Post[N]** is used for a rebuild where no code changes have been made, but where,
-  for example, a dependency has been updated and a rebuild is required.
-
-.. warning::
-   Post releases are only used by versioning the Docker images.
-   Code changes should never be released with a ``.post[N]`` version.
+**Post[N]** is used for a rebuild where no code changes have been made, but
+where, for example, a dependency has been updated and a rebuild is required.
+In vantage6, this is only used to version the Docker images that are updated
+in these cases.
 
 Create a release
 ----------------
