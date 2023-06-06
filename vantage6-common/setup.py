@@ -37,7 +37,7 @@ setup(
         'click==8.1.3',
         'colorama==0.4.6',
         'cryptography==39.0.1',
-        'docker==6.0.1',
+        'docker==6.1.2',
         'pyfiglet==0.8.post1',
         'PyYAML==6.0',
         'python-dateutil==2.8.2',

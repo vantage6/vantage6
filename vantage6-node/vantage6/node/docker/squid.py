@@ -9,7 +9,7 @@ access the data sources or other services.
 import logging
 import os
 
-from typing import NamedTuple
+from dataclasses import dataclass, field, asdict
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -28,10 +28,11 @@ from vantage6.node.globals import SQUID_IMAGE, PACKAGE_FOLDER
 log = logging.getLogger(logger_name(__name__))
 
 
-class SquidConfig(NamedTuple):
-    domains: list[str]
-    ips: list[str]
-    ports: list[int]
+@dataclass
+class SquidConfig:
+    domains: list[str] = field(default_factory=lambda: [])
+    ips: list[str] = field(default_factory=lambda: [])
+    ports: list[int] = field(default_factory=lambda: [])
 
 
 class Squid(DockerBaseManager):
@@ -85,8 +86,8 @@ class Squid(DockerBaseManager):
         log.debug(f"Squid hostname: {self.hostname}, port: {self.port}")
 
         try:
-            # Create the SSH configuration, which can later be mounted by the
-            # SSH tunnel container
+            # Create squid configuration, which can later be mounted by the
+            # squid container
             self.squid_config = self.read_config(config)
         except KeyError as e:
             # parent class should handle this
@@ -157,6 +158,12 @@ class Squid(DockerBaseManager):
                 log.debug(f"Whitelisted IP: {ip}")
                 safe = False
 
+        if not (has_domains or len(whitelist.ips) > 0):
+            log.critical("No domains or IP addresses are whitelisted!")
+
+        if not len(whitelist.ports) > 0:
+            log.critical("No ports are whitelisted!")
+
         return safe
 
     @staticmethod
@@ -214,7 +221,7 @@ class Squid(DockerBaseManager):
         template = environment.get_template("squid.conf.j2")
 
         # inject template with vars
-        squid_config = template.render(**config._asdict())
+        squid_config = template.render(**asdict(config))
 
         with open(self.config_folder / "squid.conf", "w") as f:
             f.write(squid_config)

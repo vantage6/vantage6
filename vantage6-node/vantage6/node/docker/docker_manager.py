@@ -194,14 +194,17 @@ class DockerManager(DockerBaseManager):
             label_upper = label.upper()
             db_config = get_database_config(databases, label)
             if running_in_docker():
-                uri_env = os.environ[f'{label_upper}_DATABASE_URI']
-                uri = f'/mnt/{uri_env}'
+                uri = os.environ[f'{label_upper}_DATABASE_URI']
             else:
                 uri = db_config['uri']
 
-            db_type = db_config['type']
+            if running_in_docker():
+                db_is_file = Path(f'/mnt/{uri}').exists()
+                if db_is_file:
+                    uri = f'/mnt/{uri}'
+            else:
+                db_is_file = Path(uri).exists()
 
-            db_is_file = Path(uri).exists()
             if db_is_file:
                 # We'll copy the file to the folder `data` in our task_dir.
                 self.log.info(f'Copying {uri} to {self.__tasks_dir}')
@@ -209,7 +212,7 @@ class DockerManager(DockerBaseManager):
                 uri = self.__tasks_dir / os.path.basename(uri)
 
             self.databases[label] = {'uri': uri, 'is_file': db_is_file,
-                                     'type': db_type}
+                                     'type': db_config['type']}
         self.log.debug(f"Databases: {self.databases}")
 
     def _set_algorithm_device_requests(self, device_requests_config: dict) \

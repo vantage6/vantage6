@@ -149,7 +149,7 @@ repository.
 Setup your environment
 ^^^^^^^^^^^^^^^^^^^^^^
 * Make sure you have a Github account
-* Install and configure git
+* Install and configure ``git`` and ``make``
 * (Optional) install and configure Miniconda
 * Clone the main repository locally:
 
@@ -165,7 +165,7 @@ Setup your environment
 
     git remote add fork https://github.com/{username}/vantage6
 
-* Create a virtual environment to work in. For miniconda:
+* Create a virtual environment to work in. If you are using miniconda:
 
   ::
 
@@ -181,11 +181,11 @@ Setup your environment
 
     python -m pip install --upgrade pip setuptools
 
-* Install vantage6 as development environment with the ``-e`` flag.
+* Install vantage6 as development environment:
 
   ::
 
-    pip install -e .
+    make install-dev
 
 
 Coding
