@@ -740,7 +740,7 @@ class RoleRules(RoleBase):
         role.rules.append(rule)
         role.save()
 
-        return rule_schema.dump(role.rules, many=False), HTTPStatus.CREATED
+        return rule_schema.dump(role.rules, many=True), HTTPStatus.CREATED
 
     @with_user
     def delete(self, id, rule_id):
@@ -809,4 +809,4 @@ class RoleRules(RoleBase):
         # Ok jumped all hoopes, remove it..
         role.rules.remove(rule)
 
-        return rule_schema.dump(role.rules, many=False), HTTPStatus.OK
+        return rule_schema.dump(role.rules, many=True), HTTPStatus.OK

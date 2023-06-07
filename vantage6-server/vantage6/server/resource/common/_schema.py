@@ -182,7 +182,7 @@ class ResultSchema(HATEOASModelSchema):
         exclude = ("assigned_at", "started_at", "finished_at", "status",
                    "task", "ports", "organization", "log", "input",)
 
-    run_link = fields.Method("make_run_link")
+    run = fields.Method("make_run_link")
 
     @staticmethod
     def make_run_link(obj):
@@ -242,23 +242,6 @@ class RunNodeSchema(HATEOASModelSchema):
         model = db.Node
         exclude = ('type', 'api_key', 'collaboration', 'organization',
                    'last_seen')
-
-
-class ResultSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.Run
-        exclude = ("assigned_at", "started_at", "finished_at", "status",
-                   "task", "ports", "organization", "log", "input",)
-
-    run = fields.Method("make_run_link")
-
-    @staticmethod
-    def make_run_link(obj):
-        return {
-            "id": obj.id,
-            "link": url_for("run_with_id", id=obj.id),
-            "methods": ["GET", "PATCH"]
-        }
 
 
 class PortSchema(HATEOASModelSchema):
