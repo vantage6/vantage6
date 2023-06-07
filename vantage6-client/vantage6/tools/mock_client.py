@@ -191,12 +191,6 @@ class MockAlgorithmClient:
         database: str = None, host_node_id: int = None,
         collaboration_id: int = None, organization_id: int = None
     ) -> None:
-        # use autowrapper to read in the databases
-        print(datasets)
-        # print current working directory
-        import os
-        print(os.getcwd())
-        print()
         self.n = len(datasets)
         self.datasets = []
         for dataset in datasets:
@@ -239,7 +233,8 @@ class MockAlgorithmClient:
         """
         Task subclient for the MockAlgorithmClient
         """
-        def create(self, input_: dict, organization_ids: list[int]) -> int:
+        def create(self, input_: dict, organization_ids: list[int],
+                   *args, **kwargs) -> int:
             """
             Create a new task with the MockProtocol and return the task id.
 
@@ -253,6 +248,10 @@ class MockAlgorithmClient:
                 depend on the algorithm.
             organization_ids : list[int]
                 A list of organization ids that should run the algorithm.
+            *args, **kwargs
+                Additional arguments that are passed. This is for compatibility
+                with the mocked AlgorithmClient function which accepts more
+                arguments.
 
             Returns
             -------
