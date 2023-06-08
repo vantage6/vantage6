@@ -206,7 +206,11 @@ class Organizations(OrganizationBase):
         if 'country' in args:
             q = q.filter(db.Organization.country == args['country'])
         if 'collaboration_id' in args:
-            if not self.r.has_minimal_scope(P.VIEW, S.COLLABORATION):
+            # TODO we also need to check here if the user is part of the collab
+            if not self.r.can_for_collaboration(
+                P.VIEW, args['collaboration_id'],
+                self.obtain_auth_collaborations()
+            ):
                 return {
                     'msg': 'You lack the permission to get all organizations '
                     'in your collaboration!'

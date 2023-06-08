@@ -10,7 +10,10 @@ from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.organization import Organization
+from vantage6.server.model.collaboration import Collaboration
 from vantage6.common import logger_name
+
+from vantage6.server.resource import id_in_list
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -148,6 +151,7 @@ class RuleCollection(dict):
                 perms.append(perm)
         return perms
 
+    # TODO check if this function is still needed
     def has_minimal_scope(self, operation: Operation,
                           minimal_scope: Scope) -> bool:
         """
@@ -169,6 +173,39 @@ class RuleCollection(dict):
         """
         perms = self._get_relevant_perms(operation, minimal_scope)
         return any([perm.can() for perm in perms])
+
+    def can_for_collaboration(
+        self, operation: Operation, collaboration_id: int,
+        auth_collabs: list[Collaboration]
+    ) -> bool:
+        """
+        Check if the user or node can perform the operation on a certain
+        collaboration
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        collaboration_id: int
+            Collaboration id on which the operation should be allowed
+        auth: Authenticatable
+            User or node that is performing the operation
+        """
+        # check if the entity has global permission
+        global_perm = getattr(self, f'{operation.value}_{Scope.GLOBAL.value}')
+        if global_perm and global_perm.can():
+            return True
+
+        # check if the entity has collaboration permission and the subject
+        # collaboration is in the collaborations of the user/node
+        col_perm = getattr(self,
+                           f'{operation.value}_{Scope.COLLABORATION.value}')
+        if col_perm and col_perm.can() and \
+                id_in_list(collaboration_id, auth_collabs):
+            return True
+
+        # no permission found
+        return False
 
 
 class PermissionManager:

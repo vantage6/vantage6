@@ -10,8 +10,9 @@ from flask_restful import reqparse, Api
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
 from vantage6.server.resource.common.pagination import Pagination
-from vantage6.server.permission import (Scope as S,
-                                        Operation as P, PermissionManager)
+from vantage6.server.permission import (
+    RuleCollection, Scope as S, Operation as P, PermissionManager
+)
 from vantage6.server import db
 from vantage6.server.resource.common._schema import NodeSchema
 
@@ -67,20 +68,28 @@ def permissions(permissions: PermissionManager) -> None:
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any node")
+    add(scope=S.COLLABORATION, operation=P.VIEW,
+        description="view any node in your collaborations")
     add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
         description="view your own node info", assign_to_node=True)
 
     add(scope=S.GLOBAL, operation=P.EDIT, description="edit any node")
+    add(scope=S.COLLABORATION, operation=P.EDIT,
+        description="edit any node in your collaborations")
     add(scope=S.ORGANIZATION, operation=P.EDIT,
         description="edit node that is part of your organization",
         assign_to_node=True)
 
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create node for any organization")
+    add(scope=S.COLLABORATION, operation=P.CREATE,
+        description="create node for any organization in your collaborations")
     add(scope=S.ORGANIZATION, operation=P.CREATE,
         description="create new node for your organization")
 
     add(scope=S.GLOBAL, operation=P.DELETE, description="delete any node")
+    add(scope=S.COLLABORATION, operation=P.DELETE,
+        description="delete any node in your collaborations")
     add(scope=S.ORGANIZATION, operation=P.DELETE,
         description="delete node that is part of your organization")
 
@@ -95,7 +104,7 @@ class NodeBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Nodes(NodeBase):
@@ -114,6 +123,8 @@ class Nodes(NodeBase):
             Description|\n
             |--|--|--|--|--|--|\n
             |Node|Global|View|❌|❌|View any node information|\n
+            |Node|Collaboration|View|❌|❌|View any node information for nodes
+            in your collaborations|\n
             |Node|Organization|View|✅|✅|View node information for nodes that
             belong to your organization|\n
 
@@ -193,9 +204,30 @@ class Nodes(NodeBase):
         """
         q = g.session.query(db.Node)
         auth_org_id = self.obtain_organization_id()
+        auth = self.obtain_auth()
         args = request.args
 
-        for param in ['organization_id', 'collaboration_id', 'status', 'ip']:
+        if 'organization_id' in args:
+            if not self.r.can_by_org(P.VIEW, args['organization_id'],
+                                     auth.organization):
+                return {
+                    'msg': 'You lack the permission view nodes from the '
+                    f'organization with id {args["organization_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Node.organization_id == args['organization_id'])
+
+        if 'collaboration_id' in args:
+            if not self.r.can_for_collaboration(
+                P.VIEW, args['collaboration_id'],
+                self.obtain_auth_collaborations()
+            ):
+                return {
+                    'msg': 'You lack the permission view nodes from the '
+                    f'collaboration with id {args["collaboration_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Node.collaboration_id == args['collaboration_id'])
+
+        for param in ['status', 'ip']:
             if param in args:
                 q = q.filter(getattr(db.Node, param) == args[param])
         if 'name' in args:
@@ -230,8 +262,8 @@ class Nodes(NodeBase):
         """Create node
         ---
         description: >-
-          Creates a new node-account belonging to a specific collaboration
-          which is specified in the POST body.\n
+          Creates a new node-account belonging to a specific organization and
+          collaboration which is specified in the POST body.\n
           The organization of the user needs to be within the collaboration.\n
 
           ### Permission Table\n
@@ -239,9 +271,11 @@ class Nodes(NodeBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|Create|❌|❌|Create a new node account belonging to a
-          specific collaboration|\n
+          specific organization in any collaboration|\n
+          |Node|Collaboration|Create|❌|❌|Create a new node account belonging
+          to a specific organization in your collaborations|\n
           |Node|Organization|Create|❌|❌|Create a new node account belonging
-          to a specific organization which is also part of the collaboration|\n
+          to your organization|\n
 
           Accessible to users.
 
@@ -255,11 +289,14 @@ class Nodes(NodeBase):
                     description: Collaboration id
                   organization_id:
                     type: integer
-                    description: Organization id
+                    description: Organization id. If not provided, this
+                      defaults to the organization of the user creating the
+                      node.
                   name:
                     type: str
-                    description: Human-readable name, if not profided a name
-                      is generated
+                    description: Human-readable name, if not provided a name
+                      is generated based on organization and collaboration
+                      name.
 
         responses:
           201:
@@ -292,17 +329,19 @@ class Nodes(NodeBase):
             return {"msg": f"collaboration id={data['collaboration_id']} "
                     "does not exist"}, HTTPStatus.NOT_FOUND  # 404
 
+        org_id = data["organization_id"] if "organization_id" in data else \
+            g.user.organization_id
+        organization = db.Organization.get(org_id)
+
+        # check that the organization exists
+        if not organization:
+            return {"msg": f"organization id={org_id} does not exist"}, \
+                HTTPStatus.NOT_FOUND
+
         # check permissions
-        org_id = data["organization_id"]
-        user_org_id = g.user.organization.id
-        if not self.r.c_glo.can():
-            own = not org_id or org_id == user_org_id
-            if not (self.r.c_org.can() and own):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            else:
-                org_id = g.user.organization.id
-        organization = db.Organization.get(org_id or user_org_id)
+        if not self.r.can_by_org(P.CREATE, org_id, g.user.organization):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         # we need to check that the organization belongs to the
         # collaboration
@@ -345,7 +384,7 @@ class Nodes(NodeBase):
 class Node(NodeBase):
 
     @with_user_or_node
-    def get(self, id):
+    def get(self, id_):
         """Get node
         ---
         description: >-
@@ -358,6 +397,8 @@ class Node(NodeBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|View|❌|❌|View any node information|\n
+          |Node|Collaboration|View|❌|❌|View any node information for nodes
+          within your collaborations|\n
           |Node|Organization|View|✅|✅|View node information for nodes that
           belong to your organization|\n
 
@@ -365,7 +406,7 @@ class Node(NodeBase):
 
         parameters:
           - in: path
-            name: id
+            name: id_
             schema:
               type: integer
               minimum: 1
@@ -385,24 +426,23 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
-        node = db.Node.get(id)
+        node = db.Node.get(id_)
         if not node:
-            return {'msg': f'Node id={id} is not found!'}, HTTPStatus.NOT_FOUND
+            return {'msg': f'Node id={id_} is not found!'}, \
+                HTTPStatus.NOT_FOUND
 
         # obtain authenticated model
         auth = self.obtain_auth()
 
         # check permissions
-        if not self.r.v_glo.can():
-            same_org = auth.organization.id == node.organization.id
-            if not (self.r.v_org.can() and same_org):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_by_org(P.VIEW, id_, auth.organization):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         return node_schema.dump(node, many=False).data, HTTPStatus.OK
 
     @with_user
-    def delete(self, id):
+    def delete(self, id_):
         """
         Delete node
         ---
@@ -415,6 +455,8 @@ class Node(NodeBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|Delete|❌|❌|Delete a node|\n
+          |Node|Collaboration|Delete|❌|❌|Delete a node that belongs to
+          one of the organizations in your collaborations|\n
           |Node|Organization|Delete|❌|❌|Delete a node that belongs to your
           organization|\n
 
@@ -422,7 +464,7 @@ class Node(NodeBase):
 
         parameters:
           - in: path
-            name: id
+            name: id_
             schema:
               type: integer
               minimum: 1
@@ -442,21 +484,19 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
-        node = db.Node.get(id)
+        node = db.Node.get(id_)
         if not node:
-            return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
+            return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.d_glo.can():
-            own = node.organization == g.user.organization
-            if not (self.r.d_org.can() and own):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_by_org(P.DELETE, id_, g.user.organization):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         node.delete()
-        return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
+        return {"msg": f"Successfully deleted node id={id_}"}, HTTPStatus.OK
 
     @with_user_or_node
-    def patch(self, id):
+    def patch(self, id_):
         """Update node
         ---
         description: >-
@@ -469,6 +509,8 @@ class Node(NodeBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Node|Global|Edit|❌|❌|Update a node specified by id|\n
+          |Node|Collaboration|Edit|❌|❌|Update a node specified by id which
+          is part of one of your collaborations|\n
           |Node|Organization|Edit|❌|❌|Update a node specified by id which is
           part of your organization|\n
 
@@ -476,7 +518,7 @@ class Node(NodeBase):
 
         parameters:
           - in: path
-            name: id
+            name: id_
             schema:
               type: integer
             description: Node id
@@ -516,17 +558,15 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
-        node = db.Node.get(id)
+        node = db.Node.get(id_)
         if not node:
-            return {'msg': f'Node id={id} not found!'}, HTTPStatus.NOT_FOUND
+            return {'msg': f'Node id={id_} not found!'}, HTTPStatus.NOT_FOUND
 
         auth = g.user or g.node
 
-        if not self.r.e_glo.can():
-            own = auth.organization.id == node.organization.id
-            if not (self.r.e_org.can() and own):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_by_org(P.EDIT, id_, auth.organization):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
 

@@ -17,6 +17,7 @@ from marshmallow_sqlalchemy import ModelSchema
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.permission import PermissionManager
 from vantage6.server.resource.common.pagination import Page
 
@@ -151,6 +152,23 @@ class ServicesResources(Resource):
         """
         return db.Organization.get(cls.obtain_organization_id())
 
+    @staticmethod
+    def obtain_auth_collaborations() -> list[db.Collaboration]:
+        """
+        Obtain the collaborations that the auth is part of.
+
+        Returns
+        -------
+        list[db.Collaboration]
+            List of collaborations
+        """
+        if g.user:
+            return g.user.collaborations
+        elif g.node:
+            return g.node.collaborations
+        else:
+            return [db.Collaboration.get(g.container["collaboration_id"])]
+
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
@@ -267,3 +285,56 @@ def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
     if dt:
         return datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
     return default
+
+
+def id_in_list(id_: int, resource_list: list[db.Base], ) -> bool:
+    """
+    Check if resource list contains a resource with a certain ID
+
+    Parameters
+    ----------
+    id_ : int
+        ID of the resource
+    resource_list : list[db.Base]
+        List of resources
+
+    Returns
+    -------
+    bool
+        True if resource is in list, False otherwise
+    """
+    return any(r.id == id_ for r in resource_list)
+
+
+def get_org_ids_from_collabs(auth: Authenticatable,
+                             collab_id: int = None) -> list[int]:
+    """
+    Get all organization ids from the collaborations the user or node is in.
+
+    Parameters
+    ----------
+    auth : Authenticatable
+        User or node
+    collab_id : int, optional
+        Collaboration id. If given, only return the organization ids of this
+        collaboration. If not given, return all organization ids of all
+        collaborations the user or node is in.
+
+    Returns
+    -------
+    list[int]
+        List of organization ids
+    """
+    if collab_id:
+        return [
+            org.id
+            for col in auth.organization.collaborations
+            for org in col.organizations
+            if col.id == collab_id
+        ]
+    else:
+        return [
+            org.id
+            for col in auth.organization.collaborations
+            for org in col.organizations
+        ]

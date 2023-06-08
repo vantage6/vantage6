@@ -15,6 +15,7 @@ from vantage6.server.permission import (
     RuleCollection
 )
 from vantage6.server.resource import (
+    get_org_ids_from_collabs,
     with_user,
     ServicesResources
 )
@@ -149,6 +150,11 @@ class Users(UserBase):
               type: integer
             description: Organization id
           - in: query
+            name: collaboration_id
+            schema:
+              type: integer
+            description: Collaboration id
+          - in: query
             name: firstname
             schema:
               type: string
@@ -252,8 +258,18 @@ class Users(UserBase):
             q = q.join(db.UserPermission).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
 
-        # TODO should we create an option to see all users of a collaboration?
-        # this could be achieved with the logic below for r.v_col()
+        if 'collaboration_id' in args:
+            if not self.r.can_for_collaboration(
+                P.VIEW, args['collaboration_id'],
+                self.obtain_auth_collaborations()
+            ):
+                return {
+                    'msg': 'You lack the permission view all users from '
+                    f'collaboration {args["collaboration_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.User.organization_id.in_(
+                get_org_ids_from_collabs(g.user, args['collaboration_id'])
+            ))
 
         # check permissions and apply filter if neccessary
         if not self.r.v_glo.can():
@@ -290,6 +306,8 @@ class Users(UserBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |User|Global|Create|❌|❌|Create a new user|\n
+          |User|Collaboration|Create|❌|❌|Create a new user for any
+          organization in your collaborations|\n
           |User|Organization|Create|❌|❌|Create a new user as part of your
           organization|\n
 
@@ -375,13 +393,11 @@ class Users(UserBase):
                     if not org:
                         return {'msg': "Organization does not exist."}, \
                             HTTPStatus.NOT_FOUND
-                else:  # not-root user cant create users for other organization
-                    return {'msg': 'You lack the permission to do that!'}, \
-                        HTTPStatus.UNAUTHORIZED
             organization_id = data['organization_id']
 
         # check that user is allowed to create users
-        if not (self.r.c_glo.can() or self.r.c_org.can()):
+        if not self.r.can_by_org(P.CREATE, organization_id,
+                                 g.user.organization):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
