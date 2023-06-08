@@ -293,11 +293,32 @@ class MockAlgorithmClient:
                 )
 
             id_ = len(self.parent.tasks)
+            collab_id = self.parent.collaboration_id if \
+                self.parent.collaboration_id else 1
+            # TODO adapt fields in v4+
             task = {
                 "id": id_,
                 "results": results,
                 "complete": "true",  # TODO remove in v4+.
                 "status": "completed",
+                "name": "mock",
+                "database": "mock",
+                "description": "mock",
+                "image": "mock_image",
+                "init_user": 1,
+                "initiator": 1,
+                "parent": None,
+                "collaboration": {
+                    "id": collab_id,
+                    "link": f"/api/collaboration/{collab_id}",
+                    "methods": [
+                        "DELETE",
+                        "PATCH",
+                        "GET"
+                    ]
+                },
+                "run_id": 1,
+                "children": None,
             }
             self.parent.tasks.append(task)
             return task
@@ -318,6 +339,7 @@ class MockAlgorithmClient:
             """
             return self.parent.tasks[task_id]
 
+    # TODO for v4+, add a Run class
     class Result(SubClient):
         """
         Result subclient for the MockAlgorithmClient
@@ -367,6 +389,16 @@ class MockAlgorithmClient:
                 "id": id_,
                 "name": f"mock-{id_}",
                 "domain": f"mock-{id_}.org",
+                "address1": "mock",
+                "address2": "mock",
+                "zipcode": "mock",
+                "country": "mock",
+                "public_key": "mock",
+                "collaborations": f"/api/collaboration?organization_id={id_}",
+                "users": f"/api/user?organization_id={id_}",
+                "tasks": f"/api/task?init_org_id={id_}",
+                "nodes": f"/api/node?organization_id={id_}",
+                "runs": f"/api/run?organization_id={id_}"
             }
 
         def list(self) -> list[dict]:
@@ -380,11 +412,7 @@ class MockAlgorithmClient:
             """
             organizations = []
             for i in range(self.parent.n):
-                organizations.append({
-                    "id": i,
-                    "name": f"mock-{i}",
-                    "domain": f"mock-{i}.org",
-                })
+                organizations.append(self.get(i))
             return organizations
 
     class Collaboration(SubClient):
@@ -405,13 +433,16 @@ class MockAlgorithmClient:
             dict
                 A mocked collaboration.
             """
+            collab_id = self.parent.collaboration_id if \
+                self.parent.collaboration_id else 1
             return {
-                "id": (
-                    self.parent.collaboration_id
-                    if self.parent.collaboration_id else 1,
-                ),
+                "id": collab_id,
                 "name": "mock-collaboration",
                 "encrypted": is_encrypted,
+                "tasks": f"/api/task?collaboration_id={collab_id}",
+                "nodes": f"/api/node?collaboration_id={collab_id}",
+                "organizations":
+                    f"/api/organization?collaboration_id={collab_id}"
             }
 
     class Node(SubClient):
@@ -432,11 +463,38 @@ class MockAlgorithmClient:
             dict
                 A mocked node.
             """
+            node_id = (
+                self.parent.host_node_id if self.parent.host_node_id else 1
+            )
+            collab_id = self.parent.collaboration_id if \
+                self.parent.collaboration_id else 1
             return {
-                "id": (self.parent.host_node_id
-                       if self.parent.host_node_id else 1),
+                "id": node_id,
                 "name": "mock-node",
                 "status": "online" if is_online else "offline",
+                "ip": "1.2.3.4",
+                "config": {
+                    "key": "value",
+                },
+                "collaboration": {
+                    "id": collab_id,
+                    "link": f"/api/collaboration/{collab_id}",
+                    "methods": [
+                        "DELETE",
+                        "PATCH",
+                        "GET"
+                    ]
+                },
+                "last_seen": "2021-01-01T00:00:00.000000",
+                "type": "node",
+                "organization": {
+                    "id": node_id,
+                    "link": f"/api/organization/{node_id}",
+                    "methods": [
+                        "GET",
+                        "PATCH"
+                    ]
+                },
             }
 
     # TODO implement the get_addresses method before using this part
