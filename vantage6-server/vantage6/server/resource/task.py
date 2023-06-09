@@ -255,8 +255,8 @@ class Tasks(TaskBase):
         q = g.session.query(db.Task)
         args = request.args
 
-        # obtain organization id
         auth_org_id = self.obtain_organization_id()
+        auth_collabs = self.obtain_auth_collaborations()
 
         # check permissions and apply filter if neccassary
         if not self.r.v_glo.can():
@@ -297,15 +297,50 @@ class Tasks(TaskBase):
                         f'from user id={args["init_user_id"]}!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        # filter based on arguments
-        for param in ['parent_id', 'job_id']:
-            if param in args:
-                q = q.filter(getattr(db.Task, param) == args[param])
+        if 'parent_id' in args:
+            parent = db.Task.get(args['parent_id'])
+            if not parent:
+                return {'msg': f'Parent task id={args["parent_id"]} does not '
+                        'exist!'}, HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_col(P.VIEW, parent.collaboration_id,
+                                        auth_collabs):
+                return {'msg': 'You lack the permission to view tasks '
+                        'from the collaboration that the task with parent_id='
+                        f'{parent.collaboration_id} belongs to!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Task.parent_id == args['parent_id'])
+
+        if 'job_id' in args:
+            task_in_job = q.session.query(db.Task).filter(
+                db.Task.job_id == args['job_id']).first()
+            if not task_in_job:
+                return {'msg': f'Job id={args["job_id"]} does not exist!'}, \
+                    HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_col(P.VIEW, task_in_job.collaboration_id,
+                                        auth_collabs):
+                return {'msg': 'You lack the permission to view tasks '
+                        'from the collaboration that the task with job_id='
+                        f'{task_in_job.collaboration_id} belongs to!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Task.job_id == args['job_id'])
+
         for param in ['name', 'image', 'description', 'database', 'status']:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
+
         if 'run_id' in args:
+            run = db.Run.get(args['run_id'])
+            if not run:
+                return {'msg': f'Run id={args["run_id"]} does not exist!'}, \
+                    HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_col(P.VIEW, run.collaboration_id,
+                                        auth_collabs):
+                return {'msg': 'You lack the permission to view tasks '
+                        'from the collaboration that the run with id='
+                        f'{run.collaboration_id} belongs to!'}, \
+                    HTTPStatus.UNAUTHORIZED
             q = q.join(db.Run).filter(db.Run.id == args['run_id'])
+
         if 'is_user_created' in args:
             try:
                 user_created = int(args['is_user_created'])

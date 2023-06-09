@@ -231,7 +231,7 @@ class Roles(RoleBase):
         """
         q = g.session.query(db.Role)
 
-        auth_org_id = self.obtain_organization_id()
+        auth_org = self.obtain_auth_organization()
         args = request.args
 
         # filter by organization ids (include root role if desired)
@@ -273,10 +273,23 @@ class Roles(RoleBase):
 
         # find roles containing a specific rule
         if 'rule_id' in args:
+            rule = db.Rule.query.get(args['rule_id'])
+            if not rule:
+                return {'msg': f'Rule with id={args["rule_id"]} does not '
+                        'exist!'}, HTTPStatus.BAD_REQUEST
             q = q.join(db.role_rule_association).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
 
         if 'user_id' in args:
+            user = db.User.query.get(args['user_id'])
+            if not user:
+                return {'msg': f'User with id={args["user_id"]} does not '
+                        'exist!'}, HTTPStatus.BAD_REQUEST
+            elif self.r.can_for_org(P.VIEW, user.organization_id, auth_org):
+                return {
+                    'msg': 'You lack the permission view roles from the '
+                    f'organization that user id={user.id} belongs to!'
+                }, HTTPStatus.UNAUTHORIZED
             q = q.join(db.Permission).join(db.User)\
                  .filter(db.User.id == args['user_id'])
 
@@ -287,7 +300,7 @@ class Roles(RoleBase):
                 # other roles they may have themselves, or default roles from
                 # the root organization
                 q = q.filter(or_(
-                        db.Role.organization_id == auth_org_id,
+                        db.Role.organization_id == auth_org.id,
                         db.Role.id.in_(own_role_ids),
                         db.Role.organization_id.is_(None)
                     ))

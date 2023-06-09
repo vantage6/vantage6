@@ -224,6 +224,8 @@ class Users(UserBase):
             description: Ok
           401:
             description: Unauthorized
+          400:
+            description: Invalid values provided for request parameters
 
         security:
             - bearerAuth: []
@@ -252,9 +254,27 @@ class Users(UserBase):
 
         # find users with a particulare role or rule assigned
         if 'role_id' in args:
+            role = db.Role.query.get(args['role_id'])
+            if not role:
+                return {
+                    'msg': f'Role with id={args["role_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_org(P.VIEW, role.organization_id,
+                                        g.user.organization):
+                return {
+                    'msg': 'You lack the permission view users from the '
+                    f'organization that role with id={role.organization_id} '
+                    'belongs to!'
+                }, HTTPStatus.UNAUTHORIZED
             q = q.join(db.Permission).join(db.Role)\
                  .filter(db.Role.id == args['role_id'])
+
         if 'rule_id' in args:
+            rule = db.Rule.query.get(args['rule_id'])
+            if not rule:
+                return {
+                    'msg': f'Rule with id={args["rule_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
             q = q.join(db.UserPermission).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
 
