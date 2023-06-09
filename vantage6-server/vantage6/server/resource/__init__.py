@@ -287,25 +287,6 @@ def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
     return default
 
 
-def id_in_list(id_: int, resource_list: list[db.Base], ) -> bool:
-    """
-    Check if resource list contains a resource with a certain ID
-
-    Parameters
-    ----------
-    id_ : int
-        ID of the resource
-    resource_list : list[db.Base]
-        List of resources
-
-    Returns
-    -------
-    bool
-        True if resource is in list, False otherwise
-    """
-    return any(r.id == id_ for r in resource_list)
-
-
 def get_org_ids_from_collabs(auth: Authenticatable,
                              collab_id: int = None) -> list[int]:
     """

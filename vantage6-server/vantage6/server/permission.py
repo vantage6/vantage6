@@ -6,14 +6,13 @@ from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.globals import RESOURCES
 from vantage6.server.default_roles import DefaultRole
+from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.organization import Organization
 from vantage6.server.model.collaboration import Collaboration
 from vantage6.common import logger_name
-
-from vantage6.server.resource import id_in_list
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -125,55 +124,6 @@ class RuleCollection(dict):
         # no permission found
         return False
 
-    def _get_relevant_perms(self, operation: Operation,
-                            minimal_scope: Scope) -> list[Permission]:
-        """
-        Get permissions that are relevant for a certain operation with at least
-        the given scope
-
-        Parameters
-        ----------
-        operation: Operation
-            Operation to check if allowed
-        minimal_scope: Scope
-            Scope to check if allowed
-
-        Returns
-        -------
-        list[Permission]
-            List of permissions that are relevant for the operation and scope
-        """
-        perms = []
-        scopes = get_scopes_with_level(minimal_scope)
-        for scope in scopes:
-            perm = getattr(self, f'{operation.value}_{scope.value}')
-            if perm is not None:
-                perms.append(perm)
-        return perms
-
-    # TODO check if this function is still needed
-    def has_minimal_scope(self, operation: Operation,
-                          minimal_scope: Scope) -> bool:
-        """
-        Check if a node/user/algorithm has at least the given scope for a
-        certain operation
-
-        Parameters
-        ----------
-        operation: Operation
-            Operation to check if allowed
-        minimal_scope: Scope
-            Minimal scope that user/node/algorithm should have
-
-        Returns
-        -------
-        bool
-            True if the entity is allowed to perform the operation on at least
-            the scope provided, False otherwise
-        """
-        perms = self._get_relevant_perms(operation, minimal_scope)
-        return any([perm.can() for perm in perms])
-
     def can_for_col(
         self, operation: Operation, collaboration_id: int,
         auth_collabs: list[Collaboration]
@@ -201,11 +151,29 @@ class RuleCollection(dict):
         col_perm = getattr(self,
                            f'{operation.value}_{Scope.COLLABORATION.value}')
         if col_perm and col_perm.can() and \
-                id_in_list(collaboration_id, auth_collabs):
+                self._id_in_list(collaboration_id, auth_collabs):
             return True
 
         # no permission found
         return False
+
+    def _id_in_list(self, id_: int, resource_list: list[Base]) -> bool:
+        """
+        Check if resource list contains a resource with a certain ID
+
+        Parameters
+        ----------
+        id_ : int
+            ID of the resource
+        resource_list : list[db.Base]
+            List of resources
+
+        Returns
+        -------
+        bool
+            True if resource is in list, False otherwise
+        """
+        return any(r.id == id_ for r in resource_list)
 
 
 class PermissionManager:
