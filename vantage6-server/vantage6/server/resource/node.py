@@ -327,8 +327,9 @@ class Nodes(NodeBase):
             return {"msg": f"collaboration id={data['collaboration_id']} "
                     "does not exist"}, HTTPStatus.NOT_FOUND  # 404
 
-        org_id = data["organization_id"] if "organization_id" in data else \
-            g.user.organization_id
+        org_id = data["organization_id"] \
+            if data.get("organization_id") is not None \
+            else g.user.organization_id
         organization = db.Organization.get(org_id)
 
         # check that the organization exists
@@ -382,7 +383,7 @@ class Nodes(NodeBase):
 class Node(NodeBase):
 
     @with_user_or_node
-    def get(self, id_):
+    def get(self, id):
         """Get node
         ---
         description: >-
@@ -424,23 +425,24 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
-        node = db.Node.get(id_)
+        node = db.Node.get(id)
         if not node:
-            return {'msg': f'Node id={id_} is not found!'}, \
+            return {'msg': f'Node id={id} is not found!'}, \
                 HTTPStatus.NOT_FOUND
 
         # obtain authenticated model
         auth = self.obtain_auth()
 
         # check permissions
-        if not self.r.can_for_org(P.VIEW, id_, auth.organization):
+        if not self.r.can_for_org(P.VIEW, node.organization_id,
+                                  auth.organization):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
         return node_schema.dump(node, many=False).data, HTTPStatus.OK
 
     @with_user
-    def delete(self, id_):
+    def delete(self, id):
         """
         Delete node
         ---
@@ -482,19 +484,20 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
-        node = db.Node.get(id_)
+        node = db.Node.get(id)
         if not node:
-            return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
+            return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.DELETE, id_, g.user.organization):
+        if not self.r.can_for_org(P.DELETE, node.organization_id,
+                                  g.user.organization):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
         node.delete()
-        return {"msg": f"Successfully deleted node id={id_}"}, HTTPStatus.OK
+        return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
 
     @with_user_or_node
-    def patch(self, id_):
+    def patch(self, id):
         """Update node
         ---
         description: >-
@@ -556,13 +559,14 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
-        node = db.Node.get(id_)
+        node = db.Node.get(id)
         if not node:
-            return {'msg': f'Node id={id_} not found!'}, HTTPStatus.NOT_FOUND
+            return {'msg': f'Node id={id} not found!'}, HTTPStatus.NOT_FOUND
 
         auth = g.user or g.node
 
-        if not self.r.can_for_org(P.EDIT, id_, auth.organization):
+        if not self.r.can_for_org(P.EDIT, node.organization_id,
+                                  auth.organization):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 

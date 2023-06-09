@@ -1051,7 +1051,7 @@ class CollaborationTask(ServicesResources):
         auth_org = self.obtain_auth_organization()
 
         if not self.r.v_glo.can():
-            if not (self.r.v_org.can() and auth_org in col.organizations):
+            if not (self.r.v_col.can() and auth_org in col.organizations):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 

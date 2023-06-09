@@ -163,9 +163,9 @@ class ServicesResources(Resource):
             List of collaborations
         """
         if g.user:
-            return g.user.collaborations
+            return g.user.organization.collaborations
         elif g.node:
-            return g.node.collaborations
+            return g.node.organization.collaborations
         else:
             return [db.Collaboration.get(g.container["collaboration_id"])]
 

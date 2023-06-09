@@ -411,16 +411,12 @@ class TestResources(unittest.TestCase):
         result1 = self.app.get("/api/run", headers=headers)
         self.assertEqual(result1.status_code, 200)
 
-        result2 = self.app.get("/api/run?state=open&&node_id=1",
+        result2 = self.app.get("/api/run?state=open",
                                headers=headers)
         self.assertEqual(result2.status_code, 200)
 
         result3 = self.app.get("/api/run?task_id=1", headers=headers)
         self.assertEqual(result3.status_code, 200)
-
-        result4 = self.app.get("/api/run?task_id=1&&node_id=1",
-                               headers=headers)
-        self.assertEqual(result4.status_code, 200)
 
     def test_stats(self):
         headers = self.login("root")
@@ -1922,8 +1918,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # view from another organization
-        rule = Rule.get_by_("task", Scope.ORGANIZATION,
-                            Operation.VIEW)
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.get(f'/api/collaboration/{col.id}/task',
                                headers=headers)
@@ -2064,9 +2059,10 @@ class TestResources(unittest.TestCase):
         })
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test adding a node to an collaboration from an organization witch
+        # test adding a node to an collaboration from an organization which
         # does not belong to the collaboration
-        headers = self.create_user_and_login(organization=org2, rules=[rule])
+        rule2 = Rule.get_by_("node", Scope.GLOBAL, Operation.CREATE)
+        headers = self.create_user_and_login(organization=org2, rules=[rule2])
         results = self.app.post('/api/node', headers=headers, json={
             'collaboration_id': col.id
         })
@@ -2223,7 +2219,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test user with org permissions with id
-        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.VIEW)
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.VIEW)
         headers = self.create_user_and_login(org, rules=[rule])
         results = self.app.get(f'/api/task/{task.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
@@ -2319,7 +2315,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # user with organization permissions for other organization
-        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.CREATE)
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}], 'collaboration_id': col.id
@@ -2346,7 +2342,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test master task
-        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.CREATE)
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
         headers = self.create_user_and_login(org, rules=[rule])
         results = self.app.post('/api/task', headers=headers, json={
             "organizations": [{'id': org.id}],
@@ -2430,9 +2426,10 @@ class TestResources(unittest.TestCase):
         # test with organization permissions from other organization
         org = Organization()
         col = Collaboration(organizations=[org])
-        task = Task(collaboration=col)
+        task = Task(collaboration=col, init_org=org)
         task.save()
 
+        # test with user from other organization
         rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.DELETE)
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.delete(f'/api/task/{task.id}', headers=headers)
@@ -2476,10 +2473,11 @@ class TestResources(unittest.TestCase):
         res = Run(task=task, organization=org)
         res.save()
 
-        rule = Rule.get_by_("run", Scope.ORGANIZATION, Operation.VIEW)
+        # Test with permissions of someone who is not in the collaboration
+        rule = Rule.get_by_("run", Scope.COLLABORATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
-        self.assertEqual(len(result.json['data']), 0)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with organization permission
         headers = self.create_user_and_login(org, [rule])
@@ -2493,11 +2491,11 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # test also result endpoint
-        rule = Rule.get_by_("run", Scope.ORGANIZATION, Operation.VIEW)
+        rule = Rule.get_by_("run", Scope.COLLABORATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(
             f'/api/result?task_id={task.id}', headers=headers)
-        self.assertEqual(len(result.json['data']), 0)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with organization permission
         headers = self.create_user_and_login(org, [rule])

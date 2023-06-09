@@ -771,7 +771,7 @@ class Task(TaskBase):
 
         # validate permissions
         if not self.r.can_for_org(
-            P.DELETE, task.organization_id, g.user.organization
+            P.DELETE, task.init_org_id, g.user.organization
         ) and not (self.r.d_own.can() and task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
