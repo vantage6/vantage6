@@ -8,6 +8,7 @@ from http import HTTPStatus
 from vantage6.server import db
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (
+    RuleCollection,
     Scope as S,
     Operation as P,
     PermissionManager
@@ -114,12 +115,18 @@ def permissions(permissions: PermissionManager) -> None:
 
     add(scope=S.GLOBAL, operation=P.EDIT,
         description="edit any collaboration")
+    add(scope=S.COLLABORATION, operation=P.EDIT,
+        description="edit any collaboration that your organization "
+                    "participates in")
 
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create a new collaboration")
 
     add(scope=S.GLOBAL, operation=P.DELETE,
         description="delete a collaboration")
+    add(scope=S.COLLABORATION, operation=P.DELETE,
+        description="delete any collaboration that your organization "
+                    "participates in")
 
 
 # ------------------------------------------------------------------------------
@@ -129,7 +136,7 @@ class CollaborationBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Collaborations(CollaborationBase):
@@ -401,6 +408,8 @@ class Collaboration(CollaborationBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Update a collaboration that
+          you are already a member of|\n\n
 
           Accessible to users.
 
@@ -452,7 +461,8 @@ class Collaboration(CollaborationBase):
                     "can not be found"}, HTTPStatus.NOT_FOUND  # 404
 
         # verify permissions
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id,
+                                  self.obtain_auth_collaborations()):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -492,6 +502,8 @@ class Collaboration(CollaborationBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n\n
+          |Collaboration|Collaboration|Delete|❌|❌|Remove collaborations
+          that you are part of yourself|\n\n
 
           Accessible to users.
 
@@ -523,7 +535,8 @@ class Collaboration(CollaborationBase):
                 HTTPStatus.NOT_FOUND
 
         # verify permissions
-        if not self.r.d_glo.can():
+        if not self.r.can_for_col(P.DELETE, collaboration.id,
+                                  self.obtain_auth_collaborations()):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
