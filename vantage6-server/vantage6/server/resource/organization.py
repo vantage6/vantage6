@@ -207,10 +207,8 @@ class Organizations(OrganizationBase):
             q = q.filter(db.Organization.country == args['country'])
         if 'collaboration_id' in args:
             # TODO we also need to check here if the user is part of the collab
-            if not self.r.can_for_collaboration(
-                P.VIEW, args['collaboration_id'],
-                self.obtain_auth_collaborations()
-            ):
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id'],
+                                      self.obtain_auth_collaborations()):
                 return {
                     'msg': 'You lack the permission to get all organizations '
                     'in your collaboration!'
@@ -366,7 +364,7 @@ class Organization(OrganizationBase):
                 HTTPStatus.NOT_FOUND
 
         # Check if auth has enough permissions
-        if not self.r.can_by_org(P.VIEW, id, auth_org):
+        if not self.r.can_for_org(P.VIEW, id, auth_org):
             return {'msg': 'You do not have permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -428,7 +426,7 @@ class Organization(OrganizationBase):
                 HTTPStatus.NOT_FOUND
 
         own_org = g.user.organization if g.user else g.node.organization
-        if not self.r.can_by_org(P.EDIT, id, own_org):
+        if not self.r.can_for_org(P.EDIT, id, own_org):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 

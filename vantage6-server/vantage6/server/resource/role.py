@@ -247,10 +247,8 @@ class Roles(RoleBase):
 
         # filter by collaboration id
         if 'collaboration_id' in args:
-            if not self.r.can_for_collaboration(
-                P.VIEW, args['collaboration_id'],
-                self.obtain_auth_collaborations()
-            ):
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id'],
+                                      self.obtain_auth_collaborations()):
                 return {
                     'msg': 'You lack the permission view all roles from '
                     f'collaboration {args["collaboration_id"]}!'
@@ -402,7 +400,7 @@ class Roles(RoleBase):
                     'exist!'}, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to create this role
-        if not self.r.can_by_org(
+        if not self.r.can_for_org(
             P.CREATE, organization_id, g.user.organization
         ):
             return {
@@ -466,8 +464,8 @@ class Role(RoleBase):
 
         # check permissions. A user can always view their own roles
         if not (
-            self.r.can_by_org(P.VIEW, role.organization_id,
-                              g.user.organization) or
+            self.r.can_for_org(P.VIEW, role.organization_id,
+                               g.user.organization) or
             role in g.user.roles
         ):
             return {"msg": "You do not have permission to view this."},\
@@ -554,8 +552,8 @@ class Role(RoleBase):
             }, HTTPStatus.BAD_REQUEST
 
         # check permission of the user
-        if not self.r.can_by_org(P.EDIT, role.organization_id,
-                                 g.user.organization):
+        if not self.r.can_for_org(P.EDIT, role.organization_id,
+                                  g.user.organization):
             return {'msg': 'You do not have permission to edit this role!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -634,8 +632,8 @@ class Role(RoleBase):
                        " roles cannot be deleted."
             }, HTTPStatus.BAD_REQUEST
 
-        if not self.r.can_by_org(P.DELETE, role.organization_id,
-                                 g.user.organization):
+        if not self.r.can_for_org(P.DELETE, role.organization_id,
+                                  g.user.organization):
             return {'msg': 'You do not have permission to delete this role!'},\
                 HTTPStatus.UNAUTHORIZED
 

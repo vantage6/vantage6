@@ -238,8 +238,8 @@ class Users(UserBase):
             if param in args:
                 q = q.filter(getattr(db.User, param).like(args[param]))
         if 'organization_id' in args:
-            if not self.r.can_by_org(P.VIEW, args['organization_id'],
-                                     g.user.organization):
+            if not self.r.can_for_org(P.VIEW, args['organization_id'],
+                                      g.user.organization):
                 return {
                     'msg': 'You lack the permission view users from the '
                     f'organization with id {args["organization_id"]}!'
@@ -259,10 +259,8 @@ class Users(UserBase):
                  .filter(db.Rule.id == args['rule_id'])
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_collaboration(
-                P.VIEW, args['collaboration_id'],
-                self.obtain_auth_collaborations()
-            ):
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id'],
+                                      self.obtain_auth_collaborations()):
                 return {
                     'msg': 'You lack the permission view all users from '
                     f'collaboration {args["collaboration_id"]}!'
@@ -396,8 +394,8 @@ class Users(UserBase):
             organization_id = data['organization_id']
 
         # check that user is allowed to create users
-        if not self.r.can_by_org(P.CREATE, organization_id,
-                                 g.user.organization):
+        if not self.r.can_for_org(P.CREATE, organization_id,
+                                  g.user.organization):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -508,8 +506,8 @@ class User(UserBase):
         # allow user to be returned if authenticated user can view users from
         # that organization or if the user is the same as the authenticated
         # user.
-        if (same_user or self.r.can_by_org(P.VIEW, user.organization_id,
-                                           g.user.organization)):
+        if (same_user or self.r.can_for_org(P.VIEW, user.organization_id,
+                                            g.user.organization)):
             return user_schema.dump(user, many=False).data, HTTPStatus.OK
         else:
             return {'msg': 'You lack the permission to do that!'}, \
@@ -592,8 +590,8 @@ class User(UserBase):
                 HTTPStatus.NOT_FOUND
 
         if not (self.r.e_own.can() and user == g.user) and \
-                not self.r.can_by_org(P.EDIT, user.organization_id,
-                                      g.user.organization):
+                not self.r.can_for_org(P.EDIT, user.organization_id,
+                                       g.user.organization):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -782,8 +780,8 @@ class User(UserBase):
                 HTTPStatus.NOT_FOUND
 
         if not (self.r.d_own.can() and user == g.user) and \
-                not self.r.can_by_org(P.DELETE, user.organization_id,
-                                      g.user.organization):
+                not self.r.can_for_org(P.DELETE, user.organization_id,
+                                       g.user.organization):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 

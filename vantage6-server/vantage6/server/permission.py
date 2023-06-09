@@ -81,10 +81,10 @@ class RuleCollection(dict):
         permission = Permission(RuleNeed(self.name, scope, operation))
         self.__setattr__(f'{operation.value}_{scope.value}', permission)
 
-    def can_by_org(self, operation: Operation, subject_org_id: int,
-                   own_org: Organization) -> bool:
+    def can_for_org(self, operation: Operation, subject_org_id: int,
+                    own_org: Organization) -> bool:
         """
-        Check if an operation is on a certain organization
+        Check if an operation is allowed on a certain organization
 
         Parameters
         ----------
@@ -174,7 +174,7 @@ class RuleCollection(dict):
         perms = self._get_relevant_perms(operation, minimal_scope)
         return any([perm.can() for perm in perms])
 
-    def can_for_collaboration(
+    def can_for_col(
         self, operation: Operation, collaboration_id: int,
         auth_collabs: list[Collaboration]
     ) -> bool:
