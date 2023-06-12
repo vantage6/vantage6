@@ -233,8 +233,10 @@ class MockAlgorithmClient:
         """
         Task subclient for the MockAlgorithmClient
         """
-        def create(self, input_: dict, organization_ids: list[int],
-                   *args, **kwargs) -> int:
+        def create(
+            self, input_: dict, organization_ids: list[int],
+            name: str = "mock", description: str = "mock", *args, **kwargs
+        ) -> int:
             """
             Create a new task with the MockProtocol and return the task id.
 
@@ -248,10 +250,10 @@ class MockAlgorithmClient:
                 depend on the algorithm.
             organization_ids : list[int]
                 A list of organization ids that should run the algorithm.
-            *args, **kwargs
-                Additional arguments that are passed. This is for compatibility
-                with the mocked AlgorithmClient function which accepts more
-                arguments.
+            name : str, optional
+                The name of the task, by default "mock"
+            description : str, optional
+                The description of the task, by default "mock"
 
             Returns
             -------
@@ -301,9 +303,9 @@ class MockAlgorithmClient:
                 "results": results,
                 "complete": "true",  # TODO remove in v4+.
                 "status": "completed",
-                "name": "mock",
+                "name": name,
                 "database": "mock",
-                "description": "mock",
+                "description": description,
                 "image": "mock_image",
                 "init_user": 1,
                 "initiator": 1,
