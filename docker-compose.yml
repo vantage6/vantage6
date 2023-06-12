@@ -3,7 +3,7 @@ services:
 
   vantage6-server:
     # build: .
-    image: harbor.vantage6.ai/infrastructure/server:2.0.0a1
+    image: harbor2.vantage6.ai/infrastructure/server:2.0.0a1
     dockerfile: server.Dockerfile
     ports:
       - "5000:5000"
