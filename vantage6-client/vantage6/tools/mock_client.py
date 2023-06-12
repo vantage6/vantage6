@@ -1,9 +1,7 @@
 import pandas
-import json
+import pickle
 
 from importlib import import_module
-
-from vantage6.tools import serialization
 
 
 class ClientMockProtocol:
@@ -80,7 +78,7 @@ class ClientMockProtocol:
 
             idx = 999  # we dont need this now
             results.append(
-                {"id": idx, "result": serialization.serialize(result)}
+                {"id": idx, "result": pickle.dumps(result)}
             )
 
         id_ = len(self.tasks)
@@ -125,7 +123,8 @@ class ClientMockProtocol:
         task = self.tasks[task_id]
         results = []
         for result in task.get("results"):
-            res = json.loads(result.get("result"))
+            print(result)
+            res = pickle.loads(result.get("result"))
             results.append(res)
 
         return results
