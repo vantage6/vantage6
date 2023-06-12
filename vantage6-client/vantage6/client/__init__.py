@@ -5,7 +5,6 @@ This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
 import logging
-import pickle
 import time
 import typing
 import jwt
@@ -23,7 +22,7 @@ from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common import WhoAmI
-from vantage6.client import serialization, deserialization
+from vantage6.tools import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import print_qr_code, LogLevel
 
@@ -438,9 +437,8 @@ class ClientBase(object):
     # TODO BvB 23-01-23 remove this method in v4+. It is only here for
     # backwards compatibility
     def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_='', description='',
-                  organization_ids: list = None,
-                  data_format=LEGACY, database: str = 'default') -> dict:
+                  input_='', description='', organization_ids: list = None,
+                  database: str = 'default') -> dict:
         """Post a new task at the server
 
         It will also encrypt `input_` for each receiving organization.
@@ -461,11 +459,6 @@ class ClientBase(object):
         organization_ids : list, optional
             Ids of organizations (within the collaboration) that need to
             execute this task, by default None
-        data_format : str, optional
-            Type of data format to use to send and receive
-            data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
-            will use pickle serialization. Default is 'legacy'., by default
-            LEGACY
         database : str, optional
             Database label to use for the task, by default 'default'
 
@@ -484,13 +477,8 @@ class ClientBase(object):
         if organization_ids is None:
             organization_ids = []
 
-        if data_format == LEGACY:
-            serialized_input = pickle.dumps(input_)
-        else:
-            # Data will be serialized to bytes in the specified data format.
-            # It will be prepended with 'DATA_FORMAT.' in unicode.
-            serialized_input = data_format.encode() + b'.' \
-                + serialization.serialize(input_, data_format)
+        # Data will be serialized in JSON.
+        serialized_input = serialization.serialize(input_)
 
         organization_json_list = []
         for org_id in organization_ids:
@@ -1871,7 +1859,6 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
-                   data_format: str = LEGACY,
                    database: str = 'default') -> dict:
             """Create a new task
 
@@ -1890,8 +1877,6 @@ class UserClient(ClientBase):
                 Human readable description
             input : dict
                 Algorithm input
-            data_format : str, optional
-                IO data format used, by default LEGACY
             database: str, optional
                 Database name to be used at the node
 
@@ -1902,7 +1887,7 @@ class UserClient(ClientBase):
             """
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
-                                         data_format, database)
+                                         database)
 
         def delete(self, id_: int) -> dict:
             """Delete a task
@@ -2242,18 +2227,13 @@ class ContainerClient(ClientBase):
         )
 
         res = []
-        # Encryption is not done at the client level for the container.
-        # Although I am not completely sure that the format is always
-        # a pickle.
-        # for result in results:
-        #     self._decrypt_result(result)
-        #     res.append(result.get("result"))
-        #
         try:
-            res = [pickle.loads(base64s_to_bytes(result.get("result")))
-                   for result in results if result.get("result")]
+            res = [
+                json_lib.loads(base64s_to_bytes(result.get("result")).decode())
+                for result in results if result.get("result")
+            ]
         except Exception as e:
-            self.log.error('Unable to unpickle result')
+            self.log.error('Unable to load results')
             self.log.debug(e)
 
         return res
@@ -2351,7 +2331,7 @@ class ContainerClient(ClientBase):
         """
         self.log.debug("post task without encryption (is handled by proxy)")
 
-        serialized_input = bytes_to_base64s(pickle.dumps(input_))
+        serialized_input = bytes_to_base64s(serialization.serialize(input_))
 
         organization_json_list = []
         for org_id in organization_ids:
