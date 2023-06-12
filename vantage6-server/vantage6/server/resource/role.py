@@ -745,6 +745,8 @@ class RoleRules(RoleBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Edit|❌|❌|Edit any role|\n
+          |Role|Collaboration|Edit|❌|❌|Edit any role in your collaborations
+          |\n
           |Role|Organization|Edit|❌|❌|Edit any role in your organization|\n
 
           Accessible to users.
@@ -785,11 +787,10 @@ class RoleRules(RoleBase):
                 HTTPStatus.NOT_FOUND
 
         # check that this user can edit rules
-        if not self.r.e_glo.can():
-            if not (self.r.e_org.can() and
-                    g.user.organization == role.organization):
-                return {'msg': 'You lack permissions to do that'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.EDIT, role.organization_id,
+                                  g.user.organization):
+            return {'msg': 'You lack permissions to do that'}, \
+                HTTPStatus.UNAUTHORIZED
 
         # user needs to role to assign it
         denied = self.permissions.check_user_rules([rule])
@@ -815,8 +816,10 @@ class RoleRules(RoleBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Role|Global|Delete|❌|❌|Delete any role rule|\n
-          |Role|Organization|Delete|❌|❌|Delete any role rule in your
+          |Role|Global|Edit|❌|❌|Delete any rule in a role|\n
+          |Role|Collaboration|Edit|❌|❌|Delete any rule in roles in your
+          collaborations|\n
+          |Role|Organization|Edit|❌|❌|Delete any rule in roles in your
           organization|\n
 
           Accessible to users.
@@ -852,11 +855,10 @@ class RoleRules(RoleBase):
             return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.d_glo.can():
-            if not (self.r.d_org.can() and
-                    g.user.organization == role.organization):
-                return {'msg': 'You lack permissions to do that'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.EDIT, role.organization_id,
+                                  g.user.organization):
+            return {'msg': 'You lack permissions to do that'}, \
+                HTTPStatus.UNAUTHORIZED
 
         # user needs to role to remove it
         denied = self.permissions.check_user_rules([rule])

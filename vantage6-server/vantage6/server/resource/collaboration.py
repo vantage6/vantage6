@@ -550,7 +550,7 @@ class CollaborationOrganization(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
     @only_for(("node", "user", "container"))
     def get(self, id):
@@ -639,6 +639,8 @@ class CollaborationOrganization(ServicesResources):
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Add organization to a
           collaboration|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Add organization to a
+          collaboration that your organization is already a member of|\n\n
 
           Accessible to users.
 
@@ -679,7 +681,8 @@ class CollaborationOrganization(ServicesResources):
                     "not be found"}, HTTPStatus.NOT_FOUND
 
         # verify permissions
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id,
+                                  self.obtain_auth_collaborations()):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -709,6 +712,8 @@ class CollaborationOrganization(ServicesResources):
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove an organization from an
           existing collaboration|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Remove an organization from
+          an existing collaboration that your organization is a member of|\n\n
 
           Accessible to users.
 
@@ -742,17 +747,18 @@ class CollaborationOrganization(ServicesResources):
         # get collaboration from which organization should be removed
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": f"collaboration having collaboration_id={id} can "
+            return {"msg": f"Collaboration with collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
         # get organization which should be deleted
         data = request.get_json()
         organization = db.Organization.get(data['id'])
         if not organization:
-            return {"msg": f"organization with id={id} is not found"}, \
+            return {"msg": f"Organization with id={id} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.d_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id,
+                                  self.obtain_auth_collaborations()):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -768,7 +774,7 @@ class CollaborationNode(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
     @with_user
     def get(self, id):
@@ -853,7 +859,9 @@ class CollaborationNode(ServicesResources):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Create|❌|❌|Add node to collaboration|\n
+          |Collaboration|Global|Edit|❌|❌|Add node to collaboration|\n
+          |Collaboration|Collaboration|Edit|❌|❌|Add node to collaboration
+          that your organization is a member of|\n
 
           Accessible to users.
 
@@ -894,7 +902,8 @@ class CollaborationNode(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id,
+                                  self.obtain_auth_collaborations()):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -903,6 +912,7 @@ class CollaborationNode(ServicesResources):
         if not node:
             return {"msg": f"node id={data['id']} not found"}, \
                 HTTPStatus.NOT_FOUND
+
         if node in collaboration.nodes:
             return {"msg": f"node id={data['id']} is already in collaboration "
                     f"id={id}"}, HTTPStatus.BAD_REQUEST
@@ -924,6 +934,8 @@ class CollaborationNode(ServicesResources):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove node from collaboration|\n
+          |Collaboration|Collaboration|Edit|❌|❌|Remove node from
+          collaboration that your organization is a member of|\n
 
           Accessible to users.
 
@@ -961,7 +973,8 @@ class CollaborationNode(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id,
+                                  self.obtain_auth_collaborations()):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -969,6 +982,7 @@ class CollaborationNode(ServicesResources):
         node = db.Node.get(data['id'])
         if not node:
             return {"msg": f"node id={id} not found"}, HTTPStatus.NOT_FOUND
+
         if node not in collaboration.nodes:
             return {"msg": f"node id={data['id']} is not part of "
                     f"collaboration id={id}"}, HTTPStatus.BAD_REQUEST
