@@ -76,6 +76,7 @@ def select_wrapper(database_type: str) -> WrapperBase:
     else:
         return
 
+
 def auto_wrapper(module: str, load_data: bool = True,
                  use_new_client: bool = False,
                  log_traceback: bool = False) -> None:

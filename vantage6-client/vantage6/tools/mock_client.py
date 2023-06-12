@@ -2,6 +2,7 @@ import pandas
 import pickle
 
 from importlib import import_module
+from copy import deepcopy
 
 from vantage6.tools.wrapper import select_wrapper
 
@@ -176,7 +177,7 @@ class MockAlgorithmClient:
         The name of the algorith image, by default None
     database : str, optional
         The name of the database, by default None
-    host_node_id : int, optional
+    node_id : int, optional
         The id of the node that is used to run the algorithm, by default None
     collaboration_id : int, optional
         The id of the collaboration that is used to run the algorithm, by
@@ -188,7 +189,7 @@ class MockAlgorithmClient:
     # TODO not only read CSVs but also data types
     def __init__(
         self, datasets: list[dict], module: str, image: str = None,
-        database: str = None, host_node_id: int = None,
+        database: str = None, node_id: int = None,
         collaboration_id: int = None, organization_id: int = None
     ) -> None:
         self.n = len(datasets)
@@ -207,7 +208,7 @@ class MockAlgorithmClient:
 
         self.image = image
         self.database = database
-        self.host_node_id = host_node_id
+        self.node_id = node_id
         self.collaboration_id = collaboration_id
         self.organization_id = organization_id
 
@@ -285,6 +286,11 @@ class MockAlgorithmClient:
             for org_id in organization_ids:
                 data = self.parent.datasets[org_id]
                 if master:
+                    # ensure that a task has a node_id and organization id that
+                    # is unique compared to other tasks.
+                    client_copy = deepcopy(self.parent)
+                    client_copy.node_id = org_id
+                    client_copy.organization_id = org_id
                     result = method(self.parent, data, *args, **kwargs)
                 else:
                     result = method(data, *args, **kwargs)
@@ -466,7 +472,7 @@ class MockAlgorithmClient:
                 A mocked node.
             """
             node_id = (
-                self.parent.host_node_id if self.parent.host_node_id else 1
+                self.parent.node_id if self.parent.node_id else 1
             )
             collab_id = self.parent.collaboration_id if \
                 self.parent.collaboration_id else 1
