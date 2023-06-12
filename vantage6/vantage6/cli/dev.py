@@ -9,11 +9,9 @@ instance(s). The following commands are available:
 """
 import pandas as pd
 import click
-import questionary as q
 import subprocess
 import shutil
 import itertools
-import traceback
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
@@ -29,7 +27,6 @@ from vantage6.cli.globals import (
     DEFAULT_NODE_ENVIRONMENT as N_ENV
 )
 from vantage6.cli.server import (
-    click_insert_context,
     vserver_import,
     vserver_start,
     vserver_stop,
@@ -128,7 +125,8 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
         error(f"Could not write node configuration file: {e}")
         exit(1)
 
-    info(f"Spawned node for organization {Fore.GREEN}{org_id}{Style.RESET_ALL}")
+    info(f"Spawned node for organization {Fore.GREEN}{org_id}{Style.RESET_ALL}"
+         )
 
     return {"org_id": org_id, "node_name": node_name, "api_key": api_key}
 
@@ -355,6 +353,7 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
         "server_config": server_config
     }
 
+
 # TODO: 5-6-2021: here we left off
 @cli_dev.command(name="start-demo-network")
 def start_demo_network(ip: str = None, port: int = None, image: str = None) \
@@ -389,8 +388,7 @@ def start_demo_network(ip: str = None, port: int = None, image: str = None) \
     ctx = get_server_context(server_name, S_ENV, True)
     handle_ = 'demo_'
     node_names = [config.name for config in configs if handle_ in config.name]
-    vserver_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src,
-                  attach)
+    vserver_start(ctx, ip, port, image, None, False, '', False)
     for index in range(len(node_names)):
         name = node_names[index]
         subprocess.run(["vnode", "start", "--name", name], shell=True)
