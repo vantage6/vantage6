@@ -263,7 +263,7 @@ This name should be the same as as the name you specified in the
    # different image here (e.g. python:3). In that case it is important that
    # `vantage6-client` is a dependancy of you project as this contains the wrapper
    # we are using in this example.
-   FROM harbor.vantage6.ai/algorithms/algorithm-base
+   FROM harbor2.vantage6.ai/algorithms/algorithm-base
 
    # Change this to the package name of your project. This needs to be the same
    # as what you specified for the name in the `setup.py`.
@@ -509,4 +509,4 @@ address (harbor2.vantage6.ai) and the project name (demo).
 
 .. note::
     Reach out to us on `Discord <https://discord.gg/yAyFf6Y>`__ if you want to
-    use our registries (harbor.vantage6.ai and harbor2.vantage6.ai).
+    use our registries (harbor2.vantage6.ai and harbor2.vantage6.ai).

@@ -10,7 +10,6 @@ MODULE_NAME = 'algorithm_module'
 DATA = 'column1,column2\n1,2'
 TOKEN = 'This is a fake token'
 INPUT_PARAMETERS = {'method': 'hello_world'}
-JSON_FORMAT = 'json'
 SEPARATOR = '.'
 SAMPLE_DB = pd.DataFrame([[1, 2]], columns=['column1', 'column2'])
 
