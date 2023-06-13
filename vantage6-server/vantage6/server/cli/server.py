@@ -331,9 +331,15 @@ def cli_server_shell(ctx: ServerContext) -> None:
     logging.getLogger('parso.python.diff').setLevel(logging.WARNING)
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
     logging.getLogger('asyncio').setLevel(logging.WARNING)
+
+    logging.warning(
+        "Using the shell is not recommended! There are no checks on "
+        "the validity of the data you are entering.")
+    logging.warning("Please use the User interface, Python client, or API.")
     del logging
 
     import vantage6.server.db as db
+
 
     IPython.embed(config=c)
 

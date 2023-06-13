@@ -7,7 +7,6 @@ client (client used by master algorithms) and the user client are derived.
 from __future__ import annotations
 
 import logging
-import pickle
 import time
 import typing
 import jwt
@@ -24,7 +23,7 @@ from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common import WhoAmI
-from vantage6.client import serialization, deserialization
+from vantage6.tools import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import print_qr_code, LogLevel
 from vantage6.common.task_status import TaskStatus
@@ -416,7 +415,7 @@ class ClientBase(object):
         assert self.__refresh_url, \
             "Refresh URL not found, did you authenticate?"
 
-        # if no port is specified explicit, then it should be omnit the
+        # if no port is specified explicit, then it should be omit the
         # colon : in the path. Similar (but different) to the property
         # base_path
         if self.__port:
@@ -440,9 +439,8 @@ class ClientBase(object):
     # TODO BvB 23-01-23 remove this method in v4+. It is only here for
     # backwards compatibility
     def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_='', description='',
-                  organization_ids: list = None,
-                  data_format=LEGACY, databases: list[str] = None) -> dict:
+                  input_='', description='', organization_ids: list = None,
+                  databases: list[str] = None) -> dict:
         """Post a new task at the server
 
         It will also encrypt `input_` for each receiving organization.
@@ -463,13 +461,9 @@ class ClientBase(object):
         organization_ids : list, optional
             Ids of organizations (within the collaboration) that need to
             execute this task, by default None
-        data_format : str, optional
-            Type of data format to use to send and receive
-            data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
-            will use pickle serialization. Default is 'legacy'., by default
-            LEGACY
         databases : list[str], optional
-            Database labels to use for the task, by default ['default']
+            Database labels to use for the task, by default None which will be
+            set to ['default']
 
         Returns
         -------
@@ -492,13 +486,8 @@ class ClientBase(object):
             # in that case we convert it to a list
             databases = [databases]
 
-        if data_format == LEGACY:
-            serialized_input = pickle.dumps(input_)
-        else:
-            # Data will be serialized to bytes in the specified data format.
-            # It will be prepended with 'DATA_FORMAT.' in unicode.
-            serialized_input = data_format.encode() + b'.' \
-                + serialization.serialize(input_, data_format)
+        # Data will be serialized in JSON.
+        serialized_input = serialization.serialize(input_)
 
         organization_json_list = []
         for org_id in organization_ids:
@@ -1846,7 +1835,6 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
-                   data_format: str = LEGACY,
                    databases: list[str] = None) -> dict:
             """Create a new task
 
@@ -1865,8 +1853,6 @@ class UserClient(ClientBase):
                 Human readable description
             input : dict
                 Algorithm input
-            data_format : str, optional
-                IO data format used, by default LEGACY
             databases: list[str], optional
                 Database names to be used at the node
 
@@ -1879,7 +1865,7 @@ class UserClient(ClientBase):
                 databases = ['default']
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
-                                         data_format, databases)
+                                         databases)
 
         def delete(self, id_: int) -> dict:
             """Delete a task
@@ -1956,7 +1942,7 @@ class UserClient(ClientBase):
                  assigned: tuple[str, str] = None,
                  finished: tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
-                 include_metadata: bool = True) -> list:
+                 include_metadata: bool = True) -> dict | list[dict]:
             """List runs
 
             Parameters
@@ -2025,8 +2011,6 @@ class UserClient(ClientBase):
 
             return runs
 
-        # note: using typing.List instead of `list` to prevent referring
-        # to the list() function in an incorrect manner
         def from_task(
             self, task_id: int, include_task: bool = False
         ) -> typing.List[dict]:

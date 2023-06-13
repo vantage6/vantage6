@@ -34,10 +34,10 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'click==8.1.3',
-        'docker==6.0.1',
+        'docker==6.1.2',
         'gevent==22.10.2',
         'python-socketio==5.7.2',
-        'requests==2.28.2',
+        'requests==2.31.0',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
     ],
@@ -49,7 +49,7 @@ setup(
             'schema==0.7.5',
             'appdirs==1.4.4',
             'PyJWT==2.6.0',
-            'Flask==1.1.1'
+            'flask==2.2.5'
         ]
     },
     package_data={

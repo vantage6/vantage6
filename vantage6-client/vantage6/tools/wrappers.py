@@ -24,10 +24,8 @@ The ``multi_wrapper`` is used when multiple databases are connected to a single
 algorithm. This wrapper is separated from the other wrappers because it is not
 compatible with the ``smart_wrapper``.
 """
-import os
 import io
 import pandas
-import json
 
 from abc import ABC, abstractmethod
 from SPARQLWrapper import SPARQLWrapper, CSV
@@ -76,7 +74,7 @@ class CSVWrapper(WrapperBase):
 
 
 # for backwards compatibility
-# TODO BvB 2023-03-02 remove in v5+?
+# TODO BvB 2023-03-02 remove in v4+?
 CsvWrapper = CSVWrapper
 DockerWrapper = CSVWrapper
 

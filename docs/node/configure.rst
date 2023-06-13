@@ -141,9 +141,6 @@ There are two important steps to be taken to accomplish this:
     certain algorithms. You can check this by verifying that the images you want
     to be used are signed.
 
-    In case you are using our Docker repository you need to use
-    harbor\ **2**.vantage6.ai as harbor.vantage6.ai does not have a notary.
-
 .. _node-logging:
 
 Logging
