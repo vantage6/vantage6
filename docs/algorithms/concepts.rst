@@ -460,7 +460,7 @@ package name of your algorithm.
 .. code:: docker
 
    # python vantage6 algorithm base image
-   FROM harbor.vantage6.ai/algorithms/algorithm-base
+   FROM harbor2.vantage6.ai/algorithms/algorithm-base
 
    # this should reflect the python package name
    ARG PKG_NAME="v6-summary-py"

@@ -2,7 +2,6 @@
 to be cleaned at some point. """
 import logging
 import os
-import pickle
 import docker.errors
 import json
 
@@ -286,11 +285,13 @@ class DockerTaskManager(DockerBaseManager):
             )
 
         # try reading docker input
+        # FIXME BvB 2023-02-03: why do we read docker input here? It is never
+        # really used below. Should it?
         deserialized_input = None
         if self.docker_input:
             self.log.debug("Deserialize input")
             try:
-                deserialized_input = pickle.loads(self.docker_input)
+                deserialized_input = json.loads(self.docker_input)
             except Exception:
                 pass
 
