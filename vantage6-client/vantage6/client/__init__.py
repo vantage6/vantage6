@@ -440,7 +440,7 @@ class ClientBase(object):
     # backwards compatibility
     def post_task(self, name: str, image: str, collaboration_id: int,
                   input_='', description='', organization_ids: list = None,
-                  database: str = 'default') -> dict:
+                  databases: list[str] = None) -> dict:
         """Post a new task at the server
 
         It will also encrypt `input_` for each receiving organization.
@@ -461,8 +461,9 @@ class ClientBase(object):
         organization_ids : list, optional
             Ids of organizations (within the collaboration) that need to
             execute this task, by default None
-        database : str, optional
-            Database label to use for the task, by default 'default'
+        databases : list[str], optional
+            Database labels to use for the task, by default None which will be
+            set to ['default']
 
         Returns
         -------
@@ -478,6 +479,12 @@ class ClientBase(object):
 
         if organization_ids is None:
             organization_ids = []
+        if databases is None:
+            databases = ['default']
+        elif isinstance(databases, str):
+            # it is not unlikely that users specify a single database as a str,
+            # in that case we convert it to a list
+            databases = [databases]
 
         # Data will be serialized in JSON.
         serialized_input = serialization.serialize(input_)
@@ -500,7 +507,7 @@ class ClientBase(object):
             "collaboration_id": collaboration_id,
             "description": description,
             "organizations": organization_json_list,
-            'database': database
+            'databases': databases
         })
 
     def _decrypt_input(self, input_: str) -> bytes:
@@ -1828,7 +1835,7 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
-                   database: str = 'default') -> dict:
+                   databases: list[str] = None) -> dict:
             """Create a new task
 
             Parameters
@@ -1846,17 +1853,19 @@ class UserClient(ClientBase):
                 Human readable description
             input : dict
                 Algorithm input
-            database: str, optional
-                Database name to be used at the node
+            databases: list[str], optional
+                Database names to be used at the node
 
             Returns
             -------
             dict
                 [description]
             """
+            if databases is None:
+                databases = ['default']
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
-                                         database)
+                                         databases)
 
         def delete(self, id_: int) -> dict:
             """Delete a task

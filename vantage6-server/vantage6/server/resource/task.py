@@ -268,11 +268,14 @@ class Tasks(TaskBase):
                       'parent_id', 'job_id']:
             if param in args:
                 q = q.filter(getattr(db.Task, param) == args[param])
-        for param in ['name', 'image', 'description', 'database', 'status']:
+        for param in ['name', 'image', 'description', 'status']:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
         if 'run_id' in args:
             q = q.join(db.Run).filter(db.Run.id == args['run_id'])
+        if 'database' in args:
+            q = q.join(db.TaskDatabase)\
+                 .filter(db.TaskDatabase.database == args['database'])
         if 'is_user_created' in args:
             try:
                 user_created = int(args['is_user_created'])
@@ -428,10 +431,10 @@ class Tasks(TaskBase):
                 return {"msg": "Container-token is not valid"}, \
                     HTTPStatus.UNAUTHORIZED
 
-        # permissions ok, create record
+
+        # permissions ok, create task record and TaskDatabase records
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,
-                       database=data.get('database', ''),
                        init_org=init_org)
 
         # create job_id. Users can only create top-level -tasks (they will not
@@ -450,6 +453,14 @@ class Tasks(TaskBase):
 
         # ok commit session...
         task.save()
+
+        # save the databases that the task uses
+        databases = data.get('databases', ['default'])
+        if not isinstance(databases, list):
+            databases = [databases]
+        for database in databases:
+            db_record = db.TaskDatabase(task_id=task.id, database=database)
+            db_record.save()
 
         # send socket event that task has been created
         self.socketio.emit(

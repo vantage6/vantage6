@@ -320,7 +320,7 @@ class ContainerToken(ServicesResources):
             "collaboration_id": g.node.collaboration_id,
             "task_id": task_id,
             "image": claim_image,
-            "database": db_task.database
+            "databases": [db_entry.database for db_entry in db_task.databases]
         }
         token = create_access_token(container, expires_delta=False)
 

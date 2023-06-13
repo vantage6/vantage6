@@ -56,7 +56,6 @@ class Task(Base):
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     job_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
-    database = Column(String)
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
 
@@ -66,6 +65,7 @@ class Task(Base):
     runs = relationship("Run", back_populates="task")
     init_org = relationship("Organization", back_populates="tasks")
     init_user = relationship("User", back_populates="created_tasks")
+    databases = relationship("TaskDatabase", back_populates="task")
 
     @hybrid_property
     def status(self) -> str:

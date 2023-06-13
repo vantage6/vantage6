@@ -1,8 +1,8 @@
 import json
-from typing import BinaryIO
+from typing import BinaryIO, Any
 
 
-def deserialize(file: BinaryIO):
+def deserialize(file: BinaryIO) -> Any:
     """
     Deserialize data from a file using JSON
 
@@ -13,7 +13,7 @@ def deserialize(file: BinaryIO):
 
     Returns
     -------
-    str
+    Any
         The deserialized data
     """
     return json.load(file)

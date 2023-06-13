@@ -176,6 +176,11 @@ class TaskSchema(HATEOASModelSchema):
     ))
     init_org = fields.Method("init_org_")
     init_user = fields.Method("init_user_")
+    databases = fields.Method("databases_")
+
+    @staticmethod
+    def databases_(obj):
+        return [db.database for db in obj.databases]
 
 
 class ResultSchema(HATEOASModelSchema):

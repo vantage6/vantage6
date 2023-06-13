@@ -1,8 +1,9 @@
 import jwt
-import pickle
+import json as json_lib
 
 from vantage6.client import ClientBase
-from vantage6.client import base64s_to_bytes, bytes_to_base64s
+from vantage6.common import base64s_to_bytes, bytes_to_base64s
+from vantage6.tools.serialization import serialize
 
 
 class AlgorithmClient(ClientBase):
@@ -43,7 +44,7 @@ class AlgorithmClient(ClientBase):
             container_identity = jwt_payload['identity']
 
         self.image = container_identity.get("image")
-        self.database = container_identity.get('database')
+        self.databases = container_identity.get('databases', [])
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.log.info(
@@ -184,18 +185,18 @@ class AlgorithmClient(ClientBase):
                 "result", params={"task_id": task_id}
             )
 
-            decoded_results = []
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
-            # FIXME Are we completely sure that the format is always a pickle?
-            # TODO update with v4+ changes
+            decoded_results = []
             try:
                 decoded_results = [
-                    pickle.loads(base64s_to_bytes(result.get("result")))
+                    json_lib.loads(
+                        base64s_to_bytes(result.get("result")).decode()
+                    )
                     for result in results if result.get("result")
                 ]
             except Exception as e:
-                self.parent.log.error('Unable to unpickle result')
+                self.parent.log.error('Unable to load results')
                 self.parent.log.debug(e)
 
             return decoded_results
@@ -263,7 +264,7 @@ class AlgorithmClient(ClientBase):
 
             # serializing input. Note that the input is not encrypted here, but
             # in the proxy server (self.parent.request())
-            serialized_input = bytes_to_base64s(pickle.dumps(input_))
+            serialized_input = bytes_to_base64s(serialize(input_))
             organization_json_list = []
             for org_id in organization_ids:
                 organization_json_list.append(
@@ -279,7 +280,7 @@ class AlgorithmClient(ClientBase):
                 "collaboration_id": self.parent.collaboration_id,
                 "description": description,
                 "organizations": organization_json_list,
-                "database": self.parent.database
+                "databases": self.parent.databases
             })
 
     class VPN(ClientBase.SubClient):

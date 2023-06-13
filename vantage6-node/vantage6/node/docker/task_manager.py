@@ -186,8 +186,10 @@ class DockerTaskManager(DockerBaseManager):
             self.status = TaskStatus.FAILED
             raise PermanentAlgorithmStartFail
 
-    def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: dict, database: str) -> list[dict] | None:
+    def run(
+        self, docker_input: bytes, tmp_vol_name: str, token: str,
+        algorithm_env: dict, databases_to_use: list[str]
+    ) -> list[dict] | None:
         """
         Runs the docker-image in detached mode.
 
@@ -204,6 +206,8 @@ class DockerTaskManager(DockerBaseManager):
             Bearer token that the container can use
         algorithm_env: dict
             Dictionary with additional environment variables to set
+        databases_to_use: list[str]
+            List of labels of databases to use in the task
 
         Returns
         -------
@@ -222,7 +226,7 @@ class DockerTaskManager(DockerBaseManager):
         # setup environment variables
         self.environment_variables = \
             self._setup_environment_vars(algorithm_env=algorithm_env,
-                                         database=database)
+                                         databases_to_use=databases_to_use)
 
         # run the algorithm as docker container
         vpn_ports = self._run_algorithm()
@@ -233,7 +237,7 @@ class DockerTaskManager(DockerBaseManager):
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
-    def _run_algorithm(self) -> list[dict]:
+    def _run_algorithm(self) -> list[dict] | None:
         """
         Run the algorithm container
 
@@ -408,7 +412,7 @@ class DockerTaskManager(DockerBaseManager):
         return volumes
 
     def _setup_environment_vars(self, algorithm_env: dict,
-                                database: str = 'default') -> dict:
+                                databases_to_use: list[str]) -> dict:
         """"
         Set environment variables required to run the algorithm
 
@@ -416,8 +420,8 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         algorithm_env: dict
             Dictionary with additional environment variables to set
-        database: str
-            Label of the database to use
+        databases_to_use: list[str]
+            Labels of the databases to use
 
         Returns
         -------
@@ -474,16 +478,18 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables["NO_PROXY"] = ', '.join(no_proxy)
             environment_variables["no_proxy"] = ', '.join(no_proxy)
 
-        if database in self.databases:
-            environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
-        else:
-            # In this case the algorithm might crash if it tries to access
-            # the DATABASE_LABEL environment variable
-            self.log.warning("A user specified a database that does not "
-                             "exist. Available databases are: "
-                             f"{', '.join(list(self.databases.keys()))}. This "
-                             "is likely to result in an algorithm crash.")
-            self.log.debug(f"User specified database: {database}")
+        for database in databases_to_use:
+            if database not in self.databases:
+                # In this case the algorithm might crash if it tries to access
+                # the DATABASE_LABEL environment variable
+                self.log.warning("A user specified a database that does not "
+                                 "exist. Available databases are: "
+                                 f"{self.databases.keys()}. This is likely to "
+                                 "result in an algorithm crash.")
+                self.log.debug(f"User specified database: {database}")
+
+        environment_variables["USER_REQUESTED_DATABASE_LABELS"] = \
+            ",".join(databases_to_use)
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
@@ -502,18 +508,6 @@ class DockerTaskManager(DockerBaseManager):
 
             db_labels.append(label)
         environment_variables['DB_LABELS'] = json.dumps(db_labels)
-
-        # Support legacy algorithms
-        # TODO remove in v4+
-        try:
-            environment_variables["DATABASE_URI"] = (
-                f"{self.data_folder}/"
-                f"{os.path.basename(self.databases[database]['uri'])}"
-            )
-        except KeyError as e:
-            self.log.error(f"'{database}' database missing! This could crash "
-                           "legacy algorithms")
-            self.log.debug(e)
 
         self.log.debug(f"environment: {environment_variables}")
 

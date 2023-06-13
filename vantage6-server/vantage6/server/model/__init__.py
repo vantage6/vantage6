@@ -13,3 +13,4 @@ from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule
 from vantage6.server.model.role_rule_association import role_rule_association
 from vantage6.server.model.algorithm_port import AlgorithmPort
+from vantage6.server.model.task_database import TaskDatabase
