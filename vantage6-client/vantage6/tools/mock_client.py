@@ -1,5 +1,6 @@
 import pandas
 import pickle
+import pandas as pd
 
 from importlib import import_module
 from copy import deepcopy
@@ -79,6 +80,7 @@ class ClientMockProtocol:
             else:
                 result = method(data, *args, **kwargs)
 
+            # TODO remove pickle in v4+
             idx = 999  # we dont need this now
             results.append(
                 {"id": idx, "result": pickle.dumps(result)}
@@ -154,7 +156,7 @@ class ClientMockProtocol:
 # TODO in v4+, rename to ClientMockProtocol?
 class MockAlgorithmClient:
     """
-    The MockAlgorithmClient is mimics the behaviour of the AlgorithmClient. It
+    The MockAlgorithmClient mimics the behaviour of the AlgorithmClient. It
     can be used to mock the behaviour of the AlgorithmClient and its
     communication with the server.
 
@@ -164,53 +166,53 @@ class MockAlgorithmClient:
         A list of dictionaries that contain the datasets that are used in the
         mocked algorithm. The dictionaries should contain the following:
         {
-            "database": str,
+            "database": str | pd.DataFrame,
             "type": str,
             "input_data": dict
         }
         where database is the path/URI to the database, type is the database
         type (as listed in node configuration) and input_data contains
         the input data that is normally passed to the algorithm wrapper.
+
+        Note that if the database is a pandas DataFrame, the type and
+        input_data keys are not required.
     module : str
         The name of the module that contains the algorithm.
-    image : str, optional
-        The name of the algorith image, by default None
-    database : str, optional
-        The name of the database, by default None
     node_id : int, optional
-        The id of the node that is used to run the algorithm, by default None
+        Sets the mocked node id that to this value. Defaults to 1.
     collaboration_id : int, optional
-        The id of the collaboration that is used to run the algorithm, by
-        default None
+        Sets the mocked collaboration id to this value. Defaults to 1.
     organization_id : int, optional
-        The id of the organization that is used to run the algorithm, by
-        default None
+        Sets the mocked organization id to this value. Defaults to 1.
     """
     # TODO not only read CSVs but also data types
     def __init__(
-        self, datasets: list[dict], module: str, image: str = None,
-        database: str = None, node_id: int = None,
+        self, datasets: list[dict], module: str, node_id: int = None,
         collaboration_id: int = None, organization_id: int = None
     ) -> None:
         self.n = len(datasets)
         self.datasets = []
         for dataset in datasets:
-            wrapper = select_wrapper(dataset["type"])
-            self.datasets.append(
-                wrapper.load_data(
-                    dataset["database"],
-                    dataset["input_data"] if "input_data" in dataset else {}
+            if dataset["database"].isinstance(pd.DataFrame):
+                self.datasets.append(dataset["database"])
+            else:
+                wrapper = select_wrapper(dataset["type"])
+                self.datasets.append(
+                    wrapper.load_data(
+                        dataset["database"],
+                        dataset["input_data"] if "input_data" in dataset
+                        else {}
+                    )
                 )
-            )
 
         self.lib = import_module(module)
         self.tasks = []
 
-        self.image = image
-        self.database = database
-        self.node_id = node_id
-        self.collaboration_id = collaboration_id
-        self.organization_id = organization_id
+        self.image = 'mock_image'
+        self.database = 'mock_database'
+        self.host_node_id = node_id if node_id else 1
+        self.collaboration_id = collaboration_id if collaboration_id else 1
+        self.organization_id = organization_id if organization_id else 1
 
         self.task = self.Task(self)
         self.result = self.Result(self)
@@ -289,7 +291,7 @@ class MockAlgorithmClient:
                     # ensure that a task has a node_id and organization id that
                     # is unique compared to other tasks.
                     client_copy = deepcopy(self.parent)
-                    client_copy.node_id = org_id
+                    client_copy.host_node_id = org_id
                     client_copy.organization_id = org_id
                     result = method(self.parent, data, *args, **kwargs)
                 else:
@@ -301,8 +303,7 @@ class MockAlgorithmClient:
                 )
 
             id_ = len(self.parent.tasks)
-            collab_id = self.parent.collaboration_id if \
-                self.parent.collaboration_id else 1
+            collab_id = self.parent.collaboration_id
             # TODO adapt fields in v4+
             task = {
                 "id": id_,
@@ -441,8 +442,7 @@ class MockAlgorithmClient:
             dict
                 A mocked collaboration.
             """
-            collab_id = self.parent.collaboration_id if \
-                self.parent.collaboration_id else 1
+            collab_id = self.parent.collaboration_id
             return {
                 "id": collab_id,
                 "name": "mock-collaboration",
@@ -471,11 +471,8 @@ class MockAlgorithmClient:
             dict
                 A mocked node.
             """
-            node_id = (
-                self.parent.node_id if self.parent.node_id else 1
-            )
-            collab_id = self.parent.collaboration_id if \
-                self.parent.collaboration_id else 1
+            node_id = self.parent.host_node_id
+            collab_id = self.parent.collaboration_id
             return {
                 "id": node_id,
                 "name": "mock-node",
