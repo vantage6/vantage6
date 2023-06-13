@@ -1,7 +1,8 @@
-from typing import Any, Type
+from __future__ import annotations
 import yaml
 import collections
 
+from typing import Any, Type
 from pathlib import Path
 from schema import Schema
 
@@ -152,7 +153,7 @@ class ConfigurationManager(object):
     @classmethod
     def from_file(
         cls, path: Path | str, conf_class: Type[Configuration] = Configuration
-    ) -> 'ConfigurationManager':
+    ) -> ConfigurationManager:
         """
         Load a configuration from a file.
 

@@ -37,7 +37,7 @@ setup(
         'pandas==1.5.3',
         'PyJWT==2.6.0',
         'pyfiglet==0.8.post1',
-        'requests==2.28.2',
+        'requests==2.31.0',
         'SPARQLWrapper==2.0.0',
         'qrcode==7.3.1',
         f'vantage6-common=={version_ns["__version__"]}',

@@ -100,12 +100,18 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
 
     config["logging"] = {
         "level": res,
-        "file": f"{instance_name}.log",
         "use_console": True,
         "backup_count": 5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
-        "datefmt": "%Y-%m-%d %H:%M:%S"
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+        "loggers": [
+            {"name": "urllib3", "level": "warning"},
+            {"name": "requests", "level": "warning"},
+            {"name": "engineio.client", "level": "warning"},
+            {"name": "docker.utils.config", "level": "warning"},
+            {"name": "docker.auth", "level": "warning"},
+        ]
     }
 
     encryption = q.confirm("Enable encryption?", default=True).ask()
@@ -241,7 +247,15 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         "backup_count": 5,
         "max_size": 1024,
         "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
-        "datefmt": "%Y-%m-%d %H:%M:%S"
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+        "loggers": [
+            {"name": "urllib3", "level": "warning"},
+            {"name": "socketIO-client", "level": "warning"},
+            {"name": "socketio.server", "level": "warning"},
+            {"name": "engineio.server", "level": "warning"},
+            {"name": "sqlalchemy.engine", "level": "warning"},
+            {"name": "requests_oauthlib.oauth2_session", "level": "warning"},
+        ]
     }
 
     return config

@@ -176,7 +176,7 @@ class UserToken(ServicesResources):
         ----------
         user: User
             The SQLAlchemy model of the user who is authenticating
-        mfa_code:
+        mfa_code: int | str
             A six-digit TOTP code from an authenticator app
 
         Returns

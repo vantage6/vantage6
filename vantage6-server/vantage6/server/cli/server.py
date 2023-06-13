@@ -59,7 +59,9 @@ def click_insert_context(func: callable) -> callable:
     @click.option('--system', 'system_folders', flag_value=True)
     @click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
     @wraps(func)
-    def func_with_context(name, config, system_folders, *args, **kwargs):
+    def func_with_context(name: str, config: str, system_folders: bool,
+                          *args, **kwargs) -> callable:
+
         # select configuration if none supplied
         if config:
             ctx = ServerContext.from_external_config_file(
@@ -300,10 +302,14 @@ def cli_server_shell(ctx: ServerContext) -> None:
     logging.getLogger('parso.python.diff').setLevel(logging.WARNING)
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
     logging.getLogger('asyncio').setLevel(logging.WARNING)
+
+    logging.warning(
+        "Using the shell is not recommended! There are no checks on "
+        "the validity of the data you are entering.")
+    logging.warning("Please use the User interface, Python client, or API.")
     del logging
 
     import vantage6.server.db as db
-
     IPython.embed(config=c)
 
 

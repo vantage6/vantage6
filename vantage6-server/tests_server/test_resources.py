@@ -2478,18 +2478,38 @@ class TestResources(unittest.TestCase):
 
         rule = Rule.get_by_("run", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        result = self.app.get(f'/api/task/{task.id}/run', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
+        self.assertEqual(len(result.json['data']), 0)
 
         # test with organization permission
         headers = self.create_user_and_login(org, [rule])
-        result = self.app.get(f'/api/task/{task.id}/run', headers=headers)
+        result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # test with global permission
         rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        result = self.app.get(f'/api/task/{task.id}/run', headers=headers)
+        result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # test also result endpoint
+        rule = Rule.get_by_("run", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(
+            f'/api/result?task_id={task.id}', headers=headers)
+        self.assertEqual(len(result.json['data']), 0)
+
+        # test with organization permission
+        headers = self.create_user_and_login(org, [rule])
+        result = self.app.get(
+            f'/api/result?task_id={task.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # test with global permission
+        rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(
+            f'/api/result?task_id={task.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
         # cleanup
@@ -2506,5 +2526,5 @@ class TestResources(unittest.TestCase):
 
         headers = self.login_container(collaboration=col, organization=org,
                                        task=task)
-        results = self.app.get(f'/api/task/{task.id}/run', headers=headers)
+        results = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)

@@ -136,17 +136,31 @@ class TaskSchema(HATEOASModelSchema):
     children = fields.Method("children")
 
 
-# /task/{id}?include=run
+class ResultSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Run
+        exclude = ("assigned_at", "started_at", "finished_at", "status",
+                   "task", "ports", "organization", "log", "input",)
+
+    run_link = fields.Method("make_run_link")
+
+    @staticmethod
+    def make_run_link(obj):
+        return {
+            "id": obj.id,
+            "link": url_for("run_with_id", id=obj.id),
+            "methods": ["GET", "PATCH"]
+        }
+
+
+# /task/{id}?include=results
 class TaskIncludedSchema(TaskSchema):
     """Returns the TaskSchema plus the correspoding runs."""
-    runs = fields.Nested('TaskRunSchema', many=True, exclude=['task'])
+    results = fields.Nested('TaskResultSchema', many=True)
 
 
 # /task/{id}/run
-class TaskRunSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.Run
-
+class TaskResultSchema(ResultSchema):
     node = fields.Function(
         func=lambda obj: RunNodeSchema().dump(obj.node, many=False).data
     )
@@ -190,23 +204,6 @@ class RunNodeSchema(HATEOASModelSchema):
         model = db.Node
         exclude = ('type', 'api_key', 'collaboration', 'organization',
                    'last_seen')
-
-
-class ResultSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.Run
-        exclude = ("assigned_at", "started_at", "finished_at", "status",
-                   "task", "ports", "organization", "log", "input",)
-
-    run_link = fields.Method("make_run_link")
-
-    @staticmethod
-    def make_run_link(obj):
-        return {
-            "id": obj.id,
-            "link": url_for("run_with_id", id=obj.id),
-            "methods": ["GET", "PATCH"]
-        }
 
 
 class PortSchema(HATEOASModelSchema):

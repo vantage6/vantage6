@@ -149,7 +149,7 @@ def inspect_remote_image_timestamp(
         log.warn("Or an image from docker hub?")
         log.warn("We'll make a final attempt when running the image to pull"
                  " it without any checks...")
-        return
+        return None, None
 
     # figure out API of the docker repo
     v1_check = requests.get(f"https://{reg}/api/health")
@@ -163,7 +163,7 @@ def inspect_remote_image_timestamp(
         log.error(f"Could not determine version of the registry! {reg}")
         log.error("Is this a Harbor registry?")
         log.error("Or is the harbor server offline?")
-        return
+        return None, None
 
     if v1:
         image = f"https://{reg}/api/repositories/{rep}/{img_}/tags/{tag}"
@@ -179,12 +179,12 @@ def inspect_remote_image_timestamp(
     # verify that we got an result
     if result.status_code == 404:
         log.warn(f"Remote image not found! {image}")
-        return
+        return None, None
 
     if result.status_code != 200:
         log.warn(f"Remote info could not be fetched! ({result.status_code}) "
                  f"{image}")
-        return
+        return None, None
 
     if v1:
         timestamp = parse(result.json().get("created"))
@@ -221,10 +221,10 @@ def inspect_local_image_timestamp(
         img = docker_client.images.get(image)
     except docker.errors.ImageNotFound:
         log.debug(f"Local image does not exist! {image}")
-        return None
+        return None, None
     except docker.errors.APIError:
         log.debug(f"Local info not available! {image}")
-        return None
+        return None, None
 
     try:
         digest = img.attrs.get("RepoDigests")[0].split("@")[1]

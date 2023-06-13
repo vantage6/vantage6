@@ -10,9 +10,9 @@ databases:
   default:
 allowed_images:
 docker_registries:
-  - registry: harbor.vantage6.ai
-    username: tester
-    password: 46KdE!ei
+  - registry: harbor2.vantage6.ai
+    username: some_username
+    password: some_password
 logging:
     level:        CRITICAL               # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
     file:         node.log               # Filename of logfile
