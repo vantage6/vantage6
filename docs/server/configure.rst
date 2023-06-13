@@ -59,8 +59,11 @@ You can download this file here: :download:`server_config.yaml <yaml/server_conf
     :language: yaml
 
 .. note::
-    We use `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
-    In short:
+    Before version 4.0, we used `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
+    One of these keys had to be provided at the highest level in the
+    configuration file. From version 4.0 onwards, this key is no longer allowed.
+
+    The deprecated environments in short:
 
     - ``dev`` Development environment. It is ok to break things here
     - ``test`` Testing environment. Here, you can verify that everything
@@ -73,9 +76,10 @@ You can download this file here: :download:`server_config.yaml <yaml/server_conf
     - ``prod`` Production environment. The version of the proposed solution
       where the final analyses are executed.
 
-    You can also specify the key ``application`` if you do not want to specify
-    one of the environments.
+    Before v4.0, you can also specify the key ``application`` if you do not
+    want to specify one of the environments.
 
+.. todo this section is close duplicate of docs/node/configure -- merge?
 
 .. _server-configure-location:
 
