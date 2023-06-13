@@ -192,7 +192,7 @@ class MockAlgorithmClient:
         self.n = len(datasets)
         self.datasets = []
         for dataset in datasets:
-            if dataset["database"].isinstance(pd.DataFrame):
+            if isinstance(dataset["database"], pd.DataFrame):
                 self.datasets.append(dataset["database"])
             else:
                 wrapper = select_wrapper(dataset["type"])
