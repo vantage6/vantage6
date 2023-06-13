@@ -355,7 +355,7 @@ class Node:
             docker_input=task_incl_run['input'],
             tmp_vol_name=vol_name,
             token=token,
-            database=task.get('database', 'default')
+            databases_to_use=task.get('databases', ['default'])
         )
 
         # save task status to the server

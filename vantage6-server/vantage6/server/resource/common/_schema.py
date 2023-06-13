@@ -134,6 +134,11 @@ class TaskSchema(HATEOASModelSchema):
     runs = fields.Method("runs")
     parent = fields.Method("parent_")
     children = fields.Method("children")
+    databases = fields.Method("databases_")
+
+    @staticmethod
+    def databases_(obj):
+        return [db.database for db in obj.databases]
 
 
 class ResultSchema(HATEOASModelSchema):
