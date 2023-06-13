@@ -62,10 +62,12 @@ class HATEOASModelSchema(SQLAlchemyAutoSchema):
         setattr(self, "run", lambda obj: self.create_hateoas("run", obj))
         setattr(self, "task", lambda obj: self.create_hateoas("task", obj))
         setattr(self, "port", lambda obj: self.create_hateoas("port", obj))
-        setattr(self, "parent_",
-                lambda obj: self.create_hateoas(
-                    "parent", obj, endpoint="task"
-                ))
+        setattr(self, "parent_", lambda obj: self.create_hateoas(
+            "parent", obj, endpoint="task"))
+        setattr(self, "init_org_", lambda obj: self.create_hateoas(
+            "init_org", obj, endpoint="organization"))
+        setattr(self, "init_user_", lambda obj: self.create_hateoas(
+            "init_user", obj, endpoint="user"))
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -145,7 +147,7 @@ class HATEOASModelSchema(SQLAlchemyAutoSchema):
 
         Parameters
         ----------
-        pagination : Page
+        pagination : Pagination
             Paginated database resources
 
         Returns
@@ -172,8 +174,8 @@ class TaskSchema(HATEOASModelSchema):
     children = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to="task", link_from="parent_id"
     ))
-    init_org = fields.Function(lambda obj: obj.init_org_id)
-    init_user = fields.Function(lambda obj: obj.init_user_id)
+    init_org = fields.Method("init_org_")
+    init_user = fields.Method("init_user_")
 
 
 class ResultSchema(HATEOASModelSchema):
