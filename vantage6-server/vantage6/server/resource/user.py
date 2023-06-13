@@ -412,7 +412,7 @@ class Users(UserBase):
 
         user.save()
 
-        return user_schema.dump(user).data, HTTPStatus.CREATED
+        return user_schema.dump(user), HTTPStatus.CREATED
 
 
 class User(UserBase):
@@ -472,7 +472,7 @@ class User(UserBase):
             (self.r.v_org.can() and same_org) or
             same_user
         ):
-            return user_schema.dump(user, many=False).data, HTTPStatus.OK
+            return user_schema.dump(user, many=False), HTTPStatus.OK
         else:
             return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -695,7 +695,7 @@ class User(UserBase):
             }, HTTPStatus.BAD_REQUEST
             # TODO BvB 2021-08-27 return msg that user was not updated?
 
-        return user_schema.dump(user).data, HTTPStatus.OK
+        return user_schema.dump(user), HTTPStatus.OK
 
     @with_user
     def delete(self, id):

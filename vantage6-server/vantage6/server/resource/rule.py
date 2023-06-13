@@ -206,4 +206,4 @@ class Rule(ServicesResources):
         if not rule:
             return {'msg': f'Rule id={id} not found!'}, HTTPStatus.NOT_FOUND
 
-        return rule_schema.dump(rule, many=False).data, HTTPStatus.OK
+        return rule_schema.dump(rule, many=False), HTTPStatus.OK

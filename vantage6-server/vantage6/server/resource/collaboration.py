@@ -325,7 +325,7 @@ class Collaborations(CollaborationBase):
         )
 
         collaboration.save()
-        return collaboration_schema.dump(collaboration).data, HTTPStatus.OK
+        return collaboration_schema.dump(collaboration), HTTPStatus.OK
 
 
 class Collaboration(CollaborationBase):
@@ -387,7 +387,7 @@ class Collaboration(CollaborationBase):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return collaboration_schema.dump(collaboration, many=False).data, \
+        return collaboration_schema.dump(collaboration, many=False), \
             HTTPStatus.OK  # 200
 
     @with_user
@@ -477,7 +477,7 @@ class Collaboration(CollaborationBase):
 
         collaboration.save()
 
-        return collaboration_schema.dump(collaboration, many=False).data, \
+        return collaboration_schema.dump(collaboration, many=False), \
             HTTPStatus.OK  # 200
 
     @with_user
@@ -680,7 +680,7 @@ class CollaborationOrganization(ServicesResources):
         # append organization to the collaboration
         collaboration.organizations.append(organization)
         collaboration.save()
-        return org_schema.dump(collaboration.organizations, many=True).data, \
+        return org_schema.dump(collaboration.organizations, many=True), \
             HTTPStatus.OK
 
     @with_user
@@ -746,7 +746,7 @@ class CollaborationOrganization(ServicesResources):
         # delete organization and update
         collaboration.organizations.remove(organization)
         collaboration.save()
-        return org_schema.dump(collaboration.organizations, many=True).data, \
+        return org_schema.dump(collaboration.organizations, many=True), \
             HTTPStatus.OK
 
 
@@ -896,7 +896,7 @@ class CollaborationNode(ServicesResources):
 
         collaboration.nodes.append(node)
         collaboration.save()
-        return node_schema.dump(collaboration.nodes, many=True).data,\
+        return node_schema.dump(collaboration.nodes, many=True),\
             HTTPStatus.CREATED
 
     @with_user
