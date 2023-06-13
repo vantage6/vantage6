@@ -1,4 +1,3 @@
-import pandas
 import pickle
 import pandas as pd
 
@@ -25,7 +24,7 @@ class ClientMockProtocol:
         self.datasets = []
         for dataset in datasets:
             self.datasets.append(
-                pandas.read_csv(dataset)
+                pd.read_csv(dataset)
             )
 
         self.lib = import_module(module)
