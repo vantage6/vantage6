@@ -368,7 +368,7 @@ class Organization(OrganizationBase):
             return {'msg': 'You do not have permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        return org_schema.dump(req_org, many=False).data, HTTPStatus.OK
+        return org_schema.dump(req_org, many=False), HTTPStatus.OK
 
     @only_for(("user", "node"))
     def patch(self, id):

@@ -291,7 +291,9 @@ class Roles(RoleBase):
             if not user:
                 return {'msg': f'User with id={args["user_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
-            elif self.r.can_for_org(P.VIEW, user.organization_id, auth_org):
+            elif not self.r.can_for_org(P.VIEW, user.organization_id,
+                                        auth_org) and not \
+                    g.user.id == user.id:
                 return {
                     'msg': 'You lack the permission view roles from the '
                     f'organization that user id={user.id} belongs to!'

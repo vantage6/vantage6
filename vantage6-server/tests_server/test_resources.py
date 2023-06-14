@@ -1356,7 +1356,7 @@ class TestResources(unittest.TestCase):
         result = self.app.post('/api/user', headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # you can only assign roles in which you have all rules
+        # you can only create users for in which you have all rules
         rule_view_roles = Rule.get_by_(
             "role", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(
@@ -2042,32 +2042,29 @@ class TestResources(unittest.TestCase):
         # test editing collaboration from within the collaboration
         org = Organization()
         org.save()
-        org2 = Organization()
-        org2.save()
-        col = Collaboration(organizations=[org, org2])
+        col = Collaboration(organizations=[org])
         col.save()
         rule = Rule.get_by_("collaboration", scope=Scope.COLLABORATION,
                             operation=Operation.EDIT)
-        headers = self.create_user_and_login(organization=org2, rules=[rule])
+        headers = self.create_user_and_login(organization=org, rules=[rule])
         results = self.app.patch(
-            f'/api/organization/{org.id}', headers=headers,
-            json={"name": "fourth-name"})
+            f'/api/collaboration/{col.id}', headers=headers,
+            json={"name": "some-name"})
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # check editing collaboration outside the collaboration fails without
         # root access
-        org3 = Organization()
-        org3.save()
-        headers = self.create_user_and_login(organization=org3, rules=[rule])
+        org2 = Organization()
+        org2.save()
+        headers = self.create_user_and_login(organization=org2, rules=[rule])
         results = self.app.patch(
-            f'/api/organization/{org.id}', headers=headers,
+            f'/api/collaboration/{col.id}', headers=headers,
             json={"name": "not-going-to-happen"})
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
         org.delete()
         org2.delete()
-        org3.delete()
         col.delete()
 
     def test_delete_collaboration_permissions(self):
@@ -2251,7 +2248,7 @@ class TestResources(unittest.TestCase):
         org4.delete()
         col.delete()
 
-    def test_delete_collaboration_organization_pesmissions(self):
+    def test_delete_collaboration_organization_permissions(self):
 
         org = Organization()
         org.save()
@@ -2274,6 +2271,10 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(len(results.json), 1)  # one organization left
 
+        # add back first organization
+        col.organizations.append(org)
+        col.save()
+
         # removing organization from collaboration from outside the
         # collaboration should fail with collaboration permission
         org3 = Organization()
@@ -2290,6 +2291,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(organization=org, rules=[rule])
         results = self.app.delete(f"/api/collaboration/{col.id}/organization",
                                   headers=headers, json={'id': org2.id})
+        print(results.json)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # cleanup
@@ -2805,9 +2807,6 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # cleanup
-        node.delete()
-        node2.delete()
-        node3.delete()
         org.delete()
         org2.delete()
         org3.delete()
@@ -3029,7 +3028,7 @@ class TestResources(unittest.TestCase):
         org.save()
         col = Collaboration(organizations=[org])
         col.save()
-        task = Task(collaboration=col, image="some-image")
+        task = Task(collaboration=col, image="some-image", init_org=org)
         task.save()
         res = Run(task=task, status=TaskStatus.PENDING)
         res.save()
@@ -3376,7 +3375,7 @@ class TestResources(unittest.TestCase):
         # test if container can
         org = Organization()
         col = Collaboration(organizations=[org])
-        task = Task(collaboration=col, image="some-image")
+        task = Task(collaboration=col, image="some-image", init_org=org)
         task.save()
         res = Run(task=task, organization=org, status=TaskStatus.PENDING)
         res.save()
