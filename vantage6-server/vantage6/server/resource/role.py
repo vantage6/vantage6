@@ -237,6 +237,12 @@ class Roles(RoleBase):
         # filter by organization ids (include root role if desired)
         org_filters = args.getlist('organization_id')
         if org_filters:
+            for org_id in org_filters:
+                if not self.r.can_for_org(P.VIEW, org_id, auth_org):
+                    return {
+                        'msg': 'You lack the permission view all roles from '
+                        f'organization {org_id}!'
+                    }, HTTPStatus.UNAUTHORIZED
             if 'include_root' in args and args['include_root']:
                 q = q.filter(or_(
                     db.Role.organization_id.in_(org_filters),
@@ -273,7 +279,7 @@ class Roles(RoleBase):
 
         # find roles containing a specific rule
         if 'rule_id' in args:
-            rule = db.Rule.query.get(args['rule_id'])
+            rule = db.Rule.get(args['rule_id'])
             if not rule:
                 return {'msg': f'Rule with id={args["rule_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
@@ -281,7 +287,7 @@ class Roles(RoleBase):
                  .filter(db.Rule.id == args['rule_id'])
 
         if 'user_id' in args:
-            user = db.User.query.get(args['user_id'])
+            user = db.User.get(args['user_id'])
             if not user:
                 return {'msg': f'User with id={args["user_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
@@ -295,7 +301,19 @@ class Roles(RoleBase):
 
         if not self.r.v_glo.can():
             own_role_ids = [role.id for role in g.user.roles]
-            if self.r.v_org.can():
+            if self.r.v_col.can():
+                q = q.filter(or_(
+                    db.Role.id.in_(own_role_ids),
+                    db.Role.organization_id.is_(None),
+                    db.Role.organization_id.in_(
+                        [
+                            org.id
+                            for col in self.obtain_auth_collaborations()
+                            for org in col.organizations
+                        ]
+                    )
+                ))
+            elif self.r.v_org.can():
                 # allow user to view all roles of their organization and any
                 # other roles they may have themselves, or default roles from
                 # the root organization

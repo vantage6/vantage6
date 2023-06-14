@@ -237,7 +237,11 @@ class Nodes(NodeBase):
             q = q.filter(db.Node.last_seen >= args['last_seen_from'])
 
         if not self.r.v_glo.can():
-            if self.r.v_org.can():
+            if self.r.v_col.can():
+                q = q.filter(db.Node.collaboration_id.in_(
+                    [col.id for col in self.obtain_auth_collaborations()]
+                ))
+            elif self.r.v_org.can():
                 # only the results of the user's organization are returned
                 q = q.filter(db.Node.organization_id == auth_org_id)
             else:
