@@ -77,7 +77,11 @@ def permissions(permissions: PermissionManager) -> None:
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any task")
     add(scope=S.COLLABORATION, operation=P.VIEW, assign_to_container=True,
-        assign_to_node=True, description="view tasks of your organization")
+        assign_to_node=True, description="view tasks of your collaborations")
+    add(scope=S.ORGANIZATION, operation=P.VIEW,
+        description="view tasks that your organization initiated")
+    add(scope=S.OWN, operation=P.VIEW,
+        description="view tasks that you initiated")
 
     add(scope=S.GLOBAL, operation=P.CREATE, description="create a new task")
     add(scope=S.COLLABORATION, operation=P.CREATE,
@@ -129,6 +133,9 @@ class Tasks(TaskBase):
           |Task|Global|View|❌|❌|View any task|\n
           |Task|Collaboration|View|✅|✅|View any task in your collaborations|
           \n
+          |Task|Organization|View|✅|✅|View any task that your organization
+          created|\n
+          |Task|Own|View|✅|✅|View any task that you created|\n
 
           Accessible to users.
 
@@ -263,6 +270,11 @@ class Tasks(TaskBase):
             if self.r.v_col.can():
                 q = q.join(db.Collaboration).join(db.Organization)\
                     .filter(db.Collaboration.organizations.any(id=auth_org_id))
+            elif self.r.v_org.can():
+                q = q.join(db.Organization)\
+                    .filter(db.Task.init_org_id == auth_org_id)
+            elif self.r.v_own.can():
+                q = q.filter(db.Task.init_user_id == g.user.id)
             else:
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -292,10 +304,13 @@ class Tasks(TaskBase):
                 return {'msg': f'User id={args["init_user_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_org(P.VIEW, init_user.organization_id,
-                                        self.obtain_auth_organization()):
+                                        self.obtain_auth_organization()) \
+                    and not (self.r.v_own.can() and g.user and
+                             init_user.id == g.user.id):
                 return {'msg': 'You lack the permission to view tasks '
                         f'from user id={args["init_user_id"]}!'}, \
                     HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Task.init_user_id == args['init_user_id'])
 
         if 'parent_id' in args:
             parent = db.Task.get(args['parent_id'])
@@ -678,6 +693,9 @@ class Task(TaskBase):
           |--|--|--|--|--|--|\n
           |Task|Global|View|❌|❌|View any task|\n
           |Task|Collaboration|View|✅|✅|View any task in your collaborations|
+          |Task|Organization|View|✅|✅|View any task that your organization
+          created|\n
+          |Task|Own|View|✅|✅|View any task that you created|\n
 
           Accessible to users.
 
@@ -716,8 +734,10 @@ class Task(TaskBase):
             'results' else task_schema
 
         # check permissions
-        if not self.r.can_for_col(P.VIEW, task.collaboration_id,
-                                  self.obtain_auth_collaborations()):
+        auth_org = self.obtain_auth_organization()
+        if not self.r.can_for_org(P.VIEW, task.init_org_id, auth_org) \
+                and not (self.r.v_own.can() and g.user and
+                         task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
