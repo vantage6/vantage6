@@ -632,7 +632,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
         # root user can view all roles
-        result, json_data = self.paginated_list('/api/user', headers=headers)
+        result, json_data = self.paginated_list('/api/role', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(len(json_data), len(Role.get()))
 
