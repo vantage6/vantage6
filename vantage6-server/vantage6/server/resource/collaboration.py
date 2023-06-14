@@ -916,6 +916,12 @@ class CollaborationNode(ServicesResources):
         if node in collaboration.nodes:
             return {"msg": f"node id={data['id']} is already in collaboration "
                     f"id={id}"}, HTTPStatus.BAD_REQUEST
+        elif node.organization not in collaboration.organizations:
+            return {
+                "msg": f"Node id={data['id']} belongs to an organization that "
+                f"is not part of collaboration id={id}. Please add the "
+                "organization to the collaboration first"
+            }, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.append(node)
         collaboration.save()
