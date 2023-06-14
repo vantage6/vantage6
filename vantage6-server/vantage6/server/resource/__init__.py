@@ -12,12 +12,12 @@ from flask_jwt_extended import (
     get_jwt, get_jwt_identity, jwt_required
 )
 from flask_socketio import SocketIO
-from marshmallow_sqlalchemy import ModelSchema
 
 
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.resource.common._schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
 from vantage6.server.resource.common.pagination import Page
 
@@ -69,7 +69,7 @@ class ServicesResources(Resource):
         """
         return field in request.args.getlist('include')
 
-    def dump(self, page: Page, schema: ModelSchema) -> dict:
+    def dump(self, page: Page, schema: HATEOASModelSchema) -> dict:
         """
         Dump based on the request context (to paginate or not)
 
@@ -77,7 +77,7 @@ class ServicesResources(Resource):
         ----------
         page : Page
             Page object to dump
-        schema : ModelSchema
+        schema : HATEOASModelSchema
             Schema to use for dumping
 
         Returns
@@ -87,7 +87,7 @@ class ServicesResources(Resource):
         """
         return schema.meta_dump(page)
 
-    def response(self, page: Page, schema: ModelSchema):
+    def response(self, page: Page, schema: HATEOASModelSchema):
         """
         Prepare a valid HTTP OK response from a page object
 
@@ -95,7 +95,7 @@ class ServicesResources(Resource):
         ----------
         page : Page
             Page object to dump
-        schema : ModelSchema
+        schema : HATEOASModelSchema
             Schema to use for dumping
 
         Returns

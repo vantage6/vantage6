@@ -15,10 +15,7 @@ from vantage6.common import (
 )
 from vantage6.server.model.base import Database
 from vantage6.server import ServerApp, run_dev_server
-from vantage6.cli.globals import (
-    DEFAULT_SERVER_ENVIRONMENT as S_ENV,
-    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
-)
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 from vantage6.server.controller import fixture
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
@@ -31,7 +28,6 @@ from vantage6.server._version import __version__
 help_ = {
     "name": "name of the configutation you want to use.",
     "config": "absolute path to configuration-file; overrides NAME",
-    "env": "configuration environment to use"
 }
 
 
@@ -60,26 +56,21 @@ def click_insert_context(func: callable) -> callable:
     # add option decorators
     @click.option('-n', '--name', default=None, help=help_["name"])
     @click.option('-c', '--config', default=None, help=help_["config"])
-    @click.option('-e', '--environment', default=S_ENV, help=help_["env"])
     @click.option('--system', 'system_folders', flag_value=True)
     @click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
     @wraps(func)
-    def func_with_context(name: str, config: str, environment: str,
-                          system_folders: bool, *args, **kwargs) -> callable:
+    def func_with_context(name: str, config: str, system_folders: bool,
+                          *args, **kwargs) -> callable:
 
         # select configuration if none supplied
         if config:
             ctx = ServerContext.from_external_config_file(
-                config,
-                environment,
-                system_folders
+                config, system_folders
             )
         else:
-            if name:
-                name, environment = (name, environment)
-            else:
+            if not name:
                 try:
-                    name, environment = select_configuration_questionaire(
+                    name = select_configuration_questionaire(
                         "server", system_folders
                     )
                 except Exception:
@@ -87,25 +78,16 @@ def click_insert_context(func: callable) -> callable:
                     exit()
 
             # raise error if config could not be found
-            if not ServerContext.config_exists(
-                name,
-                environment,
-                system_folders
-            ):
+            if not ServerContext.config_exists(name, system_folders):
                 scope = "system" if system_folders else "user"
                 error(
-                    f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                    f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
-                    f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
+                    f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not"
+                    f" exist in the {Fore.RED}{scope}{Style.RESET_ALL} folder!"
                 )
                 exit(1)
 
             # create server context, and initialize db
-            ctx = ServerContext(
-                name,
-                environment=environment,
-                system_folders=system_folders
-            )
+            ctx = ServerContext(name, system_folders=system_folders)
 
         # initialize database (singleton)
         allow_drop_all = ctx.config["allow_drop_all"]
@@ -165,14 +147,14 @@ def cli_server_start(ctx: ServerContext, ip: str, port: str,
 def cli_server_configuration_list() -> None:
     """Print the available servers."""
 
-    click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
+    click.echo("\nName"+(21*" ")+"System/User")
     click.echo("-"*70)
 
     sys_configs, f1 = ServerContext.available_configurations(
         system_folders=True)
     for config in sys_configs:
         click.echo(
-            f"{config.name:25}{str(config.available_environments):32} System "
+            f"{config.name:25} System "
         )
 
     usr_configs, f2 = ServerContext.available_configurations(
@@ -180,7 +162,7 @@ def cli_server_configuration_list() -> None:
     )
     for config in usr_configs:
         click.echo(
-            f"{config.name:25}{str(config.available_environments):32} User   "
+            f"{config.name:25} User   "
         )
     click.echo("-"*70)
 
@@ -216,11 +198,9 @@ def cli_server_files(ctx: ServerContext) -> None:
 @cli_server.command(name='new')
 @click.option('-n', '--name', default=None,
               help="name of the configutation you want to use.")
-@click.option('-e', '--environment', default=S_ENV,
-              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
-def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
+def cli_server_new(name: str, system_folders: bool) -> None:
     """
     Create new server configuration.
 
@@ -228,8 +208,6 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     ----------
     name : str
         The name of the configuration.
-    environment : str
-        The environment of the configuration.
     system_folders : bool
         Whether to use system folders or not.
     """
@@ -247,11 +225,10 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
 
     # check that this config does not exist
     try:
-        if ServerContext.config_exists(name, environment, system_folders):
+        if ServerContext.config_exists(name, system_folders):
             error(
-                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                f"environment {Fore.RED}{environment}{Style.RESET_ALL} "
-                f"already exists!"
+                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already "
+                "exists!"
             )
             exit(1)
     except Exception as e:
@@ -259,16 +236,10 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(
-        "server", name, environment, system_folders
-    )
+    cfg_file = configuration_wizard("server", name, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
-
-    # info(f"root user created.")
-    info(
-        f"You can start the server by "
-        f"{Fore.GREEN}vserver start{Style.RESET_ALL}."
-    )
+    info(f"You can start the server with {Fore.GREEN}vserver start"
+         f"{Style.RESET_ALL}.")
 
 
 #
@@ -339,8 +310,6 @@ def cli_server_shell(ctx: ServerContext) -> None:
     del logging
 
     import vantage6.server.db as db
-
-
     IPython.embed(config=c)
 
 

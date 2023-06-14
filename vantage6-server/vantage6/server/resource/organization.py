@@ -307,7 +307,7 @@ class Organizations(OrganizationBase):
         )
         organization.save()
 
-        return org_schema.dump(organization, many=False).data, \
+        return org_schema.dump(organization, many=False), \
             HTTPStatus.CREATED
 
 
@@ -447,8 +447,7 @@ class Organization(OrganizationBase):
                 setattr(organization, field, data[field])
 
         organization.save()
-        return org_schema.dump(organization, many=False).data, \
-            HTTPStatus.OK
+        return org_schema.dump(organization, many=False), HTTPStatus.OK
 
 
 class OrganizationCollaboration(ServicesResources):
@@ -514,7 +513,7 @@ class OrganizationCollaboration(ServicesResources):
         return self.col_schema.dump(
             organization.collaborations,
             many=True
-        ).data, HTTPStatus.OK
+        ), HTTPStatus.OK
 
 
 class OrganizationNode(ServicesResources):
@@ -575,5 +574,5 @@ class OrganizationNode(ServicesResources):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return self.nod_schema.dump(organization.nodes, many=True).data, \
+        return self.nod_schema.dump(organization.nodes, many=True), \
             HTTPStatus.OK

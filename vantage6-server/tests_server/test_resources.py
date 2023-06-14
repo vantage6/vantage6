@@ -731,7 +731,11 @@ class TestResources(unittest.TestCase):
         # verify the values
         self.assertEqual(result.json.get("name"), body["name"])
         self.assertEqual(result.json.get("description"), body["description"])
-        self.assertEqual(len(result.json.get("rules")), 2)
+        result = self.app.get(
+            "/api/rule", headers=headers,
+            query_string={'role_id': result.json.get("id")}
+        )
+        self.assertEqual(len(result.json.get('data')), 2)
 
     def test_create_role_as_root_for_different_organization(self):
         headers = self.login("root")
@@ -1353,7 +1357,10 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # you can only assign roles in which you have all rules
-        headers = self.create_user_and_login(org, rules=[rule])
+        rule_view_roles = Rule.get_by_(
+            "role", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(
+            org, rules=[rule, rule_view_roles])
         role = Role(rules=[rule], organization=org)
         role.save()
         userdata['username'] = 'smarty3'
@@ -1363,7 +1370,10 @@ class TestResources(unittest.TestCase):
         del userdata['rules']
         result = self.app.post('/api/user', headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
-        self.assertEqual(len(result.json['roles']), 1)
+        # verify that user has the role
+        result = self.app.get('/api/role', headers=headers,
+                              query_string={'user_id': result.json['id']})
+        self.assertEqual(len(result.json['data']), 1)
 
         # cleanup
         org.delete()
@@ -1508,7 +1518,7 @@ class TestResources(unittest.TestCase):
         # users and another one current user does not possess
         assigning_user_rules = user.rules
         assigning_user_rules.append(
-            Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT)
+            Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT),
         )
         assigning_user_rules.append(not_owning_rule)
         headers = self.create_user_and_login(rules=assigning_user_rules)
@@ -1516,7 +1526,12 @@ class TestResources(unittest.TestCase):
             'rules': [not_owning_rule.id, rule.id]
         })
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        user_rule_ids = [rule['id'] for rule in result.json['rules']]
+
+        result = self.app.get('/api/rule', headers=headers,
+                              query_string={'user_id': user.id})
+        user_rule_ids = [
+            rule['id'] for rule in result.json.get('data')
+        ]
         self.assertIn(not_owning_rule.id, user_rule_ids)
 
         # test that you cannot assign roles if you don't have all the
@@ -1529,12 +1544,20 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test that you CAN assign roles
-        headers = self.create_user_and_login(rules=[rule, not_owning_rule])
+        rule_global_view = Rule.get_by_("role", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(
+            rules=[rule, not_owning_rule, rule_global_view]
+        )
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'roles': [role.id]
         })
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        user_role_ids = [role['id'] for role in result.json['roles']]
+
+        result = self.app.get('/api/role', headers=headers,
+                              query_string={'user_id': user.id})
+        user_role_ids = [
+            role['id'] for role in result.json.get('data')
+        ]
         self.assertIn(role.id, user_role_ids)
 
         # test that you CANNOT assign roles from different organization

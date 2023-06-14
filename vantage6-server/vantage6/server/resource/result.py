@@ -331,7 +331,7 @@ class Result(ResultBase):
         s = result_inc_schema if request.args.get('include') == 'task' \
             else result_schema
 
-        return s.dump(result, many=False).data, HTTPStatus.OK
+        return s.dump(result, many=False), HTTPStatus.OK
 
     @with_node
     def patch(self, id):
@@ -418,4 +418,4 @@ class Result(ResultBase):
         result.status = data.get("status", result.status)
         result.save()
 
-        return result_schema.dump(result, many=False).data, HTTPStatus.OK
+        return result_schema.dump(result, many=False), HTTPStatus.OK

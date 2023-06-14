@@ -59,7 +59,7 @@ class NodeCLITest(unittest.TestCase):
 
         # returns a list of configurations and failed inports
         def side_effect(system_folders):
-            config = MagicMock(available_environments=["Application"])
+            config = MagicMock()
             config.name = "iknl"
             if not system_folders:
                 return [[config], []]
@@ -78,11 +78,11 @@ class NodeCLITest(unittest.TestCase):
         # check printed lines
         self.assertEqual(
             result.output,
-            "\nName                     Environments                    Status          System/User\n"
-            "-------------------------------------------------------------------------------------\n"
-            "iknl                     ['Application']                 Offline          System \n"
-            "iknl                     ['Application']                 Online           User   \n"
-            "-------------------------------------------------------------------------------------\n"
+            "\nName                     Status          System/User\n"
+            "-----------------------------------------------------\n"
+            "iknl                     Offline         System \n"
+            "iknl                     Online          User   \n"
+            "-----------------------------------------------------\n"
         )
 
     @patch("vantage6.cli.node.configuration_wizard")
@@ -97,7 +97,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that info message is produced
@@ -113,7 +112,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some name",
-            "--environment", "application"
         ])
 
         self.assertEqual(
@@ -130,7 +128,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that error is produced
@@ -150,7 +147,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that error is produced
@@ -172,7 +168,7 @@ class NodeCLITest(unittest.TestCase):
         )
         context.return_value.databases.items.return_value = \
             [["label", "/file.db"]]
-        select_config.return_value = ["iknl", "application"]
+        select_config.return_value = "iknl"
 
         runner = CliRunner()
         result = runner.invoke(cli_node_files, [])
