@@ -3257,8 +3257,10 @@ class TestResources(unittest.TestCase):
 
         # test with organization permissions from other organization
         org = Organization()
-        col = Collaboration(organizations=[org])
-        task = Task(collaboration=col)
+        org2 = Organization()
+        col = Collaboration(organizations=[org, org2])
+        col.save()
+        task = Task(collaboration=col, init_org=org)
         # NB: node is used implicitly in task/{id}/result schema
         node = Node(organization=org, collaboration=col)
         res = Run(task=task, organization=org)
@@ -3270,7 +3272,7 @@ class TestResources(unittest.TestCase):
         result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test with organization permission
+        # test with collaboration permission
         headers = self.create_user_and_login(org, [rule])
         result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
@@ -3288,21 +3290,64 @@ class TestResources(unittest.TestCase):
             f'/api/result?task_id={task.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test with organization permission
+        # test result endpoint with organization permission
         headers = self.create_user_and_login(org, [rule])
         result = self.app.get(
             f'/api/result?task_id={task.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
-        # test with global permission
+        # test result endpoint with global permission
         rule = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(
             f'/api/result?task_id={task.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
+        # test with organization permission
+        rule = Rule.get_by_("run", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(org, [rule])
+        result = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        result = self.app.get(f'/api/run/{res.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # test with organization permission - other organization should fail
+        headers = self.create_user_and_login(org2, [rule])
+        result = self.app.get(
+            f'/api/run?task_id={task.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        result = self.app.get(f'/api/run/{res.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test with permission to view own runs
+        rule = Rule.get_by_("run", Scope.OWN, Operation.VIEW)
+        user = self.create_user(rules=[rule], organization=org)
+        headers = self.login(user.username)
+        task2 = Task(collaboration=col, init_org=org, init_user=user)
+        task2.save()
+        res2 = Run(task=task2, organization=org)
+        res2.save()
+        result = self.app.get(f'/api/run?task_id={task2.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        result = self.app.get(f'/api/run/{res2.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # test with permission to view own runs - other user should fail
+        headers = self.create_user_and_login(rules=[rule], organization=org)
+        result = self.app.get(f'/api/run?task_id={task2.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+        result = self.app.get(f'/api/run/{res2.id}', headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
         # cleanup
         node.delete()
+        task.delete()
+        task2.delete()
+        res.delete()
+        res2.delete()
+        org.delete()
+        org2.delete()
+        col.delete()
 
     def test_view_task_run_permissions_as_container(self):
         # test if container can

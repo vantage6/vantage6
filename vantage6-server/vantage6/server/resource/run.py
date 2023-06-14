@@ -87,11 +87,14 @@ result_schema = ResultSchema()
 def permissions(permissions: PermissionManager):
     add = permissions.appender(module_name)
 
-    add(scope=S.GLOBAL, operation=P.VIEW,
-        description="view any run")
+    add(scope=S.GLOBAL, operation=P.VIEW, description="view any run")
     add(scope=S.COLLABORATION, operation=P.VIEW, assign_to_container=True,
         assign_to_node=True, description="view runs of your organizations "
         "collaborations")
+    add(scope=S.ORGANIZATION, operation=P.VIEW,
+        description="view any run of a task created by your organization")
+    add(scope=S.OWN, operation=P.VIEW,
+        description="view any run of a task created by you")
 
 
 # ------------------------------------------------------------------------------
@@ -118,6 +121,7 @@ class MultiRunBase(RunBase):
             a message and HTTP error code if the query could not be set up
         """
         auth_org = self.obtain_auth_organization()
+        auth_collabs = self.obtain_auth_collaborations()
         args = request.args
 
         q = g.session.query(db_Run)
@@ -135,8 +139,9 @@ class MultiRunBase(RunBase):
             if not task:
                 return {'msg': f'Task id={args["task_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_col(P.VIEW, task.collaboration_id,
-                                        self.obtain_auth_collaborations()):
+            elif not self.r.can_for_org(P.VIEW, task.init_org_id, auth_org) \
+                    and not (self.r.v_own.can() and
+                             g.user.id == task.init_user_id):
                 return {'msg': 'You lack the permission to view runs for '
                         f'task id={args["task_id"]}!'}, HTTPStatus.UNAUTHORIZED
             q = q.filter(db_Run.task_id == args['task_id'])
@@ -172,11 +177,23 @@ class MultiRunBase(RunBase):
         q = q.join(Organization).join(Node).join(Task, db_Run.task)\
             .join(Collaboration)
 
+        if 'collaboration_id' in args:
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id'],
+                                      auth_collabs):
+                return {'msg': 'You lack the permission to view runs for '
+                        f'collaboration id={args["collaboration_id"]}!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            q = q.filter(Collaboration.id == args['collaboration_id'])
+
         # filter based on permissions
         if not self.r.v_glo.can():
             if self.r.v_col.can():
                 col_ids = [col.id for col in auth_org.collaborations]
                 q = q.filter(Collaboration.id.in_(col_ids))
+            elif self.r.v_org.can():
+                q = q.filter(Organization.id == auth_org.id)
+            elif self.r.v_own.can():
+                q = q.filter(Task.init_user_id == g.user.id)
             else:
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -203,6 +220,9 @@ class Runs(MultiRunBase):
             |Run|Global|View|❌|❌|View any run|\n
             |Run|Collaboration|View|✅|✅|View the runs of your
             organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any run from a task created by
+            your organization|\n
+            |Run|Own|View|❌|❌|View any run from a task created by you|\n
 
             Accessible to users.
 
@@ -217,6 +237,11 @@ class Runs(MultiRunBase):
               schema:
                 type: integer
               description: Organization id
+            - in: query
+              name: collaboration_id
+              schema:
+                type: integer
+              description: Collaboration id
             - in: query
               name: assigned_from
               schema:
@@ -322,6 +347,9 @@ class Results(MultiRunBase):
             |Run|Global|View|❌|❌|View any result|\n
             |Run|Collaboration|View|✅|✅|View the results of your
             organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any result from a task created
+            by your organization|\n
+            |Run|Own|View|❌|❌|View any result from a task created by you|\n
 
             Accessible to users.
 
@@ -336,6 +364,11 @@ class Results(MultiRunBase):
               schema:
                 type: integer
               description: Organization id
+            - in: query
+              name: collaboration_id
+              schema:
+                type: integer
+              description: Collaboration id
             - in: query
               name: assigned_from
               schema:
@@ -439,15 +472,16 @@ class SingleRunBase(RunBase):
             An algorithm Run object, or a tuple with a message and HTTP error
             code if the Run could not be retrieved
         """
-        auth_collabs = self.obtain_auth_collaborations()
+        auth_org = self.obtain_auth_organization()
 
         run = db_Run.get(id)
         if not run:
             return {'msg': f'Run id={id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_col(P.VIEW, run.task.collaboration.id,
-                                  auth_collabs):
+        if not self.r.can_for_org(P.VIEW, run.task.init_org_id, auth_org) \
+                and not (self.r.v_own.can() and
+                         run.task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
         return run
@@ -471,6 +505,9 @@ class Run(SingleRunBase):
             |Run|Global|View|❌|❌|View any run|\n
             |Run|Collaboration|View|✅|✅|View the runs of your
             organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any run from a task created by
+            your organization|\n
+            |Run|Own|View|❌|❌|View any run from a task created by you|\n
 
             Accessible to users.
 
@@ -619,6 +656,9 @@ class Result(SingleRunBase):
             |Run|Global|View|❌|❌|View any result|\n
             |Run|Collaboration|View|✅|✅|View the results of your
             organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any result from a task created
+            by your organization|\n
+            |Run|Own|View|❌|❌|View any result from a task created by you|\n
 
             Accessible to users.
 
