@@ -101,7 +101,7 @@ class Task(Base):
             Time at which task was completed, None if task is not completed
         """
         return max([r.finished_at for r in self.results]) \
-            if self.complete else None
+            if self.complete and self.results else None
 
     @hybrid_property
     def status(self) -> str:
