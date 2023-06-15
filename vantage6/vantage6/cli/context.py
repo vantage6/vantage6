@@ -33,10 +33,10 @@ from vantage6.common.context import AppContext
 from vantage6.common.globals import APPNAME
 from vantage6.cli.configuration_manager import (NodeConfigurationManager,
                                                 ServerConfigurationManager)
-from vantage6.cli.globals import (DEFAULT_NODE_ENVIRONMENT as N_ENV,
-                                  DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
-                                  DEFAULT_SERVER_ENVIRONMENT as S_ENV,
-                                  DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL)
+from vantage6.cli.globals import (
+    DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
+    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
+)
 from vantage6.cli._version import __version__
 
 
@@ -49,9 +49,6 @@ class ServerContext(AppContext):
     instance_name : str
         Name of the configuration instance, corresponds to the filename
         of the configuration file.
-    environment : str, optional
-        DTAP environment to load from the configuration file, by default
-        S_ENV
     system_folders : bool, optional
         System wide or user configuration, by default S_FOL
     """
@@ -60,9 +57,8 @@ class ServerContext(AppContext):
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
-    def __init__(self, instance_name: str, environment: str = S_ENV,
-                 system_folders: bool = S_FOL):
-        super().__init__("server", instance_name, environment=environment,
+    def __init__(self, instance_name: str, system_folders: bool = S_FOL):
+        super().__init__("server", instance_name,
                          system_folders=system_folders)
         self.log.info(f"vantage6 version '{__version__}'")
 
@@ -80,10 +76,18 @@ class ServerContext(AppContext):
         uri = os.environ.get("VANTAGE6_DB_URI") or self.config['uri']
         url = make_url(uri)
 
-        if (url.host is None) and (not os.path.isabs(url.database)):
-            # We're dealing with a relative path here.
-            url.database = str(self.data_dir / url.database)
-            uri = str(url)
+        if url.host is None and not os.path.isabs(url.database):
+            # We're dealing with a relative path here of a local database, when
+            # we're running the server outside of docker. Therefore we need to
+            # prepend the data directory to the database name, but after the
+            # driver name (e.g. sqlite:////db.sqlite ->
+            # sqlite:////data_dir>/db.sqlite)
+
+            # find index of database name
+            idx_db_name = str(url).find(url.database)
+
+            # add the datadir to the right location in the database uri
+            return str(url)[:idx_db_name] + str(self.data_dir / url.database)
 
         return uri
 
@@ -101,8 +105,7 @@ class ServerContext(AppContext):
 
     @classmethod
     def from_external_config_file(
-            cls, path: str, environment: str = S_ENV,
-            system_folders: bool = S_FOL) -> ServerContext:
+            cls, path: str, system_folders: bool = S_FOL) -> ServerContext:
         """
         Create a server context from an external configuration file. External
         means that the configuration file is not located in the default folders
@@ -112,8 +115,6 @@ class ServerContext(AppContext):
         ----------
         path : str
             Path of the configuration file
-        environment : str, optional
-            DTAP environment to be loaded, by default S_ENV
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
 
@@ -122,9 +123,7 @@ class ServerContext(AppContext):
         ServerContext
             Server context object
         """
-        cls = super().from_external_config_file(
-            path, "server", environment, system_folders
-        )
+        cls = super().from_external_config_file(path, "server", system_folders)
         # if we are running a server in a docker container, the name is taken
         # from the name of the config file (which is usually a default). Get
         # the config name from environment if it is given.
@@ -132,7 +131,7 @@ class ServerContext(AppContext):
         return cls
 
     @classmethod
-    def config_exists(cls, instance_name: str, environment: str = S_ENV,
+    def config_exists(cls, instance_name: str,
                       system_folders: bool = S_FOL) -> bool:
         """
         Check if a configuration file exists.
@@ -142,8 +141,6 @@ class ServerContext(AppContext):
         instance_name : str
             Name of the configuration instance, corresponds to the filename
             of the configuration file.
-        environment : str, optional
-            DTAP environment that needs to be present, by default S_ENV
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
 
@@ -153,7 +150,6 @@ class ServerContext(AppContext):
             Whether the configuration file exists or not
         """
         return super().config_exists("server", instance_name,
-                                     environment=environment,
                                      system_folders=system_folders)
 
     @classmethod
@@ -188,8 +184,6 @@ class NodeContext(AppContext):
     instance_name : str
         Name of the configuration instance, corresponds to the filename
         of the configuration file.
-    environment : str, optional
-        DTAP environment to be loaded, by default N_ENV
     system_folders : bool, optional
         _description_, by default N_FOL
     config_file : str, optional
@@ -204,14 +198,13 @@ class NodeContext(AppContext):
     # on the host machine.
     running_in_docker = False
 
-    def __init__(self, instance_name: str, environment: str = N_ENV,
-                 system_folders: bool = N_FOL, config_file: str = None):
-        super().__init__("node", instance_name, environment, system_folders,
-                         config_file)
+    def __init__(self, instance_name: str, system_folders: bool = N_FOL,
+                 config_file: str = None):
+        super().__init__("node", instance_name, system_folders, config_file)
         self.log.info(f"vantage6 version '{__version__}'")
 
     @classmethod
-    def from_external_config_file(cls, path: str, environment: str = N_ENV,
+    def from_external_config_file(cls, path: str,
                                   system_folders: bool = N_FOL) -> NodeContext:
         """
         Create a node context from an external configuration file. External
@@ -222,8 +215,6 @@ class NodeContext(AppContext):
         ----------
         path : str
             Path of the configuration file
-        environment : str, optional
-            DTAP environment to be loaded, by default N_ENV
         system_folders : bool, optional
             System wide or user configuration, by default N_FOL
 
@@ -232,11 +223,10 @@ class NodeContext(AppContext):
         NodeContext
             Node context object
         """
-        return super().from_external_config_file(path, "node", environment,
-                                                 system_folders)
+        return super().from_external_config_file(path, "node", system_folders)
 
     @classmethod
-    def config_exists(cls, instance_name: str, environment: str = N_ENV,
+    def config_exists(cls, instance_name: str,
                       system_folders: bool = N_FOL) -> bool:
         """
         Check if a configuration file exists.
@@ -246,8 +236,6 @@ class NodeContext(AppContext):
         instance_name : str
             Name of the configuration instance, corresponds to the filename
             of the configuration file.
-        environment : str, optional
-            DTAP environment that needs to be present, by default N_ENV
         system_folders : bool, optional
             System wide or user configuration, by default N_FOL
 
@@ -257,7 +245,6 @@ class NodeContext(AppContext):
             Whether the configuration file exists or not
         """
         return super().config_exists("node", instance_name,
-                                     environment=environment,
                                      system_folders=system_folders)
 
     @classmethod
@@ -372,12 +359,31 @@ class NodeContext(AppContext):
         Returns
         -------
         str
-            Docker voluem name
+            Docker volume name
         """
         return os.environ.get(
             'SSH_TUNNEL_VOLUME_NAME',
             f"{self.docker_container_name}-ssh-vol"
         )
+
+    @property
+    def docker_squid_volume_name(self) -> str:
+        """
+        Docker volume in which the SSH configuration is stored.
+
+        Returns
+        -------
+        str
+            Docker volume name
+        """
+        return os.environ.get(
+            'SSH_SQUID_VOLUME_NAME',
+            f"{self.docker_container_name}-squid-vol"
+        )
+
+    @property
+    def proxy_log_file(self):
+        return self.log_file_name(type_="proxy_server")
 
     def docker_temporary_volume_name(self, job_id: int) -> str:
         """

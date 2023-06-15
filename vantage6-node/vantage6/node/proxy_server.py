@@ -2,6 +2,9 @@
 This module contains a proxy server implementation that the node uses to
 communicate with the server. It contains general methods for any routes, and
 methods to handle tasks and results, including their encryption and decryption.
+
+(!) Not to be confused with the squid proxy that allows algorithm containers
+to access other places in the network.
 """
 import requests
 import logging
@@ -147,6 +150,7 @@ def decrypt_result(run: dict) -> dict:
     dict
         Run dict with the `result` decrypted
     """
+    # FIXME check if this function is not implemented in several places
     server_io: NodeClient = app.config.get('SERVER_IO')
 
     # if the result is a None, there is no need to decrypt that..
@@ -274,9 +278,8 @@ def proxy_task():
 
     return response.json(), HTTPStatus.OK
 
-
-@app.route('/task/<int:id>/run', methods=["GET"])
-def proxy_task_run(id: int) -> Response:
+@app.route('/result?task_id=<int:id_>', methods=["GET"])
+def proxy_result(id_: int) -> Response:
     """
     Obtain and decrypt all results to belong to a certain task
 
@@ -298,9 +301,9 @@ def proxy_task_run(id: int) -> Response:
 
     # Forward the request
     try:
-        response: Response = make_proxied_request(f"task/{id}/run")
+        response: Response = make_proxied_request(f"result?task_id={id_}")
     except Exception:
-        log.exception('Error on "task/<id>/run"')
+        log.exception(f'Error on "result?task_id={id_}"')
         return {'msg': 'Request failed, see node logs'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 

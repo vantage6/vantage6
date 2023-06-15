@@ -160,14 +160,9 @@ class Rules(ServicesResources):
                     db.UserPermission.c.user_id == args['user_id']
                  ))
 
-        # check if pagination is disabled
-        paginate = True
-        if 'no_pagination' in args and args['no_pagination'] == '1':
-            paginate = False
-
         # paginate results
         try:
-            page = Pagination.from_query(q, request, paginate=paginate)
+            page = Pagination.from_query(q, request)
         except ValueError as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
@@ -211,4 +206,4 @@ class Rule(ServicesResources):
         if not rule:
             return {'msg': f'Rule id={id} not found!'}, HTTPStatus.NOT_FOUND
 
-        return rule_schema.dump(rule, many=False).data, HTTPStatus.OK
+        return rule_schema.dump(rule, many=False), HTTPStatus.OK

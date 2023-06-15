@@ -277,7 +277,7 @@ class Organizations(OrganizationBase):
         )
         organization.save()
 
-        return org_schema.dump(organization, many=False).data, \
+        return org_schema.dump(organization, many=False), \
             HTTPStatus.CREATED
 
 
@@ -349,8 +349,7 @@ class Organization(OrganizationBase):
             accepted = auth_org == req_org
 
         if accepted:
-            return org_schema.dump(req_org, many=False).data, \
-                HTTPStatus.OK
+            return org_schema.dump(req_org, many=False), HTTPStatus.OK
         else:
             return {'msg': 'You do not have permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
@@ -433,5 +432,4 @@ class Organization(OrganizationBase):
                 setattr(organization, field, data[field])
 
         organization.save()
-        return org_schema.dump(organization, many=False).data, \
-            HTTPStatus.OK
+        return org_schema.dump(organization, many=False), HTTPStatus.OK

@@ -11,6 +11,8 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "server" / "_data"
 
+SERVER_MODULE_NAME = APPNAME + "-server"
+
 #
 #   RUNTIME SETTINGS
 #
@@ -28,9 +30,6 @@ REFRESH_TOKENS_EXPIRE_HOURS = 48
 # access token. This is to prevent the access token from expiring before the
 # refresh token.
 MIN_REFRESH_TOKEN_EXPIRY_DELTA = 1
-
-# Expiretime of JWT token in a test environment
-JWT_TEST_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=1)
 
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory

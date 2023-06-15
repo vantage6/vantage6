@@ -36,25 +36,25 @@ from flask_mail import Mail
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
+from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
-from vantage6.cli.globals import DEFAULT_SERVER_ENVIRONMENT
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common._schema import HATEOASModelSchema
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
-    JWT_TEST_ACCESS_TOKEN_EXPIRES,
     RESOURCES,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE_HOURS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     MIN_TOKEN_VALIDITY_SECONDS,
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
+    SERVER_MODULE_NAME
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
@@ -83,7 +83,12 @@ class ServerApp:
         self.ctx = ctx
 
         # initialize, configure Flask
-        self.app = Flask(APPNAME, root_path=os.path.dirname(__file__))
+        self.app = Flask(
+            SERVER_MODULE_NAME, root_path=Path(__file__),
+            template_folder=Path(__file__).parent / 'templates',
+            static_folder=Path(__file__).parent / 'static'
+        )
+        self.debug: dict = self.ctx.config.get('debug', {})
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
@@ -116,9 +121,6 @@ class ServerApp:
         self.configure_api()
         self.load_resources()
 
-        # make specific log settings (muting etc)
-        self.configure_logging()
-
         # set the server version
         self.__version__ = __version__
 
@@ -145,13 +147,18 @@ class ServerApp:
         if msg_queue:
             log.debug(f'Connecting to msg queue: {msg_queue}')
 
+        debug_mode = self.debug.get('socketio', False)
+        if debug_mode:
+            log.debug("SocketIO debug mode enabled")
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode='gevent_uwsgi',
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*'
+                cors_allowed_origins='*',
+                logger=debug_mode,
+                engineio_logger=debug_mode
             )
         except Exception as e:
             log.warning('Default socketio settings failed, attempt to run '
@@ -163,7 +170,9 @@ class ServerApp:
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*'
+                cors_allowed_origins='*',
+                logger=debug_mode,
+                engineio_logger=debug_mode
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
@@ -171,19 +180,6 @@ class ServerApp:
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
-
-    @staticmethod
-    def configure_logging() -> None:
-        """Set third party loggers to a warning level"""
-
-        # Prevent logging from urllib3
-        logging.getLogger("urllib3").setLevel(logging.WARNING)
-        logging.getLogger("socketIO-client").setLevel(logging.WARNING)
-        logging.getLogger("engineio.server").setLevel(logging.WARNING)
-        logging.getLogger("socketio.server").setLevel(logging.WARNING)
-        logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
-        logging.getLogger('requests_oauthlib.oauth2_session')\
-            .setLevel(logging.WARNING)
 
     def configure_flask(self) -> None:
         """Configure the Flask settings of the vantage6 server."""
@@ -217,15 +213,6 @@ class ServerApp:
             is_refresh=True
         )
 
-        # Set an extra long expiration time on access tokens for testing
-        # TODO: this does not seem needed...
-        environment = self.ctx.config.get('type')
-        self.app.config['environment'] = environment
-        if environment == 'test':
-            log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
-            self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = \
-                JWT_TEST_ACCESS_TOKEN_EXPIRES
-
         # Open Api Specification (f.k.a. swagger)
         self.app.config['SWAGGER'] = {
             'title': APPNAME,
@@ -247,6 +234,10 @@ class ServerApp:
                                                           True)
         self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL",
                                                           False)
+        debug_mode = self.debug.get('flask', False)
+        if debug_mode:
+            log.debug("Flask debug mode enabled")
+        self.app.debug = debug_mode
 
         def _get_request_path(request: Request) -> str:
             """
@@ -388,14 +379,15 @@ class ServerApp:
         @self.api.representation('application/json')
         # pylint: disable=unused-argument
         def output_json(
-            data: Any, code: HTTPStatus, headers: dict = None
+            data: db.Base | list[db.Base], code: HTTPStatus,
+            headers: dict = None
         ) -> Response:
             """
             Return jsonified data for request responses.
 
             Parameters
             ----------
-            data: Any
+            data: db.Base | list[db.Base]
                 The data to be jsonified
             code: HTTPStatus
                 The HTTP status code of the response
@@ -459,7 +451,7 @@ class ServerApp:
         def user_identity_loader(
                 identity: db.Authenticatable | dict) -> str | dict:
             """"
-            JSON serializing identity to be used by create_access_token.
+            JSON serializing identity to be used by ``create_access_token``.
 
             Parameters
             ----------
@@ -660,8 +652,7 @@ class ServerApp:
                 time.sleep(PING_INTERVAL_SECONDS)
 
 
-def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
-               system_folders: bool = True) -> ServerApp:
+def run_server(config: str, system_folders: bool = True) -> ServerApp:
     """
     Run a vantage6 server.
 
@@ -669,8 +660,6 @@ def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
     ----------
     config: str
         Configuration file path
-    environment: str
-        Configuration environment to use.
     system_folders: bool
         Whether to use system or user folders. Default is True.
 
@@ -681,7 +670,6 @@ def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
     """
     ctx = ServerContext.from_external_config_file(
         config,
-        environment,
         system_folders
     )
     allow_drop_all = ctx.config["allow_drop_all"]

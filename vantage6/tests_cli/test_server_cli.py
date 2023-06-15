@@ -61,7 +61,7 @@ class ServerCLITest(unittest.TestCase):
         container1.name = f"{APPNAME}-iknl-system"
         containers.list.return_value = [container1]
 
-        config = MagicMock(available_environments=["application"])
+        config = MagicMock()
         config.name = "iknl"
         context.available_configurations.return_value = ([config], [])
 
@@ -88,7 +88,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.print_log_worker")
+    @patch("vantage6.cli.server._print_log_worker")
     @patch("vantage6.cli.server.click.Path")
     @patch("vantage6.cli.server.check_docker_running", return_value=True)
     @patch("vantage6.cli.server.ServerContext")

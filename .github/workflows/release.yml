@@ -44,8 +44,10 @@ jobs:
       - name: Get branch on which the tag is based
         id: branchname
         run: |
+         # get the branch on which the tag is based
          raw=$(git branch -r --contains ${{ github.ref }})
-         branch=${raw##*/}
+         # delete the name of the branch up to and including 'origin/'
+         branch=$(echo $raw | sed 's/.*origin\///')
          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
@@ -181,7 +183,7 @@ jobs:
 
       - # we only release a new base image if it is a major or minor release
         name: Build Docker base image
-        if: ${{ env.patch == 0 && env.stage == '' }}
+        if: ${{ env.patch == 0 }}
         run: make base-image TAG=${major}.${minor}
 
       - # build the actual infrastructure images
@@ -229,6 +231,8 @@ jobs:
     needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
+      major: ${{ needs.version.outputs.major }}
+      minor: ${{ needs.version.outputs.minor }}
       stage: ${{ needs.version.outputs.stage }}
       major_name: ${{ needs.version.outputs.major_name }}
     steps:
@@ -259,6 +263,15 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
+
+      - # Release a node image for major.minor. This is released for any
+        # non-candidate release or if no non-candidate release has been made yet
+        # for the current minor version
+        name: Build Docker base image
+        if: ${{ env.stage == 0 || env.minor == 0 }}
+        run: |
+          docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
+          docker push harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,

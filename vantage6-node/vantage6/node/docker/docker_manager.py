@@ -27,10 +27,12 @@ from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
+from vantage6.node.docker.squid import Squid
 from vantage6.node.server_io import NodeClient
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
-    PermanentAlgorithmStartFail
+    PermanentAlgorithmStartFail,
+    AlgorithmContainerNotFound
 )
 
 log = logging.getLogger(logger_name(__name__))
@@ -85,8 +87,9 @@ class DockerManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, ctx: DockerNodeContext | NodeContext,
-                 isolated_network_mgr: NetworkManager, vpn_manager: VPNManager,
-                 tasks_dir: Path, client: NodeClient) -> None:
+                 isolated_network_mgr: NetworkManager,
+                 vpn_manager: VPNManager, tasks_dir: Path, client: NodeClient,
+                 proxy: Squid | None = None) -> None:
         """ Initialization of DockerManager creates docker connection and
             sets some default values.
 
@@ -102,6 +105,8 @@ class DockerManager(DockerBaseManager):
                 Directory in which this task's data are stored
             client: NodeClient
                 Client object to communicate with the server
+            proxy: Squid | None
+                Squid proxy object
         """
         self.log.debug("Initializing DockerManager")
         super().__init__(isolated_network_mgr)
@@ -113,6 +118,7 @@ class DockerManager(DockerBaseManager):
         self.client = client
         self.__tasks_dir = tasks_dir
         self.alpine_image = config.get('alpine')
+        self.proxy = proxy
 
         # keep track of the running containers
         self.active_tasks: list[DockerTaskManager] = []
@@ -144,8 +150,15 @@ class DockerManager(DockerBaseManager):
         # keep track of linked docker services
         self.linked_services: list[str] = []
 
+        # set algorithm device requests
+        self.algorithm_device_requests = []
+        if 'algorithm_device_requests' in config:
+            self._set_algorithm_device_requests(
+                config['algorithm_device_requests']
+            )
+
     def _set_database(self, databases: dict | list) -> None:
-        """"
+        """
         Set database location and whether or not it is a file
 
         Parameters
@@ -179,14 +192,17 @@ class DockerManager(DockerBaseManager):
             label_upper = label.upper()
             db_config = get_database_config(databases, label)
             if running_in_docker():
-                uri_env = os.environ[f'{label_upper}_DATABASE_URI']
-                uri = f'/mnt/{uri_env}'
+                uri = os.environ[f'{label_upper}_DATABASE_URI']
             else:
                 uri = db_config['uri']
 
-            db_type = db_config['type']
+            if running_in_docker():
+                db_is_file = Path(f'/mnt/{uri}').exists()
+                if db_is_file:
+                    uri = f'/mnt/{uri}'
+            else:
+                db_is_file = Path(uri).exists()
 
-            db_is_file = Path(uri).exists()
             if db_is_file:
                 # We'll copy the file to the folder `data` in our task_dir.
                 self.log.info(f'Copying {uri} to {self.__tasks_dir}')
@@ -194,8 +210,27 @@ class DockerManager(DockerBaseManager):
                 uri = self.__tasks_dir / os.path.basename(uri)
 
             self.databases[label] = {'uri': uri, 'is_file': db_is_file,
-                                     'type': db_type}
+                                     'type': db_config['type']}
         self.log.debug(f"Databases: {self.databases}")
+
+    def _set_algorithm_device_requests(self, device_requests_config: dict) \
+            -> None:
+        """
+        Configure device access for the algorithm container.
+
+        Parameters
+        ----------
+        device_requests_config: dict
+           A dictionary containing configuration options for device access.
+           Supported keys:
+           - 'gpu': A boolean value indicating whether GPU access is required.
+        """
+        device_requests = []
+        if device_requests_config.get('gpu', False):
+            device = docker.types.DeviceRequest(count=-1,
+                                                capabilities=[['gpu']])
+            device_requests.append(device)
+        self.algorithm_device_requests = device_requests
 
     def create_volume(self, volume_name: str) -> None:
         """
@@ -348,7 +383,8 @@ class DockerManager(DockerBaseManager):
         self.isolated_network_mgr.delete(kill_containers=True)
 
     def run(self, run_id: int, task_info: dict, image: str,
-            docker_input: bytes, tmp_vol_name: str, token: str, database: str
+            docker_input: bytes, tmp_vol_name: str, token: str,
+            databases_to_use: list[str]
             ) -> tuple[TaskStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -368,8 +404,8 @@ class DockerManager(DockerBaseManager):
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        database: str
-            Name of the Database to use
+        databases_to_use: list[str]
+            Labels of the databases to use
 
         Returns
         -------
@@ -400,9 +436,10 @@ class DockerManager(DockerBaseManager):
             isolated_network_mgr=self.isolated_network_mgr,
             databases=self.databases,
             docker_volume_name=self.data_volume_name,
-            alpine_image=self.alpine_image
+            alpine_image=self.alpine_image,
+            proxy=self.proxy,
+            device_requests=self.algorithm_device_requests
         )
-        database = database if (database and len(database)) else 'default'
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
         # again. If it fails permanently we add it to the failed tasks to be
@@ -413,7 +450,7 @@ class DockerManager(DockerBaseManager):
                 vpn_ports = task.run(
                     docker_input=docker_input, tmp_vol_name=tmp_vol_name,
                     token=token, algorithm_env=self.algorithm_env,
-                    database=database
+                    databases_to_use=databases_to_use
                 )
 
             except UnknownAlgorithmStartFail:
@@ -452,7 +489,21 @@ class DockerManager(DockerBaseManager):
         # this is blocking
         finished_tasks = []
         while (not finished_tasks) and (not self.failed_tasks):
-            finished_tasks = [t for t in self.active_tasks if t.is_finished()]
+            for task in self.active_tasks:
+
+                try:
+                    if task.is_finished():
+                        finished_tasks.append(task)
+                        self.active_tasks.remove(task)
+                        break
+                except AlgorithmContainerNotFound:
+                    self.log.exception(f'Failed to find container for '
+                                       f'result {task.result_id}')
+                    self.failed_tasks.append(task)
+                    self.active_tasks.remove(task)
+                    break
+
+            # sleep for a second before checking again
             time.sleep(1)
 
         if finished_tasks:
@@ -470,9 +521,6 @@ class DockerManager(DockerBaseManager):
             # Retrieve results from file
             results = finished_task.get_results()
 
-            # remove finished tasks from active task list
-            self.active_tasks.remove(finished_task)
-
             # remove the VPN ports of this run from the database
             self.client.request(
                 'port', params={'run_id': finished_task.run_id},
@@ -481,7 +529,7 @@ class DockerManager(DockerBaseManager):
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()
-            logs = 'Container failed to start'
+            logs = 'Container failed'
             results = b''
 
         return Result(

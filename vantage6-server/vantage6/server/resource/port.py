@@ -150,7 +150,7 @@ class Ports(PortBase):
         )
         port.save()
 
-        return port_schema.dump(port, many=False).data, HTTPStatus.CREATED
+        return port_schema.dump(port, many=False), HTTPStatus.CREATED
 
     @with_node
     def delete(self):

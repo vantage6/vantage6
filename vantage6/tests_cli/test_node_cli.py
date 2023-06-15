@@ -19,8 +19,8 @@ from vantage6.cli.node import (
     cli_node_attach,
     cli_node_create_private_key,
     cli_node_clean,
-    print_log_worker,
-    create_client_and_authenticate,
+    _print_log_worker,
+    _create_client_and_authenticate,
 )
 
 
@@ -59,7 +59,7 @@ class NodeCLITest(unittest.TestCase):
 
         # returns a list of configurations and failed inports
         def side_effect(system_folders):
-            config = MagicMock(available_environments=["Application"])
+            config = MagicMock()
             config.name = "iknl"
             if not system_folders:
                 return [[config], []]
@@ -78,11 +78,11 @@ class NodeCLITest(unittest.TestCase):
         # check printed lines
         self.assertEqual(
             result.output,
-            "\nName                     Environments                    Status          System/User\n"
-            "-------------------------------------------------------------------------------------\n"
-            "iknl                     ['Application']                 Offline          System \n"
-            "iknl                     ['Application']                 Online           User   \n"
-            "-------------------------------------------------------------------------------------\n"
+            "\nName                     Status          System/User\n"
+            "-----------------------------------------------------\n"
+            "iknl                     Offline         System \n"
+            "iknl                     Online          User   \n"
+            "-----------------------------------------------------\n"
         )
 
     @patch("vantage6.cli.node.configuration_wizard")
@@ -97,7 +97,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that info message is produced
@@ -113,7 +112,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some name",
-            "--environment", "application"
         ])
 
         self.assertEqual(
@@ -130,7 +128,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that error is produced
@@ -150,7 +147,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that error is produced
@@ -172,7 +168,7 @@ class NodeCLITest(unittest.TestCase):
         )
         context.return_value.databases.items.return_value = \
             [["label", "/file.db"]]
-        select_config.return_value = ["iknl", "application"]
+        select_config.return_value = "iknl"
 
         runner = CliRunner()
         result = runner.invoke(cli_node_files, [])
@@ -250,7 +246,7 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.time")
-    @patch("vantage6.cli.node.print_log_worker")
+    @patch("vantage6.cli.node._print_log_worker")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.check_docker_running", return_value=True)
     def test_attach(self, check_docker, containers, log_worker, time_):
@@ -292,7 +288,7 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.create_client_and_authenticate")
+    @patch("vantage6.cli.node._create_client_and_authenticate")
     @patch("vantage6.cli.node.NodeContext")
     def test_create_private_key(self, context, client):
         context.config_exists.return_value = True
@@ -309,7 +305,7 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.RSACryptor")
-    @patch("vantage6.cli.node.create_client_and_authenticate")
+    @patch("vantage6.cli.node._create_client_and_authenticate")
     @patch("vantage6.cli.node.NodeContext")
     def test_create_private_key_overwite(self, context, client, cryptor):
         context.config_exists.return_value = True
@@ -381,18 +377,18 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 1)
 
-    def test_print_log_worker(self):
+    def test__print_log_worker(self):
         stream = BytesIO("Hello!".encode(STRING_ENCODING))
         temp_stdout = StringIO()
         with contextlib.redirect_stdout(temp_stdout):
-            print_log_worker(stream)
+            _print_log_worker(stream)
         output = temp_stdout.getvalue().strip()
         self.assertEqual(output, "Hello!")
 
     @patch("vantage6.cli.node.info")
     @patch("vantage6.cli.node.debug")
     @patch("vantage6.cli.node.error")
-    @patch("vantage6.cli.node.Client")
+    @patch("vantage6.cli.node.UserClient")
     @patch("vantage6.cli.node.q")
     def test_client(self, q, client, error, debug, info):
 
@@ -406,14 +402,14 @@ class NodeCLITest(unittest.TestCase):
 
         # should not trigger an exception
         try:
-            create_client_and_authenticate(ctx)
+            _create_client_and_authenticate(ctx)
         except Exception:
             self.fail("Raised an exception!")
 
         # client raises exception
         client.side_effect = Exception("Boom!")
         with self.assertRaises(Exception):
-            create_client_and_authenticate(ctx)
+            _create_client_and_authenticate(ctx)
 
     # TODO this function has been moved to the common package. A test should
     # be added there instead of here

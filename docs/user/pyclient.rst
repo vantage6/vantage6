@@ -85,8 +85,6 @@ new user:
    #        Human readable description
    #    input : dict
    #        Algorithm input
-   #    data_format : str, optional
-   #        IO data format used, by default LEGACY
    #    database: str, optional
    #        Name of the database to use. This should match the key
    #        in the node configuration files. If not specified the
@@ -371,7 +369,8 @@ i.e. this collaboration consists of the organizations ``example_org1``
 
 Now, we have two options: create a task that will run the master
 algorithm (which runs on one node and may spawns subtasks on other nodes),
-or create a task that will (only) run the RPC methods (which are run
+or create a task that will (only) run the so-called Remote Procedure Call (RPC)
+methods (which are run
 on each node). Typically, the RPC methods only run the node local analysis
 (e.g. compute the averages per node), whereas the master algorithms
 performs aggregation of those results as well (e.g. starts the node
@@ -390,8 +389,7 @@ us create a task that runs the master algorithm of the
                                      name="an-awesome-task",
                                      image="harbor2.vantage6.ai/demo/average",
                                      description='',
-                                     input=input_,
-                                     data_format='json')
+                                     input=input_)
 
 Note that the ``kwargs`` we specified in the ``input_`` are specific to
 this algorithm: this algorithm expects an argument ``column_name`` to be
@@ -425,8 +423,7 @@ master algorithm will normally do:
                                      name="an-awesome-task",
                                      image="harbor2.vantage6.ai/demo/average",
                                      description='',
-                                     input=input_,
-                                     data_format='json')
+                                     input=input_)
 
 .. todo check if the part below is still correct in v4+
 

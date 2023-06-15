@@ -4,8 +4,9 @@ vantage6 clients
 This module is contains a base client. From this base client the container
 client (client used by master algorithms) and the user client are derived.
 """
+from __future__ import annotations
+
 import logging
-import pickle
 import time
 import typing
 import jwt
@@ -19,11 +20,10 @@ import traceback
 from pathlib import Path
 
 from vantage6.common.exceptions import AuthenticationException
-from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common import WhoAmI
-from vantage6.client import serialization, deserialization
+from vantage6.tools import serialization, deserialization
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import print_qr_code, LogLevel
 from vantage6.common.task_status import TaskStatus
@@ -201,7 +201,7 @@ class ClientBase(object):
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
                 params: dict = None, first_try: bool = True,
-                retry: bool = True) -> dict:
+                retry: bool = True, attempts_on_timeout: int = None) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -218,6 +218,9 @@ class ClientBase(object):
             Whether this is the first attempt of this request. Default True.
         retry: bool, optional
             Try request again after refreshing the token. Default True.
+        attempts_on_timeout: int, optional
+            Number of attempts to make when a timeout occurs. Default None
+            which leads to unlimited amount of attempts.
 
         Returns
         -------
@@ -238,16 +241,22 @@ class ClientBase(object):
         url = self.generate_path_to(endpoint)
         self.log.debug(f'Making request: {method.upper()} | {url} | {params}')
 
-        try:
-            response = rest_method(url, json=json, headers=self.headers,
-                                   params=params)
-        except requests.exceptions.ConnectionError as e:
-            # we can safely retry as this is a connection error. And we
-            # keep trying!
-            self.log.error('Connection error... Retrying')
-            self.log.debug(e)
-            time.sleep(1)
-            return self.request(endpoint, json, method, params)
+        timeout_attempts = 0
+        while True:
+            try:
+                response = rest_method(url, json=json, headers=self.headers,
+                                       params=params)
+                break
+            except requests.exceptions.ConnectionError as e:
+                # we can safely retry as this is a connection error. And we
+                # keep trying (unless a max number of attempts is given)!
+                timeout_attempts += 1
+                if attempts_on_timeout is not None \
+                        and timeout_attempts > attempts_on_timeout:
+                    return {'msg': 'Connection error'}
+                self.log.error('Connection error... Retrying')
+                self.log.debug(e)
+                time.sleep(1)
 
         # TODO: should check for a non 2xx response
         if response.status_code > 210:
@@ -262,8 +271,10 @@ class ClientBase(object):
             if retry:
                 if first_try:
                     self.refresh_token()
-                    return self.request(endpoint, json, method, params,
-                                        first_try=False)
+                    return self.request(
+                        endpoint, json, method, params, first_try=False,
+                        attempts_on_timeout=attempts_on_timeout
+                    )
                 else:
                     self.log.error("Nope, refreshing the token didn't fix it.")
 
@@ -415,7 +426,7 @@ class ClientBase(object):
         assert self.__refresh_url, \
             "Refresh URL not found, did you authenticate?"
 
-        # if no port is specified explicit, then it should be omnit the
+        # if no port is specified explicit, then it should be omit the
         # colon : in the path. Similar (but different) to the property
         # base_path
         if self.__port:
@@ -439,9 +450,8 @@ class ClientBase(object):
     # TODO BvB 23-01-23 remove this method in v4+. It is only here for
     # backwards compatibility
     def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_='', description='',
-                  organization_ids: list = None,
-                  data_format=LEGACY, database: str = 'default') -> dict:
+                  input_='', description='', organization_ids: list = None,
+                  databases: list[str] = None) -> dict:
         """Post a new task at the server
 
         It will also encrypt `input_` for each receiving organization.
@@ -462,13 +472,9 @@ class ClientBase(object):
         organization_ids : list, optional
             Ids of organizations (within the collaboration) that need to
             execute this task, by default None
-        data_format : str, optional
-            Type of data format to use to send and receive
-            data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
-            will use pickle serialization. Default is 'legacy'., by default
-            LEGACY
-        database : str, optional
-            Database label to use for the task, by default 'default'
+        databases : list[str], optional
+            Database labels to use for the task, by default None which will be
+            set to ['default']
 
         Returns
         -------
@@ -484,14 +490,15 @@ class ClientBase(object):
 
         if organization_ids is None:
             organization_ids = []
+        if databases is None:
+            databases = ['default']
+        elif isinstance(databases, str):
+            # it is not unlikely that users specify a single database as a str,
+            # in that case we convert it to a list
+            databases = [databases]
 
-        if data_format == LEGACY:
-            serialized_input = pickle.dumps(input_)
-        else:
-            # Data will be serialized to bytes in the specified data format.
-            # It will be prepended with 'DATA_FORMAT.' in unicode.
-            serialized_input = data_format.encode() + b'.' \
-                + serialization.serialize(input_, data_format)
+        # Data will be serialized in JSON.
+        serialized_input = serialization.serialize(input_)
 
         organization_json_list = []
         for org_id in organization_ids:
@@ -511,7 +518,7 @@ class ClientBase(object):
             "collaboration_id": collaboration_id,
             "description": description,
             "organizations": organization_json_list,
-            'database': database
+            'databases': databases
         })
 
     def _decrypt_input(self, input_: str) -> bytes:
@@ -602,11 +609,11 @@ class ClientBase(object):
 
         Parameters
         ----------
-        parent : UserClient
+        parent : UserClient | AlgorithmClient
             The parent client
         """
         def __init__(self, parent) -> None:
-            self.parent: UserClient = parent
+            self.parent = parent
 
 
 class UserClient(ClientBase):
@@ -796,15 +803,23 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def get_server_version(self) -> dict:
+        def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
+
+            Parameters
+            ----------
+            attempts_on_timeout : int
+                Number of attempts to make when the server is not responding.
+                Default is unlimited.
 
             Returns
             -------
             dict
                 A dict containing the version number
             """
-            return self.parent.request('version')
+            return self.parent.request(
+                'version', attempts_on_timeout=attempts_on_timeout
+            )
 
         def get_server_health(self) -> dict:
             """View the health of the vantage6-server
@@ -1833,8 +1848,7 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input: dict,
-                   data_format: str = LEGACY,
-                   database: str = 'default') -> dict:
+                   databases: list[str] = None) -> dict:
             """Create a new task
 
             Parameters
@@ -1852,19 +1866,19 @@ class UserClient(ClientBase):
                 Human readable description
             input : dict
                 Algorithm input
-            data_format : str, optional
-                IO data format used, by default LEGACY
-            database: str, optional
-                Database name to be used at the node
+            databases: list[str], optional
+                Database names to be used at the node
 
             Returns
             -------
             dict
                 [description]
             """
+            if databases is None:
+                databases = ['default']
             return self.parent.post_task(name, image, collaboration, input,
                                          description, organizations,
-                                         data_format, database)
+                                         databases)
 
         def delete(self, id_: int) -> dict:
             """Delete a task
@@ -1941,7 +1955,7 @@ class UserClient(ClientBase):
                  assigned: tuple[str, str] = None,
                  finished: tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
-                 include_metadata: bool = True) -> list:
+                 include_metadata: bool = True) -> dict | list[dict]:
             """List runs
 
             Parameters
@@ -2010,8 +2024,6 @@ class UserClient(ClientBase):
 
             return runs
 
-        # note: using typing.List instead of `list` to prevent referring
-        # to the list() function in an incorrect manner
         def from_task(
             self, task_id: int, include_task: bool = False
         ) -> typing.List[dict]:

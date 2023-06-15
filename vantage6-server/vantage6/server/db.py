@@ -23,7 +23,8 @@ from vantage6.server.model import (
     UserPermission,
     role_rule_association,
     AlgorithmPort,
-    NodeConfig
+    NodeConfig,
+    TaskDatabase,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
@@ -82,20 +83,3 @@ def jsonable(value: list[Base] | Base) -> list | dict:
     # FIXME: does it make sense to raise an exception or should base types
     #        (or other JSON-serializable types) just be returned as-is?
     raise Exception('value should be instance of db.Base or list!')
-
-
-def jsonify(value: list[Base] | Base) -> str:
-    """
-    Convert a (list of) SQLAlchemy instance(s) to a JSON (string).
-
-    Parameters
-    ----------
-    value : list[Base] | Base
-        A single SQLAlchemy instance or a list of SQLAlchemy instances
-
-    Returns
-    -------
-    str
-        A JSON string
-    """
-    return json.dumps(jsonable(value))

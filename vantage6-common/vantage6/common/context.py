@@ -5,10 +5,11 @@ import logging
 import logging.handlers
 
 from pathlib import Path
+from typing import Tuple
 
 from vantage6.common import Singleton, error, Fore, Style, logger_name
 from vantage6.common.colors import ColorStreamHandler
-from vantage6.common.globals import DEFAULT_ENVIRONMENT, APPNAME
+from vantage6.common.globals import APPNAME
 from vantage6.common.configuration_manager import (
     ConfigurationManager
 )
@@ -16,7 +17,9 @@ from vantage6.common._version import __version__
 
 
 class AppContext(metaclass=Singleton):
-
+    """
+    Base class from which to create Node and Server context classes.
+    """
     # FIXME: drop the prefix "INST_": a *class* is assigned.
     # FIXME: this does not need to be a class attribute, but ~~can~~_should_
     #        be set in __init__
@@ -26,8 +29,7 @@ class AppContext(metaclass=Singleton):
 
     def __init__(
         self, instance_type: str, instance_name: str,
-        environment: str = DEFAULT_ENVIRONMENT, system_folders: bool = False,
-        config_file: Path | str = None
+        system_folders: bool = False, config_file: Path | str = None
     ) -> None:
         """
         Create a new AppContext instance.
@@ -40,9 +42,6 @@ class AppContext(metaclass=Singleton):
             Name of the configuration
         system_folders: bool
             Use system folders instead of user folders
-        environment: str
-            Environment within the config file to use. Can be any of
-            'application', 'dev', 'test', 'acc' or 'prod'.
         config_file: str
             Path to a specific config file. If left as None, OS specific folder
             will be used to find the configuration file specified by
@@ -50,10 +49,7 @@ class AppContext(metaclass=Singleton):
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
-
-        # configuration environment, load a single configuration from
-        # entire confiration file (which can contain multiple environments)
-        # self.config_file = self.config_dir / f"{instance_name}.yaml"
+        self.instance_type = instance_type
 
         # if config_file is None:
         #     config_file = f"{instance_name}.yaml"
@@ -64,17 +60,11 @@ class AppContext(metaclass=Singleton):
             config_file
         )
 
-        # will load a specific environment in the config_file, this
-        # triggers to set the logging as this is env dependant
-        self.environment: str = environment
-
-        # lookup system / user directories, this needs to be done after
-        # the environment is been set. This way we can check if the
+        # look up system / user directories. This way we can check if the
         # config file container custom directories
         self.set_folders(instance_type, self.name, system_folders)
 
-        # after both the folders and the environment have been set, we
-        # can start logging!
+        # after the folders have been set, we can start logging!
         if self.LOGGING_ENABLED:
             self.setup_logging()
 
@@ -97,8 +87,7 @@ class AppContext(metaclass=Singleton):
         self.log.info("please cite the proper sources as mentioned in:")
         self.log.info("https://vantage6.ai/vantage6/references")
         self.log.info("-" * 60)
-        self.log.info(f"Started application {APPNAME} with environment "
-                      f"{self.environment}")
+        self.log.info(f"Started application {APPNAME}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
         self.log.info(f"Successfully loaded configuration from "
                       f"'{self.config_file}'")
@@ -107,8 +96,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def from_external_config_file(
-        cls, path: Path | str, instance_type: str,
-        environment: str = DEFAULT_ENVIRONMENT, system_folders: bool = False
+        cls, path: Path | str, instance_type: str, system_folders: bool = False
     ) -> "AppContext":
         """
         Create a new AppContext instance from an external config file.
@@ -119,9 +107,6 @@ class AppContext(metaclass=Singleton):
             Path to the config file
         instance_type: str
             'server' or 'node'
-        environment: str
-            Environment within the config file to use. Can be any of
-            'application', 'dev', 'test', 'acc' or 'prod'.
         system_folders: bool
             Use system folders rather than user folders
 
@@ -137,7 +122,7 @@ class AppContext(metaclass=Singleton):
         self_.scope = "system" if system_folders else "user"
         self_.config_dir = Path(path).parent
         self_.config_file = path
-        self_.environment = environment
+        self_.instance_type = instance_type
         self_.set_folders(instance_type, instance_name, system_folders)
         module_name = logger_name(__name__)
         self_.log = logging.getLogger(module_name)
@@ -149,7 +134,7 @@ class AppContext(metaclass=Singleton):
     @classmethod
     def config_exists(
         cls, instance_type: str, instance_name: str,
-        environment: str = DEFAULT_ENVIRONMENT, system_folders: bool = False
+        system_folders: bool = False
     ) -> bool:
         """Check if a config file exists for the given instance type and name.
 
@@ -159,9 +144,6 @@ class AppContext(metaclass=Singleton):
             'server' or 'node'
         instance_name: str
             Name of the configuration
-        environment: str
-            Environment within the config file to use. Can be any of
-            'application', 'dev', 'test', 'acc' or 'prod'.
         system_folders: bool
             Use system folders rather than user folders
 
@@ -181,9 +163,9 @@ class AppContext(metaclass=Singleton):
         except Exception:
             return False
 
-        # check that environment is present in config-file
-        config_manager = cls.INST_CONFIG_MANAGER.from_file(config_file)
-        return bool(getattr(config_manager, environment))
+        # check that configuration is present in config-file
+        config = cls.INST_CONFIG_MANAGER.from_file(config_file)
+        return bool(config)
 
     @staticmethod
     def type_data_folder(instance_type: str, system_folders: bool) -> Path:
@@ -295,22 +277,32 @@ class AppContext(metaclass=Singleton):
         -------
         Path
             Path to the log file
+        """
+        return self.log_file_name(type_=self.instance_type)
+
+    def log_file_name(self, type_: str) -> Path:
+        """
+        Return a path to a log file for a given log file type
+
+        Parameters
+        ----------
+        type_: str
+            The type of log file to return.
+
+        Returns
+        -------
+        Path
+            The path to the log file.
 
         Raises
         ------
         AssertionError
-            If the configuration manager is not initialized
+            If the configuration manager is not initialized.
         """
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
-
-        # check if the configuration file contains a logging file setting
-        if self.config.get("logging"):
-            if self.config.get("logging").get("file"):
-                return self.log_dir / self.config.get("logging").get("file")
-
-        file_ = f"{self.config_manager.name}-{self.environment}"\
-                f"-{self.scope}.log"
+        file_ = (Path(self.config_manager.name) /
+                 f"{type_}_{self.scope}.log")
         return self.log_dir / file_
 
     @property
@@ -353,40 +345,7 @@ class AppContext(metaclass=Singleton):
         assert Path(path).exists(), f"config {path} not found"
         self.__config_file = Path(path)
         self.config_manager = self.INST_CONFIG_MANAGER.from_file(path)
-
-    @property
-    def environment(self) -> str:
-        """Return the environment.
-
-        Returns
-        -------
-        str
-            Environment
-        """
-        return self.__environment
-
-    @environment.setter
-    def environment(self, env) -> None:
-        """
-        Set the environment.
-
-        Parameters
-        ----------
-        env: str
-            Environment
-
-        Raises
-        ------
-        AssertionError
-            If the environment is not found in the configuration or the
-            configuration manager is not initialized.
-        """
-        assert self.config_manager, \
-            "Environment set before ConfigurationManager is initialized..."
-        assert env in self.config_manager.available_environments, \
-            f"Requested environment {env} is not found in the configuration"
-        self.__environment = env
-        self.config: dict = self.config_manager.get(env)
+        self.config = self.config_manager.config
 
     @classmethod
     def find_config_file(
@@ -513,9 +472,10 @@ class AppContext(metaclass=Singleton):
 
         Exits if the log file can't be created.
         """
+        # TODO BvB 2023-03-31: would be nice to refactor this with the other
+        # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
-        level = getattr(logging, log_config["level"].upper())
         format_ = log_config["format"]
         datefmt = log_config.get("datefmt", "")
 
@@ -523,8 +483,7 @@ class AppContext(metaclass=Singleton):
         os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
 
         # Create the root logger
-        logger = logging.getLogger()
-        logger.setLevel(level)
+        logger, level = self.configure_logger(None, log_config["level"])
 
         # Create RotatingFileHandler
         try:
@@ -549,5 +508,35 @@ class AppContext(metaclass=Singleton):
             ch.setFormatter(logging.Formatter(format_, datefmt))
             logger.addHandler(ch)
 
+        # control individual loggers
+        loggers = log_config.get("loggers", [])
+        for logger in loggers:
+            self.configure_logger(logger["name"], logger["level"])
+
         # Finally, capture all warnings using the logging mechanism.
         logging.captureWarnings(True)
+
+    @staticmethod
+    def configure_logger(name: str | None, level: str) \
+            -> Tuple[logging.Logger, int]:
+        """
+        Set the logging level of a logger.
+
+        Parameters
+        ----------
+        name : str
+            Name of the logger to configure. If `None`, the root logger is
+            configured.
+        level : str
+            Logging level to set. Must be one of 'debug', 'info', 'warning',
+            'error', 'critical'.
+
+        Returns
+        -------
+        Tuple[Logger, int]
+            The logger object and the logging level that was set.
+        """
+        logger = logging.getLogger(name)
+        level_ = getattr(logging, level.upper())
+        logger.setLevel(level_)
+        return logger, level

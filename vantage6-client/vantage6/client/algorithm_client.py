@@ -1,8 +1,9 @@
 import jwt
-import pickle
+import json as json_lib
 
 from vantage6.client import ClientBase
-from vantage6.client import base64s_to_bytes, bytes_to_base64s
+from vantage6.common import base64s_to_bytes, bytes_to_base64s
+from vantage6.tools.serialization import serialize
 
 
 class AlgorithmClient(ClientBase):
@@ -43,7 +44,7 @@ class AlgorithmClient(ClientBase):
             container_identity = jwt_payload['identity']
 
         self.image = container_identity.get("image")
-        self.database = container_identity.get('database')
+        self.databases = container_identity.get('databases', [])
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.log.info(
@@ -54,6 +55,7 @@ class AlgorithmClient(ClientBase):
 
         # attach sub-clients
         self.run = self.Run(self)
+        self.result = self.Result(self)
         self.task = self.Task(self)
         self.vpn = self.VPN(self)
         self.organization = self.Organization(self)
@@ -79,6 +81,40 @@ class AlgorithmClient(ClientBase):
             Response from the central server.
         """
         return super().request(*args, **kwargs, retry=False)
+
+    def multi_page_request(self, endpoint: str, params: dict = None) -> dict:
+        """
+        Make multiple requests to the central server to get all pages of a list
+        of results.
+
+        Parameters
+        ----------
+        endpoint: str
+            Endpoint to which the request should be made.
+        params: dict
+            Parameters to be passed to the request.
+
+        Returns
+        -------
+        dict
+            Response from the central server.
+        """
+        if params is None:
+            params = {}
+        # get first page
+        page = 1
+        params["page"] = page
+        response = self.request(endpoint, params=params)
+
+        # append next pages (if any)
+        links = response.get("links")
+        while links and links.get("next"):
+            page += 1
+            params["page"] = page
+            response["data"] += self.request(endpoint, params=params)["data"]
+            links = response.get("links")
+
+        return response['data']
 
     class Run(ClientBase.SubClient):
         """
@@ -110,21 +146,57 @@ class AlgorithmClient(ClientBase):
                 List of algorithm run data. The type of the results depends on
                 the algorithm.
             """
-            runs = self.parent.request(
-                f"task/{task_id}/run"
+            # TODO do we need this function? It may be used to collect data
+            # on subtasks but usually only the results are accessed, which is
+            # done with the function below.
+            return self.parent.multi_page_request(
+                "run", params={"task_id": task_id}
             )
 
-            decoded_results = []
+    class Result(ClientBase.SubClient):
+        """
+        Result client for the algorithm container.
+
+        This client is used to get results from the central server.
+        """
+        def get(self, task_id: int) -> list:
+            """
+            Obtain results from a specific task at the server.
+
+            Containers are allowed to obtain the results of their children
+            (having the same job_id at the server). The permissions are checked
+            at te central server.
+
+            Results are decrypted by the proxy server and decoded here before
+            returning them to the algorithm.
+
+            Parameters
+            ----------
+            task_id: int
+                ID of the task from which you want to obtain the results
+
+            Returns
+            -------
+            list
+                List of results. The type of the results depends on the
+                algorithm.
+            """
+            results = self.parent.multi_page_request(
+                "result", params={"task_id": task_id}
+            )
+
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
-            # FIXME Are we completely sure that the format is always a pickle?
+            decoded_results = []
             try:
                 decoded_results = [
-                    pickle.loads(base64s_to_bytes(run.get("result")))
-                    for run in runs if run.get("result")
+                    json_lib.loads(
+                        base64s_to_bytes(result.get("result")).decode()
+                    )
+                    for result in results if result.get("result")
                 ]
             except Exception as e:
-                self.parent.log.error('Unable to unpickle result')
+                self.parent.log.error('Unable to load results')
                 self.parent.log.debug(e)
 
             return decoded_results
@@ -192,7 +264,7 @@ class AlgorithmClient(ClientBase):
 
             # serializing input. Note that the input is not encrypted here, but
             # in the proxy server (self.parent.request())
-            serialized_input = bytes_to_base64s(pickle.dumps(input_))
+            serialized_input = bytes_to_base64s(serialize(input_))
             organization_json_list = []
             for org_id in organization_ids:
                 organization_json_list.append(
@@ -208,7 +280,7 @@ class AlgorithmClient(ClientBase):
                 "collaboration_id": self.parent.collaboration_id,
                 "description": description,
                 "organizations": organization_json_list,
-                "database": self.parent.database
+                "databases": self.parent.databases
             })
 
     class VPN(ClientBase.SubClient):
@@ -333,27 +405,11 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of organizations in the collaboration.
             """
-            page = 1
-            organizations = self.parent.request(
-                "organization",
-                params={
-                    "collaboration_id": self.parent.collaboration_id,
-                    "page": page,
+            return self.parent.multi_page_request(
+                endpoint="organization", params={
+                    "collaboration_id": self.parent.collaboration_id
                 }
             )
-            links = organizations.get("links")
-            while links and links.get("next"):
-                page += 1
-                organizations["data"] += self.parent.request(
-                    "organization",
-                    params={
-                        "collaboration_id": self.parent.collaboration_id,
-                        "page": page,
-                    }
-                )["data"]
-                links = organizations.get("links")
-
-            return organizations['data']
 
     class Collaboration(ClientBase.SubClient):
         """

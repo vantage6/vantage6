@@ -69,10 +69,10 @@ class WizardTest(unittest.TestCase):
             "config": "/some/path/"
         }
 
-        file_ = configuration_wizard("node", "vtg6", "application", False)
+        file_ = configuration_wizard("node", "vtg6", False)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-        file_ = configuration_wizard("server", "vtg6", "application", True)
+        file_ = configuration_wizard("server", "vtg6", True)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
     @patch(f"{module_path}.NodeContext")
@@ -81,14 +81,12 @@ class WizardTest(unittest.TestCase):
 
         config = MagicMock()
         config.name = "vtg6"
-        config.available_environments = ["application"]
 
         server_c.available_configurations.return_value = [[config], []]
         node_c.available_configurations.return_value = [[config], []]
 
         with patch(f"{module_path}.q") as q:
-            q.select.return_value.ask.return_value = ["vtg6", "application"]
-            name, env = select_configuration_questionaire("node", True)
+            q.select.return_value.ask.return_value = "vtg6"
+            name = select_configuration_questionaire("node", True)
 
         self.assertEqual(name, "vtg6")
-        self.assertEqual(env, "application")
