@@ -209,7 +209,7 @@ class TestResources(unittest.TestCase):
         return headers
 
     def paginated_list(
-        self, url: str, headers: dict = None, **kwargs
+        self, url: str, headers: dict = None
     ) -> tuple[Response, list]:
         """
         Get all resources of a list endpoint by browsing through all pages
@@ -228,16 +228,19 @@ class TestResources(unittest.TestCase):
         tuple[flask.Response, list]
             The response and the list of all resources
         """
-        result = self.app.get(url, headers=headers, **kwargs)
+        result = self.app.get(url, headers=headers)
         links = result.json.get('links')
         page = 1
-        json_data = result.json['data']
+        json_data = result.json.get('data')
+        if json_data is None:
+            json_data = []
         while links and links.get('next'):
             page += 1
             new_response = self.app.get(
-                links.get('next'), headers=headers, **kwargs
+                links.get('next'), headers=headers
             )
-            json_data += new_response.json.get('data')
+            json_data += new_response.json.get('data') \
+                if new_response.json.get('data') else []
             links = new_response.json.get('links')
         return result, json_data
 
@@ -620,7 +623,9 @@ class TestResources(unittest.TestCase):
 
     def test_view_role_permissions(self):
         org = Organization()
+        org.save()
         other_org = Organization()
+        other_org.save()
         col = Collaboration(organizations=[org, other_org])
         col.save()
         org_outside_collab = Organization()
@@ -651,6 +656,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(org, rules=[rule])
         result, json_data = self.paginated_list('/api/role', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
+
         # +3 for the root, container and node roles (other default roles are
         # not generated for unit tests)
         self.assertEqual(len(json_data), len(org.roles) + 3)
@@ -663,7 +669,9 @@ class TestResources(unittest.TestCase):
         # organization scope
         headers = self.create_user_and_login(other_org, rules=[rule])
         result = self.app.get(
-            '/api/role', headers=headers, query_string={'organization_id': 1})
+            '/api/role', headers=headers,
+            query_string={'organization_id': org.id}
+        )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # user can view their own roles. This should always be possible
@@ -1112,14 +1120,15 @@ class TestResources(unittest.TestCase):
         # check outside the collaboration fails
         org3 = Organization()
         org3.save()
-        role = Role(name="some-role-name", organization=org3)
-        role.save()
-        result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
+        role2 = Role(name="some-role-name", organization=org3)
+        role2.save()
+        result = self.app.post(f'/api/role/{role2.id}/rule/{rule.id}',
                                headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
         role.delete()
+        role2.delete()
         org.delete()
         org2.delete()
         org3.delete()
@@ -1190,15 +1199,16 @@ class TestResources(unittest.TestCase):
         # check outside the collaboration fails
         org3 = Organization()
         org3.save()
-        role = Role(name="some-role-name", organization=org3)
-        role.rules.append(rule)
-        role.save()
-        result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
+        role2 = Role(name="some-role-name", organization=org3)
+        role2.rules.append(rule)
+        role2.save()
+        result = self.app.delete(f'/api/role/{role2.id}/rule/{rule.id}',
                                  headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
         role.delete()
+        role2.delete()
         org.delete()
         org2.delete()
         org3.delete()
@@ -1224,7 +1234,8 @@ class TestResources(unittest.TestCase):
 
         # view users of your organization
         rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.VIEW)
-        org = Organization.get(1)
+        org = Organization()
+        org.save()
         headers = self.create_user_and_login(org, rules=[rule])
         result, json_data = self.paginated_list('/api/user', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
@@ -2291,7 +2302,6 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(organization=org, rules=[rule])
         results = self.app.delete(f"/api/collaboration/{col.id}/organization",
                                   headers=headers, json={'id': org2.id})
-        print(results.json)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # cleanup
