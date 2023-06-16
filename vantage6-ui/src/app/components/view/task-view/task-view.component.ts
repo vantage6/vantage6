@@ -11,6 +11,8 @@ import { RunDataService } from 'src/app/services/data/run-data.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
+import { allPages } from 'src/app/interfaces/utils';
+import { getIdsFromArray } from 'src/app/shared/utils';
 
 @Component({
   selector: 'app-task-view',
@@ -43,6 +45,7 @@ export class TaskViewComponent
   ngOnChanges() {
     if (this.task.id !== EMPTY_TASK.id) {
       this.setAlgorithmRuns();
+      this.setChildren();
     }
   }
 
@@ -60,6 +63,13 @@ export class TaskViewComponent
         this.setResultOrganizations();
       }
     );
+  }
+
+  async setChildren(): Promise<void> {
+    this.task.children = await this.taskDataService.list_with_params(
+        allPages(), { parent_id: this.task.id }
+    )
+    this.task.children_ids = getIdsFromArray(this.task.children);
   }
 
   async setResultOrganizations(): Promise<void> {

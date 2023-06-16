@@ -12,14 +12,14 @@ import { BaseDataService } from './base-data.service';
 import { arrayContains, deepcopy } from 'src/app/shared/utils';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { OpsType, ResType } from 'src/app/shared/enum';
-import { NodeDataService } from './node-data.service';
-import { OrgDataService } from './org-data.service';
 import { Resource } from 'src/app/shared/types';
 import {
   Pagination,
   allPages,
   defaultFirstPage,
 } from 'src/app/interfaces/utils';
+import { OrgDataService } from './org-data.service';
+import { NodeDataService } from './node-data.service';
 
 @Injectable({
   providedIn: 'root',
@@ -32,8 +32,8 @@ export class CollabDataService extends BaseDataService {
     protected collabApiService: CollabApiService,
     protected convertJsonService: ConvertJsonService,
     private userPermission: UserPermissionService,
+    private orgDataService: OrgDataService,
     private nodeDataService: NodeDataService,
-    private orgDataService: OrgDataService
   ) {
     super(collabApiService, convertJsonService);
     this.resource_list.subscribe((resources) => {
@@ -49,20 +49,6 @@ export class CollabDataService extends BaseDataService {
       // update the observables per collab
       this.updateObsPerCollab(resources);
     });
-  }
-
-  async getDependentResources() {
-    // TODO don't get all nodes and organizations, but only those that are
-    // needed for the current list of collaborations
-    (await this.nodeDataService.list(false, allPages())).subscribe((nodes) => {
-      this.nodes = nodes;
-      this.updateNodes();
-    });
-    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
-      this.organizations = orgs;
-      this.updateOrganizations();
-    });
-    return [this.organizations, this.nodes];
   }
 
   updateObsPerOrg(resources: Resource[]) {
@@ -98,25 +84,41 @@ export class CollabDataService extends BaseDataService {
 
   async get(
     id: number,
+    include_links: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration>> {
-    return (await super.get_base(
-      id,
-      this.convertJsonService.getCollaboration,
-      force_refresh
-    )) as Observable<Collaboration>;
+    let collab = (
+      await super.get_base(
+        id,
+        this.convertJsonService.getCollaboration,
+        force_refresh
+      )
+    ) as BehaviorSubject<Collaboration>;
+    if (include_links) {
+      let collab_val = collab.value;
+      // request the organizations for the current collaboration
+      collab_val.organizations = await this.orgDataService.list_with_params(
+        allPages(),
+        { collaboration_id: collab_val.id }
+      );
+      // request the nodes for the current collaboration
+      let nodes = await this.nodeDataService.list_with_params(allPages(), {
+        collaboration_id: collab_val.id,
+      });
+      this.addNodesToCollaboration(collab_val, nodes);
+    }
+    return collab.asObservable() as Observable<Collaboration>;
   }
 
   async list(
     force_refresh: boolean = false,
     pagination: Pagination = defaultFirstPage()
   ): Promise<Observable<Collaboration[]>> {
-    let collaborations = (await super.list_base(
+    return (await super.list_base(
       this.convertJsonService.getCollaboration,
       pagination,
       force_refresh
-    )) as Observable<Collaboration[]>;
-    return collaborations;
+    )).asObservable() as Observable<Collaboration[]>;
   }
 
   async org_list(
@@ -139,21 +141,28 @@ export class CollabDataService extends BaseDataService {
       this.convertJsonService.getCollaboration,
       pagination,
       force_refresh
-    )) as Observable<Collaboration[]>;
+    )).asObservable() as Observable<Collaboration[]>;
   }
 
-  updateNodes(): void {
-    let collabs = deepcopy(this.resource_list.value);
+  async list_with_params(
+    pagination: Pagination = allPages(),
+    request_params: any = {}
+  ): Promise<Collaboration[]> {
+    return await super.list_with_params_base(
+      this.convertJsonService.getCollaboration,
+      request_params,
+      pagination,
+    ) as Collaboration[];
+  }
+
+  updateNodes(collabs: Collaboration[]): void {
     this.deleteNodesFromCollaborations(collabs);
     this.addNodesToCollaborations(collabs, this.nodes);
-    this.resource_list.next(collabs);
   }
 
-  updateOrganizations(): void {
-    let collabs = deepcopy(this.resource_list.value);
+  updateOrganizations(collabs: Collaboration[]): void {
     this.deleteOrgsFromCollaborations(collabs);
     this.addOrgsToCollaborations(collabs, this.organizations);
-    this.resource_list.next(collabs);
   }
 
   addOrgsToCollaborations(

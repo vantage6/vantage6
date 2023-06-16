@@ -31,11 +31,9 @@ export class NodeDataService extends BaseDataService {
     id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Node>> {
-    return (await super.get_base(
-      id,
-      this.convertJsonService.getNode,
-      force_refresh
-    )) as Observable<Node>;
+    return (
+      await super.get_base(id, this.convertJsonService.getNode, force_refresh)
+    ).asObservable() as Observable<Node>;
   }
 
   async list(
@@ -46,7 +44,7 @@ export class NodeDataService extends BaseDataService {
       this.convertJsonService.getNode,
       pagination,
       force_refresh
-    )) as Observable<Node[]>;
+    )).asObservable() as Observable<Node[]>;
   }
 
   async org_list(
@@ -59,7 +57,7 @@ export class NodeDataService extends BaseDataService {
       this.convertJsonService.getNode,
       pagination,
       force_refresh
-    )) as Observable<Node[]>;
+    )).asObservable() as Observable<Node[]>;
   }
 
   async collab_list(
@@ -73,6 +71,17 @@ export class NodeDataService extends BaseDataService {
       pagination,
       force_refresh
     )) as Observable<Node[]>;
+  }
+
+  async list_with_params(
+    pagination: Pagination = allPages(),
+    request_params: any = {}
+  ): Promise<Node[]> {
+    return await super.list_with_params_base(
+      this.convertJsonService.getNode,
+      request_params,
+      pagination,
+    ) as Node[];
   }
 
   updateNodeStatus(status_update: any) {

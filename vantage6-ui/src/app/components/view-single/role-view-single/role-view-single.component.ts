@@ -40,7 +40,7 @@ export class RoleViewSingleComponent
   }
 
   async setResources(): Promise<void> {
-    (await this.roleDataService.get(this.route_id as number)).subscribe(
+    (await this.roleDataService.get(this.route_id as number, true)).subscribe(
       (role) => {
         this.role = role;
       }

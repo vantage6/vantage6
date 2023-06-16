@@ -90,10 +90,8 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
-    (await this.collabDataService.org_list(this.logged_in_org_id)).subscribe(
-      (collabs) => {
-        this.collaborations = collabs;
-      }
+    this.collaborations = await this.collabDataService.list_with_params(
+      allPages(), { organization_id: this.logged_in_org_id}
     );
 
     // subscribe to id parameter in route to change edited role if required
@@ -156,8 +154,13 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
       : 'Select task';
   }
 
-  public selectCollab(collab: Collaboration): void {
+  public async selectCollab(collab: Collaboration): Promise<void> {
     this.task.collaboration = collab;
+    // get organizations for this collaboration
+    this.task.collaboration.organizations = await this.orgDataService.list_with_params(
+      allPages(), { collaboration_id: this.task.collaboration.id }
+    );
+
     this.selected_orgs = [];
     this.deselected_orgs = collab.organizations;
     this.checkMasterMultiOrg();
@@ -173,6 +176,13 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.task = task;
     this.selectCollab(getById(this.collaborations, task.collaboration_id));
     this.task.databases.push(''); // add empty database so user  can add one
+    if (this.task.collaboration){
+      // TODO this call should not be necessary, as it is done in selectCollab()
+      // but somehow it is. Check if task is renewed somewhere else.
+      this.task.collaboration.organizations = await this.orgDataService.list_with_params(
+        allPages(), { collaboration_id: this.task.collaboration.id }
+      );
+    }
 
     // Get also the task's algorithm runs as this includes the input and the
     // organization

@@ -50,21 +50,21 @@ export class ConvertJsonService {
 
   getUser(user_json: any, roles: Role[], rules: Rule[]): User {
     let user_roles: Role[] = [];
-    if (user_json.roles) {
-      user_json.roles.forEach((role: any) => {
-        let r = getById(roles, role.id);
-        if (r !== undefined) {
-          user_roles.push(r);
-        }
-      });
-    }
+    // if (user_json.roles) {
+    //   user_json.roles.forEach((role: any) => {
+    //     let r = getById(roles, role.id);
+    //     if (r !== undefined) {
+    //       user_roles.push(r);
+    //     }
+    //   });
+    // }
     let user_rules: Rule[] = [];
-    if (user_json.rules) {
-      user_json.rules.forEach((rule: any) => {
-        let r = getById(rules, rule.id);
-        user_rules.push(r);
-      });
-    }
+    // if (user_json.rules) {
+    //   user_json.rules.forEach((rule: any) => {
+    //     let r = getById(rules, rule.id);
+    //     user_rules.push(r);
+    //   });
+    // }
     return {
       id: user_json.id,
       type: ResType.USER,
@@ -80,11 +80,11 @@ export class ConvertJsonService {
 
   getOrganization(org_json: any): Organization {
     let col_ids: number[] = [];
-    if (org_json.collaborations) {
-      for (let col of org_json.collaborations) {
-        col_ids.push(col.id);
-      }
-    }
+    // if (org_json.collaborations) {
+    //   for (let col of org_json.collaborations) {
+    //     col_ids.push(col.id);
+    //   }
+    // }
     return {
       id: org_json.id,
       type: ResType.ORGANIZATION,
@@ -109,25 +109,25 @@ export class ConvertJsonService {
   ): Collaboration {
     let orgs: Organization[] = [];
     let org_ids: number[] = [];
-    if (coll_json.organizations) {
-      coll_json.organizations.forEach((org_json: any) => {
-        let org = getById(organizations, org_json.id);
-        if (org) {
-          org = deepcopy(org);
-          for (let node of nodes) {
-            if (
-              node.organization_id === org.id &&
-              node.collaboration_id === coll_json.id
-            ) {
-              org.node = node;
-              break;
-            }
-          }
-          orgs.push(org);
-        }
-        org_ids.push(org_json.id);
-      });
-    }
+    // if (coll_json.organizations) {
+    //   coll_json.organizations.forEach((org_json: any) => {
+    //     let org = getById(organizations, org_json.id);
+    //     if (org) {
+    //       org = deepcopy(org);
+    //       for (let node of nodes) {
+    //         if (
+    //           node.organization_id === org.id &&
+    //           node.collaboration_id === coll_json.id
+    //         ) {
+    //           org.node = node;
+    //           break;
+    //         }
+    //       }
+    //       orgs.push(org);
+    //     }
+    //     org_ids.push(org_json.id);
+    //   });
+    // }
     return {
       id: coll_json.id,
       name: coll_json.name,
@@ -170,12 +170,6 @@ export class ConvertJsonService {
   }
 
   getTask(json: any): Task {
-    let child_ids = [];
-    if (json.children) {
-      for (let child of json.children) {
-        child_ids.push(child.id);
-      }
-    }
     return {
       id: json.id,
       type: ResType.TASK,
@@ -189,7 +183,7 @@ export class ConvertJsonService {
       parent_id: json.parent ? json.parent.id : null,
       databases: json.databases,
       complete: json.complete,
-      children_ids: child_ids,
+      children_ids: [],
       status: json.status,
     };
   }

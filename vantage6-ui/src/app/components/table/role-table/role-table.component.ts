@@ -74,13 +74,14 @@ export class RoleTableComponent
         await this.roleDataService.org_list(
           this.route_org_id as number,
           force_refresh,
+          false,
           pagination
         )
       ).subscribe((roles) => {
         this.resources = roles;
       });
     } else {
-      (await this.roleDataService.list(force_refresh, pagination)).subscribe(
+      (await this.roleDataService.list(pagination)).subscribe(
         (roles: Role[]) => {
           this.resources = roles;
         }

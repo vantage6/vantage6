@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
 import { User } from 'src/app/interfaces/user';
@@ -14,6 +14,7 @@ import {
   allPages,
   defaultFirstPage,
 } from 'src/app/interfaces/utils';
+import { getIdsFromArray, removeMatchedIdsFromArray } from 'src/app/shared/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -36,7 +37,7 @@ export class UserDataService extends BaseDataService {
     (await this.ruleDataService.list(allPages())).subscribe((rules) => {
       this.rules = rules;
     });
-    (await this.roleDataService.list(false, allPages())).subscribe((roles) => {
+    (await this.roleDataService.list(allPages())).subscribe((roles) => {
       this.roles = roles;
     });
     return [this.roles, this.rules];
@@ -44,13 +45,41 @@ export class UserDataService extends BaseDataService {
 
   async get(
     id: number,
+    include_links: boolean = false,
+    only_extra_rules: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<User>> {
-    return (await super.get_base(
+    let user: any = await super.get_base(
       id,
       this.convertJsonService.getUser,
       force_refresh
-    )) as Observable<User>;
+    );
+    if (include_links) {
+      // for single resource, include the internal resources
+      let user_value = (user as BehaviorSubject<User>).value;
+      // request the rules for the current user
+      user_value.rules = await this.ruleDataService.list_with_params(
+        allPages(),
+        { user_id: user_value.id }
+      );
+      // add roles to the user
+      user_value.roles = await this.roleDataService.list_with_params(
+        allPages(),
+        { user_id: user_value.id },
+        true
+      );
+      if (only_extra_rules) {
+        // remove rules that are already included in the roles
+        for (let role of user_value.roles) {
+          user_value.rules = removeMatchedIdsFromArray(
+            user_value.rules, getIdsFromArray(role.rules)
+          );
+        }
+      }
+      user.next(user_value);
+    }
+    // return observable. If required, convert to observable first.
+    return (user as BehaviorSubject<User>).asObservable();
   }
 
   async list(
@@ -61,7 +90,7 @@ export class UserDataService extends BaseDataService {
       this.convertJsonService.getUser,
       pagination,
       force_refresh
-    )) as Observable<User[]>;
+    )).asObservable() as Observable<User[]>;
   }
 
   async list_with_params(
@@ -87,7 +116,7 @@ export class UserDataService extends BaseDataService {
       this.convertJsonService.getUser,
       pagination,
       force_refresh
-    )) as Observable<User[]>;
+    )).asObservable() as Observable<User[]>;
   }
 
   save(user: User) {

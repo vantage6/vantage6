@@ -83,7 +83,7 @@ export class CollaborationEditComponent
   }
 
   async setupEdit(id: number) {
-    (await this.collabDataService.get(id)).subscribe((collab) => {
+    (await this.collabDataService.get(id, true)).subscribe((collab) => {
       this.collaboration = collab;
       this.collaboration_orig_name = this.collaboration.name;
       // remove organizations that are already in collaboration from the

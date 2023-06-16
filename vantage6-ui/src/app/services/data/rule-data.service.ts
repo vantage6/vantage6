@@ -23,13 +23,35 @@ export class RuleDataService extends BaseDataService {
 
   async list(
     pagination: Pagination = allPages(),
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    user_id: number | null = null
   ): Promise<Observable<Rule[]>> {
+    // only get rules for specific user if requested
+    let params: any = user_id === null ? {} : { user_id: user_id };
+    if (pagination.all_pages === true) {
+      params = { ...params, no_pagination: 1 };
+    }
+    // get rules
     return (await super.list_base(
       this.convertJsonService.getRule,
       pagination,
-      force_refresh
-    )) as Observable<Rule[]>;
+      force_refresh,
+      params
+    )).asObservable() as Observable<Rule[]>;
+  }
+
+  async list_with_params(
+    pagination: Pagination = allPages(),
+    request_params: any = {}
+  ): Promise<Rule[]> {
+    if (pagination.all_pages === true) {
+      request_params = { ...request_params, no_pagination: 1 };
+    }
+    return (await super.list_with_params_base(
+      this.convertJsonService.getRule,
+      request_params,
+      pagination
+    )) as Rule[];
   }
 
   async ruleGroups(): Promise<Observable<RuleGroup[]>> {
