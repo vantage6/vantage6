@@ -99,7 +99,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
 
     // set defaults
     // this.task.data_format = 'legacy';
-    this.task.database = 'default';
+    this.task.databases = [''];
     this.initializeTaskInput();
 
     // set previous tasks, so user can create tasks they have done before.
@@ -175,6 +175,7 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     this.has_selected_previous_task = true;
     this.task = task;
     this.selectCollab(getById(this.collaborations, task.collaboration_id));
+    this.task.databases.push(''); // add empty database so user  can add one
     if (this.task.collaboration){
       // TODO this call should not be necessary, as it is done in selectCollab()
       // but somehow it is. Check if task is renewed somewhere else.
@@ -368,10 +369,10 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
     return index;
   }
 
-  checkAddArgsBox(): void {
+  checkAddBox(array: any[]): void {
     // add new input box for args if last box is filled
-    if (this.task_input.args[this.task_input.args.length - 1] != '') {
-      this.task_input.args.push('');
+    if (array[array.length - 1] != '') {
+      array.push('');
     }
   }
 

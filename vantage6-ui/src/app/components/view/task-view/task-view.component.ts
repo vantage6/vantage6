@@ -109,8 +109,9 @@ export class TaskViewComponent
       : '';
   }
 
-  getDatabaseName(): string {
-    return this.task.database ? this.task.database : 'default';
+  getDatabaseNames(): string {
+    let databases = this.task.databases ? this.task.databases : ['default'];
+    return databases.join(', ');
   }
 
   getRunPanelTitle(run: Run): string {

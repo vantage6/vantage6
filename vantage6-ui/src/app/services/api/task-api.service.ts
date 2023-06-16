@@ -48,6 +48,14 @@ export class TaskApiService extends BaseApiService {
       });
     }
 
+    let databases: string[] = task.databases;
+    if (!databases) {
+      databases = ['default'];
+    } else {
+      // delete any empty strings
+      databases = databases.filter((db) => db);
+    }
+
     // TODO add encryption option
     let data: any = {
       name: task.name,
@@ -55,7 +63,7 @@ export class TaskApiService extends BaseApiService {
       image: task.image,
       organizations: org_input,
       collaboration_id: collab_id,
-      database: task.database,
+      databases: databases,
       input: input,
     };
     return data;
