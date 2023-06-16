@@ -201,7 +201,7 @@ class ClientBase(object):
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
                 params: dict = None, first_try: bool = True,
-                retry: bool = True, attempts_on_timeout: int = None) -> dict:
+                retry: bool = True) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -218,9 +218,6 @@ class ClientBase(object):
             Whether this is the first attempt of this request. Default True.
         retry: bool, optional
             Try request again after refreshing the token. Default True.
-        attempts_on_timeout: int, optional
-            Number of attempts to make when a timeout occurs. Default None
-            which leads to unlimited amount of attempts.
 
         Returns
         -------
@@ -241,22 +238,16 @@ class ClientBase(object):
         url = self.generate_path_to(endpoint)
         self.log.debug(f'Making request: {method.upper()} | {url} | {params}')
 
-        timeout_attempts = 0
-        while True:
-            try:
-                response = rest_method(url, json=json, headers=self.headers,
-                                       params=params)
-                break
-            except requests.exceptions.ConnectionError as e:
-                # we can safely retry as this is a connection error. And we
-                # keep trying (unless a max number of attempts is given)!
-                timeout_attempts += 1
-                if attempts_on_timeout is not None \
-                        and timeout_attempts > attempts_on_timeout:
-                    return {'msg': 'Connection error'}
-                self.log.error('Connection error... Retrying')
-                self.log.debug(e)
-                time.sleep(1)
+        try:
+            response = rest_method(url, json=json, headers=self.headers,
+                                   params=params)
+        except requests.exceptions.ConnectionError as e:
+            # we can safely retry as this is a connection error. And we
+            # keep trying!
+            self.log.error('Connection error... Retrying')
+            self.log.debug(e)
+            time.sleep(1)
+            return self.request(endpoint, json, method, params)
 
         # TODO: should check for a non 2xx response
         if response.status_code > 210:
@@ -271,10 +262,8 @@ class ClientBase(object):
             if retry:
                 if first_try:
                     self.refresh_token()
-                    return self.request(
-                        endpoint, json, method, params, first_try=False,
-                        attempts_on_timeout=attempts_on_timeout
-                    )
+                    return self.request(endpoint, json, method, params,
+                                        first_try=False)
                 else:
                     self.log.error("Nope, refreshing the token didn't fix it.")
 
@@ -809,23 +798,15 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def get_server_version(self, attempts_on_timeout: int = None) -> dict:
+        def get_server_version(self) -> dict:
             """View the version number of the vantage6-server
-
-            Parameters
-            ----------
-            attempts_on_timeout : int
-                Number of attempts to make when the server is not responding.
-                Default is unlimited.
 
             Returns
             -------
             dict
                 A dict containing the version number
             """
-            return self.parent.request(
-                'version', attempts_on_timeout=attempts_on_timeout
-            )
+            return self.parent.request('version')
 
         def get_server_health(self) -> dict:
             """View the health of the vantage6-server

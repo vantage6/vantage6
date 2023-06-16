@@ -5,12 +5,9 @@ from functools import wraps
 from typing import Any
 
 from vantage6.client.algorithm_client import AlgorithmClient
-from vantage6.tools.wrappers import (
-    CSVWrapper, ExcelWrapper, SparqlDockerWrapper, ParquetWrapper,
-    SQLWrapper, OMOPWrapper
-)
 from vantage6.tools.wrap import load_input
 from vantage6.tools.util import info, error, warn
+from vantage6.tools.wrappers import select_wrapper
 
 
 def algorithm_client(func: callable) -> callable:
@@ -138,19 +135,8 @@ def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
 
     # Create the correct wrapper based on the database type, note that the
     # multi database wrapper is not available.
-    if database_type == "csv":
-        wrapper = CSVWrapper()
-    elif database_type == "excel":
-        wrapper = ExcelWrapper()
-    elif database_type == "sparql":
-        wrapper = SparqlDockerWrapper()
-    elif database_type == "parquet":
-        wrapper = ParquetWrapper()
-    elif database_type == "sql":
-        wrapper = SQLWrapper()
-    elif database_type == "omop":
-        wrapper = OMOPWrapper()
-    else:
+    wrapper = select_wrapper(database_type)
+    if wrapper is None:
         error(f"Unknown database type '{database_type}' for database with "
               f"label '{label}'. Please check the node configuration.")
         exit(1)

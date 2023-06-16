@@ -231,8 +231,6 @@ jobs:
     needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
-      major: ${{ needs.version.outputs.major }}
-      minor: ${{ needs.version.outputs.minor }}
       stage: ${{ needs.version.outputs.stage }}
       major_name: ${{ needs.version.outputs.major_name }}
     steps:
@@ -263,15 +261,6 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
-
-      - # Release a node image for major.minor. This is released for any
-        # non-candidate release or if no non-candidate release has been made yet
-        # for the current minor version
-        name: Build Docker base image
-        if: ${{ env.stage == 0 || env.minor == 0 }}
-        run: |
-          docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,

@@ -24,6 +24,7 @@ The ``multi_wrapper`` is used when multiple databases are connected to a single
 algorithm. This wrapper is separated from the other wrappers because it is not
 compatible with the ``smart_wrapper``.
 """
+from __future__ import annotations
 import io
 import pandas
 
@@ -33,6 +34,37 @@ from SPARQLWrapper import SPARQLWrapper, CSV
 from vantage6.tools.util import info, error
 
 _SPARQL_RETURN_FORMAT = CSV
+
+
+def select_wrapper(database_type: str) -> WrapperBase | None:
+    """
+    Select the correct wrapper based on the database type.
+
+    Parameters
+    ----------
+    database_type : str
+        The database type to select the wrapper for.
+
+    Returns
+    -------
+    derivative of WrapperBase | None
+        The wrapper for the specified database type. None if the database type
+        is not supported by a wrapper.
+    """
+    if database_type == "csv":
+        return CSVWrapper()
+    elif database_type == "excel":
+        return ExcelWrapper()
+    elif database_type == "sparql":
+        return SparqlDockerWrapper()
+    elif database_type == "parquet":
+        return ParquetWrapper()
+    elif database_type == "sql":
+        return SQLWrapper()
+    elif database_type == "omop":
+        return OMOPWrapper()
+    else:
+        return None
 
 
 class WrapperBase(ABC):
