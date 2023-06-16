@@ -2,9 +2,11 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { EMPTY_ROLE, getEmptyRole, RoleWithOrg } from 'src/app/interfaces/role';
 import { User } from 'src/app/interfaces/user';
+import { allPages } from 'src/app/interfaces/utils';
 import { RoleApiService } from 'src/app/services/api/role-api.service';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
+import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { ResType } from 'src/app/shared/enum';
 import { BaseViewComponent } from '../base-view/base-view.component';
@@ -29,7 +31,8 @@ export class RoleViewComponent
     protected roleApiService: RoleApiService,
     protected roleDataService: RoleDataService,
     protected modalService: ModalService,
-    private userDataService: UserDataService
+    private userDataService: UserDataService,
+    private ruleDataService: RuleDataService,
   ) {
     super(roleApiService, roleDataService, modalService);
   }
@@ -37,6 +40,7 @@ export class RoleViewComponent
   ngOnChanges() {
     if (this.role.id !== EMPTY_ROLE.id) {
       this.setUsers();
+      this.setRules();
     }
   }
 
@@ -47,6 +51,14 @@ export class RoleViewComponent
       },
       false
     );
+  }
+
+  async setRules(): Promise<void> {
+    this.role.rules = await this.ruleDataService.list_with_params(
+      allPages(), {role_id: this.role.id}
+    );
+    // renew role object to trigger ngOnChange detection in child components
+    this.role = {...this.role};
   }
 
   isDefaultRole(): boolean {

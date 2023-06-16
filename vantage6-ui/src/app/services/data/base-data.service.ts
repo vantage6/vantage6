@@ -141,13 +141,13 @@ export abstract class BaseDataService {
     id: number,
     convertJsonFunc: Function,
     force_refresh: boolean = false
-  ): Promise<Observable<Resource | null>> {
+  ): Promise<BehaviorSubject<Resource | null>> {
+    // TODO consider always returning BehaviorSubjects, in base functions?
     if (force_refresh || !(id in this.resources_by_id)) {
-      let additional_resources = await this.getDependentResources();
+    //   let additional_resources = await this.getDependentResources();
       let resource = await this.apiService.getResource(
         id,
-        convertJsonFunc,
-        additional_resources
+        convertJsonFunc
       );
       if (resource !== null) {
         this.save(resource);
@@ -156,7 +156,7 @@ export abstract class BaseDataService {
         this.resources_by_id[id] = new BehaviorSubject<Resource | null>(null);
       }
     }
-    return this.resources_by_id[id].asObservable();
+    return this.resources_by_id[id];
   }
 
   protected async list_base(
@@ -164,7 +164,9 @@ export abstract class BaseDataService {
     pagination: Pagination,
     force_refresh: boolean = false,
     additional_params: any = {}
-  ): Promise<Observable<Resource[]>> {
+  ): Promise<BehaviorSubject<Resource[]>> {
+    // FIXME this function does not work properly when the list is requested
+    // several times with different additional_params and force_refresh=false
     let page_id = getPageId(pagination);
     if (
       force_refresh ||
@@ -191,8 +193,8 @@ export abstract class BaseDataService {
       this.saveMultiple(resources);
     }
     return pagination.all_pages
-      ? this.resource_list.asObservable()
-      : this.resources_by_pagination[page_id].asObservable();
+      ? this.resource_list
+      : this.resources_by_pagination[page_id];
   }
 
   async list_with_params_base(
@@ -221,7 +223,7 @@ export abstract class BaseDataService {
     pagination: Pagination,
     force_refresh: boolean = false,
     params: any = {}
-  ): Promise<Observable<Resource[]>> {
+  ): Promise<BehaviorSubject<Resource[]>> {
     let page_id = getPageId(pagination);
     if (!arrayContains(this.requested_org_lists, organization_id)) {
       this.requested_org_lists.push(organization_id);
@@ -258,8 +260,8 @@ export abstract class BaseDataService {
       }
     }
     return pagination.all_pages
-      ? this.resources_per_org[organization_id].asObservable()
-      : this.resources_by_pagination[page_id].asObservable();
+      ? this.resources_per_org[organization_id]
+      : this.resources_by_pagination[page_id];
   }
 
   async collab_list_base(

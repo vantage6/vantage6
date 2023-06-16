@@ -68,49 +68,73 @@ export class RoleDataService extends BaseDataService {
 
   async get(
     id: number,
+    include_links: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<Role>> {
-    return (await super.get_base(
-      id,
-      this.convertJsonService.getRole,
-      force_refresh
-    )) as Observable<Role>;
+    let role = await super.get_base(
+			id, this.convertJsonService.getRole, force_refresh
+    );
+		if (include_links) {
+      let role_value = (role as BehaviorSubject<Role>).value;
+      role_value = await this.addRulesToRole(role_value);
+      role.next(role_value);
+    }
+    return role.asObservable() as Observable<Role>;
   }
 
   async list(
+    pagination: Pagination = defaultFirstPage(),
+    include_rules: boolean = false,
     force_refresh: boolean = false,
-    pagination: Pagination = defaultFirstPage()
   ): Promise<Observable<Role[]>> {
-    return (await super.list_base(
+    let roles = (await super.list_base(
       this.convertJsonService.getRole,
       pagination,
       force_refresh
-    )) as Observable<Role[]>;
+    ));
+    if (include_rules) {
+      let roles_value = (roles as BehaviorSubject<Role[]>).value;
+      roles_value = await this.addRulesToRoles(roles_value);
+      roles.next(roles_value);
+    }
+    return roles.asObservable() as Observable<Role[]>;
   }
 
   async list_with_params(
     pagination: Pagination = allPages(),
-    request_params: any = {}
+    request_params: any = {},
+    include_rules: boolean = false
   ): Promise<Role[]> {
-    return (await super.list_with_params_base(
+    let roles = (await super.list_with_params_base(
       this.convertJsonService.getRole,
       request_params,
       pagination
     )) as Role[];
+    if (include_rules) {
+      roles = await this.addRulesToRoles(roles);
+    }
+    return roles;
   }
 
   async org_list(
     organization_id: number,
+    include_rules: boolean = false,
     force_refresh: boolean = false,
     pagination: Pagination = allPages()
   ): Promise<Observable<Role[]>> {
-    return (await super.org_list_base(
+    let roles = (await super.org_list_base(
       organization_id,
       this.convertJsonService.getRole,
       pagination,
       force_refresh,
       { include_root: true }
-    )) as Observable<Role[]>;
+    ))
+    if (include_rules){
+      let roles_value = (roles as BehaviorSubject<Role[]>).value;
+      roles_value = await this.addRulesToRoles(roles_value);
+    }
+
+    return roles.asObservable() as Observable<Role[]>;
   }
 
   private remove_non_user_roles(roles: Role[]) {
@@ -125,5 +149,20 @@ export class RoleDataService extends BaseDataService {
 
   isDefaultRole(role: Role): boolean {
     return role.organization_id === null;
+  }
+
+  private async addRulesToRoles(roles: Role[]): Promise<Role[]> {
+    for (let role of roles) {
+      role = await this.addRulesToRole(role);
+    }
+    return roles;
+  }
+
+  private async addRulesToRole(role: Role): Promise<Role> {
+    role.rules = await this.ruleDataService.list_with_params(
+      allPages(),
+      { role_id: role.id }
+    );
+    return role;
   }
 }

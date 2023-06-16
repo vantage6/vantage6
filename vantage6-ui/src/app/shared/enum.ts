@@ -34,6 +34,7 @@ export enum OpsType {
   EDIT = 'edit',
   DELETE = 'delete',
   SEND = 'send',
+  RECEIVE = 'receive',
   ANY = '*',
 }
 

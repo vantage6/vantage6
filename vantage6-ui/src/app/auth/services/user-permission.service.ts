@@ -21,7 +21,6 @@ const PERMISSION_KEY = 'permissions-user';
 export class UserPermissionService {
   user: User = EMPTY_USER;
   userBhs = new BehaviorSubject<User>(this.user);
-  userRules: Rule[] = [];
   userExtraRules: Rule[] = [];
   all_rules: Rule[] = [];
   ready = new BehaviorSubject<boolean>(false);
@@ -176,31 +175,15 @@ export class UserPermissionService {
       return;
     }
 
-    // request the rules for the current user
-    (await this.userDataService.get(user_id)).subscribe((user) => {
+    // request the current user
+    (await this.userDataService.get(user_id, true)).subscribe((user) => {
       this.user = user;
       this.user.is_logged_in = true;
     });
 
-    await this._setPermissions(this.user);
+    await this.savePermissions(this.user.rules);
 
     this.userBhs.next(this.user);
-  }
-
-  private async _setPermissions(user: User) {
-    // remove any existing rules that may be present
-    this.userRules = [];
-
-    // add rules from the user rules and roles
-    this.userRules.push(...deepcopy(user.rules));
-    for (let role of user.roles) {
-      this.userRules.push(...role.rules);
-    }
-    // remove double rules
-    this.userRules = [...new Set(this.userRules)];
-
-    // save permissions
-    await this.savePermissions(this.userRules);
   }
 
   canAssignRole(role: Role): boolean {
@@ -220,7 +203,7 @@ export class UserPermissionService {
   }
 
   canAssignRule(rule: Rule): boolean {
-    return arrayContainsObjWithId(rule.id, this.userRules);
+    return arrayContainsObjWithId(rule.id, this.user.rules);
   }
 
   async getAssignableRoles(available_roles: Role[]): Promise<Role[]> {
@@ -251,7 +234,6 @@ export class UserPermissionService {
   clear(): void {
     this.user = EMPTY_USER;
     this.userBhs.next(this.user);
-    this.userRules = [];
     this.userExtraRules = [];
     this.ready.next(false);
   }

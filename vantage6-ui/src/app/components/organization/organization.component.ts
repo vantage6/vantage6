@@ -32,7 +32,7 @@ import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { FileService } from 'src/app/services/common/file.service';
-import { allPages } from 'src/app/interfaces/utils';
+import { allPages, defaultFirstPage } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-organization',
@@ -201,11 +201,9 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setCollaborations(): Promise<void> {
-    (
-      await this.collabDataService.org_list(this.current_organization.id)
-    ).subscribe((collabs) => {
-      this.collaborations = collabs;
-    });
+    this.collaborations = await this.collabDataService.list_with_params(
+      defaultFirstPage(), {'organization_id': this.route_org_id}
+    )
   }
 
   editOrganization(org: Organization): void {

@@ -7,6 +7,7 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { ResType } from 'src/app/shared/enum';
+import { deepcopy } from 'src/app/shared/utils';
 import { BaseSingleViewComponent } from '../base-single-view/base-single-view.component';
 
 @Component({
@@ -44,11 +45,11 @@ export class UserViewSingleComponent
   }
 
   async setUser() {
-    (await this.userDataService.get(this.route_id as number)).subscribe(
-      (user) => {
-        this.user = user;
-      }
-    );
+    (
+      await this.userDataService.get(this.route_id as number)
+    ).subscribe((user) => {
+      this.user = deepcopy(user);
+    });
   }
 
   async setOrganization() {

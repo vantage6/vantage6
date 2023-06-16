@@ -99,7 +99,6 @@ export abstract class BaseApiService {
 
     // convert json to Resource[]
     let json_data = response.body;
-    // console.log(json_data.data[0]);
     let resources = [];
     for (let dic of json_data.data) {
       resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
