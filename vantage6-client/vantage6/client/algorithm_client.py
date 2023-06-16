@@ -1,3 +1,4 @@
+from typing import Any
 import jwt
 import json as json_lib
 
@@ -124,7 +125,23 @@ class AlgorithmClient(ClientBase):
         job_id from the central server.
         """
 
-        def get(self, task_id: int) -> list:
+        def get(self, id_) -> dict:
+            """
+            Obtain a specific algorithm run from the central server.
+
+            Parameters
+            ----------
+            id_: int
+                ID of the algorithm run that should be obtained.
+
+            Returns
+            -------
+            dict
+                Algorithm run data.
+            """
+            return self.parent.request(f"run/{id_}")
+
+        def from_task(self, task_id: int) -> list:
             """
             Obtain algorithm runs from a specific task at the server.
 
@@ -159,7 +176,33 @@ class AlgorithmClient(ClientBase):
 
         This client is used to get results from the central server.
         """
-        def get(self, task_id: int) -> list:
+        def get(self, id_: int) -> Any:
+            """
+            Obtain a specific result from the central server.
+
+            Parameters
+            ----------
+            id_: int
+                ID of the algorithm run of which the result should be obtained.
+
+            Returns
+            -------
+            Any
+                Result of the algorithm run.
+            """
+            response = self.parent.request(f"result/{id_}")
+
+            # Encryption is not done at the client level for the container. The
+            # algorithm developer is responsible for decrypting the results.
+            self.parent.log.info('--> Attempting to decode results!')
+            result = None
+            if response.get('result'):
+                result = json_lib.loads(
+                    base64s_to_bytes(response.get('result')).decode()
+                )
+            return result
+
+        def from_task(self, task_id: int) -> list[Any]:
             """
             Obtain results from a specific task at the server.
 
@@ -177,7 +220,7 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            list
+            list[Any]
                 List of results. The type of the results depends on the
                 algorithm.
             """

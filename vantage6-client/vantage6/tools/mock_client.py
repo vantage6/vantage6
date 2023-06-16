@@ -1,158 +1,13 @@
 import pandas as pd
 import json
 
+from typing import Any
 from importlib import import_module
 from copy import deepcopy
 
 from vantage6.tools.wrappers import select_wrapper
-from vantage6.tools import serialization
 
 
-class ClientMockProtocol:
-    """
-    The ClientMockProtocol is used to test your algorithm locally. It
-    mimics the behaviour of the client and its communication with the server.
-
-    Parameters
-    ----------
-    datasets : list[str]
-        A list of paths to the datasets that are used in the algorithm.
-    module : str
-        The name of the module that contains the algorithm.
-    """
-    def __init__(self, datasets: list[str], module: str) -> None:
-        self.n = len(datasets)
-        self.datasets = []
-        for dataset in datasets:
-            self.datasets.append(
-                pd.read_csv(dataset)
-            )
-
-        self.lib = import_module(module)
-        self.tasks = []
-
-    # TODO in v4+, don't provide a default value for list? There is no use
-    # in calling this function with 0 organizations as the task will never
-    # be executed in that case.
-    def create_new_task(self, input_: dict,
-                        organization_ids: list[int] = None) -> int:
-        """
-        Create a new task with the MockProtocol and return the task id.
-
-        Parameters
-        ----------
-        input_ : dict
-            The input data that is passed to the algorithm. This should at
-            least  contain the key 'method' which is the name of the method
-            that should be called. Another often used key is 'master' which
-            indicates that this container is a master container. Other keys
-            depend on the algorithm.
-        organization_ids : list[int], optional
-            A list of organization ids that should run the algorithm.
-
-        Returns
-        -------
-        int
-            The id of the task.
-        """
-        if organization_ids is None:
-            organization_ids = []
-
-        # extract method from lib and input
-        master = input_.get("master")
-
-        method_name = input_.get("method")
-        if master:
-            method = getattr(self.lib, method_name)
-        else:
-            method = getattr(self.lib, f"RPC_{method_name}")
-
-        # get input
-        args = input_.get("args", [])
-        kwargs = input_.get("kwargs", {})
-
-        # get data for organization
-        results = []
-        for org_id in organization_ids:
-            data = self.datasets[org_id]
-            if master:
-                result = method(self, data, *args, **kwargs)
-            else:
-                result = method(data, *args, **kwargs)
-
-            # TODO remove pickle in v4+
-            idx = 999  # we dont need this now
-            results.append(
-                {"id": idx, "result": serialization.serialize(result)}
-            )
-
-        id_ = len(self.tasks)
-        task = {
-            "id": id_,
-            "results": results,
-            "complete": "true"
-        }
-        self.tasks.append(task)
-        return task
-
-    def get_task(self, task_id: int) -> dict:
-        """
-        Return the task with the given id.
-
-        Parameters
-        ----------
-        task_id : int
-            The id of the task.
-
-        Returns
-        -------
-        dict
-            The task details.
-        """
-        return self.tasks[task_id]
-
-    def get_results(self, task_id: int) -> list[dict]:
-        """
-        Return the results of the task with the given id.
-
-        Parameters
-        ----------
-        task_id : int
-            The id of the task.
-
-        Returns
-        -------
-        list[dict]
-            The results of the task.
-        """
-        task = self.tasks[task_id]
-        results = []
-        for result in task.get("results"):
-            res = json.loads(result.get("result"))
-            results.append(res)
-
-        return results
-
-    def get_organizations_in_my_collaboration(self) -> list[dict]:
-        """
-        Get mocked organizations.
-
-        Returns
-        -------
-        list[dict]
-            A list of mocked organizations.
-        """
-        organizations = []
-        for i in range(self.n):
-            organizations.append({
-                "id": i,
-                "name": f"mock-{i}",
-                "domain": f"mock-{i}.org",
-            })
-        return organizations
-
-
-# TODO in v4+, rename to ClientMockProtocol?
 class MockAlgorithmClient:
     """
     The MockAlgorithmClient mimics the behaviour of the AlgorithmClient. It
@@ -235,6 +90,10 @@ class MockAlgorithmClient:
         """
         Task subclient for the MockAlgorithmClient
         """
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            self.last_result_id = 0
+
         def create(
             self, input_: dict, organization_ids: list[int],
             name: str = "mock", description: str = "mock", *args, **kwargs
@@ -296,36 +155,39 @@ class MockAlgorithmClient:
                 else:
                     result = method(data, *args, **kwargs)
 
-                idx = 999  # we dont need this now
-                results.append(
-                    {"id": idx, "result": json.dumps(result)}
-                )
+                self.last_result_id += 1
+                results.append({
+                    "id": self.last_result_id,
+                    "result": json.dumps(result)
+                })
 
             id_ = len(self.parent.tasks)
             collab_id = self.parent.collaboration_id
-            # TODO adapt fields in v4+
             task = {
                 "id": id_,
-                "results": results,
-                "complete": "true",  # TODO remove in v4+.
+                "runs": f"/api/run?task_id={id_}",
                 "status": "completed",
                 "name": name,
-                "database": "mock",
+                "databases": ["mock"],
                 "description": description,
                 "image": "mock_image",
-                "init_user": 1,
-                "initiator": 1,
+                "init_user": {
+                    "id": 1,
+                    "link": "/api/user/1",
+                    "methods": ["GET", "DELETE", "PATCH"]
+                },
+                "init_org": {
+                    "id": self.parent.organization_id,
+                    "link": f"/api/organization/{self.parent.organization_id}",
+                    "methods": ["GET", "PATCH"]
+                },
                 "parent": None,
                 "collaboration": {
                     "id": collab_id,
                     "link": f"/api/collaboration/{collab_id}",
-                    "methods": [
-                        "DELETE",
-                        "PATCH",
-                        "GET"
-                    ]
+                    "methods": ["DELETE", "PATCH", "GET"]
                 },
-                "run_id": 1,
+                "job_id": 1,
                 "children": None,
             }
             self.parent.tasks.append(task)
@@ -352,7 +214,29 @@ class MockAlgorithmClient:
         """
         Result subclient for the MockAlgorithmClient
         """
-        def get(self, task_id: int) -> list[dict]:
+        def get(self, id_: int) -> Any:
+            """
+            Get mocked result by ID
+
+            Parameters
+            ----------
+            id_ : int
+                The id of the result.
+
+            Returns
+            -------
+            Any
+                A mocked result.
+            """
+            for task in self.parent.tasks:
+                for result in task.get("results"):
+                    if result.get("id") == id_:
+                        return json.loads(result.get("result"))
+            return {
+                "msg": f"Could not find result with id {id_}"
+            }
+
+        def from_task(self, task_id: int) -> list[Any]:
             """
             Return the results of the task with the given id.
 
@@ -363,13 +247,12 @@ class MockAlgorithmClient:
 
             Returns
             -------
-            list[dict]
+            list[Any]
                 The results of the task.
             """
             task = self.parent.tasks[task_id]
             results = []
             for result in task.get("results"):
-                # TODO in v4+, this is no longer a pickle
                 res = json.loads(result.get("result"))
                 results.append(res)
 
