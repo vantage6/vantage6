@@ -115,6 +115,9 @@ class TaskBase(ServicesResources):
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
+        # permissions for the run resource are also relevant for the task
+        # resource as they are sometimes included
+        self.r_run: RuleCollection = getattr(self.permissions, 'run')
 
 
 class Tasks(TaskBase):
@@ -278,6 +281,16 @@ class Tasks(TaskBase):
             else:
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
+        # if results are included, check permissions on results
+        if self.is_included('results'):
+            max_scope_task = self.r.get_max_scope(P.VIEW)
+            if not self.r_run.has_at_least_scope(max_scope_task, P.VIEW):
+                max_scope_run = self.r_run.get_max_scope(P.VIEW)
+                return {
+                    'msg': 'You cannot view the results of all tasks, as you '
+                    f'are allowed to view tasks with scope {max_scope_task} '
+                    f'but you can only view results with scope {max_scope_run}'
+                }, HTTPStatus.UNAUTHORIZED
 
         if 'collaboration_id' in args:
             if not self.r.can_for_col(
@@ -383,8 +396,7 @@ class Tasks(TaskBase):
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
-        # TODO BvB 2023-02-08: does this work?
-        schema = task_result_schema if self.is_included('result') else\
+        schema = task_result_schema if self.is_included('results') else\
             task_schema
 
         return self.response(page, schema)
@@ -751,6 +763,13 @@ class Task(TaskBase):
                          task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
+        # if results are included, check permissions for results
+        if self.is_included('results') and not \
+                self.r_run.can_for_org(P.VIEW, task.init_org_id, auth_org) \
+                and not (self.r.v_own.can() and g.user and
+                         task.init_user_id == g.user.id):
+            return {'msg': 'You lack the permission to view results for this '
+                    'task!'}, HTTPStatus.UNAUTHORIZED
 
         return schema.dump(task, many=False), HTTPStatus.OK
 

@@ -20,39 +20,6 @@ log = logging.getLogger(module_name)
 RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
 
 
-# TODO document this function in the API reference
-def get_scopes_with_level(minimal_scope: Scope) -> list[Scope]:
-    """
-    Get scopes that are at least equal to a certain scope
-
-    Parameters
-    ----------
-    minimal_scope: Scope
-        Minimal scope
-
-    Returns
-    -------
-    list[Scope]
-        List of scopes that are at least equal to the minimal scope
-
-    Raises
-    ------
-    ValueError
-        If the minimal scope is not known
-    """
-    if minimal_scope == Scope.ORGANIZATION:
-        return [Scope.ORGANIZATION, Scope.COLLABORATION, Scope.GLOBAL]
-    elif minimal_scope == Scope.COLLABORATION:
-        return [Scope.COLLABORATION, Scope.GLOBAL]
-    elif minimal_scope == Scope.GLOBAL:
-        return [Scope.GLOBAL]
-    elif minimal_scope == Scope.OWN:
-        return [Scope.OWN, Scope.ORGANIZATION, Scope.COLLABORATION,
-                Scope.GLOBAL]
-    else:
-        raise ValueError(f"Unknown scope '{minimal_scope}'")
-
-
 class RuleCollection(dict):
     """
     Class that tracks a set of all rules for a certain resource name
@@ -157,6 +124,56 @@ class RuleCollection(dict):
         # no permission found
         return False
 
+    def get_max_scope(self, operation: Operation) -> Scope | None:
+        """
+        Get the highest scope that the entity has for a certain operation
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check
+
+        Returns
+        -------
+        Scope | None
+            Highest scope that the entity has for the operation. None if the
+            entity has no permission for the operation
+        """
+        if getattr(self, f'{operation.value}_{Scope.GLOBAL.value}'):
+            return Scope.GLOBAL
+        elif getattr(self, f'{operation.value}_{Scope.COLLABORATION.value}'):
+            return Scope.COLLABORATION
+        elif getattr(self, f'{operation.value}_{Scope.ORGANIZATION.value}'):
+            return Scope.ORGANIZATION
+        elif getattr(self, f'{operation.value}_{Scope.OWN.value}'):
+            return Scope.OWN
+        else:
+            return None
+
+    def has_at_least_scope(self, scope: Scope, operation: Operation) -> bool:
+        """
+        Check if the entity has at least a certain scope for a certain
+        operation
+
+        Parameters
+        ----------
+        scope: Scope
+            Scope to check if the entity has at least
+        operation: Operation
+            Operation to check
+
+        Returns
+        -------
+        bool
+            True if the entity has at least the scope, False otherwise
+        """
+        scopes: list[Scope] = self._get_scopes_from(scope)
+        for s in scopes:
+            perm = getattr(self, f'{operation.value}_{s.value}')
+            if perm and perm.can():
+                return True
+        return False
+
     def _id_in_list(self, id_: int, resource_list: list[Base]) -> bool:
         """
         Check if resource list contains a resource with a certain ID
@@ -174,6 +191,37 @@ class RuleCollection(dict):
             True if resource is in list, False otherwise
         """
         return any(r.id == id_ for r in resource_list)
+
+    def _get_scopes_from(self, minimal_scope: Scope) -> list[Scope]:
+        """
+        Get scopes that are at least equal to a certain scope
+
+        Parameters
+        ----------
+        minimal_scope: Scope
+            Minimal scope
+
+        Returns
+        -------
+        list[Scope]
+            List of scopes that are at least equal to the minimal scope
+
+        Raises
+        ------
+        ValueError
+            If the minimal scope is not known
+        """
+        if minimal_scope == Scope.ORGANIZATION:
+            return [Scope.ORGANIZATION, Scope.COLLABORATION, Scope.GLOBAL]
+        elif minimal_scope == Scope.COLLABORATION:
+            return [Scope.COLLABORATION, Scope.GLOBAL]
+        elif minimal_scope == Scope.GLOBAL:
+            return [Scope.GLOBAL]
+        elif minimal_scope == Scope.OWN:
+            return [Scope.OWN, Scope.ORGANIZATION, Scope.COLLABORATION,
+                    Scope.GLOBAL]
+        else:
+            raise ValueError(f"Unknown scope '{minimal_scope}'")
 
 
 class PermissionManager:
