@@ -2961,10 +2961,37 @@ class TestResources(unittest.TestCase):
         results = self.app.get('/api/task', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
+        # test that user is not allowed to view task results without id
+        results = self.app.get('/api/task', headers=headers,
+                               query_string={'include': 'results'})
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test that user is allowed to view task results if they have the rule
+        # to view results
+        rule_view_results = Rule.get_by_("run", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(org,
+                                             rules=[rule, rule_view_results])
+        results = self.app.get('/api/task', headers=headers,
+                               query_string={'include': 'results'})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
         # test user with global permissions and id
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.get(f'/api/task/{task.id}', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test that user is not allowed to view task results with id
+        results = self.app.get(f'/api/task/{task.id}', headers=headers,
+                               query_string={'include': 'results'})
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test that user is allowed to view task results if they have the rule
+        # to view results
+        headers = self.create_user_and_login(org,
+                                             rules=[rule, rule_view_results])
+        results = self.app.get(f'/api/task/{task.id}', headers=headers,
+                               query_string={'include': 'results'})
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test user with global permissions without id
