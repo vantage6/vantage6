@@ -109,7 +109,7 @@ class MockAlgorithmClient:
             self.last_result_id = 0
 
         def create(
-            self, input_: dict, organization_ids: list[int],
+            self, input_: dict, organizations: list[int],
             name: str = "mock", description: str = "mock", *args, **kwargs
         ) -> int:
             """
@@ -123,7 +123,7 @@ class MockAlgorithmClient:
                 that should be called. Another often used key is 'master' which
                 indicates that this container is a master container. Other keys
                 depend on the algorithm.
-            organization_ids : list[int]
+            organizations : list[int]
                 A list of organization ids that should run the algorithm.
             name : str, optional
                 The name of the task, by default "mock"
@@ -135,7 +135,7 @@ class MockAlgorithmClient:
             int
                 The id of the task.
             """
-            if not len(organization_ids):
+            if not len(organizations):
                 raise ValueError(
                     "No organization ids provided. Cannot create a task for "
                     "zero organizations."
@@ -150,7 +150,7 @@ class MockAlgorithmClient:
             kwargs = input_.get("kwargs", {})
 
             # get data for organization
-            for org_id in organization_ids:
+            for org_id in organizations:
                 # When creating a child task, pass the parent's datasets and
                 # client to the child. By passing also the client, the child
                 # has access to the same IDs specified

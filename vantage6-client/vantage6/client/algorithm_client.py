@@ -269,7 +269,7 @@ class AlgorithmClient(ClientBase):
             )
 
         def create(
-            self, input_: bytes, organization_ids: list[int] = None,
+            self, input_: bytes, organizations: list[int] = None,
             name: str = "subtask", description: str = None
         ) -> dict:
             """
@@ -281,9 +281,9 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
-            input_ : bytes
+            input : bytes
                 Input to the task. Should be b64 encoded.
-            organization_ids : list[int]
+            organizations : list[int]
                 List of organization IDs that should execute the task.
             name: str, optional
                 Name of the subtask
@@ -295,10 +295,9 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing information on the created task
             """
-            if organization_ids is None:
-                organization_ids = []
-            self.parent.log.debug(
-                f"Creating new subtask for {organization_ids}")
+            if organizations is None:
+                organizations = []
+            self.parent.log.debug(f"Creating new subtask for {organizations}")
 
             description = (
                 description or
@@ -309,7 +308,7 @@ class AlgorithmClient(ClientBase):
             # in the proxy server (self.parent.request())
             serialized_input = bytes_to_base64s(serialize(input_))
             organization_json_list = []
-            for org_id in organization_ids:
+            for org_id in organizations:
                 organization_json_list.append(
                     {
                         "id": org_id,
