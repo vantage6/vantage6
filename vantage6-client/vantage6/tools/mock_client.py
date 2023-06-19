@@ -45,6 +45,7 @@ class MockAlgorithmClient:
         collaboration_id: int = None, organization_id: int = None
     ) -> None:
         self.n = len(datasets)
+        # TODO adapt this to using multiple datasets
         self.datasets = []
         for dataset in datasets:
             if isinstance(dataset["database"], pd.DataFrame):
@@ -61,6 +62,8 @@ class MockAlgorithmClient:
 
         self.lib = import_module(module)
         self.tasks = []
+        self.runs = []
+        self.results = []
 
         self.image = 'mock_image'
         self.database = 'mock_database'
@@ -142,7 +145,6 @@ class MockAlgorithmClient:
             kwargs = input_.get("kwargs", {})
 
             # get data for organization
-            results = []
             for org_id in organization_ids:
                 data = self.parent.datasets[org_id]
                 if master:
@@ -156,9 +158,45 @@ class MockAlgorithmClient:
                     result = method(data, *args, **kwargs)
 
                 self.last_result_id += 1
-                results.append({
+                self.parent.results.append({
                     "id": self.last_result_id,
-                    "result": json.dumps(result)
+                    "result": json.dumps(result),
+                    "run": {
+                        "id": self.last_result_id,
+                        "link": f"/api/run/{self.last_result_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                })
+                self.parent.runs.append({
+                    "id": self.last_result_id,
+                    "started_at": "2021-01-01T00:00:00.000000",
+                    "assigned_at": "2021-01-01T00:00:00.000000",
+                    "finished_at": "2021-01-01T00:00:00.000000",
+                    "log": "mock_log",
+                    "ports": [],
+                    "status": "completed",
+                    "input": json.dumps(input_),
+                    "results": {
+                        "id": self.last_result_id,
+                        "link": f"/api/result/{self.last_result_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "node": {
+                        "id": org_id,
+                        "ip": None,
+                        "name": "mock_node",
+                        "status": "online",
+                    },
+                    "organization": {
+                        "id": org_id,
+                        "link": f"/api/organization/{org_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "task": {
+                        "id": len(self.parent.tasks),
+                        "link": f"/api/task/{len(self.parent.tasks)}",
+                        "methods": ["GET", "PATCH"]
+                    },
                 })
 
             id_ = len(self.parent.tasks)
@@ -209,7 +247,49 @@ class MockAlgorithmClient:
             """
             return self.parent.tasks[task_id]
 
-    # TODO for v4+, add a Run class
+    class Run(SubClient):
+        """
+        Run subclient for the MockAlgorithmClient
+        """
+        def get(self, id_: int) -> dict:
+            """
+            Get mocked run by ID
+
+            Parameters
+            ----------
+            id_ : int
+                The id of the run.
+
+            Returns
+            -------
+            dict
+                A mocked run.
+            """
+            for run in self.parent.runs:
+                if run.get("id") == id_:
+                    return run
+            return None
+
+        def from_task(self, task_id: int) -> list[dict]:
+            """
+            Get mocked runs by task ID
+
+            Parameters
+            ----------
+            task_id : int
+                The id of the task.
+
+            Returns
+            -------
+            list[dict]
+                A list of mocked runs.
+            """
+            runs = []
+            for run in self.parent.runs:
+                if run.get("task").get("id") == task_id:
+                    runs.append(run)
+            return runs
+
     class Result(SubClient):
         """
         Result subclient for the MockAlgorithmClient
@@ -250,12 +330,11 @@ class MockAlgorithmClient:
             list[Any]
                 The results of the task.
             """
-            task = self.parent.tasks[task_id]
             results = []
-            for result in task.get("results"):
-                res = json.loads(result.get("result"))
-                results.append(res)
-
+            for task in self.parent.tasks:
+                if task.get("id") == task_id:
+                    for result in task.get("results"):
+                        results.append(json.loads(result.get("result")))
             return results
 
     class Organization(SubClient):
