@@ -1,6 +1,17 @@
 Release notes
 =============
 
+3.10.1
+-----
+
+*19 June 2023*
+
+- **Bugfix**
+
+ - Fixed bug in setting organization_id for the AlgorithmClient (
+   `Issue#719 <https://github.com/vantage6/vantage6/issues/719>`_,
+   `PR#720 <https://github.com/vantage6/vantage6/pull/720>`_).
+
 3.10.0
 -----
 
