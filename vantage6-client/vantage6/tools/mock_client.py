@@ -39,7 +39,6 @@ class MockAlgorithmClient:
     organization_id : int, optional
         Sets the mocked organization id to this value. Defaults to 1.
     """
-    # TODO not only read CSVs but also data types
     def __init__(
         self, datasets: list[dict], module: str, node_id: int = None,
         collaboration_id: int = None, organization_id: int = None
@@ -308,10 +307,9 @@ class MockAlgorithmClient:
             Any
                 A mocked result.
             """
-            for task in self.parent.tasks:
-                for result in task.get("results"):
-                    if result.get("id") == id_:
-                        return json.loads(result.get("result"))
+            for result in self.parent.results:
+                if result.get("id") == id_:
+                    return json.loads(result.get("result"))
             return {
                 "msg": f"Could not find result with id {id_}"
             }
