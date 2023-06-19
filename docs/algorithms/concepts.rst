@@ -1,5 +1,9 @@
 .. _algo-concepts:
 
+.. TODO introduce decorators
+.. TODO say that decorators have reserved keywords ``mock_data`` and
+..      ``mock_client``
+
 Concepts
 ========
 

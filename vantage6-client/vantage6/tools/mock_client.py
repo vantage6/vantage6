@@ -16,14 +16,24 @@ class MockAlgorithmClient:
 
     Parameters
     ----------
-    datasets : list[dict]
-        A list of dictionaries that contain the datasets that are used in the
-        mocked algorithm. The dictionaries should contain the following:
-        {
-            "database": str | pd.DataFrame,
-            "type": str,
-            "input_data": dict
-        }
+    datasets : list[list[dict]]
+        A list that contains the datasets per organization that are used in the
+        mocked algorithm. The format is as follows:
+        [
+          [
+            # organization 1 datasets
+            {
+                "database": str | pd.DataFrame,
+                "type": str,  # e.g. "csv" or "sql"
+                "input_data": dict
+            }, {
+                ...  # second dataset for organization 1
+            }
+          ], [
+            # organization 2 datasets
+            ...
+          ]
+        ]
         where database is the path/URI to the database, type is the database
         type (as listed in node configuration) and input_data contains
         the input data that is normally passed to the algorithm wrapper.
@@ -44,20 +54,22 @@ class MockAlgorithmClient:
         collaboration_id: int = None, organization_id: int = None
     ) -> None:
         self.n = len(datasets)
-        # TODO adapt this to using multiple datasets
-        self.datasets = []
-        for dataset in datasets:
-            if isinstance(dataset["database"], pd.DataFrame):
-                self.datasets.append(dataset["database"])
-            else:
-                wrapper = select_wrapper(dataset["type"])
-                self.datasets.append(
-                    wrapper.load_data(
-                        dataset["database"],
-                        dataset["input_data"] if "input_data" in dataset
-                        else {}
+        self.datasets_per_org = []
+        for org_datasets in datasets:
+            org_data = []
+            for dataset in org_datasets:
+                if isinstance(dataset["database"], pd.DataFrame):
+                    org_data.append(dataset["database"])
+                else:
+                    wrapper = select_wrapper(dataset["type"])
+                    org_data.append(
+                        wrapper.load_data(
+                            dataset["database"],
+                            dataset["input_data"] if "input_data" in dataset
+                            else {}
+                        )
                     )
-                )
+            self.datasets_per_org.append(org_data)
 
         self.lib = import_module(module)
         self.tasks = []
@@ -130,14 +142,8 @@ class MockAlgorithmClient:
                 )
 
             # extract method from lib and input
-            # TODO in v4+, there is no master and this should be removed
-            master = input_.get("master")
-
             method_name = input_.get("method")
-            if master:
-                method = getattr(self.parent.lib, method_name)
-            else:
-                method = getattr(self.parent.lib, f"RPC_{method_name}")
+            method = getattr(self.parent.lib, method_name)
 
             # get input
             args = input_.get("args", [])
@@ -145,16 +151,18 @@ class MockAlgorithmClient:
 
             # get data for organization
             for org_id in organization_ids:
-                data = self.parent.datasets[org_id]
-                if master:
-                    # ensure that a task has a node_id and organization id that
-                    # is unique compared to other tasks.
-                    client_copy = deepcopy(self.parent)
-                    client_copy.host_node_id = org_id
-                    client_copy.organization_id = org_id
-                    result = method(self.parent, data, *args, **kwargs)
-                else:
-                    result = method(data, *args, **kwargs)
+                # When creating a child task, pass the parent's datasets and
+                # client to the child. By passing also the client, the child
+                # has access to the same IDs specified
+                data = self.parent.datasets_per_org[org_id]
+                client_copy = deepcopy(self.parent)
+                client_copy.host_node_id = org_id
+                client_copy.organization_id = org_id
+                result = method(
+                    mock_client=self.parent,
+                    mock_data=data,
+                    *args, **kwargs
+                )
 
                 self.last_result_id += 1
                 self.parent.results.append({
@@ -244,6 +252,10 @@ class MockAlgorithmClient:
             dict
                 The task details.
             """
+            if task_id >= len(self.parent.tasks):
+                return {
+                    "msg": f"Could not find task with id {task_id}"
+                }
             return self.parent.tasks[task_id]
 
     class Run(SubClient):
@@ -267,7 +279,9 @@ class MockAlgorithmClient:
             for run in self.parent.runs:
                 if run.get("id") == id_:
                     return run
-            return None
+            return {
+                "msg": f"Could not find run with id {id_}"
+            }
 
         def from_task(self, task_id: int) -> list[dict]:
             """
