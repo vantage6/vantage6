@@ -204,7 +204,7 @@ class MockAlgorithmClient:
                     )
                 )
 
-        self.lib = import_module(module)
+        self.module_name = module
         self.tasks = []
 
         self.image = 'mock_image'
@@ -272,11 +272,13 @@ class MockAlgorithmClient:
             # TODO in v4+, there is no master and this should be removed
             master = input_.get("master")
 
+            module = import_module(self.parent.module_name)
+
             method_name = input_.get("method")
             if master:
-                method = getattr(self.parent.lib, method_name)
+                method = getattr(module, method_name)
             else:
-                method = getattr(self.parent.lib, f"RPC_{method_name}")
+                method = getattr(module, f"RPC_{method_name}")
 
             # get input
             args = input_.get("args", [])

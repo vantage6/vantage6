@@ -1,6 +1,16 @@
 Release notes
 =============
 
+3.10.2
+-----
+
+*20 June 2023*
+
+- **Bugfix**
+
+ - Fixed bug in copying the MockClient itself to pass it on to a child task (
+   `PR#723 <https://github.com/vantage6/vantage6/pull/723>`_).
+
 3.10.1
 -----
 
