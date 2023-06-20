@@ -275,7 +275,7 @@ class Tasks(TaskBase):
         page = Pagination.from_query(q, request)
 
         # serialization schema
-        schema = task_result_schema if self.is_included('result') else\
+        schema = task_result_schema if self.is_included('results') else\
             task_schema
 
         return self.response(page, schema)
