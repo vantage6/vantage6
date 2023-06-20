@@ -1,7 +1,7 @@
 Release notes
 =============
 
-3.10.2
+3.10.3
 -----
 
 *20 June 2023*
@@ -10,6 +10,11 @@ Release notes
 
  - Fixed bug in copying the MockClient itself to pass it on to a child task (
    `PR#723 <https://github.com/vantage6/vantage6/pull/723>`_).
+
+.. note::
+
+    Release 3.10.2 failed to be published to PyPI due to a gateway error,
+    so that version was skipped.
 
 3.10.1
 -----
