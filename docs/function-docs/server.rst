@@ -272,14 +272,5 @@ vantage6.server.exceptions
     :members:
 
 
-vantage6.server.cli
--------------------
-
-This section contains the documentation of the `vserver-local` CLI commands.
-
-.. click:: vantage6.server.cli.server:cli_server
-    :prog: vserver-local
-    :nested: full
-
 .. todo add files in vantage6.server.controller?
 .. todo add files in vantage6.server.configuration?
