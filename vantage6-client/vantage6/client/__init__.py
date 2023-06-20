@@ -1859,7 +1859,8 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                [description]
+                A dictonairy containing data on the created task, or a message
+                from the server if the task could not be created
             """
             # TODO v4+ integrate post_task function in this function
             if databases is None:

@@ -281,7 +281,7 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
-            input : bytes
+            input_ : bytes
                 Input to the task. Should be b64 encoded.
             organizations : list[int]
                 List of organization IDs that should execute the task.
@@ -295,7 +295,7 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing information on the created task
             """
-            if organizations is None:
+            if not organizations:
                 organizations = []
             self.parent.log.debug(f"Creating new subtask for {organizations}")
 
