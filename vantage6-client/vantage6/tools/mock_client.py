@@ -152,7 +152,6 @@ class ClientMockProtocol:
         return organizations
 
 
-# TODO in v4+, rename to ClientMockProtocol?
 class MockAlgorithmClient:
     """
     The MockAlgorithmClient mimics the behaviour of the AlgorithmClient. It
@@ -167,11 +166,12 @@ class MockAlgorithmClient:
         {
             "database": str | pd.DataFrame,
             "type": str,
-            "input_data": dict
+            "db_input": dict
         }
         where database is the path/URI to the database, type is the database
-        type (as listed in node configuration) and input_data contains
-        the input data that is normally passed to the algorithm wrapper.
+        type (as listed in node configuration) and db_input is the input
+        that is given to the algorithm wrapper (this is e.g. a sheet name for
+        an excel file or a query for a SQL database).
 
         Note that if the database is a pandas DataFrame, the type and
         input_data keys are not required.
@@ -184,24 +184,24 @@ class MockAlgorithmClient:
     organization_id : int, optional
         Sets the mocked organization id to this value. Defaults to 1.
     """
-    # TODO not only read CSVs but also data types
     def __init__(
         self, datasets: list[dict], module: str, node_id: int = None,
         collaboration_id: int = None, organization_id: int = None
     ) -> None:
         self.n = len(datasets)
-        self.datasets = []
-        for dataset in datasets:
+        self.datasets = {}
+        self.organizations_with_data = []
+        for idx, dataset in enumerate(datasets):
+            org_id = organization_id + idx if organization_id else idx
+            self.organizations_with_data.append(org_id)
             if isinstance(dataset["database"], pd.DataFrame):
-                self.datasets.append(dataset["database"])
+                self.datasets[org_id] = dataset["database"]
             else:
                 wrapper = select_wrapper(dataset["type"])
-                self.datasets.append(
-                    wrapper.load_data(
-                        dataset["database"],
-                        dataset["input_data"] if "input_data" in dataset
-                        else {}
-                    )
+                self.datasets[org_id] = wrapper.load_data(
+                    dataset["database"],
+                    dataset["db_input"] if "db_input" in dataset
+                    else {}
                 )
 
         self.module_name = module
@@ -294,7 +294,7 @@ class MockAlgorithmClient:
                     client_copy = deepcopy(self.parent)
                     client_copy.host_node_id = org_id
                     client_copy.organization_id = org_id
-                    result = method(self.parent, data, *args, **kwargs)
+                    result = method(client_copy, data, *args, **kwargs)
                 else:
                     result = method(data, *args, **kwargs)
 
@@ -395,6 +395,11 @@ class MockAlgorithmClient:
             dict
                 A mocked organization.
             """
+            if not id_ == self.parent.organization_id and \
+                    id_ not in self.parent.organizations_with_data:
+                return {
+                    "msg": f"Organization {id_} not found."
+                }
             return {
                 "id": id_,
                 "name": f"mock-{id_}",
