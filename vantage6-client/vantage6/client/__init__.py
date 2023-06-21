@@ -436,80 +436,6 @@ class ClientBase(object):
         self._access_token = response.json()["access_token"]
         self.__refresh_token = response.json()["refresh_token"]
 
-    # TODO BvB 23-01-23 remove this method in v4+. It is only here for
-    # backwards compatibility
-    def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_='', description='', organization_ids: list = None,
-                  databases: list[str] = None) -> dict:
-        """Post a new task at the server
-
-        It will also encrypt `input_` for each receiving organization.
-
-        Parameters
-        ----------
-        name : str
-            Human readable name for the task
-        image : str
-            Docker image name containing the algorithm
-        collaboration_id : int
-            Collaboration `id` of the collaboration for which the task is
-            intended
-        input_ : str, optional
-            Task input, by default ''
-        description : str, optional
-            Human readable description of the task, by default ''
-        organization_ids : list, optional
-            Ids of organizations (within the collaboration) that need to
-            execute this task, by default None
-        databases : list[str], optional
-            Database labels to use for the task, by default None which will be
-            set to ['default']
-
-        Returns
-        -------
-        dict
-            Containing the task meta-data
-
-        Raises
-        ------
-        AssertionError
-            Encryption has not yet been setup.
-        """
-        assert self.cryptor, "Encryption has not yet been setup!"
-
-        if organization_ids is None:
-            organization_ids = []
-        if databases is None:
-            databases = ['default']
-        elif isinstance(databases, str):
-            # it is not unlikely that users specify a single database as a str,
-            # in that case we convert it to a list
-            databases = [databases]
-
-        # Data will be serialized in JSON.
-        serialized_input = serialization.serialize(input_)
-
-        organization_json_list = []
-        for org_id in organization_ids:
-            pub_key = self.request(f"organization/{org_id}").get("public_key")
-            # pub_key = base64s_to_bytes(pub_key)
-            # self.log.debug(pub_key)
-
-            organization_json_list.append({
-                "id": org_id,
-                "input": self.cryptor.encrypt_bytes_to_str(serialized_input,
-                                                           pub_key)
-            })
-
-        return self.request('task', method='post', json={
-            "name": name,
-            "image": image,
-            "collaboration_id": collaboration_id,
-            "description": description,
-            "organizations": organization_json_list,
-            'databases': databases
-        })
-
     def _decrypt_input(self, input_: str) -> bytes:
         """Helper to decrypt the input of an algorithm run
 
@@ -1834,7 +1760,7 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
-                   image: str, description: str, input: dict,
+                   image: str, description: str, input_: dict,
                    databases: list[str] = None) -> dict:
             """Create a new task
 
@@ -1851,7 +1777,7 @@ class UserClient(ClientBase):
                 Docker image name which contains the algorithm
             description : str
                 Human readable description
-            input : dict
+            input_ : dict
                 Algorithm input
             databases: list[str], optional
                 Database names to be used at the node
@@ -1859,13 +1785,42 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                [description]
+                Description of the created task
             """
+            assert self.parent.cryptor, "Encryption has not yet been setup!"
+
+            if organizations is None:
+                organizations = []
             if databases is None:
                 databases = ['default']
-            return self.parent.post_task(name, image, collaboration, input,
-                                         description, organizations,
-                                         databases)
+            elif isinstance(databases, str):
+                # it is not unlikely that users specify a single database as a
+                # str, in that case we convert it to a list
+                databases = [databases]
+
+            # Data will be serialized in JSON.
+            serialized_input = serialization.serialize(input_)
+
+            # Encrypt the input per organization using that organization's
+            # public key.
+            organization_json_list = []
+            for org_id in organizations:
+                pub_key = self.parent.request(f"organization/{org_id}")\
+                    .get("public_key")
+                organization_json_list.append({
+                    "id": org_id,
+                    "input": self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_input, pub_key)
+                })
+
+            return self.parent.request('task', method='post', json={
+                "name": name,
+                "image": image,
+                "collaboration_id": collaboration,
+                "description": description,
+                "organizations": organization_json_list,
+                'databases': databases
+            })
 
         def delete(self, id_: int) -> dict:
             """Delete a task
