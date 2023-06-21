@@ -431,7 +431,6 @@ class Tasks(TaskBase):
                 return {"msg": "Container-token is not valid"}, \
                     HTTPStatus.UNAUTHORIZED
 
-
         # permissions ok, create task record and TaskDatabase records
         task = db.Task(collaboration=collaboration, name=data.get('name', ''),
                        description=data.get('description', ''), image=image,

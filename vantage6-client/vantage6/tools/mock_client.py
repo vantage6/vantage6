@@ -313,8 +313,23 @@ class MockAlgorithmClient:
                 "database": "mock",
                 "description": description,
                 "image": "mock_image",
-                "init_user": 1,
-                "initiator": 1,
+                "init_user": {
+                    "id": 1,
+                    "link": "/api/user/1",
+                    "methods": [
+                        "DELETE",
+                        "PATCH",
+                        "GET"
+                    ]
+                },
+                "init_org": {
+                    "id": 1,
+                    "link": "/api/organization/1",
+                    "methods": [
+                        "PATCH",
+                        "GET"
+                    ]
+                },
                 "parent": None,
                 "collaboration": {
                     "id": collab_id,

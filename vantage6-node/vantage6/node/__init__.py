@@ -481,8 +481,8 @@ class Node:
 
                 response = self.client.request(f"task/{task_id}")
 
-                init_org_id = response.get("init_org")
-                if not init_org_id:
+                init_org = response.get("init_org")
+                if not init_org:
                     self.log.error(
                         f"Initiator organization from task (id={task_id}) "
                         "could not be retrieved!"
@@ -496,7 +496,7 @@ class Node:
                         'status': results.status,
                         'finished_at': datetime.datetime.now().isoformat(),
                     },
-                    init_org_id=init_org_id,
+                    init_org_id=init_org.get("id"),
                 )
             except Exception:
                 self.log.exception('Speaking thread had an exception')

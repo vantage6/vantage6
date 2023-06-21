@@ -1736,9 +1736,6 @@ class UserClient(ClientBase):
             """
             # if the param is None, it will not be passed on to the
             # request
-            # TODO in v4+, we should change the 'initiator' argument to
-            # a name that distinguishes it better from the initiating user.
-            # Then, we should also change it in the server
             params = {
                 'init_org_id': initiating_org, 'init_user_id': initiating_user,
                 'collaboration_id': collaboration,

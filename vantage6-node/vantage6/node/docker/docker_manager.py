@@ -285,8 +285,8 @@ class DockerManager(DockerBaseManager):
         allowed_orgs = self._policies.get('allowed_organizations', [])
         if allowed_users or allowed_orgs:
             is_allowed = self.client.check_user_allowed_to_send_task(
-                allowed_users, allowed_orgs, task_info['initiator'],
-                task_info['init_user']
+                allowed_users, allowed_orgs, task_info['init_org']['id'],
+                task_info['init_user']['id']
             )
             if not is_allowed:
                 self.log.warn("A task was sent by a user or organization that "

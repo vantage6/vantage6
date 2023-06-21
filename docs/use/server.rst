@@ -745,7 +745,7 @@ for that organization.
        collaboration=collaboration,
        job_id=job_id,
        database="default",
-       initiator=iknl,
+       init_org=iknl,
    )
    task.save()
 
@@ -783,7 +783,7 @@ for parent and child tasks.
        collaboration=collaboration,
        job_id=parent_task.job_id,
        database="default",
-       initiator=iknl,
+       init_org=iknl,
        parent=parent_task
    )
    child_task.save()
