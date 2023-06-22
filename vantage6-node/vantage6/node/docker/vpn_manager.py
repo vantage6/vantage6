@@ -358,14 +358,13 @@ class VPNManager(DockerBaseManager):
         self.log.debug("Finding exposed ports of algorithm container")
         ports = self._find_exposed_ports(algo_image_name)
 
-        self.log.debug("Finding occupied ports... (using the VPN client container)")
         # Find ports on VPN container that are already occupied
         cmd = (
             'sh -c '
             '"iptables -t nat -L PREROUTING -n | awk \'{print $7}\' | cut -c 5-"'
         )
         occupied_ports = self.vpn_client_container.exec_run(cmd=cmd)
-        self.log.debug("VPN client container reported back")
+
         occupied_ports = occupied_ports.output.decode('utf-8')
         occupied_ports = occupied_ports.split('\n')
         occupied_ports = \
@@ -403,8 +402,6 @@ class VPNManager(DockerBaseManager):
             # longer necessary
             del port['algo_port']
         command += '"'
-
-        self.log.debug(f"Setting up port forwarding: {command}")
         self.vpn_client_container.exec_run(command)
 
         return ports
