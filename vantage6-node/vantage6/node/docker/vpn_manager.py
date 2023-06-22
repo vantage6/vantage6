@@ -362,7 +362,7 @@ class VPNManager(DockerBaseManager):
         # Find ports on VPN container that are already occupied
         cmd = (
             'sh -c '
-            '"iptables -t nat -L PREROUTING | awk \'{print $7}\' | cut -c 5-"'
+            '"iptables -t nat -L PREROUTING -n | awk \'{print $7}\' | cut -c 5-"'
         )
         occupied_ports = self.vpn_client_container.exec_run(cmd=cmd)
         self.log.debug("VPN client container reported back")
