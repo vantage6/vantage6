@@ -1834,7 +1834,7 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
-                   image: str, description: str, input: dict,
+                   image: str, description: str, input_: dict,
                    databases: list[str] = None) -> dict:
             """Create a new task
 
@@ -1851,7 +1851,7 @@ class UserClient(ClientBase):
                 Docker image name which contains the algorithm
             description : str
                 Human readable description
-            input : dict
+            input_ : dict
                 Algorithm input
             databases: list[str], optional
                 Database names to be used at the node
@@ -1859,11 +1859,13 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                [description]
+                A dictonairy containing data on the created task, or a message
+                from the server if the task could not be created
             """
+            # TODO v4+ integrate post_task function in this function
             if databases is None:
                 databases = ['default']
-            return self.parent.post_task(name, image, collaboration, input,
+            return self.parent.post_task(name, image, collaboration, input_,
                                          description, organizations,
                                          databases)
 
