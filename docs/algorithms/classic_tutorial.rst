@@ -1,5 +1,8 @@
 .. _algo-tutorial:
 
+.. todo rewrite this to a modern version, taking into account the description
+   in the develop.rst file.
+
 Classic Tutorial
 ================
 

@@ -20,6 +20,8 @@ vantage6.client.utils
 .. automodule:: vantage6.client.utils
    :members:
 
+.. _algo-client-api-ref:
+
 Algorithm Client
 ----------------
 

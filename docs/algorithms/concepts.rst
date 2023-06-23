@@ -1,17 +1,20 @@
 .. _algo-concepts:
 
-Concepts
-========
+Algorithm concepts
+==================
 
-Algorithms are executed at the (vantage6-)node. The node receives a computation
+This page details the concepts used in vantage6 algorithms. Understanding
+these concepts is helpful when you to create your own algorithms, which
+
+Algorithms are executed at the vantage6 node. The node receives a computation
 task from the vantage6-server. The node will then retrieve the algorithm,
 execute it and return the results to the server.
 
 Algorithms are shared using `Docker images <https://docs.docker.com/get-started
 /#what-is-a-container-image>`_ which are stored in a `Docker image registry
-<https://docs.vantage6.ai/installation/server/docker-registry>`_ which is
-accessible to the nodes. In the following sections we explain the fundamentals
-of algorithm containers.
+<https://docs.vantage6.ai/installation/server/docker-registry>`_. The node
+downloads the algorithms from the Docker registry. In the following sections we
+explain the fundamentals of algorithm containers.
 
 1. `Input & output`_
    Interface between the node and algorithm container
@@ -119,6 +122,8 @@ The algorithm container has access to several file mounts.
 
 The paths to these files and directories are stored in the environment
 variables, which we will explain now.
+
+.. _wrapper-concepts:
 
 Wrappers
 --------
