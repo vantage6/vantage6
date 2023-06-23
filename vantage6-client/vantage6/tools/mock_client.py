@@ -71,7 +71,7 @@ class MockAlgorithmClient:
                     )
             self.datasets_per_org.append(org_data)
 
-        self.lib = import_module(module)
+        self.module_name = module
         self.tasks = []
         self.runs = []
         self.results = []
@@ -141,9 +141,11 @@ class MockAlgorithmClient:
                     "zero organizations."
                 )
 
+            module = import_module(self.parent.module_name)
+
             # extract method from lib and input
             method_name = input_.get("method")
-            method = getattr(self.parent.lib, method_name)
+            method = getattr(module, method_name)
 
             # get input
             args = input_.get("args", [])

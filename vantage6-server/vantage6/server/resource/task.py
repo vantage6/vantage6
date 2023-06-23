@@ -297,8 +297,7 @@ class Tasks(TaskBase):
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
-        # TODO BvB 2023-02-08: does this work?
-        schema = task_result_schema if self.is_included('result') else\
+        schema = task_result_schema if self.is_included('results') else\
             task_schema
 
         return self.response(page, schema)
