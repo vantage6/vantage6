@@ -132,6 +132,13 @@ environments:
         portal_username: your_eduvpn_portal_user_name
         portal_userpass: your_eduvpn_portal_user_password
 
+    # specify custom Docker images to use for starting the different
+    # components.
+    # OPTIONAL
+    images:
+      server: harbor2.vantage6.ai/infrastructure/server:petronas
+      ui: harbor2.vantage6.ai/infrastructure/ui:petronas
+
   prod: {}
   acc: {}
   dev: {}
