@@ -325,8 +325,8 @@ def cli_server_configuration_list() -> None:
     click.echo(header)
     click.echo("-"*len(header))
 
-    running = Fore.GREEN + "Online" + Style.RESET_ALL
-    stopped = Fore.RED + "Offline" + Style.RESET_ALL
+    running = Fore.GREEN + "Running" + Style.RESET_ALL
+    stopped = Fore.RED + "Not running" + Style.RESET_ALL
 
     # system folders
     configs, f1 = ServerContext.available_configurations(
