@@ -1,10 +1,13 @@
 import pickle
 import pandas as pd
+import logging
 
 from importlib import import_module
 from copy import deepcopy
 
 from vantage6.tools.wrapper import select_wrapper
+
+module_name = __name__.split('.')[1]
 
 
 class ClientMockProtocol:
@@ -166,7 +169,7 @@ class MockAlgorithmClient:
         {
             "database": str | pd.DataFrame,
             "type": str,
-            "db_input": dict
+            "db_input": dict, # optional, depends on database type
         }
         where database is the path/URI to the database, type is the database
         type (as listed in node configuration) and db_input is the input
@@ -177,22 +180,44 @@ class MockAlgorithmClient:
         input_data keys are not required.
     module : str
         The name of the module that contains the algorithm.
-    node_id : int, optional
-        Sets the mocked node id that to this value. Defaults to 1.
     collaboration_id : int, optional
         Sets the mocked collaboration id to this value. Defaults to 1.
-    organization_id : int, optional
-        Sets the mocked organization id to this value. Defaults to 1.
+    organization_ids : list[int], optional
+        Set the organization ids to this value. The first value is used for
+        this organization, the rest for child tasks. Defaults to [1, 2, ...].
+    node_ids: list[int], optional
+        Set the node ids to this value. The first value is used for this node,
+        the rest for child tasks. Defaults to [1, 2, ...].
     """
     def __init__(
-        self, datasets: list[dict], module: str, node_id: int = None,
-        collaboration_id: int = None, organization_id: int = None
+        self, datasets: list[dict], module: str, collaboration_id: int = None,
+        organization_ids: int = None, node_ids: int = None,
     ) -> None:
+        self.log = logging.getLogger(module_name)
         self.n = len(datasets)
         self.datasets = {}
         self.organizations_with_data = []
+        self.organization_id = \
+            organization_ids[0] if organization_ids[0] else 1
+
+        if len(organization_ids) == len(datasets):
+            self.all_organization_ids = organization_ids
+        else:
+            self.log.warning("Not enough organization ids given, using default"
+                             " values of 1, 2, ... instead")
+            self.all_organization_ids = range(len(datasets))
+
+        # TODO v4+ rename host_node_id to node_id
+        self.host_node_id = node_ids[0] if len(node_ids) else 1
+        if len(node_ids) == len(datasets):
+            self.all_node_ids = node_ids
+        else:
+            self.log.warning("Not enough node ids given, using default values"
+                             " of 1, 2, ... instead")
+            self.all_node_ids = range(len(datasets))
+
         for idx, dataset in enumerate(datasets):
-            org_id = organization_id + idx if organization_id else idx
+            org_id = self.all_organization_ids[idx]
             self.organizations_with_data.append(org_id)
             if isinstance(dataset["database"], pd.DataFrame):
                 self.datasets[org_id] = dataset["database"]
@@ -204,14 +229,12 @@ class MockAlgorithmClient:
                     else {}
                 )
 
+        self.collaboration_id = collaboration_id if collaboration_id else 1
         self.module_name = module
-        self.tasks = []
 
         self.image = 'mock_image'
         self.database = 'mock_database'
-        self.host_node_id = node_id if node_id else 1
-        self.collaboration_id = collaboration_id if collaboration_id else 1
-        self.organization_id = organization_id if organization_id else 1
+        self.tasks = []
 
         self.task = self.Task(self)
         self.result = self.Result(self)
@@ -292,7 +315,7 @@ class MockAlgorithmClient:
                     # ensure that a task has a node_id and organization id that
                     # is unique compared to other tasks.
                     client_copy = deepcopy(self.parent)
-                    client_copy.host_node_id = org_id
+                    client_copy.host_node_id = self._select_node(org_id)
                     client_copy.organization_id = org_id
                     result = method(client_copy, data, *args, **kwargs)
                 else:
@@ -348,6 +371,27 @@ class MockAlgorithmClient:
                 The task details.
             """
             return self.parent.tasks[task_id]
+
+        def _select_node(self, org_id: int) -> int:
+            """
+            Select a node for the given organization id.
+
+            Parameters
+            ----------
+            org_id : int
+                The organization id.
+
+            Returns
+            -------
+            int
+                The node id.
+            """
+            if not self.parent.all_node_ids or \
+                    not self.parent.all_organization_ids or \
+                    org_id not in self.parent.all_organization_ids:
+                return org_id
+            org_idx = self.parent.all_organization_ids.index(org_id)
+            return self.parent.all_node_ids[org_idx]
 
     # TODO for v4+, add a Run class
     class Result(SubClient):
