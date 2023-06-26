@@ -129,7 +129,7 @@ def cli_server() -> None:
 @click.option('-i', '--image', default=None, help="Server Docker image to use")
 @click.option('--with-ui', 'start_ui', flag_value=True, default=False,
               help="Start the graphical User Interface as well")
-@click.option('--ui-port', default=4200, type=int,
+@click.option('--ui-port', default=None, type=int,
               help="Port to listen on for the User Interface")
 @click.option('--rabbitmq-image', default=None,
               help="RabbitMQ docker image to use")
@@ -273,8 +273,7 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
     _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
 
     # start the UI if requested
-    if start_ui:
-        info(f'Starting User Interface at port {ui_port}')
+    if start_ui or ctx.config.get('ui') and ctx.config['ui'].get('enabled'):
         _start_ui(docker_client, ctx, ui_port)
 
     # The `ip` and `port` refer here to the ip and port within the container.
@@ -873,7 +872,6 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     system_folders : bool
         Wether to use system folders or not
     """
-
     # kill the server
     container = client.containers.get(container_name)
     container.kill()
@@ -934,10 +932,15 @@ def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
     ui_port : int
         Port to expose the UI on
     """
+    # if no port is specified, check if config contains a port
+    ui_config = ctx.config.get('ui')
+    if ui_config and not ui_port:
+        ui_port = ui_config.get('port')
+
     # check if the port is valid
     # TODO make function to check if port is valid, and use in more places
     if not isinstance(ui_port, int) or not 0 < ui_port < 65536:
-        warning(f"UI port {ui_port} is not valid! Using default port "
+        warning(f"UI port '{ui_port}' is not valid! Using default port "
                 f"{DEFAULT_UI_PORT}")
         ui_port = DEFAULT_UI_PORT
 
@@ -965,13 +968,11 @@ def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
         "API_PATH": ctx.config.get("api_path"),
     }
 
-    ui_container_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-ui"
-    ui_container = get_container(client, name=ui_container_name)
-    if ui_container:
-        warning(f"UI container {ui_container_name} already exists! "
-                f"Please stop it first before starting a new one.")
-        return
+    # stop the UI container if it is already running
+    _stop_ui(client, ctx)
 
+    info(f'Starting User Interface at port {ui_port}')
+    ui_container_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-ui"
     client.containers.run(
         image,
         detach=True,

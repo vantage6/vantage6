@@ -55,6 +55,8 @@ configuration options.
 
 You can download this file here: :download:`server_config.yaml <yaml/server_config.yaml>`
 
+.. _server-configuration-file:
+
 .. literalinclude :: yaml/server_config.yaml
     :language: yaml
 
