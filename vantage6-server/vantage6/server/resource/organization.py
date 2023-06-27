@@ -16,7 +16,7 @@ from vantage6.server.permission import (
 from vantage6.server.resource import (
     with_user_or_node, only_for, with_user, ServicesResources
 )
-from vantage6.server.resource.common._schema import (
+from vantage6.server.resource.common.schema import (
     OrganizationSchema,
     CollaborationSchema,
     NodeSchema

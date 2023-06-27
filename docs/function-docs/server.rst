@@ -101,7 +101,7 @@ vantage6.server.resource.common._schema
     still the case (there that module is rewritten)
 
 .. automodule:: vantage6.server.resource.common._schema
-    :members:
+    :members: HATEOASModelSchema
 
 vantage6.server.resource.common.auth_helper
 +++++++++++++++++++++++++++++++++++++++++++
@@ -113,7 +113,6 @@ vantage6.server.resource.common.swagger_template
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 This module contains the template for the OAS3 documentation of the API.
-
 
 SQLAlchemy models
 -----------------

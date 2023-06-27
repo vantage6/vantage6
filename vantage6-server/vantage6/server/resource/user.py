@@ -18,7 +18,7 @@ from vantage6.server.resource import (
     ServicesResources
 )
 from vantage6.server.resource.common.pagination import Pagination
-from vantage6.server.resource.common._schema import UserSchema
+from vantage6.server.resource.common.schema import UserSchema
 
 
 module_name = logger_name(__name__)

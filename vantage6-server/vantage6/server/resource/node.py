@@ -13,7 +13,7 @@ from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
 from vantage6.server import db
-from vantage6.server.resource.common._schema import NodeSchema
+from vantage6.server.resource.common.schema import NodeSchema
 
 
 module_name = __name__.split('.')[-1]
