@@ -1,6 +1,26 @@
 Release notes
 =============
 
+3.10.4
+-----
+
+*27 June 2023*
+
+- **Change**
+
+ - Extended the AlgorithmMockClient so that algorithm developers may pass it
+   organization id's and node id's
+   (`PR#737 <https://github.com/vantage6/vantage6/pull/737>`_).
+
+- **Bugfix**
+
+ - Speed up starting algorithm using VPN  (
+   `Issue#681 <https://github.com/vantage6/vantage6/issues/681>`_,
+   `PR#732 <https://github.com/vantage6/vantage6/pull/732>`_).
+ - Updated VPN configurator Dockerfile so that VPN configuration works on
+   Ubuntu 22 (`Issue#724 <https://github.com/vantage6/vantage6/issues/724>`_,
+   `PR#725 <https://github.com/vantage6/vantage6/pull/725>`_).
+
 3.10.3
 -----
 
