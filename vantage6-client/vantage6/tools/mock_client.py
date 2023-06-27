@@ -184,10 +184,10 @@ class MockAlgorithmClient:
         Sets the mocked collaboration id to this value. Defaults to 1.
     organization_ids : list[int], optional
         Set the organization ids to this value. The first value is used for
-        this organization, the rest for child tasks. Defaults to [1, 2, ...].
+        this organization, the rest for child tasks. Defaults to [0, 1, 2, ...].
     node_ids: list[int], optional
         Set the node ids to this value. The first value is used for this node,
-        the rest for child tasks. Defaults to [1, 2, ...].
+        the rest for child tasks. Defaults to [0, 1, 2, ...].
     """
     def __init__(
         self, datasets: list[dict], module: str, collaboration_id: int = None,
@@ -197,24 +197,38 @@ class MockAlgorithmClient:
         self.n = len(datasets)
         self.datasets = {}
         self.organizations_with_data = []
-        self.organization_id = \
-            organization_ids[0] if organization_ids[0] else 1
 
-        if len(organization_ids) == len(datasets):
+        if organization_ids and len(organization_ids) == self.n:
             self.all_organization_ids = organization_ids
         else:
-            self.log.warning("Not enough organization ids given, using default"
-                             " values of 1, 2, ... instead")
-            self.all_organization_ids = range(len(datasets))
+            default_organization_ids = list(range(self.n))
+            if organization_ids:
+                self.log.warning(
+                    "The number of organization ids (%s) does not match the number "
+                    "of datasets (#=%s), using default values (%s) instead",
+                    organization_ids,
+                    self.n,
+                    default_organization_ids,
+                )
+            self.all_organization_ids = default_organization_ids
+
+        self.organization_id = self.all_organization_ids[0]
 
         # TODO v4+ rename host_node_id to node_id
-        self.host_node_id = node_ids[0] if len(node_ids) else 1
-        if len(node_ids) == len(datasets):
+        if node_ids and len(node_ids) == self.n:
             self.all_node_ids = node_ids
         else:
-            self.log.warning("Not enough node ids given, using default values"
-                             " of 1, 2, ... instead")
-            self.all_node_ids = range(len(datasets))
+            default_node_ids = list(range(self.n))
+            if node_ids:
+                self.log.warning(
+                    "The number of node ids (%s) does not match the number of "
+                    "datasets (#=%s), using default values (%s) instead",
+                    node_ids,
+                    self.n,
+                    default_node_ids,
+                )
+            self.all_node_ids = default_node_ids
+        self.host_node_id = self.all_node_ids[0]
 
         for idx, dataset in enumerate(datasets):
             org_id = self.all_organization_ids[idx]
@@ -470,7 +484,7 @@ class MockAlgorithmClient:
                 A list of mocked organizations in the collaboration.
             """
             organizations = []
-            for i in range(self.parent.n):
+            for i in self.parent.all_organization_ids:
                 organizations.append(self.get(i))
             return organizations
 
