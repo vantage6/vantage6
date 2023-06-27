@@ -1,4 +1,4 @@
-ARG ALPINE_VERSION=3
-FROM alpine:${ALPINE_VERSION}
+FROM ubuntu:22.04
 
-RUN apk add iproute2
+RUN apt update
+RUN apt install iproute2 iptables -y
