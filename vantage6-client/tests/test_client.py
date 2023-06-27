@@ -4,7 +4,7 @@ import json
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-from vantage6.client import Client
+from vantage6.client import UserClient
 from vantage6.common.globals import STRING_ENCODING
 
 # Mock server
@@ -94,8 +94,8 @@ class TestClient(TestCase):
             return results
 
     @staticmethod
-    def setup_client() -> Client:
-        client = Client(HOST, PORT)
+    def setup_client() -> UserClient:
+        client = UserClient(HOST, PORT)
         client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
         client.setup_encryption(None)
         return client

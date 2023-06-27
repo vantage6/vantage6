@@ -493,13 +493,6 @@ class ClientBase(object):
         dict
             Data on the algorithm run(s) with decrypted input
         """
-        # TODO change in v4+ when pagination is default
-        # hack: in the case that the pagination metadata is included we
-        # need to strip that for decrypting
-        if isinstance(data, dict) and 'data' in data:
-            wrapper = data
-            data = data['data']
-
         if is_single_resource:
             data[field] = deserialization.load_data(
                 self._decrypt_input(
@@ -507,14 +500,11 @@ class ClientBase(object):
                 )
             )
         else:
-            for resource in data:
+            # for multiple resources, data is in a 'data' field of a dict
+            for resource in data['data']:
                 resource[field] = deserialization.load_data(
                     self._decrypt_input(resource[field])
                 )
-
-        if 'wrapper' in locals():
-            wrapper['data'] = data
-            data = wrapper
 
         return data
 
@@ -534,24 +524,20 @@ class ClientBase(object):
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, verbose=False, log_level='debug',
-                 **kwargs) -> None:
+    def __init__(self, *args, log_level='debug', **kwargs) -> None:
         """Create user client
 
         All paramters from `ClientBase` can be used here.
 
         Parameters
         ----------
-        verbose : bool, optional
-            Whenever to print (info) messages, by default False
         log_level : str, optional
             The log level to use, by default 'debug'
         """
         super(UserClient, self).__init__(*args, **kwargs)
 
         # Replace logger by print logger
-        # TODO in v4+, remove the verbose option and only keep log_level
-        self.log = self._get_logger(verbose, log_level)
+        self.log = self._get_logger(log_level)
 
         # attach sub-clients
         self.util = self.Util(self)
@@ -580,14 +566,12 @@ class UserClient(ClientBase):
         self.log.info("-" * 60)
 
     @staticmethod
-    def _get_logger(enabled: bool, level: str) -> logging.Logger:
+    def _get_logger(level: str) -> logging.Logger:
         """
         Create print-logger
 
         Parameters
         ----------
-        enabled: bool
-            If true, logging at most detailed level
         level: str
             Desired logging level
 
@@ -603,9 +587,7 @@ class UserClient(ClientBase):
 
         # set log level
         level = level.upper()
-        if enabled:
-            logger.setLevel(LogLevel.DEBUG.value)
-        elif level not in [lvl.value for lvl in LogLevel]:
+        if level not in [lvl.value for lvl in LogLevel]:
             default_lvl = LogLevel.DEBUG.value
             logger.setLevel(default_lvl)
             logger.warn(
@@ -2129,8 +2111,3 @@ class UserClient(ClientBase):
                 'role_id': role
             }
             return self.parent.request('rule', params=params)
-
-
-# For backwards compatibility
-# TODO remove in v4+?
-Client = UserClient
