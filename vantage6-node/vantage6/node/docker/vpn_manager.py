@@ -350,29 +350,37 @@ class VPNManager(DockerBaseManager):
             return None  # no port assigned if no VPN is available
 
         # Get IP Address of the algorithm container
+        self.log.debug("Getting IP address of algorithm container")
         algo_helper_container.reload()  # update attributes
         algo_ip = self.get_isolated_netw_ip(algo_helper_container)
 
         # Set ports at which algorithm containers receive traffic
+        self.log.debug("Finding exposed ports of algorithm container")
         ports = self._find_exposed_ports(algo_image_name)
 
         # Find ports on VPN container that are already occupied
         cmd = (
             'sh -c '
-            '"iptables -t nat -L PREROUTING | awk \'{print $7}\' | cut -c 5-"'
+            '"iptables -t nat -L PREROUTING -n | '
+            'awk \'{print $7}\' | cut -c 5-"'
         )
         occupied_ports = self.vpn_client_container.exec_run(cmd=cmd)
+
         occupied_ports = occupied_ports.output.decode('utf-8')
         occupied_ports = occupied_ports.split('\n')
         occupied_ports = \
             [int(port) for port in occupied_ports if port != '']
+        self.log.debug(f"Occupied ports: {occupied_ports}")
 
         # take first available port
         vpn_client_port_options = set(FREE_PORT_RANGE) - set(occupied_ports)
         for port in ports:
-            port['port'] = vpn_client_port_options.pop()
+            port_ = vpn_client_port_options.pop()
+            self.log.debug(f"Assigning port {port_} to algorithm port")
+            port['port'] = port_
 
         vpn_ip = self.get_vpn_ip()
+        self.log.debug(f"VPN IP: {vpn_ip}")
 
         # Set up forwarding VPN traffic to algorithm container
         command = 'sh -c "'
