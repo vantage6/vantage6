@@ -140,6 +140,42 @@ def update_post(post: str) -> None:
             f.write(new_content)
 
 
+def update_version_docker_files(version: str) -> None:
+    """
+    Update version in relevant Dockerfiles
+
+    Parameters
+    ----------
+    version : str
+        The new version to which to update.
+    """
+    major_minor = ".".join(version.split(".")[:2])
+
+    # update version label in infrastructure-base
+    info("Updating version in infrastructure-base/Dockerfile")
+    file = Path("../docker/infrastructure-base.Dockerfile")
+    with open(file, 'r') as f:
+        content = f.read()
+        new_content = re.sub(
+            r"(LABEL version=\")(\d+.\d+)\"",
+            r"\g<1>{}".format(major_minor + '"'),
+            content
+        )
+    with open(file, 'w') as f:
+        f.write(new_content)
+
+    # update version label in node-and-server
+    info("Updating version in node-and-server/Dockerfile")
+    file = Path("../docker/node-and-server.Dockerfile")
+    with open(file, 'r') as f:
+        content = f.read()
+        new_content = re.sub(
+            r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
+        )
+    with open(file, 'w') as f:
+        f.write(new_content)
+
+
 @click.command()
 @click.option('--spec', default='final', help="final, candidate, beta, alpha")
 @click.option('--version', default='0.0.0', help="major.minor.patch")
@@ -172,6 +208,9 @@ def set_version(spec: str, version: str, build: int, post: int) -> None:
 
     update_post(str(post))
     info("Post release version set")
+
+    update_version_docker_files(version)
+    info("Docker files updated")
 
 
 if __name__ == '__main__':
