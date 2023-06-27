@@ -1764,7 +1764,8 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                Description of the created task
+                A dictionairy containing data on the created task, or a message
+                from the server if the task could not be created
             """
             assert self.parent.cryptor, "Encryption has not yet been setup!"
 

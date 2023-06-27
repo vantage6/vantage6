@@ -1,3 +1,4 @@
+from typing import Any
 import jwt
 import json as json_lib
 
@@ -47,6 +48,7 @@ class AlgorithmClient(ClientBase):
         self.databases = container_identity.get('databases', [])
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
+        self.organization_id = container_identity.get("organization_id")
         self.log.info(
             f"Container in collaboration_id={self.collaboration_id} \n"
             f"Key created by node_id {self.host_node_id} \n"
@@ -124,7 +126,23 @@ class AlgorithmClient(ClientBase):
         job_id from the central server.
         """
 
-        def get(self, task_id: int) -> list:
+        def get(self, id_) -> dict:
+            """
+            Obtain a specific algorithm run from the central server.
+
+            Parameters
+            ----------
+            id_: int
+                ID of the algorithm run that should be obtained.
+
+            Returns
+            -------
+            dict
+                Algorithm run data.
+            """
+            return self.parent.request(f"run/{id_}")
+
+        def from_task(self, task_id: int) -> list:
             """
             Obtain algorithm runs from a specific task at the server.
 
@@ -159,7 +177,33 @@ class AlgorithmClient(ClientBase):
 
         This client is used to get results from the central server.
         """
-        def get(self, task_id: int) -> list:
+        def get(self, id_: int) -> Any:
+            """
+            Obtain a specific result from the central server.
+
+            Parameters
+            ----------
+            id_: int
+                ID of the algorithm run of which the result should be obtained.
+
+            Returns
+            -------
+            Any
+                Result of the algorithm run.
+            """
+            response = self.parent.request(f"result/{id_}")
+
+            # Encryption is not done at the client level for the container. The
+            # algorithm developer is responsible for decrypting the results.
+            self.parent.log.info('--> Attempting to decode results!')
+            result = None
+            if response.get('result'):
+                result = json_lib.loads(
+                    base64s_to_bytes(response.get('result')).decode()
+                )
+            return result
+
+        def from_task(self, task_id: int) -> list[Any]:
             """
             Obtain results from a specific task at the server.
 
@@ -177,7 +221,7 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            list
+            list[Any]
                 List of results. The type of the results depends on the
                 algorithm.
             """
@@ -226,7 +270,7 @@ class AlgorithmClient(ClientBase):
             )
 
         def create(
-            self, input_: bytes, organization_ids: list[int] = None,
+            self, input_: bytes, organizations: list[int] = None,
             name: str = "subtask", description: str = None
         ) -> dict:
             """
@@ -240,7 +284,7 @@ class AlgorithmClient(ClientBase):
             ----------
             input_ : bytes
                 Input to the task. Should be b64 encoded.
-            organization_ids : list[int]
+            organizations : list[int]
                 List of organization IDs that should execute the task.
             name: str, optional
                 Name of the subtask
@@ -252,10 +296,9 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing information on the created task
             """
-            if organization_ids is None:
-                organization_ids = []
-            self.parent.log.debug(
-                f"Creating new subtask for {organization_ids}")
+            if not organizations:
+                organizations = []
+            self.parent.log.debug(f"Creating new subtask for {organizations}")
 
             description = (
                 description or
@@ -266,7 +309,7 @@ class AlgorithmClient(ClientBase):
             # in the proxy server (self.parent.request())
             serialized_input = bytes_to_base64s(serialize(input_))
             organization_json_list = []
-            for org_id in organization_ids:
+            for org_id in organizations:
                 organization_json_list.append(
                     {
                         "id": org_id,
