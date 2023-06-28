@@ -13,6 +13,9 @@ from vantage6.server.permission import (
     Operation as P,
     PermissionManager
 )
+from vantage6.server.resource.common.input_schema import (
+    OrganizationInputSchema
+)
 from vantage6.server.resource import (
     with_user_or_node, only_for, with_user, ServicesResources
 )
@@ -107,6 +110,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 org_schema = OrganizationSchema()
+org_input_schema = OrganizationInputSchema()
 
 
 class OrganizationBase(ServicesResources):
@@ -278,8 +282,14 @@ class Organizations(OrganizationBase):
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
+        # validate request body
         data = request.get_json()
-        name = data.get('name', '')
+        errors = org_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        name = data.get('name')
         if db.Organization.exists("name", name):
             return {
                 "msg": f"Organization with name '{name}' already exists!"

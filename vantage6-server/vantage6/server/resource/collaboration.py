@@ -2,11 +2,16 @@
 import logging
 
 from flask import request, g
-from flask_restful import reqparse, Api
+from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6.server import db
 from vantage6.server.resource.common.pagination import Pagination
+from vantage6.server.resource.common.input_schema import (
+    CollaborationAddNodeSchema,
+    CollaborationAddOrganizationSchema,
+    CollaborationInputSchema
+)
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -88,6 +93,9 @@ collaboration_schema = CollaborationSchema()
 tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
+collaboration_input_schema = CollaborationInputSchema()
+collaboration_add_organization_schema = CollaborationAddOrganizationSchema()
+collaboration_add_node_schema = CollaborationAddNodeSchema()
 
 
 # -----------------------------------------------------------------------------
@@ -295,13 +303,12 @@ class Collaborations(CollaborationBase):
 
         tags: ["Collaboration"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True,
-                            help="This field cannot be left blank!")
-        parser.add_argument('organization_ids', type=int, required=True,
-                            action='append')
-        parser.add_argument('encrypted', type=int, required=False)
-        data = parser.parse_args()
+        data = request.get_json()
+        # validate request body
+        errors = collaboration_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         name = data["name"]
         if db.Collaboration.exists("name", name):
@@ -670,8 +677,14 @@ class CollaborationOrganization(ServicesResources):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        # get the organization
+        # validate request body
         data = request.get_json()
+        errors = collaboration_add_organization_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        # get the organization
         organization = db.Organization.get(data['id'])
         if not organization:
             return {"msg": f"organization with id={id} is not found"}, \
@@ -885,7 +898,13 @@ class CollaborationNode(ServicesResources):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
+        # validate request body
         data = request.get_json()
+        errors = collaboration_add_node_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         node = db.Node.get(data['id'])
         if not node:
             return {"msg": f"node id={data['id']} not found"}, \

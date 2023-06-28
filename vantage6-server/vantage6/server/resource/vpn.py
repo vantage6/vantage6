@@ -16,6 +16,9 @@ from requests_oauthlib import OAuth2Session
 
 from vantage6.common import logger_name
 from vantage6.server.resource import with_node, ServicesResources
+from vantage6.server.resource.common.input_schema import (
+    VPNConfigUpdateInputSchema
+)
 from vantage6.server.exceptions import (
     VPNConfigException, VPNPortalAuthException
 )
@@ -56,6 +59,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=('POST',),
         resource_class_kwargs=services
     )
+
+
+vpn_config_schema = VPNConfigUpdateInputSchema()
 
 
 # ------------------------------------------------------------------------------
@@ -168,19 +174,21 @@ class VPNConfig(ServicesResources):
         tags: ["VPN"]
 
         """
+        body = request.get_json()
+
+        # validate request body
+        errors = vpn_config_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         # check if the VPN server is configured
         if not self._is_server_configured():
             return {'msg': 'This server does not support VPN'}, \
                 HTTPStatus.NOT_IMPLEMENTED
 
-        # retrieve user based on email or username
-        body = request.get_json()
-        vpn_config = body.get("vpn_config")
-        if not vpn_config:
-            return {"msg": "vpn_config is missing!"}, \
-                HTTPStatus.BAD_REQUEST
-
         # refresh keypair by calling EduVPN API
+        vpn_config = body.get("vpn_config")
         try:
             vpn_connector = EduVPNConnector(self.config['vpn_server'])
             ovpn_config = vpn_connector.refresh_keypair(vpn_config)

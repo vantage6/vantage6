@@ -4,8 +4,7 @@ import uuid
 
 from http import HTTPStatus
 from flask import g, request
-from flask_restful import reqparse, Api
-
+from flask_restful import Api
 
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
@@ -14,6 +13,7 @@ from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
 from vantage6.server import db
 from vantage6.server.resource.common._schema import NodeSchema
+from vantage6.server.resource.common.input_schema import NodeInputSchema
 
 
 module_name = __name__.split('.')[-1]
@@ -89,6 +89,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 node_schema = NodeSchema()
+node_input_schema = NodeInputSchema()
 
 
 class NodeBase(ServicesResources):
@@ -255,10 +256,11 @@ class Nodes(NodeBase):
                     description: Collaboration id
                   organization_id:
                     type: integer
-                    description: Organization id
+                    description: Organization id. If not provided, the user's
+                      organization is used
                   name:
-                    type: str
-                    description: Human-readable name, if not profided a name
+                    type: string
+                    description: Human-readable name. If not provided a name
                       is generated
 
         responses:
@@ -278,16 +280,15 @@ class Nodes(NodeBase):
 
         tags: ["Node"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument("collaboration_id", type=int, required=True,
-                            help="This field cannot be left blank!")
-        parser.add_argument("organization_id", type=int, required=False)
-        parser.add_argument("name", type=str, required=False)
-        data = parser.parse_args()
-
-        collaboration = db.Collaboration.get(data["collaboration_id"])
+        data = request.get_json()
+        # validate request body
+        errors = node_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # check that the collaboration exists
+        collaboration = db.Collaboration.get(data["collaboration_id"])
         if not collaboration:
             return {"msg": f"collaboration id={data['collaboration_id']} "
                     "does not exist"}, HTTPStatus.NOT_FOUND  # 404
