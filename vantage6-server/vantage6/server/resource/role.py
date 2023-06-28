@@ -4,7 +4,7 @@ import logging
 from http import HTTPStatus
 from flask.globals import request
 from flask import g
-from flask_restful import reqparse, Api
+from flask_restful import Api
 from sqlalchemy import or_
 
 from vantage6.server import db
@@ -18,6 +18,7 @@ from vantage6.server.permission import (
 )
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.resource.common._schema import RoleSchema, RuleSchema
+from vantage6.server.resource.common.input_schema import RoleInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.default_roles import DefaultRole
 
@@ -107,6 +108,7 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_schema = RoleSchema()
 rule_schema = RuleSchema()
+role_input_schema = RoleInputSchema()
 
 
 class RoleBase(ServicesResources):
@@ -321,12 +323,12 @@ class Roles(RoleBase):
 
         tags: ["Role"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument("name", type=str, required=True)
-        parser.add_argument("description", type=str, required=True)
-        parser.add_argument("rules", type=int, action='append', required=False)
-        parser.add_argument("organization_id", type=int, required=False)
-        data = parser.parse_args()
+        data = request.get_json()
+        # validate request body
+        errors = role_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # check if role name is allowed (i.e. not a default role name)
         if 'name' in data and data['name'] in [role for role in DefaultRole]:

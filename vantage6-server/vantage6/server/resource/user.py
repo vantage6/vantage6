@@ -17,6 +17,7 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources
 )
+from vantage6.server.resource.common.input_schema import UserInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common._schema import UserSchema
 
@@ -96,6 +97,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 user_schema = UserSchema()
+user_input_schema = UserInputSchema()
 
 
 class UserBase(ServicesResources):
@@ -319,18 +321,12 @@ class Users(UserBase):
 
         tags: ["User"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=True)
-        parser.add_argument("firstname", type=str, required=True)
-        parser.add_argument("lastname", type=str, required=True)
-        # TODO password should be send to the email, rather than setting it
-        parser.add_argument("password", type=str, required=True)
-        parser.add_argument("email", type=str, required=True)
-        parser.add_argument("organization_id", type=int, required=False,
-                            help="This is only used if you're root")
-        parser.add_argument("roles", type=int, action="append", required=False)
-        parser.add_argument("rules", type=int, action="append", required=False)
-        data = parser.parse_args()
+        data = request.get_json()
+        # validate request body
+        errors = user_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # check unique constraints
         if db.User.username_exists(data["username"]):

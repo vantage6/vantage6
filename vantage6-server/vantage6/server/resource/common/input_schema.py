@@ -105,7 +105,6 @@ class PortInputSchema(Schema):
 
 class RecoverPasswordInputSchema(Schema):
     """ Schema for validating input for recovering a password. """
-    # TODO make sure the max lengths match username and email
     email = fields.Email(validate=Length(max=256))
     username = fields.String(validate=Length(max=128))
 
@@ -118,7 +117,6 @@ class RecoverPasswordInputSchema(Schema):
 class ResetPasswordInputSchema(Schema):
     """ Schema for validating input for resetting a password. """
     reset_token = fields.String(required=True, validate=Length(max=512))
-    # TODO make sure max length matches password
     password = fields.String(required=True, validate=Length(max=128))
 
 
@@ -144,8 +142,16 @@ class ResetAPIKeyInputSchema(_OnlyIdSchema):
     pass
 
 
+class RoleInputSchema(Schema):
+    """ Schema for validating input for creating a role. """
+    name = fields.String(required=True, validate=Length(max=128))
+    description = fields.String(validate=Length(max=512))
+    rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
+    organization_id = fields.Integer(validate=Range(min=1))
+
+
 class TaskInputSchema(Schema):
-    """ Schema for validating input for a creating a task. """
+    """ Schema for validating input for creating a task. """
     name = fields.String(validate=Length(max=128))
     description = fields.String(validate=Length(max=512))
     image = fields.String(required=True, validate=Length(max=1024))
@@ -170,6 +176,20 @@ class TaskInputSchema(Schema):
             if 'input' not in organization:
                 raise ValidationError(
                     'Input is required for each organization')
+
+
+class UserInputSchema(Schema):
+    """ Schema for validating input for creating a user. """
+    username = fields.String(required=True, validate=Length(max=128))
+    email = fields.Email(required=True, validate=Length(max=256))
+    # TODO use the checks from user.set_password() to validate proper password
+    # also in other places in this file
+    password = fields.String(required=True, validate=Length(max=128))
+    firstname = fields.String(validate=Length(max=128))
+    lastname = fields.String(validate=Length(max=128))
+    organization_id = fields.Integer(validate=Range(min=1))
+    roles = fields.List(fields.Integer(validate=Range(min=1)))
+    rules = fields.List(fields.Integer(validate=Range(min=1)))
 
 
 class VPNConfigUpdateInputSchema(Schema):
