@@ -9,6 +9,10 @@ from marshmallow.validate import Length, Range, OneOf
 from vantage6.common.task_status import TaskStatus
 from vantage6.server.default_roles import DefaultRole
 
+_MAX_LEN_STR_SHORT = 128
+_MAX_LEN_STR_LONG = 1024
+_MAX_LEN_PW = 128
+_MAX_LEN_NAME = 128
 
 
 class _OnlyIdSchema(Schema):
@@ -18,13 +22,15 @@ class _OnlyIdSchema(Schema):
 
 class ChangePasswordInputSchema(Schema):
     """ Schema for validating input for changing a password. """
-    current_password = fields.String(required=True, validate=Length(max=128))
-    new_password = fields.String(required=True, validate=Length(max=128))
+    current_password = fields.String(required=True,
+                                     validate=Length(max=_MAX_LEN_PW))
+    new_password = fields.String(required=True,
+                                 validate=Length(max=_MAX_LEN_PW))
 
 
 class CollaborationInputSchema(Schema):
     """ Schema for validating input for a creating a collaboration. """
-    name = fields.String(required=True, validate=Length(max=128))
+    name = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
     organization_ids = fields.List(fields.Integer(), required=True)
     encrypted = fields.Boolean(required=True)
 
@@ -75,7 +81,7 @@ class KillNodeTasksInputSchema(_OnlyIdSchema):
 
 class NodeInputSchema(Schema):
     """ Schema for validating input for a creating a node. """
-    name = fields.String(validate=Length(max=128))
+    name = fields.String(validate=Length(max=_MAX_LEN_NAME))
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organization_id = fields.Integer(validate=Range(min=1))
     ip = fields.String()
@@ -104,12 +110,12 @@ class NodeInputSchema(Schema):
 
 class OrganizationInputSchema(Schema):
     """ Schema for validating input for a creating an organization. """
-    name = fields.String(required=True, validate=Length(max=128))
-    address1 = fields.String(validate=Length(max=128))
-    address2 = fields.String(validate=Length(max=128))
-    zipcode = fields.String(validate=Length(max=128))
-    country = fields.String(validate=Length(max=128))
-    domain = fields.String(validate=Length(max=128))
+    name = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    address1 = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
+    address2 = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
+    zipcode = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
+    country = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
+    domain = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     public_key = fields.String()
 
 
@@ -117,7 +123,7 @@ class PortInputSchema(Schema):
     """ Schema for validating input for a creating a port. """
     port = fields.Integer(required=True)
     run_id = fields.Integer(required=True, validate=Range(min=1))
-    label = fields.String(validate=Length(max=128))
+    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
 
     @validates('port')
     def validate_port(self, port):
@@ -140,8 +146,8 @@ class PortInputSchema(Schema):
 
 class RecoverPasswordInputSchema(Schema):
     """ Schema for validating input for recovering a password. """
-    email = fields.Email(validate=Length(max=256))
-    username = fields.String(validate=Length(max=128))
+    email = fields.Email()
+    username = fields.String(validate=Length(max=_MAX_LEN_NAME))
 
     @validates_schema
     def validate_email_or_username(self, data, **kwargs):
@@ -151,15 +157,16 @@ class RecoverPasswordInputSchema(Schema):
 
 class ResetPasswordInputSchema(Schema):
     """ Schema for validating input for resetting a password. """
-    reset_token = fields.String(required=True, validate=Length(max=512))
-    password = fields.String(required=True, validate=Length(max=128))
+    reset_token = fields.String(required=True,
+                                validate=Length(_MAX_LEN_STR_LONG))
+    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
 
 
 class Recover2FAInputSchema(Schema):
     """ Schema for validating input for recovering 2FA. """
-    email = fields.Email(validate=Length(max=256))
-    username = fields.String(validate=Length(max=128))
-    password = fields.String(validate=Length(max=128))
+    email = fields.Email()
+    username = fields.String(validate=Length(max=_MAX_LEN_NAME))
+    password = fields.String(validate=Length(max=_MAX_LEN_PW))
 
     @validates_schema
     def validate_email_or_username(self, data: dict, **kwargs):
@@ -182,7 +189,8 @@ class Recover2FAInputSchema(Schema):
 
 class Reset2FAInputSchema(Schema):
     """ Schema for validating input for resetting 2FA. """
-    reset_token = fields.String(required=True, validate=Length(max=512))
+    reset_token = fields.String(required=True,
+                                validate=Length(max=_MAX_LEN_STR_LONG))
 
 
 class ResetAPIKeyInputSchema(_OnlyIdSchema):
@@ -192,8 +200,8 @@ class ResetAPIKeyInputSchema(_OnlyIdSchema):
 
 class RoleInputSchema(Schema):
     """ Schema for validating input for creating a role. """
-    name = fields.String(required=True, validate=Length(max=128))
-    description = fields.String(validate=Length(max=512))
+    name = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
     organization_id = fields.Integer(validate=Range(min=1))
 
@@ -229,8 +237,8 @@ class RunInputSchema(Schema):
 
 class TaskInputSchema(Schema):
     """ Schema for validating input for creating a task. """
-    name = fields.String(validate=Length(max=128))
-    description = fields.String(validate=Length(max=512))
+    name = fields.String(validate=Length(max=_MAX_LEN_NAME))
+    description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True)
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
@@ -265,9 +273,9 @@ class TaskInputSchema(Schema):
 
 class TokenUserInputSchema(Schema):
     """ Schema for validating input for creating a token for a user. """
-    username = fields.String(required=True, validate=Length(max=128))
-    password = fields.String(required=True, validate=Length(max=128))
-    mfa_code = fields.String(validate=Length(equal=6))
+    username = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
+    mfa_code = fields.String(validate=Length(max=10))
 
 
 class TokenNodeInputSchema(Schema):
@@ -303,13 +311,13 @@ class TokenAlgorithmInputSchema(Schema):
 
 class UserInputSchema(Schema):
     """ Schema for validating input for creating a user. """
-    username = fields.String(required=True, validate=Length(max=128))
-    email = fields.Email(required=True, validate=Length(max=256))
+    username = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    email = fields.Email(required=True)
     # TODO use the checks from user.set_password() to validate proper password
     # also in other places in this file
-    password = fields.String(required=True, validate=Length(max=128))
-    firstname = fields.String(validate=Length(max=128))
-    lastname = fields.String(validate=Length(max=128))
+    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
+    firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
+    lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
