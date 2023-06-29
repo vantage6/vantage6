@@ -463,8 +463,14 @@ class Collaboration(CollaborationBase):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        # only update fields that are provided
         data = request.get_json()
+        # validate request body
+        errors = collaboration_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        # only update fields that are provided
         if "name" in data:
             name = data["name"]
             if collaboration.name != name and \

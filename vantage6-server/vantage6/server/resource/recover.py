@@ -24,6 +24,7 @@ from vantage6.server.resource.common.auth_helper import (
     create_qr_uri, user_login
 )
 from vantage6.server.resource.common.input_schema import (
+    ChangePasswordInputSchema,
     RecoverPasswordInputSchema,
     ResetPasswordInputSchema,
     Recover2FAInputSchema,
@@ -105,6 +106,7 @@ reset_pw_schema = ResetPasswordInputSchema()
 recover_2fa_schema = Recover2FAInputSchema()
 reset_2fa_schema = Reset2FAInputSchema()
 reset_api_key_schema = ResetAPIKeyInputSchema()
+change_pw_schema = ChangePasswordInputSchema()
 
 
 # ------------------------------------------------------------------------------
@@ -471,15 +473,14 @@ class ChangePassword(ServicesResources):
         tags: ["Account recovery"]
         """
         body = request.get_json()
+        # validate request body
+        errors = change_pw_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         old_password = body.get("current_password")
         new_password = body.get("new_password")
-
-        if not old_password:
-            return {"msg": "Your current password is missing"},  \
-                HTTPStatus.BAD_REQUEST
-        elif not new_password:
-            return {"msg": "Your new password is missing!"}, \
-                HTTPStatus.BAD_REQUEST
 
         user = g.user
         log.debug(f"Changing password for user {user.id}")

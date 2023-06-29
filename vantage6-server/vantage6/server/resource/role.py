@@ -493,6 +493,16 @@ class Role(RoleBase):
         """
         data = request.get_json()
 
+        # validate request body
+        errors = role_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+        # organization_id cannot be changed in PATCH, only defined in POST
+        if 'organization_id' in data:
+            return {'msg': 'Cannot change organization of a role.'}, \
+                HTTPStatus.BAD_REQUEST
+
         role = db.Role.get(id)
         if not role:
             return {"msg": f"Role with id={id} not found."}, \

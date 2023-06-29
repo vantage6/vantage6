@@ -430,6 +430,12 @@ class Organization(OrganizationBase):
 
         tags: ["Organization"]
         """
+        # validate request body
+        data = request.get_json()
+        errors = org_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         organization = db.Organization.get(id)
         if not organization:
@@ -444,7 +450,6 @@ class Organization(OrganizationBase):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        data = request.get_json()
         name = data.get('name', None)
         if name:
             if organization.name != name and \

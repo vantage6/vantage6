@@ -4,7 +4,7 @@ import sqlalchemy.exc
 
 from http import HTTPStatus
 from flask import g, request
-from flask_restful import reqparse, Api
+from flask_restful import Api
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -543,10 +543,19 @@ class User(UserBase):
         tags: ["User"]
         """
         user = db.User.get(id)
-
         if not user:
             return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
+
+        data = request.get_json()
+        # validate request body
+        errors = user_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+        if data.get("password"):
+            return {"msg": "You cannot change your password here!"}, \
+                HTTPStatus.BAD_REQUEST
 
         if not self.r.e_glo.can():
             if not (self.r.e_org.can() and user.organization ==
@@ -554,22 +563,6 @@ class User(UserBase):
                 if not (self.r.e_own.can() and user == g.user):
                     return {'msg': 'You lack the permission to do that!'}, \
                         HTTPStatus.UNAUTHORIZED
-
-        parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=False)
-        parser.add_argument("firstname", type=str, required=False)
-        parser.add_argument("lastname", type=str, required=False)
-        parser.add_argument("email", type=str, required=False)
-        data = parser.parse_args()
-
-        # check if user defined a password, which is deprecated
-        # FIXME BvB 22-06-29: with time, this check may be removed. Now it is
-        # here for backwards compatibility (if people have scripts using this,
-        # this makes them aware something changed)
-        request_json = request.get_json()
-        if request_json.get("password"):
-            return {"msg": "You cannot change your password here!"}, \
-                HTTPStatus.BAD_REQUEST
 
         if data["username"] is not None:
             if data["username"] == '':
@@ -603,11 +596,10 @@ class User(UserBase):
             user.email = data["email"]
 
         # request parser is awefull with lists
-        json_data = request.get_json()
-        if 'roles' in json_data:
+        if 'roles' in data:
             # validate that these roles exist
             roles = []
-            for role_id in json_data['roles']:
+            for role_id in data['roles']:
                 role = db.Role.get(role_id)
                 if not role:
                     return {'msg': f'Role={role_id} can not be found!'}, \
@@ -649,10 +641,10 @@ class User(UserBase):
 
             user.roles = roles
 
-        if 'rules' in json_data:
+        if 'rules' in data:
             # validate that these rules exist
             rules = []
-            for rule_id in json_data['rules']:
+            for rule_id in data['rules']:
                 rule = db.Rule.get(rule_id)
                 if not rule:
                     return {'msg': f'Rule={rule_id} can not be found!'}, \

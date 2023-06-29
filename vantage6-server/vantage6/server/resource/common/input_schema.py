@@ -1,14 +1,23 @@
 import uuid
+import ipaddress
 
 from marshmallow import (
     Schema, fields, ValidationError, validates, validates_schema
 )
-from marshmallow.validate import Length, Range
+from marshmallow.validate import Length, Range, OneOf
+
+from vantage6.common.task_status import TaskStatus
 
 
 class _OnlyIdSchema(Schema):
     """ Schema for validating POST requests that only require an ID field. """
     id = fields.Integer(required=True, validate=Range(min=1))
+
+
+class ChangePasswordInputSchema(Schema):
+    """ Schema for validating input for changing a password. """
+    current_password = fields.String(required=True, validate=Length(max=128))
+    new_password = fields.String(required=True, validate=Length(max=128))
 
 
 class CollaborationInputSchema(Schema):
@@ -67,6 +76,28 @@ class NodeInputSchema(Schema):
     name = fields.String(validate=Length(max=128))
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organization_id = fields.Integer(validate=Range(min=1))
+    ip = fields.String()
+    clear_ip = fields.Boolean()
+
+    @validates('ip')
+    def validate_ip(self, ip: str):
+        """
+        Validate IP address in request body.
+
+        Parameters
+        ----------
+        ip : str
+            IP address to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the IP address is not valid.
+        """
+        try:
+            ipaddress.ip_address(ip)
+        except ValueError:
+            raise ValidationError('IP address is not valid')
 
 
 class OrganizationInputSchema(Schema):
@@ -77,7 +108,7 @@ class OrganizationInputSchema(Schema):
     zipcode = fields.String(validate=Length(max=128))
     country = fields.String(validate=Length(max=128))
     domain = fields.String(validate=Length(max=128))
-    public_key = fields.String(validate=Length(max=128))
+    public_key = fields.String()
 
 
 class PortInputSchema(Schema):
@@ -159,10 +190,20 @@ class ResetAPIKeyInputSchema(_OnlyIdSchema):
 
 class RoleInputSchema(Schema):
     """ Schema for validating input for creating a role. """
+    # TODO add check that name cannot be one of default roles
     name = fields.String(required=True, validate=Length(max=128))
     description = fields.String(validate=Length(max=512))
     rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
     organization_id = fields.Integer(validate=Range(min=1))
+
+
+class RunInputSchema(Schema):
+    """ Schema for validating input for patching an algorithm run. """
+    started_at = fields.DateTime()
+    finished_at = fields.DateTime()
+    log = fields.String()
+    result = fields.String()
+    status = fields.String(validate=OneOf([s.value for s in TaskStatus]))
 
 
 class TaskInputSchema(Schema):

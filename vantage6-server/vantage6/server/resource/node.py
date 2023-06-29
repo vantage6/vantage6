@@ -520,6 +520,13 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
+        data = request.get_json()
+        # validate request body
+        errors = node_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         node = db.Node.get(id)
         if not node:
             return {'msg': f'Node id={id} not found!'}, HTTPStatus.NOT_FOUND
@@ -531,8 +538,6 @@ class Node(NodeBase):
             if not (self.r.e_org.can() and own):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
-
-        data = request.get_json()
 
         # update fields
         if 'name' in data:
