@@ -1,3 +1,5 @@
+import uuid
+
 from marshmallow import (
     Schema, fields, ValidationError, validates, validates_schema
 )
@@ -127,7 +129,20 @@ class Recover2FAInputSchema(Schema):
     password = fields.String(validate=Length(max=128))
 
     @validates_schema
-    def validate_email_or_username(self, data, **kwargs):
+    def validate_email_or_username(self, data: dict, **kwargs):
+        """
+        Validate the input, which should contain either an email or username.
+
+        Parameters
+        ----------
+        data : dict
+            The input data.
+
+        Raises
+        ------
+        ValidationError
+            If the input does not contain an email or username.
+        """
         if not ('email' in data or 'username' in data):
             raise ValidationError('Email or username is required')
 
@@ -154,18 +169,26 @@ class TaskInputSchema(Schema):
     """ Schema for validating input for creating a task. """
     name = fields.String(validate=Length(max=128))
     description = fields.String(validate=Length(max=512))
-    image = fields.String(required=True, validate=Length(max=1024))
+    image = fields.String(required=True)
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.String())
 
     @validates('organizations')
-    def validate_organizations(self, organizations):
+    def validate_organizations(self, organizations: list[dict]):
         """
         Validate the organizations in the input.
 
         Parameters
         ----------
+        organizations : list[dict]
+            List of organizations to validate. Each organization must have an
+            id and input.
+
+        Raises
+        ------
+        ValidationError
+            If the organizations are not valid.
         """
         if not len(organizations):
             raise ValidationError('At least one organization is required')
@@ -176,6 +199,44 @@ class TaskInputSchema(Schema):
             if 'input' not in organization:
                 raise ValidationError(
                     'Input is required for each organization')
+
+
+class TokenUserInputSchema(Schema):
+    """ Schema for validating input for creating a token for a user. """
+    username = fields.String(required=True, validate=Length(max=128))
+    password = fields.String(required=True, validate=Length(max=128))
+    mfa_code = fields.String(validate=Length(equal=6))
+
+
+class TokenNodeInputSchema(Schema):
+    """ Schema for validating input for creating a token for a node. """
+    api_key = fields.String(required=True)
+
+    @validates('api_key')
+    def validate_api_key(self, api_key: str):
+        """
+        Validate the API key in the input. The API key should be a valid UUID
+
+        Parameters
+        ----------
+        api_key : str
+            API key to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the API key is not valid.
+        """
+        try:
+            uuid.UUID(api_key)
+        except ValueError:
+            raise ValidationError('API key is not a valid UUID')
+
+
+class TokenAlgorithmInputSchema(Schema):
+    """ Schema for validating input for creating a token for an algorithm. """
+    task_id = fields.Integer(required=True, validate=Range(min=1))
+    image = fields.String(required=True)
 
 
 class UserInputSchema(Schema):
