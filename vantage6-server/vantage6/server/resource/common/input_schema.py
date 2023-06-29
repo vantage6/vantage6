@@ -7,6 +7,8 @@ from marshmallow import (
 from marshmallow.validate import Length, Range, OneOf
 
 from vantage6.common.task_status import TaskStatus
+from vantage6.server.default_roles import DefaultRole
+
 
 
 class _OnlyIdSchema(Schema):
@@ -190,11 +192,30 @@ class ResetAPIKeyInputSchema(_OnlyIdSchema):
 
 class RoleInputSchema(Schema):
     """ Schema for validating input for creating a role. """
-    # TODO add check that name cannot be one of default roles
     name = fields.String(required=True, validate=Length(max=128))
     description = fields.String(validate=Length(max=512))
     rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
     organization_id = fields.Integer(validate=Range(min=1))
+
+    @validates('name')
+    def validate_name(self, name: str):
+        """
+        Validate that role name is not one of the default roles.
+
+        Parameters
+        ----------
+        name : str
+            Role name to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the role name is one of the default roles.
+        """
+        if name in [role for role in DefaultRole]:
+            raise ValidationError(
+                'Role name cannot be one of the default roles'
+            )
 
 
 class RunInputSchema(Schema):

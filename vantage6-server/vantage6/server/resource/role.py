@@ -330,13 +330,6 @@ class Roles(RoleBase):
             return {'msg': 'Request body is incorrect', 'errors': errors}, \
                 HTTPStatus.BAD_REQUEST
 
-        # check if role name is allowed (i.e. not a default role name)
-        if 'name' in data and data['name'] in [role for role in DefaultRole]:
-            return {
-                "msg": f"Cannot create role '{data['name']}' as it is a "
-                       "reserved role name."
-            }, HTTPStatus.BAD_REQUEST
-
         # obtain the requested rules from the DB.
         rules = []
         if data['rules']:
@@ -508,13 +501,8 @@ class Role(RoleBase):
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        # check if role name is allowed (i.e. not a default role name)
-        if 'name' in data and data['name'] in [role for role in DefaultRole]:
-            return {
-                "msg": f"Cannot change role name into '{data['name']}' as that"
-                       " is a reserved role name."
-            }, HTTPStatus.BAD_REQUEST
-        elif role.name in [role for role in DefaultRole]:
+        # check if user tries to change name of a default role
+        if role.name in [role for role in DefaultRole]:
             return {
                 "msg": f"This role ('{role.name}') is a default role. Its name"
                        " cannot be changed."
