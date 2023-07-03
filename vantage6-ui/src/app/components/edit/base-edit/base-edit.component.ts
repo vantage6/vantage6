@@ -114,7 +114,15 @@ export abstract class BaseEditComponent implements OnInit {
         return data;
       })
       .catch((error) => {
-        this.modalService.openErrorModal(error.error.msg);
+        let msg = error.error.msg;
+        if (error.error.errors) {
+            // append errors of request validation to error message (if any)
+            let errors = error.error.errors;
+            msg = msg + ' (' + Object.keys(errors).map(
+                key=>`${key}: ${errors[key]}`
+            ).join(', ') + ')';
+        }
+        this.modalService.openErrorModal(msg);
         return null;
       });
   }
