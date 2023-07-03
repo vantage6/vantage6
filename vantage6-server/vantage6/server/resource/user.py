@@ -338,7 +338,7 @@ class Users(UserBase):
         # check if the organization has been provided, if this is the case the
         # user needs global permissions in case it is not their own
         organization_id = g.user.organization_id
-        if data['organization_id']:
+        if data.get('organization_id'):
             if data['organization_id'] != organization_id:
                 if self.r.c_glo.can():
                     # check if organization exists
@@ -380,7 +380,7 @@ class Users(UserBase):
                         )}, HTTPStatus.UNAUTHORIZED
 
         # You can only assign rules that you already have to others.
-        potential_rules = data["rules"]
+        potential_rules = data.get("rules")
         rules = []
         if potential_rules:
             rules = [db.Rule.get(rule) for rule in potential_rules
@@ -564,12 +564,8 @@ class User(UserBase):
                     return {'msg': 'You lack the permission to do that!'}, \
                         HTTPStatus.UNAUTHORIZED
 
-        if data["username"] is not None:
-            if data["username"] == '':
-                return {
-                    "msg": "Empty username is not allowed!"
-                }, HTTPStatus.BAD_REQUEST
-            elif user.username != data["username"]:
+        if data.get("username") is not None:
+            if user.username != data["username"]:
                 if db.User.exists("username", data["username"]):
                     return {
                         "msg": "User with that username already exists"
@@ -579,16 +575,12 @@ class User(UserBase):
                         "msg": "You cannot change the username of another user"
                     }, HTTPStatus.BAD_REQUEST
             user.username = data["username"]
-        if data["firstname"] is not None:
+        if data.get("firstname") is not None:
             user.firstname = data["firstname"]
-        if data["lastname"] is not None:
+        if data.get("lastname") is not None:
             user.lastname = data["lastname"]
-        if data["email"] is not None:
-            if data["email"] == '':
-                return {
-                    "msg": "Empty email is not allowed!"
-                }, HTTPStatus.BAD_REQUEST
-            elif (user.email != data["email"] and
+        if data.get("email") is not None:
+            if (user.email != data["email"] and
                     db.User.exists("email", data["email"])):
                 return {
                     "msg": "User with that email already exists."

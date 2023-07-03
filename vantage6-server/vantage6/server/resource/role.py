@@ -348,7 +348,7 @@ class Roles(RoleBase):
         # set the organization id
         organization_id = (
             data['organization_id']
-            if data['organization_id'] else g.user.organization_id
+            if 'organization_id' in data else g.user.organization_id
         )
         # verify that the organization for which we create a role exists
         if not db.Organization.get(organization_id):
@@ -366,8 +366,9 @@ class Roles(RoleBase):
                 HTTPStatus.UNAUTHORIZED
 
         # create the actual role
-        role = db.Role(name=data["name"], description=data["description"],
-                       rules=rules, organization_id=organization_id)
+        role = db.Role(name=data.get("name"),
+                       description=data.get("description"), rules=rules,
+                       organization_id=organization_id)
         role.save()
 
         return role_schema.dump(role, many=False), HTTPStatus.CREATED

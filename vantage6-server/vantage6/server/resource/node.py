@@ -294,7 +294,7 @@ class Nodes(NodeBase):
                     "does not exist"}, HTTPStatus.NOT_FOUND  # 404
 
         # check permissions
-        org_id = data["organization_id"]
+        org_id = data.get("organization_id", None)
         user_org_id = g.user.organization.id
         if not self.r.c_glo.can():
             own = not org_id or org_id == user_org_id
@@ -319,7 +319,7 @@ class Nodes(NodeBase):
                         HTTPStatus.BAD_REQUEST
 
         # if no name is provided, generate one
-        name = data['name'] if data['name'] else \
+        name = data['name'] if 'name' in data else \
             f"{organization.name} - {collaboration.name} Node"
         if db.Node.exists("name", name):
             return {

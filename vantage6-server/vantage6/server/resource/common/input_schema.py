@@ -71,7 +71,9 @@ class ChangePasswordInputSchema(_PasswordValidationSchema):
 
 class CollaborationInputSchema(Schema):
     """ Schema for validating input for a creating a collaboration. """
-    name = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    name = fields.String(required=True, validate=Length(
+        min=1, max=_MAX_LEN_NAME
+    ))
     organization_ids = fields.List(fields.Integer(), required=True)
     encrypted = fields.Boolean(required=True)
 
@@ -151,7 +153,9 @@ class NodeInputSchema(Schema):
 
 class OrganizationInputSchema(Schema):
     """ Schema for validating input for a creating an organization. """
-    name = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    name = fields.String(required=True, validate=Length(
+        min=1, max=_MAX_LEN_NAME
+    ))
     address1 = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     address2 = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     zipcode = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
@@ -199,8 +203,8 @@ class RecoverPasswordInputSchema(Schema):
 class ResetPasswordInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for resetting a password. """
     reset_token = fields.String(required=True,
-                                validate=Length(_MAX_LEN_STR_LONG))
-    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
+                                validate=Length(max=_MAX_LEN_STR_LONG))
+    password = fields.String(required=True)
 
     @validates('password')
     def validate_password(self, password: str):
@@ -275,7 +279,9 @@ class ResetAPIKeyInputSchema(_OnlyIdSchema):
 
 class RoleInputSchema(Schema):
     """ Schema for validating input for creating a role. """
-    name = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    name = fields.String(required=True, validate=Length(
+        min=1, max=_MAX_LEN_NAME
+    ))
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
     organization_id = fields.Integer(validate=Range(min=1))
@@ -314,7 +320,7 @@ class TaskInputSchema(Schema):
     """ Schema for validating input for creating a task. """
     name = fields.String(validate=Length(max=_MAX_LEN_NAME))
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
-    image = fields.String(required=True)
+    image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.String())
@@ -348,8 +354,10 @@ class TaskInputSchema(Schema):
 
 class TokenUserInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for creating a token for a user. """
-    username = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
-    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
+    username = fields.String(required=True, validate=Length(
+        min=1, max=_MAX_LEN_NAME))
+    password = fields.String(required=True, validate=Length(
+        min=1, max=_MAX_LEN_PW))
     mfa_code = fields.String(validate=Length(max=10))
 
 
@@ -381,12 +389,14 @@ class TokenNodeInputSchema(Schema):
 class TokenAlgorithmInputSchema(Schema):
     """ Schema for validating input for creating a token for an algorithm. """
     task_id = fields.Integer(required=True, validate=Range(min=1))
-    image = fields.String(required=True)
+    image = fields.String(required=True, validate=Length(min=1))
 
 
 class UserInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for creating a user. """
-    username = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
+    username = fields.String(required=True, validate=Length(
+        min=1, max=_MAX_LEN_NAME
+    ))
     email = fields.Email(required=True)
     password = fields.String(required=True)
     firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
