@@ -8,6 +8,7 @@ from marshmallow.validate import Length, Range, OneOf
 
 from vantage6.common.task_status import TaskStatus
 from vantage6.server.default_roles import DefaultRole
+from vantage6.server.resource.common.auth_helper import validate_password
 
 _MAX_LEN_STR_SHORT = 128
 _MAX_LEN_STR_LONG = 1024
@@ -20,12 +21,52 @@ class _OnlyIdSchema(Schema):
     id = fields.Integer(required=True, validate=Range(min=1))
 
 
-class ChangePasswordInputSchema(Schema):
+class _PasswordValidationSchema(Schema):
+    """ Schema that contains password validation function """
+    def _validate_password(self, password: str):
+        """
+        Check if the password is strong enough.
+
+        Parameters
+        ----------
+        password : str
+            Password to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the password is not strong enough.
+        """
+        try:
+            validate_password(password)
+        except ValueError as e:
+            raise ValidationError(str(e))
+
+
+class ChangePasswordInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for changing a password. """
+    # validation for current password is not necessary, as it is checked in the
+    # authentication process
     current_password = fields.String(required=True,
                                      validate=Length(max=_MAX_LEN_PW))
-    new_password = fields.String(required=True,
-                                 validate=Length(max=_MAX_LEN_PW))
+    new_password = fields.String(required=True)
+
+    @validates('new_password')
+    def validate_password(self, password: str):
+        """
+        Check if the password is strong enough.
+
+        Parameters
+        ----------
+        password : str
+            Password to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the password is not strong enough.
+        """
+        self._validate_password(password)
 
 
 class CollaborationInputSchema(Schema):
@@ -155,18 +196,35 @@ class RecoverPasswordInputSchema(Schema):
             raise ValidationError('Email or username is required')
 
 
-class ResetPasswordInputSchema(Schema):
+class ResetPasswordInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for resetting a password. """
     reset_token = fields.String(required=True,
                                 validate=Length(_MAX_LEN_STR_LONG))
     password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
 
+    @validates('password')
+    def validate_password(self, password: str):
+        """
+        Check if the password is strong enough.
 
-class Recover2FAInputSchema(Schema):
+        Parameters
+        ----------
+        password : str
+            Password to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the password is not strong enough.
+        """
+        self._validate_password(password)
+
+
+class Recover2FAInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for recovering 2FA. """
     email = fields.Email()
     username = fields.String(validate=Length(max=_MAX_LEN_NAME))
-    password = fields.String(validate=Length(max=_MAX_LEN_PW))
+    password = fields.String(required=True)
 
     @validates_schema
     def validate_email_or_username(self, data: dict, **kwargs):
@@ -185,6 +243,23 @@ class Recover2FAInputSchema(Schema):
         """
         if not ('email' in data or 'username' in data):
             raise ValidationError('Email or username is required')
+
+    @validates('password')
+    def validate_password(self, password: str):
+        """
+        Check if the password is strong enough.
+
+        Parameters
+        ----------
+        password : str
+            Password to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the password is not strong enough.
+        """
+        self._validate_password(password)
 
 
 class Reset2FAInputSchema(Schema):
@@ -271,11 +346,28 @@ class TaskInputSchema(Schema):
                     'Input is required for each organization')
 
 
-class TokenUserInputSchema(Schema):
+class TokenUserInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for creating a token for a user. """
     username = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
-    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
+    password = fields.String(required=True)
     mfa_code = fields.String(validate=Length(max=10))
+
+    @validates('password')
+    def validate_password(self, password: str):
+        """
+        Check if the password is strong enough.
+
+        Parameters
+        ----------
+        password : str
+            Password to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the password is not strong enough.
+        """
+        self._validate_password(password)
 
 
 class TokenNodeInputSchema(Schema):
@@ -309,18 +401,33 @@ class TokenAlgorithmInputSchema(Schema):
     image = fields.String(required=True)
 
 
-class UserInputSchema(Schema):
+class UserInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for creating a user. """
     username = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
     email = fields.Email(required=True)
-    # TODO use the checks from user.set_password() to validate proper password
-    # also in other places in this file
-    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
+    password = fields.String(required=True)
     firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
+
+    @validates('password')
+    def validate_password(self, password: str):
+        """
+        Check if the password is strong enough.
+
+        Parameters
+        ----------
+        password : str
+            Password to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the password is not strong enough.
+        """
+        self._validate_password(password)
 
 
 class VPNConfigUpdateInputSchema(Schema):
