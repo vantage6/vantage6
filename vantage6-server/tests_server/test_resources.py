@@ -2168,7 +2168,8 @@ class TestResources(unittest.TestCase):
         node = Node(organization=org, collaboration=col)
         node.save()
 
-        results = self.app.patch(f"/api/node/{node.id}", headers=headers)
+        results = self.app.patch(f"/api/node/{node.id}", headers=headers,
+                                 json={})
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test user with global permissions
