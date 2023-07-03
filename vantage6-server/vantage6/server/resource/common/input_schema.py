@@ -349,25 +349,8 @@ class TaskInputSchema(Schema):
 class TokenUserInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for creating a token for a user. """
     username = fields.String(required=True, validate=Length(max=_MAX_LEN_NAME))
-    password = fields.String(required=True)
+    password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
     mfa_code = fields.String(validate=Length(max=10))
-
-    @validates('password')
-    def validate_password(self, password: str):
-        """
-        Check if the password is strong enough.
-
-        Parameters
-        ----------
-        password : str
-            Password to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the password is not strong enough.
-        """
-        self._validate_password(password)
 
 
 class TokenNodeInputSchema(Schema):
