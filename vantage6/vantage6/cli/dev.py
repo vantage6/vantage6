@@ -18,7 +18,7 @@ from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
 from vantage6.common.globals import APPNAME
-from vantage6.common import info, warning, error, generate_apikey
+from vantage6.common import info, error, generate_apikey
 
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context import ServerContext, NodeContext
@@ -97,7 +97,7 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
     folders = NodeContext.instance_folders('node', node_name, False)
     path_to_data_dir = Path(folders['data'])
     path_to_data_dir.mkdir(parents=True, exist_ok=True)
-    full_path = str(folders['config'] / f'{node_name}.yaml')
+    full_path = Path(folders['config'] / f'{node_name}.yaml')
 
     if full_path.exists():
         error(f"Node configuration file already exists: {full_path}")
@@ -259,7 +259,7 @@ def create_vserver_config(server_name: str, port: int) -> Path:
 
 
 def demo_network(num_nodes: int, server_url: str, server_port: int,
-                 server_name: str) -> tuple(list[dict], Path, Path):
+                 server_name: str) -> tuple[list[dict], Path, Path]:
     """Generates the demo network.
 
     Parameters
@@ -275,8 +275,8 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
 
     Returns
     -------
-    list
-        List containing node, server import and server configurations.
+    tuple[list[dict], Path, Path]
+        Tuple containing node, server import and server configurations.
     """
     # if not ServerContext.config_exists(server_name):
     node_configs = generate_node_configs(num_nodes, server_url, server_port)
@@ -304,8 +304,8 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
     """Synthesizes a demo network.
 
     Creates server instance as well as its import configuration file. Server
-    name is set to 'default_server'. Generates `n` node configurations, but by
-    default this is set to 3. Then runs a Batch import of
+    name is set to 'dev_default_server'. Generates `n` node configurations, but
+    by default this is set to 3. Then runs a Batch import of
     organizations/collaborations/users and tasks.
 
     Parameters
@@ -361,7 +361,7 @@ def start_demo_network(ip: str = None, port: int = None, image: str = None) \
     """Starts currently running demo-network, it once run as
     `start-demo-network`, it will display a list of available configurations
     to run, select the correct option, if using default settings it should be
-    'default_server'.
+    'dev_default_server'.
 
     Parameters
     ----------
@@ -391,18 +391,19 @@ def start_demo_network(ip: str = None, port: int = None, image: str = None) \
     vserver_start(ctx, ip, port, image, None, False, '', False)
     for index in range(len(node_names)):
         name = node_names[index]
+        print(name)
         subprocess.run(["vnode", "start", "--name", name], shell=True)
 
 
 @cli_dev.command(name="stop-demo-network")
-@click.option("-n", "--name", default="default_server",
+@click.option("-n", "--name", default=server_name,
               help="Configuration name")
 def stop_demo_network(name: str, environment: str = S_ENV,
                       system_folders: bool = True,
                       all_servers: bool = False) -> None:
     """Stops currently running demo-network. Defaults names for the server is
-    'default_server', if run as `vdev stop-demo-network`. Defaults to stopping
-    all the nodes spawned with the 'demo_' handle.
+    'dev_default_server', if run as `vdev stop-demo-network`. Defaults to
+    stopping all the nodes spawned with the 'demo_' handle.
 
     Parameters
     ----------
@@ -480,19 +481,19 @@ def inner_remove_network(server_name: str, system_folders: bool) -> None:
 
 
 @cli_dev.command(name="remove-demo-network")
-@click.option("-n", "--name", default="default_server",
+@click.option("-n", "--name", default=server_name,
               help="Configuration name")
 def remove_demo_network(name: str) -> None:
     """Wrapper function for`inner_remove_network`, removes demo network. If no
-    name is provided, the default option is chosen which is `default_server`.
-    This function tries to remove the demo_network in in `system` as well
-    as `user`system_folders.
+    name is provided, the default option is chosen which is
+    `dev_default_server`. This function tries to remove the demo_network in in
+    `system` as well as `user`system_folders.
 
     Parameters
     ----------
     name : str
         Name of the spawned server executed from `vdev start-demo-network`,
-        default `default_server`.
+        default `dev_default_server`.
     """
     try:
         inner_remove_network(server_name=name, system_folders=True)
