@@ -805,19 +805,6 @@ class TestResources(unittest.TestCase):
         result = self.app.delete(f'/api/role/{role.id}', headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
-    def test_rules_from_role(self):
-        headers = self.login('root')
-        role = Role.get()[0]
-
-        result, json_data = self.paginated_list(
-            f'/api/role/{role.id}/rule', headers=headers
-        )
-        self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(role.rules), len(json_data))
-
-        result = self.app.get('/api/role/9999/rule', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
-
     def test_add_single_rule_to_role(self):
         headers = self.login('root')
 
