@@ -19,7 +19,7 @@ from vantage6.server.resource import (
 )
 from vantage6.server.resource.common.input_schema import UserInputSchema
 from vantage6.server.resource.common.pagination import Pagination
-from vantage6.server.resource.common._schema import UserSchema
+from vantage6.server.resource.common.output_schema import UserSchema
 
 
 module_name = logger_name(__name__)

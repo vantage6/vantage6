@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, validates
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
-from vantage6.server.resource.common.auth_helper import validate_password
+from vantage6.server.model.common.utils import validate_password
 
 
 class User(Authenticatable):

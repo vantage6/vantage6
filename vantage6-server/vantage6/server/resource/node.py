@@ -12,7 +12,7 @@ from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (Scope as S,
                                         Operation as P, PermissionManager)
 from vantage6.server import db
-from vantage6.server.resource.common._schema import NodeSchema
+from vantage6.server.resource.common.output_schema import NodeSchema
 from vantage6.server.resource.common.input_schema import NodeInputSchema
 
 

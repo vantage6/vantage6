@@ -8,7 +8,7 @@ from marshmallow.validate import Length, Range, OneOf
 
 from vantage6.common.task_status import TaskStatus
 from vantage6.server.default_roles import DefaultRole
-from vantage6.server.resource.common.auth_helper import validate_password
+from vantage6.server.model.common.utils import validate_password
 
 _MAX_LEN_STR_SHORT = 128
 _MAX_LEN_STR_LONG = 1024
