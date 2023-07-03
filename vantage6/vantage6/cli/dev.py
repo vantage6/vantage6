@@ -320,12 +320,6 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
     image : str, optional
         Node Docker image to use which contains the import script,
         by default None
-    mount_src : str, optional
-        Vantage6 source location, this will overwrite the source code in the
-        container. Useful for debugging/development., by default ''
-    keep : bool, optional
-        Wether to keep the image after finishing/crashing. Useful for
-        debugging., by default False
 
     Returns
     -------
@@ -354,7 +348,7 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
     }
 
 
-# TODO: 5-6-2021: here we left off
+# TODO: 5-6-2023: here we left off
 @cli_dev.command(name="start-demo-network")
 def start_demo_network(ip: str = None, port: int = None, image: str = None) \
         -> None:
@@ -371,36 +365,21 @@ def start_demo_network(ip: str = None, port: int = None, image: str = None) \
         port to listen on, by default None
     image : str, fixed
         Server Docker image to use, by default None
-    rabbitmq_image : str, fixed
-        RabbitMQ docker image to use, by default None
-    keep : bool, fixed
-        Wether to keep the image after the server has finished, useful for
-        debugging, by default False
-    mount_src : str, fixed
-        Path to the vantage6 package source, this overrides the source code in
-        the container. This is useful when developing and testing the server.
-        , by default ''
-    attach : bool, fixed
-        Wether to attach the server logs to the console after starting the
-        server., by default False
     """
-    configs, f1 = NodeContext.available_configurations(system_folders=False)
+    configs, _ = NodeContext.available_configurations(system_folders=False)
     ctx = get_server_context(server_name, S_ENV, True)
     handle_ = 'demo_'
     node_names = [config.name for config in configs if handle_ in config.name]
     vserver_start(ctx, ip, port, image, None, False, '', False)
-    for index in range(len(node_names)):
-        name = node_names[index]
-        print(name)
-        subprocess.run(["vnode", "start", "--name", name], shell=True)
+    for name in node_names:
+        # TODO with or without shell=True?
+        subprocess.run(["vnode", "start", "--name", name])
 
 
 @cli_dev.command(name="stop-demo-network")
 @click.option("-n", "--name", default=server_name,
               help="Configuration name")
-def stop_demo_network(name: str, environment: str = S_ENV,
-                      system_folders: bool = True,
-                      all_servers: bool = False) -> None:
+def stop_demo_network(name: str) -> None:
     """Stops currently running demo-network. Defaults names for the server is
     'dev_default_server', if run as `vdev stop-demo-network`. Defaults to
     stopping all the nodes spawned with the 'demo_' handle.
@@ -409,82 +388,69 @@ def stop_demo_network(name: str, environment: str = S_ENV,
     ----------
     name : str
         Name of the spawned server executed from `vdev start-demo-network`
-    environment : str, fixed
-        DTAP environment to use, by default S_ENV
-    system_folders : bool, fixed
-        Wether to use system folders or not, by default True
-    all_servers : bool, fixed
-        Wether to stop all servers or not, by default False
     """
-    vserver_stop(name, environment, system_folders, all_servers)
-    # TODO: This will need to be dynamic... what happens if a config exists in
-    # system?
-    configs, f1 = NodeContext.available_configurations(False)
+    vserver_stop(name=name, environment=S_ENV, system_folders=True,
+                 all_servers=False)
+    configs, _ = NodeContext.available_configurations(False)
     handle_ = 'demo_'
     node_names = [config.name for config in configs if handle_ in config.name]
     for name in node_names:
         vnode_stop(name, system_folders=False, all_nodes=False, force=False)
 
 
-def inner_remove_network(server_name: str, system_folders: bool) -> None:
+def _remove_demo_network(server_name: str) -> None:
     """This function does the bulk of removing the demo network. Removes all
-    folders and anything within that was spawned by the `create_demo_network`.
+    folders and anything within that which was spawned by the
+    `create_demo_network`.
 
     Parameters
     ----------
     server_name : str
         Name of the spawned server executed from `vdev start-demo-network`
-    system_folders : bool
-        Wether to use system folders or not.
     """
-    handle_ = 'demo_'
-    if system_folders:
-        target = "--system"
-    else:
-        target = "--user"
-    server_configs = ServerContext.instance_folders("server", server_name,
-                                                    system_folders)
-    if ServerContext.config_exists(server_name, S_ENV, system_folders):
-        server_ctx = get_server_context(server_name, S_ENV, system_folders)
+    # removing the server
+    if ServerContext.config_exists(server_name, S_ENV, True):
+        server_ctx = get_server_context(server_name, S_ENV, True)
         # first we want to shut all the log files and root handlers...
         for handler in itertools.chain(server_ctx.log.handlers,
                                        server_ctx.log.root.handlers):
             handler.close()
         # now run vserver remove
-        vserver_remove(server_ctx, server_name, S_ENV, system_folders)
-    else:
-        info(f"Skipping this configuration {server_name} in the {target[2:]} \
-             folders")
-        # traceback.print_exc()
+        vserver_remove(server_ctx, server_name, S_ENV, True)
+
+    # removing the server import config
+    server_configs = ServerContext.instance_folders("server", server_name,
+                                                    system_folders=True)
     if 'demo' in server_configs:
         info("Deleting demo import config file")
-        import_config_to_del = f"{server_configs['demo']}\\{server_name}.yaml"
+        import_config_to_del = \
+            Path(server_configs['demo']) / f"{server_name}.yaml"
         remove_file(import_config_to_del, 'import_configuration')
-    # also want to remove the folder
+
+    # also want to remove the server folder
     server_folder = server_configs['data']
     if server_folder.is_dir():
         shutil.rmtree(server_folder)
-    # nodes
-    configs, f1 = NodeContext.available_configurations(
-        system_folders=system_folders
-        )
+
+    # remove the nodes
+    handle_ = 'demo_'
+    configs, _ = NodeContext.available_configurations(system_folders=False)
     node_names = [config.name for config in configs if handle_ in config.name]
-    if len(node_names):
-        for name in node_names:
-            node_ctx = NodeContext(name, N_ENV, system_folders)
-            for handler in itertools.chain(node_ctx.log.handlers,
-                                           node_ctx.log.root.handlers):
-                handler.close()
-            subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
-                            target], shell=True)
-            shutil.rmtree(f"{node_ctx.config_dir}\\{name}")
+    for name in node_names:
+        node_ctx = NodeContext(name, N_ENV, False)
+        for handler in itertools.chain(node_ctx.log.handlers,
+                                       node_ctx.log.root.handlers):
+            handler.close()
+        subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
+                        "--user"])
+        shutil.rmtree(Path(node_ctx.config_dir) / name)
 
 
 @cli_dev.command(name="remove-demo-network")
 @click.option("-n", "--name", default=server_name,
               help="Configuration name")
 def remove_demo_network(name: str) -> None:
-    """Wrapper function for`inner_remove_network`, removes demo network. If no
+    """Wrapper function for`_remove_demo_network`, removes demo network. If no
     name is provided, the default option is chosen which is
     `dev_default_server`. This function tries to remove the demo_network in in
     `system` as well as `user`system_folders.
@@ -495,9 +461,4 @@ def remove_demo_network(name: str) -> None:
         Name of the spawned server executed from `vdev start-demo-network`,
         default `dev_default_server`.
     """
-    try:
-        inner_remove_network(server_name=name, system_folders=True)
-    except Exception as e:
-        print(e)
-    else:
-        inner_remove_network(server_name=name, system_folders=False)
+    _remove_demo_network(server_name=name)
