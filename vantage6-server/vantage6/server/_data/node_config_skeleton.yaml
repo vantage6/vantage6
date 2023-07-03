@@ -8,7 +8,10 @@ encryption:
   private_key:
 databases:
   default:
-allowed_images:
+policies:
+  allowed_algorithms:
+  allowed_organizations:
+  allowed_users:
 docker_registries:
   - registry: harbor2.vantage6.ai
     username: some_username

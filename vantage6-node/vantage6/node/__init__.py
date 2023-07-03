@@ -1043,12 +1043,6 @@ class Node:
                 config_to_share['encryption'] = \
                     encryption_config.get('enabled')
 
-        # TODO v4+ remove the old 'allowed_images' key, it's now inside
-        # 'policies'. It's now overwritten below if 'policies' is set.
-        allowed_algos = self.config.get('allowed_images')
-        config_to_share['allowed_algorithms'] = allowed_algos \
-            if allowed_algos else 'all'
-
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get('policies', {})
         config_to_share['allowed_algorithms'] = \

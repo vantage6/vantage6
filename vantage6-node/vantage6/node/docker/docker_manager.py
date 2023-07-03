@@ -291,9 +291,12 @@ class DockerManager(DockerBaseManager):
             if not is_allowed:
                 self.log.warn("A task was sent by a user or organization that "
                               "this node does not allow to start tasks.")
-            return is_allowed
+                return False
 
-        # No policies found that would prevent the task from being run
+        # if no limits are declared, log warning
+        if not self._policies:
+            self.log.warn("All docker images are allowed on this Node!")
+
         return True
 
     def is_running(self, run_id: int) -> bool:
