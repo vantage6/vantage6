@@ -34,17 +34,18 @@ class Organization(Base):
         Country of the organization
     _public_key : bytes
         Public key of the organization
-    collaborations : list[Collaboration]
+    collaborations :
+            list[:class:`~vantage6.server.model.collaboration.Collaboration`]
         List of collaborations that this organization is part of
-    results : list[:class:`~vantage6.server.model.result.Result`]
+    results : list[:class:`~vantage6.server.model.run.Run`]
         List of results that are part of this organization
     nodes : list[:class:`~vantage6.server.model.node.Node`]
         List of nodes that are part of this organization
-    users : list[User]
+    users : list[:class:`~vantage6.server.model.user.User`]
         List of users that are part of this organization
-    tasks : list[Task]
+    tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are created by this organization
-    roles : list[Role]
+    roles : list[:class:`~vantage6.server.model.role.Role`]
 
     """
     # fields

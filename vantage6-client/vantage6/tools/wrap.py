@@ -16,6 +16,7 @@ def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
 
     Data is received in the form of files, whose location should be
     specified in the following environment variables:
+
     - ``INPUT_FILE``: input arguments for the algorithm. This file should be
       encoded in JSON format.
     - ``OUTPUT_FILE``: location where the results of the algorithm should

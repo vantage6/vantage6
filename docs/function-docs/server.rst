@@ -166,10 +166,10 @@ vantage6.server.model.organization.Organization
     :members:
     :exclude-members: id
 
-vantage6.server.model.result.Result
+vantage6.server.model.run.Run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: vantage6.server.model.result.Result
+.. autoclass:: vantage6.server.model.run.Run
     :members:
     :exclude-members: id
 
@@ -262,8 +262,8 @@ vantage6.server.default_roles
 
 .. autofunction:: vantage6.server.default_roles.get_default_roles
 
-Custom exceptions
------------------
+Custom server exceptions
+------------------------
 
 vantage6.server.exceptions
 ++++++++++++++++++++++++++
