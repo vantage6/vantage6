@@ -441,32 +441,10 @@ class Tasks(TaskBase):
             }, room=f"collaboration_{collaboration_id}", namespace='/tasks'
         )
 
-        # if the 'master'-flag is set to true the (master) task is executed on
-        # a node in the collaboration from the organization to which the user
-        # belongs. If also organization_ids are supplied, then these are
-        # ignored.
-        # TODO in this case the user *must* have a node attached to this
-        # collaboration
-        # TODO this does not make a lot of sense as the `organizations` input
-        # should only contain the organization where the master container
-        # shoudl run
-        assign_orgs = []
-        if data.get("master", False) and g.user:
-            for org in organizations_json_list:
-                if org['id'] == g.user.organization_id:
-                    assign_orgs = [org]
-                    break
-            if not assign_orgs:
-                return {'msg': 'You\'re trying to create a master task. '
-                        'However you do not have a node yourself in this '
-                        'collaboration!'}, HTTPStatus.BAD_REQUEST
-        else:
-            assign_orgs = organizations_json_list
-
         # now we need to create results for the nodes to fill. Each node
         # receives their instructions from a result, not from the task itself
-        log.debug(f"Assigning task to {len(assign_orgs)} nodes.")
-        for org in assign_orgs:
+        log.debug(f"Assigning task to {len(organizations_json_list)} nodes.")
+        for org in organizations_json_list:
             organization = db.Organization.get(org['id'])
             log.debug(f"Assigning task to '{organization.name}'.")
             input_ = org.get('input')
