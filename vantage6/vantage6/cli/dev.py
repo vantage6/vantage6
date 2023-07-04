@@ -37,6 +37,7 @@ from vantage6.cli.node import vnode_stop
 from vantage6.cli.utils import remove_file
 
 server_name = 'dev_default_server'
+handle_ = 'dev_demo_'
 
 
 def dummy_data(node_name: str) -> Path:
@@ -91,7 +92,7 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
     template = environment.get_template("node_config.j2")
 
     # TODO: make this name specific to the server it connects
-    node_name = f"demo_node_{org_id}"
+    node_name = f"{handle_}node_{org_id}"
     dir_data = dummy_data(node_name)
 
     folders = NodeContext.instance_folders('node', node_name, False)
@@ -150,7 +151,7 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int) \
         List of dictionaries containing node configurations.
     """
     configs = []
-    for i in range(num_nodes):
+    for i in range(1, num_nodes+1):
         configs.append(create_node_config_file(i, server_url, port))
 
     return configs
@@ -196,7 +197,7 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) \
                                            collaboration=collaboration)
     folders = ServerContext.instance_folders("server", server_name, False)
 
-    demo_dir = Path(folders['demo'])
+    demo_dir = Path(folders['dev'])
     demo_dir.mkdir(parents=True, exist_ok=True)
     full_path = demo_dir / f'{server_name}.yaml'
     if full_path.exists():
@@ -278,7 +279,6 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
     tuple[list[dict], Path, Path]
         Tuple containing node, server import and server configurations.
     """
-    # if not ServerContext.config_exists(server_name):
     node_configs = generate_node_configs(num_nodes, server_url, server_port)
     server_import_config = create_vserver_import_config(node_configs,
                                                         server_name)
@@ -327,7 +327,6 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
         Dictionary containing the locations of the node configurations,
         server import configuration and server configuration (YAML).
     """
-    # TODO: make this work with multiple servers
     if not ServerContext.config_exists(server_name):
         demo = demo_network(num_nodes, server_url, server_port, server_name)
         info(f"Created {Fore.GREEN}{demo[0]}{Style.RESET_ALL} node "
@@ -337,7 +336,6 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} "
               "already exists!")
         exit(1)
-
     (node_config, server_import_config, server_config) = demo
     ctx = get_server_context(server_name, S_ENV, True)
     vserver_import(ctx, server_import_config, False, image, '', False)
@@ -348,7 +346,6 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
     }
 
 
-# TODO: 5-6-2023: here we left off
 @cli_dev.command(name="start-demo-network")
 def start_demo_network(ip: str = None, port: int = None, image: str = None) \
         -> None:
@@ -368,11 +365,9 @@ def start_demo_network(ip: str = None, port: int = None, image: str = None) \
     """
     configs, _ = NodeContext.available_configurations(system_folders=False)
     ctx = get_server_context(server_name, S_ENV, True)
-    handle_ = 'demo_'
     node_names = [config.name for config in configs if handle_ in config.name]
     vserver_start(ctx, ip, port, image, None, False, '', False)
     for name in node_names:
-        # TODO with or without shell=True?
         subprocess.run(["vnode", "start", "--name", name])
 
 
@@ -392,9 +387,9 @@ def stop_demo_network(name: str) -> None:
     vserver_stop(name=name, environment=S_ENV, system_folders=True,
                  all_servers=False)
     configs, _ = NodeContext.available_configurations(False)
-    handle_ = 'demo_'
     node_names = [config.name for config in configs if handle_ in config.name]
     for name in node_names:
+        print(name)
         vnode_stop(name, system_folders=False, all_nodes=False, force=False)
 
 
@@ -421,10 +416,10 @@ def _remove_demo_network(server_name: str) -> None:
     # removing the server import config
     server_configs = ServerContext.instance_folders("server", server_name,
                                                     system_folders=True)
-    if 'demo' in server_configs:
+    if 'dev' in server_configs:
         info("Deleting demo import config file")
         import_config_to_del = \
-            Path(server_configs['demo']) / f"{server_name}.yaml"
+            Path(server_configs['dev']) / f"{server_name}.yaml"
         remove_file(import_config_to_del, 'import_configuration')
 
     # also want to remove the server folder
@@ -433,7 +428,6 @@ def _remove_demo_network(server_name: str) -> None:
         shutil.rmtree(server_folder)
 
     # remove the nodes
-    handle_ = 'demo_'
     configs, _ = NodeContext.available_configurations(system_folders=False)
     node_names = [config.name for config in configs if handle_ in config.name]
     for name in node_names:
@@ -441,6 +435,7 @@ def _remove_demo_network(server_name: str) -> None:
         for handler in itertools.chain(node_ctx.log.handlers,
                                        node_ctx.log.root.handlers):
             handler.close()
+        print(name)
         subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
                         "--user"])
         shutil.rmtree(Path(node_ctx.config_dir) / name)
