@@ -21,6 +21,35 @@ class _OnlyIdSchema(Schema):
     id = fields.Integer(required=True, validate=Range(min=1))
 
 
+class _NameValidationSchema(Schema):
+    """ Schema for validating POST requests with a name field. """
+    name = fields.String(required=True)
+
+    @validates('name')
+    def validate_name(self, name: str):
+        """
+        Validate the name in the input.
+
+        Parameters
+        ----------
+        name : str
+            Name to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the name is empty, too long or numerical
+        """
+        if not len(name):
+            raise ValidationError('Name cannot be empty')
+        if not name.isalpha():
+            raise ValidationError('Name cannot be numerical')
+        if len(name) > _MAX_LEN_NAME:
+            raise ValidationError(
+                f'Name cannot be longer than {_MAX_LEN_NAME} characters'
+            )
+
+
 class _PasswordValidationSchema(Schema):
     """ Schema that contains password validation function """
     def _validate_password(self, password: str):
@@ -69,11 +98,8 @@ class ChangePasswordInputSchema(_PasswordValidationSchema):
         self._validate_password(password)
 
 
-class CollaborationInputSchema(Schema):
+class CollaborationInputSchema(_NameValidationSchema):
     """ Schema for validating input for a creating a collaboration. """
-    name = fields.String(required=True, validate=Length(
-        min=1, max=_MAX_LEN_NAME
-    ))
     organization_ids = fields.List(fields.Integer(), required=True)
     encrypted = fields.Boolean(required=True)
 
@@ -122,9 +148,10 @@ class KillNodeTasksInputSchema(_OnlyIdSchema):
     pass
 
 
-class NodeInputSchema(Schema):
+class NodeInputSchema(_NameValidationSchema):
     """ Schema for validating input for a creating a node. """
-    name = fields.String(validate=Length(max=_MAX_LEN_NAME))
+    # overwrite name attr as it is not required for a node
+    name = fields.String(required=False)
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organization_id = fields.Integer(validate=Range(min=1))
     ip = fields.String()
@@ -151,11 +178,8 @@ class NodeInputSchema(Schema):
             raise ValidationError('IP address is not valid')
 
 
-class OrganizationInputSchema(Schema):
+class OrganizationInputSchema(_NameValidationSchema):
     """ Schema for validating input for a creating an organization. """
-    name = fields.String(required=True, validate=Length(
-        min=1, max=_MAX_LEN_NAME
-    ))
     address1 = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     address2 = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     zipcode = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
@@ -277,11 +301,8 @@ class ResetAPIKeyInputSchema(_OnlyIdSchema):
     pass
 
 
-class RoleInputSchema(Schema):
+class RoleInputSchema(_NameValidationSchema):
     """ Schema for validating input for creating a role. """
-    name = fields.String(required=True, validate=Length(
-        min=1, max=_MAX_LEN_NAME
-    ))
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
     organization_id = fields.Integer(validate=Range(min=1))
@@ -316,9 +337,10 @@ class RunInputSchema(Schema):
     status = fields.String(validate=OneOf([s.value for s in TaskStatus]))
 
 
-class TaskInputSchema(Schema):
+class TaskInputSchema(_NameValidationSchema):
     """ Schema for validating input for creating a task. """
-    name = fields.String(validate=Length(max=_MAX_LEN_NAME))
+    # overwrite name attr as it is not required for a task
+    name = fields.String(required=False)
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
@@ -392,7 +414,7 @@ class TokenAlgorithmInputSchema(Schema):
     image = fields.String(required=True, validate=Length(min=1))
 
 
-class UserInputSchema(_PasswordValidationSchema):
+class UserInputSchema(_PasswordValidationSchema, _NameValidationSchema):
     """ Schema for validating input for creating a user. """
     username = fields.String(required=True, validate=Length(
         min=1, max=_MAX_LEN_NAME
@@ -421,6 +443,23 @@ class UserInputSchema(_PasswordValidationSchema):
             If the password is not strong enough.
         """
         self._validate_password(password)
+
+    @validates('username')
+    def validate_username(self, username: str):
+        """
+        Check if the username is appropriate
+
+        Parameters
+        ----------
+        username : str
+            Username to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the username is too short, too long or numeric.
+        """
+        self.validate_name(username)
 
 
 class VPNConfigUpdateInputSchema(Schema):
