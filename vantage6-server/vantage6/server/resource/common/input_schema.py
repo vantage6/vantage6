@@ -52,6 +52,9 @@ class _NameValidationSchema(Schema):
 
 class _PasswordValidationSchema(Schema):
     """ Schema that contains password validation function """
+    password = fields.String(required=True)
+
+    @validates('password')
     def _validate_password(self, password: str):
         """
         Check if the password is strong enough.
@@ -72,7 +75,7 @@ class _PasswordValidationSchema(Schema):
             raise ValidationError(str(e))
 
 
-class ChangePasswordInputSchema(_PasswordValidationSchema):
+class ChangePasswordInputSchema(Schema):
     """ Schema for validating input for changing a password. """
     # validation for current password is not necessary, as it is checked in the
     # authentication process
@@ -95,7 +98,13 @@ class ChangePasswordInputSchema(_PasswordValidationSchema):
         ValidationError
             If the password is not strong enough.
         """
-        self._validate_password(password)
+        # Note that this function is the same as in the
+        # _PasswordValidationSchema, but it is repeated because this schema
+        # does not contain the password field.
+        try:
+            validate_password(password)
+        except ValueError as e:
+            raise ValidationError(str(e))
 
 
 class CollaborationInputSchema(_NameValidationSchema):
@@ -228,31 +237,12 @@ class ResetPasswordInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for resetting a password. """
     reset_token = fields.String(required=True,
                                 validate=Length(max=_MAX_LEN_STR_LONG))
-    password = fields.String(required=True)
-
-    @validates('password')
-    def validate_password(self, password: str):
-        """
-        Check if the password is strong enough.
-
-        Parameters
-        ----------
-        password : str
-            Password to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the password is not strong enough.
-        """
-        self._validate_password(password)
 
 
 class Recover2FAInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for recovering 2FA. """
     email = fields.Email()
     username = fields.String(validate=Length(max=_MAX_LEN_NAME))
-    password = fields.String(required=True)
 
     @validates_schema
     def validate_email_or_username(self, data: dict, **kwargs):
@@ -271,23 +261,6 @@ class Recover2FAInputSchema(_PasswordValidationSchema):
         """
         if not ('email' in data or 'username' in data):
             raise ValidationError('Email or username is required')
-
-    @validates('password')
-    def validate_password(self, password: str):
-        """
-        Check if the password is strong enough.
-
-        Parameters
-        ----------
-        password : str
-            Password to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the password is not strong enough.
-        """
-        self._validate_password(password)
 
 
 class Reset2FAInputSchema(Schema):
@@ -374,10 +347,14 @@ class TaskInputSchema(_NameValidationSchema):
                     'Input is required for each organization')
 
 
-class TokenUserInputSchema(_PasswordValidationSchema):
+class TokenUserInputSchema(Schema):
     """ Schema for validating input for creating a token for a user. """
     username = fields.String(required=True, validate=Length(
         min=1, max=_MAX_LEN_NAME))
+    # Note that we don't inherit from _PasswordValidationSchema here and
+    # don't validate password in case the password does not fulfill the
+    # password policy. This is e.g. the case with the default root user created
+    # when the server is started for the first time.
     password = fields.String(required=True, validate=Length(
         min=1, max=_MAX_LEN_PW))
     mfa_code = fields.String(validate=Length(max=10))
@@ -420,29 +397,11 @@ class UserInputSchema(_PasswordValidationSchema, _NameValidationSchema):
         min=1, max=_MAX_LEN_NAME
     ))
     email = fields.Email(required=True)
-    password = fields.String(required=True)
     firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
-
-    @validates('password')
-    def validate_password(self, password: str):
-        """
-        Check if the password is strong enough.
-
-        Parameters
-        ----------
-        password : str
-            Password to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the password is not strong enough.
-        """
-        self._validate_password(password)
 
     @validates('username')
     def validate_username(self, username: str):
