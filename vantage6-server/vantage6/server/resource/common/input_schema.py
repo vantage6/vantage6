@@ -16,6 +16,50 @@ _MAX_LEN_PW = 128
 _MAX_LEN_NAME = 128
 
 
+def _validate_name(name: str):
+    """
+    Validate a name field in the request input.
+
+    Parameters
+    ----------
+    name : str
+        Name to validate.
+
+    Raises
+    ------
+    ValidationError
+        If the name is empty, too long or numerical
+    """
+    if not len(name):
+        raise ValidationError('Name cannot be empty')
+    if not name.isalpha():
+        raise ValidationError('Name cannot be numerical')
+    if len(name) > _MAX_LEN_NAME:
+        raise ValidationError(
+            f'Name cannot be longer than {_MAX_LEN_NAME} characters'
+        )
+
+
+def _validate_password(password: str):
+    """
+    Check if the password is strong enough.
+
+    Parameters
+    ----------
+    password : str
+        Password to validate.
+
+    Raises
+    ------
+    ValidationError
+        If the password is not strong enough.
+    """
+    try:
+        validate_password(password)
+    except ValueError as e:
+        raise ValidationError(str(e))
+
+
 class _OnlyIdSchema(Schema):
     """ Schema for validating POST requests that only require an ID field. """
     id = fields.Integer(required=True, validate=Range(min=1))
@@ -40,14 +84,7 @@ class _NameValidationSchema(Schema):
         ValidationError
             If the name is empty, too long or numerical
         """
-        if not len(name):
-            raise ValidationError('Name cannot be empty')
-        if not name.isalpha():
-            raise ValidationError('Name cannot be numerical')
-        if len(name) > _MAX_LEN_NAME:
-            raise ValidationError(
-                f'Name cannot be longer than {_MAX_LEN_NAME} characters'
-            )
+        _validate_name(name)
 
 
 class _PasswordValidationSchema(Schema):
@@ -69,10 +106,7 @@ class _PasswordValidationSchema(Schema):
         ValidationError
             If the password is not strong enough.
         """
-        try:
-            validate_password(password)
-        except ValueError as e:
-            raise ValidationError(str(e))
+        _validate_password(password)
 
 
 class ChangePasswordInputSchema(Schema):
@@ -98,13 +132,7 @@ class ChangePasswordInputSchema(Schema):
         ValidationError
             If the password is not strong enough.
         """
-        # Note that this function is the same as in the
-        # _PasswordValidationSchema, but it is repeated because this schema
-        # does not contain the password field.
-        try:
-            validate_password(password)
-        except ValueError as e:
-            raise ValidationError(str(e))
+        _validate_password(password)
 
 
 class CollaborationInputSchema(_NameValidationSchema):
@@ -391,7 +419,7 @@ class TokenAlgorithmInputSchema(Schema):
     image = fields.String(required=True, validate=Length(min=1))
 
 
-class UserInputSchema(_PasswordValidationSchema, _NameValidationSchema):
+class UserInputSchema(_PasswordValidationSchema):
     """ Schema for validating input for creating a user. """
     username = fields.String(required=True, validate=Length(
         min=1, max=_MAX_LEN_NAME
@@ -418,7 +446,7 @@ class UserInputSchema(_PasswordValidationSchema, _NameValidationSchema):
         ValidationError
             If the username is too short, too long or numeric.
         """
-        self.validate_name(username)
+        _validate_name(username)
 
 
 class VPNConfigUpdateInputSchema(Schema):
