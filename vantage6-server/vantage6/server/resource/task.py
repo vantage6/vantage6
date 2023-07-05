@@ -728,6 +728,11 @@ class Task(TaskBase):
             log.info(f" Removing run id={run.id}")
             run.delete()
 
+        # delete child tasks
+        for child_task in task.children:
+            log.info(f" Removing child task id={child_task.id}")
+            child_task.delete()
+
         # permissions ok, delete...
         task.delete()
 
