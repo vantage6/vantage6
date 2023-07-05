@@ -74,7 +74,7 @@ export class RoleDataService extends BaseDataService {
     let role = await super.get_base(
 			id, this.convertJsonService.getRole, force_refresh
     );
-		if (include_links) {
+    if (include_links) {
       let role_value = (role as BehaviorSubject<Role>).value;
       role_value = await this.addRulesToRole(role_value);
       role.next(role_value);

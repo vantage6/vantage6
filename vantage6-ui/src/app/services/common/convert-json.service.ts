@@ -29,13 +29,7 @@ export class ConvertJsonService {
     };
   }
 
-  getRole(role_json: any, all_rules: Rule[]): Role {
-    let rules: Rule[] = [];
-    if (role_json.rules) {
-      for (let rule of role_json.rules) {
-        rules.push(getById(all_rules, rule.id));
-      }
-    }
+  getRole(role_json: any): Role {
     return {
       id: role_json.id,
       type: ResType.ROLE,
@@ -44,7 +38,7 @@ export class ConvertJsonService {
       organization_id: role_json.organization
         ? role_json.organization.id
         : null,
-      rules: rules,
+      rules: [], // rules are added later
     };
   }
 

@@ -100,8 +100,8 @@ export class UserDataService extends BaseDataService {
   ): Promise<User[]> {
     return (await super.list_with_params_base(
       this.convertJsonService.getUser,
-      pagination,
       request_params,
+      pagination,
       save
     )) as User[];
   }
