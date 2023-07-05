@@ -32,6 +32,25 @@ export class UserDataService extends BaseDataService {
     super(apiService, convertJsonService);
   }
 
+  updateObsById(resources: User[]) {
+    for (let res of resources) {
+      if (res.id in this.resources_by_id) {
+        let cur_val = this.resources_by_id[res.id].value as User;
+        if (cur_val.rules.length > 0 && res.rules.length === 0) {
+          res.rules = cur_val.rules;
+        }
+        if (cur_val.roles.length > 0 && res.roles.length === 0) {
+          res.roles = cur_val.roles;
+        }
+        this.resources_by_id[res.id].next(res);
+      } else {
+        this.resources_by_id[res.id] = new BehaviorSubject<Resource | null>(
+          res
+        );
+      }
+    }
+  }
+
   async getDependentResources(): Promise<Resource[][]> {
     // TODO is this required? It seems more data may be collected than is needed
     (await this.ruleDataService.list(allPages())).subscribe((rules) => {
@@ -49,14 +68,14 @@ export class UserDataService extends BaseDataService {
     only_extra_rules: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<User>> {
-    let user: any = await super.get_base(
+    let user = await super.get_base(
       id,
       this.convertJsonService.getUser,
       force_refresh
-    );
+    ) as BehaviorSubject<User>;
     if (include_links) {
       // for single resource, include the internal resources
-      let user_value = (user as BehaviorSubject<User>).value;
+      let user_value = user.value;
       // request the rules for the current user
       user_value.rules = await this.ruleDataService.list_with_params(
         allPages(),
@@ -78,8 +97,7 @@ export class UserDataService extends BaseDataService {
       }
       user.next(user_value);
     }
-    // return observable. If required, convert to observable first.
-    return (user as BehaviorSubject<User>).asObservable();
+    return user.asObservable();
   }
 
   async list(
