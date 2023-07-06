@@ -626,7 +626,6 @@ def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
     logs = container.logs(stream=True, stdout=True)
     Thread(target=print_log_worker, args=(logs,), daemon=False).start()
     info(f"Success! container id = {container.id}")
-    return None
 
 
 #
@@ -927,8 +926,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
         Wether to use system folders or not
     """
     # kill the server
-    container = client.containers.get(container_name)
-    container.kill()
+    remove_container(container_name, kill=True)
     info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
 
     # find the configuration name from the docker container name
@@ -970,46 +968,39 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def select_server(name: str, environment: str, system_folders: bool) \
-        -> tuple[str, str]:
-    name, environment = (name, environment) if name else \
-        select_configuration_questionaire("server", system_folders)
-    if not ServerContext.config_exists(name, environment, system_folders):
-        error(
-            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
-            f"not be found."
-        )
-        exit(1)
-    return name, environment
-
-
+# TODO add click command for this
 def vserver_remove(ctx: ServerContext, name: str, environment: str,
                    system_folders: bool) -> None:
-    client = docker.from_env()
+    """
+    Function to remove a server.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    name : str
+        Name of the server to remove
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or not
+    """
     check_docker_running()
-    running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"})
+
     # first stop server
-    running_server_names = [server.name for server in running_servers]
-    if name in running_server_names:
-        vserver_stop(name, environment, system_folders, False)
-    # now check containers
-    info("Deleting Docker containers")
-    containers = client.containers.list()
-    for container in containers:
-        if container.name.startswith(ctx.docker_container_name):
-            info(f"Deleting docker container {container.name}")
-            container.remove()
+    vserver_stop(name, environment, system_folders, False)
+
     if not q.confirm(
         "This server will be deleted permanently including its configuration. "
         "Are you sure?", default=False
     ).ask():
         info("Server will not be deleted")
         exit(0)
+
     # now remove the folders...
     info(f"Removing configuration file {ctx.config_file}")
     remove_file(ctx.config_file, 'configuration')
+
     info(f"Removing log file {ctx.log_file}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
