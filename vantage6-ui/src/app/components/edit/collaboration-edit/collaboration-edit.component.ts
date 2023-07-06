@@ -117,10 +117,14 @@ export class CollaborationEditComponent
   }
 
   async addNewCollaboration(new_collab_json: any) {
+    // retain the organizations that were assigned in the collaboration as
+    // these are not in the JSON returned by the API
+    let collab_orgs = this.collaboration.organizations;
     this.collaboration = this.convertJsonService.getCollaboration(
       new_collab_json,
       this.all_organizations
     );
+    this.collaboration.organizations = collab_orgs;
     // create the nodes for the new collaboration, and add them to it
     let nodes = await this.createNodes(this.collaboration.organizations);
     this.collabDataService.addNodesToCollaboration(this.collaboration, nodes);
