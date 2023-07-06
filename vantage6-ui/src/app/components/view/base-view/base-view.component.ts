@@ -4,7 +4,6 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { ExitMode, ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-base-view',

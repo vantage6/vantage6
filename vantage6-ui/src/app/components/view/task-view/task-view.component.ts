@@ -87,7 +87,11 @@ export class TaskViewComponent
   }
 
   askConfirmDelete(): void {
-    super.askConfirmDelete(this.task, ResType.TASK);
+    super.askConfirmDelete(
+      this.task,
+      ResType.TASK,
+      "Note that this will also delete all subtasks and all results."
+    );
   }
 
   getCollaborationName(): string {
