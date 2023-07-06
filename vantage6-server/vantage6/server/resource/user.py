@@ -722,7 +722,7 @@ class User(UserBase):
               type: integer
             description: User id
             required: true
-         - in: query
+          - in: query
             name: delete_dependents
             schema:
               type: boolean
