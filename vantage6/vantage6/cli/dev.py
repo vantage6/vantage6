@@ -2,10 +2,10 @@
 This module contains the CLI commands for generating dummy server and node
 instance(s). The following commands are available:
 
-    * vdev ---
-    * vdev ----
-    * vdev ---
-    * vdev ---
+    * vdev create-demo-network
+    * vdev remove-demo-network
+    * vdev start-demo-network
+    * vdev stop-demo-network
 """
 import pandas as pd
 import click
@@ -40,31 +40,32 @@ server_name = 'dev_default_server'
 handle_ = 'dev_demo_'
 
 
-def dummy_data(node_name: str) -> Path:
+def dummy_data(node_name: str, dev_folder: Path) -> Path:
     """Synthesize csv dataset.
 
     Parameters
     ----------
     node_name : str
         Name of node to be used as part of dataset.
+    dev_folder : Path
+        Path to the dev folder.
 
     Returns
     -------
     Path
         Directory the data is saved in.
     """
-    cwd = Path.cwd()
     df = pd.DataFrame({'name': ['Raphael', 'Donatello'],
                        'mask': ['red', 'purple'],
                        'weapon': ['sai', 'bo staff']})
-    dir_data = cwd / f"df_{node_name}.csv"
+    dir_data = dev_folder / f"df_{node_name}.csv"
     df.to_csv(dir_data)
     info(f"Spawned dataset for {Fore.GREEN}{node_name}, writing to "
          f"{Fore.GREEN}{dir_data}{Style.RESET_ALL}")
     return dir_data
 
 
-def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
+def create_node_config_file(server_url: str, port: int, config: dict) -> None:
     """Create a node configuration file (YAML).
 
     Creates a node configuration for a simulated organization. Organization ID
@@ -73,18 +74,12 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
 
     Parameters
     ----------
-    org_id : int
-        Organization ID.
     server_url : str
         Url of the dummy server.
     port : int
         Port of the dummy server.
-
-    Returns
-    -------
-    dict
-        Dictionary of `organization_name`, `node_name` and `api_key` to
-        be imported by `vserver import`.
+    config : dict
+        Configuration dictionary containing org_id, api_key and node name.
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
@@ -92,10 +87,10 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
     template = environment.get_template("node_config.j2")
 
     # TODO: make this name specific to the server it connects
-    node_name = f"{handle_}node_{org_id}"
-    dir_data = dummy_data(node_name)
-
+    node_name = config['node_name']
     folders = NodeContext.instance_folders('node', node_name, False)
+    dummy_datafile = dummy_data(node_name, folders['dev'])
+
     path_to_data_dir = Path(folders['data'])
     path_to_data_dir.mkdir(parents=True, exist_ok=True)
     full_path = Path(folders['config'] / f'{node_name}.yaml')
@@ -104,12 +99,10 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
         error(f"Node configuration file already exists: {full_path}")
         exit(1)
 
-    api_key = generate_apikey()
-
     node_config = template.render({
-        "api_key": api_key,
+        "api_key": config['api_key'],
         "databases": {
-            "default": dir_data
+            "default": dummy_datafile
         },
         "logging": {
             "file": f'{node_name}.log'
@@ -126,10 +119,8 @@ def create_node_config_file(org_id: int, server_url: str, port: int) -> dict:
         error(f"Could not write node configuration file: {e}")
         exit(1)
 
-    info(f"Spawned node for organization {Fore.GREEN}{org_id}{Style.RESET_ALL}"
-         )
-
-    return {"org_id": org_id, "node_name": node_name, "api_key": api_key}
+    info(f"Spawned node for organization {Fore.GREEN}{config['org_id']}"
+         f"{Style.RESET_ALL}")
 
 
 def generate_node_configs(num_nodes: int, server_url: str, port: int) \
@@ -151,8 +142,14 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int) \
         List of dictionaries containing node configurations.
     """
     configs = []
-    for i in range(1, num_nodes+1):
-        configs.append(create_node_config_file(i, server_url, port))
+    for i in range(num_nodes):
+        config = {
+            'org_id': i + 1,
+            'api_key': generate_apikey(),
+            'node_name': f"{handle_}node_{i + 1}"
+        }
+        create_node_config_file(server_url, port, config)
+        configs.append(config)
 
     return configs
 
@@ -191,7 +188,8 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) \
         collaboration['participants'].append({'name': f"org_{org_id}",
                                               'api_key': config['api_key']})
     organizations[0]['make_admin'] = True
-    info(f"Organization {Fore.GREEN}0{Style.RESET_ALL} is the admin")
+    info(f"Organization {Fore.GREEN}{node_configs[0]['org_id']}"
+         f"{Style.RESET_ALL} is the admin")
 
     server_import_config = template.render(organizations=organizations,
                                            collaboration=collaboration)
@@ -329,7 +327,7 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
     """
     if not ServerContext.config_exists(server_name):
         demo = demo_network(num_nodes, server_url, server_port, server_name)
-        info(f"Created {Fore.GREEN}{demo[0]}{Style.RESET_ALL} node "
+        info(f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
              f"configuration(s), attaching them to {Fore.GREEN}{server_name}"
              f"{Style.RESET_ALL}.")
     else:
@@ -389,19 +387,24 @@ def stop_demo_network(name: str) -> None:
     configs, _ = NodeContext.available_configurations(False)
     node_names = [config.name for config in configs if handle_ in config.name]
     for name in node_names:
-        print(name)
         vnode_stop(name, system_folders=False, all_nodes=False, force=False)
 
 
-def _remove_demo_network(server_name: str) -> None:
-    """This function does the bulk of removing the demo network. Removes all
-    folders and anything within that which was spawned by the
-    `create_demo_network`.
+@cli_dev.command(name="remove-demo-network")
+@click.option("-n", "--name", default=server_name,
+              help="Configuration name")
+def remove_demo_network(server_name: str) -> None:
+    """ Remove demo network.
+
+    If no name is provided, the default option is chosen which is
+    `dev_default_server`. This function tries to remove the demo_network in
+    `system` as well as `user`system_folders.
 
     Parameters
     ----------
     server_name : str
-        Name of the spawned server executed from `vdev start-demo-network`
+        Name of the spawned server executed from `vdev start-demo-network`,
+        default `dev_default_server`.
     """
     # removing the server
     if ServerContext.config_exists(server_name, S_ENV, True):
@@ -435,25 +438,6 @@ def _remove_demo_network(server_name: str) -> None:
         for handler in itertools.chain(node_ctx.log.handlers,
                                        node_ctx.log.root.handlers):
             handler.close()
-        print(name)
         subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
                         "--user"])
         shutil.rmtree(Path(node_ctx.config_dir) / name)
-
-
-@cli_dev.command(name="remove-demo-network")
-@click.option("-n", "--name", default=server_name,
-              help="Configuration name")
-def remove_demo_network(name: str) -> None:
-    """Wrapper function for`_remove_demo_network`, removes demo network. If no
-    name is provided, the default option is chosen which is
-    `dev_default_server`. This function tries to remove the demo_network in in
-    `system` as well as `user`system_folders.
-
-    Parameters
-    ----------
-    name : str
-        Name of the spawned server executed from `vdev start-demo-network`,
-        default `dev_default_server`.
-    """
-    _remove_demo_network(server_name=name)

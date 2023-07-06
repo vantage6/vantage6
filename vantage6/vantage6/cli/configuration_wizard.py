@@ -1,8 +1,8 @@
 import questionary as q
-import uuid
 
 from pathlib import Path
 
+from vantage6.common import generate_apikey
 from vantage6.common.globals import DATABASE_TYPES
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
@@ -176,7 +176,7 @@ def server_configuration_questionaire(instance_name: str) -> dict:
 
     constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
     if constant_jwt_secret:
-        config["jwt_secret_key"] = str(uuid.uuid1())
+        config["jwt_secret_key"] = generate_apikey()
 
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR",

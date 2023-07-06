@@ -11,9 +11,8 @@ from flask_restful import Api
 from jwt.exceptions import DecodeError
 from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
-import uuid
 
-from vantage6.common import logger_name
+from vantage6.common import logger_name, generate_apikey
 from vantage6.common.globals import APPNAME
 from vantage6.server import db
 from vantage6.server.globals import (
@@ -558,7 +557,7 @@ class ResetAPIKey(ServicesResources):
 
         # all good, change API key
         log.info(f"Successful API key reset for node {id}")
-        api_key = str(uuid.uuid1())
+        api_key = generate_apikey()
         node.api_key = api_key
         node.save()
 

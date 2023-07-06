@@ -263,449 +263,6 @@ def cli_node_start(name: str, config: str, environment: str,
                 mount_src, attach, force_db_mount)
 
 
-#
-#   stop
-#
-@cli_node.command(name='stop')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-@click.option('--all', 'all_nodes', flag_value=True)
-@click.option('--force', 'force', flag_value=True, help="kills containers "
-                                                        "instantly")
-def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
-                  force: bool) -> None:
-    vnode_stop(name, system_folders, all_nodes, force)
-
-
-#
-#   attach
-#
-@cli_node.command(name='attach')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_attach(name: str, system_folders: bool) -> None:
-    """
-    Attach the logs from the docker container to the terminal.
-
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    system_folders : bool
-        Wether this configuration stored in the system or in the user folders.
-    """
-    client = docker.from_env()
-    check_docker_running()
-
-    running_node_names = find_running_node_names(client)
-
-    if not running_node_names:
-        warning("No nodes are currently running. Cannot show any logs!")
-        return
-
-    if not name:
-        name = q.select("Select the node you wish to inspect:",
-                        choices=running_node_names).ask()
-    else:
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}"
-
-    if name in running_node_names:
-        container = client.containers.get(name)
-        logs = container.attach(stream=True, logs=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
-        while True:
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                info("Closing log file. Keyboard Interrupt.")
-                info("Note that your node is still running! Shut it down with "
-                     f"'{Fore.RED}vnode stop{Style.RESET_ALL}'")
-                exit(0)
-    else:
-        error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
-
-
-#
-#   create-private-key
-#
-@cli_node.command(name='create-private-key')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option("-c", "--config", default=None,
-              help='absolute path to configuration-file; overrides NAME')
-@click.option('-e', '--environment', default=N_ENV,
-              help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-@click.option('--no-upload', 'upload', flag_value=False, default=True)
-@click.option("-o", "--organization-name", default=None,
-              help="Organization name")
-@click.option('--overwrite', 'overwrite', flag_value=True, default=False)
-def cli_node_create_private_key(
-        name: str, config: str, environment: str, system_folders: bool,
-        upload: bool, organization_name: str, overwrite: bool
-        ) -> None:
-    """
-    Create and upload a new private key (use with caution).
-
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    config : str
-        Absolute path to configuration-file; overrides NAME.
-    environment : str
-        DTAP environment to use.
-    system_folders : bool
-        Wether this configuration stored in the system or in the user folders.
-    upload : bool
-        Wether to upload the private key to the server.
-    organization_name : str
-        Used to store and reference the private key.
-    overwrite : bool
-        Overwrite existing private key if present.
-    """
-    NodeContext.LOGGING_ENABLED = False
-    if config:
-        name = Path(config).stem
-        ctx = NodeContext(name, environment, system_folders, config)
-    else:
-        # retrieve context
-        name, environment = select_node(name, environment, system_folders)
-
-        # raise error if config could not be found
-        if not NodeContext.config_exists(name, environment, system_folders):
-            error(
-                f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
-                f"not be found."
-            )
-            exit(1)
-
-        # Create node context
-        ctx = NodeContext(name, environment, system_folders)
-
-    # Authenticate with the server to obtain organization name if it wasn't
-    # provided
-    if organization_name is None:
-        client = create_client_and_authenticate(ctx)
-        organization_name = client.whoami.organization_name
-
-    # create directory where private key goes if it doesn't exist yet
-    ctx.type_data_folder(system_folders).mkdir(parents=True, exist_ok=True)
-
-    # generate new key, and save it
-    filename = f"privkey_{organization_name}.pem"
-    file_ = ctx.type_data_folder(system_folders) / filename
-
-    if file_.exists():
-        warning(f"File '{Fore.CYAN}{file_}{Style.RESET_ALL}' exists!")
-
-        if overwrite:
-            warning("'--override' specified, so it will be overwritten ...")
-
-    if file_.exists() and not overwrite:
-        error("Could not create private key!")
-        warning(
-            "If you're **sure** you want to create a new key, "
-            "please run this command with the '--overwrite' flag"
-        )
-        warning("Continuing with existing key instead!")
-        private_key = RSACryptor(file_).private_key
-
-    else:
-        try:
-            info("Generating new private key")
-            private_key = RSACryptor.create_new_rsa_key(file_)
-
-        except Exception as e:
-            error(f"Could not create new private key '{file_}'!?")
-            debug(e)
-            info("Bailing out ...")
-            exit(1)
-
-        warning(f"Private key written to '{file_}'")
-        warning(
-            "If you're running multiple nodes, be sure to copy the private "
-            "key to the appropriate directories!"
-        )
-
-    # create public key
-    info("Deriving public key")
-    public_key = RSACryptor.create_public_key_bytes(private_key)
-
-    # update config file
-    info("Updating configuration")
-    ctx.config["encryption"]["private_key"] = str(file_)
-    ctx.config_manager.put(environment, ctx.config)
-    ctx.config_manager.save(ctx.config_file)
-
-    # upload key to the server
-    if upload:
-        info(
-            "Uploading public key to the server. "
-            "This will overwrite any previously existing key!"
-        )
-
-        if 'client' not in locals():
-            client = create_client_and_authenticate(ctx)
-
-        # TODO what happens if the user doesn't have permission to upload key?
-        # Does that lead to an exception or not?
-        try:
-            client.request(
-                f"/organization/{client.whoami.organization_id}",
-                method="patch",
-                json={"public_key": bytes_to_base64s(public_key)}
-            )
-
-        except Exception as e:
-            error("Could not upload the public key!")
-            debug(e)
-            exit(1)
-
-    else:
-        warning("Public key not uploaded!")
-
-    info("[Done]")
-
-
-#
-#   clean
-#
-@cli_node.command(name='clean')
-def cli_node_clean() -> None:
-    """
-    This command erases temporary Docker volumes.
-    """
-    client = docker.from_env()
-    check_docker_running()
-
-    # retrieve all volumes
-    volumes = client.volumes.list()
-    candidates = []
-    msg = "This would remove the following volumes: "
-    for volume in volumes:
-        if volume.name[-6:] == "tmpvol":
-            candidates.append(volume)
-            msg += volume.name + ","
-    info(msg)
-
-    confirm = q.confirm("Are you sure?")
-    if confirm.ask():
-        for volume in candidates:
-            try:
-                volume.remove()
-                # info(volume.name)
-            except docker.errors.APIError as e:
-                error(f"Failed to remove volume {Fore.RED}'{volume.name}'"
-                      f"{Style.RESET_ALL}. Is it still in use?")
-                debug(e)
-                exit(1)
-    info("Done!")
-
-
-#
-#   remove
-#
-@cli_node.command(name="remove")
-@click.option("-n", "--name", default=None)
-@click.option('-e', '--environment', default=N_ENV,
-              help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
-    vnode_remove(name, environment, system_folders)
-
-
-#
-#   version
-#
-@cli_node.command(name='version')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_version(name: str, system_folders: bool) -> None:
-    """
-    Returns current version of vantage6 services installed.
-
-    Parameters
-    ----------
-    name : str
-        Configuration name
-    system_folders : bool
-        If True, use system folders, otherwise use user folders
-    """
-    client = docker.from_env()
-    check_docker_running()
-
-    running_node_names = find_running_node_names(client)
-
-    if not name:
-        if not running_node_names:
-            error("No nodes are running! You can only check the version for "
-                  "nodes that are running")
-            exit(1)
-        name = q.select("Select the node you wish to inspect:",
-                        choices=running_node_names).ask()
-    else:
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}"
-
-    if name in running_node_names:
-        container = client.containers.get(name)
-        version = container.exec_run(cmd='vnode-local version', stdout=True)
-        click.echo(
-            {"node": version.output.decode('utf-8'), "cli": __version__})
-    else:
-        error(f"Node {name} is not running! Cannot provide version...")
-
-
-#
-#   set-api-key
-#
-@cli_node.command(name='set-api-key')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option("--api-key", default=None, help="New API key")
-@click.option('-e', '--environment', default=N_ENV,
-              help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-def cli_node_set_api_key(name: str, api_key: str, environment: str,
-                         system_folders: bool) -> None:
-    """
-    Put a new API key into the node configuration file
-
-    Parameters
-    ----------
-    name : str
-        Node configuration name
-    api_key : str
-        New API key
-    environment : str
-        DTAP environment
-    system_folders : bool
-        If True, use system folders, otherwise use user folders
-    """
-    # select name and environment
-    name, environment = select_node(name, environment, system_folders)
-
-    # Check that we can write in the config folder
-    if not check_config_writeable(system_folders):
-        error("Your user does not have write access to all folders. Exiting")
-        exit(1)
-
-    if not api_key:
-        api_key = q.text("Please enter your new API key:").ask()
-
-    # get configuration manager
-    ctx = NodeContext(name, environment=environment,
-                      system_folders=system_folders)
-    conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
-
-    # set new api key, and save the file
-    ctx.config['api_key'] = api_key
-    conf_mgr.put(environment, ctx.config)
-    conf_mgr.save(ctx.config_file)
-    info("Your new API key has been uploaded to the config file "
-         f"{ctx.config_file}.")
-
-
-#  helper functions
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
-    """
-    Print the logs from the logs stream.
-
-    Parameters
-    ----------
-    logs_stream : Iterable[bytes]
-        Output of the container.attach() method
-    """
-    for log in logs_stream:
-        print(log.decode(STRING_ENCODING), end="")
-
-
-def create_client_and_authenticate(ctx: NodeContext) -> Client:
-    """
-    Generate a client and authenticate with the server.
-
-    Parameters
-    ----------
-    ctx : NodeContext
-        Context of the node loaded from the configuration file
-
-    Returns
-    -------
-    Client
-        vantage6 client
-    """
-    host = ctx.config['server_url']
-    port = ctx.config['port']
-    api_path = ctx.config['api_path']
-
-    info(f"Connecting to server at '{host}:{port}{api_path}'")
-    username = q.text("Username:").ask()
-    password = q.password("Password:").ask()
-
-    client = Client(host, port, api_path)
-
-    try:
-        client.authenticate(username, password)
-
-    except Exception as e:
-        error("Could not authenticate with server!")
-        debug(e)
-        exit(1)
-
-    return client
-
-
-def select_node(name: str, environment: str, system_folders: bool) \
-        -> tuple[str, str]:
-    """
-    Let user select node through questionnaire if name/environment is not
-    given.
-
-    Returns
-    -------
-    tuple[str, str]
-        name, environment of the configuration file
-    """
-    name, environment = (name, environment) if name else \
-        select_configuration_questionaire("node", system_folders)
-
-    # raise error if config could not be found
-    if not NodeContext.config_exists(name, environment, system_folders):
-        error(
-            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
-            f"not be found."
-        )
-        exit(1)
-    return name, environment
-
-
-def find_running_node_names(client: docker.DockerClient) -> list[str]:
-    """
-    Returns a list of names of running nodes.
-
-    Parameters
-    ----------
-    client : docker.DockerClient
-        Docker client instance
-
-    Returns
-    -------
-    list[str]
-        List of names of running nodes
-    """
-    running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"})
-    return [node.name for node in running_nodes]
-
-
 def vnode_start(name: str, config: str, environment: str, system_folders: bool,
                 image: str, keep: bool, mount_src: str, attach: bool,
                 force_db_mount: bool) -> None:
@@ -978,6 +535,21 @@ def vnode_start(name: str, config: str, environment: str, system_folders: bool,
                 exit(0)
 
 
+#
+#   stop
+#
+@cli_node.command(name='stop')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option('--all', 'all_nodes', flag_value=True)
+@click.option('--force', 'force', flag_value=True, help="kills containers "
+                                                        "instantly")
+def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
+                  force: bool) -> None:
+    vnode_stop(name, system_folders, all_nodes, force)
+
+
 def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
                force: bool) -> None:
     """
@@ -1036,6 +608,248 @@ def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
+
+
+#
+#   attach
+#
+@cli_node.command(name='attach')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_attach(name: str, system_folders: bool) -> None:
+    """
+    Attach the logs from the docker container to the terminal.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    system_folders : bool
+        Wether this configuration stored in the system or in the user folders.
+    """
+    client = docker.from_env()
+    check_docker_running()
+
+    running_node_names = find_running_node_names(client)
+
+    if not running_node_names:
+        warning("No nodes are currently running. Cannot show any logs!")
+        return
+
+    if not name:
+        name = q.select("Select the node you wish to inspect:",
+                        choices=running_node_names).ask()
+    else:
+        post_fix = "system" if system_folders else "user"
+        name = f"{APPNAME}-{name}-{post_fix}"
+
+    if name in running_node_names:
+        container = client.containers.get(name)
+        logs = container.attach(stream=True, logs=True)
+        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                info("Closing log file. Keyboard Interrupt.")
+                info("Note that your node is still running! Shut it down with "
+                     f"'{Fore.RED}vnode stop{Style.RESET_ALL}'")
+                exit(0)
+    else:
+        error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
+
+
+#
+#   create-private-key
+#
+@cli_node.command(name='create-private-key')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-c", "--config", default=None,
+              help='absolute path to configuration-file; overrides NAME')
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option('--no-upload', 'upload', flag_value=False, default=True)
+@click.option("-o", "--organization-name", default=None,
+              help="Organization name")
+@click.option('--overwrite', 'overwrite', flag_value=True, default=False)
+def cli_node_create_private_key(
+        name: str, config: str, environment: str, system_folders: bool,
+        upload: bool, organization_name: str, overwrite: bool
+        ) -> None:
+    """
+    Create and upload a new private key (use with caution).
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    config : str
+        Absolute path to configuration-file; overrides NAME.
+    environment : str
+        DTAP environment to use.
+    system_folders : bool
+        Wether this configuration stored in the system or in the user folders.
+    upload : bool
+        Wether to upload the private key to the server.
+    organization_name : str
+        Used to store and reference the private key.
+    overwrite : bool
+        Overwrite existing private key if present.
+    """
+    NodeContext.LOGGING_ENABLED = False
+    if config:
+        name = Path(config).stem
+        ctx = NodeContext(name, environment, system_folders, config)
+    else:
+        # retrieve context
+        name, environment = select_node(name, environment, system_folders)
+
+        # raise error if config could not be found
+        if not NodeContext.config_exists(name, environment, system_folders):
+            error(
+                f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+                f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
+                f"not be found."
+            )
+            exit(1)
+
+        # Create node context
+        ctx = NodeContext(name, environment, system_folders)
+
+    # Authenticate with the server to obtain organization name if it wasn't
+    # provided
+    if organization_name is None:
+        client = create_client_and_authenticate(ctx)
+        organization_name = client.whoami.organization_name
+
+    # create directory where private key goes if it doesn't exist yet
+    ctx.type_data_folder(system_folders).mkdir(parents=True, exist_ok=True)
+
+    # generate new key, and save it
+    filename = f"privkey_{organization_name}.pem"
+    file_ = ctx.type_data_folder(system_folders) / filename
+
+    if file_.exists():
+        warning(f"File '{Fore.CYAN}{file_}{Style.RESET_ALL}' exists!")
+
+        if overwrite:
+            warning("'--override' specified, so it will be overwritten ...")
+
+    if file_.exists() and not overwrite:
+        error("Could not create private key!")
+        warning(
+            "If you're **sure** you want to create a new key, "
+            "please run this command with the '--overwrite' flag"
+        )
+        warning("Continuing with existing key instead!")
+        private_key = RSACryptor(file_).private_key
+
+    else:
+        try:
+            info("Generating new private key")
+            private_key = RSACryptor.create_new_rsa_key(file_)
+
+        except Exception as e:
+            error(f"Could not create new private key '{file_}'!?")
+            debug(e)
+            info("Bailing out ...")
+            exit(1)
+
+        warning(f"Private key written to '{file_}'")
+        warning(
+            "If you're running multiple nodes, be sure to copy the private "
+            "key to the appropriate directories!"
+        )
+
+    # create public key
+    info("Deriving public key")
+    public_key = RSACryptor.create_public_key_bytes(private_key)
+
+    # update config file
+    info("Updating configuration")
+    ctx.config["encryption"]["private_key"] = str(file_)
+    ctx.config_manager.put(environment, ctx.config)
+    ctx.config_manager.save(ctx.config_file)
+
+    # upload key to the server
+    if upload:
+        info(
+            "Uploading public key to the server. "
+            "This will overwrite any previously existing key!"
+        )
+
+        if 'client' not in locals():
+            client = create_client_and_authenticate(ctx)
+
+        # TODO what happens if the user doesn't have permission to upload key?
+        # Does that lead to an exception or not?
+        try:
+            client.request(
+                f"/organization/{client.whoami.organization_id}",
+                method="patch",
+                json={"public_key": bytes_to_base64s(public_key)}
+            )
+
+        except Exception as e:
+            error("Could not upload the public key!")
+            debug(e)
+            exit(1)
+
+    else:
+        warning("Public key not uploaded!")
+
+    info("[Done]")
+
+
+#
+#   clean
+#
+@cli_node.command(name='clean')
+def cli_node_clean() -> None:
+    """
+    This command erases temporary Docker volumes.
+    """
+    client = docker.from_env()
+    check_docker_running()
+
+    # retrieve all volumes
+    volumes = client.volumes.list()
+    candidates = []
+    msg = "This would remove the following volumes: "
+    for volume in volumes:
+        if volume.name[-6:] == "tmpvol":
+            candidates.append(volume)
+            msg += volume.name + ","
+    info(msg)
+
+    confirm = q.confirm("Are you sure?")
+    if confirm.ask():
+        for volume in candidates:
+            try:
+                volume.remove()
+                # info(volume.name)
+            except docker.errors.APIError as e:
+                error(f"Failed to remove volume {Fore.RED}'{volume.name}'"
+                      f"{Style.RESET_ALL}. Is it still in use?")
+                debug(e)
+                exit(1)
+    info("Done!")
+
+
+#
+#   remove
+#
+@cli_node.command(name="remove")
+@click.option("-n", "--name", default=None)
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
+    vnode_remove(name, environment, system_folders)
 
 
 def vnode_remove(name: str, environment: str, system_folders: bool):
@@ -1108,3 +922,189 @@ def vnode_remove(name: str, environment: str, system_folders: bool):
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
     remove_file(ctx.log_file, 'log')
+
+
+#
+#   version
+#
+@cli_node.command(name='version')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_version(name: str, system_folders: bool) -> None:
+    """
+    Returns current version of vantage6 services installed.
+
+    Parameters
+    ----------
+    name : str
+        Configuration name
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
+    """
+    client = docker.from_env()
+    check_docker_running()
+
+    running_node_names = find_running_node_names(client)
+
+    if not name:
+        if not running_node_names:
+            error("No nodes are running! You can only check the version for "
+                  "nodes that are running")
+            exit(1)
+        name = q.select("Select the node you wish to inspect:",
+                        choices=running_node_names).ask()
+    else:
+        post_fix = "system" if system_folders else "user"
+        name = f"{APPNAME}-{name}-{post_fix}"
+
+    if name in running_node_names:
+        container = client.containers.get(name)
+        version = container.exec_run(cmd='vnode-local version', stdout=True)
+        click.echo(
+            {"node": version.output.decode('utf-8'), "cli": __version__})
+    else:
+        error(f"Node {name} is not running! Cannot provide version...")
+
+
+#
+#   set-api-key
+#
+@cli_node.command(name='set-api-key')
+@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("--api-key", default=None, help="New API key")
+@click.option('-e', '--environment', default=N_ENV,
+              help='configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True)
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+def cli_node_set_api_key(name: str, api_key: str, environment: str,
+                         system_folders: bool) -> None:
+    """
+    Put a new API key into the node configuration file
+
+    Parameters
+    ----------
+    name : str
+        Node configuration name
+    api_key : str
+        New API key
+    environment : str
+        DTAP environment
+    system_folders : bool
+        If True, use system folders, otherwise use user folders
+    """
+    # select name and environment
+    name, environment = select_node(name, environment, system_folders)
+
+    # Check that we can write in the config folder
+    if not check_config_writeable(system_folders):
+        error("Your user does not have write access to all folders. Exiting")
+        exit(1)
+
+    if not api_key:
+        api_key = q.text("Please enter your new API key:").ask()
+
+    # get configuration manager
+    ctx = NodeContext(name, environment=environment,
+                      system_folders=system_folders)
+    conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
+
+    # set new api key, and save the file
+    ctx.config['api_key'] = api_key
+    conf_mgr.put(environment, ctx.config)
+    conf_mgr.save(ctx.config_file)
+    info("Your new API key has been uploaded to the config file "
+         f"{ctx.config_file}.")
+
+
+#  helper functions
+def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+    """
+    Print the logs from the logs stream.
+
+    Parameters
+    ----------
+    logs_stream : Iterable[bytes]
+        Output of the container.attach() method
+    """
+    for log in logs_stream:
+        print(log.decode(STRING_ENCODING), end="")
+
+
+def create_client_and_authenticate(ctx: NodeContext) -> Client:
+    """
+    Generate a client and authenticate with the server.
+
+    Parameters
+    ----------
+    ctx : NodeContext
+        Context of the node loaded from the configuration file
+
+    Returns
+    -------
+    Client
+        vantage6 client
+    """
+    host = ctx.config['server_url']
+    port = ctx.config['port']
+    api_path = ctx.config['api_path']
+
+    info(f"Connecting to server at '{host}:{port}{api_path}'")
+    username = q.text("Username:").ask()
+    password = q.password("Password:").ask()
+
+    client = Client(host, port, api_path)
+
+    try:
+        client.authenticate(username, password)
+
+    except Exception as e:
+        error("Could not authenticate with server!")
+        debug(e)
+        exit(1)
+
+    return client
+
+
+def select_node(name: str, environment: str, system_folders: bool) \
+        -> tuple[str, str]:
+    """
+    Let user select node through questionnaire if name/environment is not
+    given.
+
+    Returns
+    -------
+    tuple[str, str]
+        name, environment of the configuration file
+    """
+    name, environment = (name, environment) if name else \
+        select_configuration_questionaire("node", system_folders)
+
+    # raise error if config could not be found
+    if not NodeContext.config_exists(name, environment, system_folders):
+        error(
+            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} with "
+            f"environment {Fore.RED}{environment}{Style.RESET_ALL} could "
+            f"not be found."
+        )
+        exit(1)
+    return name, environment
+
+
+def find_running_node_names(client: docker.DockerClient) -> list[str]:
+    """
+    Returns a list of names of running nodes.
+
+    Parameters
+    ----------
+    client : docker.DockerClient
+        Docker client instance
+
+    Returns
+    -------
+    list[str]
+        List of names of running nodes
+    """
+    running_nodes = client.containers.list(
+        filters={"label": f"{APPNAME}-type=node"})
+    return [node.name for node in running_nodes]

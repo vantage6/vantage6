@@ -18,6 +18,3 @@ docs/_build
 **/dist/
 *.egg-info
 *.code-workspace
-
-# Testing datasets
-*.csv

@@ -167,6 +167,171 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
                   )
 
 
+def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
+                  rabbitmq_image: str, keep: bool, mount_src: str,
+                  attach: bool) -> None:
+    """
+    Start the server in a Docker container.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    ip : str
+        ip interface to listen on
+    port : int
+        port to listen on
+    image : str
+        Server Docker image to use
+    rabbitmq_image : str
+        RabbitMQ docker image to use
+    keep : bool
+        Wether to keep the image after the server has finished, useful for
+        debugging
+    mount_src : str
+        Path to the vantage6 package source, this overrides the source code in
+        the container. This is useful when developing and testing the server.
+    attach : bool
+        Wether to attach the server logs to the console after starting the
+        server.
+    """
+    info("Starting server...")
+    info("Finding Docker daemon.")
+    docker_client = docker.from_env()
+    # will print an error if not
+    check_docker_running()
+
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(ctx.name)
+
+    # check that this server is not already running
+    running_servers = docker_client.containers.list(
+        filters={"label": f"{APPNAME}-type=server"})
+    for server in running_servers:
+        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-server":
+            error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} "
+                  "is already running")
+            exit(1)
+
+    # Determine image-name. First we check if the option --image has been used.
+    # Then we check if the image has been specified in the config file, and
+    # finally we use the default settings from the package.
+    if image is None:
+        image = ctx.config.get(
+            "image",
+            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
+        )
+    info(f"Pulling latest server image '{image}'.")
+    try:
+        pull_if_newer(docker.from_env(), image)
+        # docker_client.images.pull(image)
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
+    else:
+        info(" ... success!")
+
+    info("Creating mounts")
+    config_file = "/mnt/config.yaml"
+    mounts = [
+        docker.types.Mount(
+            config_file, str(ctx.config_file), type="bind"
+        )
+    ]
+
+    if mount_src:
+        mount_src = os.path.abspath(mount_src)
+        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
+    # FIXME: code duplication with cli_server_import()
+    # try to mount database
+    uri = ctx.config['uri']
+    url = make_url(uri)
+    environment_vars = None
+
+    # If host is None, we're dealing with a file-based DB, like SQLite
+    if (url.host is None):
+        db_path = url.database
+
+        if not os.path.isabs(db_path):
+            # We're dealing with a relative path here -> make it absolute
+            db_path = ctx.data_dir / url.database
+
+        basename = os.path.basename(db_path)
+        dirname = os.path.dirname(db_path)
+        os.makedirs(dirname, exist_ok=True)
+
+        # we're mounting the entire folder that contains the database
+        mounts.append(docker.types.Mount(
+            "/mnt/database/", dirname, type="bind"
+        ))
+
+        environment_vars = {
+            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}",
+            "VANTAGE6_CONFIG_NAME": ctx.config_file_name
+        }
+
+    else:
+        warning(f"Database could not be transferred, make sure {url.host} "
+                "is reachable from the Docker container")
+        info("Consider using the docker-compose method to start a server")
+
+    # Create a docker network for the server and other services like RabbitMQ
+    # to reside in
+    server_network_mgr = NetworkManager(
+        network_name=f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
+    )
+    server_network_mgr.create_network(is_internal=False)
+
+    # Note that ctx.data_dir has been created at this point, which is required
+    # for putting some RabbitMQ configuration files inside
+    info('Starting RabbitMQ container')
+    _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
+
+    # The `ip` and `port` refer here to the ip and port within the container.
+    # So we do not really care that is it listening on all interfaces.
+    internal_port = 5000
+    cmd = (
+        f'uwsgi --http :{internal_port} --gevent 1000 --http-websockets '
+        '--master --callable app --disable-logging '
+        '--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py '
+        f'--pyargv {config_file}'
+    )
+    info(cmd)
+
+    info("Run Docker container")
+    port_ = str(port or ctx.config["port"] or 5000)
+    container = docker_client.containers.run(
+        image,
+        command=cmd,
+        mounts=mounts,
+        detach=True,
+        labels={
+            f"{APPNAME}-type": "server",
+            "name": ctx.config_file_name
+        },
+        environment=environment_vars,
+        ports={f"{internal_port}/tcp": (ip, port_)},
+        name=ctx.docker_container_name,
+        auto_remove=not keep,
+        tty=True,
+        network=server_network_mgr.network_name
+    )
+
+    info(f"Success! container id = {container.id}")
+
+    if attach:
+        logs = container.attach(stream=True, logs=True, stdout=True)
+        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                info("Closing log file. Keyboard Interrupt.")
+                info("Note that your server is still running! Shut it down "
+                     f"with {Fore.RED}vserver stop{Style.RESET_ALL}")
+                exit(0)
+
+
 #
 #   list
 #
@@ -347,6 +512,123 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
     vserver_import(ctx, file_, drop_all, image, mount_src, keep)
 
 
+def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
+                   image: str, mount_src: str, keep: bool) -> None:
+    """Batch import organizations/collaborations/users and tasks.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    file_ : str
+        Yaml file containing the vantage6 formatted data to import
+    drop_all : bool
+        Wether to drop all data before importing
+    image : str
+        Node Docker image to use which contains the import script
+    mount_src : str
+        Vantage6 source location, this will overwrite the source code in the
+        container. Useful for debugging/development.
+    keep : bool
+        Wether to keep the image after finishing/crashing. Useful for
+        debugging.
+    """
+    info("Starting server...")
+    info("Finding Docker daemon.")
+    docker_client = docker.from_env()
+    # will print an error if not
+    check_docker_running()
+
+    # check if name is allowed for docker volume, else exit
+    check_config_name_allowed(ctx.name)
+
+    # pull latest Docker image
+    if image is None:
+        image = ctx.config.get(
+            "image",
+            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
+        )
+    info(f"Pulling latest server image '{image}'.")
+    try:
+        docker_client.images.pull(image)
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
+    else:
+        info(" ... success!")
+
+    info("Creating mounts")
+    mounts = [
+        docker.types.Mount(
+            "/mnt/config.yaml", str(ctx.config_file), type="bind"
+        ),
+        docker.types.Mount(
+            "/mnt/import.yaml", str(file_), type="bind"
+        )
+    ]
+
+    # FIXME: code duplication with cli_server_start()
+    # try to mount database
+    uri = ctx.config['uri']
+    url = make_url(uri)
+    environment_vars = None
+
+    if mount_src:
+        mount_src = os.path.abspath(mount_src)
+        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
+
+    # If host is None, we're dealing with a file-based DB, like SQLite
+    if (url.host is None):
+        db_path = url.database
+
+        if not os.path.isabs(db_path):
+            # We're dealing with a relative path here -> make it absolute
+            db_path = ctx.data_dir / url.database
+
+        basename = os.path.basename(db_path)
+        dirname = os.path.dirname(db_path)
+        os.makedirs(dirname, exist_ok=True)
+
+        # we're mounting the entire folder that contains the database
+        mounts.append(docker.types.Mount(
+            "/mnt/database/", dirname, type="bind"
+        ))
+
+        environment_vars = {
+            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}"
+        }
+
+    else:
+        warning(f"Database could not be transferred, make sure {url.host} "
+                "is reachable from the Docker container")
+        info("Consider using the docker-compose method to start a server")
+
+    drop_all_ = "--drop-all" if drop_all else ""
+    cmd = f'vserver-local import -c /mnt/config.yaml -e {ctx.environment} ' \
+          f'{drop_all_} /mnt/import.yaml'
+
+    info(cmd)
+
+    info("Run Docker container")
+    container = docker_client.containers.run(
+        image,
+        command=cmd,
+        mounts=mounts,
+        detach=True,
+        labels={
+            f"{APPNAME}-type": "server",
+            "name": ctx.config_file_name
+        },
+        environment=environment_vars,
+        auto_remove=not keep,
+        tty=True
+    )
+    logs = container.logs(stream=True, stdout=True)
+    Thread(target=print_log_worker, args=(logs,), daemon=False).start()
+    info(f"Success! container id = {container.id}")
+    return None
+
+
 #
 #   shell
 #
@@ -409,6 +691,56 @@ def cli_server_stop(name: str, environment: str, system_folders: bool,
         Wether to stop all servers or not
     """
     vserver_stop(name, environment, system_folders, all_servers)
+
+
+def vserver_stop(name: str, environment: str, system_folders: bool,
+                 all_servers: bool):
+    """
+    Stop one or all running server(s).
+
+    Parameters
+    ----------
+    name : str
+        Name of the server to stop
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or not
+    all_servers : bool
+        Wether to stop all servers or not
+    """
+    client = docker.from_env()
+    check_docker_running()
+
+    running_servers = client.containers.list(
+        filters={"label": f"{APPNAME}-type=server"})
+
+    if not running_servers:
+        warning("No servers are currently running.")
+        return
+
+    running_server_names = [server.name for server in running_servers]
+
+    if all_servers:
+        for container_name in running_server_names:
+            _stop_server_containers(client, container_name, environment,
+                                    system_folders)
+        return
+
+    # make sure we have a configuration name to work with
+    if not name:
+        container_name = q.select("Select the server you wish to stop:",
+                                  choices=running_server_names).ask()
+    else:
+        post_fix = "system" if system_folders else "user"
+        container_name = f"{APPNAME}-{name}-{post_fix}-server"
+
+    if container_name not in running_server_names:
+        error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
+        return
+
+    _stop_server_containers(client, container_name, environment,
+                            system_folders)
 
 
 #
@@ -636,339 +968,6 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
-
-
-def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
-                   image: str, mount_src: str, keep: bool) -> None:
-    """Batch import organizations/collaborations/users and tasks.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        Server context object
-    file_ : str
-        Yaml file containing the vantage6 formatted data to import
-    drop_all : bool
-        Wether to drop all data before importing
-    image : str
-        Node Docker image to use which contains the import script
-    mount_src : str
-        Vantage6 source location, this will overwrite the source code in the
-        container. Useful for debugging/development.
-    keep : bool
-        Wether to keep the image after finishing/crashing. Useful for
-        debugging.
-    """
-    info("Starting server...")
-    info("Finding Docker daemon.")
-    docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
-
-    # check if name is allowed for docker volume, else exit
-    check_config_name_allowed(ctx.name)
-
-    # pull latest Docker image
-    if image is None:
-        image = ctx.config.get(
-            "image",
-            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
-        )
-    info(f"Pulling latest server image '{image}'.")
-    try:
-        docker_client.images.pull(image)
-    except Exception as e:
-        warning(' ... Getting latest node image failed:')
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
-
-    info("Creating mounts")
-    mounts = [
-        docker.types.Mount(
-            "/mnt/config.yaml", str(ctx.config_file), type="bind"
-        ),
-        docker.types.Mount(
-            "/mnt/import.yaml", str(file_), type="bind"
-        )
-    ]
-
-    # FIXME: code duplication with cli_server_start()
-    # try to mount database
-    uri = ctx.config['uri']
-    url = make_url(uri)
-    environment_vars = None
-
-    if mount_src:
-        mount_src = os.path.abspath(mount_src)
-        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
-
-    # If host is None, we're dealing with a file-based DB, like SQLite
-    if (url.host is None):
-        db_path = url.database
-
-        if not os.path.isabs(db_path):
-            # We're dealing with a relative path here -> make it absolute
-            db_path = ctx.data_dir / url.database
-
-        basename = os.path.basename(db_path)
-        dirname = os.path.dirname(db_path)
-        os.makedirs(dirname, exist_ok=True)
-
-        # we're mounting the entire folder that contains the database
-        mounts.append(docker.types.Mount(
-            "/mnt/database/", dirname, type="bind"
-        ))
-
-        environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}"
-        }
-
-    else:
-        warning(f"Database could not be transferred, make sure {url.host} "
-                "is reachable from the Docker container")
-        info("Consider using the docker-compose method to start a server")
-
-    drop_all_ = "--drop-all" if drop_all else ""
-    cmd = f'vserver-local import -c /mnt/config.yaml -e {ctx.environment} ' \
-          f'{drop_all_} /mnt/import.yaml'
-
-    info(cmd)
-
-    info("Run Docker container")
-    container = docker_client.containers.run(
-        image,
-        command=cmd,
-        mounts=mounts,
-        detach=True,
-        labels={
-            f"{APPNAME}-type": "server",
-            "name": ctx.config_file_name
-        },
-        environment=environment_vars,
-        auto_remove=not keep,
-        tty=True
-    )
-    logs = container.logs(stream=True, stdout=True)
-    Thread(target=print_log_worker, args=(logs,), daemon=False).start()
-    info(f"Success! container id = {container.id}")
-    return None
-
-
-def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
-                  rabbitmq_image: str, keep: bool, mount_src: str,
-                  attach: bool) -> None:
-    """
-    Start the server in a Docker container.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        Server context object
-    ip : str
-        ip interface to listen on
-    port : int
-        port to listen on
-    image : str
-        Server Docker image to use
-    rabbitmq_image : str
-        RabbitMQ docker image to use
-    keep : bool
-        Wether to keep the image after the server has finished, useful for
-        debugging
-    mount_src : str
-        Path to the vantage6 package source, this overrides the source code in
-        the container. This is useful when developing and testing the server.
-    attach : bool
-        Wether to attach the server logs to the console after starting the
-        server.
-    """
-    info("Starting server...")
-    info("Finding Docker daemon.")
-    docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
-
-    # check if name is allowed for docker volume, else exit
-    check_config_name_allowed(ctx.name)
-
-    # check that this server is not already running
-    running_servers = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"})
-    for server in running_servers:
-        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-server":
-            error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} "
-                  "is already running")
-            exit(1)
-
-    # Determine image-name. First we check if the option --image has been used.
-    # Then we check if the image has been specified in the config file, and
-    # finally we use the default settings from the package.
-    if image is None:
-        image = ctx.config.get(
-            "image",
-            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
-        )
-    info(f"Pulling latest server image '{image}'.")
-    try:
-        pull_if_newer(docker.from_env(), image)
-        # docker_client.images.pull(image)
-    except Exception as e:
-        warning(' ... Getting latest node image failed:')
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
-
-    info("Creating mounts")
-    config_file = "/mnt/config.yaml"
-    mounts = [
-        docker.types.Mount(
-            config_file, str(ctx.config_file), type="bind"
-        )
-    ]
-
-    if mount_src:
-        mount_src = os.path.abspath(mount_src)
-        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
-    # FIXME: code duplication with cli_server_import()
-    # try to mount database
-    uri = ctx.config['uri']
-    url = make_url(uri)
-    environment_vars = None
-
-    # If host is None, we're dealing with a file-based DB, like SQLite
-    if (url.host is None):
-        db_path = url.database
-
-        if not os.path.isabs(db_path):
-            # We're dealing with a relative path here -> make it absolute
-            db_path = ctx.data_dir / url.database
-
-        basename = os.path.basename(db_path)
-        dirname = os.path.dirname(db_path)
-        os.makedirs(dirname, exist_ok=True)
-
-        # we're mounting the entire folder that contains the database
-        mounts.append(docker.types.Mount(
-            "/mnt/database/", dirname, type="bind"
-        ))
-
-        environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}",
-            "VANTAGE6_CONFIG_NAME": ctx.config_file_name
-        }
-
-    else:
-        warning(f"Database could not be transferred, make sure {url.host} "
-                "is reachable from the Docker container")
-        info("Consider using the docker-compose method to start a server")
-
-    # Create a docker network for the server and other services like RabbitMQ
-    # to reside in
-    server_network_mgr = NetworkManager(
-        network_name=f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
-    )
-    server_network_mgr.create_network(is_internal=False)
-
-    # Note that ctx.data_dir has been created at this point, which is required
-    # for putting some RabbitMQ configuration files inside
-    info('Starting RabbitMQ container')
-    _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
-
-    # The `ip` and `port` refer here to the ip and port within the container.
-    # So we do not really care that is it listening on all interfaces.
-    internal_port = 5000
-    cmd = (
-        f'uwsgi --http :{internal_port} --gevent 1000 --http-websockets '
-        '--master --callable app --disable-logging '
-        '--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py '
-        f'--pyargv {config_file}'
-    )
-    info(cmd)
-
-    info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or 5000)
-    container = docker_client.containers.run(
-        image,
-        command=cmd,
-        mounts=mounts,
-        detach=True,
-        labels={
-            f"{APPNAME}-type": "server",
-            "name": ctx.config_file_name
-        },
-        environment=environment_vars,
-        ports={f"{internal_port}/tcp": (ip, port_)},
-        name=ctx.docker_container_name,
-        auto_remove=not keep,
-        tty=True,
-        network=server_network_mgr.network_name
-    )
-
-    info(f"Success! container id = {container.id}")
-
-    if attach:
-        logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
-        while True:
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                info("Closing log file. Keyboard Interrupt.")
-                info("Note that your server is still running! Shut it down "
-                     f"with {Fore.RED}vserver stop{Style.RESET_ALL}")
-                exit(0)
-
-
-def vserver_stop(name: str, environment: str, system_folders: bool,
-                 all_servers: bool):
-    """
-    Stop one or all running server(s).
-
-    Parameters
-    ----------
-    name : str
-        Name of the server to stop
-    environment : str
-        DTAP environment to use
-    system_folders : bool
-        Wether to use system folders or not
-    all_servers : bool
-        Wether to stop all servers or not
-    """
-    client = docker.from_env()
-    check_docker_running()
-
-    running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"})
-
-    if not running_servers:
-        warning("No servers are currently running.")
-        return
-
-    running_server_names = [server.name for server in running_servers]
-
-    if all_servers:
-        for container_name in running_server_names:
-            _stop_server_containers(client, container_name, environment,
-                                    system_folders)
-        return
-
-    # make sure we have a configuration name to work with
-    if not name:
-        container_name = q.select("Select the server you wish to stop:",
-                                  choices=running_server_names).ask()
-    else:
-        post_fix = "system" if system_folders else "user"
-        container_name = f"{APPNAME}-{name}-{post_fix}-server"
-
-    if container_name not in running_server_names:
-        error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
-        return
-
-    _stop_server_containers(client, container_name, environment,
-                            system_folders)
-# docker.client.VolumeCollection.prune
 
 
 def select_server(name: str, environment: str, system_folders: bool) \
