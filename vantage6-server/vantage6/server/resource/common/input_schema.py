@@ -32,8 +32,8 @@ def _validate_name(name: str):
     """
     if not len(name):
         raise ValidationError('Name cannot be empty')
-    if not name.isalpha():
-        raise ValidationError('Name cannot be numerical')
+    if name.isnumeric():
+        raise ValidationError('Name cannot a number')
     if len(name) > _MAX_LEN_NAME:
         raise ValidationError(
             f'Name cannot be longer than {_MAX_LEN_NAME} characters'
