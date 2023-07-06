@@ -26,9 +26,9 @@ export class BaseViewComponent implements OnInit {
     this.dataService.save(resource);
   }
 
-  async delete(resource: Resource): Promise<void> {
+  async delete(resource: Resource, params: any = {}): Promise<void> {
     this.apiService
-      .delete(resource)
+      .delete(resource, params)
       .toPromise()
       .then((data) => {
         this.deletingResource.emit(resource);

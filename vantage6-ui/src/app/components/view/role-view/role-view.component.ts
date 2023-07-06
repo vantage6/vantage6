@@ -65,6 +65,10 @@ export class RoleViewComponent
     return this.roleDataService.isDefaultRole(this.role);
   }
 
+  async delete(): Promise<void> {
+    super.delete(this.role, {delete_dependents: true});
+  }
+
   askConfirmDelete(): void {
     super.askConfirmDelete(
       this.role,

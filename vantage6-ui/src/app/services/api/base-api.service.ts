@@ -52,9 +52,10 @@ export abstract class BaseApiService {
     return this.http.post<any>(environment.api_url + '/' + resource.type, data);
   }
 
-  delete(resource: Resource) {
+  delete(resource: Resource, params: any = {}) {
     return this.http.delete<any>(
-      environment.api_url + '/' + resource.type + '/' + resource.id
+      environment.api_url + '/' + resource.type + '/' + resource.id,
+      { params: params}
     );
   }
 
