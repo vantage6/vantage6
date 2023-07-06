@@ -539,7 +539,7 @@ class Collaboration(CollaborationBase):
                 return {
                     "msg": f"Collaboration id={id} has "
                     f"{len(collaboration.tasks)} tasks and "
-                    "{len(collaboration.nodes)} nodes. Please delete them "
+                    f"{len(collaboration.nodes)} nodes. Please delete them "
                     "separately or set delete_dependents=True"
                 }, HTTPStatus.BAD_REQUEST
             else:
