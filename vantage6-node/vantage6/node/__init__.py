@@ -1059,17 +1059,6 @@ class Node:
             config_to_share['allowed_orgs'] = \
                 policies.get('allowed_organizations')
 
-        # share node database labels and types
-        labels = []
-        types = {}
-        for db in self.config.get('databases', []):
-            label = db.get('label')
-            type_ = db.get('type')
-            labels.append(label)
-            types[f"db_type_{label}"] = type_
-        config_to_share['database_labels'] = labels
-        config_to_share['database_types'] = types
-
         self.log.debug(f"Sharing node configuration: {config_to_share}")
         self.socketIO.emit(
             'node_info_update', config_to_share, namespace='/tasks'
