@@ -50,7 +50,7 @@ class MockAlgorithmClient:
         Sets the mocked collaboration id to this value. Defaults to 1.
     organization_ids : list[int], optional
         Set the organization ids to this value. The first value is used for
-        this organization, the rest for child tasks. Defaults to [0, 1, 2, ...].
+        this organization, the rest for child tasks. Defaults to [0, 1, 2, ..].
     node_ids: list[int], optional
         Set the node ids to this value. The first value is used for this node,
         the rest for child tasks. Defaults to [0, 1, 2, ...].
@@ -68,8 +68,9 @@ class MockAlgorithmClient:
             default_organization_ids = list(range(self.n))
             if organization_ids:
                 self.log.warning(
-                    "The number of organization ids (%s) does not match the number "
-                    "of datasets (#=%s), using default values (%s) instead",
+                    "The number of organization ids (%s) does not match the "
+                    "number of datasets (#=%s), using default values (%s) "
+                    "instead",
                     organization_ids,
                     self.n,
                     default_organization_ids,
