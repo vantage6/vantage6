@@ -4,7 +4,6 @@ import { environment } from 'src/environments/environment';
 import { ResType } from 'src/app/shared/enum';
 
 import { ModalService } from 'src/app/services/common/modal.service';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 import { Resource } from 'src/app/shared/types';
 import { BehaviorSubject } from 'rxjs';
 import { Pagination } from 'src/app/interfaces/utils';
