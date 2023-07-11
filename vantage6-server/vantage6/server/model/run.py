@@ -4,7 +4,6 @@ import logging
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common import logger_name
 from vantage6.server.model.base import Base
@@ -21,7 +20,8 @@ log_ = logging.getLogger(logger_name(__name__))
 
 class Run(Base):
     """
-    A Run is the description of a Task as executed by a Node.
+    A Run is the description of a :class:`.~vantage6.server.model.task.Task` as
+    executed by a Node.
 
     The input and result fields will be encrypted and can be only read by the
     intended receiver of the message.
@@ -46,11 +46,11 @@ class Run(Base):
         Status of the task
     log : str
         Log of the task
-    task : Task
+    task : :class:`.~vantage6.server.model.task.Task`
         Task that was executed
-    organization : Organization
+    organization : :class:`.~vantage6.server.model.organization.Organization`
         Organization that executed the task
-    ports : list[AlgorithmPort]
+    ports : list[:class:`.~vantage6.server.model.algorithm_port.AlgorithmPort`]
         List of ports that are part of this result
     """
 

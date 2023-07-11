@@ -20,27 +20,16 @@ class MockAlgorithmClient:
     Parameters
     ----------
     datasets : list[list[dict]]
-        A list that contains the datasets per organization that are used in the
-        mocked algorithm. The format is as follows:
-        [
-          [
-            # organization 1 datasets
-            {
-                "database": str | pd.DataFrame,
-                "type": str,  # e.g. "csv" or "sql"
-                "input_data": dict
-            }, {
-                ...  # second dataset for organization 1
-            }
-          ], [
-            # organization 2 datasets
-            ...
-          ]
-        ]
-        where database is the path/URI to the database, type is the database
-        type (as listed in node configuration) and db_input is the input
-        that is given to the algorithm wrapper (this is e.g. a sheet name for
-        an excel file or a query for a SQL database).
+        A list that contains the datasets that are used in the mocked
+        algorithm. The inner list contains the datasets for each organization;
+        the outer list is for each organization. A single dataset should be
+        described as a dictionary with the same keys as in a node
+        configuration:
+
+        - database: str (path to file or SQL connection string) or pd.DataFrame
+        - type (str, e.g. "csv" or "sql")
+        - input_data (dict). The input data that is normally passed to the
+          algorithm wrapper, e.g. a worksheet for an excel database.
 
         Note that if the database is a pandas DataFrame, the type and
         input_data keys are not required.
