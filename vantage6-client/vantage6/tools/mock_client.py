@@ -7,6 +7,7 @@ from importlib import import_module
 from copy import deepcopy
 
 from vantage6.tools.wrappers import select_wrapper
+from vantage6.tools.util import info
 
 module_name = __name__.split('.')[1]
 
@@ -118,6 +119,24 @@ class MockAlgorithmClient:
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.node = self.Node(self)
+
+    def wait_for_results(self, task_id: int, *args, **kwargs) -> list:
+        """
+        Mock waiting for results - just return the results as tasks are
+        completed synchronously in the mock client.
+
+        Parameters
+        ----------
+        task_id: int
+            ID of the task for which the results should be obtained.
+
+        Returns
+        -------
+        list
+            List of task results.
+        """
+        info('Mocking waiting for results')
+        return self.result.from_task(task_id)
 
     class SubClient:
         """

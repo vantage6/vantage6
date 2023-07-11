@@ -747,7 +747,7 @@ class UserClient(ClientBase):
             self.log.info('--> Retrieving additional user info failed!')
             self.log.error(traceback.format_exc())
 
-    def wait_for_results(self, task_id: int, sleep: float = 1) -> dict:
+    def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
         """
         Polls the server to check when results are ready, and returns the
         results when the task is completed.
@@ -756,7 +756,7 @@ class UserClient(ClientBase):
         ----------
         task_id: int
             ID of the task that you are waiting for
-        sleep: float
+        interval: float
             Interval in seconds between checks if task is finished. Default 1.
 
         Returns
@@ -782,7 +782,7 @@ class UserClient(ClientBase):
                 f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
             )
             sys.stdout.flush()
-            time.sleep(sleep)
+            time.sleep(interval)
         sys.stdout.write('\rDone!                  ')
 
         # Re-enable logging
