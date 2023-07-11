@@ -301,7 +301,7 @@ class PermissionManager:
 
         Parameters
         ----------
-        rules: List[Rule]
+        rules: list[:class:`~vantage6.server.model.rule.Rule`]
             List of rules that user is checked to have
 
         Returns

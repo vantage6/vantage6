@@ -1,11 +1,11 @@
 Python client
-======
+=============
 
 This page contains the API reference of the functions in the vantage-client
 package.
 
 User Client
-----------
+-----------
 
 vantage6.client
 +++++++++++++++
@@ -59,11 +59,6 @@ vantage6.tools.mock_client
 .. automodule:: vantage6.tools.mock_client
    :members:
 
-vantage6.tools.dispatch_rpc
-+++++++++++++++++++++++++++
-
-.. automodule:: vantage6.tools.dispatch_rpc
-   :members:
 
 vantage6.tools.util
 +++++++++++++++++++
@@ -72,8 +67,8 @@ vantage6.tools.util
    :members:
 
 
-Custom exceptions
------------------
+Custom client exceptions
+------------------------
 
 vantage6.client.exceptions
 ++++++++++++++++++++++++++

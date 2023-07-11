@@ -123,6 +123,18 @@ the central part of an algorithm to create a subtasks for each node with
 ``client.task.create()``. A full list of all commands that are available
 can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
 
+.. warning::
+
+    The decorators each have one reserved keyword: ``mock_data`` for the
+    ``@data`` decorator and ``mock_client`` for the ``@algorithm_client``
+    decorator. These keywords should not be used as argument names in your
+    algorithm functions.
+
+    The reserved keywords are used by the
+    :ref:`MockAlgorithmClient <mock-test-algo-dev>` to mock the data and the
+    algorithm client. This is useful for testing your algorithm locally.
+
+
 Algorithm wrappers
 ----------------
 
@@ -290,7 +302,7 @@ Central function
 
 .. code:: python
 
-   @client
+   @algorithm_client
    def main(client, *args, **kwargs):
       # Run partial function.
       task = client.task.create(
@@ -324,6 +336,8 @@ Partial function
        return {
            "result": sum(data[colum_name].to_list())
        }
+
+.. _mock-test-algo-dev:
 
 Testing your algorithm
 ----------------------

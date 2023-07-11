@@ -43,9 +43,9 @@ class Rule(Base):
         Scope of the rule
     description : str
         Description of the rule
-    roles : list[Role]
+    roles : list[:class:`.~vantage6.server.model.role.Role`]
         Roles that have this rule
-    users : list[User]
+    users : list[:class:`.~vantage6.server.model.user.User`]
         Users that have this rule
     """
 

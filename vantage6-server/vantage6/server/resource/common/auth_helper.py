@@ -34,7 +34,7 @@ def user_login(
 
     Returns
     -------
-    User or Dict:
+    :class:`~vantage6.server.model.user.User` or dict:
         User SQLAlchemy model if user is logged in, otherwise dictionary with
         error message
     HTTPStatus:
@@ -80,7 +80,7 @@ def notify_user_blocked(
 
     Parameters
     ----------
-    user: User
+    user: :class:`~vantage6.server.model.user.User`
         User who is temporarily blocked
     max_n_attempts: int
         Maximum number of failed login attempts before the account is locked
@@ -126,7 +126,7 @@ def create_qr_uri(user: User) -> dict:
 
     Parameters
     ----------
-    user: User
+    user: :class:`~vantage6.server.model.user.User`
         User for whom two-factor authentication is to be set up
 
     Returns

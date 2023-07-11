@@ -46,7 +46,6 @@ configuration options.
 You can download this file here: :download:`node_config.yaml`
 
 .. literalinclude :: node_config.yaml
-    :language: yaml
 
 .. note::
     Before version 4.0, we used `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
