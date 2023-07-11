@@ -19,10 +19,6 @@ swagger_template = {
                         "type": "string",
                         "description": "Human-readable task description"
                     },
-                    "input": {
-                        "type": "string",
-                        "description": "Task input"
-                    },
                     "name": {
                         "type": "string",
                         "description": "Human-readable task name"
@@ -32,29 +28,38 @@ swagger_template = {
                         "description": "Collaboration id"
                     },
                     "organizations": {
-                        "type": "array",
-                        "items": {"type": "integer"},
+                        "type": "dict",
                         "description": (
-                            "Organization ids in collaboration to create task "
-                            "for"
+                            "List of organizations that should run the task. "
+                            "The key 'id' should give the organization id, and"
+                            " the key 'input' should give the input for that "
+                            "organization. Each input should be a encrypted "
+                            "and/or serialized dictionary that may contain the"
+                            " keys 'method', kwargs', 'args', and 'master'."
                         )
                     },
                     "database": {
                         "type": "string",
                         "description": "Database to use for this task"
-                    },
-                    "master": {
-                        "type": "boolean",
-                        "description": (
-                            "Whether or not this is a master task. Default "
-                            "value is False"
-                        )
                     }
                 },
                 "example": {
                     "name": "human-readable-name",
                     "image": "hello-world",
-                    "collaboration_id": 1
+                    "collaboration_id": 1,
+                    "database": "database-name",
+                    "organizations (to be encrypted/serialized!)": [
+                        {
+                            "id": 1,
+                            "input": {
+                                "method": "method-name",
+                                "kwargs": {"key": "value"},
+                                "args": ["arg1", "arg2"],
+                                "master": True
+                            }
+                        }
+                    ]
+
                 },
                 "required": ["image", "collaboration_id"]
             },
