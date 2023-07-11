@@ -42,6 +42,8 @@ vantage6.tools.wrapper
    :members:
    :show-inheritance:
 
+.. _mock-client-api-ref:
+
 vantage6.tools.mock_client
 ++++++++++++++++++++++++++
 

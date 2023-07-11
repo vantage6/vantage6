@@ -1,8 +1,8 @@
 Algorithm development guide
 ===========================
 
-This page offers a step-by-step guide to develop your own vantage6 algorithms.
-In doing so, we refer to the `algorithm concepts <algo-concepts>`_ section
+This page offers a step-by-step guide to develop a vantage6 algorithm.
+We refer to the `algorithm concepts <algo-concepts>`_ section
 regularly. In that section, we explain the fundamentals of algorithm containers
 in more detail than in this guide.
 
@@ -77,8 +77,8 @@ Let's say you are implementing a function called ``my_function``:
    def my_function(column_name: str):
        pass
 
-Now, you have a lot of freedom as to what arguments you define in your function.
-In this case ``column_name`` is just an example. Note that these arguments
+You have complete freedom as to what arguments you define in your function;
+``column_name`` is just an example. Note that these arguments
 have to be provided by the user when the algorithm is called. This is explained
 :ref:`here <pyclient-create-task>` for the Python client.
 
@@ -94,7 +94,7 @@ can be provided to your algorithm function in the following way:
         pass
 
 The ``@data(2)`` decorator indicates that the first two arguments of the
-function are dataframes that are provided by the vantage6 infrastructure.
+function are dataframes that should be provided by the vantage6 infrastructure.
 In this case, the user would have to specify two databases when calling the
 algorithm. Note that the user should also specify the data type of the database
 and optionally, additional parameters such as a SQL query or the name of a
@@ -103,7 +103,7 @@ worksheet in an Excel file.
 Note that it is also possible to just specify ``@data()`` without an argument -
 in that case, a single dataframe is added to the arguments.
 
-A second decorator that is often used is the ``@algorithm_client`` decorator:
+A second useful decorator is the ``@algorithm_client`` decorator:
 
 .. code:: python
 
@@ -148,9 +148,9 @@ to locate certain files or to add local configuration settings into the
 container.
 
 There are several environment variables that are always available. These are
-listed in the :ref:`table-env-vars` table. In addition, environment variables can be
-added to the container by specifying them using the ``algorithm_env`` option
-in the node configuration file (see the :ref:`example node configuration file <node-configure-structure>`).
+listed in the :ref:`table-env-vars` table. Additional environment variables may
+be added to the container using the ``algorithm_env`` option
+in the node configuration files (see the :ref:`example node configuration file <node-configure-structure>`).
 
 .. _table-env-vars:
 
@@ -222,8 +222,8 @@ algorithm instances that are part of the same task.
 VPN communication is only possible if the docker container exposes ports to
 the VPN network. In the algorithm boilerplate, one port is exposed by default.
 If you need to expose more ports (e.g. for sending different information to
-different parts of your algorithm), you can do so by adding the lines such as
-the following to the Dockerfile:
+different parts of your algorithm), you can do so by adding lines to the
+Dockerfile:
 
 .. code:: bash
 
@@ -266,7 +266,16 @@ These results will be returned to the user after the algorithm has finished.
 Testing your algorithm
 ----------------------
 
-.. TODO MockClient stuff
+It can be helpful to test your algorithm outside of vantage6 using the
+``MockAlgorithmClient``. This may save
+time as it does not require you to set up a test infrastructure with a vantage6
+server and nodes, and allows you to test your algorithm without building a
+docker image every time.
+
+The :ref:`MockAlgorithmClient <mock-client-api-ref>` has the same interface as
+the ``AlgorithmClient``, so it should be easy to switch between the two. An
+example of how you can use the ``MockAlgorithmClient`` to test your algorithm
+is included in the boilerplate code.
 
 Writing documentation
 ---------------------
@@ -292,8 +301,9 @@ available for retrieval by the nodes. The algorithm is packaged in a Docker
 image. A Docker image is created from a Dockerfile, which acts as a blue-print.
 
 The Dockerfile is already present in the boilerplate code. Usually, you do not
-need to change many things in the Dockerfile. However, you should make sure
-to update the ``PKG_NAME`` variable to the name of your algorithm package.
+need to change many things in the Dockerfile; exceptions are mentioned where
+relevant elsewhere on this page. However, you should **always** update the
+``PKG_NAME`` variable to the name of your algorithm package.
 
 
 Package & distribute
@@ -333,6 +343,14 @@ Here are a few examples of how to build and upload your image:
 Now that your algorithm has been uploaded it is available for nodes to retrieve
 when they need it.
 
+.. note::
+
+    We are planning to create an algorithm build service that algorithm
+    developers can use to build and upload their algorithms. This will make
+    the process of building and uploading your algorithm easier, as you will
+    only have to provide the code and the build service will take care of the
+    rest.
+
 Calling your algorithm from vantage6
 ------------------------------------
 
@@ -347,3 +365,5 @@ provide the node with the proper address of the server as detailed
 Once your infrastructure is set up, you can create a task for your algorithm.
 You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
+
+.. todo Add example with ``vdev``
