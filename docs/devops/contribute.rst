@@ -213,20 +213,17 @@ code.
 Local test setup
 ^^^^^^^^^^^^^^^^
 To test your code changes, it may be useful to create a local test setup.
-There are several ways of doing this.
+This can be done by using the commands ``vserver`` and ``vnode`` in combination
+with the options ``--mount-src`` and optionally ``--image``.
 
-1. Use the command ``vserver-local`` and ``vnode-local``. This runs the
-   application in your current activated Python environment.
-2. Use the command ``vserver`` and ``vnode`` in combination with the options
-   ``--mount-src`` and optionally ``--image``.
-  * The ``--mount-src`` option will run your current code in the docker image.
-    The provided path should point towards the root folder of the `vantage6
-    repository <https://github.com/vantage6/vantage6>`_.
-  * The ``--image`` can be used to point towards a custom build infrastructure
-    image. Note that when your code update includes dependency upgrades you
-    need to build a custom infrastructure image as the 'old' image does not
-    contain these and the ``--mount-src`` option will only overwrite the
-    source and not re-install dependencies.
+* The ``--mount-src`` option will run your current code in the docker image.
+  The provided path should point towards the root folder of the `vantage6
+  repository <https://github.com/vantage6/vantage6>`_.
+* The ``--image`` can be used to point towards a custom build infrastructure
+  image. Note that when your code update includes dependency upgrades you
+  need to build a custom infrastructure image as the 'old' image does not
+  contain these and the ``--mount-src`` option will only overwrite the
+  source and not re-install dependencies.
 
 .. note::
 
