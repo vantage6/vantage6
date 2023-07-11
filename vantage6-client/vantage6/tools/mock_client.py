@@ -1,11 +1,14 @@
 import pandas as pd
 import json
+import logging
 
 from typing import Any
 from importlib import import_module
 from copy import deepcopy
 
 from vantage6.tools.wrappers import select_wrapper
+
+module_name = __name__.split('.')[1]
 
 
 class MockAlgorithmClient:
@@ -32,20 +35,60 @@ class MockAlgorithmClient:
         input_data keys are not required.
     module : str
         The name of the module that contains the algorithm.
-    node_id : int, optional
-        Sets the mocked node id that to this value. Defaults to 1.
     collaboration_id : int, optional
         Sets the mocked collaboration id to this value. Defaults to 1.
-    organization_id : int, optional
-        Sets the mocked organization id to this value. Defaults to 1.
+    organization_ids : list[int], optional
+        Set the organization ids to this value. The first value is used for
+        this organization, the rest for child tasks. Defaults to [0, 1, 2, ..].
+    node_ids: list[int], optional
+        Set the node ids to this value. The first value is used for this node,
+        the rest for child tasks. Defaults to [0, 1, 2, ...].
     """
     def __init__(
-        self, datasets: list[dict], module: str, node_id: int = None,
-        collaboration_id: int = None, organization_id: int = None
+        self, datasets: list[dict], module: str, collaboration_id: int = None,
+        organization_ids: int = None, node_ids: int = None,
     ) -> None:
+        self.log = logging.getLogger(module_name)
         self.n = len(datasets)
-        self.datasets_per_org = []
-        for org_datasets in datasets:
+
+        if organization_ids and len(organization_ids) == self.n:
+            self.all_organization_ids = organization_ids
+        else:
+            default_organization_ids = list(range(self.n))
+            if organization_ids:
+                self.log.warning(
+                    "The number of organization ids (%s) does not match the "
+                    "number of datasets (#=%s), using default values (%s) "
+                    "instead",
+                    organization_ids,
+                    self.n,
+                    default_organization_ids,
+                )
+            self.all_organization_ids = default_organization_ids
+
+        self.organization_id = self.all_organization_ids[0]
+
+        # TODO v4+ rename host_node_id to node_id (also in other places)
+        if node_ids and len(node_ids) == self.n:
+            self.all_node_ids = node_ids
+        else:
+            default_node_ids = list(range(self.n))
+            if node_ids:
+                self.log.warning(
+                    "The number of node ids (%s) does not match the number of "
+                    "datasets (#=%s), using default values (%s) instead",
+                    node_ids,
+                    self.n,
+                    default_node_ids,
+                )
+            self.all_node_ids = default_node_ids
+        self.host_node_id = self.all_node_ids[0]
+
+        self.datasets_per_org = {}
+        self.organizations_with_data = []
+        for idx, org_datasets in enumerate(datasets):
+            org_id = self.all_organization_ids[idx]
+            self.organizations_with_data.append(org_id)
             org_data = []
             for dataset in org_datasets:
                 if isinstance(dataset["database"], pd.DataFrame):
@@ -59,8 +102,9 @@ class MockAlgorithmClient:
                             else {}
                         )
                     )
-            self.datasets_per_org.append(org_data)
+            self.datasets_per_org[org_id] = org_data
 
+        self.collaboration_id = collaboration_id if collaboration_id else 1
         self.module_name = module
         self.tasks = []
         self.runs = []
@@ -68,9 +112,6 @@ class MockAlgorithmClient:
 
         self.image = 'mock_image'
         self.database = 'mock_database'
-        self.host_node_id = node_id if node_id else 1
-        self.collaboration_id = collaboration_id if collaboration_id else 1
-        self.organization_id = organization_id if organization_id else 1
 
         self.task = self.Task(self)
         self.result = self.Result(self)
@@ -148,7 +189,7 @@ class MockAlgorithmClient:
                 # has access to the same IDs specified
                 data = self.parent.datasets_per_org[org_id]
                 client_copy = deepcopy(self.parent)
-                client_copy.host_node_id = org_id
+                client_copy.host_node_id = self._select_node(org_id)
                 client_copy.organization_id = org_id
                 result = method(
                     mock_client=self.parent,
@@ -249,6 +290,27 @@ class MockAlgorithmClient:
                     "msg": f"Could not find task with id {task_id}"
                 }
             return self.parent.tasks[task_id]
+
+        def _select_node(self, org_id: int) -> int:
+            """
+            Select a node for the given organization id.
+
+            Parameters
+            ----------
+            org_id : int
+                The organization id.
+
+            Returns
+            -------
+            int
+                The node id.
+            """
+            if not self.parent.all_node_ids or \
+                    not self.parent.all_organization_ids or \
+                    org_id not in self.parent.all_organization_ids:
+                return org_id
+            org_idx = self.parent.all_organization_ids.index(org_id)
+            return self.parent.all_node_ids[org_idx]
 
     class Run(SubClient):
         """
@@ -359,6 +421,11 @@ class MockAlgorithmClient:
             dict
                 A mocked organization.
             """
+            if not id_ == self.parent.organization_id and \
+                    id_ not in self.parent.organizations_with_data:
+                return {
+                    "msg": f"Organization {id_} not found."
+                }
             return {
                 "id": id_,
                 "name": f"mock-{id_}",
@@ -385,7 +452,7 @@ class MockAlgorithmClient:
                 A list of mocked organizations in the collaboration.
             """
             organizations = []
-            for i in range(self.parent.n):
+            for i in self.parent.all_organization_ids:
                 organizations.append(self.get(i))
             return organizations
 
