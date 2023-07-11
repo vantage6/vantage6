@@ -35,10 +35,19 @@ vantage6.client.algorithm_client
 Algorithm tooling
 -----------------
 
-vantage6.tools.wrapper
+.. _wrapper-function-docs:
+
+vantage6.tools.wrappers
 ++++++++++++++++++++++
 
-.. automodule:: vantage6.tools.wrapper
+.. automodule:: vantage6.tools.wrappers
+   :members:
+   :show-inheritance:
+
+vantage6.tools.wrap
+++++++++++++++++++++++
+
+.. automodule:: vantage6.tools.wrap
    :members:
    :show-inheritance:
 

@@ -1,3 +1,5 @@
+.. _algo-dev-guide:
+
 Algorithm development guide
 ===========================
 
@@ -140,6 +142,16 @@ your ``Dockerfile``:
 where ``${PKG_NAME}`` is the name of your algorithm package. The ``wrap_algorithm``
 function will wrap your algorithm.
 
+For R, the command is slightly different:
+
+.. code:: r
+
+   CMD Rscript -e "vtg::docker.wrapper('$PKG_NAME')"
+
+Also, note that this only works for CSV files.
+
+.. _algo-env-vars:
+
 Environment variables
 ---------------------
 
@@ -148,13 +160,15 @@ to locate certain files or to add local configuration settings into the
 container.
 
 There are several environment variables that are always available. These are
-listed in the :ref:`table-env-vars` table. Additional environment variables may
+listed in :numref:`envvartable`. Additional environment variables may
 be added to the container using the ``algorithm_env`` option
-in the node configuration files (see the :ref:`example node configuration file <node-configure-structure>`).
+in the node configuration files (see the
+:ref:`example node configuration file <node-configure-structure>`).
 
 .. _table-env-vars:
 
 .. list-table:: Environment variables
+   :name: envvartable
    :widths: 30 70
    :header-rows: 1
 
@@ -165,7 +179,7 @@ in the node configuration files (see the :ref:`example node configuration file <
        for the algorithms.
    * - ``TOKEN_FILE``
      - Path to the token file. The token file contains a JWT token which can
-       be used to access the vantage6-server. This way the algorithm container
+       be used to access the vantage6 server. This way the algorithm container
        is able to post new tasks and retrieve results.
    * - ``TEMPORARY_FOLDER``
      - Path to the temporary folder. This folder can be used to store
@@ -173,15 +187,17 @@ in the node configuration files (see the :ref:`example node configuration file <
        containers that have the same run_id. Algorithm containers which are
        created from an algorithm container themselves share the same run_id.
    * - ``HOST``
-     - Contains the URL to the vantage6-server.
+     - Contains the URL to the vantage6 server.
    * - ``PORT``
-     - Contains the port to which the vantage6-server listens. Is used in
+     - Contains the port to which the vantage6 server listens. Is used in
        combination with HOST and API_PATH.
    * - ``API_PATH``
-     - Contains the api base path from the vantage6-server.
+     - Contains the api base path from the vantage6 server.
    * - ``[*]_DATABASE_URI``
      - Contains the URI of the local database. The  ``*``  is replaced by the
-       key specified in the node configuration file.
+       label specified in the node configuration file.
+
+.. _vpn-in-algo-dev:
 
 VPN
 ---
@@ -262,6 +278,52 @@ These results will be returned to the user after the algorithm has finished.
     you cannot, for example, return a ``pandas.DataFrame`` or a
     ``numpy.ndarray``. Such objects should be converted to a JSON serializable
     format first.
+
+Example functions
+-----------------
+
+If you have followed the steps above, you may end up with an algorithm that
+looks something like this:
+
+Central function
+~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   @client
+   def main(client, *args, **kwargs):
+      # Run partial function.
+      task = client.task.create(
+         {
+            "method": "my_algorithm",
+            "args": args,
+            "kwargs": kwargs
+         },
+         organization_ids=[...]
+      )
+
+       # wait for the federated part to complete
+       # and return
+       results = wait_and_collect(task)
+
+       return results
+
+Partial function
+~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import pandas as pd
+
+   @data(1)
+   def my_partial_function(data: pd.DataFrame, column_name: str):
+       # do something with the data
+       data[column_name] = data[column_name] + 1
+
+       # return the results
+       return {
+           "result": sum(data[colum_name].to_list())
+       }
 
 Testing your algorithm
 ----------------------
