@@ -65,11 +65,17 @@ export class UserViewComponent extends BaseViewComponent implements OnInit {
     this.user.rules = rules;
   }
 
+  async delete(): Promise<void> {
+    super.delete(this.user, {delete_dependents: true});
+  }
+
   askConfirmDelete(): void {
-    let message = '';
+    let message = (
+        'Note that all tasks that this user created will also be deleted.'
+    );
     if (this.user.id === this.userPermission.user.id) {
-      message =
-        'This is your own account! You will be logged out if you delete it.';
+      message += '<br><b>This is your own account! You will be logged out if '+
+                 'you delete it.</b>';
     }
     super.askConfirmDelete(this.user, ResType.USER, message);
   }

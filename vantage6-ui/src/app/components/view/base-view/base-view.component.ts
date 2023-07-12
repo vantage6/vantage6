@@ -4,7 +4,6 @@ import { ModalService } from 'src/app/services/common/modal.service';
 import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { ExitMode, ResType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
-import { ModalMessageComponent } from '../../modal/modal-message/modal-message.component';
 
 @Component({
   selector: 'app-base-view',
@@ -26,9 +25,9 @@ export class BaseViewComponent implements OnInit {
     this.dataService.save(resource);
   }
 
-  async delete(resource: Resource): Promise<void> {
+  async delete(resource: Resource, params: any = {}): Promise<void> {
     this.apiService
-      .delete(resource)
+      .delete(resource, params)
       .toPromise()
       .then((data) => {
         this.deletingResource.emit(resource);

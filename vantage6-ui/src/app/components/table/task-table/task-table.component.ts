@@ -326,7 +326,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   askConfirmDelete(): void {
     // open modal window to ask for confirmation of irreversible delete action
     this.modalService
-      .openDeleteModal(this.selection.selected, ResType.TASK)
+      .openDeleteModal(
+        this.selection.selected,
+        ResType.TASK,
+        "Note that this will also delete all associated subtasks and results."
+      )
       .result.then((exit_mode) => {
         if (exit_mode === ExitMode.DELETE) {
           this.deleteSelectedTasks();

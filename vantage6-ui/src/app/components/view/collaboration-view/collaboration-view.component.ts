@@ -197,21 +197,14 @@ configuration file for the node using 'vnode new'.`,
   }
 
   async delete(): Promise<void> {
-    // delete nodes
-    for (let org of this.collaboration.organizations) {
-      if (org.node) {
-        await this.nodeApiService.delete(org.node).toPromise();
-        this.nodeDataService.remove(org.node);
-      }
-    }
-    super.delete(this.collaboration);
+    super.delete(this.collaboration, {delete_dependents: true});
   }
 
   askConfirmDelete(): void {
     super.askConfirmDelete(
       this.collaboration,
       ResType.COLLABORATION,
-      'Note that any registered nodes in this collaboration will also be deleted.'
+      'Note that nodes and tasks from this collaboration will also be deleted!'
     );
   }
 }
