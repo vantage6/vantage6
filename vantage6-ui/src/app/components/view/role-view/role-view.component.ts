@@ -45,20 +45,24 @@ export class RoleViewComponent
   }
 
   async setUsers(): Promise<void> {
-    this.users_with_this_role = await this.userDataService.list_with_params(
+    (await this.userDataService.list_with_params(
       {
         role_id: this.role.id,
-      },
-      false
-    );
+      }
+    )).subscribe((users) => {
+      this.users_with_this_role = users;
+    });
   }
 
   async setRules(): Promise<void> {
-    this.role.rules = await this.ruleDataService.list_with_params(
+    (await this.ruleDataService.list_with_params(
       allPages(), {role_id: this.role.id}
-    );
-    // renew role object to trigger ngOnChange detection in child components
-    this.role = {...this.role};
+    )).subscribe((rules) => {
+      this.role.rules = rules;
+
+      // renew role object to trigger ngOnChange detection in child components
+      this.role = {...this.role};
+    });
   }
 
   isDefaultRole(): boolean {

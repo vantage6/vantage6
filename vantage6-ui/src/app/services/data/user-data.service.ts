@@ -77,16 +77,20 @@ export class UserDataService extends BaseDataService {
       // for single resource, include the internal resources
       let user_value = user.value;
       // request the rules for the current user
-      user_value.rules = await this.ruleDataService.list_with_params(
+      (await this.ruleDataService.list_with_params(
         allPages(),
         { user_id: user_value.id }
-      );
+      )).subscribe((rules) => {
+        user_value.rules = rules;
+      });
       // add roles to the user
-      user_value.roles = await this.roleDataService.list_with_params(
+      (await this.roleDataService.list_with_params(
         allPages(),
         { user_id: user_value.id },
         true
-      );
+      )).subscribe((roles) => {
+        user_value.roles = roles;
+      });
       if (only_extra_rules) {
         // remove rules that are already included in the roles
         for (let role of user_value.roles) {
@@ -115,13 +119,13 @@ export class UserDataService extends BaseDataService {
     request_params: any = {},
     save: boolean = true,
     pagination: Pagination = allPages()
-  ): Promise<User[]> {
+  ): Promise<Observable<User[]>> {
     return (await super.list_with_params_base(
       this.convertJsonService.getUser,
       request_params,
       pagination,
       save
-    )) as User[];
+    )).asObservable() as Observable<User[]>;
   }
 
   async org_list(

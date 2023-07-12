@@ -43,7 +43,7 @@ export class RuleDataService extends BaseDataService {
   async list_with_params(
     pagination: Pagination = allPages(),
     request_params: any = {}
-  ): Promise<Rule[]> {
+  ): Promise<Observable<Rule[]>> {
     if (pagination.all_pages === true) {
       request_params = { ...request_params, no_pagination: 1 };
     }
@@ -51,7 +51,7 @@ export class RuleDataService extends BaseDataService {
       this.convertJsonService.getRule,
       request_params,
       pagination
-    )) as Rule[];
+    )).asObservable() as Observable<Rule[]>;
   }
 
   async ruleGroups(): Promise<Observable<RuleGroup[]>> {

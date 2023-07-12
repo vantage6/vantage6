@@ -66,10 +66,12 @@ export class TaskViewComponent
   }
 
   async setChildren(): Promise<void> {
-    this.task.children = await this.taskDataService.list_with_params(
+    (await this.taskDataService.list_with_params(
         allPages(), { parent_id: this.task.id }
-    )
-    this.task.children_ids = getIdsFromArray(this.task.children);
+    )).subscribe((tasks) => {
+      this.task.children = tasks;
+      this.task.children_ids = getIdsFromArray(this.task.children);
+    });
   }
 
   async setResultOrganizations(): Promise<void> {

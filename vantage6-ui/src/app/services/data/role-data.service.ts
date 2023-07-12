@@ -104,16 +104,18 @@ export class RoleDataService extends BaseDataService {
     pagination: Pagination = allPages(),
     request_params: any = {},
     include_rules: boolean = false
-  ): Promise<Role[]> {
+  ): Promise<Observable<Role[]>> {
     let roles = (await super.list_with_params_base(
       this.convertJsonService.getRole,
       request_params,
       pagination
-    )) as Role[];
+    )) as BehaviorSubject<Role[]>;
     if (include_rules) {
-      roles = await this.addRulesToRoles(roles);
+      let roles_value = (roles as BehaviorSubject<Role[]>).value;
+      roles_value = await this.addRulesToRoles(roles_value);
+      roles.next(roles_value);
     }
-    return roles;
+    return roles.asObservable() as Observable<Role[]>;
   }
 
   async org_list(
@@ -159,10 +161,12 @@ export class RoleDataService extends BaseDataService {
   }
 
   private async addRulesToRole(role: Role): Promise<Role> {
-    role.rules = await this.ruleDataService.list_with_params(
+    (await this.ruleDataService.list_with_params(
       allPages(),
       { role_id: role.id }
-    );
+    )).subscribe((rules) => {
+      role.rules = rules;
+    });
     return role;
   }
 }

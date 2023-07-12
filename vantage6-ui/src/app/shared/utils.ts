@@ -7,6 +7,10 @@ export function deepcopy(obj: any): any {
   // return Object.assign({}, obj);
 }
 
+export function objectEquals(x: any, y: any): boolean {
+  return JSON.stringify(x) === JSON.stringify(y);
+}
+
 export function removeMatchedIdFromArray(array: any[], id: number): any[] {
   // remove the elements from an array that have a certain id
   return array.filter(function (elem: any) {

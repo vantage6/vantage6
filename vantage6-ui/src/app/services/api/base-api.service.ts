@@ -84,14 +84,14 @@ export abstract class BaseApiService {
 
   async getResources(
     convertJsonFunc: Function,
-    pagination: Pagination,
+    all_pages: boolean = false,
     additionalConvertArgs: Resource[][] = [],
     request_params: any = {}
   ): Promise<Resource[]> {
+    if (all_pages){
+        request_params['page'] = 1;
+    }
     // get data of resources that logged-in user is allowed to view
-    if (pagination.page) request_params['page'] = pagination.page;
-    if (pagination.page_size) request_params['per_page'] = pagination.page_size;
-
     let response = await this.list(request_params).toPromise();
 
     // get total count of resources from the headers (not just for current page)
@@ -105,16 +105,16 @@ export abstract class BaseApiService {
     }
 
     // if all pages are requested, get data of all pages
-    if (pagination.all_pages) {
-      let page = pagination.page ? pagination.page : 1;
+    if (all_pages) {
+      let page = 2;
       while (json_data.links['next']) {
-        page = page + 1;
         request_params['page'] = page;
         response = await this.list(request_params).toPromise();
         json_data = response.body;
         for (let dic of json_data.data) {
           resources.push(convertJsonFunc(dic, ...additionalConvertArgs));
         }
+        page = page + 1;
       }
     }
 
