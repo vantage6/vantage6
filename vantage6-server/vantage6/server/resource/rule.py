@@ -160,9 +160,14 @@ class Rules(ServicesResources):
                     db.UserPermission.c.user_id == args['user_id']
                  ))
 
+        # check if pagination is disabled
+        paginate = True
+        if 'no_pagination' in args and args['no_pagination'] == '1':
+            paginate = False
+
         # paginate results
         try:
-            page = Pagination.from_query(q, request)
+            page = Pagination.from_query(q, request, paginate=paginate)
         except ValueError as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 

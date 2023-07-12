@@ -159,6 +159,7 @@ class Pagination:
     @classmethod
     def from_query(
         cls, query: sqlalchemy.orm.query, request: flask.Request,
+        paginate: bool = True
     ) -> Pagination:
         """
         Create a Pagination object from a query.
@@ -169,6 +170,8 @@ class Pagination:
             Query to paginate
         request : flask.Request
             Request object
+        paginate : bool
+            Whether to paginate the query or not, default True
 
         Returns
         -------
@@ -182,18 +185,27 @@ class Pagination:
         total = query.distinct().order_by(None).count()
 
         # check if pagination is desired, else return all records
-        page_id = request.args.get('page')
-        if not page_id:
+        if paginate:
+            page_id = request.args.get('page')
+            if not page_id:
+                page_id = 1
+                per_page = total or 1
+            else:
+                page_id = int(page_id)
+                per_page = int(request.args.get('per_page', 10))
+
+            if page_id <= 0:
+                raise AttributeError('page needs to be >= 1')
+            if per_page <= 0:
+                raise AttributeError('per_page needs to be >= 1')
+        else:
             page_id = 1
             per_page = total or 1
-        else:
-            page_id = int(page_id)
-            per_page = int(request.args.get('per_page', 10))
 
-        if page_id <= 0:
-            raise AttributeError('page needs to be >= 1')
-        if per_page <= 0:
-            raise AttributeError('per_page needs to be >= 1')
+        # FIXME BvB 2020-02-09 good error handling if sort is not a valid
+        #  field
+        if request.args.get('sort', False):
+            query = cls._add_sorting(query, request.args.get('sort'))
 
         items = query.distinct().limit(per_page).offset((page_id-1)*per_page)\
             .all()
