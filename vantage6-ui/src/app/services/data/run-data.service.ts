@@ -38,12 +38,12 @@ export class RunDataService extends BaseDataService {
     });
   }
 
+  /**
+   * Update the cached observables per task id.
+   *
+   * @param resources The resources to update the observables with.
+   */
   updateObsPerTask(resources: Run[]): void {
-    /**
-     * Update the cached observables per task id.
-     *
-     * @param resources The resources to update the observables with.
-     */
     if (this.queried_task_ids.length === 0) return;
     for (let task_id of this.queried_task_ids) {
       if (task_id in this.resources_per_task) {
@@ -58,18 +58,18 @@ export class RunDataService extends BaseDataService {
     }
   }
 
+  /**
+   * Get all runs for a task. If the runs are not in the cache, they will be
+   * requested from the vantage6 server.
+   *
+   * @param task_id The id of the task to get the runs for.
+   * @param force_refresh Whether to force a refresh of the cache.
+   * @returns An observable of the runs.
+   */
   async get_by_task_id(
     task_id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Run[]>> {
-    /**
-     * Get all runs for a task. If the runs are not in the cache, they will be
-     * requested from the vantage6 server.
-     *
-     * @param task_id The id of the task to get the runs for.
-     * @param force_refresh Whether to force a refresh of the cache.
-     * @returns An observable of the runs.
-     */
     // get resources by task ID
     if (force_refresh || !this.queried_task_ids.includes(task_id)) {
       if (!(task_id in this.resources_per_task)) {
@@ -85,24 +85,24 @@ export class RunDataService extends BaseDataService {
     return this.resources_per_task[task_id].asObservable();
   }
 
+  /**
+   * Save a run to the cache.
+   *
+   * @param run The run to save.
+   */
   save(run: Run): void {
-    /**
-     * Save a run to the cache.
-     *
-     * @param run The run to save.
-     */
     // don't save organization along with run as this can lead to loop
     // of saves when then the organization is updated, then run again, etc
     if (run.organization) run.organization = undefined;
     super.save(run);
   }
 
+  /**
+   * Update the run when a socket event is received.
+   *
+   * @param data The data received from the socket event.
+   */
   updateRunOnSocketEvent(data: any): void {
-    /**
-     * Update the run when a socket event is received.
-     *
-     * @param data The data received from the socket event.
-     */
     if (data.status === TaskStatus.COMPLETED) {
       // TODO improve this code: now we wait for 5 seconds to retrieve results
       // when we get a socket update says result is finished, so that we are
