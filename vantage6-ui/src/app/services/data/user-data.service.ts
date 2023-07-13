@@ -16,6 +16,9 @@ import {
 } from 'src/app/interfaces/utils';
 import { getIdsFromArray, removeMatchedIdsFromArray } from 'src/app/shared/utils';
 
+/**
+ * Service for retrieving and updating user data.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -32,7 +35,14 @@ export class UserDataService extends BaseDataService {
     super(apiService, convertJsonService);
   }
 
-  updateObsById(resources: User[]) {
+  updateObsById(resources: User[]): void {
+    /**
+     * Update the cache for the given resources.
+     *
+     * This function is an override of the base class function.
+     *
+     * @param resources The resources to update the cache for.
+     */
     for (let res of resources) {
       if (res.id in this.resources_by_id) {
         let cur_val = this.resources_by_id[res.id].value as User;
@@ -52,6 +62,14 @@ export class UserDataService extends BaseDataService {
   }
 
   async getDependentResources(): Promise<Resource[][]> {
+    /**
+     * Get the rules and roles, which are required to get users. This function
+     * should be called before getting the users.
+     *
+     * This is an override of the base class function.
+     *
+     * @returns An array of rules and roles, which are required to get users.
+     */
     // TODO is this required? It seems more data may be collected than is needed
     (await this.ruleDataService.list(allPages())).subscribe((rules) => {
       this.rules = rules;
@@ -68,6 +86,18 @@ export class UserDataService extends BaseDataService {
     only_extra_rules: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<User>> {
+    /**
+     * Get a user by id. If the user is not in the cache, it will be requested
+     * from the vantage6 server.
+     *
+     * @param id The id of the user to get.
+     * @param include_links Whether to include the rules and roles associated
+     * with the user.
+     * @param only_extra_rules Whether to only include rules that are not
+     * already included in the roles.
+     * @param force_refresh Whether to force a refresh of the cache.
+     * @returns An observable of the user.
+     */
     let user = await super.get_base(
       id,
       this.convertJsonService.getUser,
@@ -108,6 +138,14 @@ export class UserDataService extends BaseDataService {
     pagination: Pagination = defaultFirstPage(),
     force_refresh: boolean = false
   ): Promise<Observable<User[]>> {
+    /**
+     * Get all users. If the users are not in the cache, they will be requested
+     * from the vantage6 server.
+     *
+     * @param pagination The pagination parameters to use.
+     * @param force_refresh Whether to force a refresh of the cache.
+     * @returns An observable of the users.
+     */
     return (await super.list_base(
       this.convertJsonService.getUser,
       pagination,
@@ -120,6 +158,15 @@ export class UserDataService extends BaseDataService {
     save: boolean = true,
     pagination: Pagination = allPages()
   ): Promise<Observable<User[]>> {
+    /**
+     * Get users with the given parameters. If the users are not in the cache,
+     * they will be requested from the vantage6 server.
+     *
+     * @param request_params The parameters to use in the request.
+     * @param save Whether to save the users to the cache.
+     * @param pagination The pagination parameters to use.
+     * @returns An observable of the users.
+     */
     return (await super.list_with_params_base(
       this.convertJsonService.getUser,
       request_params,
@@ -133,6 +180,15 @@ export class UserDataService extends BaseDataService {
     force_refresh: boolean = false,
     pagination: Pagination = allPages()
   ): Promise<Observable<User[]>> {
+    /**
+     * Get all users for an organization. If the users are not in the cache,
+     * they will be requested from the vantage6 server.
+     *
+     * @param organization_id The id of the organization to get the users for.
+     * @param force_refresh Whether to force a refresh of the cache.
+     * @param pagination The pagination parameters to use.
+     * @returns An observable of the users.
+     */
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getUser,
@@ -141,7 +197,12 @@ export class UserDataService extends BaseDataService {
     )).asObservable() as Observable<User[]>;
   }
 
-  save(user: User) {
+  save(user: User): void {
+    /**
+     * Save a user to the cache.
+     *
+     * @param user The user to save.
+     */
     // remove organization - these should be set within components where
     // needed. Delete them here to prevent endless loop of updates
     if (user.organization) user.organization = undefined;

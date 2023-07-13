@@ -8,6 +8,9 @@ import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { deepcopy } from 'src/app/shared/utils';
 
+/**
+ * Service for retrieving and updating rule data.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -26,6 +29,18 @@ export class RuleDataService extends BaseDataService {
     force_refresh: boolean = false,
     user_id: number | null = null
   ): Promise<Observable<Rule[]>> {
+    /**
+     * Get all rules. If the rules are not in the cache, they will be requested
+     * from the vantage6 server.
+     *
+     * @param pagination The pagination parameters to use.
+     * @param force_refresh Whether to force a refresh of the cache.
+     * @param user_id The id of the user to get the rules for. If null, get all
+     * rules.
+     * @returns An observable of the rules.
+     */
+    // TODO instead of having user_id as a parameter, those rules should be
+    // obtained through the list_with_params function
     // only get rules for specific user if requested
     let params: any = user_id === null ? {} : { user_id: user_id };
     if (pagination.all_pages === true) {
@@ -44,6 +59,14 @@ export class RuleDataService extends BaseDataService {
     pagination: Pagination = allPages(),
     request_params: any = {}
   ): Promise<Observable<Rule[]>> {
+    /**
+     * Get rules with the given parameters. If the rules are not in the cache,
+     * they will be requested from the vantage6 server.
+     *
+     * @param pagination The pagination parameters to use.
+     * @param request_params The parameters to use in the request.
+     * @returns An observable of the rules.
+     */
     if (pagination.all_pages === true) {
       request_params = { ...request_params, no_pagination: 1 };
     }
@@ -55,6 +78,12 @@ export class RuleDataService extends BaseDataService {
   }
 
   async ruleGroups(): Promise<Observable<RuleGroup[]>> {
+    /**
+     * Get the rules and then divide them in groups, based on resource, scope
+     * and operation.
+     *
+     * @returns An observable of the rule groups.
+     */
     if (this.rule_groups.value.length > 0) {
       return this.rule_groups.asObservable();
     }
@@ -62,23 +91,32 @@ export class RuleDataService extends BaseDataService {
     // set list of all rules
     await this.list();
 
-    this._setRuleGroups();
+    this.setRuleGroups();
 
     return this.rule_groups.asObservable();
   }
 
-  _setRuleGroups(): void {
+  private setRuleGroups(): void {
+    /**
+     * Divide the rules in groups, based on resource, scope and operation.
+     */
     // sort rules by resource, then scope, then operation
     this.resource_list.next(
-      this._sortRules(this.resource_list.value as Rule[]) as Rule[]
+      this.sortRules(this.resource_list.value as Rule[]) as Rule[]
     );
 
     // divide sorted rules in groups
-    let rule_groups = this._makeRuleGroups();
+    let rule_groups = this.makeRuleGroups();
     this.rule_groups.next(rule_groups);
   }
 
-  _sortRules(rules: Rule[]): Rule[] {
+  private sortRules(rules: Rule[]): Rule[] {
+    /**
+     * Sort rules by resource, then scope, then operation.
+     *
+     * @param rules The rules to sort.
+     * @returns The sorted rules.
+     */
     const resource_order = Object.values(ResType);
     const scope_order = Object.values(ScopeType);
     const operation_order = Object.values(OpsType);
@@ -99,13 +137,18 @@ export class RuleDataService extends BaseDataService {
     });
   }
 
-  _makeRuleGroups(): RuleGroup[] {
+  private makeRuleGroups(): RuleGroup[] {
+    /**
+     * Create the rule groups from the sorted rules.
+     *
+     * @returns The rule groups.
+     */
     let rule_groups: RuleGroup[] = [];
     let current_rule_group: RuleGroup | undefined = undefined;
     for (let rule of this.resource_list.value as Rule[]) {
       if (current_rule_group === undefined) {
         // first rule: make new rule group
-        current_rule_group = this._newRuleGroup(rule);
+        current_rule_group = this.newRuleGroup(rule);
       } else if (
         current_rule_group.resource === rule.resource &&
         current_rule_group.scope === rule.scope
@@ -118,7 +161,7 @@ export class RuleDataService extends BaseDataService {
         rule_groups.push(deepcopy(current_rule_group));
 
         // start new rule group
-        current_rule_group = this._newRuleGroup(rule);
+        current_rule_group = this.newRuleGroup(rule);
       }
     }
     // add last rule group
@@ -128,7 +171,10 @@ export class RuleDataService extends BaseDataService {
     return rule_groups;
   }
 
-  _newRuleGroup(rule: Rule): RuleGroup {
+  private newRuleGroup(rule: Rule): RuleGroup {
+    /**
+     * Create a new rule group with the given rule.
+     */
     return {
       resource: rule.resource,
       scope: rule.scope,

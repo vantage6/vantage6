@@ -8,6 +8,9 @@ import { ConvertJsonService } from '../common/convert-json.service';
 import { SocketioConnectService } from '../common/socketio-connect.service';
 import { BaseDataService } from './base-data.service';
 
+/**
+ * Service for retrieving and updating run data.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -15,7 +18,7 @@ export class RunDataService extends BaseDataService {
   queried_task_ids: number[] = [];
   resources_per_task: { [task_id: number]: BehaviorSubject<Run[]> } = {};
 
-  // TODO update on run updates
+  // TODO update when receiving socket events that runs are updated
   constructor(
     protected apiService: RunApiService,
     protected convertJsonService: ConvertJsonService,
@@ -36,6 +39,11 @@ export class RunDataService extends BaseDataService {
   }
 
   updateObsPerTask(resources: Run[]): void {
+    /**
+     * Update the cached observables per task id.
+     *
+     * @param resources The resources to update the observables with.
+     */
     if (this.queried_task_ids.length === 0) return;
     for (let task_id of this.queried_task_ids) {
       if (task_id in this.resources_per_task) {
@@ -54,6 +62,14 @@ export class RunDataService extends BaseDataService {
     task_id: number,
     force_refresh: boolean = false
   ): Promise<Observable<Run[]>> {
+    /**
+     * Get all runs for a task. If the runs are not in the cache, they will be
+     * requested from the vantage6 server.
+     *
+     * @param task_id The id of the task to get the runs for.
+     * @param force_refresh Whether to force a refresh of the cache.
+     * @returns An observable of the runs.
+     */
     // get resources by task ID
     if (force_refresh || !this.queried_task_ids.includes(task_id)) {
       if (!(task_id in this.resources_per_task)) {
@@ -69,7 +85,12 @@ export class RunDataService extends BaseDataService {
     return this.resources_per_task[task_id].asObservable();
   }
 
-  save(run: Run) {
+  save(run: Run): void {
+    /**
+     * Save a run to the cache.
+     *
+     * @param run The run to save.
+     */
     // don't save organization along with run as this can lead to loop
     // of saves when then the organization is updated, then run again, etc
     if (run.organization) run.organization = undefined;
@@ -77,6 +98,11 @@ export class RunDataService extends BaseDataService {
   }
 
   updateRunOnSocketEvent(data: any): void {
+    /**
+     * Update the run when a socket event is received.
+     *
+     * @param data The data received from the socket event.
+     */
     if (data.status === TaskStatus.COMPLETED) {
       // TODO improve this code: now we wait for 5 seconds to retrieve results
       // when we get a socket update says result is finished, so that we are
