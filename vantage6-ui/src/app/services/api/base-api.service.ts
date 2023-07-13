@@ -5,7 +5,7 @@ import { ResType } from 'src/app/shared/enum';
 
 import { ModalService } from 'src/app/services/common/modal.service';
 import { Resource } from 'src/app/shared/types';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 /**
  * Base class for all api services. This class contains the basic functions
@@ -58,7 +58,7 @@ export abstract class BaseApiService {
    * @param resource The resource to update.
    * @returns An observable for the request response.
    */
-  update(resource: Resource): any {
+  update(resource: Resource): Observable<any> {
     const data = this.get_data(resource);
     return this.http.patch<any>(
       environment.api_url + '/' + resource.type + '/' + resource.id,
@@ -72,7 +72,7 @@ export abstract class BaseApiService {
    * @param resource The resource to create.
    * @returns An observable for the request response.
    */
-  create(resource: Resource): any {
+  create(resource: Resource): Observable<any> {
     const data = this.get_data(resource);
     return this.http.post<any>(environment.api_url + '/' + resource.type, data);
   }
