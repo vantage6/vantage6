@@ -5,6 +5,9 @@ import { Task } from 'src/app/interfaces/task';
 import { HttpClient } from '@angular/common/http';
 import { ModalService } from '../common/modal.service';
 
+/**
+ * Service for interacting with the task endpoints of the API
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -16,6 +19,12 @@ export class TaskApiService extends BaseApiService {
     super(ResType.TASK, http, modalService);
   }
 
+  /**
+   * Get data for creating a task in the API.
+   *
+   * @param task The task object to get the data for.
+   * @returns A dictionary with the data for creating the task.
+   */
   get_data(task: Task): any {
     if (!task.input || !task.organizations) {
       return; // this is only for creating tasks, which requires input

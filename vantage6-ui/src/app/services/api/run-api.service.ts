@@ -6,7 +6,11 @@ import { environment } from 'src/environments/environment';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { ModalService } from '../common/modal.service';
 import { BaseApiService } from './base-api.service';
+import { Observable } from 'rxjs';
 
+/**
+ * Service for interacting with the run endpoints of the API
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -19,30 +23,34 @@ export class RunApiService extends BaseApiService {
     super(ResType.RUN, http, modalService);
   }
 
-  get_by_task_id(task_id: number) {
+  /**
+   * Get a run by id from the API.
+   *
+   * @param id The id of the run to get.
+   * @returns An observable for the request response.
+   */
+  get_by_task_id(task_id: number): Observable<any> {
     return this.http.get(environment.api_url + '/run', {
       params: { task_id: task_id },
     });
   }
 
-  // TODO this function is only required when creating/updating resources, so
-  // for a result it is never used I think (?)
+  /**
+   * Implement the abstract get_data function of the base class. This is not
+   * useful for algorithm runs, since they should not be updated via this
+   * user interface.
+   */
   get_data(run: Run): any {
-    let data: any = {
-      input: run.input,
-      result: run.result,
-      log: run.log,
-      task_id: run.task_id,
-      organization_id: run.organization_id,
-      ports: run.ports,
-      started_at: run.started_at,
-      assigned_at: run.assigned_at,
-      finished_at: run.finished_at,
-      port_ids: run.port_ids,
-    };
-    return data;
+    // raise error if this function is called
+    throw new Error('Algorithm runs cannot be updated by the user interface.');
   }
 
+  /**
+   * Get the algorithm runs for the given task id.
+   *
+   * @param task_id The id of the task for which to get the algorithm runs.
+   * @returns An array of algorithm runs.
+   */
   async getResourcesByTaskId(task_id: number): Promise<Run[]> {
     // get data of resources that logged-in user is allowed to view
     let response: any = await this.get_by_task_id(task_id).toPromise();
