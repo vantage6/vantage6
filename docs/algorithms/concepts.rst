@@ -29,10 +29,12 @@ explain the fundamentals of algorithm containers.
 Algorithm structure
 -------------------
 
-Multi-party analyses commonly have an orchestration part and a federated part,
-where the orchestration part is responsible for combining the partial results of
-the federated part, and the federated part is responsible for the actual
-analysis.
+Multi-party analyses commonly have an orchestator or aggregator part and a
+remote part. The remote part is responsible for the actual analysis and the
+aggregator part is responsible for combining the partial results of
+the remote parts. An alternative to an aggregator is an orchestrator, which
+does not combine the partial results itself, but instead orchestrates the remote
+parts in a certain way that also leads to a global result.
 
 In vantage6, we refer to the orchestration part as the **central function** and
 the federated part as the **partial function**.
@@ -63,8 +65,8 @@ Input & output
 
 The algorithm runs in an isolated environment at the data station.
 It is important to limit the connectivity and accessability of an algorithm
-run for security reasons. For instance, algorithms cannot access the general
-internet while they are running.
+run for security reasons. For instance, by default, algorithms cannot access the
+internet.
 
 In order for the algorithm to do its work, it needs to be provided with several
 environment variables and file mounts. The exact environment variables that

@@ -43,11 +43,11 @@ The functions that will be available to the user have to be defined in the
 ``__init__.py`` file at the base of your algorithm module. Other than that,
 you have complete freedom in which functions you implement.
 
-Often, vantage6 algorithms consists of two parts: a central part and a
-partial or federated part. The partial or federated part is the
-part that is executed at each the nodes that participates in an analysis.
-The central part is responsible for orchestrating the algorithm and combining
-the partial results. However, this structure is not a requirement.
+Vantage6 algorithms commonly have an orchestator or aggregator part and a
+remote part. The orchestrator part is responsible for combining the partial
+results of the remote parts. The remote part is usually executed at each of the
+nodes included in the analysis. While this structure is common for vantage6
+algorithms, it is not required.
 
 If you do follow this structure however, we recommend the following file
 structure:
@@ -98,8 +98,8 @@ can be provided to your algorithm function in the following way:
 The ``@data(2)`` decorator indicates that the first two arguments of the
 function are dataframes that should be provided by the vantage6 infrastructure.
 In this case, the user would have to specify two databases when calling the
-algorithm. Note that the user should also specify the data type of the database
-and optionally, additional parameters such as a SQL query or the name of a
+algorithm. Note that depending on the type of the database used, the user may
+also have to specify additional parameters such as a SQL query or the name of a
 worksheet in an Excel file.
 
 Note that it is also possible to just specify ``@data()`` without an argument -
@@ -160,7 +160,7 @@ For R, the command is slightly different:
 
    CMD Rscript -e "vtg::docker.wrapper('$PKG_NAME')"
 
-Also, note that this only works for CSV files.
+Also, note that when using R, this only works for CSV files.
 
 .. _algo-env-vars:
 
