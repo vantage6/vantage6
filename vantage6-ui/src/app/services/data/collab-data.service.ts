@@ -38,37 +38,6 @@ export class CollabDataService extends BaseDataService {
     super(collabApiService, convertJsonService);
   }
 
-  updateObsPerOrg(resources: Resource[]) {
-    // collaborations should be updated in slightly different way from super
-    // function as they contain multiple organizations and also (as consequence)
-    // we could also have incomplete data for specific organizations
-    if (!this.requested_org_lists) return;
-    for (let org_id of this.requested_org_lists) {
-      if (org_id in this.resources_per_org) {
-        this.resources_per_org[org_id].next(
-          this.getCollabsForOrgId(resources as Collaboration[], org_id)
-        );
-      } else {
-        this.resources_per_org[org_id] = new BehaviorSubject<Resource[]>(
-          this.getCollabsForOrgId(resources as Collaboration[], org_id)
-        );
-      }
-    }
-  }
-
-  private getCollabsForOrgId(
-    resources: Collaboration[],
-    org_id: number
-  ): Resource[] {
-    let org_resources: Resource[] = [];
-    for (let r of resources) {
-      if (arrayContains(r.organization_ids, org_id)) {
-        org_resources.push(r);
-      }
-    }
-    return org_resources;
-  }
-
   async get(
     id: number,
     include_links: boolean = false,

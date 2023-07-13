@@ -38,34 +38,6 @@ export class RoleDataService extends BaseDataService {
     return [this.rules];
   }
 
-  updateObsPerOrg(resources: Resource[]) {
-    // This overwrites the super() method to ensure that default roles
-    // (with organization_id=null) are also included in each organization
-    if (!this.requested_org_lists) return;
-    for (let org_id of this.requested_org_lists) {
-      if (org_id in this.resources_per_org) {
-        this.resources_per_org[org_id].next(
-          this.getRolesForOrgId(resources as Role[], org_id)
-        );
-      } else {
-        this.resources_per_org[org_id] = new BehaviorSubject<Resource[]>(
-          this.getRolesForOrgId(resources as Role[], org_id)
-        );
-      }
-    }
-  }
-
-  private getRolesForOrgId(roles: Role[], org_id: number): Role[] {
-    let org_resources: Role[] = [];
-    for (let r of roles) {
-      if (r.organization_id === org_id || r.organization_id === null) {
-        org_resources.push(r);
-      }
-    }
-    org_resources = this.remove_non_user_roles(org_resources);
-    return org_resources;
-  }
-
   async get(
     id: number,
     include_links: boolean = false,

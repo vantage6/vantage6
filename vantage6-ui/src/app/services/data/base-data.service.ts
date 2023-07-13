@@ -23,11 +23,8 @@ import { Pagination, getPageId, getPageSize } from 'src/app/interfaces/utils';
 export abstract class BaseDataService {
   resource_list = new BehaviorSubject<Resource[]>([]);
   resources_by_params: { [params: string]: BehaviorSubject<Resource[]> } = {};
-  resources_per_org: { [org_id: number]: BehaviorSubject<Resource[]> } = {};
-  resources_per_col: { [col_id: number]: BehaviorSubject<Resource[]> } = {};
   resources_by_id: { [id: number]: BehaviorSubject<Resource | null> } = {};
-  resources_by_pagination: { [page_id: string]: BehaviorSubject<Resource[]> } =
-    {};
+
   // TODO this boolean should depend on how many resources there are in total
   // in the database
   has_queried_list: boolean = false;
@@ -214,19 +211,6 @@ export abstract class BaseDataService {
       this.total_resource_count += 1;
     }
     this.resource_list.next(updated_list);
-    // update pagination lists
-    for (let page_id in this.resources_by_pagination) {
-      let page_resources = this.resources_by_pagination[page_id];
-      if (arrayContainsObjWithId(resource.id, page_resources.value)) {
-        let updated_page_resources = [...page_resources.value];
-        updated_page_resources = addOrReplace(updated_page_resources, resource);
-        this.resources_by_pagination[page_id].next(updated_page_resources);
-      } else if (page_resources.value.length < getPageSize(page_id)) {
-        let updated_page_resources = [...page_resources.value];
-        updated_page_resources = addOrReplace(updated_page_resources, resource);
-        this.resources_by_pagination[page_id].next(updated_page_resources);
-      }
-    }
   }
 
   public remove(resource: Resource): void {
@@ -236,18 +220,6 @@ export abstract class BaseDataService {
     );
     // decrease count of resources
     this.total_resource_count -= 1;
-    // remove from pagination lists
-    for (let page_id in this.resources_by_pagination) {
-      let page_resources = this.resources_by_pagination[page_id];
-      if (arrayContainsObjWithId(resource.id, page_resources.value)) {
-        this.resources_by_pagination[page_id].next(
-          removeMatchedIdFromArray(
-            this.resources_by_pagination[page_id].value,
-            resource.id
-          )
-        );
-      }
-    }
   }
 
   public clear(): void {
