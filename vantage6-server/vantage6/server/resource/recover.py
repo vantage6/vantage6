@@ -564,7 +564,7 @@ class ResetAPIKey(ServicesResources):
             return {'msg': 'Request body is incorrect', 'errors': errors}, \
                 HTTPStatus.BAD_REQUEST
 
-        id_ = body.get('id')
+        id_ = body['id']
         node = db.Node.get(id_)
         if not node:
             return {

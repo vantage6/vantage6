@@ -16,7 +16,7 @@ _MAX_LEN_PW = 128
 _MAX_LEN_NAME = 128
 
 
-def _validate_name(name: str):
+def _validate_name(name: str) -> None:
     """
     Validate a name field in the request input.
 
@@ -40,7 +40,7 @@ def _validate_name(name: str):
         )
 
 
-def _validate_password(password: str):
+def _validate_password(password: str) -> None:
     """
     Check if the password is strong enough.
 
@@ -373,6 +373,9 @@ class TaskInputSchema(_NameValidationSchema):
             if 'input' not in organization:
                 raise ValidationError(
                     'Input is required for each organization')
+            if 'method' not in organization['input']:
+                raise ValidationError(
+                    'Algorithm method is required for each organization input')
 
 
 class TokenUserInputSchema(Schema):

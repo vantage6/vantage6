@@ -259,14 +259,14 @@ class Ports(PortBase):
 
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
-        run_id = data.get('run_id')
+        run_id = data['run_id']
         linked_run = g.session.query.query(Run).filter(Run.id == run_id).one()
         if g.node.id != linked_run.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         port = AlgorithmPort(
-            port=data.get('port'),
+            port=data['port'],
             run_id=run_id,
             label=data.get('label' ''),
         )
