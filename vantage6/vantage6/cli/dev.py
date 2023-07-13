@@ -347,10 +347,11 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
 @cli_dev.command(name="start-demo-network")
 def start_demo_network(ip: str = None, port: int = None, image: str = None) \
         -> None:
-    """Starts currently running demo-network, it once run as
-    `start-demo-network`, it will display a list of available configurations
-    to run, select the correct option, if using default settings it should be
-    'dev_default_server'.
+    """Starts running a demo-network
+
+    Once run as, `start-demo-network`, it will display a list of available
+    configurations to run, select the correct option, if using default settings
+    it should be 'dev_default_server'.
 
     Parameters
     ----------
