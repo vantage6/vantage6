@@ -46,23 +46,26 @@ export class UserViewComponent extends BaseViewComponent implements OnInit {
   }
 
   private async addRoles(): Promise<void> {
-    this.user.roles = await this.roleDataService.list_with_params(
+    (await this.roleDataService.list_with_params(
       allPages(),
       { user_id: this.user.id },
       true
-    );
+    )).subscribe((roles) => {
+        this.user.roles = roles;
+    });
   }
 
   private async addRules(): Promise<void> {
-    let rules = await this.ruleDataService.list_with_params(
+    (await this.ruleDataService.list_with_params(
       allPages(),
       { user_id: this.user.id }
-    );
-    // remove rules that are already in roles
-    for (let role of this.user.roles) {
-      rules = removeMatchedIdsFromArray(rules, getIdsFromArray(role.rules));
-    }
-    this.user.rules = rules;
+    )).subscribe((rules) => {
+      // remove rules that are already in roles
+      for (let role of this.user.roles) {
+        rules = removeMatchedIdsFromArray(rules, getIdsFromArray(role.rules));
+      }
+      this.user.rules = rules;
+    });
   }
 
   async delete(): Promise<void> {

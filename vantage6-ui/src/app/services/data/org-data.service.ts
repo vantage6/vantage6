@@ -45,11 +45,11 @@ export class OrgDataService extends BaseDataService {
   async list_with_params(
     pagination: Pagination = allPages(),
     request_params: any = {}
-  ): Promise<Organization[]> {
-    return await super.list_with_params_base(
+  ): Promise<Observable<Organization[]>> {
+    return (await super.list_with_params_base(
       this.convertJsonService.getOrganization,
       request_params,
       pagination,
-    ) as Organization[];
+    )).asObservable() as Observable<Organization[]>;
   }
 }

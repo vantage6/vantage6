@@ -7,7 +7,9 @@ import {
   arrayContains,
   arrayContainsObjWithId,
   filterArrayByProperty,
+  getById,
   getIdsFromArray,
+  objectEquals,
   removeMatchedIdFromArray,
   unique,
 } from 'src/app/shared/utils';
@@ -20,6 +22,7 @@ import { Pagination, getPageId, getPageSize } from 'src/app/interfaces/utils';
 })
 export abstract class BaseDataService {
   resource_list = new BehaviorSubject<Resource[]>([]);
+  resources_by_params: { [params: string]: BehaviorSubject<Resource[]> } = {};
   resources_per_org: { [org_id: number]: BehaviorSubject<Resource[]> } = {};
   resources_per_col: { [col_id: number]: BehaviorSubject<Resource[]> } = {};
   resources_by_id: { [id: number]: BehaviorSubject<Resource | null> } = {};
@@ -43,17 +46,11 @@ export abstract class BaseDataService {
       // When the list of all resources is updated, ensure that sublists of
       // observables are also updated
 
-      // update the observables per org
-      this.updateObsPerOrg(resources);
-
       // update observables that are gotten one by one
       this.updateObsById(resources);
 
-      // update the observables per collab
-      this.updateObsPerCollab(resources);
-
-      // update the observables per page
-      this.updateObsPerPage(resources);
+      // update the observables per params
+      this.updateObsPerParams(resources);
     });
   }
 
@@ -73,64 +70,28 @@ export abstract class BaseDataService {
     return [];
   }
 
-  updateObsPerOrg(resources: Resource[]) {
-    if (!this.requested_org_lists) return;
-    if (resources.length && !('organization_id' in resources[0])) {
-      // ignore resources that do not have organization ids -> we can not
-      // divide them in resources per organization
-      return;
-    }
-    for (let org_id of this.requested_org_lists) {
-      if (org_id in this.resources_per_org) {
-        this.resources_per_org[org_id].next(
-          filterArrayByProperty(resources, 'organization_id', org_id)
-        );
-      } else {
-        this.resources_per_org[org_id] = new BehaviorSubject<Resource[]>(
-          filterArrayByProperty(resources, 'organization_id', org_id)
-        );
-      }
-    }
-  }
-
   updateObsById(resources: Resource[]) {
     for (let res of resources) {
-      if (res.id in this.resources_by_id) {
-        this.resources_by_id[res.id].next(res);
-      } else {
+      if (!(res.id in this.resources_by_id)) {
         this.resources_by_id[res.id] = new BehaviorSubject<Resource | null>(
           res
         );
+      } else if (!objectEquals(res, this.resources_by_id[res.id].value)){
+        this.resources_by_id[res.id].next(res);
       }
     }
   }
 
-  updateObsPerCollab(resources: Resource[]) {
-    // TODO update to include only stuff from requested collabs
-    if (resources.length && !('collaboration_id' in resources[0])) {
-      return;
-    }
-    let col_ids = unique(getIdsFromArray(resources, 'collaboration_id'));
-    for (let col_id of col_ids) {
-      if (col_id in this.resources_per_col) {
-        this.resources_per_col[col_id].next(
-          filterArrayByProperty(resources, 'collaboration_id', col_id)
-        );
-      } else {
-        this.resources_per_col[col_id] = new BehaviorSubject<Resource[]>(
-          filterArrayByProperty(resources, 'collaboration_id', col_id)
-        );
-      }
-    }
-  }
-
-  updateObsPerPage(resources: Resource[]) {
-    for (let page_id in this.resources_by_pagination) {
-      let page_resources = this.resources_by_pagination[page_id];
-      for (let page_resource of page_resources.value) {
-        if (arrayContainsObjWithId(page_resource.id, resources)) {
-          page_resources.next(
-            addOrReplace(page_resources.value, page_resource)
+  updateObsPerParams(resources: Resource[]) {
+    for (let params in this.resources_by_params) {
+      let params_resources = this.resources_by_params[params];
+      for (let params_resource of params_resources.value) {
+        if (
+          arrayContainsObjWithId(params_resource.id, resources) &&
+          !objectEquals(params_resource, getById(resources, params_resource.id))
+        ) {
+          params_resources.next(
+            addOrReplace(params_resources.value, params_resource)
           );
         }
       }
@@ -165,56 +126,50 @@ export abstract class BaseDataService {
     force_refresh: boolean = false,
     additional_params: any = {}
   ): Promise<BehaviorSubject<Resource[]>> {
-    // FIXME this function does not work properly when the list is requested
-    // several times with different additional_params and force_refresh=false
-    let page_id = getPageId(pagination);
-    if (
-      force_refresh ||
-      !this.has_queried_list ||
-      !(pagination.all_pages || page_id in this.resources_by_pagination)
-    ) {
-      let additional_resources = await this.getDependentResources();
-      const resources = await this.apiService.getResources(
-        convertJsonFunc,
-        pagination,
-        additional_resources,
-        additional_params
-      );
-      if (pagination.all_pages) {
-        this.has_queried_list = true;
-      } else {
-        if (!(page_id in this.resources_by_pagination)) {
-          // create empty observable as organization had not yet been queried
-          this.resources_by_pagination[page_id] = new BehaviorSubject<
-            Resource[]
-          >(resources);
-        }
-      }
-      this.saveMultiple(resources);
+    let result = this.list_with_params_base(
+      convertJsonFunc, additional_params, pagination, force_refresh
+    )
+    if (pagination.all_pages) {
+      this.has_queried_list = true;
     }
-    return pagination.all_pages
-      ? this.resource_list
-      : this.resources_by_pagination[page_id];
+    return result;
   }
 
   async list_with_params_base(
     convertJsonFunc: Function,
     request_params: any,
     pagination: Pagination,
-    save: boolean = true
-  ): Promise<Resource[]> {
-    // TODO we may want to transform this also to a function that yields observables
-    let additional_resources = await this.getDependentResources();
-    // TODO find a way to detect if this query was sent before, now it is
-    // always repeated
-    const resources = await this.apiService.getResources(
-      convertJsonFunc,
-      pagination,
-      additional_resources,
-      request_params
-    );
-    if (save) this.saveMultiple(resources);
-    return resources;
+    force_refresh: boolean = false
+  ): Promise<BehaviorSubject<Resource[]>> {
+    if (pagination.page){
+      request_params['page'] = pagination.page;
+    }
+    if (pagination.page_size){
+      request_params['per_page'] = pagination.page_size;
+    }
+
+    let params_key: string = this.paramsKey(request_params);
+
+    if (force_refresh || !(params_key in this.resources_by_params)) {
+      // get any dependent resources that may be required
+      let additional_resources = await this.getDependentResources();
+
+      // get the resources
+      const resources = await this.apiService.getResources(
+        convertJsonFunc,
+        pagination.all_pages,
+        additional_resources,
+        request_params
+      );
+
+      // store the resources in observable based on the params
+      this.resources_by_params[params_key] =
+        new BehaviorSubject<Resource[]>(resources);
+
+      // save the resources in the general list
+      this.saveMultiple(resources);
+    }
+    return this.resources_by_params[params_key];
   }
 
   async org_list_base(
@@ -224,44 +179,10 @@ export abstract class BaseDataService {
     force_refresh: boolean = false,
     params: any = {}
   ): Promise<BehaviorSubject<Resource[]>> {
-    let page_id = getPageId(pagination);
-    if (!arrayContains(this.requested_org_lists, organization_id)) {
-      this.requested_org_lists.push(organization_id);
-    }
-    // check if we need to get resources for the current organization
-    if (
-      force_refresh ||
-      !(organization_id in this.resources_per_org) ||
-      !this.requested_org_pages.includes(pagination)
-    ) {
-      if (!(organization_id in this.resources_per_org)) {
-        // create empty observable as organization had not yet been queried
-        this.resources_per_org[organization_id] = new BehaviorSubject<
-          Resource[]
-        >([]);
-      }
-      let additional_resources = await this.getDependentResources();
-      params['organization_id'] = organization_id;
-      let org_resources = await this.apiService.getResources(
-        convertJsonFunc,
-        pagination,
-        additional_resources,
-        params
-      );
-      // save the new resources. This will also update the observables
-      // for the list by organization.
-      this.saveMultiple(org_resources);
-      // save page
-      if (!(page_id in this.resources_by_pagination)) {
-        // create empty observable as organization had not yet been queried
-        this.resources_by_pagination[page_id] = new BehaviorSubject<Resource[]>(
-          org_resources
-        );
-      }
-    }
-    return pagination.all_pages
-      ? this.resources_per_org[organization_id]
-      : this.resources_by_pagination[page_id];
+    params['organization_id'] = organization_id;
+    return this.list_with_params_base(
+      convertJsonFunc, params, pagination, force_refresh
+    )
   }
 
   async collab_list_base(
@@ -270,39 +191,10 @@ export abstract class BaseDataService {
     pagination: Pagination,
     force_refresh: boolean = false
   ): Promise<Observable<Resource[]>> {
-    let page_id = getPageId(pagination);
-    if (
-      force_refresh ||
-      !(collaboration_id in this.resources_per_col) ||
-      !this.requested_org_pages.includes(pagination)
-    ) {
-      if (!(collaboration_id in this.resources_per_col)) {
-        // create empty observable as organization had not yet been queried
-        this.resources_per_col[collaboration_id] = new BehaviorSubject<
-          Resource[]
-        >([]);
-      }
-      let additional_resources = await this.getDependentResources();
-      let resources = await this.apiService.getResources(
-        convertJsonFunc,
-        pagination,
-        additional_resources,
-        { collaboration_id: collaboration_id }
-      );
-      // save the new resources. This will also update the observables
-      // for the list per collaboration
-      this.saveMultiple(resources);
-      // save page
-      if (!(page_id in this.resources_by_pagination)) {
-        // create empty observable as organization had not yet been queried
-        this.resources_by_pagination[page_id] = new BehaviorSubject<Resource[]>(
-          resources
-        );
-      }
-    }
-    return pagination.all_pages
-      ? this.resources_per_col[collaboration_id].asObservable()
-      : this.resources_by_pagination[page_id].asObservable();
+    let params: any = {collaboration_id: collaboration_id};
+    return this.list_with_params_base(
+      convertJsonFunc, params, pagination, force_refresh
+    )
   }
 
   public saveMultiple(resources: Resource[]) {
@@ -361,5 +253,9 @@ export abstract class BaseDataService {
   public clear(): void {
     this.has_queried_list = false;
     this.resource_list.next([]);
+  }
+
+  private paramsKey(params: any): string {
+    return JSON.stringify(params);
   }
 }

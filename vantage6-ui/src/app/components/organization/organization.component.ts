@@ -155,11 +155,11 @@ export class OrganizationComponent implements OnInit {
     this.modalService.closeLoadingModal();
   }
 
-  async onRenewalRoles() {
-    this.roles = await this.sortRoles(this.roles);
+  onRenewalRoles() {
+    this.roles = this.sortRoles(this.roles);
   }
 
-  async sortRoles(roles: Role[]): Promise<Role[]> {
+  sortRoles(roles: Role[]): Role[] {
     //sort roles: put roles of current organization first, then generic roles
     roles.sort((a, b) => b.organization_id - a.organization_id);
     return roles;
@@ -201,9 +201,11 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setCollaborations(): Promise<void> {
-    this.collaborations = await this.collabDataService.list_with_params(
+    (await this.collabDataService.list_with_params(
       defaultFirstPage(), {'organization_id': this.route_org_id}
-    )
+    )).subscribe((collabs) => {
+      this.collaborations = collabs;
+    });
   }
 
   editOrganization(org: Organization): void {

@@ -76,12 +76,12 @@ export class NodeDataService extends BaseDataService {
   async list_with_params(
     pagination: Pagination = allPages(),
     request_params: any = {}
-  ): Promise<Node[]> {
-    return await super.list_with_params_base(
+  ): Promise<Observable<Node[]>> {
+    return (await super.list_with_params_base(
       this.convertJsonService.getNode,
       request_params,
       pagination,
-    ) as Node[];
+    )).asObservable() as Observable<Node[]>;
   }
 
   updateNodeStatus(status_update: any) {

@@ -36,19 +36,6 @@ export class CollabDataService extends BaseDataService {
     private nodeDataService: NodeDataService,
   ) {
     super(collabApiService, convertJsonService);
-    this.resource_list.subscribe((resources) => {
-      // When the list of all resources is updated, ensure that sublists of
-      // observables are also updated
-
-      // update the observables per org
-      this.updateObsPerOrg(resources);
-
-      // update observables that are gotten one by one
-      this.updateObsById(resources);
-
-      // update the observables per collab
-      this.updateObsPerCollab(resources);
-    });
   }
 
   updateObsPerOrg(resources: Resource[]) {
@@ -97,15 +84,18 @@ export class CollabDataService extends BaseDataService {
     if (include_links) {
       let collab_val = collab.value;
       // request the organizations for the current collaboration
-      collab_val.organizations = await this.orgDataService.list_with_params(
+      (await this.orgDataService.list_with_params(
         allPages(),
         { collaboration_id: collab_val.id }
-      );
-      // request the nodes for the current collaboration
-      let nodes = await this.nodeDataService.list_with_params(allPages(), {
-        collaboration_id: collab_val.id,
+      )).subscribe((orgs) => {
+        collab_val.organizations = orgs;
       });
-      this.addNodesToCollaboration(collab_val, nodes);
+      // request the nodes for the current collaboration
+      (await this.nodeDataService.list_with_params(allPages(), {
+        collaboration_id: collab_val.id,
+      })).subscribe((nodes) => {
+        this.addNodesToCollaboration(collab_val, nodes);
+      });
     }
     return collab.asObservable() as Observable<Collaboration>;
   }
@@ -147,12 +137,12 @@ export class CollabDataService extends BaseDataService {
   async list_with_params(
     pagination: Pagination = allPages(),
     request_params: any = {}
-  ): Promise<Collaboration[]> {
-    return await super.list_with_params_base(
+  ): Promise<Observable<Collaboration[]>> {
+    return (await super.list_with_params_base(
       this.convertJsonService.getCollaboration,
       request_params,
       pagination,
-    ) as Collaboration[];
+    )).asObservable() as Observable<Collaboration[]>;
   }
 
   updateNodes(collabs: Collaboration[]): void {

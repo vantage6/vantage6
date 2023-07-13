@@ -76,24 +76,27 @@ export class CollaborationViewComponent
   }
 
   private async setOrganizations() {
-    this.collaboration.organizations = await this.orgDataService.list_with_params(
+    (await this.orgDataService.list_with_params(
       allPages(), {collaboration_id: this.collaboration.id}
-    )
-    this.collaboration.organization_ids =
-      getIdsFromArray(this.collaboration.organizations);
+    )).subscribe((orgs) => {
+      this.collaboration.organizations = orgs;
+      this.collaboration.organization_ids =
+        getIdsFromArray(this.collaboration.organizations);
+    });
   }
 
   private async setNodes() {
-    let nodes = await this.nodeDataService.list_with_params(
+    (await this.nodeDataService.list_with_params(
       allPages(), {collaboration_id: this.collaboration.id}
-    )
-    for (let node of nodes){
-      for (let org of this.collaboration.organizations){
-        if (node.organization_id === org.id){
-          org.node = node;
+    )).subscribe((nodes) => {
+      for (let node of nodes){
+        for (let org of this.collaboration.organizations){
+          if (node.organization_id === org.id){
+            org.node = node;
+          }
         }
       }
-    }
+    });
   }
 
   async setTasks(): Promise<void> {

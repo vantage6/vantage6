@@ -88,12 +88,12 @@ export class TaskDataService extends BaseDataService {
   async list_with_params(
     pagination: Pagination = allPages(),
     request_params: any = {}
-  ): Promise<Task[]> {
-    return await super.list_with_params_base(
+  ): Promise<Observable<Task[]>> {
+    return (await super.list_with_params_base(
       this.convertJsonService.getTask,
       request_params,
       pagination,
-    ) as Task[];
+    )).asObservable() as Observable<Task[]>;
   }
 
   save(task: Task) {
