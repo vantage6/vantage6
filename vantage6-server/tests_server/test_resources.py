@@ -2307,9 +2307,10 @@ class TestResources(unittest.TestCase):
     def test_create_task_permission_as_user(self):
         # non existant collaboration
         headers = self.create_user_and_login()
+        input_ = {'method': 'dummy'}
         task_json = {
             "collaboration_id": 9999,
-            "organizations": [{'id': 9999, 'input': 'dummy'}],
+            "organizations": [{'id': 9999, 'input': input_}],
             "image": "some-image"
         }
         results = self.app.post('/api/task', headers=headers, json=task_json)
@@ -2322,7 +2323,7 @@ class TestResources(unittest.TestCase):
         col.save()
 
         # task without any node created
-        task_json["organizations"] = [{'id': org.id, 'input': 'dummy'}]
+        task_json["organizations"] = [{'id': org.id, 'input': input_}]
         task_json["collaboration_id"] = col.id
         results = self.app.post('/api/task', headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
@@ -2334,12 +2335,12 @@ class TestResources(unittest.TestCase):
         org2 = Organization()
         org2.save()
 
-        task_json["organizations"] = [{'id': org2.id, 'input': 'dummy'}]
+        task_json["organizations"] = [{'id': org2.id, 'input': input_}]
         results = self.app.post('/api/task', headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # user without any permissions
-        task_json["organizations"] = [{'id': org.id, 'input': 'dummy'}]
+        task_json["organizations"] = [{'id': org.id, 'input': input_}]
         results = self.app.post('/api/task', headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -2377,10 +2378,11 @@ class TestResources(unittest.TestCase):
         parent_res.save()
 
         # test wrong image name
+        input_ = {'method': 'dummy'}
         headers = self.login_container(collaboration=col, organization=org,
                                        task=parent_task)
         results = self.app.post('/api/task', headers=headers, json={
-            "organizations": [{'id': org.id, 'input': 'dummy'}],
+            "organizations": [{'id': org.id, 'input': input_}],
             'collaboration_id': col.id,
             'image': 'other-image'
         })
@@ -2393,7 +2395,7 @@ class TestResources(unittest.TestCase):
         node2 = Node(organization=org, collaboration=col2)
         node2.save()
         results = self.app.post('/api/task', headers=headers, json={
-            "organizations": [{'id': org.id, 'input': 'dummy'}],
+            "organizations": [{'id': org.id, 'input': input_}],
             'collaboration_id': col2.id,
             'image': 'some-image'
         })
@@ -2401,7 +2403,7 @@ class TestResources(unittest.TestCase):
 
         # test with correct parameters
         results = self.app.post('/api/task', headers=headers, json={
-            "organizations": [{'id': org.id, 'input': 'dummy'}],
+            "organizations": [{'id': org.id, 'input': input_}],
             'collaboration_id': col.id,
             'image': 'some-image'
         })
@@ -2411,7 +2413,7 @@ class TestResources(unittest.TestCase):
         parent_res.status = TaskStatus.COMPLETED
         parent_res.save()
         results = self.app.post('/api/task', headers=headers, json={
-            "organizations": [{'id': org.id, 'input': 'dummy'}],
+            "organizations": [{'id': org.id, 'input': input_}],
             'collaboration_id': col.id,
             'image': 'some-image'
         })
@@ -2421,7 +2423,7 @@ class TestResources(unittest.TestCase):
         parent_res.status = TaskStatus.FAILED
         parent_res.save()
         results = self.app.post('/api/task', headers=headers, json={
-            "organizations": [{'id': org.id, 'input': 'dummy'}],
+            "organizations": [{'id': org.id, 'input': input_}],
             'collaboration_id': col.id,
             'image': 'some-image'
         })
