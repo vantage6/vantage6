@@ -204,12 +204,10 @@ class Nodes(NodeBase):
         """
         q = g.session.query(db.Node)
         auth_org_id = self.obtain_organization_id()
-        auth = self.obtain_auth()
         args = request.args
 
         if 'organization_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['organization_id'],
-                                      auth.organization):
+            if not self.r.can_for_org(P.VIEW, args['organization_id']):
                 return {
                     'msg': 'You lack the permission view nodes from the '
                     f'organization with id {args["organization_id"]}!'
@@ -217,8 +215,7 @@ class Nodes(NodeBase):
             q = q.filter(db.Node.organization_id == args['organization_id'])
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id'],
-                                      self.obtain_auth_collaborations()):
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
                 return {
                     'msg': 'You lack the permission view nodes from the '
                     f'collaboration with id {args["collaboration_id"]}!'
@@ -342,7 +339,7 @@ class Nodes(NodeBase):
                 HTTPStatus.NOT_FOUND
 
         # check permissions
-        if not self.r.can_for_org(P.CREATE, org_id, g.user.organization):
+        if not self.r.can_for_org(P.CREATE, org_id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -434,12 +431,8 @@ class Node(NodeBase):
             return {'msg': f'Node id={id} is not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        # obtain authenticated model
-        auth = self.obtain_auth()
-
         # check permissions
-        if not self.r.can_for_org(P.VIEW, node.organization_id,
-                                  auth.organization):
+        if not self.r.can_for_org(P.VIEW, node.organization_id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -492,8 +485,7 @@ class Node(NodeBase):
         if not node:
             return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.DELETE, node.organization_id,
-                                  g.user.organization):
+        if not self.r.can_for_org(P.DELETE, node.organization_id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -567,10 +559,7 @@ class Node(NodeBase):
         if not node:
             return {'msg': f'Node id={id} not found!'}, HTTPStatus.NOT_FOUND
 
-        auth = g.user or g.node
-
-        if not self.r.can_for_org(P.EDIT, node.organization_id,
-                                  auth.organization):
+        if not self.r.can_for_org(P.EDIT, node.organization_id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 

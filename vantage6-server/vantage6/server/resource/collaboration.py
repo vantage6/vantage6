@@ -461,8 +461,7 @@ class Collaboration(CollaborationBase):
                     "can not be found"}, HTTPStatus.NOT_FOUND  # 404
 
         # verify permissions
-        if not self.r.can_for_col(P.EDIT, collaboration.id,
-                                  self.obtain_auth_collaborations()):
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -535,8 +534,7 @@ class Collaboration(CollaborationBase):
                 HTTPStatus.NOT_FOUND
 
         # verify permissions
-        if not self.r.can_for_col(P.DELETE, collaboration.id,
-                                  self.obtain_auth_collaborations()):
+        if not self.r.can_for_col(P.DELETE, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -681,8 +679,7 @@ class CollaborationOrganization(ServicesResources):
                     "not be found"}, HTTPStatus.NOT_FOUND
 
         # verify permissions
-        if not self.r.can_for_col(P.EDIT, collaboration.id,
-                                  self.obtain_auth_collaborations()):
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -757,8 +754,7 @@ class CollaborationOrganization(ServicesResources):
             return {"msg": f"Organization with id={id} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_col(P.EDIT, collaboration.id,
-                                  self.obtain_auth_collaborations()):
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -902,8 +898,7 @@ class CollaborationNode(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_col(P.EDIT, collaboration.id,
-                                  self.obtain_auth_collaborations()):
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -979,8 +974,7 @@ class CollaborationNode(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_col(P.EDIT, collaboration.id,
-                                  self.obtain_auth_collaborations()):
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 

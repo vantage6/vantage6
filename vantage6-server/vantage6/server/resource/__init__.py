@@ -16,6 +16,9 @@ from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.utils import (
+    obtain_auth_collaborations, obtain_auth_organization
+)
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.resource.common._schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
@@ -150,7 +153,7 @@ class ServicesResources(Resource):
         db.Organization
             Organization model
         """
-        return db.Organization.get(cls.obtain_organization_id())
+        return obtain_auth_organization()
 
     @staticmethod
     def obtain_auth_collaborations() -> list[db.Collaboration]:
@@ -162,12 +165,7 @@ class ServicesResources(Resource):
         list[db.Collaboration]
             List of collaborations
         """
-        if g.user:
-            return g.user.organization.collaborations
-        elif g.node:
-            return g.node.organization.collaborations
-        else:
-            return [db.Collaboration.get(g.container["collaboration_id"])]
+        return obtain_auth_collaborations()
 
 
 # ------------------------------------------------------------------------------

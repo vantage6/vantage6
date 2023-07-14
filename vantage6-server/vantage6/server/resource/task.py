@@ -266,7 +266,6 @@ class Tasks(TaskBase):
         args = request.args
 
         auth_org_id = self.obtain_organization_id()
-        auth_collabs = self.obtain_auth_collaborations()
 
         # check permissions and apply filter if neccassary
         if not self.r.v_glo.can():
@@ -293,10 +292,7 @@ class Tasks(TaskBase):
                 }, HTTPStatus.UNAUTHORIZED
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(
-                P.VIEW, args['collaboration_id'],
-                self.obtain_auth_collaborations()
-            ):
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
                 return {'msg': 'You lack the permission to view tasks '
                         f'from collaboration {args["collaboration_id"]}!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -304,8 +300,7 @@ class Tasks(TaskBase):
                 db.Collaboration.id == args['collaboration_id'])
 
         if 'init_org_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['init_org_id'],
-                                      self.obtain_auth_organization()):
+            if not self.r.can_for_org(P.VIEW, args['init_org_id']):
                 return {'msg': 'You lack the permission to view tasks '
                         f'from organization id={args["init_org_id"]}!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -316,8 +311,7 @@ class Tasks(TaskBase):
             if not init_user:
                 return {'msg': f'User id={args["init_user_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, init_user.organization_id,
-                                        self.obtain_auth_organization()) \
+            elif not self.r.can_for_org(P.VIEW, init_user.organization_id) \
                     and not (self.r.v_own.can() and g.user and
                              init_user.id == g.user.id):
                 return {'msg': 'You lack the permission to view tasks '
@@ -330,8 +324,7 @@ class Tasks(TaskBase):
             if not parent:
                 return {'msg': f'Parent task id={args["parent_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_col(P.VIEW, parent.collaboration_id,
-                                        auth_collabs):
+            elif not self.r.can_for_col(P.VIEW, parent.collaboration_id):
                 return {'msg': 'You lack the permission to view tasks '
                         'from the collaboration that the task with parent_id='
                         f'{parent.collaboration_id} belongs to!'}, \
@@ -344,8 +337,7 @@ class Tasks(TaskBase):
             if not task_in_job:
                 return {'msg': f'Job id={args["job_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_col(P.VIEW, task_in_job.collaboration_id,
-                                        auth_collabs):
+            elif not self.r.can_for_col(P.VIEW, task_in_job.collaboration_id):
                 return {'msg': 'You lack the permission to view tasks '
                         'from the collaboration that the task with job_id='
                         f'{task_in_job.collaboration_id} belongs to!'}, \
@@ -361,8 +353,7 @@ class Tasks(TaskBase):
             if not run:
                 return {'msg': f'Run id={args["run_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_col(P.VIEW, run.collaboration_id,
-                                        auth_collabs):
+            elif not self.r.can_for_col(P.VIEW, run.collaboration_id):
                 return {'msg': 'You lack the permission to view tasks '
                         'from the collaboration that the run with id='
                         f'{run.collaboration_id} belongs to!'}, \
@@ -515,9 +506,7 @@ class Tasks(TaskBase):
         image = data.get('image', '')
 
         # verify permissions
-        if g.user and not self.r.can_for_col(
-            P.CREATE, collaboration.id, self.obtain_auth_collaborations()
-        ):
+        if g.user and not self.r.can_for_col(P.CREATE, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -757,15 +746,14 @@ class Task(TaskBase):
             'results' else task_schema
 
         # check permissions
-        auth_org = self.obtain_auth_organization()
-        if not self.r.can_for_org(P.VIEW, task.init_org_id, auth_org) \
+        if not self.r.can_for_org(P.VIEW, task.init_org_id) \
                 and not (self.r.v_own.can() and g.user and
                          task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
         # if results are included, check permissions for results
         if self.is_included('results') and not \
-                self.r_run.can_for_org(P.VIEW, task.init_org_id, auth_org) \
+                self.r_run.can_for_org(P.VIEW, task.init_org_id) \
                 and not (self.r.v_own.can() and g.user and
                          task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to view results for this '
@@ -820,9 +808,8 @@ class Task(TaskBase):
             return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # validate permissions
-        if not self.r.can_for_org(
-            P.DELETE, task.init_org_id, g.user.organization
-        ) and not (self.r.d_own.can() and task.init_user_id == g.user.id):
+        if not self.r.can_for_org(P.DELETE, task.init_org_id) and \
+                not (self.r.d_own.can() and task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 

@@ -238,7 +238,7 @@ class Roles(RoleBase):
         org_filters = args.getlist('organization_id')
         if org_filters:
             for org_id in org_filters:
-                if not self.r.can_for_org(P.VIEW, org_id, auth_org):
+                if not self.r.can_for_org(P.VIEW, org_id):
                     return {
                         'msg': 'You lack the permission view all roles from '
                         f'organization {org_id}!'
@@ -253,8 +253,7 @@ class Roles(RoleBase):
 
         # filter by collaboration id
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id'],
-                                      self.obtain_auth_collaborations()):
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
                 return {
                     'msg': 'You lack the permission view all roles from '
                     f'collaboration {args["collaboration_id"]}!'
@@ -291,8 +290,7 @@ class Roles(RoleBase):
             if not user:
                 return {'msg': f'User with id={args["user_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, user.organization_id,
-                                        auth_org) and not \
+            elif not self.r.can_for_org(P.VIEW, user.organization_id) and not \
                     g.user.id == user.id:
                 return {
                     'msg': 'You lack the permission view roles from the '
@@ -433,9 +431,7 @@ class Roles(RoleBase):
                     'exist!'}, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to create this role
-        if not self.r.can_for_org(
-            P.CREATE, organization_id, g.user.organization
-        ):
+        if not self.r.can_for_org(P.CREATE, organization_id):
             return {
                 'msg': 'You cannot create a role for this organization!'
             }, HTTPStatus.UNAUTHORIZED
@@ -497,8 +493,7 @@ class Role(RoleBase):
 
         # check permissions. A user can always view their own roles
         if not (
-            self.r.can_for_org(P.VIEW, role.organization_id,
-                               g.user.organization) or
+            self.r.can_for_org(P.VIEW, role.organization_id) or
             role in g.user.roles
         ):
             return {"msg": "You do not have permission to view this."},\
@@ -585,8 +580,7 @@ class Role(RoleBase):
             }, HTTPStatus.BAD_REQUEST
 
         # check permission of the user
-        if not self.r.can_for_org(P.EDIT, role.organization_id,
-                                  g.user.organization):
+        if not self.r.can_for_org(P.EDIT, role.organization_id):
             return {'msg': 'You do not have permission to edit this role!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -665,8 +659,7 @@ class Role(RoleBase):
                        " roles cannot be deleted."
             }, HTTPStatus.BAD_REQUEST
 
-        if not self.r.can_for_org(P.DELETE, role.organization_id,
-                                  g.user.organization):
+        if not self.r.can_for_org(P.DELETE, role.organization_id):
             return {'msg': 'You do not have permission to delete this role!'},\
                 HTTPStatus.UNAUTHORIZED
 
@@ -807,8 +800,7 @@ class RoleRules(RoleBase):
                 HTTPStatus.NOT_FOUND
 
         # check that this user can edit rules
-        if not self.r.can_for_org(P.EDIT, role.organization_id,
-                                  g.user.organization):
+        if not self.r.can_for_org(P.EDIT, role.organization_id):
             return {'msg': 'You lack permissions to do that'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -874,8 +866,7 @@ class RoleRules(RoleBase):
             return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.EDIT, role.organization_id,
-                                  g.user.organization):
+        if not self.r.can_for_org(P.EDIT, role.organization_id):
             return {'msg': 'You lack permissions to do that'}, \
                 HTTPStatus.UNAUTHORIZED
 

@@ -121,14 +121,12 @@ class MultiRunBase(RunBase):
             a message and HTTP error code if the query could not be set up
         """
         auth_org = self.obtain_auth_organization()
-        auth_collabs = self.obtain_auth_collaborations()
         args = request.args
 
         q = g.session.query(db_Run)
 
         if 'organization_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['organization_id'],
-                                      auth_org):
+            if not self.r.can_for_org(P.VIEW, args['organization_id']):
                 return {'msg': 'You lack the permission to view runs for '
                         f'organization id={args["organization_id"]}!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -139,7 +137,7 @@ class MultiRunBase(RunBase):
             if not task:
                 return {'msg': f'Task id={args["task_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, task.init_org_id, auth_org) \
+            elif not self.r.can_for_org(P.VIEW, task.init_org_id) \
                     and not (self.r.v_own.can() and
                              g.user.id == task.init_user_id):
                 return {'msg': 'You lack the permission to view runs for '
@@ -151,8 +149,7 @@ class MultiRunBase(RunBase):
             if not node:
                 return {'msg': f'Node id={args["node_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_col(P.VIEW, node.collaboration_id,
-                                        self.obtain_auth_collaborations()):
+            elif not self.r.can_for_col(P.VIEW, node.collaboration_id):
                 return {'msg': 'You lack the permission to view runs for '
                         f'node id={args["node_id"]}!'}, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Node.id == args.get('node_id'))\
@@ -178,8 +175,7 @@ class MultiRunBase(RunBase):
             .join(Collaboration)
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id'],
-                                      auth_collabs):
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
                 return {'msg': 'You lack the permission to view runs for '
                         f'collaboration id={args["collaboration_id"]}!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -472,14 +468,12 @@ class SingleRunBase(RunBase):
             An algorithm Run object, or a tuple with a message and HTTP error
             code if the Run could not be retrieved
         """
-        auth_org = self.obtain_auth_organization()
-
         run = db_Run.get(id)
         if not run:
             return {'msg': f'Run id={id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.VIEW, run.task.init_org_id, auth_org) \
+        if not self.r.can_for_org(P.VIEW, run.task.init_org_id) \
                 and not (self.r.v_own.can() and
                          run.task.init_user_id == g.user.id):
             return {'msg': 'You lack the permission to do that!'}, \
