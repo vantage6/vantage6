@@ -9,7 +9,7 @@ import time
 from threading import Thread
 
 from vantage6.common import WhoAmI
-from vantage6.client import ClientBase
+from vantage6.common.client.client_base import ClientBase
 from vantage6.node.globals import REFRESH_BEFORE_EXPIRES_SECONDS
 
 

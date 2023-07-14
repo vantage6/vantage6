@@ -28,7 +28,7 @@ from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.docker.squid import Squid
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail,

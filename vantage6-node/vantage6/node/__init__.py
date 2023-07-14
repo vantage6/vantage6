@@ -54,7 +54,7 @@ from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_RETRY_CONNECT_NODE, TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET
 )
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager

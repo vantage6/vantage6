@@ -4,8 +4,7 @@ import uuid
 from pathlib import Path
 
 from vantage6.common.globals import DATABASE_TYPES
-# TODO v4+ move NodeClient to other location
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 from vantage6.common import error, warning
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
