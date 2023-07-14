@@ -25,9 +25,8 @@ from. You can find such a template in the Github repository
 
 and you are ready to start!
 
-Note that there are also several algorithms that have been written in R, such
-as `vtg.basic <https://github.com/IKNL/vtg.basic>`_. If you plan to write your
-algorithm in R, you can use this as a starting point.
+Note that there is also a `boilerplate for R <https://github.com/IKNL/vtg.tpl>`_,
+but it not updated as frequently as the Python boilerplate.
 
 .. note::
 

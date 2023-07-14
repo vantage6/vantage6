@@ -29,12 +29,14 @@ explain the fundamentals of algorithm containers.
 Algorithm structure
 -------------------
 
-Multi-party analyses commonly have an orchestator or aggregator part and a
+Multi-party analyses commonly have a central part and a
 remote part. The remote part is responsible for the actual analysis and the
-aggregator part is responsible for combining the partial results of
-the remote parts. An alternative to an aggregator is an orchestrator, which
-does not combine the partial results itself, but instead orchestrates the remote
-parts in a certain way that also leads to a global result.
+central part is often responsible for aggregating the partial results of
+the remote parts. An alternative to aggregating is orchestration, where
+the central part does not combine the partial results itself, but instead
+orchestrates the remote parts in a certain way that also leads to a global
+result. Of course, the central part may also do both aggregation and
+orchestration.
 
 In vantage6, we refer to the orchestration part as the **central function** and
 the federated part as the **partial function**.
