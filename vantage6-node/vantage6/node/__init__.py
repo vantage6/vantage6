@@ -776,10 +776,6 @@ class Node:
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
 
-        # FIXME: remove me in 4+. alpine image has been moved into the `images`
-        # key. This is to support older configuration files.
-        legacy_alpine = self.config.get('alpine')
-
         # user can specify custom images in the configuration file
         custom_alpine = self.config['images'].get('alpine') \
             if 'images' in self.config else None
@@ -794,7 +790,7 @@ class Node:
             node_client=self.client,
             vpn_volume_name=vpn_volume_name,
             vpn_subnet=self.config.get('vpn_subnet'),
-            alpine_image=custom_alpine or legacy_alpine,
+            alpine_image=custom_alpine,
             vpn_client_image=custom_vpn_client,
             network_config_image=custom_network
         )

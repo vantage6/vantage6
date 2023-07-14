@@ -306,14 +306,6 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if not image:
-
-        # FIXME: remove me in version 4+, as this is to support older
-        # configuration files. So the outer `image` key is no longer supported
-        if ctx.config.get('image'):
-            warning('Using the `image` option in the config file is to be '
-                    'removed in version 4+.')
-            image = ctx.config.get('image')
-
         custom_images: dict = ctx.config.get('images')
         if custom_images:
             image = custom_images.get("node")

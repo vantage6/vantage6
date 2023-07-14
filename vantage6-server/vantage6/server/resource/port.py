@@ -161,8 +161,6 @@ class Ports(PortBase):
 
     @with_node
     def delete(self):
-        # FIXME should we have swagger docs if only accessible for node? Also
-        # same case for post request
         """ Delete ports by run_id
         ---
         description: >-

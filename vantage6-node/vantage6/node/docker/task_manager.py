@@ -1,5 +1,5 @@
-""" TODO the task folder is also created by this class. This folder needs
-to be cleaned at some point. """
+# TODO the task folder is also created by this class. This folder needs
+# to be cleaned at some point.
 import logging
 import os
 import docker.errors

@@ -41,12 +41,7 @@ class AlgorithmClient(ClientBase):
         jwt_payload = jwt.decode(
             token, options={"verify_signature": False})
 
-        # FIXME: 'identity' is no longer needed in version 4+. So this if
-        # statement can be removed
-        if 'sub' in jwt_payload:
-            container_identity = jwt_payload['sub']
-        elif 'identity' in jwt_payload:
-            container_identity = jwt_payload['identity']
+        container_identity = jwt_payload['sub']
 
         self.image = container_identity.get("image")
         self.databases = container_identity.get('databases', [])
