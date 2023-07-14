@@ -515,6 +515,12 @@ class Collaboration(CollaborationBase):
               type: integer
             description: Collaboration id
             required: true
+          - in: query
+            name: delete_dependents
+            schema:
+              type: boolean
+            description: If set to true, the collaboratio will be deleted along
+              with all its tasks and nodes (default=False)
 
         responses:
           200:
@@ -539,6 +545,24 @@ class Collaboration(CollaborationBase):
         if not self.r.d_glo.can():
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
+
+        if collaboration.tasks or collaboration.nodes:
+            delete_dependents = request.args.get('delete_dependents', False)
+            if not delete_dependents:
+                return {
+                    "msg": f"Collaboration id={id} has "
+                    f"{len(collaboration.tasks)} tasks and "
+                    f"{len(collaboration.nodes)} nodes. Please delete them "
+                    "separately or set delete_dependents=True"
+                }, HTTPStatus.BAD_REQUEST
+            else:
+                log.warn(f"Deleting collaboration id={id} along with "
+                         f"{len(collaboration.tasks)} tasks and "
+                         f"{len(collaboration.nodes)} nodes")
+                for task in collaboration.tasks:
+                    task.delete()
+                for node in collaboration.nodes:
+                    node.delete()
 
         collaboration.delete()
         return {"msg": f"Collaboration id={id} successfully deleted"}, \
