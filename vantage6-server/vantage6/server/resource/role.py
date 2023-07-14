@@ -4,7 +4,7 @@ import logging
 from http import HTTPStatus
 from flask.globals import request
 from flask import g
-from flask_restful import reqparse, Api
+from flask_restful import Api
 from sqlalchemy import or_
 
 from vantage6.server import db
@@ -17,7 +17,8 @@ from vantage6.server.permission import (
     PermissionManager
 )
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.resource.common._schema import RoleSchema, RuleSchema
+from vantage6.server.resource.common.output_schema import RoleSchema, RuleSchema
+from vantage6.server.resource.common.input_schema import RoleInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.default_roles import DefaultRole
 
@@ -107,6 +108,7 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_schema = RoleSchema()
 rule_schema = RuleSchema()
+role_input_schema = RoleInputSchema()
 
 
 class RoleBase(ServicesResources):
@@ -321,19 +323,12 @@ class Roles(RoleBase):
 
         tags: ["Role"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument("name", type=str, required=True)
-        parser.add_argument("description", type=str, required=True)
-        parser.add_argument("rules", type=int, action='append', required=False)
-        parser.add_argument("organization_id", type=int, required=False)
-        data = parser.parse_args()
-
-        # check if role name is allowed (i.e. not a default role name)
-        if 'name' in data and data['name'] in [role for role in DefaultRole]:
-            return {
-                "msg": f"Cannot create role '{data['name']}' as it is a "
-                       "reserved role name."
-            }, HTTPStatus.BAD_REQUEST
+        data = request.get_json()
+        # validate request body
+        errors = role_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # obtain the requested rules from the DB.
         rules = []
@@ -353,7 +348,7 @@ class Roles(RoleBase):
         # set the organization id
         organization_id = (
             data['organization_id']
-            if data['organization_id'] else g.user.organization_id
+            if 'organization_id' in data else g.user.organization_id
         )
         # verify that the organization for which we create a role exists
         if not db.Organization.get(organization_id):
@@ -371,8 +366,9 @@ class Roles(RoleBase):
                 HTTPStatus.UNAUTHORIZED
 
         # create the actual role
-        role = db.Role(name=data["name"], description=data["description"],
-                       rules=rules, organization_id=organization_id)
+        role = db.Role(name=data.get("name"),
+                       description=data.get("description"), rules=rules,
+                       organization_id=organization_id)
         role.save()
 
         return role_schema.dump(role, many=False), HTTPStatus.CREATED
@@ -491,18 +487,23 @@ class Role(RoleBase):
         """
         data = request.get_json()
 
+        # validate request body
+        errors = role_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+        # organization_id cannot be changed in PATCH, only defined in POST
+        if 'organization_id' in data:
+            return {'msg': 'Cannot change organization of a role.'}, \
+                HTTPStatus.BAD_REQUEST
+
         role = db.Role.get(id)
         if not role:
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        # check if role name is allowed (i.e. not a default role name)
-        if 'name' in data and data['name'] in [role for role in DefaultRole]:
-            return {
-                "msg": f"Cannot change role name into '{data['name']}' as that"
-                       " is a reserved role name."
-            }, HTTPStatus.BAD_REQUEST
-        elif role.name in [role for role in DefaultRole]:
+        # check if user tries to change name of a default role
+        if role.name in [role for role in DefaultRole]:
             return {
                 "msg": f"This role ('{role.name}') is a default role. Its name"
                        " cannot be changed."

@@ -4,7 +4,7 @@ import sqlalchemy.exc
 
 from http import HTTPStatus
 from flask import g, request
-from flask_restful import reqparse, Api
+from flask_restful import Api
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -17,8 +17,9 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources
 )
+from vantage6.server.resource.common.input_schema import UserInputSchema
 from vantage6.server.resource.common.pagination import Pagination
-from vantage6.server.resource.common._schema import UserSchema
+from vantage6.server.resource.common.output_schema import UserSchema
 
 
 module_name = logger_name(__name__)
@@ -96,6 +97,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 user_schema = UserSchema()
+user_input_schema = UserInputSchema()
 
 
 class UserBase(ServicesResources):
@@ -319,18 +321,12 @@ class Users(UserBase):
 
         tags: ["User"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=True)
-        parser.add_argument("firstname", type=str, required=True)
-        parser.add_argument("lastname", type=str, required=True)
-        # TODO password should be send to the email, rather than setting it
-        parser.add_argument("password", type=str, required=True)
-        parser.add_argument("email", type=str, required=True)
-        parser.add_argument("organization_id", type=int, required=False,
-                            help="This is only used if you're root")
-        parser.add_argument("roles", type=int, action="append", required=False)
-        parser.add_argument("rules", type=int, action="append", required=False)
-        data = parser.parse_args()
+        data = request.get_json()
+        # validate request body
+        errors = user_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # check unique constraints
         if db.User.username_exists(data["username"]):
@@ -342,7 +338,7 @@ class Users(UserBase):
         # check if the organization has been provided, if this is the case the
         # user needs global permissions in case it is not their own
         organization_id = g.user.organization_id
-        if data['organization_id']:
+        if data.get('organization_id'):
             if data['organization_id'] != organization_id:
                 if self.r.c_glo.can():
                     # check if organization exists
@@ -384,7 +380,7 @@ class Users(UserBase):
                         )}, HTTPStatus.UNAUTHORIZED
 
         # You can only assign rules that you already have to others.
-        potential_rules = data["rules"]
+        potential_rules = data.get("rules")
         rules = []
         if potential_rules:
             rules = [db.Rule.get(rule) for rule in potential_rules
@@ -547,10 +543,19 @@ class User(UserBase):
         tags: ["User"]
         """
         user = db.User.get(id)
-
         if not user:
             return {"msg": f"user id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
+
+        data = request.get_json()
+        # validate request body
+        errors = user_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+        if data.get("password"):
+            return {"msg": "You cannot change your password here!"}, \
+                HTTPStatus.BAD_REQUEST
 
         if not self.r.e_glo.can():
             if not (self.r.e_org.can() and user.organization ==
@@ -559,28 +564,8 @@ class User(UserBase):
                     return {'msg': 'You lack the permission to do that!'}, \
                         HTTPStatus.UNAUTHORIZED
 
-        parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=False)
-        parser.add_argument("firstname", type=str, required=False)
-        parser.add_argument("lastname", type=str, required=False)
-        parser.add_argument("email", type=str, required=False)
-        data = parser.parse_args()
-
-        # check if user defined a password, which is deprecated
-        # FIXME BvB 22-06-29: with time, this check may be removed. Now it is
-        # here for backwards compatibility (if people have scripts using this,
-        # this makes them aware something changed)
-        request_json = request.get_json()
-        if request_json.get("password"):
-            return {"msg": "You cannot change your password here!"}, \
-                HTTPStatus.BAD_REQUEST
-
-        if data["username"] is not None:
-            if data["username"] == '':
-                return {
-                    "msg": "Empty username is not allowed!"
-                }, HTTPStatus.BAD_REQUEST
-            elif user.username != data["username"]:
+        if data.get("username") is not None:
+            if user.username != data["username"]:
                 if db.User.exists("username", data["username"]):
                     return {
                         "msg": "User with that username already exists"
@@ -590,16 +575,12 @@ class User(UserBase):
                         "msg": "You cannot change the username of another user"
                     }, HTTPStatus.BAD_REQUEST
             user.username = data["username"]
-        if data["firstname"] is not None:
+        if data.get("firstname") is not None:
             user.firstname = data["firstname"]
-        if data["lastname"] is not None:
+        if data.get("lastname") is not None:
             user.lastname = data["lastname"]
-        if data["email"] is not None:
-            if data["email"] == '':
-                return {
-                    "msg": "Empty email is not allowed!"
-                }, HTTPStatus.BAD_REQUEST
-            elif (user.email != data["email"] and
+        if data.get("email") is not None:
+            if (user.email != data["email"] and
                     db.User.exists("email", data["email"])):
                 return {
                     "msg": "User with that email already exists."
@@ -607,11 +588,10 @@ class User(UserBase):
             user.email = data["email"]
 
         # request parser is awefull with lists
-        json_data = request.get_json()
-        if 'roles' in json_data:
+        if 'roles' in data:
             # validate that these roles exist
             roles = []
-            for role_id in json_data['roles']:
+            for role_id in data['roles']:
                 role = db.Role.get(role_id)
                 if not role:
                     return {'msg': f'Role={role_id} can not be found!'}, \
@@ -653,10 +633,10 @@ class User(UserBase):
 
             user.roles = roles
 
-        if 'rules' in json_data:
+        if 'rules' in data:
             # validate that these rules exist
             rules = []
-            for rule_id in json_data['rules']:
+            for rule_id in data['rules']:
                 rule = db.Rule.get(rule_id)
                 if not rule:
                     return {'msg': f'Rule={rule_id} can not be found!'}, \

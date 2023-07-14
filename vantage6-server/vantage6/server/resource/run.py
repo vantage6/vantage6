@@ -20,8 +20,9 @@ from vantage6.server.resource import (
     parse_datetime,
     ServicesResources
 )
+from vantage6.server.resource.common.input_schema import RunInputSchema
 from vantage6.server.resource.common.pagination import Pagination
-from vantage6.server.resource.common._schema import (
+from vantage6.server.resource.common.output_schema import (
     RunSchema, RunTaskIncludedSchema, ResultSchema
 )
 from vantage6.server.model import (
@@ -63,7 +64,7 @@ def setup(api, api_base, services):
         methods=('GET',),
         resource_class_kwargs=services
     )
-    # TODO implement a PATCH method and use it to update the result. Then,
+    # TODO v4+ implement a PATCH method and use it to update the result. Then,
     # remove that from patching it in the Run resource.
     api.add_resource(
         Result,
@@ -78,6 +79,7 @@ def setup(api, api_base, services):
 run_schema = RunSchema()
 run_inc_schema = RunTaskIncludedSchema()
 result_schema = ResultSchema()
+run_input_schema = RunInputSchema()
 
 
 # -----------------------------------------------------------------------------
@@ -522,6 +524,9 @@ class Run(SingleRunBase):
                   log:
                     type: string
                     description: Task log messages
+                  status:
+                    type: string
+                    description: Status of the task
 
         responses:
           200:
@@ -543,6 +548,11 @@ class Run(SingleRunBase):
             return {'msg': f'Run id={id} not found!'}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
+        # validate request body
+        errors = run_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         if run.organization_id != g.node.organization_id:
             log.warn(

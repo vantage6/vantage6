@@ -13,7 +13,7 @@ from vantage6.server.resource import (
 )
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.resource.common._schema import RuleSchema
+from vantage6.server.resource.common.output_schema import RuleSchema
 from vantage6.server.resource.common.pagination import Pagination
 
 

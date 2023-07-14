@@ -26,6 +26,11 @@ from vantage6.server.resource import (
 from vantage6.server.resource.common.auth_helper import (
   user_login, create_qr_uri
 )
+from vantage6.server.resource.common.input_schema import (
+    TokenAlgorithmInputSchema,
+    TokenNodeInputSchema,
+    TokenUserInputSchema
+)
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -80,6 +85,11 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
 
 
+user_token_input_schema = TokenUserInputSchema()
+node_token_input_schema = TokenNodeInputSchema()
+algorithm_token_input_schema = TokenAlgorithmInputSchema()
+
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
@@ -123,18 +133,16 @@ class UserToken(ServicesResources):
         """
         log.debug("Authenticate user using username and password")
 
-        if not request.is_json:
-            log.warning('Authentication failed because no JSON body was '
-                        'provided!')
-            return {"msg": "Missing JSON in request"}, HTTPStatus.BAD_REQUEST
+        body = request.get_json()
+        # validate request body
+        errors = user_token_input_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # Check JSON body
-        username = request.json.get('username', None)
-        password = request.json.get('password', None)
-        if not username and password:
-            msg = "Username and/or password missing in JSON body"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+        username = body.get('username')
+        password = body.get('password')
 
         user, code = user_login(self.config, username, password, self.mail)
         if code != HTTPStatus.OK:  # login failed
@@ -150,7 +158,7 @@ class UserToken(ServicesResources):
                 return create_qr_uri(user), HTTPStatus.OK
             else:
                 # 2nd authentication factor: check the OTP secret of the user
-                mfa_code = request.json.get('mfa_code')
+                mfa_code = body.get('mfa_code')
                 if not mfa_code:
                     # note: this is not treated as error, but simply guide
                     # user to also fill in second factor
@@ -219,20 +227,16 @@ class NodeToken(ServicesResources):
         """
         log.debug("Authenticate Node using api key")
 
-        if not request.is_json:
-            log.warning('Authentication failed because no JSON body was '
-                        'provided!')
-            return {"msg": "Missing JSON in request"}, HTTPStatus.BAD_REQUEST
+        body = request.get_json()
+        # validate request body
+        errors = node_token_input_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # Check JSON body
-        api_key = request.json.get('api_key', None)
-        if not api_key:
-            msg = "api_key missing in JSON body"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.BAD_REQUEST
-
+        api_key = request.json.get('api_key')
         node = db.Node.get_by_api_key(api_key)
-
         if not node:  # login failed
             log.error("Api key is not recognized")
             return {"msg": "Api key is not recognized!"}, \
@@ -273,10 +277,15 @@ class ContainerToken(ServicesResources):
         """
         log.debug("Creating a token for a container running on a node")
 
-        data = request.get_json()
+        body = request.get_json()
+        # validate request body
+        errors = algorithm_token_input_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
-        task_id = data.get("task_id")
-        claim_image = data.get("image")
+        task_id = body.get("task_id")
+        claim_image = body.get("image")
 
         db_task = db.Task.get(task_id)
         if not db_task:
