@@ -50,12 +50,12 @@ class AlgorithmClient(ClientBase):
 
         self.image = container_identity.get("image")
         self.databases = container_identity.get('databases', [])
-        self.host_node_id = container_identity.get("node_id")
+        self.node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.organization_id = container_identity.get("organization_id")
         self.log.info(
             f"Container in collaboration_id={self.collaboration_id} \n"
-            f"Key created by node_id {self.host_node_id} \n"
+            f"Key created by node_id {self.node_id} \n"
             f"Can only use image={self.image}"
         )
 
@@ -330,7 +330,7 @@ class AlgorithmClient(ClientBase):
 
             description = (
                 description or
-                f"task from container on node_id={self.parent.host_node_id}"
+                f"task from container on node_id={self.parent.node_id}"
             )
 
             # serializing input. Note that the input is not encrypted here, but
@@ -512,4 +512,4 @@ class AlgorithmClient(ClientBase):
                 Dictionary containing data on the node this algorithm is
                 running on.
             """
-            return self.parent.request(f"node/{self.parent.host_node_id}")
+            return self.parent.request(f"node/{self.parent.node_id}")
