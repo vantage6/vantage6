@@ -15,13 +15,17 @@ Version format
 **Major** releases update the first digit, e.g. ``1.2.3`` is updated to
 ``2.0.0``. This is used for releasing breaking changes: server and nodes of
 version 2.x.y are unlikely to be able to run an algorithm written for version
-1.x.y.
+1.x.y. Also, the responses of the central server API may change in a way that
+changes the response to client requests.
 
 **Minor** releases update the second digit, e.g. ``1.2.3`` to ``1.3.0``. This is
 used for releasing new features (e.g. a new endpoint), enhancements and other
-changes that are compatible with all other components. Algorithms written for version
-``1.x.y`` should run on any server of version ``1.z.a``. However, nodes and
-servers of different minor versions may not be able to communicate properly.
+changes that are compatible with all other components. Algorithms written for
+version``1.x.y`` should run on any server of version ``1.z.a``. Also, the
+central server API should be compatible with other minor versions - the same
+fields present before will be present in the new version, although new fields
+may be added. However, nodes and servers of different minor versions may not be
+able to communicate properly.
 
 **Patch** releases update the third digit, e.g. ``1.2.3`` to ``1.2.4``. This is
 used for bugfixes and other minor changes. Different patch releases should be
@@ -37,6 +41,59 @@ the actual release is made.
 where, for example, a dependency has been updated and a rebuild is required.
 In vantage6, this is only used to version the Docker images that are updated
 in these cases.
+
+Testing a release
+-------------------
+
+Before a release is made, it is tested by the development team. They go through
+the following steps to test a release:
+
+1. *Create a release candidate*. This process is the same as creating
+   the :ref:`actual release <create-release>`, except that the candidate has
+   a 'pre' tag (e.g. ``1.2.3rc1`` for release candidate number 1 of version
+   1.2.3). Note that for an RC release, no notifications are sent to Discord.
+2. *Install the release*. The release should be tested from a clean conda
+   environment.
+
+  .. code:: bash
+
+    conda create -n <name> python=3.10
+    conda activate <name>
+    pip install vantage6==<version>
+
+3. *Start server and node*. Start the server and node for the release candidate:
+
+  .. code:: bash
+
+    vserver start --name <server name>
+                  --image harbor2.vantage6.ai/infrastructure/server:<version>
+                  --attach
+    vnode start --name <node name>
+                --image harbor2.vantage6.ai/infrastructure/node:<version>
+                --attach
+
+4. *Test code changes*. Go through all issues that are part of the new release
+   and test their functionality.
+
+5. *Run test algorithms*. The algorithm `v6-feature-tester` is run and checked.
+   This algorithm checks several features to see if they are performing as
+   expected. Additionaly, the `v6-node-to-node-diagnostics` algorithm is run
+   to check the VPN functionality.
+
+6. *Check swagger*. Check if the swagger docs run without error. They should be
+   on http://localhost:5000/apidocs/ when running server locally.
+
+7. *Test the UI*. Also make a release candidate there.
+
+After these steps, the release is ready. It is executed for both the main
+infrastructure and the UI. The release process is described below.
+
+.. note::
+
+  We are working on further automating the testing and release process.
+
+
+.. _create-release:
 
 Create a release
 ----------------
@@ -170,3 +227,22 @@ The release pipeline for the UI executes the following steps:
 3. Application is built.
 4. Docker images are built and released to harbor2.
 5. Application is pushed to our UI deployment slot (an Azure app service).
+
+
+Post-release checks
+-------------------
+
+After a release, there are a few checks that are performed. Most of these are
+only relevant if you are hosting a server yourself that is being automatically
+updated upon new releases, as is for instance the case for the Petronas server.
+
+For petronas, the following checks are done:
+
+- Check that harbor2.vantage6.ai has updated images ``server:petronas``,
+  ``server:petronas-live`` and ``node:petronas``.
+- Check if the (live) server version is updated. Go to:
+  https://petronas.vantage6.ai/version. Check logs if it is not updated.
+- Release any documentation that may not yet have been released.
+- Upgrade issue status to 'Done' in any relevant issue tracker.
+- Check if nodes are online, and restart them to update to the latest version
+  if desired.

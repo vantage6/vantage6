@@ -388,7 +388,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.info")
     @patch("vantage6.cli.node.debug")
     @patch("vantage6.cli.node.error")
-    @patch("vantage6.cli.node.UserClient")
+    @patch("vantage6.cli.node.Client")
     @patch("vantage6.cli.node.q")
     def test_client(self, q, client, error, debug, info):
 

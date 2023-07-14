@@ -12,11 +12,12 @@ from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer
 )
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
     FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT, ALPINE_IMAGE
 )
-from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.node.node_client import NodeClient
 from vantage6.node.docker.docker_base import DockerBaseManager
 
 
@@ -28,8 +29,8 @@ class VPNManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, isolated_network_mgr: NetworkManager,
-                 node_name: str, vpn_volume_name: str, vpn_subnet: str,
-                 alpine_image: str | None = None,
+                 node_name: str, node_client: NodeClient, vpn_volume_name: str,
+                 vpn_subnet: str, alpine_image: str | None = None,
                  vpn_client_image: str | None = None,
                  network_config_image: str | None = None) -> None:
         """
@@ -56,6 +57,7 @@ class VPNManager(DockerBaseManager):
 
         self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
         self.vpn_volume_name = vpn_volume_name
+        self.client = node_client
         self.subnet = vpn_subnet
         self.alpine_image = ALPINE_IMAGE if not alpine_image \
             else alpine_image
@@ -138,6 +140,9 @@ class VPNManager(DockerBaseManager):
         else:
             raise ConnectionError("VPN connection not established!")
 
+        # send VPN IP address to server
+        self.send_vpn_ip_to_server()
+
         # check that the VPN connection IP address is part of the subnet
         # defined in the node configuration. If not, the VPN connection would
         # not work.
@@ -201,6 +206,9 @@ class VPNManager(DockerBaseManager):
         self.log.debug("Stopping and removing the VPN client container")
         remove_container(self.vpn_client_container, kill=True)
 
+        # clear VPN IP address from server
+        self.send_vpn_ip_to_server()
+
         # Clean up host network changes. We have added two rules to the front
         # of the DOCKER-USER chain. We now execute more or less the same
         # commands, but with -D (delete) instead of -I (insert)
@@ -245,6 +253,22 @@ class VPNManager(DockerBaseManager):
             raise ConnectionError(
                 "Could not get VPN IP: VPN is not connected!")
         return vpn_interface[0]['addr_info'][0]['local']
+
+    def send_vpn_ip_to_server(self) -> None:
+        """
+        Send VPN IP address to the server
+        """
+        node_id = self.client.whoami.id_
+        if self.has_vpn:
+            node_ip = self.get_vpn_ip()
+            self.client.request(
+                f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
+            )
+        else:
+            # VPN is disconnected, send NULL IP address
+            self.client.request(
+                f"node/{node_id}", json={"clear_ip": True}, method="PATCH"
+            )
 
     def forward_vpn_traffic(self, helper_container: Container,
                             algo_image_name: str) -> list[dict] | None:
@@ -326,29 +350,37 @@ class VPNManager(DockerBaseManager):
             return None  # no port assigned if no VPN is available
 
         # Get IP Address of the algorithm container
+        self.log.debug("Getting IP address of algorithm container")
         algo_helper_container.reload()  # update attributes
         algo_ip = self.get_isolated_netw_ip(algo_helper_container)
 
         # Set ports at which algorithm containers receive traffic
+        self.log.debug("Finding exposed ports of algorithm container")
         ports = self._find_exposed_ports(algo_image_name)
 
         # Find ports on VPN container that are already occupied
         cmd = (
             'sh -c '
-            '"iptables -t nat -L PREROUTING | awk \'{print $7}\' | cut -c 5-"'
+            '"iptables -t nat -L PREROUTING -n | '
+            'awk \'{print $7}\' | cut -c 5-"'
         )
         occupied_ports = self.vpn_client_container.exec_run(cmd=cmd)
+
         occupied_ports = occupied_ports.output.decode('utf-8')
         occupied_ports = occupied_ports.split('\n')
         occupied_ports = \
             [int(port) for port in occupied_ports if port != '']
+        self.log.debug(f"Occupied ports: {occupied_ports}")
 
         # take first available port
         vpn_client_port_options = set(FREE_PORT_RANGE) - set(occupied_ports)
         for port in ports:
-            port['port'] = vpn_client_port_options.pop()
+            port_ = vpn_client_port_options.pop()
+            self.log.debug(f"Assigning port {port_} to algorithm port")
+            port['port'] = port_
 
         vpn_ip = self.get_vpn_ip()
+        self.log.debug(f"VPN IP: {vpn_ip}")
 
         # Set up forwarding VPN traffic to algorithm container
         command = 'sh -c "'

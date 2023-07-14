@@ -17,10 +17,11 @@ from vantage6.server.permission import (
     Operation as P
 )
 from vantage6.server.resource import only_for, ServicesResources, with_user
-from vantage6.server.resource.common._schema import (
+from vantage6.server.resource.common.output_schema import (
     TaskSchema,
     TaskIncludedSchema,
 )
+from vantage6.server.resource.common.input_schema import TaskInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.event import kill_task
 
@@ -108,6 +109,7 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 task_schema = TaskSchema()
 task_result_schema = TaskIncludedSchema()
+task_input_schema = TaskInputSchema()
 
 
 class TaskBase(ServicesResources):
@@ -447,6 +449,12 @@ class Tasks(TaskBase):
         tags: ["Task"]
         """
         data = request.get_json()
+        # validate request body
+        errors = task_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         collaboration_id = data.get('collaboration_id')
         collaboration = db.Collaboration.get(collaboration_id)
 
@@ -540,7 +548,7 @@ class Tasks(TaskBase):
         task.save()
 
         # save the databases that the task uses
-        databases = data.get('databases', ['default'])
+        databases = data.get('databases')
         if not isinstance(databases, list):
             databases = [databases]
         for database in databases:

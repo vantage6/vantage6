@@ -16,6 +16,10 @@ from vantage6.server.permission import (
     Operation,
     PermissionManager
 )
+from vantage6.server.resource.common.input_schema import (
+    KillNodeTasksInputSchema,
+    KillTaskInputSchema
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -84,6 +88,10 @@ def permissions(permissions: PermissionManager) -> None:
         description="send websocket events to all collaborations")
 
 
+kill_task_schema = KillTaskInputSchema()
+kill_node_tasks_schema = KillNodeTasksInputSchema()
+
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
@@ -132,12 +140,15 @@ class KillTask(ServicesResources):
 
         tags: ["Task"]
         """
-        # obtain task id or node id from request
         body = request.get_json()
-        id_ = body.get("id")
-        if not id_:
-            return {"msg": "No task id provided!"}, HTTPStatus.BAD_REQUEST
 
+        # validate request body
+        errors = kill_task_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        id_ = body.get("id")
         task = db.Task.get(id_)
         if not task:
             return {"msg": f"Task id={id_} not found"}, HTTPStatus.NOT_FOUND
@@ -213,12 +224,14 @@ class KillNodeTasks(ServicesResources):
 
         tags: ["Task"]
         """
-        # obtain task id or node id from request
         body = request.get_json()
-        id_ = body.get("id")
-        if not id_:
-            return {"msg": "No node id provided!"}, HTTPStatus.BAD_REQUEST
+        # validate request body
+        errors = kill_node_tasks_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
+        id_ = body.get("id")
         node = db.Node.get(id_)
         if not node:
             return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND

@@ -1,5 +1,7 @@
 .. include:: <isonum.txt>
 
+.. _server-admin-guide:
+
 Server admin guide
 ==================
 

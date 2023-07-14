@@ -16,5 +16,9 @@ This section is to be extended with more examples in the future.
    :caption: Contents:
 
    concepts
+   develop
    classic_tutorial
 ..    Tutorial
+
+.. todo explain somewhere which data sources are supported and how to use them
+.. fhir, csv, sparql, etc.

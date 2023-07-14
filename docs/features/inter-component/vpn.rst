@@ -1,3 +1,5 @@
+.. _vpn-feature:
+
 Algorithm-to-algorithm comunication
 -----------------------------------
 

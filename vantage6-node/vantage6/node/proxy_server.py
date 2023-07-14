@@ -15,7 +15,7 @@ from requests import Response
 from flask import Flask, request, jsonify
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
-from vantage6.node.server_io import NodeClient
+from vantage6.node.node_client import NodeClient
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -150,14 +150,13 @@ def decrypt_result(run: dict) -> dict:
     dict
         Run dict with the `result` decrypted
     """
-    # FIXME check if this function is not implemented in several places
-    server_io: NodeClient = app.config.get('SERVER_IO')
+    client: NodeClient = app.config.get('SERVER_IO')
 
     # if the result is a None, there is no need to decrypt that..
     try:
         if run['result']:
             run["result"] = bytes_to_base64s(
-                server_io.cryptor.decrypt_str_to_bytes(
+                client.cryptor.decrypt_str_to_bytes(
                     run["result"]
                 )
             )
@@ -201,8 +200,8 @@ def proxy_task():
         Response from the vantage6 server
     """
     # We need the server io for the decryption of the results
-    server_io: NodeClient = app.config.get("SERVER_IO")
-    if not server_io:
+    client: NodeClient = app.config.get("SERVER_IO")
+    if not client:
         log.error("Task proxy request received but proxy server was not "
                   "initialized properly.")
         return jsonify({'msg': 'Proxy server not initialized properly'}), 500
@@ -253,8 +252,8 @@ def proxy_task():
         public_key = response.json().get("public_key")
 
         # Encrypt the input field
-        server_io: NodeClient = app.config.get("SERVER_IO")
-        organization["input"] = server_io.cryptor.encrypt_bytes_to_str(
+        client: NodeClient = app.config.get("SERVER_IO")
+        organization["input"] = client.cryptor.encrypt_bytes_to_str(
             base64s_to_bytes(input_),
             public_key
         )
@@ -263,7 +262,7 @@ def proxy_task():
                   f"{organization_id}!")
         return organization
 
-    if server_io.is_encrypted_collaboration():
+    if client.is_encrypted_collaboration():
 
         log.debug("Applying end-to-end encryption")
         data["organizations"] = [encrypt_input(o) for o in organizations]
@@ -294,8 +293,8 @@ def proxy_result(id_: int) -> Response:
         Reponse from the vantage6 server
     """
     # We need the server io for the decryption of the results
-    server_io = app.config.get("SERVER_IO")
-    if not server_io:
+    client = app.config.get("SERVER_IO")
+    if not client:
         return jsonify({'msg': 'Proxy server not initialized properly'}),\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -335,8 +334,8 @@ def proxy_runs(id_: int) -> Response:
         Response of the vantage6 server
     """
     # We need the server io for the decryption of the results
-    server_io: NodeClient = app.config.get("SERVER_IO")
-    if not server_io:
+    client: NodeClient = app.config.get("SERVER_IO")
+    if not client:
         return {'msg': 'Proxy server not initialized properly'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 

@@ -19,7 +19,8 @@ from vantage6.server.resource import (
 )
 from vantage6.server import db
 from vantage6.server.resource.common.pagination import Pagination
-from vantage6.server.resource.common._schema import PortSchema
+from vantage6.server.resource.common.output_schema import PortSchema
+from vantage6.server.resource.common.input_schema import PortInputSchema
 from vantage6.server.model import (
     Run,
     AlgorithmPort,
@@ -73,6 +74,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
 # Schemas
 port_schema = PortSchema()
+port_input_schema = PortInputSchema()
 
 
 # -----------------------------------------------------------------------------
@@ -249,17 +251,22 @@ class Ports(PortBase):
         tags: ["VPN"]
         """
         data = request.get_json()
+        # validate request body
+        errors = port_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
-        run_id = data.get('run_id', '')
+        run_id = data['run_id']
         linked_run = g.session.query.query(Run).filter(Run.id == run_id).one()
         if g.node.id != linked_run.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
         port = AlgorithmPort(
-            port=data.get('port', ''),
+            port=data['port'],
             run_id=run_id,
             label=data.get('label' ''),
         )

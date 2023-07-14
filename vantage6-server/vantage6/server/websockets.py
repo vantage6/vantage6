@@ -298,13 +298,19 @@ class DefaultSocketNamespace(Namespace):
         to_store = []
         for k, v in node_config.items():
             # add single item or list of items
-            if not isinstance(v, list):
-                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
-            else:
+            if isinstance(v, list):
                 to_store.extend([
                     db.NodeConfig(node_id=node.id, key=k, value=i)
                     for i in v
                 ])
+            elif isinstance(v, dict):
+                to_store.extend([
+                    db.NodeConfig(node_id=node.id, key=inner_key,
+                                  value=inner_val)
+                    for inner_key, inner_val in v.items()
+                ])
+            else:
+                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
 
         node.config = to_store
         node.save()

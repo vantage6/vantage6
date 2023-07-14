@@ -9,7 +9,6 @@ The following pages each describe one feature of the vantage6 server.
 
    2fa
    horizontal_scaling
-   vpn
    permissions
    api_structure
 

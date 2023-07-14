@@ -14,10 +14,13 @@ from vantage6.server.permission import (
     PermissionManager,
     RuleCollection
 )
+from vantage6.server.resource.common.input_schema import (
+    OrganizationInputSchema
+)
 from vantage6.server.resource import (
     with_user_or_node, only_for, with_user, ServicesResources
 )
-from vantage6.server.resource.common._schema import (
+from vantage6.server.resource.common.output_schema import (
     OrganizationSchema,
     CollaborationSchema,
     NodeSchema
@@ -110,6 +113,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 org_schema = OrganizationSchema()
+org_input_schema = OrganizationInputSchema()
 
 
 class OrganizationBase(ServicesResources):
@@ -288,8 +292,14 @@ class Organizations(OrganizationBase):
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
+        # validate request body
         data = request.get_json()
-        name = data.get('name', '')
+        errors = org_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        name = data.get('name')
         if db.Organization.exists("name", name):
             return {
                 "msg": f"Organization with name '{name}' already exists!"
@@ -415,6 +425,12 @@ class Organization(OrganizationBase):
 
         tags: ["Organization"]
         """
+        # validate request body
+        data = request.get_json()
+        errors = org_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         organization = db.Organization.get(id)
         if not organization:
@@ -425,7 +441,6 @@ class Organization(OrganizationBase):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        data = request.get_json()
         name = data.get('name', None)
         if name:
             if organization.name != name and \

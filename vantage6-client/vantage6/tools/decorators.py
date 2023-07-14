@@ -5,12 +5,10 @@ from functools import wraps
 from typing import Any
 
 from vantage6.client.algorithm_client import AlgorithmClient
-from vantage6.tools.wrappers import (
-    CSVWrapper, ExcelWrapper, SparqlDockerWrapper, ParquetWrapper,
-    SQLWrapper, OMOPWrapper
-)
+from vantage6.tools.mock_client import MockAlgorithmClient
 from vantage6.tools.wrap import load_input
 from vantage6.tools.util import info, error, warn
+from vantage6.tools.wrappers import select_wrapper
 
 
 def algorithm_client(func: callable) -> callable:
@@ -20,6 +18,11 @@ def algorithm_client(func: callable) -> callable:
     By adding @algorithm_client to a function, the ``algorithm_client``
     argument will be added to the front of the argument list. This client can
     be used to communicate with the server.
+
+    There is one reserved argument `mock_client` in the function to be
+    decorated. If this argument is provided, the decorator will add this
+    MockAlgorithmClient to the front of the argument list instead of the
+    regular AlgorithmClient.
 
     Parameters
     ----------
@@ -31,7 +34,18 @@ def algorithm_client(func: callable) -> callable:
     callable
         Decorated function
     """
-    def wrap_function(*args, **kwargs):
+    def wrap_function(mock_client: MockAlgorithmClient = None,
+                      *args, **kwargs) -> callable:
+        """
+        Wrap the function with the client object
+
+        Parameters
+        ----------
+        mock_client : MockAlgorithmClient
+            Mock client to use instead of the regular client
+        """
+        if mock_client is not None:
+            return func(mock_client, *args, **kwargs)
         # read server address from the environment
         host = os.environ["HOST"]
         port = os.environ["PORT"]
@@ -60,6 +74,11 @@ def data(number_of_databases: int = 1) -> callable:
     Note that the user should provide exactly as many databases as the
     decorated function requires when they create the task.
 
+    There is one reserved argument `mock_data` in the function to be
+    decorated. If this argument is provided, the decorator will add this
+    mocked data to the front of the argument list, instead of reading in the
+    data from the databases.
+
     Parameters
     ----------
     number_of_databases: int
@@ -80,7 +99,18 @@ def data(number_of_databases: int = 1) -> callable:
     """
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
-        def decorator(*args, **kwargs) -> callable:
+        def decorator(mock_data: list[pd.DataFrame] = None, *args,
+                      **kwargs) -> callable:
+            """
+            Wrap the function with the data
+
+            Parameters
+            ----------
+            mock_data : list[pd.DataFrame]
+                Mock data to use instead of the regular data
+            """
+            if mock_data is not None:
+                return func(*mock_data, *args, **kwargs)
             # query to execute on the database
             input_file = os.environ["INPUT_FILE"]
             info(f"Reading input file {input_file}")
@@ -138,19 +168,8 @@ def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
 
     # Create the correct wrapper based on the database type, note that the
     # multi database wrapper is not available.
-    if database_type == "csv":
-        wrapper = CSVWrapper()
-    elif database_type == "excel":
-        wrapper = ExcelWrapper()
-    elif database_type == "sparql":
-        wrapper = SparqlDockerWrapper()
-    elif database_type == "parquet":
-        wrapper = ParquetWrapper()
-    elif database_type == "sql":
-        wrapper = SQLWrapper()
-    elif database_type == "omop":
-        wrapper = OMOPWrapper()
-    else:
+    wrapper = select_wrapper(database_type)
+    if wrapper is None:
         error(f"Unknown database type '{database_type}' for database with "
               f"label '{label}'. Please check the node configuration.")
         exit(1)

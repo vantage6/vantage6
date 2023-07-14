@@ -33,28 +33,29 @@ swagger_template = {
                     },
                     "organizations": {
                         "type": "array",
-                        "items": {"type": "integer"},
+                        "items": {"type": "dictionary"},
                         "description": (
-                            "Organization ids in collaboration to create task "
-                            "for"
+                            "List of organizations for who the task is "
+                            "intended. For each organization, the 'id' and "
+                            "'input' fields should be specified."
                         )
                     },
                     "databases": {
                         "type": "array",
+                        "items": {"type": "string"},
                         "description": "Databases to use for this task"
-                    },
-                    "master": {
-                        "type": "boolean",
-                        "description": (
-                            "Whether or not this is a master task. Default "
-                            "value is False"
-                        )
                     }
                 },
                 "example": {
                     "name": "human-readable-name",
                     "image": "hello-world",
-                    "collaboration_id": 1
+                    "collaboration_id": 1,
+                    "description": "human-readable-description",
+                    "organizations": [{
+                        "id": 1,
+                        "input": "input-for-organization-1"
+                    }],
+                    "databases": ["database1", "database2"],
                 },
                 "required": ["image", "collaboration_id"]
             },

@@ -13,8 +13,6 @@ DEFAULT_DOCKER_REGISTRY = "harbor2.vantage6.ai"
 
 DEFAULT_NODE_IMAGE = f"infrastructure/node:{MAIN_VERSION_NAME}"
 
-DEFAULT_NODE_IMAGE_WO_TAG = "infrastructure/node"
-
 DEFAULT_SERVER_IMAGE = f"infrastructure/server:{MAIN_VERSION_NAME}"
 
 

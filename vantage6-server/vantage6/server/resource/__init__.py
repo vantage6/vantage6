@@ -20,7 +20,7 @@ from vantage6.server.utils import (
     obtain_auth_collaborations, obtain_auth_organization
 )
 from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.resource.common._schema import HATEOASModelSchema
+from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
 from vantage6.server.resource.common.pagination import Page
 

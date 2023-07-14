@@ -11,19 +11,11 @@ Currently the following wrappers are available:
     - ``OMOPWrapper``
     - ``ExcelWrapper``
 
-When writing the Docker file for the algorithm, you can call the
-`auto_wrapper` which will automatically select the correct wrapper based on
-the database type. The database type is set by the vantage6 node based on its
-configuration file.
-
-For legacy reasons, the ``docker_wrapper``, ``sparql_docker_wrapper`` and
-``parquet_wrapper`` are still available. These wrappers are deprecated and
-will be removed in the future.
-
-The ``multi_wrapper`` is used when multiple databases are connected to a single
-algorithm. This wrapper is separated from the other wrappers because it is not
-compatible with the ``smart_wrapper``.
+When writing the Docker file for the algorithm, the correct wrapper will
+automatically be selected based on the database type. The database type is set
+by the vantage6 node based on its configuration file.
 """
+from __future__ import annotations
 import io
 import pandas
 
@@ -33,6 +25,37 @@ from SPARQLWrapper import SPARQLWrapper, CSV
 from vantage6.tools.util import info, error
 
 _SPARQL_RETURN_FORMAT = CSV
+
+
+def select_wrapper(database_type: str) -> WrapperBase | None:
+    """
+    Select the correct wrapper based on the database type.
+
+    Parameters
+    ----------
+    database_type : str
+        The database type to select the wrapper for.
+
+    Returns
+    -------
+    derivative of WrapperBase | None
+        The wrapper for the specified database type. None if the database type
+        is not supported by a wrapper.
+    """
+    if database_type == "csv":
+        return CSVWrapper()
+    elif database_type == "excel":
+        return ExcelWrapper()
+    elif database_type == "sparql":
+        return SparqlDockerWrapper()
+    elif database_type == "parquet":
+        return ParquetWrapper()
+    elif database_type == "sql":
+        return SQLWrapper()
+    elif database_type == "omop":
+        return OMOPWrapper()
+    else:
+        return None
 
 
 class WrapperBase(ABC):

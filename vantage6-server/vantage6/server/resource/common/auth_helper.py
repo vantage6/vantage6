@@ -6,10 +6,8 @@ from http import HTTPStatus
 from flask import request, render_template
 from flask_mail import Mail
 
-
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
-from vantage6.server import db
 from vantage6.server.model.user import User
 
 module_name = __name__.split('.')[-1]
@@ -18,7 +16,7 @@ log = logging.getLogger(module_name)
 
 def user_login(
     config: dict, username: str, password: str, mail: Mail
-) -> tuple[dict | db.User, HTTPStatus]:
+) -> tuple[dict | User, HTTPStatus]:
     """
     Returns user a message in case of failed login attempt.
 
@@ -34,7 +32,7 @@ def user_login(
 
     Returns
     -------
-    User or Dict:
+    :class:`~vantage6.server.model.user.User` or dict:
         User SQLAlchemy model if user is logged in, otherwise dictionary with
         error message
     HTTPStatus:
@@ -42,8 +40,8 @@ def user_login(
     """
     log.info(f"Trying to login '{username}'")
     failed_login_msg = "Failed to login"
-    if db.User.username_exists(username):
-        user = db.User.get_by_username(username)
+    if User.username_exists(username):
+        user = User.get_by_username(username)
         password_policy = config.get("password_policy", {})
         max_failed_attempts = password_policy.get('max_failed_attempts', 5)
         inactivation_time = password_policy.get('inactivation_minutes', 15)
@@ -72,7 +70,7 @@ def user_login(
 
 
 def notify_user_blocked(
-    user: db.User, max_n_attempts: int, min_rem: int, mail: Mail,
+    user: User, max_n_attempts: int, min_rem: int, mail: Mail,
     config: dict
 ) -> None:
     """
@@ -80,7 +78,7 @@ def notify_user_blocked(
 
     Parameters
     ----------
-    user: User
+    user: :class:`~vantage6.server.model.user.User`
         User who is temporarily blocked
     max_n_attempts: int
         Maximum number of failed login attempts before the account is locked
@@ -126,7 +124,7 @@ def create_qr_uri(user: User) -> dict:
 
     Parameters
     ----------
-    user: User
+    user: :class:`~vantage6.server.model.user.User`
         User for whom two-factor authentication is to be set up
 
     Returns
