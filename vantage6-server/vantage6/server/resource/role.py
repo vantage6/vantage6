@@ -633,6 +633,12 @@ class Role(RoleBase):
               minimum: 1
             description: Role id
             required: true
+          - in: query
+            name: delete_dependents
+            schema:
+              type: boolean
+            description: If set to true, the role is deleted even though users
+               with this role may lose permissions (default=False)
 
         responses:
           200:
@@ -663,6 +669,21 @@ class Role(RoleBase):
         if not self.r.can_for_org(P.DELETE, role.organization_id):
             return {'msg': 'You do not have permission to delete this role!'},\
                 HTTPStatus.UNAUTHORIZED
+
+        # check if role is assigned to users
+        if role.users:
+            params = request.args
+            if not params.get('delete_dependents', False):
+                return {
+                    'msg': "Role is assigned to users. Please remove the role "
+                    "from the users first, or set the 'delete_dependents' "
+                    "parameter to delete the role anyway."
+                }, HTTPStatus.BAD_REQUEST
+            else:
+                log.warn(f"Role {id} deleted even though it was assigned to "
+                         "users. This may result in missing permissions.")
+                # Note that the role is removed from the users automatically
+                # due to the relationship between the role and the user.
 
         role.delete()
 

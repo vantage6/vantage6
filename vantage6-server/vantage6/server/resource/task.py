@@ -831,8 +831,26 @@ class Task(TaskBase):
             log.info(f" Removing run id={run.id}")
             run.delete()
 
+        # delete child/grandchild/... tasks
+        Task._delete_subtasks(task)
+
         # permissions ok, delete...
         task.delete()
 
         return {"msg": f"task id={id} and its algorithm run data have been "
                        "successfully deleted"}, HTTPStatus.OK
+
+    @staticmethod
+    def _delete_subtasks(task: db.Task) -> None:
+        """
+        Delete subtasks recursively.
+
+        Parameters
+        ----------
+        task : db.Task
+            Task to delete.
+        """
+        for child_task in task.children:
+            Task._delete_subtasks(child_task)
+            log.info(f" Removing child task id={child_task.id}")
+            child_task.delete()

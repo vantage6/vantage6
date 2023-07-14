@@ -756,6 +756,12 @@ class User(UserBase):
               type: integer
             description: User id
             required: true
+          - in: query
+            name: delete_dependents
+            schema:
+              type: boolean
+            description: If set to true, the user will be deleted along with
+              all tasks they created (default=False)
 
         responses:
           200:
@@ -779,6 +785,22 @@ class User(UserBase):
                 not self.r.can_for_org(P.DELETE, user.organization_id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
+
+        # check if user created any tasks
+        if user.created_tasks:
+            params = request.args
+            if not params.get('delete_dependents', False):
+                return {
+                    "msg": f"User has created {len(user.created_tasks)} tasks."
+                    " Please delete those first, or set the "
+                    "`delete_dependents` parameter to true to delete them "
+                    "automatically together with this user."
+                }, HTTPStatus.BAD_REQUEST
+            else:
+                log.warn(f"Deleting {len(user.created_tasks)} tasks created by"
+                         f" user id={id}")
+                for task in user.created_tasks:
+                    task.delete()
 
         user.delete()
         log.info(f"user id={id} is removed from the database")
