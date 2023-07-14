@@ -356,8 +356,8 @@ class TaskInputSchema(_NameValidationSchema):
         Parameters
         ----------
         organizations : list[dict]
-            List of organizations to validate. Each organization must have an
-            id and input.
+            List of organizations to validate. Each organization must have at
+            least an organization id.
 
         Raises
         ------
@@ -370,12 +370,6 @@ class TaskInputSchema(_NameValidationSchema):
             if 'id' not in organization:
                 raise ValidationError(
                     'Organization id is required for each organization')
-            if 'input' not in organization:
-                raise ValidationError(
-                    'Input is required for each organization')
-            if 'method' not in organization['input']:
-                raise ValidationError(
-                    'Algorithm method is required for each organization input')
 
 
 class TokenUserInputSchema(Schema):
