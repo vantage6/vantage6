@@ -595,6 +595,7 @@ class Node(NodeBase):
                         'not found!'}, HTTPStatus.NOT_FOUND
             node.organization = organization
 
+        auth = self.obtain_auth()
         col_id = data.get('collaboration_id')
         updated_col = col_id and col_id != node.collaboration.id
         if updated_col:

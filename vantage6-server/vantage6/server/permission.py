@@ -10,7 +10,6 @@ from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.model.organization import Organization
 from vantage6.server.utils import (
     obtain_auth_collaborations, obtain_auth_organization
 )
