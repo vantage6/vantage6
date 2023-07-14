@@ -208,7 +208,7 @@ class Nodes(NodeBase):
         args = request.args
 
         if 'organization_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['organization_id']):
+            if not self.r.can_for_org(P.VIEW, int(args['organization_id'])):
                 return {
                     'msg': 'You lack the permission view nodes from the '
                     f'organization with id {args["organization_id"]}!'
@@ -216,7 +216,7 @@ class Nodes(NodeBase):
             q = q.filter(db.Node.organization_id == args['organization_id'])
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+            if not self.r.can_for_col(P.VIEW, int(args['collaboration_id'])):
                 return {
                     'msg': 'You lack the permission view nodes from the '
                     f'collaboration with id {args["collaboration_id"]}!'

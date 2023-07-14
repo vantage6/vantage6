@@ -192,8 +192,7 @@ class Organizations(OrganizationBase):
         if 'country' in args:
             q = q.filter(db.Organization.country == args['country'])
         if 'collaboration_id' in args:
-            # TODO we also need to check here if the user is part of the collab
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+            if not self.r.can_for_col(P.VIEW, int(args['collaboration_id'])):
                 return {
                     'msg': 'You lack the permission to get all organizations '
                     'in your collaboration!'
