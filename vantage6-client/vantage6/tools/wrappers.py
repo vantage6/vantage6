@@ -11,18 +11,9 @@ Currently the following wrappers are available:
     - ``OMOPWrapper``
     - ``ExcelWrapper``
 
-When writing the Docker file for the algorithm, you can call the
-`auto_wrapper` which will automatically select the correct wrapper based on
-the database type. The database type is set by the vantage6 node based on its
-configuration file.
-
-For legacy reasons, the ``docker_wrapper``, ``sparql_docker_wrapper`` and
-``parquet_wrapper`` are still available. These wrappers are deprecated and
-will be removed in the future.
-
-The ``multi_wrapper`` is used when multiple databases are connected to a single
-algorithm. This wrapper is separated from the other wrappers because it is not
-compatible with the ``smart_wrapper``.
+When writing the Docker file for the algorithm, the correct wrapper will
+automatically be selected based on the database type. The database type is set
+by the vantage6 node based on its configuration file.
 """
 from __future__ import annotations
 import io

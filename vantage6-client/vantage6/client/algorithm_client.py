@@ -1,10 +1,14 @@
-from typing import Any
 import jwt
 import json as json_lib
+import time
+
+from typing import Any
 
 from vantage6.client import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
+from vantage6.common.task_status import TaskStatus
 from vantage6.tools.serialization import serialize
+from vantage6.tools.util import info
 
 
 class AlgorithmClient(ClientBase):
@@ -84,7 +88,31 @@ class AlgorithmClient(ClientBase):
         """
         return super().request(*args, **kwargs, retry=False)
 
-    def multi_page_request(self, endpoint: str, params: dict = None) -> dict:
+    def wait_for_results(self, task_id: int, interval: float = 1) -> list:
+        """
+        Poll the central server until results are available and then return
+        them.
+
+        Parameters
+        ----------
+        task_id: int
+            ID of the task for which the results should be obtained.
+        interval: float
+            Interval in seconds to wait between checking server for results.
+
+        Returns
+        -------
+        list
+            List of task results.
+        """
+        while self.task.get(task_id)['status'] != TaskStatus.COMPLETED:
+            info(f"Waiting for results of task {task_id}...")
+            time.sleep(interval)
+        info("Done!")
+
+        return self.result.from_task(task_id)
+
+    def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """
         Make multiple requests to the central server to get all pages of a list
         of results.
@@ -167,7 +195,7 @@ class AlgorithmClient(ClientBase):
             # TODO do we need this function? It may be used to collect data
             # on subtasks but usually only the results are accessed, which is
             # done with the function below.
-            return self.parent.multi_page_request(
+            return self.parent._multi_page_request(
                 "run", params={"task_id": task_id}
             )
 
@@ -225,7 +253,7 @@ class AlgorithmClient(ClientBase):
                 List of results. The type of the results depends on the
                 algorithm.
             """
-            results = self.parent.multi_page_request(
+            results = self.parent._multi_page_request(
                 "result", params={"task_id": task_id}
             )
 
@@ -448,7 +476,7 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of organizations in the collaboration.
             """
-            return self.parent.multi_page_request(
+            return self.parent._multi_page_request(
                 endpoint="organization", params={
                     "collaboration_id": self.parent.collaboration_id
                 }

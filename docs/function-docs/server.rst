@@ -165,10 +165,10 @@ vantage6.server.model.organization.Organization
     :members:
     :exclude-members: id
 
-vantage6.server.model.result.Result
+vantage6.server.model.run.Run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: vantage6.server.model.result.Result
+.. autoclass:: vantage6.server.model.run.Run
     :members:
     :exclude-members: id
 
@@ -261,8 +261,8 @@ vantage6.server.default_roles
 
 .. autofunction:: vantage6.server.default_roles.get_default_roles
 
-Custom exceptions
------------------
+Custom server exceptions
+------------------------
 
 vantage6.server.exceptions
 ++++++++++++++++++++++++++
@@ -270,15 +270,6 @@ vantage6.server.exceptions
 .. automodule:: vantage6.server.exceptions
     :members:
 
-
-vantage6.server.cli
--------------------
-
-This section contains the documentation of the `vserver-local` CLI commands.
-
-.. click:: vantage6.server.cli.server:cli_server
-    :prog: vserver-local
-    :nested: full
 
 .. todo add files in vantage6.server.controller?
 .. todo add files in vantage6.server.configuration?

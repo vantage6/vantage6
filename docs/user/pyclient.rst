@@ -365,6 +365,8 @@ i.e. this collaboration consists of the organizations ``example_org1``
 (with id ``2``), ``example_org2`` (with id ``3``) and ``example_org3``
 (with id ``4``).
 
+.. _pyclient-create-task:
+
 **Creating a task that runs the master algorithm**
 
 Now, we have two options: create a task that will run the master

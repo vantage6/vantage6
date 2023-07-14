@@ -35,7 +35,7 @@ def algorithm_client(func: callable) -> callable:
         Decorated function
     """
     def wrap_function(mock_client: MockAlgorithmClient = None,
-                      *args, **kwargs):
+                      *args, **kwargs) -> callable:
         """
         Wrap the function with the client object
 

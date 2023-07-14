@@ -34,7 +34,14 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [True, False, True, True]
+            q.confirm.return_value.ask.side_effect = [
+                True,  # add a database
+                False,  # don't enable two-factor authentication
+                True,  # add VPN server
+                False,  # don't abort if no server connection is made to pull
+                        # collaboration settings
+                True  # Enable encryption
+            ]
             dirs = MagicMock(data="/")
             config = node_configuration_questionaire(dirs, "iknl")
 

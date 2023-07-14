@@ -206,16 +206,6 @@ class TaskIncludedSchema(TaskSchema):
     runs = fields.Nested('TaskRunSchema', many=True)
 
 
-# /task/{id}/run
-class TaskRunSchema(ResultSchema):
-    node = fields.Function(
-        serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
-    )
-    ports = fields.Function(
-        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
-    )
-
-
 class RunSchema(HATEOASModelSchema):
     class Meta:
         model = db.Run
@@ -238,6 +228,16 @@ class RunSchema(HATEOASModelSchema):
             "link": url_for("result_with_id", id=obj.id),
             "methods": ["GET", "PATCH"]
         }
+
+
+# /task/{id}/run
+class TaskRunSchema(RunSchema):
+    node = fields.Function(
+        serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
+    )
+    ports = fields.Function(
+        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
+    )
 
 
 class RunTaskIncludedSchema(RunSchema):
@@ -309,9 +309,6 @@ class CollaborationSchema(HATEOASModelSchema):
 
 
 class NodeSchema(HATEOASModelSchema):
-    # organization = ma.HyperlinkRelated('organization_with_id')
-    # collaboration = ma.HyperlinkRelated('collaboration_with_id')
-
     organization = fields.Method("organization")
     collaboration = fields.Method("collaboration")
     config = fields.Nested('NodeConfigSchema', many=True,

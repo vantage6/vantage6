@@ -13,10 +13,11 @@ class Collaboration(Base):
     Table that describes which collaborations are available.
 
     Collaborations are combinations of one or more organizations
-    that do studies together. Each :class:`.Organization` has a
+    that do studies together. Each
+    :class:`~vantage6.server.model.organization.Organization` has a
     :class:`~vantage6.server.model.node.Node` for
     each collaboration that it is part of. Within a collaboration multiple
-    :class:`.Task` can be executed.
+    :class:`~vantage6.server.model.task.Task` can be executed.
 
     Attributes
     ----------
@@ -24,11 +25,12 @@ class Collaboration(Base):
         Name of the collaboration
     encrypted : bool
         Whether the collaboration is encrypted or not
-    organizations : list[:class:`.Organization`]
+    organizations :
+            list[:class:`~vantage6.server.model.organization.Organization`]
         List of organizations that are part of this collaboration
     nodes : list[:class:`~vantage6.server.model.node.Node`]
         List of nodes that are part of this collaboration
-    tasks : list[:class:`.Task`]
+    tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this collaboration
     """
 
@@ -83,16 +85,17 @@ class Collaboration(Base):
     def get_node_from_organization(
             self, organization: Organization) -> Node | None:
         """
-        Returns the node that is part of the given :class:`.Organization`.
+        Returns the node that is part of the given
+        :class:`~vantage6.server.model.organization.Organization`.
 
         Parameters
         ----------
-        organization: Organization
-            Organization
+        organization: :class:`~vantage6.server.model.organization.Organization`
+            Organization to get node from
 
         Returns
         -------
-        Union[:class:`~vantage6.server.model.node.Node`, None]
+        :class:`~vantage6.server.model.node.Node` | None
             Node for the given organization for this collaboration, or None if
             there is no node for the given organization.
         """

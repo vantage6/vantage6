@@ -11,11 +11,16 @@ from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
-    PermissionManager
+    PermissionManager,
+    RuleCollection
+)
+from vantage6.server.resource.common.input_schema import (
+    OrganizationInputSchema
 )
 from vantage6.server.resource import (
     only_for, with_user, ServicesResources
 )
+from vantage6.server.resource.common.output_schema import OrganizationSchema
 from vantage6.server.resource.common.schema import OrganizationSchema
 
 
@@ -81,6 +86,8 @@ def permissions(permissions: PermissionManager) -> None:
         description="edit any organization")
     add(scope=S.ORGANIZATION, operation=P.EDIT,
         description="edit your own organization info", assign_to_node=True)
+    add(scope=S.COLLABORATION, operation=P.EDIT,
+        description='edit collaborating organizations')
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create a new organization")
 
@@ -89,13 +96,14 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 org_schema = OrganizationSchema()
+org_input_schema = OrganizationInputSchema()
 
 
 class OrganizationBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Organizations(OrganizationBase):
@@ -185,6 +193,12 @@ class Organizations(OrganizationBase):
         if 'country' in args:
             q = q.filter(db.Organization.country == args['country'])
         if 'collaboration_id' in args:
+            # TODO we also need to check here if the user is part of the collab
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+                return {
+                    'msg': 'You lack the permission to get all organizations '
+                    'in your collaboration!'
+                }, HTTPStatus.UNAUTHORIZED
             q = q.join(db.Member).join(db.Collaboration)\
                  .filter(db.Collaboration.id == args['collaboration_id'])
 
@@ -198,8 +212,9 @@ class Organizations(OrganizationBase):
             ).all()
             g.session.commit()
 
-            # list comprehension fetish, and add own organization in case
-            # this organization does not participate in any collaborations yet
+            # filter orgs in own collaborations, and add own organization in
+            # case this organization does not participate in any collaborations
+            # yet
             org_ids = [o.id for col in collabs for o in col.organizations]
             org_ids = list(set(org_ids + [auth_org.id]))
 
@@ -260,8 +275,14 @@ class Organizations(OrganizationBase):
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
 
+        # validate request body
         data = request.get_json()
-        name = data.get('name', '')
+        errors = org_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        name = data.get('name')
         if db.Organization.exists("name", name):
             return {
                 "msg": f"Organization with name '{name}' already exists!"
@@ -325,35 +346,18 @@ class Organization(OrganizationBase):
         tags: ["Organization"]
         """
 
-        # obtain organization of authenticated
-        auth_org = self.obtain_auth_organization()
-
         # retrieve requested organization
         req_org = db.Organization.get(id)
         if not req_org:
             return {'msg': f'Organization id={id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        accepted = False
         # Check if auth has enough permissions
-        if self.r.v_glo.can():
-            accepted = True
-        elif self.r.v_col.can():
-            # check if the organization is whithin a collaboration
-            for col in auth_org.collaborations:
-                if req_org in col.organizations:
-                    accepted = True
-            # or that the organization is auths org
-            if req_org == auth_org:
-                accepted = True
-        elif self.r.v_org.can():
-            accepted = auth_org == req_org
-
-        if accepted:
-            return org_schema.dump(req_org, many=False), HTTPStatus.OK
-        else:
+        if not self.r.can_for_org(P.VIEW, id):
             return {'msg': 'You do not have permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
+
+        return org_schema.dump(req_org, many=False), HTTPStatus.OK
 
     @only_for(("user", "node"))
     def patch(self, id):
@@ -368,6 +372,8 @@ class Organization(OrganizationBase):
           |--|--|--|--|--|--|\n
           |Organization|Global|Edit|❌|❌|Update an organization with
           specified id|\n
+          |Organization|Collaboration|Edit|❌|❌|Update an organization within
+          the collaboration the user is part of|\n
           |Organization|Organization|Edit|❌|❌|Update the organization that
           the user is part of|\n
 
@@ -402,21 +408,22 @@ class Organization(OrganizationBase):
 
         tags: ["Organization"]
         """
+        # validate request body
+        data = request.get_json()
+        errors = org_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         organization = db.Organization.get(id)
         if not organization:
             return {"msg": f"Organization with id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not (
-            self.r.e_glo.can() or
-            (self.r.e_org.can() and g.user and id == g.user.organization.id) or
-            (self.r.e_org.can() and g.node and id == g.node.organization.id)
-        ):
+        if not self.r.can_for_org(P.EDIT, id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        data = request.get_json()
         name = data.get('name', None)
         if name:
             if organization.name != name and \

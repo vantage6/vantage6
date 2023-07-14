@@ -46,7 +46,6 @@ configuration options.
 You can download this file here: :download:`node_config.yaml`
 
 .. literalinclude :: node_config.yaml
-    :language: yaml
 
 .. _node-configure-location:
 

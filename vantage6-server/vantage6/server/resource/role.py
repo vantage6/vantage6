@@ -4,20 +4,26 @@ import logging
 from http import HTTPStatus
 from flask.globals import request
 from flask import g
-from flask_restful import reqparse, Api
+from flask_restful import Api
 from sqlalchemy import or_
 
 from vantage6.server import db
 from vantage6.server.resource import (
+    get_org_ids_from_collabs,
     with_user,
     ServicesResources
 )
 from vantage6.common import logger_name
 from vantage6.server.permission import (
-    PermissionManager
+    PermissionManager,
+    RuleCollection,
+    Operation as P,
 )
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.resource.common.schema import RoleSchema, RuleSchema
+from vantage6.server.resource.common.output_schema import (
+    RoleSchema, RuleSchema
+)
+from vantage6.server.resource.common.input_schema import RoleInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.default_roles import DefaultRole
 
@@ -79,20 +85,29 @@ def permissions(permissions: PermissionManager) -> None:
     add = permissions.appender(module_name)
     add(scope=Scope.GLOBAL, operation=Operation.VIEW,
         description="View any role")
+    add(scope=Scope.COLLABORATION, operation=Operation.VIEW,
+        description="View any role in your collaborations")
     add(scope=Scope.ORGANIZATION, operation=Operation.VIEW,
         description="View the roles of your organization")
     add(scope=Scope.GLOBAL, operation=Operation.CREATE,
         description="Create role for any organization")
+    add(scope=Scope.COLLABORATION, operation=Operation.CREATE,
+        description="Create role for any organization in your collaborations")
     add(scope=Scope.ORGANIZATION, operation=Operation.CREATE,
         description="Create role for your organization")
     add(scope=Scope.GLOBAL, operation=Operation.EDIT,
         description="Edit any role")
+    add(scope=Scope.COLLABORATION, operation=Operation.EDIT,
+        description="Edit any role in your collaborations")
     add(scope=Scope.ORGANIZATION, operation=Operation.EDIT,
         description="Edit a role from your organization")
     add(scope=Scope.GLOBAL, operation=Operation.DELETE,
-        description="Delete any organization")
+        description="Delete a role from any organization")
+    add(scope=Scope.COLLABORATION, operation=Operation.DELETE,
+        description="Delete a role from any organization in your "
+                    "collaborations")
     add(scope=Scope.ORGANIZATION, operation=Operation.DELETE,
-        description="Delete your organization")
+        description="Delete a role from your organization")
 
 
 # -----------------------------------------------------------------------------
@@ -100,13 +115,14 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_schema = RoleSchema()
 rule_schema = RuleSchema()
+role_input_schema = RoleInputSchema()
 
 
 class RoleBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Roles(RoleBase):
@@ -126,6 +142,8 @@ class Roles(RoleBase):
             Description|\n
             |--|--|--|--|--|--|\n
             |Role|Global|View|❌|❌|View all roles|\n
+            |Role|Collaboration|View|❌|❌|View all roles in your
+            collaborations|\n
             |Role|Organization|View|❌|❌|View roles that are part of your
             organization|\n
 
@@ -157,6 +175,11 @@ class Roles(RoleBase):
                 items:
                   type: integer
                   description: Organization id of which you want to get roles
+            - in: query
+              name: collaboration_id
+              schema:
+              type: integer
+              description: Collaboration id
             - in: query
               name: rule_id
               schema:
@@ -205,19 +228,42 @@ class Roles(RoleBase):
         """
         q = g.session.query(db.Role)
 
-        auth_org_id = self.obtain_organization_id()
+        auth_org = self.obtain_auth_organization()
         args = request.args
 
         # filter by organization ids (include root role if desired)
         org_filters = args.getlist('organization_id')
         if org_filters:
+            for org_id in org_filters:
+                if not self.r.can_for_org(P.VIEW, org_id):
+                    return {
+                        'msg': 'You lack the permission view all roles from '
+                        f'organization {org_id}!'
+                    }, HTTPStatus.UNAUTHORIZED
             if 'include_root' in args and args['include_root']:
                 q = q.filter(or_(
                     db.Role.organization_id.in_(org_filters),
-                    db.Role.organization_id == None
+                    db.Role.organization_id.is_(None)
                 ))
             else:
                 q = q.filter(db.Role.organization_id.in_(org_filters))
+
+        # filter by collaboration id
+        if 'collaboration_id' in args:
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+                return {
+                    'msg': 'You lack the permission view all roles from '
+                    f'collaboration {args["collaboration_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            org_ids = get_org_ids_from_collabs(g.user,
+                                               args['collaboration_id'])
+            if 'include_root' in args and args['include_root']:
+                q = q.filter(or_(
+                    db.Role.organization_id.in_(org_ids),
+                    db.Role.organization_id.is_(None)
+                ))
+            else:
+                q = q.filter(db.Role.organization_id.in_(org_ids))
 
         # filter by one or more names or descriptions
         for param in ['name', 'description']:
@@ -229,23 +275,49 @@ class Roles(RoleBase):
 
         # find roles containing a specific rule
         if 'rule_id' in args:
+            rule = db.Rule.get(args['rule_id'])
+            if not rule:
+                return {'msg': f'Rule with id={args["rule_id"]} does not '
+                        'exist!'}, HTTPStatus.BAD_REQUEST
             q = q.join(db.role_rule_association).join(db.Rule)\
                  .filter(db.Rule.id == args['rule_id'])
 
         if 'user_id' in args:
+            user = db.User.get(args['user_id'])
+            if not user:
+                return {'msg': f'User with id={args["user_id"]} does not '
+                        'exist!'}, HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_org(P.VIEW, user.organization_id) and not \
+                    g.user.id == user.id:
+                return {
+                    'msg': 'You lack the permission view roles from the '
+                    f'organization that user id={user.id} belongs to!'
+                }, HTTPStatus.UNAUTHORIZED
             q = q.join(db.Permission).join(db.User)\
                  .filter(db.User.id == args['user_id'])
 
         if not self.r.v_glo.can():
             own_role_ids = [role.id for role in g.user.roles]
-            if self.r.v_org.can():
+            if self.r.v_col.can():
+                q = q.filter(or_(
+                    db.Role.id.in_(own_role_ids),
+                    db.Role.organization_id.is_(None),
+                    db.Role.organization_id.in_(
+                        [
+                            org.id
+                            for col in self.obtain_auth_collaborations()
+                            for org in col.organizations
+                        ]
+                    )
+                ))
+            elif self.r.v_org.can():
                 # allow user to view all roles of their organization and any
                 # other roles they may have themselves, or default roles from
                 # the root organization
                 q = q.filter(or_(
-                        db.Role.organization_id == auth_org_id,
+                        db.Role.organization_id == auth_org.id,
                         db.Role.id.in_(own_role_ids),
-                        db.Role.organization_id == None
+                        db.Role.organization_id.is_(None)
                     ))
             else:
                 # allow users without permission to view only their own roles
@@ -273,6 +345,8 @@ class Roles(RoleBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Create|❌|❌|Create a role for any organization|\n
+          |Role|Collaboration|Create|❌|❌|Create a role for organization in
+          your collaborations|\n
           |Role|Organization|Create|❌|❌|Create a role for your organization|\n
 
           Accessible to users.
@@ -314,19 +388,12 @@ class Roles(RoleBase):
 
         tags: ["Role"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument("name", type=str, required=True)
-        parser.add_argument("description", type=str, required=True)
-        parser.add_argument("rules", type=int, action='append', required=False)
-        parser.add_argument("organization_id", type=int, required=False)
-        data = parser.parse_args()
-
-        # check if role name is allowed (i.e. not a default role name)
-        if 'name' in data and data['name'] in [role for role in DefaultRole]:
-            return {
-                "msg": f"Cannot create role '{data['name']}' as it is a "
-                       "reserved role name."
-            }, HTTPStatus.BAD_REQUEST
+        data = request.get_json()
+        # validate request body
+        errors = role_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         # obtain the requested rules from the DB.
         rules = []
@@ -346,7 +413,7 @@ class Roles(RoleBase):
         # set the organization id
         organization_id = (
             data['organization_id']
-            if data['organization_id'] else g.user.organization_id
+            if 'organization_id' in data else g.user.organization_id
         )
         # verify that the organization for which we create a role exists
         if not db.Organization.get(organization_id):
@@ -354,18 +421,15 @@ class Roles(RoleBase):
                     'exist!'}, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to create this role
-        if (not self.r.c_glo.can() and
-                organization_id != g.user.organization_id):
+        if not self.r.can_for_org(P.CREATE, organization_id):
             return {
-                'msg': 'You cannot create roles for other organizations!'
+                'msg': 'You cannot create a role for this organization!'
             }, HTTPStatus.UNAUTHORIZED
-        elif not self.r.c_glo.can() and not self.r.c_org.can():
-            return {'msg': 'You lack the permission to create roles!'}, \
-                HTTPStatus.UNAUTHORIZED
 
         # create the actual role
-        role = db.Role(name=data["name"], description=data["description"],
-                       rules=rules, organization_id=organization_id)
+        role = db.Role(name=data.get("name"),
+                       description=data.get("description"), rules=rules,
+                       organization_id=organization_id)
         role.save()
 
         return role_schema.dump(role, many=False), HTTPStatus.CREATED
@@ -385,6 +449,8 @@ class Role(RoleBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|View|❌|❌|View all roles|\n
+          |Role|Collaboration|View|❌|❌|View all roles for your
+          collaborations|\n
           |Role|Organization|View|❌|❌|View roles that are part of your
           organization|\n
 
@@ -417,11 +483,12 @@ class Role(RoleBase):
                 HTTPStatus.NOT_FOUND
 
         # check permissions. A user can always view their own roles
-        if not (self.r.v_glo.can() or role in g.user.roles):
-            if not (self.r.v_org.can()
-                    and role.organization == g.user.organization):
-                return {"msg": "You do not have permission to view this."},\
-                     HTTPStatus.UNAUTHORIZED
+        if not (
+            self.r.can_for_org(P.VIEW, role.organization_id) or
+            role in g.user.roles
+        ):
+            return {"msg": "You do not have permission to view this."},\
+                    HTTPStatus.UNAUTHORIZED
 
         return role_schema.dump(role, many=False), HTTPStatus.OK
 
@@ -437,6 +504,8 @@ class Role(RoleBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Edit|❌|❌|Update any role|\n
+          |Role|Collaboration|Edit|❌|❌|Update any role in your
+          collaborations|\n
           |Role|Organization|Edit|❌|❌|Update a role from your organization|\n
 
           Accessible to users.
@@ -484,31 +553,32 @@ class Role(RoleBase):
         """
         data = request.get_json()
 
+        # validate request body
+        errors = role_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+        # organization_id cannot be changed in PATCH, only defined in POST
+        if 'organization_id' in data:
+            return {'msg': 'Cannot change organization of a role.'}, \
+                HTTPStatus.BAD_REQUEST
+
         role = db.Role.get(id)
         if not role:
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        # check if role name is allowed (i.e. not a default role name)
-        if 'name' in data and data['name'] in [role for role in DefaultRole]:
-            return {
-                "msg": f"Cannot change role name into '{data['name']}' as that"
-                       " is a reserved role name."
-            }, HTTPStatus.BAD_REQUEST
-        elif role.name in [role for role in DefaultRole]:
+        # check if user tries to change name of a default role
+        if role.name in [role for role in DefaultRole]:
             return {
                 "msg": f"This role ('{role.name}') is a default role. Its name"
                        " cannot be changed."
             }, HTTPStatus.BAD_REQUEST
 
         # check permission of the user
-        if not self.r.e_glo.can():
-            if not self.r.e_org.can():
-                return {'msg': 'You do not have permission to edit roles!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            elif g.user.organization_id != role.organization.id:
-                return {'msg': 'You can\'t edit roles from another '
-                        'organization'}, HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.EDIT, role.organization_id):
+            return {'msg': 'You do not have permission to edit this role!'}, \
+                HTTPStatus.UNAUTHORIZED
 
         # process patch
         if 'name' in data:
@@ -544,6 +614,8 @@ class Role(RoleBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Delete|❌|❌|Delete any role|\n
+          |Role|Collaboration|Delete|❌|❌|Delete any role in your
+          collaborations|\n
           |Role|Organization|Delete|❌|❌|Delete a role in your organization|\n
 
           Accessible to users.
@@ -556,10 +628,18 @@ class Role(RoleBase):
               minimum: 1
             description: Role id
             required: true
+          - in: query
+            name: delete_dependents
+            schema:
+              type: boolean
+            description: If set to true, the role is deleted even though users
+               with this role may lose permissions (default=False)
 
         responses:
           200:
             description: Ok
+          400:
+            description: Cannot delete default roles
           401:
             description: Unauthorized
           404:
@@ -575,13 +655,30 @@ class Role(RoleBase):
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.d_glo.can():
-            if not self.r.d_org.can():
-                return {'msg': 'You do not have permission to delete roles!'},\
-                    HTTPStatus.UNAUTHORIZED
-            elif role.organization.id != g.user.organization.id:
-                return {'msg': 'You can\'t delete a role from another '
-                        'organization'}, HTTPStatus.UNAUTHORIZED
+        if role.name in [role for role in DefaultRole]:
+            return {
+                "msg": f"This role ('{role.name}') is a default role. Default"
+                       " roles cannot be deleted."
+            }, HTTPStatus.BAD_REQUEST
+
+        if not self.r.can_for_org(P.DELETE, role.organization_id):
+            return {'msg': 'You do not have permission to delete this role!'},\
+                HTTPStatus.UNAUTHORIZED
+
+        # check if role is assigned to users
+        if role.users:
+            params = request.args
+            if not params.get('delete_dependents', False):
+                return {
+                    'msg': "Role is assigned to users. Please remove the role "
+                    "from the users first, or set the 'delete_dependents' "
+                    "parameter to delete the role anyway."
+                }, HTTPStatus.BAD_REQUEST
+            else:
+                log.warn(f"Role {id} deleted even though it was assigned to "
+                         "users. This may result in missing permissions.")
+                # Note that the role is removed from the users automatically
+                # due to the relationship between the role and the user.
 
         role.delete()
 
@@ -602,6 +699,8 @@ class RoleRules(RoleBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Role|Global|Edit|❌|❌|Edit any role|\n
+          |Role|Collaboration|Edit|❌|❌|Edit any role in your collaborations
+          |\n
           |Role|Organization|Edit|❌|❌|Edit any role in your organization|\n
 
           Accessible to users.
@@ -642,11 +741,9 @@ class RoleRules(RoleBase):
                 HTTPStatus.NOT_FOUND
 
         # check that this user can edit rules
-        if not self.r.e_glo.can():
-            if not (self.r.e_org.can() and
-                    g.user.organization == role.organization):
-                return {'msg': 'You lack permissions to do that'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.EDIT, role.organization_id):
+            return {'msg': 'You lack permissions to do that'}, \
+                HTTPStatus.UNAUTHORIZED
 
         # user needs to role to assign it
         denied = self.permissions.check_user_rules([rule])
@@ -671,8 +768,10 @@ class RoleRules(RoleBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Role|Global|Delete|❌|❌|Delete any role rule|\n
-          |Role|Organization|Delete|❌|❌|Delete any role rule in your
+          |Role|Global|Edit|❌|❌|Delete any rule in a role|\n
+          |Role|Collaboration|Edit|❌|❌|Delete any rule in roles in your
+          collaborations|\n
+          |Role|Organization|Edit|❌|❌|Delete any rule in roles in your
           organization|\n
 
           Accessible to users.
@@ -708,11 +807,9 @@ class RoleRules(RoleBase):
             return {'msg': f'Rule id={rule_id} not found!'}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.d_glo.can():
-            if not (self.r.d_org.can() and
-                    g.user.organization == role.organization):
-                return {'msg': 'You lack permissions to do that'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.EDIT, role.organization_id):
+            return {'msg': 'You lack permissions to do that'}, \
+                HTTPStatus.UNAUTHORIZED
 
         # user needs to role to remove it
         denied = self.permissions.check_user_rules([rule])

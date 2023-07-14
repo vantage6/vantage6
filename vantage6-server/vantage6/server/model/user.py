@@ -1,6 +1,5 @@
 from __future__ import annotations
 import bcrypt
-import re
 import datetime as dt
 
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
@@ -9,6 +8,7 @@ from sqlalchemy.orm import relationship, validates
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
+from vantage6.server.model.common.utils import validate_password
 
 
 class User(Authenticatable):
@@ -127,23 +127,10 @@ class User(Authenticatable):
             If the new password fails to pass the checks, a message is
             returned. Else, none is returned
         """
-        if len(pw) < 8:
-            return (
-                "Password too short: use at least 8 characters with mixed "
-                "lowercase, uppercase, numbers and special characters"
-            )
-        elif len(pw) > 128:
-            # because long passwords can be used for DoS attacks (long pw
-            # hashing consumes a lot of resources)
-            return "Password too long: use at most 128 characters"
-        elif re.search('[0-9]', pw) is None:
-            return "Password should contain at least one number"
-        elif re.search('[A-Z]', pw) is None:
-            return "Password should contain at least one uppercase letter"
-        elif re.search('[a-z]', pw) is None:
-            return "Password should contain at least one lowercase letter"
-        elif pw.isalnum():
-            return "Password should contain at least one special character"
+        try:
+            validate_password(pw)
+        except ValueError as e:
+            return str(e)
 
         self.password = pw
         self.save()
