@@ -58,8 +58,8 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_('collaboration', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_('run', Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_('task', Scope.COLLABORATION, Operation.VIEW),
+        db.Rule.get_by_('run', Scope.COLLABORATION, Operation.VIEW),
         db.Rule.get_by_('port', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.RECEIVE),
     ]
@@ -71,7 +71,7 @@ def get_default_roles(db) -> list[dict]:
     }
     # 3. Researcher role
     RESEARCHER_RULES = VIEWER_RULES + [
-        db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.CREATE),
+        db.Rule.get_by_('task', Scope.COLLABORATION, Operation.CREATE),
         db.Rule.get_by_('task', Scope.ORGANIZATION, Operation.DELETE),
     ]
     RESEARCHER_ROLE = {
@@ -102,17 +102,22 @@ def get_default_roles(db) -> list[dict]:
     }
     # 4. Collaboration administrator role
     COLLAB_ADMIN_RULES = ORG_ADMIN_RULES + [
-        db.Rule.get_by_('user', Scope.GLOBAL, Operation.VIEW),
-        db.Rule.get_by_('user', Scope.GLOBAL, Operation.CREATE),
-        db.Rule.get_by_('user', Scope.GLOBAL, Operation.EDIT),
+        db.Rule.get_by_('user', Scope.COLLABORATION, Operation.VIEW),
+        db.Rule.get_by_('user', Scope.COLLABORATION, Operation.CREATE),
+        db.Rule.get_by_('user', Scope.COLLABORATION, Operation.EDIT),
+        # The following rule is given so that a collaboration admin can
+        # view which organizations they may add to their collaboration
         db.Rule.get_by_('organization', Scope.GLOBAL, Operation.VIEW),
-        db.Rule.get_by_('organization', Scope.GLOBAL, Operation.EDIT),
-        db.Rule.get_by_('collaboration', Scope.GLOBAL, Operation.VIEW),
-        db.Rule.get_by_('collaboration', Scope.GLOBAL, Operation.EDIT),
-        db.Rule.get_by_('role', Scope.GLOBAL, Operation.VIEW),
-        db.Rule.get_by_('node', Scope.GLOBAL, Operation.CREATE),
-        db.Rule.get_by_('node', Scope.GLOBAL, Operation.VIEW),
-        db.Rule.get_by_('node', Scope.GLOBAL, Operation.DELETE),
+        db.Rule.get_by_('organization', Scope.COLLABORATION, Operation.EDIT),
+        db.Rule.get_by_('collaboration', Scope.COLLABORATION, Operation.VIEW),
+        db.Rule.get_by_('collaboration', Scope.COLLABORATION, Operation.EDIT),
+        # The following rule is given so that a collaboration admin can
+        # create a new collaboration
+        db.Rule.get_by_('collaboration', Scope.GLOBAL, Operation.CREATE),
+        db.Rule.get_by_('role', Scope.COLLABORATION, Operation.VIEW),
+        db.Rule.get_by_('node', Scope.COLLABORATION, Operation.CREATE),
+        db.Rule.get_by_('node', Scope.COLLABORATION, Operation.VIEW),
+        db.Rule.get_by_('node', Scope.COLLABORATION, Operation.DELETE),
         db.Rule.get_by_('event', Scope.COLLABORATION, Operation.RECEIVE),
         db.Rule.get_by_('event', Scope.COLLABORATION, Operation.SEND),
     ]

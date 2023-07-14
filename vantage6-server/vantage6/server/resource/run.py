@@ -10,6 +10,7 @@ from sqlalchemy import desc
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.permission import (
+    RuleCollection,
     PermissionManager,
     Scope as S,
     Operation as P
@@ -88,11 +89,14 @@ run_input_schema = RunInputSchema()
 def permissions(permissions: PermissionManager):
     add = permissions.appender(module_name)
 
-    add(scope=S.GLOBAL, operation=P.VIEW,
-        description="view any run")
-    add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
+    add(scope=S.GLOBAL, operation=P.VIEW, description="view any run")
+    add(scope=S.COLLABORATION, operation=P.VIEW, assign_to_container=True,
         assign_to_node=True, description="view runs of your organizations "
         "collaborations")
+    add(scope=S.ORGANIZATION, operation=P.VIEW,
+        description="view any run of a task created by your organization")
+    add(scope=S.OWN, operation=P.VIEW,
+        description="view any run of a task created by you")
 
 
 # ------------------------------------------------------------------------------
@@ -102,13 +106,13 @@ class RunBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class MultiRunBase(RunBase):
     """Base class for resources that return multiple runs or results"""
 
-    def get_query_multiple_runs(self) -> Union[sa.orm.query.Query, tuple]:
+    def get_query_multiple_runs(self) -> sa.orm.query.Query | tuple:
         """
         Returns a query object that can be used to retrieve runs.
 
@@ -123,10 +127,39 @@ class MultiRunBase(RunBase):
 
         q = g.session.query(db_Run)
 
+        if 'organization_id' in args:
+            if not self.r.can_for_org(P.VIEW, args['organization_id']):
+                return {'msg': 'You lack the permission to view runs for '
+                        f'organization id={args["organization_id"]}!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            q = q.filter(db_Run.organization_id == args['organization_id'])
+
+        if 'task_id' in args:
+            task = db.Task.get(args['task_id'])
+            if not task:
+                return {'msg': f'Task id={args["task_id"]} does not exist!'}, \
+                    HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_org(P.VIEW, task.init_org_id) \
+                    and not (self.r.v_own.can() and
+                             g.user.id == task.init_user_id):
+                return {'msg': 'You lack the permission to view runs for '
+                        f'task id={args["task_id"]}!'}, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db_Run.task_id == args['task_id'])
+
+        if args.get('node_id'):
+            node = db.Node.get(args['node_id'])
+            if not node:
+                return {'msg': f'Node id={args["node_id"]} does not exist!'}, \
+                    HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_col(P.VIEW, node.collaboration_id):
+                return {'msg': 'You lack the permission to view runs for '
+                        f'node id={args["node_id"]}!'}, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Node.id == args.get('node_id'))\
+                .filter(db.Collaboration.id == db.Node.collaboration_id)
+
         # relation filters
-        for param in ['task_id', 'organization_id', 'port']:
-            if param in args:
-                q = q.filter(getattr(db_Run, param) == args[param])
+        if 'port' in args:
+            q = q.filter(db_Run.port == args['port'])
 
         # date selections
         for param in ['assigned', 'started', 'finished']:
@@ -138,20 +171,27 @@ class MultiRunBase(RunBase):
 
         # custom filters
         if args.get('state') == 'open':
-            q = q.filter(db_Run.finished_at == None)
+            q = q.filter(db_Run.finished_at.is_(None))
 
         q = q.join(Organization).join(Node).join(Task, db_Run.task)\
             .join(Collaboration)
 
-        if args.get('node_id'):
-            q = q.filter(db.Node.id == args.get('node_id'))\
-                .filter(db.Collaboration.id == db.Node.collaboration_id)
+        if 'collaboration_id' in args:
+            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+                return {'msg': 'You lack the permission to view runs for '
+                        f'collaboration id={args["collaboration_id"]}!'}, \
+                    HTTPStatus.UNAUTHORIZED
+            q = q.filter(Collaboration.id == args['collaboration_id'])
 
         # filter based on permissions
         if not self.r.v_glo.can():
-            if self.r.v_org.can():
+            if self.r.v_col.can():
                 col_ids = [col.id for col in auth_org.collaborations]
                 q = q.filter(Collaboration.id.in_(col_ids))
+            elif self.r.v_org.can():
+                q = q.filter(Organization.id == auth_org.id)
+            elif self.r.v_own.can():
+                q = q.filter(Task.init_user_id == g.user.id)
             else:
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
@@ -176,8 +216,11 @@ class Runs(MultiRunBase):
             Description|\n
             |--|--|--|--|--|--|\n
             |Run|Global|View|❌|❌|View any run|\n
-            |Run|Organization|View|✅|✅|View the runs of your
+            |Run|Collaboration|View|✅|✅|View the runs of your
             organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any run from a task created by
+            your organization|\n
+            |Run|Own|View|❌|❌|View any run from a task created by you|\n
 
             Accessible to users.
 
@@ -192,6 +235,11 @@ class Runs(MultiRunBase):
               schema:
                 type: integer
               description: Organization id
+            - in: query
+              name: collaboration_id
+              schema:
+                type: integer
+              description: Collaboration id
             - in: query
               name: assigned_from
               schema:
@@ -295,8 +343,11 @@ class Results(MultiRunBase):
             Description|\n
             |--|--|--|--|--|--|\n
             |Run|Global|View|❌|❌|View any result|\n
-            |Run|Organization|View|✅|✅|View the results of your
+            |Run|Collaboration|View|✅|✅|View the results of your
             organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any result from a task created
+            by your organization|\n
+            |Run|Own|View|❌|❌|View any result from a task created by you|\n
 
             Accessible to users.
 
@@ -311,6 +362,11 @@ class Results(MultiRunBase):
               schema:
                 type: integer
               description: Organization id
+            - in: query
+              name: collaboration_id
+              schema:
+                type: integer
+              description: Collaboration id
             - in: query
               name: assigned_from
               schema:
@@ -414,16 +470,15 @@ class SingleRunBase(RunBase):
             An algorithm Run object, or a tuple with a message and HTTP error
             code if the Run could not be retrieved
         """
-        auth_org = self.obtain_auth_organization()
-
         run = db_Run.get(id)
         if not run:
             return {'msg': f'Run id={id} not found!'}, \
                 HTTPStatus.NOT_FOUND
-        if not self.r.v_glo.can():
-            c_orgs = run.task.collaboration.organizations
-            if not (self.r.v_org.can() and auth_org in c_orgs):
-                return {'msg': 'You lack the permission to do that!'}, \
+
+        if not self.r.can_for_org(P.VIEW, run.task.init_org_id) \
+                and not (self.r.v_own.can() and
+                         run.task.init_user_id == g.user.id):
+            return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
         return run
 
@@ -444,8 +499,11 @@ class Run(SingleRunBase):
             Description|\n
             |--|--|--|--|--|--|\n
             |Run|Global|View|❌|❌|View any run|\n
-            |Run|Organization|View|✅|✅|View the runs of your
-            organizations collaborations|\n
+            |Run|Collaboration|View|✅|✅|View the runs of your
+            organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any run from a task created by
+            your organization|\n
+            |Run|Own|View|❌|❌|View any run from a task created by you|\n
 
             Accessible to users.
 
@@ -600,8 +658,11 @@ class Result(SingleRunBase):
             Description|\n
             |--|--|--|--|--|--|\n
             |Run|Global|View|❌|❌|View any result|\n
-            |Run|Organization|View|✅|✅|View the results of your
+            |Run|Collaboration|View|✅|✅|View the results of your
             organization's collaborations|\n
+            |Run|Organization|View|❌|❌|View any result from a task created
+            by your organization|\n
+            |Run|Own|View|❌|❌|View any result from a task created by you|\n
 
             Accessible to users.
 

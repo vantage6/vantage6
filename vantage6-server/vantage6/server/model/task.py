@@ -32,7 +32,7 @@ class Task(Base):
         Id of the parent task (if any)
     database : str
         Name of the database that needs to be used for this task
-    initiator_id : int
+    init_org_id : int
         Id of the organization that created this task
     init_user_id : int
         Id of the user that created this task

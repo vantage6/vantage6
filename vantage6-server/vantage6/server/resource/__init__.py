@@ -16,6 +16,10 @@ from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.utils import (
+    obtain_auth_collaborations, obtain_auth_organization
+)
+from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
 from vantage6.server.resource.common.pagination import Page
@@ -149,7 +153,19 @@ class ServicesResources(Resource):
         db.Organization
             Organization model
         """
-        return db.Organization.get(cls.obtain_organization_id())
+        return obtain_auth_organization()
+
+    @staticmethod
+    def obtain_auth_collaborations() -> list[db.Collaboration]:
+        """
+        Obtain the collaborations that the auth is part of.
+
+        Returns
+        -------
+        list[db.Collaboration]
+            List of collaborations
+        """
+        return obtain_auth_collaborations()
 
 
 # ------------------------------------------------------------------------------
@@ -267,3 +283,37 @@ def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
     if dt:
         return datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
     return default
+
+
+def get_org_ids_from_collabs(auth: Authenticatable,
+                             collab_id: int = None) -> list[int]:
+    """
+    Get all organization ids from the collaborations the user or node is in.
+
+    Parameters
+    ----------
+    auth : Authenticatable
+        User or node
+    collab_id : int, optional
+        Collaboration id. If given, only return the organization ids of this
+        collaboration. If not given, return all organization ids of all
+        collaborations the user or node is in.
+
+    Returns
+    -------
+    list[int]
+        List of organization ids
+    """
+    if collab_id:
+        return [
+            org.id
+            for col in auth.organization.collaborations
+            for org in col.organizations
+            if col.id == collab_id
+        ]
+    else:
+        return [
+            org.id
+            for col in auth.organization.collaborations
+            for org in col.organizations
+        ]
