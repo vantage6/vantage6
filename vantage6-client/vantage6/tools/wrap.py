@@ -4,7 +4,8 @@ import traceback
 
 from typing import Any
 
-from vantage6.tools import deserialization, serialization
+from vantage6.common.client import deserialization
+from vantage6.tools import serialization
 from vantage6.tools.util import info, error
 from vantage6.tools.exceptions import DeserializationException
 

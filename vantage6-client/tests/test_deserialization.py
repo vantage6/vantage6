@@ -1,5 +1,5 @@
 from pathlib import Path
-from vantage6.tools import deserialization
+from vantage6.common.client import deserialization
 
 SIMPLE_TARGET_DATA = {'key': 'value'}
 

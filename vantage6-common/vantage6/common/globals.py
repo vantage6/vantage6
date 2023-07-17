@@ -26,3 +26,7 @@ VPN_CONFIG_FILE = 'vpn-config.ovpn.conf'
 DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "omop", "excel", "other"]
 
 PING_INTERVAL_SECONDS = 60
+
+# start trying to refresh the JWT token of the node 10 minutes before it
+# expires.
+NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600

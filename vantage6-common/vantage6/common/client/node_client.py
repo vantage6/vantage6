@@ -10,7 +10,7 @@ from threading import Thread
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
-from vantage6.node.globals import REFRESH_BEFORE_EXPIRES_SECONDS
+from vantage6.common.globals import NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
 
 
 class NodeClient(ClientBase):
@@ -75,11 +75,12 @@ class NodeClient(ClientBase):
             expiry_time = jwt.decode(
                 self.token, options={"verify_signature": False})["exp"]
             time_until_expiry = expiry_time - time.time()
-            if time_until_expiry < REFRESH_BEFORE_EXPIRES_SECONDS:
+            if time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
                 self.refresh_token()
             else:
                 time.sleep(
-                    int(time_until_expiry - REFRESH_BEFORE_EXPIRES_SECONDS + 1)
+                    int(time_until_expiry -
+                        NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS + 1)
                 )
 
     def request_token_for_container(self, task_id: int, image: str) -> dict:
