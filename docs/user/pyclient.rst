@@ -161,7 +161,8 @@ object, and authenticating
    import config
 
    # Initialize the client object, and run the authentication
-   client = Client(config.server_url, config.server_port, config.server_api)
+   client = Client(config.server_url, config.server_port, config.server_api,
+                   log_level='debug')
    client.authenticate(config.username, config.password)
 
    # Optional: setup the encryption, if you have an organization_key
