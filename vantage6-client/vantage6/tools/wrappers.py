@@ -96,12 +96,6 @@ class CSVWrapper(WrapperBase):
         return pandas.read_csv(database_uri)
 
 
-# for backwards compatibility
-# TODO BvB 2023-03-02 remove in v4+?
-CsvWrapper = CSVWrapper
-DockerWrapper = CSVWrapper
-
-
 class ExcelWrapper(WrapperBase):
     @staticmethod
     def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:

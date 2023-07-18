@@ -4,7 +4,6 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import desc
 
 from vantage6.common import logger_name
 from vantage6.server.permission import (
@@ -14,18 +13,14 @@ from vantage6.server.permission import (
 )
 from vantage6.server.resource import (
     with_node,
-    only_for,
     ServicesResources
 )
 from vantage6.server import db
-from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common.output_schema import PortSchema
 from vantage6.server.resource.common.input_schema import PortInputSchema
 from vantage6.server.model import (
     Run,
     AlgorithmPort,
-    Collaboration,
-    Task
 )
 from vantage6.server.resource import with_container
 
@@ -53,14 +48,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Ports,
         path,
         endpoint='port_without_id',
-        methods=('GET', 'POST', 'DELETE'),
-        resource_class_kwargs=services
-    )
-    api.add_resource(
-        Port,
-        path + '/<int:id>',
-        endpoint='port_with_id',
-        methods=('GET',),
+        methods=('POST', 'DELETE'),
         resource_class_kwargs=services
     )
     api.add_resource(
@@ -107,109 +95,6 @@ class PortBase(ServicesResources):
 
 
 class Ports(PortBase):
-
-    @only_for(('node', 'user', 'container'))
-    def get(self):
-        """ Returns a list of ports
-        ---
-
-        description: >-
-          Returns a list of all ports you are allowed to see.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Port|Global|View|❌|❌|View any port|\n
-          |Port|Organization|View|✅|✅|View the ports of your
-          organizations collaborations|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: query
-            name: task_id
-            schema:
-              type: integer
-            description: Task id
-          - in: query
-            name: run_id
-            schema:
-              type: integer
-            description: Run id
-          - in: query
-            name: job_id
-            schema:
-              type: integer
-            description: Run id
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination (default=1)
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page (default=10)
-          - in: query
-            name: sort
-            schema:
-              type: string
-            description: >-
-              Sort by one or more fields, separated by a comma. Use a minus
-              sign (-) in front of the field to sort in descending order.
-
-        responses:
-          200:
-            description: Ok
-          401:
-            description: Unauthorized
-          400:
-            description: Improper values for pagination or sorting parameters
-
-        security:
-        - bearerAuth: []
-
-        tags: ["VPN"]
-        """
-        auth_org = self.obtain_auth_organization()
-        args = request.args
-
-        q = g.session.query(AlgorithmPort)
-
-        # relation filters
-        if 'run_id' in args:
-            q = q.filter(AlgorithmPort.run_id == args['run_id'])
-        if 'task_id' in args:
-            q = q.join(Run).filter(Run.task_id == args['task_id'])
-        if 'job_id' in args:
-            # check if Run was already joined in 'task_id' arg
-            if Run not in [joined.class_ for joined in q._join_entities]:
-                q = q.join(Run)
-            q = q.join(Task).filter(Task.job_id == args['job_id'])
-
-        # filter based on permissions
-        if not self.r.v_glo.can():
-            if self.r.v_org.can():
-                col_ids = [col.id for col in auth_org.collaborations]
-                q = q.filter(Collaboration.id.in_(col_ids))
-            else:
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # query the DB and paginate
-        q = q.order_by(desc(AlgorithmPort.id))
-        try:
-            page = Pagination.from_query(query=q, request=request)
-        except ValueError as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
-
-        # serialization of the models
-        s = port_schema
-
-        return self.response(page, s)
-
     @with_node
     def post(self):
         """Create a list of port description
@@ -276,8 +161,6 @@ class Ports(PortBase):
 
     @with_node
     def delete(self):
-        # FIXME should we have swagger docs if only accessible for node? Also
-        # same case for post request
         """ Delete ports by run_id
         ---
         description: >-
@@ -331,66 +214,6 @@ class Ports(PortBase):
         g.session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
-
-
-class Port(PortBase):
-    """Resource for /api/port"""
-
-    @only_for(('node', 'user', 'container'))
-    def get(self, id):
-        """ Get a single port
-        ---
-        description: >-
-            Returns a port specified by an id.\n
-
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |Port|Global|View|❌|❌|View any port|\n
-            |Port|Organization|View|✅|✅|View the ports of your
-            organization's collaborations|\n
-
-            Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            minimum: 1
-            description: Port id
-            required: true
-
-        responses:
-          200:
-              description: Ok
-          401:
-              description: Unauthorized
-          404:
-              description: Port id not found
-
-        security:
-          - bearerAuth: []
-
-        tags: ["VPN"]
-        """
-        auth_org = self.obtain_auth_organization()
-
-        port = AlgorithmPort.get(id)
-        if not port:
-            return {'msg': f'Port id={id} not found!'}, HTTPStatus.NOT_FOUND
-
-        # check permissions
-        if not self.r.v_glo.can():
-            if not self.r.v_org.can() and auth_org == auth_org.id:
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # serialize
-        s = port_schema
-
-        return s.dump(port, many=False), HTTPStatus.OK
 
 
 class VPNAddress(ServicesResources):

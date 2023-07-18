@@ -54,7 +54,7 @@ from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_RETRY_CONNECT_NODE, TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET
 )
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
@@ -481,8 +481,8 @@ class Node:
 
                 response = self.client.request(f"task/{task_id}")
 
-                init_org_id = response.get("init_org")
-                if not init_org_id:
+                init_org = response.get("init_org")
+                if not init_org:
                     self.log.error(
                         f"Initiator organization from task (id={task_id}) "
                         "could not be retrieved!"
@@ -496,7 +496,7 @@ class Node:
                         'status': results.status,
                         'finished_at': datetime.datetime.now().isoformat(),
                     },
-                    init_org_id=init_org_id,
+                    init_org_id=init_org.get("id"),
                 )
             except Exception:
                 self.log.exception('Speaking thread had an exception')
@@ -776,10 +776,6 @@ class Node:
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
 
-        # FIXME: remove me in 4+. alpine image has been moved into the `images`
-        # key. This is to support older configuration files.
-        legacy_alpine = self.config.get('alpine')
-
         # user can specify custom images in the configuration file
         custom_alpine = self.config['images'].get('alpine') \
             if 'images' in self.config else None
@@ -794,7 +790,7 @@ class Node:
             node_client=self.client,
             vpn_volume_name=vpn_volume_name,
             vpn_subnet=self.config.get('vpn_subnet'),
-            alpine_image=custom_alpine or legacy_alpine,
+            alpine_image=custom_alpine,
             vpn_client_image=custom_vpn_client,
             network_config_image=custom_network
         )
@@ -1042,12 +1038,6 @@ class Node:
             if encryption_config.get('enabled') is not None:
                 config_to_share['encryption'] = \
                     encryption_config.get('enabled')
-
-        # TODO v4+ remove the old 'allowed_images' key, it's now inside
-        # 'policies'. It's now overwritten below if 'policies' is set.
-        allowed_algos = self.config.get('allowed_images')
-        config_to_share['allowed_algorithms'] = allowed_algos \
-            if allowed_algos else 'all'
 
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get('policies', {})

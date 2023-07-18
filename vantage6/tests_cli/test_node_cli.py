@@ -212,7 +212,11 @@ class NodeCLITest(unittest.TestCase):
             data_dir=Path("data"),
             log_dir=Path("logs"),
             config_dir=Path("configs"),
-            databases={"default": "data.csv"}
+            databases=[{
+                "label": "some-label",
+                "uri": "data.csv",
+                "type": "csv"
+            }]
         )
         ctx.get_data_file.return_value = "data.csv"
         ctx.name = 'some-name'
@@ -388,7 +392,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.info")
     @patch("vantage6.cli.node.debug")
     @patch("vantage6.cli.node.error")
-    @patch("vantage6.cli.node.Client")
+    @patch("vantage6.cli.node.UserClient")
     @patch("vantage6.cli.node.q")
     def test_client(self, q, client, error, debug, info):
 

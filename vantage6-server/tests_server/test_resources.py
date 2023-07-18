@@ -229,6 +229,12 @@ class TestResources(unittest.TestCase):
             The response and the list of all resources
         """
         result = self.app.get(url, headers=headers)
+
+        # check if response is OK
+        if result.status_code != HTTPStatus.OK:
+            return result, []
+
+        # get data
         links = result.json.get('links')
         page = 1
         json_data = result.json.get('data')
@@ -970,19 +976,6 @@ class TestResources(unittest.TestCase):
         org.delete()
         col.delete()
 
-    def test_rules_from_role(self):
-        headers = self.login('root')
-        role = Role.get()[0]
-
-        result, json_data = self.paginated_list(
-            f'/api/role/{role.id}/rule', headers=headers
-        )
-        self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(role.rules), len(json_data))
-
-        result = self.app.get('/api/role/9999/rule', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
-
     def test_add_single_rule_to_role(self):
         headers = self.login('root')
 
@@ -990,10 +983,11 @@ class TestResources(unittest.TestCase):
         role.save()
 
         # role without rules
-        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
-
+        result, json_data = self.paginated_list(
+            f'/api/rule?role_id={role.id}', headers=headers
+        )
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json['data']), 0)
+        self.assertEqual(len(json_data), 0)
 
         rule = Rule.get()[0]
 
@@ -1013,9 +1007,11 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
 
         # check that the role now has one rule
-        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        result, json_data = self.paginated_list(
+            f'/api/rule?role_id={role.id}', headers=headers
+        )
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json['data']), 1)
+        self.assertEqual(len(json_data), 1)
 
     def test_remove_single_rule_from_role(self):
         headers = self.login('root')
@@ -1034,43 +1030,16 @@ class TestResources(unittest.TestCase):
                                  headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
-        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
+        result, json_data = self.paginated_list(
+            f'/api/rule?role_id={role.id}', headers=headers
+        )
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(len(result.json['data']), 1)
+        self.assertEqual(len(json_data), 1)
 
         result = self.app.delete(f'/api/role/{role.id}/rule/{rule.id}',
                                  headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(len(result.json), 0)
-
-    def test_view_permission_rules(self):
-        rule = Rule.get_by_("role", Scope.ORGANIZATION, Operation.VIEW)
-
-        org = Organization()
-        org.save()
-        role = Role(name="some-role", organization=org)
-        role.save()
-
-        # user does not belong to organization
-        headers = self.create_user_and_login(rules=[rule])
-        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
-
-        # user does belong to the organization
-        headers = self.create_user_and_login(organization=role.organization,
-                                             rules=[rule])
-        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.OK)
-
-        # user has global permissions
-        rule = Rule.get_by_("role", Scope.GLOBAL, Operation.VIEW)
-        headers = self.create_user_and_login(rules=[rule])
-        result = self.app.get(f'/api/role/{role.id}/rule', headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.OK)
-
-        # cleanup
-        role.delete()
-        org.delete()
 
     def test_add_rule_to_role_permission(self):
         org = Organization()
@@ -1892,40 +1861,46 @@ class TestResources(unittest.TestCase):
 
         # try to view without permissions
         headers = self.create_user_and_login(org)
-        results = self.app.get(f"/api/organization/{org.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?organization_id={org.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # try to view with organization permissions
         rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(org, rules=[rule])
-        results = self.app.get(f"/api/organization/{org.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?organization_id={org.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # try to view other organization
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f"/api/organization/{org.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?organization_id={org.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # try to view with global permissions
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f"/api/organization/{org.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?organization_id={org.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # try to view as node
         headers = self.create_node_and_login(organization=org)
-        results = self.app.get(f"/api/organization/{org.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?organization_id={org.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # try to view as node from another organization
         headers = self.create_node_and_login()
-        results = self.app.get(f"/api/organization/{org.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?organization_id={org.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
@@ -1940,42 +1915,50 @@ class TestResources(unittest.TestCase):
         col.save()
 
         headers = self.create_user_and_login()
-        results = self.app.get('/api/organization/9999/collaboration',
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
-        # test view without any permission
-        results = self.app.get(f'/api/organization/{org.id}/collaboration',
-                               headers=headers)
+        # test that we can't view without permissions
+        results, json_data = self.paginated_list(
+            f'/api/collaboration?organization_id={org.id}', headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test view with organization scope
         rule = Rule.get_by_("collaboration", Scope.ORGANIZATION,
                             Operation.VIEW)
         headers = self.create_user_and_login(organization=org, rules=[rule])
-        results = self.app.get(f'/api/organization/{org.id}/collaboration',
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f'/api/collaboration?organization_id={org.id}', headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test view with organization scope other organiation
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f'/api/organization/{org.id}/collaboration',
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f'/api/collaboration?organization_id={org.id}', headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test view with global scope
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f'/api/organization/{org.id}/collaboration',
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f'/api/collaboration?organization_id={org.id}', headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test as node
         headers = self.create_node_and_login(organization=org,
                                              collaboration=col)
-        results = self.app.get(f'/api/organization/{org.id}/collaboration',
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f'/api/collaboration?organization_id={org.id}', headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test as node other organization - should not be permitted
+        results, json_data = self.paginated_list(
+            f'/api/collaboration?organization_id={org.id + 1}', headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_view_collaboration_permissions(self):
 
@@ -2132,11 +2115,6 @@ class TestResources(unittest.TestCase):
     def test_view_collaboration_organization_permissions_as_user(self):
         headers = self.create_user_and_login()
 
-        # non-existing collaboration
-        results = self.app.get("/api/collaboration/9999/organization",
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
-
         org = Organization()
         org.save()
         col = Collaboration(organizations=[org])
@@ -2144,32 +2122,46 @@ class TestResources(unittest.TestCase):
 
         # access without the proper permissions
         headers = self.create_user_and_login(organization=org)
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # global permissions
-        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
+        rule = Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(organization=org, rules=[rule])
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # organization permissions of another organization
-        rule = Rule.get_by_("collaboration", Scope.ORGANIZATION,
+        rule = Rule.get_by_("organization", Scope.ORGANIZATION,
                             Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # now with the correct organization
-        rule = Rule.get_by_("collaboration", Scope.ORGANIZATION,
+        # now with the correct organization but without the correct permissions
+        rule = Rule.get_by_("organization", Scope.ORGANIZATION,
                             Operation.VIEW)
         headers = self.create_user_and_login(organization=org, rules=[rule])
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # now with the correct organization and the correct permissions
+        rule = Rule.get_by_("organization", Scope.COLLABORATION,
+                            Operation.VIEW)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(json_data), len(col.organizations))
 
     def test_view_collaboration_organization_permissions_as_node(self):
 
@@ -2180,16 +2172,19 @@ class TestResources(unittest.TestCase):
 
         # node of a different organization
         headers = self.create_node_and_login()
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # node of the correct organization
         headers = self.create_node_and_login(organization=org,
                                              collaboration=col)
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(json_data), len(col.organizations))
 
     def test_view_collaboration_organization_permissions_as_container(self):
 
@@ -2198,16 +2193,20 @@ class TestResources(unittest.TestCase):
         col = Collaboration(organizations=[org])
         col.save()
 
-        # node of a different organization
+        # container of a different organization
         headers = self.login_container()
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
+        # container of the correct organization
         headers = self.login_container(organization=org, collaboration=col)
-        results = self.app.get(f"/api/collaboration/{col.id}/organization",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/organization?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(json_data), len(col.organizations))
 
     def test_edit_collaboration_organization_permissions(self):
 
@@ -2318,40 +2317,46 @@ class TestResources(unittest.TestCase):
         node = Node(collaboration=col, organization=org)
         node.save()
 
-        # try to view an non-existant collaboration
-        headers = self.create_user_and_login()
-        results = self.app.get("/api/collaboration/9999/node", headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
-
         # try to view without any permissions
-        results = self.app.get(f"/api/collaboration/{col.id}/node",
-                               headers=headers)
+        headers = self.create_user_and_login()
+        results, json_data = self.paginated_list(
+            "/api/node?collaboration_id=9999", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # try to view from another organzization
-        rule = Rule.get_by_("collaboration", Scope.ORGANIZATION,
-                            Operation.VIEW)
+        rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f"/api/collaboration/{col.id}/node",
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        results, json_data = self.paginated_list(
+            f"/api/node?collaboration_id={col.id}", headers=headers
+        )
+        self.assertEqual(len(json_data), 0)
 
         # try to view from another organization with global permissions
-        rule = Rule.get_by_("collaboration", Scope.GLOBAL,
-                            Operation.VIEW)
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f"/api/collaboration/{col.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json['data']), len(col.nodes))
+        self.assertEqual(len(json_data), len(col.nodes))
 
-        # try to view from your organization
-        rule = Rule.get_by_("collaboration", Scope.ORGANIZATION,
-                            Operation.VIEW)
+        # try to view your collaboration's nodes with organization permissions
+        rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule], organization=org)
-        results = self.app.get(f"/api/collaboration/{col.id}/node",
-                               headers=headers)
+        results, json_data = self.paginated_list(
+            f"/api/node?collaboration_id={col.id}", headers=headers
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # and now with collaboration permissions
+        rule = Rule.get_by_("node", Scope.COLLABORATION, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule], organization=org)
+        results, json_data = self.paginated_list(
+            f"/api/node?collaboration_id={col.id}", headers=headers
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(json_data), len(col.nodes))
 
         # cleanup
         node.delete()
@@ -2500,62 +2505,6 @@ class TestResources(unittest.TestCase):
         org2.delete()
         org3.delete()
         col.delete()
-
-    def test_view_collaboration_task_permissions_as_user(self):
-
-        org = Organization()
-        col = Collaboration(organizations=[org])
-        task = Task(collaboration=col)
-        task.save()
-
-        # view non existing collaboration
-        headers = self.create_user_and_login()
-        results = self.app.get('/api/collaboration/9999/task',
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
-
-        # view without any permission
-        results = self.app.get(f'/api/collaboration/{col.id}/task',
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
-
-        # view from another organization
-        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.VIEW)
-        headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f'/api/collaboration/{col.id}/task',
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
-
-        # view from your own organization
-        headers = self.create_user_and_login(rules=[rule], organization=org)
-        results = self.app.get(f'/api/collaboration/{col.id}/task',
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json['data']), len(col.tasks))
-
-        # view with global permissions
-        rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
-        headers = self.create_user_and_login(rules=[rule])
-        results = self.app.get(f'/api/collaboration/{col.id}/task',
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json['data']), len(col.tasks))
-
-    def test_view_collaboration_task_permissions_as_node(self):
-
-        org = Organization()
-        col = Collaboration(organizations=[org])
-        node, api_key = self.create_node(org, col)
-        task = Task(collaboration=col)
-        task.save()
-
-        headers = self.login_node(api_key)
-        results = self.app.get(f'/api/collaboration/{col.id}/task',
-                               headers=headers)
-        self.assertEqual(results.status_code, HTTPStatus.OK)
-
-        # cleanup
-        node.delete()
 
     def test_view_node_permissions_as_user(self):
 

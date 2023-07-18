@@ -20,12 +20,10 @@ from vantage6.server.permission import (
 )
 from vantage6.server.resource.common.output_schema import (
     CollaborationSchema,
-    TaskSchema,
     OrganizationSchema,
     NodeSchemaSimple
 )
 from vantage6.server.resource import (
-    with_user_or_node,
     with_user,
     only_for,
     ServicesResources
@@ -70,28 +68,20 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         CollaborationOrganization,
         path+'/<int:id>/organization',
         endpoint='collaboration_with_id_organization',
-        methods=('GET', 'POST', 'DELETE'),
+        methods=('POST', 'DELETE'),
         resource_class_kwargs=services
     )
     api.add_resource(
         CollaborationNode,
         path+'/<int:id>/node',
         endpoint='collaboration_with_id_node',
-        methods=('GET', 'POST', 'DELETE'),
-        resource_class_kwargs=services
-    )
-    api.add_resource(
-        CollaborationTask,
-        path+'/<int:id>/task',
-        endpoint='collaboration_with_id_task',
-        methods=('GET',),
+        methods=('POST', 'DELETE'),
         resource_class_kwargs=services
     )
 
 
 # Schemas
 collaboration_schema = CollaborationSchema()
-tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
 collaboration_input_schema = CollaborationInputSchema()
@@ -149,7 +139,7 @@ class CollaborationBase(ServicesResources):
 
 class Collaborations(CollaborationBase):
 
-    @with_user
+    @only_for(['user', 'node'])
     def get(self):
         """Returns a list of collaborations
         ---
@@ -587,80 +577,6 @@ class CollaborationOrganization(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
-    @only_for(("node", "user", "container"))
-    def get(self, id):
-        """ Returns organizations that participate in the collaboration
-        ---
-        description: >-
-          Returns a list of all organizations that belong to the specified
-          collaboration.
-
-          ### Permission Table\n
-          |Rulename|Scope|Operation|Assigned to Node|Assigned to Container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Collaboration|Global|View|❌|❌|All collaborations|\n
-          |Collaboration|Organization|View|✅|✅|Collaborations
-          in which your organization participates|\n\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Collaboration id
-            required: true
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination (default=1)
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page (default=10)
-          - in: query
-            name: sort
-            schema:
-              type: string
-            description: >-
-              Sort by one or more fields, separated by a comma. Use a minus
-              sign (-) in front of the field to sort in descending order.
-
-        responses:
-            200:
-                description: Ok
-            404:
-                description: Collaboration specified by id does not exists
-            401:
-                description: Unauthorized
-
-        security:
-            - bearerAuth: []
-
-        tags: ["Collaboration"]
-        """
-        col = db.Collaboration.get(id)
-        if not col:
-            return {'msg': f'collaboration (id={id}) can not be found'},\
-                HTTPStatus.NOT_FOUND
-
-        # check permission
-        if not self.r.v_glo.can():
-            auth_org = self.obtain_auth_organization()
-            if not (self.r.v_org.can() and auth_org in col.organizations):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # paginate organizations
-        page = Pagination.from_list(col.organizations, request)
-
-        # model serialization
-        return self.response(page, org_schema)
-
     @with_user
     def post(self, id):
         """ Add organization to collaboration
@@ -816,78 +732,6 @@ class CollaborationNode(ServicesResources):
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
     @with_user
-    def get(self, id):
-        """ List nodes in collaboration.
-        ---
-        description: >-
-          Returns a list of node(s) which belong to the specified
-          collaboration.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Collaboration|Global|View|❌|❌|List nodes in a specified
-          collaboration|\n
-          |Collaboration|Organization|View|✅|✅|List nodes in a specified
-          collaboration|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Collaboration id
-            required: true
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination (default=1)
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page (default=10)
-          - in: query
-            name: sort
-            schema:
-              type: string
-            description: >-
-              Sort by one or more fields, separated by a comma. Use a minus
-              sign (-) in front of the field to sort in descending order.
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Collaboration not found
-          401:
-            description: Unauthorized
-
-        tags: ["Collaboration"]
-        """
-        col = db.Collaboration.get(id)
-        if not col:
-            return {"msg": f"collaboration id={id} can not be found"},\
-                HTTPStatus.NOT_FOUND
-
-        # check permission
-        if not self.r.v_glo.can():
-            auth_org = self.obtain_auth_organization()
-            if not (self.r.v_org.can() and auth_org in col.organizations):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # paginate nodes
-        page = Pagination.from_list(col.nodes, request)
-
-        # model serialization
-        return self.response(page, node_schema)
-
-    @with_user
     def post(self, id):
         """ Add node to collaboration
         ---
@@ -1040,86 +884,3 @@ class CollaborationNode(ServicesResources):
         collaboration.save()
         return {"msg": f"node id={data['id']} removed from collaboration "
                 f"id={id}"}, HTTPStatus.OK
-
-
-class CollaborationTask(ServicesResources):
-    """Resource for /api/collaboration/<int:id>/task."""
-
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, 'task')
-
-    @with_user_or_node
-    def get(self, id):
-        """List tasks from collaboration
-        ---
-        description: >-
-            Returns a list of all tasks that belong to the collaboration.\n
-
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |Task|Global|View|❌|❌|View tasks of collaboration|\n
-            |Task|Organization|View|✅|✅|View tasks only when your
-            organization participates in the collaboration|\n
-
-            Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Collaboration id
-            required: true
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination (default=1)
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page (default=10)
-          - in: query
-            name: sort
-            schema:
-              type: string
-            description: >-
-              Sort by one or more fields, separated by a comma. Use a minus
-              sign (-) in front of the field to sort in descending order.
-
-        responses:
-          200:
-            description: Ok
-          401:
-            description: Unauthorized
-          404:
-            description: Collaboration not found
-
-        security:
-            - bearerAuth: []
-
-        tags: ["Collaboration"]
-
-        """
-        col = db.Collaboration.get(id)
-        if not col:
-            return {"msg": f"Collaboration id={id} can not be found"},\
-                HTTPStatus.NOT_FOUND
-
-        # obtain auth's organization id
-        auth_org = self.obtain_auth_organization()
-
-        if not self.r.v_glo.can():
-            if not (self.r.v_col.can() and auth_org in col.organizations):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # paginate tasks
-        page = Pagination.from_list(col.tasks, request)
-
-        # model serialization
-        return self.response(page, tasks_schema)

@@ -28,7 +28,7 @@ from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.docker.squid import Squid
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail,
@@ -126,9 +126,7 @@ class DockerManager(DockerBaseManager):
         # keep track of the containers that have failed to start
         self.failed_tasks: list[DockerTaskManager] = []
 
-        # before a task is executed it gets exposed to these regex
-        # TODO remove in v4+ as it is supersed by the 'policies' block
-        self._allowed_images = config.get("allowed_images")
+        # before a task is executed it gets exposed to these policies
         self._policies = config.get("policies", {})
 
         # node name is used to identify algorithm containers belonging
@@ -168,21 +166,7 @@ class DockerManager(DockerBaseManager):
         databases: dict | list
             databases as specified in the config file
         """
-
-        # Check wether the new or old database config is used.
-        # TODO: we should remove the old way in v4+
-        old_format = isinstance(databases, dict)
-
-        # Check that the `default` database label is present. If this is
-        # not the case, older algorithms will break
-        if old_format:
-            db_labels = databases.keys()
-        else:
-            db_labels = [db['label'] for db in databases]
-
-        if 'default' not in db_labels:
-            self.log.error("'default' database not specified in the config!")
-            self.log.debug(f'databases in config={db_labels}')
+        db_labels = [db['label'] for db in databases]
 
         # If we're running in a docker container, database_uri would point
         # to a path on the *host* (since it's been read from the config
@@ -300,35 +284,20 @@ class DockerManager(DockerBaseManager):
         allowed_users = self._policies.get('allowed_users', [])
         allowed_orgs = self._policies.get('allowed_organizations', [])
         if allowed_users or allowed_orgs:
-            # TODO in v4+, simpify this logic when part below is removed (
-            # simply return the result of the check_user_allowed_to_send_task)
             is_allowed = self.client.check_user_allowed_to_send_task(
-                allowed_users, allowed_orgs, task_info['initiator'],
-                task_info['init_user']
+                allowed_users, allowed_orgs, task_info['init_org']['id'],
+                task_info['init_user']['id']
             )
             if not is_allowed:
-                self.log.warn(
-                    "A task was sent by a user or organization that this node"
-                    " does not allow to start tasks.")
+                self.log.warn("A task was sent by a user or organization that "
+                              "this node does not allow to start tasks.")
                 return False
 
-        # --------------------------------------------------------------------
-        # TODO in v4+, remove part below as it is superseded by the 'policies'
-        # block
-        # --------------------------------------------------------------------
-        # if no limits are declared
-        if not self._allowed_images:
+        # if no limits are declared, log warning
+        if not self._policies:
             self.log.warn("All docker images are allowed on this Node!")
-            return True
 
-        # check if it matches any of the regex cases
-        for regex_expr in self._allowed_images:
-            expr_ = re.compile(regex_expr)
-            if expr_.match(docker_image_name):
-                return True
-
-        # if not, it is considered an illegal image
-        return False
+        return True
 
     def is_running(self, run_id: int) -> bool:
         """

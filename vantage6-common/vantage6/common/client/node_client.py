@@ -9,8 +9,8 @@ import time
 from threading import Thread
 
 from vantage6.common import WhoAmI
-from vantage6.client import ClientBase
-from vantage6.node.globals import REFRESH_BEFORE_EXPIRES_SECONDS
+from vantage6.common.client.client_base import ClientBase
+from vantage6.common.globals import NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
 
 
 class NodeClient(ClientBase):
@@ -75,11 +75,12 @@ class NodeClient(ClientBase):
             expiry_time = jwt.decode(
                 self.token, options={"verify_signature": False})["exp"]
             time_until_expiry = expiry_time - time.time()
-            if time_until_expiry < REFRESH_BEFORE_EXPIRES_SECONDS:
+            if time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
                 self.refresh_token()
             else:
                 time.sleep(
-                    int(time_until_expiry - REFRESH_BEFORE_EXPIRES_SECONDS + 1)
+                    int(time_until_expiry -
+                        NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS + 1)
                 )
 
     def request_token_for_container(self, task_id: int, image: str) -> dict:
@@ -307,7 +308,7 @@ class NodeClient(ClientBase):
 
     def check_user_allowed_to_send_task(
         self, allowed_users: list[str], allowed_orgs: list[str],
-        initiator_id: int, init_user_id: int
+        init_org_id: int, init_user_id: int
     ) -> bool:
         """
         Check if the user is allowed to send a task to this node
@@ -318,7 +319,7 @@ class NodeClient(ClientBase):
             List of allowed user IDs or usernames
         allowed_orgs: list[str]
             List of allowed organization IDs or names
-        initiator_id: int
+        init_org_id: int
             ID of the organization that initiated the task
         init_user_id: int
             ID of the user that initiated the task
@@ -333,7 +334,7 @@ class NodeClient(ClientBase):
             return True
 
         # check if task-initiating org id is in allowed orgs
-        if any(str(initiator_id) == org for org in allowed_orgs):
+        if any(str(init_org_id) == org for org in allowed_orgs):
             return True
 
         # TODO it would be nicer to check all users in a single request
@@ -350,12 +351,12 @@ class NodeClient(ClientBase):
         #         if d.get("username") == user and d.get("id") == init_user_id:
         #             return True
 
-        # TODO rename initiator_id to init_org_id in v4+
         # check if task-initiating org name is in allowed orgs
-        for org in allowed_orgs:
-            resp = self.request("organization", params={"name": org})
-            for d in resp:
-                if d.get("name") == org and d.get("id") == initiator_id:
+        for allowed_org in allowed_orgs:
+            resp = self.request("organization", params={"name": allowed_org})
+            for org in resp:
+                if org.get("name") == allowed_org and \
+                        org.get("id") == init_org_id:
                     return True
 
         # not in any of the allowed users or orgs

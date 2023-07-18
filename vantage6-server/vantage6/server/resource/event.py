@@ -70,8 +70,6 @@ def permissions(permissions: PermissionManager) -> None:
     permissions : PermissionManager
         Permission manager instance to which permissions are added
     """
-    # TODO in v4, change the operations below to 'SEND' and 'RECEIVE' as these
-    # are permissions to do stuff via socket connections
     add = permissions.appender(module_name)
 
     add(scope=Scope.ORGANIZATION, operation=Operation.RECEIVE,

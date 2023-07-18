@@ -4,7 +4,7 @@ import time
 
 from typing import Any
 
-from vantage6.client import ClientBase
+from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.task_status import TaskStatus
 from vantage6.tools.serialization import serialize
@@ -41,21 +41,16 @@ class AlgorithmClient(ClientBase):
         jwt_payload = jwt.decode(
             token, options={"verify_signature": False})
 
-        # FIXME: 'identity' is no longer needed in version 4+. So this if
-        # statement can be removed
-        if 'sub' in jwt_payload:
-            container_identity = jwt_payload['sub']
-        elif 'identity' in jwt_payload:
-            container_identity = jwt_payload['identity']
+        container_identity = jwt_payload['sub']
 
         self.image = container_identity.get("image")
         self.databases = container_identity.get('databases', [])
-        self.host_node_id = container_identity.get("node_id")
+        self.node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.organization_id = container_identity.get("organization_id")
         self.log.info(
             f"Container in collaboration_id={self.collaboration_id} \n"
-            f"Key created by node_id {self.host_node_id} \n"
+            f"Key created by node_id {self.node_id} \n"
             f"Can only use image={self.image}"
         )
 
@@ -330,7 +325,7 @@ class AlgorithmClient(ClientBase):
 
             description = (
                 description or
-                f"task from container on node_id={self.parent.host_node_id}"
+                f"task from container on node_id={self.parent.node_id}"
             )
 
             # serializing input. Note that the input is not encrypted here, but
@@ -512,4 +507,4 @@ class AlgorithmClient(ClientBase):
                 Dictionary containing data on the node this algorithm is
                 running on.
             """
-            return self.parent.request(f"node/{self.parent.host_node_id}")
+            return self.parent.request(f"node/{self.parent.node_id}")

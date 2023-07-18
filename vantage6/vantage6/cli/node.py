@@ -44,7 +44,7 @@ from vantage6.common.docker.addons import (
   check_docker_running
 )
 from vantage6.common.encryption import RSACryptor
-from vantage6.client import Client
+from vantage6.client import UserClient
 
 from vantage6.cli.context import NodeContext
 from vantage6.cli.globals import (
@@ -203,13 +203,8 @@ def cli_node_files(name: str, system_folders: bool) -> None:
     info(f"Log file           = {ctx.log_file}")
     info(f"data folders       = {ctx.data_dir}")
     info("Database labels and files")
-    # TODO in v4+, this will always be a list so remove next few lines
-    if isinstance(ctx.databases, dict):
-        for label, path in ctx.databases.items():
-            info(f" - {label:15} = {path}")
-    else:
-        for db in ctx.databases:
-            info(f" - {db['label']:15} = {db['uri']} (type: {db['type']})")
+    for db in ctx.databases:
+        info(f" - {db['label']:15} = {db['uri']} (type: {db['type']})")
 
 
 #
@@ -260,6 +255,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     """
     info("Starting node...")
     info("Finding Docker daemon")
+    print("alhoa")
     docker_client = docker.from_env()
     check_docker_running()
 
@@ -310,14 +306,6 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if not image:
-
-        # FIXME: remove me in version 4+, as this is to support older
-        # configuration files. So the outer `image` key is no longer supported
-        if ctx.config.get('image'):
-            warning('Using the `image` option in the config file is to be '
-                    'removed in version 4+.')
-            image = ctx.config.get('image')
-
         custom_images: dict = ctx.config.get('images')
         if custom_images:
             image = custom_images.get("node")
@@ -413,18 +401,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
 
     # only mount the DB if it is a file
     info("Setting up databases")
-
-    # Check wether the new or old database configuration is used
-    # TODO: remove this in version v4+
-    old_format = isinstance(ctx.databases, dict)
-    if old_format:
-        db_labels = ctx.databases.keys()
-        warning('Using the old database configuration format. Please update.')
-        debug('You are using the db config old format, algorithms using the '
-              'auto wrapper will not work!')
-    else:
-        db_labels = [db['label'] for db in ctx.databases]
-
+    db_labels = [db['label'] for db in ctx.databases]
     for label in db_labels:
 
         db_config = get_database_config(ctx.databases, label)
@@ -452,11 +429,6 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
             suffix = Path(uri).suffix
             env[f'{label_capitals}_DATABASE_URI'] = f'{label}{suffix}'
             mounts.append((f'/mnt/{label}{suffix}', str(uri)))
-
-        # FIXME legacy to support < 2.1.3 can be removed from 3+
-        # FIXME this is still required in v3+ but should be removed in v4
-        if label == 'default':
-            env['DATABASE_URI'] = '/mnt/default.csv'
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} '\
@@ -973,7 +945,7 @@ def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def _create_client_and_authenticate(ctx: NodeContext) -> Client:
+def _create_client_and_authenticate(ctx: NodeContext) -> UserClient:
     """
     Generate a client and authenticate with the server.
 
@@ -984,7 +956,7 @@ def _create_client_and_authenticate(ctx: NodeContext) -> Client:
 
     Returns
     -------
-    Client
+    UserClient
         vantage6 client
     """
     host = ctx.config['server_url']
@@ -995,7 +967,7 @@ def _create_client_and_authenticate(ctx: NodeContext) -> Client:
     username = q.text("Username:").ask()
     password = q.password("Password:").ask()
 
-    client = Client(host, port, api_path)
+    client = UserClient(host, port, api_path)
 
     try:
         client.authenticate(username, password)

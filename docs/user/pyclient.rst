@@ -154,7 +154,7 @@ object, and authenticating
 
 .. code:: python
 
-   from vantage6.client import Client
+   from vantage6.client import UserClient as Client
 
    # Note: we assume here the config.py you just created is in the current directory.
    # If it is not, then you need to make sure it can be found on your PYTHONPATH
@@ -162,16 +162,11 @@ object, and authenticating
 
    # Initialize the client object, and run the authentication
    client = Client(config.server_url, config.server_port, config.server_api,
-                   verbose=True)
+                   log_level='debug')
    client.authenticate(config.username, config.password)
 
    # Optional: setup the encryption, if you have an organization_key
    client.setup_encryption(config.organization_key)
-
-.. note::
-    Above, we have added ``verbose=True`` as additional argument when creating
-    the Client(…) object. This will print much more information that can be
-    used to debug the issue.
 
 .. _creating-organization:
 
@@ -433,8 +428,6 @@ master algorithm will normally do:
                                      description='',
                                      input=input_)
 
-.. todo check if the part below is still correct in v4+
-
 **Inspecting the results**
 
 Of course, it will take a little while to run your algorithm. You can
@@ -445,19 +438,13 @@ every 3 seconds to see if the task has been completed:
 
    print("Waiting for results")
    task_id = average_task['id']
-   task_info = client.task.get(task_id)
-   while not task_info.get("complete"):
-       task_info = client.task.get(task_id, include_results=True)
-       print("Waiting for results")
-       time.sleep(3)
+   result = client.wait_for_results(task_id)
 
-   print("Results are ready!")
-
-When the results are in, you can get the task_id from the task object:
+You can also check the status of the task using:
 
 .. code:: python
 
-   task_id = task_info['id']
+   task_info = client.task.get(task_id, include_results=True)
 
 and then retrieve the results
 
@@ -466,20 +453,17 @@ and then retrieve the results
    result_info = client.result.list(task=task_id)
 
 The number of results may be different depending on what you run, but
-for the master algorithm in this example, we can retrieve it using:
+for the central average algorithm in this example, the results would be:
 
 .. code:: python
 
-   >>> result_info['data'][0]['result']
-   {'average': 53.25}
+   >>> result_info
+   [{'average': 53.25}]
 
-while for the RPC algorithm, dispatched to two nodes, we can retrieve it
-using
+while for the partial algorithms, dispatched to two nodes, the results would be:
 
 .. code:: python
 
-   >>> result_info['data'][0]['result']
-   {'sum': 253, 'count': 4}
-   >>> result_info['data'][1]['result']
-   {'sum': 173, 'count': 4}
+   >>> result_info
+   [{'sum': 253, 'count': 4}, {'sum': 173, 'count': 4}]
 

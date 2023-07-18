@@ -293,39 +293,3 @@ class Pagination:
                     sorter = sorter[1:]
                 query = query.order_by(sorter)
         return query
-
-    # TODO in v4+, remove this method if also removing the double endpoints
-    @classmethod
-    def from_list(cls, items: list[db.Base],
-                  request: flask.Request) -> Pagination:
-        """
-        Create a Pagination object from a list of database objects.
-
-        Parameters
-        ----------
-        items : list[db.Base]
-            List of database objects to paginate
-        request : flask.Request
-            Request object
-
-        Returns
-        -------
-        Pagination
-            Pagination object
-        """
-        page_id = int(request.args.get('page', DEFAULT_PAGE))
-        per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
-        total = len(items)
-
-        if page_id <= 0:
-            raise AttributeError('page needs to be >= 1')
-        if per_page <= 0:
-            raise AttributeError('per_page needs to be >= 1')
-
-        beginning = (page_id - 1) * per_page
-        ending = page_id * per_page
-        if ending > total:
-            ending = total
-        items = items[beginning:ending]
-
-        return cls(items, page_id, per_page, total, request)

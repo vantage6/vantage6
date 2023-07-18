@@ -69,7 +69,6 @@ class MockAlgorithmClient:
 
         self.organization_id = self.all_organization_ids[0]
 
-        # TODO v4+ rename host_node_id to node_id (also in other places)
         if node_ids and len(node_ids) == self.n:
             self.all_node_ids = node_ids
         else:
@@ -83,7 +82,7 @@ class MockAlgorithmClient:
                     default_node_ids,
                 )
             self.all_node_ids = default_node_ids
-        self.host_node_id = self.all_node_ids[0]
+        self.node_id = self.all_node_ids[0]
 
         self.datasets_per_org = {}
         self.organizations_with_data = []
@@ -208,7 +207,7 @@ class MockAlgorithmClient:
                 # has access to the same IDs specified
                 data = self.parent.datasets_per_org[org_id]
                 client_copy = deepcopy(self.parent)
-                client_copy.host_node_id = self._select_node(org_id)
+                client_copy.node_id = self._select_node(org_id)
                 client_copy.organization_id = org_id
                 result = method(
                     mock_client=self.parent,
@@ -522,7 +521,7 @@ class MockAlgorithmClient:
             dict
                 A mocked node.
             """
-            node_id = self.parent.host_node_id
+            node_id = self.parent.node_id
             collab_id = self.parent.collaboration_id
             return {
                 "id": node_id,

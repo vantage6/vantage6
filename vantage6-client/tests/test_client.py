@@ -4,7 +4,7 @@ import json
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
-from vantage6.client import Client
+from vantage6.client import UserClient
 from vantage6.common.globals import STRING_ENCODING
 
 # Mock server
@@ -45,17 +45,19 @@ class TestClient(TestCase):
         mock_requests.post.return_value.status_code = 200
 
         mock_jwt = TestClient._create_mock_jwt()
-        with patch.multiple('vantage6.client', requests=mock_requests, jwt=mock_jwt):
+        with patch.multiple('vantage6.client', requests=mock_requests,
+                            jwt=mock_jwt):
             client = TestClient.setup_client()
 
-            client.post_task(
+            client.task.create(
                 name=TASK_NAME, image=TASK_IMAGE,
                 collaboration_id=COLLABORATION_ID,
                 organization_ids=ORGANIZATION_IDS, input_=input_
             )
 
-            # In a request.post call, json is provided with the keyword argument 'json'
-            # call_args provides a tuple with positional arguments followed by a dict with positional arguments
+            # In a request.post call, json is provided with the keyword
+            # argument 'json'. call_args provides a tuple with positional
+            # arguments followed by a dict with positional arguments
             post_content = mock_requests.post.call_args[1]['json']
 
             post_input = post_content['organizations'][0]['input']
@@ -72,13 +74,19 @@ class TestClient(TestCase):
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
 
-        user = {'id': FAKE_ID, 'firstname': 'naam', 'organization': {'id': FAKE_ID}}
+        user = {
+            'id': FAKE_ID, 'firstname': 'naam',
+            'organization': {'id': FAKE_ID}
+        }
         organization = {'id': FAKE_ID, 'name': FAKE_NAME}
 
-        # The client will first send a post request for authentication, then for retrieving results.
-        mock_requests.get.return_value.json.side_effect = [user, organization, mock_result_response]
+        # The client will first send a post request for authentication, then
+        # for retrieving results.
+        mock_requests.get.return_value.json.side_effect = \
+            [user, organization, mock_result_response]
 
-        with patch.multiple('vantage6.client', requests=mock_requests, jwt=mock_jwt):
+        with patch.multiple('vantage6.client', requests=mock_requests,
+                            jwt=mock_jwt):
             client = TestClient.setup_client()
 
             results = client.result.from_task(task_id=FAKE_ID)
@@ -86,8 +94,8 @@ class TestClient(TestCase):
             return results
 
     @staticmethod
-    def setup_client() -> Client:
-        client = Client(HOST, PORT)
+    def setup_client() -> UserClient:
+        client = UserClient(HOST, PORT)
         client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
         client.setup_encryption(None)
         return client

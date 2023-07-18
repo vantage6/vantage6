@@ -39,8 +39,10 @@ setup(
         'cryptography==41.0.0',
         'docker==6.1.2',
         'pyfiglet==0.8.post1',
+        'PyJWT==2.6.0',
         'PyYAML==6.0',
         'python-dateutil==2.8.2',
+        'requests==2.31.0',
         'schema==0.7.5',
     ],
     package_data={

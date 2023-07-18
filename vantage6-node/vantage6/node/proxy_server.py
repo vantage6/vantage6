@@ -15,7 +15,7 @@ from requests import Response
 from flask import Flask, request, jsonify
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -276,6 +276,7 @@ def proxy_task():
             HTTPStatus.INTERNAL_SERVER_ERROR
 
     return response.json(), HTTPStatus.OK
+
 
 @app.route('/result?task_id=<int:id_>', methods=["GET"])
 def proxy_result(id_: int) -> Response:

@@ -66,27 +66,6 @@ class Organization(Base):
     tasks = relationship("Task", back_populates="init_org")
     roles = relationship("Role", back_populates="organization")
 
-    def get_run_ids(self):
-        """
-        Returns a list of run ids that are part of this organization.
-
-        Returns
-        -------
-        list[int]
-            List of result ids
-        """
-        # FIXME this should be removed in version 4.0 and above, it only exists
-        # to make the organization endpoint faster and these links should be
-        # adapted there.
-        # note that the import below is required since this file (Organization)
-        # is already imported in model.Run
-        from vantage6.server.model.run import Run
-        session = DatabaseSessionManager.get_session()
-        result_ids = session.query(Run.id)\
-                            .filter(Run.organization_id == self.id).all()
-        session.commit()
-        return result_ids
-
     @classmethod
     def get_by_name(cls, name) -> Organization | None:
         """

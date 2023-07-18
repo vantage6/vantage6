@@ -20,7 +20,9 @@ from vantage6.server.permission import (
     Operation as P,
 )
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.resource.common.output_schema import RoleSchema, RuleSchema
+from vantage6.server.resource.common.output_schema import (
+    RoleSchema, RuleSchema
+)
 from vantage6.server.resource.common.input_schema import RoleInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.default_roles import DefaultRole
@@ -57,13 +59,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         path + '/<int:id>',
         endpoint="role_with_id",
         methods=('GET', 'PATCH', 'DELETE'),
-        resource_class_kwargs=services
-    )
-    api.add_resource(
-        RoleRules,
-        path + '/<int:id>/rule',
-        endpoint='role_rule_without_id',
-        methods=('GET',),
         resource_class_kwargs=services
     )
     api.add_resource(
@@ -691,82 +686,6 @@ class Role(RoleBase):
 
 
 class RoleRules(RoleBase):
-
-    @with_user
-    def get(self, id):
-        """Returns the rules for a specific role
-        ---
-        description: >-
-            View the rules that belong to a specific role.\n
-
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |Role|Global|View|❌|❌|View a role's rules|\n
-            |Role|Organization|View|❌|❌|View a role's rules for roles in
-            your organization|\n
-
-            Accessible to users.
-
-        parameters:
-            - in: path
-              name: id
-              schema:
-                type: integer
-              minimum: 1
-              description: Role id
-              required: true
-            - in: query
-              name: page
-              schema:
-                type: integer
-              description: Page number for pagination (default=1)
-            - in: query
-              name: per_page
-              schema:
-                type: integer
-              description: Number of items per page (default=10)
-            - in: query
-              name: sort
-              schema:
-                type: string
-              description: >-
-                Sort by one or more fields, separated by a comma. Use a minus
-                sign (-) in front of the field to sort in descending order.
-
-        responses:
-            200:
-                description: Ok
-            404:
-                description: Node with specified id is not found
-            401:
-                description: Unauthorized
-
-        security:
-            - bearerAuth: []
-
-        tags: ["Role"]
-        """
-        role = db.Role.get(id)
-
-        if not role:
-            return {'msg': f'Role id={id} not found!'}, HTTPStatus.NOT_FOUND
-
-        # obtain auth organization model
-        auth_org = self.obtain_auth_organization()
-
-        # check permission
-        if not self.r.v_glo.can():
-            if not (self.r.v_org.can() and auth_org == role.organization):
-                return {'msg': 'You lack permissions to do that'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # paginate elements
-        page = Pagination.from_list(role.rules, request)
-
-        return self.response(page, rule_schema)
-
     @with_user
     def post(self, id, rule_id):
         """Add a rule to a role.

@@ -336,15 +336,6 @@ def get_database_config(databases: list, label: str) -> dict | None:
     ]
 
     """
-    # FIXME The old format should be removed in v4+.
-    old_format = isinstance(databases, dict)
-    if old_format:
-        return {
-            "label": label,
-            "uri": databases[label],
-            "type": None
-        }
-    else:
-        for database in databases:
-            if database["label"] == label:
-                return database
+    for database in databases:
+        if database["label"] == label:
+            return database

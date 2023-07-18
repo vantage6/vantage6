@@ -725,7 +725,6 @@ class User(UserBase):
             return {
                 "msg": "User could not be updated with those parameters."
             }, HTTPStatus.BAD_REQUEST
-            # TODO BvB 2021-08-27 return msg that user was not updated?
 
         return user_schema.dump(user), HTTPStatus.OK
 

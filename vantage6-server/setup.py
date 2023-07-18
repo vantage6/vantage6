@@ -49,6 +49,7 @@ setup(
         'kombu==5.2.4',
         'marshmallow==3.19.0',
         'marshmallow-sqlalchemy==0.29.0',
+        'PyJWT==2.6.0',
         'pyotp==2.8.0',
         'questionary==1.10.0',
         'requests==2.31.0',

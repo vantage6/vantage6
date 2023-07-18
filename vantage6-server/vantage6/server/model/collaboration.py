@@ -109,11 +109,6 @@ class Collaboration(Base):
         """
         Find :class:`.Collaboration` by its name.
 
-        Note
-        ----
-        If multiple collaborations share the same name, the first
-        collaboration found is returned.
-
         Parameters
         ----------
         name: str
@@ -125,8 +120,6 @@ class Collaboration(Base):
             Collaboration with the given name, or None if no collaboration
             with the given name exists.
         """
-        # FIXME BvB 2022-01-18. From v4+ there shouldn't be any collisions
-        # in collab names anymore, so correct docstring above
         session = DatabaseSessionManager.get_session()
         try:
             result = session.query(cls).filter_by(name=name).first()
