@@ -109,7 +109,7 @@ def get_default_roles(db) -> list[dict]:
         # view which organizations they may add to their collaboration
         db.Rule.get_by_('organization', Scope.GLOBAL, Operation.VIEW),
         db.Rule.get_by_('organization', Scope.COLLABORATION, Operation.EDIT),
-        db.Rule.get_by_('collaboration', Scope.COLLABORATION, Operation.VIEW),
+        db.Rule.get_by_('collaboration', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('collaboration', Scope.COLLABORATION, Operation.EDIT),
         # The following rule is given so that a collaboration admin can
         # create a new collaboration
