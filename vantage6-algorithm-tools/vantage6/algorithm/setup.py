@@ -35,10 +35,10 @@ setup(
     packages=find_namespace_packages(),
     python_requires='>=3.6',
     install_requires=[
-        'pandas==1.5.3',
+        'pandas>=1.5.3',
         'PyJWT==2.6.0',
         'pyfiglet==0.8.post1',
-        'SPARQLWrapper==2.0.0',
+        'SPARQLWrapper>=2.0.0',
         f'vantage6-common=={version_ns["__version__"]}',
     ],
     tests_require=["pytest"],
