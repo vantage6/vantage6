@@ -6,8 +6,8 @@ from typing import Any
 from importlib import import_module
 from copy import deepcopy
 
-from vantage6.tools.wrappers import select_wrapper
-from vantage6.tools.util import info
+from vantage6.algorithm.tools.wrappers import select_wrapper
+from vantage6.algorithm.tools.util import info
 
 module_name = __name__.split('.')[1]
 

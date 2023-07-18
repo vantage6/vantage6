@@ -21,6 +21,7 @@ RUN pip install -r /vantage6/requirements.txt \
 # Copy all project dependencies into the image
 # COPY vantage6/requirements.txt /tmp/cli-requirements.txt
 # COPY vantage6-client/requirements.txt /tmp/client-requirements.txt
+# COPY vantage6-algorithm-tools/requirements.txt /tmp/tools-requirements.txt
 # COPY vantage6-common/requirements.txt /tmp/common-requirements.txt
 # COPY vantage6-node/requirements.txt /tmp/node-requirements.txt
 # COPY vantage6-server/requirements.txt /tmp/server-requirements.txt
@@ -30,6 +31,8 @@ RUN pip install -r /vantage6/requirements.txt \
 # RUN pip install -r /tmp/cli-requirements.txt \
 #     --extra-index-url https://www.piwheels.org/simple
 # RUN pip install -r /tmp/client-requirements.txt \
+#     --extra-index-url https://www.piwheels.org/simple
+# RUN pip install -r /tmp/tools-requirements.txt \
 #     --extra-index-url https://www.piwheels.org/simple
 # RUN pip install -r /tmp/common-requirements.txt \
 #     --extra-index-url https://www.piwheels.org/simple

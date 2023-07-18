@@ -20,7 +20,7 @@ from pathlib import Path
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor
 from vantage6.common import WhoAmI
-from vantage6.tools import serialization
+from vantage6.common import serialization
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
