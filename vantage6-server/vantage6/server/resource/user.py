@@ -255,7 +255,7 @@ class Users(UserBase):
 
         # find users with a particulare role or rule assigned
         if 'role_id' in args:
-            role = db.Role.query.get(args['role_id'])
+            role = db.Role.get(args['role_id'])
             if not role:
                 return {
                     'msg': f'Role with id={args["role_id"]} does not exist!'
