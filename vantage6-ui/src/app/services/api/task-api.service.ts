@@ -72,7 +72,6 @@ export class TaskApiService extends BaseApiService {
       organizations: org_input,
       collaboration_id: collab_id,
       databases: databases,
-      input: input,
     };
     return data;
   }
