@@ -2,7 +2,7 @@ Release notes
 =============
 
 3.10.4
------
+------
 
 *27 June 2023*
 
@@ -22,7 +22,7 @@ Release notes
    `PR#725 <https://github.com/vantage6/vantage6/pull/725>`_).
 
 3.10.3
------
+------
 
 *20 June 2023*
 
@@ -37,7 +37,7 @@ Release notes
     so that version was skipped.
 
 3.10.1
------
+------
 
 *19 June 2023*
 
@@ -48,7 +48,7 @@ Release notes
    `PR#720 <https://github.com/vantage6/vantage6/pull/720>`_).
 
 3.10.0
------
+------
 
 *19 June 2023*
 
@@ -163,7 +163,7 @@ Release notes
      (`Issue#656 <https://github.com/vantage6/vantage6/issues/656>`_,
      `PR#676 <https://github.com/vantage6/vantage6/pull/676>`_)
    - Fixed database label logging
-     (`PR#674 <https://github.com/vantage6/vantage6/pull/664>`_)
+     (`PR#664 <https://github.com/vantage6/vantage6/pull/664>`_)
    - Fixed a bug were VPN messages to the originating node where not always
      sent/received
      (`Issue#671 <https://github.com/vantage6/vantage6/issues/671>`_,
@@ -363,7 +363,7 @@ Release notes
     `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
  -  Latest versions of VPN images were not automatically downloaded by node
     on VPN connection startup. This has been corrected (
-    `PR#533 <https://github.com/vantage6/vantage6/pull/542>`_).
+    `PR#542 <https://github.com/vantage6/vantage6/pull/542>`_).
 
 3.7.1
 -----

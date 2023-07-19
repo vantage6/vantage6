@@ -38,7 +38,7 @@ Algorithm tooling
 .. _wrapper-function-docs:
 
 vantage6.tools.wrappers
-++++++++++++++++++++++
++++++++++++++++++++++++
 
 .. automodule:: vantage6.tools.wrappers
    :members:

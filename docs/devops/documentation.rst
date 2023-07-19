@@ -1,4 +1,5 @@
 .. _documentation:
+
 Documentation
 =============
 
@@ -8,7 +9,8 @@ shipped directly  with the server instance. All of these documentation pages are
 described in more detail below.
 
 How this documentation is created
------------------------
+---------------------------------
+
 The source of the documentation you are currently reading is located
 `here <https://github.com/vantage6/vantage6/tree/main/docs/>`_, in the ``docs``
 folder of the *vantage6* repository itself.

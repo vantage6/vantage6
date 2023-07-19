@@ -135,7 +135,7 @@ can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
 
 
 Algorithm wrappers
-----------------
+------------------
 
 The vantage6 :ref:`wrappers <wrapper-concepts>` are used to simplify the
 interaction between the algorithm and the node. The wrappers are responsible

@@ -1,7 +1,7 @@
-.. _algo-tutorial:
-
 .. todo rewrite this to a modern version, taking into account the description
    in the develop.rst file.
+
+.. _classic-algo-tutorial:
 
 Classic Tutorial
 ================
@@ -190,7 +190,7 @@ algorithm with a JWT token so that the central part of the algorithm has
 access to the server to post these subtasks.
 
 📂Algorithm Structure
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 The algorithm needs to be structured as a Python
 `package <https://packaging.python.org/tutorials/packaging-projects/>`__.
@@ -405,8 +405,6 @@ For our average algorithm the implementation will look as follows:
            "sum": local_sum,
            "count": local_count
        }
-
-.. _local-testing-1:
 
 Local testing
 ~~~~~~~~~~~~~

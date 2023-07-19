@@ -1,8 +1,5 @@
 .. _server-api-refs:
 
-.. this removes all the class members from the right sidebar
-:tocdepth: 3
-
 Server
 ======
 
@@ -94,14 +91,14 @@ vantage6.server.resource
 .. automodule:: vantage6.server.resource
     :members:
 
-vantage6.server.resource.common._schema
-+++++++++++++++++++++++++++++++++++++++
+vantage6.server.resource.common.output_schema
++++++++++++++++++++++++++++++++++++++++++++++
 
 .. todo This output isn't pretty at the moment, check in v4.0 if this is
     still the case (there that module is rewritten)
 
-.. automodule:: vantage6.server.resource.common._schema
-    :members: HATEOASModelSchema
+.. automodule:: vantage6.server.resource.common.output_schema
+    :members: HATEOASModelSchema, create_one_to_many_link
 
 vantage6.server.resource.common.auth_helper
 +++++++++++++++++++++++++++++++++++++++++++
@@ -227,7 +224,7 @@ vantage6.server.model.permission
     :members:
 
 vantage6.server.model.role_rule_association
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: vantage6.server.model.role_rule_association
 

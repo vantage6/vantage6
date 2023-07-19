@@ -59,8 +59,6 @@ This documentation space consists of the following main sections:
 * :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
 * :doc:`/features/index` (Under construction) |rarr|
   *Documentation of vantage6 features*
-.. * :doc:`/technical-documentation/index` (Under construction) |rarr|
-..   *Implementation details of the vantage6 platform*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
   vantage6 infrastructure*
 * :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
