@@ -111,7 +111,7 @@ class ConfigurationManager(object):
         """
         configuration = self.conf_class(config)
         if configuration.is_valid:
-            self.config = configuration
+            self.config = config
 
     def get(self) -> Configuration:
         """
