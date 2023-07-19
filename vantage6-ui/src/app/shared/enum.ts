@@ -14,6 +14,7 @@ export enum ResType {
   NODE = 'node',
   TASK = 'task',
   RUN = 'run',
+  RESULT = 'result',
   EVENT = 'event',
   PORT = 'port',
   RULE = 'rule',

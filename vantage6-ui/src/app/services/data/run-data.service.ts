@@ -7,6 +7,7 @@ import { RunApiService } from '../api/run-api.service';
 import { ConvertJsonService } from '../common/convert-json.service';
 import { SocketioConnectService } from '../common/socketio-connect.service';
 import { BaseDataService } from './base-data.service';
+import { ResultApiService } from '../api/result-api.service';
 
 /**
  * Service for retrieving and updating run data.
@@ -22,6 +23,7 @@ export class RunDataService extends BaseDataService {
   constructor(
     protected apiService: RunApiService,
     protected convertJsonService: ConvertJsonService,
+    private resultApiService: ResultApiService,
     private socketConnectService: SocketioConnectService
   ) {
     super(apiService, convertJsonService);
@@ -79,7 +81,22 @@ export class RunDataService extends BaseDataService {
       if (!this.queried_task_ids.includes(task_id)) {
         this.queried_task_ids.push(task_id);
       }
+      // get the algorithm runs data
       let runs = await this.apiService.getResourcesByTaskId(task_id);
+
+      // get the results of the runs as well
+      let results = await this.resultApiService.getResourcesByTaskId(task_id);
+
+      // add results to runs
+      for (let run of runs) {
+        for (let result of results) {
+          if (result.id === run.id) {
+            run.result = result.result;
+            break;
+          }
+        }
+      }
+
       this.saveMultiple(runs);
     }
     return this.resources_per_task[task_id].asObservable();

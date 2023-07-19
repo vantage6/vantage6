@@ -10,6 +10,7 @@ import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { ResType } from 'src/app/shared/enum';
 import { Run } from 'src/app/interfaces/run';
+import { Result } from 'src/app/interfaces/result';
 
 @Injectable({
   providedIn: 'root',
@@ -216,6 +217,14 @@ export class ConvertJsonService {
       assigned_at: json.assigned_at,
       finished_at: json.finished_at,
       status: json.status,
+    };
+  }
+
+  getAlgorithmResult(json: any): Result {
+    return {
+      id: json.id,
+      type: ResType.RESULT,
+      result: json.result,
     };
   }
 }
