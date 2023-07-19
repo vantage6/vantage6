@@ -47,7 +47,7 @@ Installing a VPN server
 
 To use algorithm-to-algorithm communication, a VPN server must be set up by
 the server administrator. The installation instructions for the VPN server
-are :ref:`here <eduvpn>`.
+are :ref:`here <eduvpn-install>`.
 
 Configuring the vantage6 server
 +++++++++++++++++++++++++++++++

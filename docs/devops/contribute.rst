@@ -1,3 +1,5 @@
+.. _contribute:
+
 Contribute
 ==========
 
@@ -35,7 +37,7 @@ us to manage them.
     as they should not be publically visible. To see how we deal with security
     vulnerabilities read our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
 
-    See the :ref:`Security vulnerabilities` section when you want to release a
+    See the :ref:`security-vulnerabilities` section when you want to release a
     security patch yourself.
 
 We distibute the open issues in sprints and hotfixes.
@@ -56,6 +58,8 @@ If you would like to fix an existing bug or create a new feature, check
 :ref:`submit-patch` for more details on e.g. how to set up a local development
 environment and how the release process works. We prefer that
 you let us know you what are working on so we prevent duplicate work.
+
+.. _security-vulnerabilities:
 
 Security vulnerabilities
 ------------------------
@@ -86,10 +90,10 @@ advisory for you.
        the patch is released.
    * - Severity
      - Determine severity score using `this <https://nvd.nist.gov/vuln-metrics/
-       cvss/v3-calculator>`_ tool. Then use table :numref:`severity` to
+       cvss/v3-calculator>`__ tool. Then use table :numref:`severity` to
        determine the level from this score.
    * - Common weakness enumerator (CWE)
-     - Find the CWE (or multiple) on `this <https://cwe.mitre.org/>`_ website.
+     - Find the CWE (or multiple) on `this <https://cwe.mitre.org/>`__ website.
 
 .. list-table:: Severity
    :name: severity

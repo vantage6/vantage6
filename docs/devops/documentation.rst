@@ -36,6 +36,7 @@ documentation text or the docstrings, the documentation pages will also be
 reloaded.
 
 .. TODO review part below
+
 This documentation is automatically built and published on a commit (on
 certain branches, including ``main``). Both Frank and Bart have access to the
 vantage6 project when logged into readthedocs. Here they can manage which

@@ -17,8 +17,8 @@ as much).
    -  Ubuntu 18.04+
    -  MacOS Big Sur+ (only for node)
    -  Windows 10+ (only for node)
--  :ref:`python`
--  :ref:`docker`
+-  Python
+-  Docker
 
 .. note::
     For the server, Ubuntu is highly recommended. It is possible to run a

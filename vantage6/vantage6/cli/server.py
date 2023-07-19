@@ -426,7 +426,7 @@ def cli_server_new(name: str, system_folders: bool) -> None:
 #
 # TODO this method has a lot of duplicated code from `start`
 @cli_server.command(name='import')
-@click.argument('file_', type=click.Path(exists=True))
+@click.argument('file', type=click.Path(exists=True))
 @click.option('--drop-all', is_flag=True, default=False)
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--mount-src', default='',
@@ -434,7 +434,7 @@ def cli_server_new(name: str, system_folders: bool) -> None:
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click_insert_context
-def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
+def cli_server_import(ctx: ServerContext, file: str, drop_all: bool,
                       image: str, mount_src: str, keep: bool) -> None:
     """
     Batch import organizations/collaborations/users and tasks.
@@ -443,7 +443,7 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
     ----------
     ctx : ServerContext
         Server context object
-    file_ : str
+    file : str
         Yaml file containing the vantage6 formatted data to import
     drop_all : bool
         Wether to drop all data before importing
@@ -486,7 +486,7 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
             "/mnt/config.yaml", str(ctx.config_file), type="bind"
         ),
         docker.types.Mount(
-            "/mnt/import.yaml", str(file_), type="bind"
+            "/mnt/import.yaml", str(file), type="bind"
         )
     ]
 
