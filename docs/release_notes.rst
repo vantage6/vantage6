@@ -1,6 +1,108 @@
 Release notes
 =============
 
+4.0.0
+-----
+
+*27 July 2023*
+
+- **Security**
+
+.. TODO complete this section
+.. - collab delete linked resources
+.. - pickles
+.. - resource name int
+.. - access in /collaboration/tasks
+.. - e.g.
+..  - Refresh tokens are no longer indefinitely valid (
+..    `CVE#CVE-2023-23929 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-23929>`_,
+..    `commit <https://github.com/vantage6/vantage6/commit/48ebfca42359e9a6743e9598684585e2522cdce8>`_).
+
+todo
+decorators
+vserver-local remove
+
+- **Feature**
+
+ - A complete permission scope has been added at the collaboration level,
+   allowing projects to assign one user to manage everything within that
+   collaboration level without requiring global access
+   (`Issue#245 <https://github.com/vantage6/vantage6/issues/245>`_,
+   `PR#711 <https://github.com/vantage6/vantage6/pull/711>`_).
+ - Enforce pagination in the API to improve performance, and add a `sort`
+   parameter for GET requests which yield multiple resources
+   (`Issue#392 <https://github.com/vantage6/vantage6/issues/392>`_,
+   `PR#611 <https://github.com/vantage6/vantage6/pull/611>`_).
+ - Share a node's database labels and types with the central server, so that the
+   server can validate that these match between nodes and offer them as
+   suggestions to the user when creating tasks
+   (`Issue#750 <https://github.com/vantage6/vantage6/issues/750>`_,
+   `PR#751 <https://github.com/vantage6/vantage6/pull/751>`_).
+ - ``vnode new`` now automatically retrieves information on e.g. whether the
+   collaboration is encrypted, so that the user doesn't have to specify this
+   information themselves
+   (`Issue#434 <https://github.com/vantage6/vantage6/issues/434>`_,
+   `PR#739 <https://github.com/vantage6/vantage6/pull/739>`_).
+ - Allow only unique names for organizations, collaborations, and nodes
+   (`Issue#242 <https://github.com/vantage6/vantage6/issues/242>`_,
+   `PR#515 <https://github.com/vantage6/vantage6/pull/515>`_).
+ - New function ``client.task.wait_for_completion()`` for the `AlgorithmClient`
+   to allow waiting for subtasks to complete
+   (`Issue#651 <https://github.com/vantage6/vantage6/issues/651>`_,
+   `PR#727 <https://github.com/vantage6/vantage6/pull/727>`_).
+ - Improved validation of the input for all POST and PATCH requests using
+   marshmallow schemas (`Issue#76 <https://github.com/vantage6/vantage6/issues/76>`_,
+   `PR#744 <https://github.com/vantage6/vantage6/pull/744>`_).
+ - Added option ``user_created`` to filter tasks that have been directly
+   created by a user and are thus not subtasks
+   (`Issue#583 <https://github.com/vantage6/vantage6/issues/583>`_,
+   `PR#599 <https://github.com/vantage6/vantage6/pull/599>`_).
+
+- **Change**
+
+ - Changed the API response structure: no longer returning as many linked
+   resources for performance reasons
+   (`Issue#49 <https://github.com/vantage6/vantage6/issues/49>`_,
+   `PR#709 <https://github.com/vantage6/vantage6/pull/709>`_)
+ - The ``result`` endpoint has been renamed to ``run`` as this was a misnomer
+   that concerns algorithm runs
+   (`Issue#436 <https://github.com/vantage6/vantage6/issues/436>`_,
+   `PR#527 <https://github.com/vantage6/vantage6/pull/527>`_),
+   `PR#620 <https://github.com/vantage6/vantage6/pull/620>`_).
+ - Split the `vantage6-client` package: the Python user client is kept in this
+   package, and a new `vantage6-algorithm-tools` PyPI package is created for the
+   tools that help algorithm developers. These tools were part of the client
+   package, but moving them reduces the sizes of both packages
+   (`Issue#662 <https://github.com/vantage6/vantage6/issues/662>`_,
+   `PR#763 <https://github.com/vantage6/vantage6/pull/763>`_)
+ - Removed environments `test`, `dev`, `prod`, `acc` and `application` from
+   vantage6 servers and nodes as these were used little
+   (`Issue#260 <https://github.com/vantage6/vantage6/issues/260>`_,
+   `PR#643 <https://github.com/vantage6/vantage6/pull/643>`_)
+ - Harmonized the interfaces between the `AlgorithmClient` and the `MockClient`
+   (`Issue#669 <https://github.com/vantage6/vantage6/issues/669>`_,
+   `PR#722 <https://github.com/vantage6/vantage6/pull/722>`_)
+ - When users request resources where they are not allowed to see everything,
+   they now get an unauthorized error instead of an incomplete or empty response
+   (`Issue#635 <https://github.com/vantage6/vantage6/issues/635>`_,
+   `PR#711 <https://github.com/vantage6/vantage6/pull/711>`_).
+ - Node checks the server's version and by default, it pulls a matching image
+   instead of the latest image of it's major version
+   (`Issue#700 <https://github.com/vantage6/vantage6/issues/700>`_,
+   `PR#706 <https://github.com/vantage6/vantage6/pull/706>`_).
+ - Backwards compatibility code that was present to make different v3.x versions
+   compatible has been removed. Additionally, small improvements have been made
+   that were not possible to do without breaking compatibility
+   (`Issue#454 <https://github.com/vantage6/vantage6/issues/454>`_,
+   `PR#740 <https://github.com/vantage6/vantage6/pull/740>`_,
+   `PR#758 <https://github.com/vantage6/vantage6/pull/758>`_).
+..    # TODO check what the above entails
+
+- **Bugfix**
+
+ - Remove wrong dot in the version for prereleases  (
+   `PR#764 <https://github.com/vantage6/vantage6/pull/764>`_).
+
 3.10.4
 -----
 
@@ -59,7 +161,7 @@ Release notes
    new mock client now contains all the same functions as the regular client
    with the same signatures, and it returns the same data fields as those
    functions. Also, you may submit all supported data formats instead of just
-   CSV files, and you may also submit pandas Dataframes directly.
+   CSV files, and you may also submit pandas Dataframes directly
    (`Issue#683 <https://github.com/vantage6/vantage6/issues/683>`_,
    `PR#702 <https://github.com/vantage6/vantage6/pull/702>`_).
 
