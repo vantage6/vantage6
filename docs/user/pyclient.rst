@@ -368,24 +368,24 @@ i.e. this collaboration consists of the organizations ``example_org1``
 
 .. _pyclient-create-task:
 
-**Creating a task that runs the master algorithm**
+**Creating a task that runs the central algorithm**
 
-Now, we have two options: create a task that will run the master
+Now, we have two options: create a task that will run the central part of an
 algorithm (which runs on one node and may spawns subtasks on other nodes),
-or create a task that will (only) run the so-called Remote Procedure Call (RPC)
-methods (which are run
-on each node). Typically, the RPC methods only run the node local analysis
-(e.g. compute the averages per node), whereas the master algorithms
-performs aggregation of those results as well (e.g. starts the node
-local analyses and then also computes the overall average). First, let
-us create a task that runs the master algorithm of the
-``harbor2.vantage6.ai/demo/average`` container
+or create a task that will (only) run the partial methods (which are run
+on each node). Typically, the partial methods only run the node local analysis
+(e.g. compute the averages per node), whereas the central methods
+performs aggregation of those results as well (e.g. starts the partial 
+analyses and then computes the overall average). First, let
+us create a task that runs the central part of the
+``harbor2.vantage6.ai/demo/average`` algorithm:
 
 .. code:: python
 
-   input_ = {'method': 'master',
-             'kwargs': {'column_name': 'age'},
-             'master': True}
+   input_ = {
+       'method': 'central_average',
+       'kwargs': {'column_name': 'age'}
+   }
 
    average_task = client.task.create(collaboration=1,
                                      organizations=[2,3],
@@ -408,18 +408,19 @@ called ``my_other_database`` instead of the ``default`` database, we
 could have specified an additional ``database = 'my_other_database'``
 argument. Check ``help(client.task.create)`` for more information.
 
-**Creating a task that runs the RPC algorithm**
+**Creating a task that runs the partial algorithm**
 
-You might be interested to know output of the RPC algorithm (in this
+You might be interested to know output of the partial algorithm (in this
 example: the averages for the 'age' column for each node). In that case,
-you can run only the RPC algorithm, omitting the aggregation that the
-master algorithm will normally do:
+you can run only the partial algorithm, omitting the aggregation that the
+central part of the algorithm will normally do:
 
 .. code:: python
 
-   input_ = {'method': 'average_partial',
-             'kwargs': {'column_name': 'age'},
-             'master': False}
+   input_ = {
+       'method': 'partial_average',
+       'kwargs': {'column_name': 'age'},
+   }
 
    average_task = client.task.create(collaboration=1,
                                      organizations=[2,3],

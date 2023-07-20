@@ -169,9 +169,7 @@ class MockAlgorithmClient:
             input_ : dict
                 The input data that is passed to the algorithm. This should at
                 least  contain the key 'method' which is the name of the method
-                that should be called. Another often used key is 'master' which
-                indicates that this container is a master container. Other keys
-                depend on the algorithm.
+                that should be called. Other keys depend on the algorithm.
             organizations : list[int]
                 A list of organization ids that should run the algorithm.
             name : str, optional

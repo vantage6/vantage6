@@ -620,7 +620,7 @@ class Tasks(TaskBase):
         else:
             log.debug(f" created by container on node_id="
                       f"{g.container['node_id']}"
-                      f" for (master) task_id={g.container['task_id']}")
+                      f" for (parent) task_id={g.container['task_id']}")
 
         log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
         log.debug(f" name: '{task.name}'")
@@ -641,7 +641,7 @@ class Tasks(TaskBase):
             log.warning(f"  container image: {container['image']}")
             return False
 
-        # check master task is not completed yet
+        # check that parent task is not completed yet
         if has_task_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 f"Container from node={container['node_id']} "

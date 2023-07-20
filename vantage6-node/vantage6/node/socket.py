@@ -56,7 +56,8 @@ class NodeTaskNamespace(ClientNamespace):
 
         else:
             self.log.critical(
-                'Task Master Node reference not set is socket namespace'
+                'Node reference is not set in socket namespace; cannot create '
+                'new task!'
             )
 
     def on_algorithm_status_change(self, data):

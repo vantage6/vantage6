@@ -123,7 +123,7 @@ def cli_server() -> None:
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click.option('--mount-src', default='',
-              help="mount vantage6-master package source")
+              help="Mount the main vantage6 package source")
 @click.option('--attach/--detach', default=False,
               help="Attach server logs to the console after start")
 @click_insert_context
@@ -430,7 +430,7 @@ def cli_server_new(name: str, system_folders: bool) -> None:
 @click.option('--drop-all', is_flag=True, default=False)
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--mount-src', default='',
-              help="mount vantage6-master package source")
+              help="Mount the main vantage6 package source")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing")
 @click_insert_context
