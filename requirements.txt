@@ -45,7 +45,7 @@ prompt-toolkit==3.0.36
 pure-eval==0.2.2
 pycparser==2.21
 pyfiglet==0.8.post1
-Pygments==2.14.0
+Pygments==2.15.0
 PyJWT==2.6.0
 pyotp==2.8.0
 pyparsing==3.0.9
