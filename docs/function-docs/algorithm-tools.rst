@@ -4,10 +4,10 @@ Algorithm client and tools
 Algorithm Client
 ----------------
 
-vantage6.algorithm.client.algorithm_client
+vantage6.algorithm.client
 +++++++++++++++++++++++++++++++++
 
-.. automodule:: vantage6.algorithm.client.algorithm_client
+.. automodule:: vantage6.algorithm.client.__init__
    :members:
    :show-inheritance:
 
