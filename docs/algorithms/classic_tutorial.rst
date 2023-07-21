@@ -237,7 +237,7 @@ requires.
        long_description_content_type='text/markdown',
        url='https://github.com/IKNL/v6-average-py',
        packages=find_packages(),
-       python_requires='>=3.6',
+       python_requires='>=3.10',
        install_requires=[
            'vantage6-client',
            # list your dependencies here:
