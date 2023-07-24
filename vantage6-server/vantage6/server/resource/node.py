@@ -351,7 +351,7 @@ class Nodes(NodeBase):
                         HTTPStatus.BAD_REQUEST
 
         # verify that this node does not already exist
-        if db.Node.exists(organization.id, collaboration.id):
+        if db.Node.exists_by_id(organization.id, collaboration.id):
             return {'msg': f'Organization id={organization.id} already has a '
                     f'node for collaboration id={collaboration.id}'}, \
                         HTTPStatus.BAD_REQUEST
@@ -361,7 +361,7 @@ class Nodes(NodeBase):
             f"{organization.name} - {collaboration.name} Node"
         if db.Node.exists("name", name):
             return {
-                "msg": f"Node name '{name}' already exists!"
+                "msg": f"Node with name '{name}' already exists!"
             }, HTTPStatus.BAD_REQUEST
 
         # Ok we're good to go!
@@ -615,7 +615,8 @@ class Node(NodeBase):
         # validate that node does not already exist when we change either
         # the organization and/or collaboration
         if updated_org or updated_col:
-            if db.Node.exists(node.organization.id, node.collaboration.id):
+            if db.Node.exists_by_id(node.organization.id,
+                                    node.collaboration.id):
                 return {'msg': 'A node with organization id='
                         f'{node.organization.id} and collaboration id='
                         f'{node.collaboration.id} already exists!'}, \
