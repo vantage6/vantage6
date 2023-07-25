@@ -2,6 +2,12 @@
 
 $toolbar_height: 80px;
 
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 mat-toolbar {
   background: v.$white;
   color: v.$vtg-blue;
@@ -32,18 +38,18 @@ mat-sidenav {
 }
 
 .content {
-  min-height: calc(100vh - 88px);
+  height: calc(100% - 6px);
   background-color: v.$vtg-blue-opac03;
   border-radius: 10px 0 0 10px;
-  margin: 6px;
+  margin: 6px 6px 0 6px;
   margin-left: 32px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+  overflow-y: auto;
 }
 
 mat-sidenav-container {
-  height: calc(100vh - 65px);
+  flex-grow: 1;
   background-color: v.$white;
+  padding-bottom: 16px;
 }
 
 .btn-primary {
