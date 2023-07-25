@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
+import { arrayContainsObjWithId } from 'src/app/shared/utils';
 
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { Rule } from 'src/app/interfaces/rule';
