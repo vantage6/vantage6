@@ -597,7 +597,7 @@ class Node(NodeBase):
             node.organization = organization
 
         auth = self.obtain_auth()
-        col_id = int(data.get('collaboration_id'))
+        col_id = data.get('collaboration_id')
         updated_col = col_id and col_id != node.collaboration.id
         if updated_col:
             collaboration = db.Collaboration.get(col_id)
