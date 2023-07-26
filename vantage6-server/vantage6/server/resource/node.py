@@ -216,12 +216,13 @@ class Nodes(NodeBase):
             q = q.filter(db.Node.organization_id == args['organization_id'])
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, int(args['collaboration_id'])):
+            collaboration_id = int(args['collaboration_id'])
+            if not self.r.can_for_col(P.VIEW, collaboration_id):
                 return {
                     'msg': 'You lack the permission view nodes from the '
-                    f'collaboration with id {args["collaboration_id"]}!'
+                    f'collaboration with id {collaboration_id}!'
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Node.collaboration_id == args['collaboration_id'])
+            q = q.filter(db.Node.collaboration_id == collaboration_id)
 
         for param in ['status', 'ip']:
             if param in args:
@@ -596,13 +597,13 @@ class Node(NodeBase):
             node.organization = organization
 
         auth = self.obtain_auth()
-        col_id = data.get('collaboration_id')
+        col_id = int(data.get('collaboration_id'))
         updated_col = col_id and col_id != node.collaboration.id
         if updated_col:
-            collaboration = db.Collaboration.get(data['collaboration_id'])
+            collaboration = db.Collaboration.get(col_id)
             if not collaboration:
-                return {'msg': f'collaboration id={data["collaboration_id"]}'
-                        'not found!'}, HTTPStatus.NOT_FOUND
+                return {'msg': f'collaboration id={col_id} not found!'}, \
+                    HTTPStatus.NOT_FOUND
 
             if not self.r.e_glo.can():
                 if auth.organization not in collaboration.organizations:
