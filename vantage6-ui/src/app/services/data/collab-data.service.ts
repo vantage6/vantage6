@@ -11,7 +11,7 @@ import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 import { arrayContains, deepcopy } from 'src/app/shared/utils';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { OpsType, ResType } from 'src/app/shared/enum';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
 import {
   Pagination,
@@ -66,18 +66,26 @@ export class CollabDataService extends BaseDataService {
     if (include_links) {
       let collab_val = collab.value;
       // request the organizations for the current collaboration
-      (await this.orgDataService.list_with_params(
-        allPages(),
-        { collaboration_id: collab_val.id }
-      )).subscribe((orgs) => {
-        collab_val.organizations = orgs;
-      });
-      // request the nodes for the current collaboration
-      (await this.nodeDataService.list_with_params(allPages(), {
-        collaboration_id: collab_val.id,
-      })).subscribe((nodes) => {
-        this.addNodesToCollaboration(collab_val, nodes);
-      });
+      if (this.userPermission.hasMininimalPermission(
+        OpsType.VIEW, ResType.ORGANIZATION, ScopeType.COLLABORATION)
+      ){
+        (await this.orgDataService.list_with_params(
+          allPages(),
+          { collaboration_id: collab_val.id }
+        )).subscribe((orgs) => {
+          collab_val.organizations = orgs;
+        });
+      }
+      if (this.userPermission.hasMininimalPermission(
+        OpsType.VIEW, ResType.NODE, ScopeType.COLLABORATION)
+      ){
+        // request the nodes for the current collaboration
+        (await this.nodeDataService.list_with_params(allPages(), {
+          collaboration_id: collab_val.id,
+        })).subscribe((nodes) => {
+          this.addNodesToCollaboration(collab_val, nodes);
+        });
+      }
     }
     return collab.asObservable() as Observable<Collaboration>;
   }

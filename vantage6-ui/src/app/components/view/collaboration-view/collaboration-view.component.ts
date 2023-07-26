@@ -22,7 +22,7 @@ import { ConvertJsonService } from 'src/app/services/common/convert-json.service
 import { ModalService } from 'src/app/services/common/modal.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { OpsType, ResType } from 'src/app/shared/enum';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { getIdsFromArray, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../base-view/base-view.component';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
@@ -86,17 +86,21 @@ export class CollaborationViewComponent
   }
 
   private async setNodes() {
-    (await this.nodeDataService.list_with_params(
-      allPages(), {collaboration_id: this.collaboration.id}
-    )).subscribe((nodes) => {
-      for (let node of nodes){
-        for (let org of this.collaboration.organizations){
-          if (node.organization_id === org.id){
-            org.node = node;
+    if (this.userPermission.hasMininimalPermission(
+      OpsType.VIEW, ResType.NODE, ScopeType.COLLABORATION)
+    ){
+      (await this.nodeDataService.list_with_params(
+        allPages(), {collaboration_id: this.collaboration.id}
+      )).subscribe((nodes) => {
+        for (let node of nodes){
+          for (let org of this.collaboration.organizations){
+            if (node.organization_id === org.id){
+              org.node = node;
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   async setTasks(): Promise<void> {
