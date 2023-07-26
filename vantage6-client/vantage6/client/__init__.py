@@ -20,7 +20,7 @@ from pathlib import Path
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor
 from vantage6.common import WhoAmI
-from vantage6.common import serialization
+from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
@@ -1291,7 +1291,7 @@ class UserClient(ClientBase):
                 databases = [databases]
 
             # Data will be serialized in JSON.
-            serialized_input = serialization.serialize(input_)
+            serialized_input = serialize(input_)
 
             # Encrypt the input per organization using that organization's
             # public key.
