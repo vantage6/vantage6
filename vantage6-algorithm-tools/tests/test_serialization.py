@@ -1,6 +1,6 @@
 from pytest import mark
 
-from vantage6.tools import serialization
+from vantage6.common import serialization
 import pandas as pd
 
 

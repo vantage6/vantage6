@@ -22,7 +22,7 @@ import pandas
 from abc import ABC, abstractmethod
 from SPARQLWrapper import SPARQLWrapper, CSV
 
-from vantage6.tools.util import info, error
+from vantage6.algorithm.tools.util import info, error
 
 _SPARQL_RETURN_FORMAT = CSV
 

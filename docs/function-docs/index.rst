@@ -16,4 +16,5 @@ below represents a distinct PyPi package.
    server
    cli
    client
+   algorithm-tools
    common
