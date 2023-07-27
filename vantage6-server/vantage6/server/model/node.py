@@ -127,7 +127,7 @@ class Node(Authenticatable):
         return result
 
     @classmethod
-    def exists(cls, organization_id: int, collaboration_id: int) -> bool:
+    def exists_by_id(cls, organization_id: int, collaboration_id: int) -> bool:
         """
         Check if a node exists for the given organization and collaboration.
 
