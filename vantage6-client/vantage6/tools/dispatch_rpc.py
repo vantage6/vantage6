@@ -1,8 +1,8 @@
 import os
 import importlib
 import jwt
+import traceback
 
-from types import ModuleType
 from typing import Any
 
 from vantage6.client import ContainerClient
@@ -10,8 +10,8 @@ from vantage6.client.algorithm_client import AlgorithmClient
 from vantage6.tools.util import info, warn, error
 
 
-def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
-                 use_new_client: bool = False) -> Any:
+def dispatch_rpc(data: Any, input_data: dict, module: str, token: str,
+                 use_new_client: bool = False, log_traceback=False) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
@@ -24,13 +24,18 @@ def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
         contain the key 'method' which is the name of the method that should be
         called. Another often used key is 'master' which indicates that this
         container is a master container. Other keys depend on the algorithm.
-    module : ModuleType
-        The module that contains the algorithm.
+    module : str
+        The name of the module that contains the algorithm.
     token : str
         The JWT token that is used to authenticate from the algorithm container
         to the server.
     use_new_client : bool, optional
         Whether to use the new client or the old client, by default False
+    log_traceback: bool, optional
+        Whether to print the full error message from algorithms or not, by
+        default False. Algorithm developers should only use this option if
+        they are sure that the error message does not contain any sensitive
+        information. By default False.
 
     Returns
     -------
@@ -97,7 +102,9 @@ def dispatch_rpc(data: Any, input_data: dict, module: ModuleType, token: str,
         result = method(client, data, *args, **kwargs) if master else \
                  method(data, *args, **kwargs)
     except Exception as e:
-        warn(f"Error encountered while calling {method_name}: {e}")
+        error(f"Error encountered while calling {method_name}: {e}")
+        if log_traceback:
+            error(traceback.print_exc())
         exit(1)
 
     return result

@@ -14,6 +14,10 @@ application:
   # subnet of the VPN server
   vpn_subnet: 10.76.0.0/16
 
+  # set the devices the algorithm container is allowed to request.
+  algorithm_device_requests:
+    gpu: false
+
   # add additional environment variables to the algorithm containers.
   # this could be usefull for passwords or other things that algorithms
   # need to know about the node it is running on
@@ -32,6 +36,8 @@ application:
     alpine: harbor2.vantage6.ai/infrastructure/alpine
     vpn_client: harbor2.vantage6.ai/infrastructure/vpn_client
     network_config: harbor2.vantage6.ai/infrastructure/vpn_network
+    ssh_tunnel: harbor2.vantage6.ai/infrastructure/ssh_tunnel
+    squid: harbor2.vantage6.ai/infrastructure/squid
 
   # path or endpoint to the local data source. The client can request a
   # certain database by using its label. The type is used by the
@@ -127,14 +133,24 @@ application:
             ip: 127.0.0.1
             port: 8000
 
+  # Whitelist URLs and/or IP addresses that the algorithm containers are
+  # allowed to reach using the http protocol.
+  whitelist:
+    domains:
+      - google.com
+      - github.com
+      - host.docker.internal # docker host ip (windows/mac)
+    ips:
+      - 172.17.0.1 # docker bridge ip (linux)
+      - 8.8.8.8
+    ports:
+      - 443
+
   # Settings for the logger
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
     level:        DEBUG
-
-    # Filename of the log-file, used by RotatingFileHandler
-    file:         my_node.log
 
     # whenever the output needs to be shown in the console
     use_console:  true
@@ -145,9 +161,34 @@ application:
     # Size kb of a single log file, used by RotatingFileHandler
     max_size:     1024
 
-    # format: input for logging.Formatter,
+    # Format: input for logging.Formatter,
     format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
     datefmt:      "%Y-%m-%d %H:%M:%S"
+
+    # (optional) set the individual log levels per logger name, for example
+    # mute some loggers that are too verbose.
+    loggers:
+      - name: urllib
+        level: warning
+      - name: requests
+        level: warning
+      - name: engineio.client
+        level: warning
+      - name: docker.utils.config
+        level: warning
+      - name: docker.auth
+        level: warning
+
+  # Additional debug flags
+  debug:
+
+    # Set to `true` to enable the Flask/socketio into debug mode.
+    socketio: false
+
+    # Set to `true` to set the Flask app used for the LOCAL proxy service
+    # into debug mode
+    proxy_server: false
+
 
   # directory where local task files (input/output) are stored
   task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\mydir

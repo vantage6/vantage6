@@ -1,7 +1,8 @@
-from typing import Any, Type
+from __future__ import annotations
 import yaml
 import collections
 
+from typing import Any, Type
 from pathlib import Path
 from schema import Schema
 
@@ -83,6 +84,7 @@ class ConfigurationManager(object):
     A configuration file contains at top level an `application` and/or
     `environments` key. The `environments` key can contain up to four
     keys: `dev`, `test`, `acc`, `prod`. e.g.:
+
     application:
         ...
     environments:
@@ -273,7 +275,7 @@ class ConfigurationManager(object):
     @classmethod
     def from_file(
         cls, path: Path | str, conf_class: Type[Configuration] = Configuration
-    ) -> 'ConfigurationManager':
+    ) -> ConfigurationManager:
         """
         Load a configuration from a file.
 

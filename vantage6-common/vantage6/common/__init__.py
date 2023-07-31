@@ -122,7 +122,7 @@ def base64s_to_bytes(bytes_string: str) -> bytes:
 #
 # CLI prints
 #
-def echo(msg: str, level="info") -> None:
+def echo(msg: str, level: str = "info") -> None:
     """
     Print a message to the CLI.
 
@@ -336,8 +336,8 @@ def get_database_config(databases: list, label: str) -> dict | None:
         }
     ]
 
-    The old format should be removed in version 4+.
     """
+    # FIXME The old format should be removed in v4+.
     old_format = isinstance(databases, dict)
     if old_format:
         return {

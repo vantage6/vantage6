@@ -47,19 +47,21 @@ from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
+from vantage6.common.log import get_file_logger
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_RETRY_CONNECT_NODE, TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET
 )
-from vantage6.node.server_io import NodeClient
+from vantage6.node.node_client import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.docker.ssh_tunnel import SSHTunnel
+from vantage6.node.docker.squid import Squid
 
 
 class VPNConnectMode(Enum):
@@ -69,7 +71,7 @@ class VPNConnectMode(Enum):
 
 
 # ------------------------------------------------------------------------------
-class Node(object):
+class Node:
     """
     Authenticates to the central server, setup encryption, a
     websocket connection, retrieving task that were posted while
@@ -101,17 +103,18 @@ class Node(object):
         check_docker_running()
 
         self.config = self.ctx.config
+        self.debug: dict = self.config.get('debug', {})
         self.queue = queue.Queue()
         self._using_encryption = None
 
         # initialize Node connection to the server
-        self.server_io = NodeClient(
+        self.client = NodeClient(
             host=self.config.get('server_url'),
             port=self.config.get('port'),
             path=self.config.get('api_path')
         )
 
-        self.log.info(f"Connecting server: {self.server_io.base_path}")
+        self.log.info(f"Connecting server: {self.client.base_path}")
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
@@ -126,10 +129,6 @@ class Node(object):
         self.log.info("Setting up proxy server")
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
-
-        # Create a long-lasting websocket connection.
-        self.log.debug("Creating websocket connection with the server")
-        self.connect_to_socket()
 
         # setup docker isolated network manager
         internal_ = running_in_docker()
@@ -151,6 +150,9 @@ class Node(object):
         # Create SSH tunnel according to the node configuration
         self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
 
+        # Create Squid proxy server
+        self.squid = self.setup_squid_proxy(isolated_network_mgr)
+
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
         self.__docker = DockerManager(
@@ -158,8 +160,13 @@ class Node(object):
             isolated_network_mgr=isolated_network_mgr,
             vpn_manager=self.vpn_manager,
             tasks_dir=self.__tasks_dir,
-            client=self.server_io,
+            client=self.client,
+            proxy=self.squid
         )
+
+        # Create a long-lasting websocket connection.
+        self.log.debug("Creating websocket connection with the server")
+        self.connect_to_socket()
 
         # Connect the node to the isolated algorithm network *only* if we're
         # running in a docker container.
@@ -211,15 +218,25 @@ class Node(object):
         proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
 
         # 'app' is defined in vantage6.node.proxy_server
-        # app.debug = True
-        proxy_server.app.config["SERVER_IO"] = self.server_io
-        proxy_server.server_url = self.server_io.base_path
+        debug_mode = self.debug.get("proxy_server", False)
+        if debug_mode:
+            self.log.debug("Debug mode enabled for proxy server")
+            proxy_server.app.debug = True
+        proxy_server.app.config["SERVER_IO"] = self.client
+        proxy_server.server_url = self.client.base_path
+
+        # set up proxy server logging
+        log_level = getattr(logging, self.config["logging"]["level"].upper())
+        self.proxy_log = get_file_logger(
+            'proxy_server', self.ctx.proxy_log_file, log_level_file=log_level
+        )
 
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
             self.log.info(
                 f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
-            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app)
+            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app,
+                                     log=self.proxy_log)
 
             try:
                 http_server.serve_forever()
@@ -243,15 +260,58 @@ class Node(object):
 
     def sync_task_queue_with_server(self) -> None:
         """ Get all unprocessed tasks from the server for this node."""
-        assert self.server_io.cryptor, "Encrpytion has not been setup"
+        assert self.client.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        tasks = self.server_io.get_results(state="open", include_task=True)
-        self.log.debug(tasks)
-        for task in tasks:
-            self.queue.put(task)
+        task_results = self.client.get_results(state="open", include_task=True)
+        self.log.debug(task_results)
 
-        self.log.info(f"received {self.queue._qsize()} tasks")
+        # add the tasks to the queue
+        self.__add_tasks_to_queue(task_results)
+        self.log.info(f"Received {self.queue._qsize()} tasks")
+
+    def get_task_and_add_to_queue(self, task_id: int) -> None:
+        """
+        Fetches (open) task with task_id from the server. The `task_id` is
+        delivered by the websocket-connection.
+
+        Parameters
+        ----------
+        task_id : int
+            Task identifier
+        """
+        # fetch (open) result for the node with the task_id
+        task_results = self.client.get_results(
+            include_task=True,
+            state='open',
+            task_id=task_id
+        )
+
+        # add the tasks to the queue
+        self.__add_tasks_to_queue(task_results)
+
+    def __add_tasks_to_queue(self, task_results: list[dict]) -> None:
+        """
+        Add a task to the queue.
+
+        Parameters
+        ----------
+        taskresult : list[dict]
+            A list of dictionaries with information required to run the
+            algorithm
+        """
+        for task_result in task_results:
+            try:
+                if not self.__docker.is_running(task_result['id']):
+                    self.queue.put(task_result)
+                else:
+                    self.log.info(
+                        f"Not starting task {task_result['task']['id']} - "
+                        f"{task_result['task']['name']} as it is already "
+                        "running"
+                    )
+            except Exception:
+                self.log.exception("Error while syncing task queue")
 
     def __start_task(self, taskresult: dict) -> None:
         """
@@ -267,9 +327,9 @@ class Node(object):
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.server_io.set_task_start_time(taskresult["id"])
+        self.client.set_task_start_time(taskresult["id"])
 
-        token = self.server_io.request_token_for_container(
+        token = self.client.request_token_for_container(
             task["id"],
             task["image"]
         )
@@ -305,19 +365,31 @@ class Node(object):
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
             update['finished_at'] = datetime.datetime.now().isoformat()
-        self.server_io.patch_results(
-            id_=taskresult['id'], result=update
-        )
+        self.client.patch_results(id_=taskresult['id'], result=update)
+
+        # ensure that the /tasks namespace is connected. This may take a while
+        # (usually < 5s) when the socket just (re)connected
+        MAX_ATTEMPTS = 30
+        retries = 0
+        while '/tasks' not in self.socketIO.namespaces and \
+                retries < MAX_ATTEMPTS:
+            retries += 1
+            self.log.debug('Waiting for /tasks namespace to connect...')
+            time.sleep(1)
+        self.log.debug('Connected to /tasks namespace')
+        # in case the namespace is still not connected, the socket notification
+        # will not be sent to other nodes, but the task will still be processed
+
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
             'algorithm_status_change',
             data={
-                'node_id': self.server_io.whoami.id_,
+                'node_id': self.client.whoami.id_,
                 'status': task_status,
                 'result_id': taskresult['id'],
                 'task_id': task['id'],
-                'collaboration_id': self.server_io.collaboration_id,
-                'organization_id': self.server_io.whoami.organization_id,
+                'collaboration_id': self.client.collaboration_id,
+                'organization_id': self.client.whoami.organization_id,
                 'parent_id': get_parent_id(task),
             },
             namespace='/tasks',
@@ -327,21 +399,12 @@ class Node(object):
             # Save port of VPN client container at which it redirects traffic
             # to the algorithm container. First delete any existing port
             # assignments in case algorithm has crashed
-            self.server_io.request(
+            self.client.request(
                 'port', params={'result_id': taskresult['id']}, method="DELETE"
             )
             for port in vpn_ports:
                 port['result_id'] = taskresult['id']
-                self.server_io.request('port', method='POST', json=port)
-
-            # Save IP address of VPN container
-            # FIXME BvB 2023-02-21: node IP is now updated when task is started
-            # but this should be done when VPN connection is established
-            node_id = self.server_io.whoami.id_
-            node_ip = self.vpn_manager.get_vpn_ip()
-            self.server_io.request(
-                f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
-            )
+                self.client.request('port', method='POST', json=port)
 
     def __listening_worker(self) -> None:
         """
@@ -383,13 +446,13 @@ class Node(object):
                 self.socketIO.emit(
                     'algorithm_status_change',
                     data={
-                        'node_id': self.server_io.whoami.id_,
+                        'node_id': self.client.whoami.id_,
                         'status': results.status,
                         'result_id': results.result_id,
                         'task_id': results.task_id,
-                        'collaboration_id': self.server_io.collaboration_id,
+                        'collaboration_id': self.client.collaboration_id,
                         'organization_id':
-                            self.server_io.whoami.organization_id,
+                            self.client.whoami.organization_id,
                         'parent_id': results.parent_id,
                     },
                     namespace='/tasks',
@@ -401,7 +464,7 @@ class Node(object):
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
                 # just store the task_id when retrieving the task the first
                 # time?
-                response = self.server_io.request(
+                response = self.client.request(
                     f"result/{results.result_id}"
                 )
                 task_id = response.get("task").get("id")
@@ -413,7 +476,7 @@ class Node(object):
                     )
                     return
 
-                response = self.server_io.request(f"task/{task_id}")
+                response = self.client.request(f"task/{task_id}")
 
                 init_org_id = response.get("initiator")
                 if not init_org_id:
@@ -422,7 +485,7 @@ class Node(object):
                         " not be retrieved!"
                     )
 
-                self.server_io.patch_results(
+                self.client.patch_results(
                     id_=results.result_id,
                     result={
                         'result': results.data,
@@ -439,9 +502,9 @@ class Node(object):
         """ Print error message when node cannot find the server """
         self.log.warning(
             "Could not connect to the server. Retrying in 10 seconds")
-        if self.server_io.host == 'http://localhost' and running_in_docker():
+        if self.client.host == 'http://localhost' and running_in_docker():
             self.log.warn(
-                f"You are trying to reach the server at {self.server_io.host}."
+                f"You are trying to reach the server at {self.client.host}."
                 " As your node is running inside a Docker container, it cannot"
                 " reach localhost on your host system. Probably, you have to "
                 "change your serverl URL to http://host.docker.internal "
@@ -449,7 +512,7 @@ class Node(object):
             )
         else:
             self.log.debug("Are you sure the server can be reached at "
-                           f"{self.server_io.base_path}?")
+                           f"{self.client.base_path}?")
 
     def authenticate(self) -> None:
         """
@@ -465,7 +528,7 @@ class Node(object):
         while i < TIME_LIMIT_RETRY_CONNECT_NODE / SLEEP_BTWN_NODE_LOGIN_TRIES:
             i = i + 1
             try:
-                self.server_io.authenticate(api_key)
+                self.client.authenticate(api_key)
 
             except AuthenticationException as e:
                 msg = "Authentication failed: API key is wrong!"
@@ -488,13 +551,13 @@ class Node(object):
                 break
 
         if success:
-            self.log.info(f"Node name: {self.server_io.name}")
+            self.log.info(f"Node name: {self.client.name}")
         else:
             self.log.critical('Unable to authenticate. Exiting')
             exit(1)
 
         # start thread to keep the connection alive by refreshing the token
-        self.server_io.auto_refresh_token()
+        self.client.auto_refresh_token()
 
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""
@@ -517,7 +580,7 @@ class Node(object):
 
     def setup_encryption(self) -> None:
         """ Setup encryption if the node is part of encrypted collaboration """
-        encrypted_collaboration = self.server_io.is_encrypted_collaboration()
+        encrypted_collaboration = self.client.is_encrypted_collaboration()
         encrypted_node = self.config['encryption']["enabled"]
 
         if encrypted_collaboration != encrypted_node:
@@ -527,11 +590,11 @@ class Node(object):
         if encrypted_collaboration:
             self.log.warn('Enabling encryption!')
             private_key_file = self.private_key_filename()
-            self.server_io.setup_encryption(private_key_file)
+            self.client.setup_encryption(private_key_file)
 
         else:
             self.log.warn('Disabling encryption!')
-            self.server_io.setup_encryption(None)
+            self.client.setup_encryption(None)
 
     def _set_task_dir(self, ctx) -> None:
         """
@@ -573,6 +636,60 @@ class Node(object):
         else:
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
+
+    def setup_squid_proxy(self, isolated_network_mgr: NetworkManager) \
+            -> Squid:
+        """
+        Initiates a Squid proxy if configured in the config.yml
+
+        Expects the configuration in the following format:
+
+        ```yaml
+        whitelist:
+            domains:
+                - domain1
+                - domain2
+            ips:
+                - ip1
+                - ip2
+            ports:
+                - port1
+                - port2
+        ```
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Network manager for isolated network
+
+        Returns
+        -------
+        Squid
+            Squid proxy instance
+        """
+        if 'whitelist' not in self.config:
+            self.log.info("No squid proxy configured")
+            return
+
+        custom_squid_image = self.config.get('images', {}).get('squid') \
+            if 'images' in self.config else None
+
+        self.log.info("Setting up squid proxy")
+        config = self.config['whitelist']
+
+        volume = self.ctx.docker_squid_volume_name if \
+            self.ctx.running_in_docker else self.ctx.data_dir
+
+        try:
+            squid = Squid(isolated_network_mgr, config, self.ctx.name, volume,
+                          custom_squid_image)
+        except Exception as e:
+            self.log.critical("Squid proxy failed to initialize. "
+                              "Continuing without.")
+            self.log.debug(e, exc_info=True)
+            squid = None
+
+        return squid
 
     def setup_ssh_tunnels(self, isolated_network_mgr: NetworkManager) \
             -> list[SSHTunnel]:
@@ -671,6 +788,7 @@ class Node(object):
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name,
+            node_client=self.client,
             vpn_volume_name=vpn_volume_name,
             vpn_subnet=self.config.get('vpn_subnet'),
             alpine_image=custom_alpine or legacy_alpine,
@@ -714,7 +832,7 @@ class Node(object):
             next_mode = VPNConnectMode.REFRESH_KEYPAIR
         elif connect_mode == VPNConnectMode.REFRESH_KEYPAIR:
             self.log.debug("Refreshing VPN keypair...")
-            do_try = self.server_io.refresh_vpn_keypair(ovpn_file=ovpn_file)
+            do_try = self.client.refresh_vpn_keypair(ovpn_file=ovpn_file)
             next_mode = VPNConnectMode.REFRESH_COMPLETE
         elif connect_mode == VPNConnectMode.REFRESH_COMPLETE:
             self.log.debug("Requesting new VPN configuration file...")
@@ -747,7 +865,7 @@ class Node(object):
             Whether or not configuration file was successfully obtained
         """
         # get the ovpn configuration from the server
-        success, ovpn_config = self.server_io.get_vpn_config()
+        success, ovpn_config = self.client.get_vpn_config()
         if not success:
             self.log.warn("Obtaining VPN configuration file not successful!")
             self.log.warn("Disabling node-to-node communication via VPN")
@@ -773,14 +891,18 @@ class Node(object):
         Create long-lasting websocket connection with the server. The
         connection is used to receive status updates, such as new tasks.
         """
-        self.socketIO = SocketIO(request_timeout=60)
+        debug_mode = self.debug.get('socketio', False)
+        if debug_mode:
+            self.log.debug("Debug mode enabled for socketio")
+        self.socketIO = SocketIO(request_timeout=60, logger=debug_mode,
+                                 engineio_logger=debug_mode)
 
         self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
         NodeTaskNamespace.node_worker_ref = self
 
         self.socketIO.connect(
-            url=f'{self.server_io.host}:{self.server_io.port}',
-            headers=self.server_io.headers,
+            url=f'{self.client.host}:{self.client.port}',
+            headers=self.client.headers,
             wait=False
         )
 
@@ -795,8 +917,8 @@ class Node(object):
             time.sleep(1)
             i += 1
 
-        self.log.info(f'Connected to host={self.server_io.host} on port='
-                      f'{self.server_io.port}')
+        self.log.info(f'Connected to host={self.client.host} on port='
+                      f'{self.client.port}')
 
         self.log.debug("Starting thread for to ping the server to notify this"
                        " node is online.")
@@ -807,35 +929,19 @@ class Node(object):
         Send ping messages periodically to the server over the socketIO
         connection to notify the server that this node is online
         """
+        # Wait for the socket to be connected to the namespaces on startup
+        time.sleep(5)
+
         while True:
             try:
-                self.socketIO.emit('ping', namespace='/tasks')
+                if self.socketIO.connected:
+                    self.socketIO.emit('ping', namespace='/tasks')
+                else:
+                    self.log.debug('SocketIO is not connected, skipping ping')
             except Exception:
                 self.log.exception('Ping thread had an exception')
             # Wait before sending next ping
             time.sleep(PING_INTERVAL_SECONDS)
-
-    def get_task_and_add_to_queue(self, task_id: int) -> None:
-        """
-        Fetches (open) task with task_id from the server. The `task_id` is
-        delivered by the websocket-connection.
-
-        Parameters
-        ----------
-        task_id : int
-            Task identifier
-        """
-        # fetch (open) result for the node with the task_id
-        tasks = self.server_io.get_results(
-            include_task=True,
-            state='open',
-            task_id=task_id
-        )
-
-        # in the current setup, only a single result for a single node
-        # in a task exists.
-        for task in tasks:
-            self.queue.put(task)
 
     def run_forever(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
@@ -848,7 +954,7 @@ class Node(object):
 
                 while not kill_listener.kill_now:
                     try:
-                        task = self.queue.get(timeout=1)
+                        taskresult = self.queue.get(timeout=1)
                         # if no item is returned, the Empty exception is
                         # triggered, thus break statement is not reached
                         break
@@ -864,7 +970,7 @@ class Node(object):
 
                 # if task comes available, attempt to execute it
                 try:
-                    self.__start_task(task)
+                    self.__start_task(taskresult)
                 except Exception as e:
                     self.log.exception(e)
 
@@ -889,13 +995,13 @@ class Node(object):
             List of dictionaries with information on killed task (keys:
             result_id, task_id and parent_id)
         """
-        if kill_info['collaboration_id'] != self.server_io.collaboration_id:
+        if kill_info['collaboration_id'] != self.client.collaboration_id:
             self.log.debug(
                 "Not killing tasks as this node is in another collaboration."
             )
             return []
         elif 'node_id' in kill_info and \
-                kill_info['node_id'] != self.server_io.whoami.id_:
+                kill_info['node_id'] != self.client.whoami.id_:
             self.log.debug(
                 "Not killing tasks as instructions to kill tasks were directed"
                 " at another node in this collaboration.")
@@ -904,11 +1010,11 @@ class Node(object):
         # kill specific task if specified, else kill all algorithms
         kill_list = kill_info.get('kill_list')
         killed_algos = self.__docker.kill_tasks(
-            org_id=self.server_io.whoami.organization_id, kill_list=kill_list
+            org_id=self.client.whoami.organization_id, kill_list=kill_list
         )
         # update status of killed tasks
         for killed_algo in killed_algos:
-            self.server_io.patch_results(
+            self.client.patch_results(
                 id_=killed_algo.result_id, result={'status': TaskStatus.KILLED}
             )
         return killed_algos
@@ -973,9 +1079,6 @@ class Node(object):
 # ------------------------------------------------------------------------------
 def run(ctx):
     """ Start the node."""
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("engineio.client").setLevel(logging.WARNING)
 
     # initialize node, connect to the server using websockets
     node = Node(ctx)

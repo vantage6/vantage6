@@ -1,0 +1,33 @@
+# allowed ports
+{% for port in ports %}
+acl allowed_ports port {{ port }}
+{% endfor %}
+
+# allowed domains
+{% for domain in domains %}
+acl whitelist_domain dstdomain {{ domain }}
+{% endfor %}
+
+# allowed ips
+{% for ip in ips %}
+acl whitelist_ip dst {{ ip }}
+{% endfor %}
+
+http_access deny !allowed_ports
+http_access deny CONNECT !allowed_ports
+{% if domains|length > 0 %}
+http_access allow whitelist_domain
+{% endif %}
+{% if ips|length > 0 %}
+http_access allow whitelist_ip
+{% endif %}
+http_access deny all
+
+# port of the squid proxy
+http_port 3128
+
+coredump_dir /var/spool/squid
+
+refresh_pattern -i (/cgi-bin/|\?) 0	0%	0
+refresh_pattern (Release|Packages(.gz)*)$      0       20%     2880
+refresh_pattern .		0	20%	4320

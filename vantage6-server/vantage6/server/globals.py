@@ -11,6 +11,8 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "server" / "_data"
 
+SERVER_MODULE_NAME = APPNAME + "-server"
+
 #
 #   RUNTIME SETTINGS
 #

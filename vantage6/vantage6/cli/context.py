@@ -80,10 +80,18 @@ class ServerContext(AppContext):
         uri = os.environ.get("VANTAGE6_DB_URI") or self.config['uri']
         url = make_url(uri)
 
-        if (url.host is None) and (not os.path.isabs(url.database)):
-            # We're dealing with a relative path here.
-            url.database = str(self.data_dir / url.database)
-            uri = str(url)
+        if url.host is None and not os.path.isabs(url.database):
+            # We're dealing with a relative path here of a local database, when
+            # we're running the server outside of docker. Therefore we need to
+            # prepend the data directory to the database name, but after the
+            # driver name (e.g. sqlite:////db.sqlite ->
+            # sqlite:////data_dir>/db.sqlite)
+
+            # find index of database name
+            idx_db_name = str(url).find(url.database)
+
+            # add the datadir to the right location in the database uri
+            return str(url)[:idx_db_name] + str(self.data_dir / url.database)
 
         return uri
 
@@ -372,12 +380,31 @@ class NodeContext(AppContext):
         Returns
         -------
         str
-            Docker voluem name
+            Docker volume name
         """
         return os.environ.get(
             'SSH_TUNNEL_VOLUME_NAME',
             f"{self.docker_container_name}-ssh-vol"
         )
+
+    @property
+    def docker_squid_volume_name(self) -> str:
+        """
+        Docker volume in which the SSH configuration is stored.
+
+        Returns
+        -------
+        str
+            Docker volume name
+        """
+        return os.environ.get(
+            'SSH_SQUID_VOLUME_NAME',
+            f"{self.docker_container_name}-squid-vol"
+        )
+
+    @property
+    def proxy_log_file(self):
+        return self.log_file_name(type_="proxy_server")
 
     def docker_temporary_volume_name(self, run_id: int) -> str:
         """

@@ -80,7 +80,7 @@ def cli_node_list() -> None:
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     header = \
         "\nName"+(21*" ") + \
@@ -91,8 +91,8 @@ def cli_node_list() -> None:
     click.echo(header)
     click.echo("-"*len(header))
 
-    running = Fore.GREEN + "Online" + Style.RESET_ALL
-    stopped = Fore.RED + "Offline" + Style.RESET_ALL
+    running = Fore.GREEN + "Running" + Style.RESET_ALL
+    stopped = Fore.RED + "Not running" + Style.RESET_ALL
 
     # system folders
     configs, f1 = NodeContext.available_configurations(
@@ -207,7 +207,7 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
     system_folders : bool
         Is this configuration stored in the system or in the user folders.
     """
-    name, environment = select_node(name, environment, system_folders)
+    name, environment = _select_node(name, environment, system_folders)
 
     # create node context
     ctx = NodeContext(name, environment=environment,
@@ -365,6 +365,7 @@ def vnode_start(name: str, config: str, environment: str, system_folders: bool,
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
     ssh_volume = docker_client.volumes.create(ctx.docker_ssh_volume_name)
+    squid_volume = docker_client.volumes.create(ctx.docker_squid_volume_name)
 
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
@@ -374,6 +375,7 @@ def vnode_start(name: str, config: str, environment: str, system_folders: bool,
         ("/mnt/data", data_volume.name),
         ("/mnt/vpn", vpn_volume.name),
         ("/mnt/ssh", ssh_volume.name),
+        ("/mnt/squid", squid_volume.name),
         ("/mnt/config", str(ctx.config_dir)),
         ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
@@ -516,7 +518,7 @@ def vnode_start(name: str, config: str, environment: str, system_folders: bool,
 
     if attach:
         logs = container.attach(stream=True, logs=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -561,7 +563,7 @@ def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     if not running_node_names:
         warning("No nodes are currently running.")
@@ -623,7 +625,7 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     if not running_node_names:
         warning("No nodes are currently running. Cannot show any logs!")
@@ -639,7 +641,7 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
     if name in running_node_names:
         container = client.containers.get(name)
         logs = container.attach(stream=True, logs=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -697,7 +699,7 @@ def cli_node_create_private_key(
         ctx = NodeContext(name, environment, system_folders, config)
     else:
         # retrieve context
-        name, environment = select_node(name, environment, system_folders)
+        name, environment = _select_node(name, environment, system_folders)
 
         # raise error if config could not be found
         if not NodeContext.config_exists(name, environment, system_folders):
@@ -714,7 +716,7 @@ def cli_node_create_private_key(
     # Authenticate with the server to obtain organization name if it wasn't
     # provided
     if organization_name is None:
-        client = create_client_and_authenticate(ctx)
+        client = _create_client_and_authenticate(ctx)
         organization_name = client.whoami.organization_name
 
     # create directory where private key goes if it doesn't exist yet
@@ -774,7 +776,7 @@ def cli_node_create_private_key(
         )
 
         if 'client' not in locals():
-            client = create_client_and_authenticate(ctx)
+            client = _create_client_and_authenticate(ctx)
 
         # TODO what happens if the user doesn't have permission to upload key?
         # Does that lead to an exception or not?
@@ -864,12 +866,13 @@ def vnode_remove(name: str, environment: str, system_folders: bool):
         If True, use system folders, otherwise use user folders
     """
     # select configuration name if none supplied
-    name, environment = select_node(name, environment, system_folders)
+    name, environment = _select_node(name, environment, system_folders)
+
     client = docker.from_env()
     check_if_docker_daemon_is_running(client)
 
     # check if node is still running, otherwise don't allow deleting it
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     post_fix = "system" if system_folders else "user"
     node_container_name = f"{APPNAME}-{name}-{post_fix}"
@@ -903,17 +906,17 @@ def vnode_remove(name: str, environment: str, system_folders: bool):
 
     # remove the VPN configuration file
     vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
-    remove_file(vpn_config_file, 'VPN configuration')
+    _remove_file(vpn_config_file, 'VPN configuration')
 
     # remove the config file
-    remove_file(ctx.config_file, 'configuration')
+    _remove_file(ctx.config_file, 'configuration')
 
     # remove the log file. As this process opens the log file above, the log
     # handlers need to be closed before deleting
     info(f"Removing log file {ctx.log_file}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    remove_file(ctx.log_file, 'log')
+    _remove_file(ctx.log_file, 'log')
 
 
 #
@@ -937,7 +940,7 @@ def cli_node_version(name: str, system_folders: bool) -> None:
     client = docker.from_env()
     check_docker_running()
 
-    running_node_names = find_running_node_names(client)
+    running_node_names = _find_running_node_names(client)
 
     if not name:
         if not running_node_names:
@@ -986,7 +989,7 @@ def cli_node_set_api_key(name: str, api_key: str, environment: str,
         If True, use system folders, otherwise use user folders
     """
     # select name and environment
-    name, environment = select_node(name, environment, system_folders)
+    name, environment = _select_node(name, environment, system_folders)
 
     # Check that we can write in the config folder
     if not check_config_writeable(system_folders):
@@ -1010,7 +1013,7 @@ def cli_node_set_api_key(name: str, api_key: str, environment: str,
 
 
 #  helper functions
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     Print the logs from the logs stream.
 
@@ -1023,7 +1026,7 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def create_client_and_authenticate(ctx: NodeContext) -> Client:
+def _create_client_and_authenticate(ctx: NodeContext) -> Client:
     """
     Generate a client and authenticate with the server.
 
@@ -1058,7 +1061,7 @@ def create_client_and_authenticate(ctx: NodeContext) -> Client:
     return client
 
 
-def select_node(name: str, environment: str, system_folders: bool) \
+def _select_node(name: str, environment: str, system_folders: bool) \
         -> tuple[str, str]:
     """
     Let user select node through questionnaire if name/environment is not
@@ -1083,7 +1086,7 @@ def select_node(name: str, environment: str, system_folders: bool) \
     return name, environment
 
 
-def find_running_node_names(client: docker.DockerClient) -> list[str]:
+def _find_running_node_names(client: docker.DockerClient) -> list[str]:
     """
     Returns a list of names of running nodes.
 
@@ -1100,3 +1103,25 @@ def find_running_node_names(client: docker.DockerClient) -> list[str]:
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
     return [node.name for node in running_nodes]
+
+
+def _remove_file(file: str, file_type: str) -> None:
+    """
+    Remove a file if it exists.
+
+    Parameters
+    ----------
+    file : str
+        absolute path to the file to be deleted
+    file_type : str
+        type of file, used for logging
+    """
+    if os.path.isfile(file):
+        info(f"Removing {file_type} file: {file}")
+        try:
+            os.remove(file)
+        except Exception as e:
+            error(f"Could not delete file: {file}")
+            error(e)
+    else:
+        warning(f"Could not remove {file_type} file: {file} does not exist")

@@ -25,12 +25,14 @@ from vantage6.common.globals import (
     APPNAME,
     STRING_ENCODING,
     DEFAULT_DOCKER_REGISTRY,
-    DEFAULT_SERVER_IMAGE
+    DEFAULT_SERVER_IMAGE,
+    DEFAULT_UI_IMAGE
 )
 from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
-from vantage6.cli.globals import (DEFAULT_SERVER_ENVIRONMENT,
-                                  DEFAULT_SERVER_SYSTEM_FOLDERS)
+from vantage6.cli.globals import (
+    DEFAULT_SERVER_ENVIRONMENT, DEFAULT_SERVER_SYSTEM_FOLDERS, DEFAULT_UI_PORT
+)
 from vantage6.cli.context import ServerContext
 from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
@@ -108,7 +110,7 @@ def click_insert_context(func: callable) -> callable:
                 error("No configurations could be found!")
                 exit(1)
 
-        ctx = get_server_context(name, environment, system_folders)
+        ctx = _get_server_context(name, environment, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context
@@ -126,6 +128,10 @@ def cli_server() -> None:
 @click.option('--ip', default=None, help='ip address to listen on')
 @click.option('-p', '--port', default=None, type=int, help='port to listen on')
 @click.option('-i', '--image', default=None, help="Server Docker image to use")
+@click.option('--with-ui', 'start_ui', flag_value=True, default=False,
+              help="Start the graphical User Interface as well")
+@click.option('--ui-port', default=None, type=int,
+              help="Port to listen on for the User Interface")
 @click.option('--rabbitmq-image', default=None,
               help="RabbitMQ docker image to use")
 @click.option('--keep/--auto-remove', default=False,
@@ -136,8 +142,8 @@ def cli_server() -> None:
               help="Attach server logs to the console after start")
 @click_insert_context
 def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
-                     rabbitmq_image: str, keep: bool, mount_src: str,
-                     attach: bool) -> None:
+                     start_ui: bool, ui_port: int, rabbitmq_image: str,
+                     keep: bool, mount_src: str, attach: bool) -> None:
     """
     Start the server in a Docker container.
 
@@ -217,16 +223,28 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if image is None:
-        image = ctx.config.get(
-            "image",
-            f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
-        )
+
+        # FIXME: remove me in version 4+, as this is to support older
+        # configuration files. So the outer `image` key is no longer supported
+        # Note that this was implicitly supported in version 3.* for server as
+        # well
+        if ctx.config.get('image'):
+            warning('Using the `image` option in the config file is to be '
+                    'removed in version 4+.')
+            image = ctx.config.get('image')
+
+        custom_images: dict = ctx.config.get('images')
+        if custom_images:
+            image = custom_images.get('server')
+        if not image:
+            image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
+
     info(f"Pulling latest server image '{image}'.")
     try:
         pull_if_newer(docker.from_env(), image)
         # docker_client.images.pull(image)
     except Exception as e:
-        warning(' ... Getting latest node image failed:')
+        warning(' ... Getting latest server image failed:')
         warning(f"     {e}")
     else:
         info(" ... success!")
@@ -287,6 +305,10 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     info('Starting RabbitMQ container')
     _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
 
+    # start the UI if requested
+    if start_ui or ctx.config.get('ui') and ctx.config['ui'].get('enabled'):
+        _start_ui(docker_client, ctx, ui_port)
+
     # The `ip` and `port` refer here to the ip and port within the container.
     # So we do not really care that is it listening on all interfaces.
     internal_port = 5000
@@ -321,7 +343,7 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
 
     if attach:
         logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -358,8 +380,8 @@ def cli_server_configuration_list() -> None:
     click.echo(header)
     click.echo("-"*len(header))
 
-    running = Fore.GREEN + "Online" + Style.RESET_ALL
-    stopped = Fore.RED + "Offline" + Style.RESET_ALL
+    running = Fore.GREEN + "Running" + Style.RESET_ALL
+    stopped = Fore.RED + "Not running" + Style.RESET_ALL
 
     # system folders
     configs, f1 = ServerContext.available_configurations(
@@ -456,7 +478,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(f"Create a new server using '{Fore.GREEN}vserver new "
-             "--user{Style.RESET_ALL}' instead!")
+             f"--user{Style.RESET_ALL}' instead!")
         exit(1)
 
     # create config in ctx location
@@ -620,7 +642,8 @@ def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
         tty=True
     )
     logs = container.logs(stream=True, stdout=True)
-    Thread(target=print_log_worker, args=(logs,), daemon=False).start()
+    Thread(target=_print_log_worker, args=(logs,), daemon=False).start()
+
     info(f"Success! container id = {container.id}")
 
 
@@ -774,7 +797,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     if name in running_server_names:
         container = client.containers.get(name)
         logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+        Thread(target=_print_log_worker, args=(logs,), daemon=True).start()
         while True:
             try:
                 time.sleep(1)
@@ -837,7 +860,7 @@ def cli_server_version(name: str, system_folders: bool) -> None:
 #
 # helper functions
 #
-def get_server_context(name: str, environment: str, system_folders: bool) \
+def _get_server_context(name: str, environment: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
@@ -930,7 +953,10 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = get_server_context(config_name, environment, system_folders)
+    ctx = _get_server_context(config_name, environment, system_folders)
+
+    # kill the UI container (if it exists)
+    _stop_ui(client, ctx)
 
     # delete the server network
     network_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-network"
@@ -951,7 +977,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
                  f"{Style.RESET_ALL} container.")
 
 
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     Print the logs from the docker container to the terminal.
 
@@ -1001,3 +1027,90 @@ def vserver_remove(ctx: ServerContext, name: str, environment: str,
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
     remove_file(ctx.log_file, 'log')
+
+
+def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
+    """
+    Start the UI container.
+
+    Parameters
+    ----------
+    client : DockerClient
+        Docker client
+    ctx : ServerContext
+        Server context object
+    ui_port : int
+        Port to expose the UI on
+    """
+    # if no port is specified, check if config contains a port
+    ui_config = ctx.config.get('ui')
+    if ui_config and not ui_port:
+        ui_port = ui_config.get('port')
+
+    # check if the port is valid
+    # TODO make function to check if port is valid, and use in more places
+    if not isinstance(ui_port, int) or not 0 < ui_port < 65536:
+        warning(f"UI port '{ui_port}' is not valid! Using default port "
+                f"{DEFAULT_UI_PORT}")
+        ui_port = DEFAULT_UI_PORT
+
+    # find image to use
+    custom_images: dict = ctx.config.get('images')
+    image = None
+    if custom_images:
+        image = custom_images.get('ui')
+    if not image:
+        image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_UI_IMAGE}"
+
+    info(f"Pulling latest UI image '{image}'.")
+    try:
+        pull_if_newer(docker.from_env(), image)
+        # docker_client.images.pull(image)
+    except Exception as e:
+        warning(' ... Getting latest node image failed:')
+        warning(f"     {e}")
+    else:
+        info(" ... success!")
+
+    # set environment variables
+    env_vars = {
+        "SERVER_URL": f"http://localhost:{ctx.config.get('port')}",
+        "API_PATH": ctx.config.get("api_path"),
+    }
+
+    # stop the UI container if it is already running
+    _stop_ui(client, ctx)
+
+    info(f'Starting User Interface at port {ui_port}')
+    ui_container_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-ui"
+    client.containers.run(
+        image,
+        detach=True,
+        labels={
+            f"{APPNAME}-type": "ui",
+            "name": ctx.config_file_name
+        },
+        ports={"80/tcp": (ctx.config.get('ip'), ui_port)},
+        name=ui_container_name,
+        environment=env_vars,
+        tty=True,
+    )
+
+
+def _stop_ui(client: DockerClient, ctx: ServerContext) -> None:
+    """
+    Check if the UI container is running, and if so, stop and remove it.
+
+    Parameters
+    ----------
+    client : DockerClient
+        Docker client
+    ctx : ServerContext
+        Server context object
+    """
+    ui_container_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-ui"
+    ui_container = get_container(client, name=ui_container_name)
+    if ui_container:
+        remove_container(ui_container, kill=True)
+        info(f"Stopped the {Fore.GREEN}{ui_container_name}"
+             f"{Style.RESET_ALL} User Interface container.")

@@ -85,6 +85,16 @@ support-image:
 	make support-vpn-client-image
 	make support-vpn-configurator-image
 	make support-ssh-tunnel-image
+	make support-squid-image
+
+support-squid-image:
+	@echo "Building ${REGISTRY}/infrastructure/squid:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/squid:${TAG} \
+		--tag ${REGISTRY}/infrastructure/squid:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/squid.Dockerfile \
+		--push .
 
 support-alpine-image:
 	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"

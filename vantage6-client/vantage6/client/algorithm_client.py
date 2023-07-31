@@ -46,6 +46,7 @@ class AlgorithmClient(ClientBase):
         self.database = container_identity.get('database')
         self.host_node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
+        self.organization_id = self.whoami.organization_id
         self.log.info(
             f"Container in collaboration_id={self.collaboration_id} \n"
             f"Key created by node_id {self.host_node_id} \n"

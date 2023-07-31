@@ -12,11 +12,12 @@ from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer
 )
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
     FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT, ALPINE_IMAGE
 )
-from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.node.node_client import NodeClient
 from vantage6.node.docker.docker_base import DockerBaseManager
 
 
@@ -28,8 +29,8 @@ class VPNManager(DockerBaseManager):
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, isolated_network_mgr: NetworkManager,
-                 node_name: str, vpn_volume_name: str, vpn_subnet: str,
-                 alpine_image: str | None = None,
+                 node_name: str, node_client: NodeClient, vpn_volume_name: str,
+                 vpn_subnet: str, alpine_image: str | None = None,
                  vpn_client_image: str | None = None,
                  network_config_image: str | None = None) -> None:
         """
@@ -56,6 +57,7 @@ class VPNManager(DockerBaseManager):
 
         self.vpn_client_container_name = f'{APPNAME}-{node_name}-vpn-client'
         self.vpn_volume_name = vpn_volume_name
+        self.client = node_client
         self.subnet = vpn_subnet
         self.alpine_image = ALPINE_IMAGE if not alpine_image \
             else alpine_image
@@ -138,6 +140,9 @@ class VPNManager(DockerBaseManager):
         else:
             raise ConnectionError("VPN connection not established!")
 
+        # send VPN IP address to server
+        self.send_vpn_ip_to_server()
+
         # check that the VPN connection IP address is part of the subnet
         # defined in the node configuration. If not, the VPN connection would
         # not work.
@@ -201,6 +206,9 @@ class VPNManager(DockerBaseManager):
         self.log.debug("Stopping and removing the VPN client container")
         remove_container(self.vpn_client_container, kill=True)
 
+        # clear VPN IP address from server
+        self.send_vpn_ip_to_server()
+
         # Clean up host network changes. We have added two rules to the front
         # of the DOCKER-USER chain. We now execute more or less the same
         # commands, but with -D (delete) instead of -I (insert)
@@ -231,16 +239,36 @@ class VPNManager(DockerBaseManager):
             IP address assigned to VPN client container by VPN server
         """
         try:
-            _, vpn_interface = self.vpn_client_container.exec_run(
-                'ip --json addr show dev tun0'
-            )
-            vpn_interface = json.loads(vpn_interface)
+            # use has_connection() to check if VPN is active. This function
+            # also waits for a connection to be established, which is helpful
+            # for unstable connections
+            if self.has_connection():
+                _, vpn_interface = self.vpn_client_container.exec_run(
+                    'ip --json addr show dev tun0'
+                )
+                vpn_interface = json.loads(vpn_interface)
         except (JSONDecodeError, docker.errors.APIError):
             # JSONDecodeError if VPN is not setup yet, APIError if VPN
             # container is restarting (e.g. due to connection errors)
             raise ConnectionError(
                 "Could not get VPN IP: VPN is not connected!")
         return vpn_interface[0]['addr_info'][0]['local']
+
+    def send_vpn_ip_to_server(self) -> None:
+        """
+        Send VPN IP address to the server
+        """
+        node_id = self.client.whoami.id_
+        if self.has_vpn:
+            node_ip = self.get_vpn_ip()
+            self.client.request(
+                f"node/{node_id}", json={"ip": node_ip}, method="PATCH"
+            )
+        else:
+            # VPN is disconnected, send NULL IP address
+            self.client.request(
+                f"node/{node_id}", json={"clear_ip": True}, method="PATCH"
+            )
 
     def forward_vpn_traffic(self, helper_container: Container,
                             algo_image_name: str) -> list[dict] | None:

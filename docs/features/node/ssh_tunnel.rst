@@ -10,6 +10,9 @@ remote server through a secure SSH connection. This allows you to connect to
 a dataset that is hosted on another machine than your node, as long as you
 have SSH access to that machine.
 
+An alternative solution would be to create a `whitelist <whitelisting>`_ of domains, ports and
+IP addresses that are allowed to be accessed by the algorithm.
+
 Setting up SSH tunneling
 ++++++++++++++++++++++++
 
@@ -67,7 +70,7 @@ configuration file.
 There are a few things to note about the SSH tunnel configuration:
 
 1. You can provide multiple SSH tunnels in the ``ssh-tunnels`` list, by simply
-   specifying more blocks of the same format.
+   extending the list.
 2. The hostname of each tunnel should come back in one of the databases, so
    that they may be accessible to the algorithms.
 3. The ``host`` is the address at which the remote server can be reached. This

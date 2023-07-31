@@ -67,6 +67,31 @@ environments:
       format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
       datefmt:      "%Y-%m-%d %H:%M:%S"
 
+    # (optional) set the individual log levels per logger name, for example
+    # mute some loggers that are too verbose.
+      loggers:
+        - name: urllib3
+          level: warning
+        - name: socketIO-client
+          level: warning
+        - name: engineio.server
+          level: warning
+        - name: socketio.server
+          level: warning
+        - name: sqlalchemy.engine
+          level: warning
+        - name: requests_oauthlib.oauth2_session
+          level: warning
+
+    # Additional debug flags
+    debug:
+
+      # Set to `true` to enable debug mode for the socketio server
+      socketio: false
+
+      # Set to `true` to enable debug mode in the Flask app
+      flask: false
+
     # Configure a smtp mail server for the server to use for administrative
     # purposes. e.g. allowing users to reset their password.
     # OPTIONAL
@@ -106,6 +131,22 @@ environments:
         # Username and password to acccess the EduVPN portal
         portal_username: your_eduvpn_portal_user_name
         portal_userpass: your_eduvpn_portal_user_password
+
+    # specify custom Docker images to use for starting the different
+    # components.
+    # OPTIONAL
+    images:
+      server: harbor2.vantage6.ai/infrastructure/server:petronas
+      ui: harbor2.vantage6.ai/infrastructure/ui:petronas
+
+    # options for starting the User Interface when starting the server
+    ui:
+      # set this to true to start the UI when starting the server with
+      # `vserver start`
+      enabled: true
+
+      # port at which the UI will be available on your local machine
+      port: 3456
 
   prod: {}
   acc: {}

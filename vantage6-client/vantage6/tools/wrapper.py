@@ -24,6 +24,7 @@ The ``multi_wrapper`` is used when multiple databases are connected to a single
 algorithm. This wrapper is separated from the other wrappers because it is not
 compatible with the ``smart_wrapper``.
 """
+from __future__ import annotations
 import os
 import pickle
 import io
@@ -46,8 +47,39 @@ _MAX_FORMAT_STRING_LENGTH = 10
 _SPARQL_RETURN_FORMAT = CSV
 
 
+def select_wrapper(database_type: str) -> WrapperBase:
+    """
+    Select the correct wrapper based on the database type.
+
+    Parameters
+    ----------
+    database_type : str
+        The database type to select the wrapper for.
+
+    Returns
+    -------
+    derivative of WrapperBase
+        The wrapper for the specified database type.
+    """
+    if database_type == "csv":
+        return CSVWrapper()
+    elif database_type == "excel":
+        return ExcelWrapper()
+    elif database_type == "sparql":
+        return SparqlDockerWrapper()
+    elif database_type == "parquet":
+        return ParquetWrapper()
+    elif database_type == "sql":
+        return SQLWrapper()
+    elif database_type == "omop":
+        return OMOPWrapper()
+    else:
+        return
+
+
 def auto_wrapper(module: str, load_data: bool = True,
-                 use_new_client: bool = False) -> None:
+                 use_new_client: bool = False,
+                 log_traceback: bool = False) -> None:
     """
     Wrap an algorithm module to provide input and output handling for the
     vantage6 infrastructure. This function will automatically select the
@@ -61,6 +93,11 @@ def auto_wrapper(module: str, load_data: bool = True,
         Wether to load the data or not, by default True
     use_new_client : bool, optional
         Wether to use the new client or not, by default False
+    log_traceback: bool, optional
+        Whether to print the full error message from algorithms or not, by
+        default False. Algorithm developers should only use this option if
+        they are sure that the error message does not contain any sensitive
+        information. By default False.
     """
 
     # Get the database label from the environment variable, this variable is
@@ -78,28 +115,18 @@ def auto_wrapper(module: str, load_data: bool = True,
 
     # Create the correct wrapper based on the database type, note that the
     # multi database wrapper is not available.
-    if database_type == "csv":
-        wrapper = CSVWrapper()
-    if database_type == "excel":
-        wrapper = ExcelWrapper()
-    elif database_type == "sparql":
-        wrapper = SparqlDockerWrapper()
-    elif database_type == "parquet":
-        wrapper = ParquetWrapper()
-    elif database_type == "sql":
-        wrapper = SQLWrapper()
-    elif database_type == "omop":
-        wrapper = OMOPWrapper()
-    else:
+    wrapper = select_wrapper(database_type)
+    if wrapper is None:
         error(f"Unknown database type: {database_type}")
-        return
+        return  # no wrapper
 
     # Execute the algorithm with the correct data wrapper
-    wrapper.wrap_algorithm(module, load_data, use_new_client)
+    wrapper.wrap_algorithm(module, load_data, use_new_client, log_traceback)
 
 
 def docker_wrapper(module: str, load_data: bool = True,
-                   use_new_client: bool = False) -> None:
+                   use_new_client: bool = False,
+                   log_traceback: bool = False) -> None:
     """
     Specific wrapper for CSV only data sources. Use the ``auto_wrapper``
     to automatically select the correct wrapper based on the database type.
@@ -113,12 +140,18 @@ def docker_wrapper(module: str, load_data: bool = True,
         True
     use_new_client : bool, optional
         Whether to use the new or old client, by default False
+    log_traceback: bool, optional
+        Whether to print the full error message from algorithms or not, by
+        default False. Algorithm developers should only use this option if
+        they are sure that the error message does not contain any sensitive
+        information. By default False.
     """
     wrapper = DockerWrapper()
-    wrapper.wrap_algorithm(module, load_data, use_new_client)
+    wrapper.wrap_algorithm(module, load_data, use_new_client, log_traceback)
 
 
-def sparql_wrapper(module: str, use_new_client: bool = False) -> None:
+def sparql_wrapper(module: str, use_new_client: bool = False,
+                   log_traceback: bool = False) -> None:
     """
     Specific wrapper for SPARQL only data sources. Use the ``auto_wrapper``
     to automatically select the correct wrapper based on the database type.
@@ -129,12 +162,18 @@ def sparql_wrapper(module: str, use_new_client: bool = False) -> None:
         Module name of the algorithm package.
     use_new_client : bool, optional
         Whether to use the new or old client, by default False
+    log_traceback: bool, optional
+        Whether to print the full error message from algorithms or not, by
+        default False. Algorithm developers should only use this option if
+        they are sure that the error message does not contain any sensitive
+        information. By default False.
     """
     wrapper = SparqlDockerWrapper()
-    wrapper.wrap_algorithm(module, use_new_client)
+    wrapper.wrap_algorithm(module, use_new_client, log_traceback)
 
 
-def parquet_wrapper(module: str, use_new_client: bool = False) -> None:
+def parquet_wrapper(module: str, use_new_client: bool = False,
+                    log_traceback: bool = False) -> None:
     """
     Specific wrapper for Parquet only data sources. Use the ``auto_wrapper``
     to automatically select the correct wrapper based on the database type.
@@ -145,12 +184,18 @@ def parquet_wrapper(module: str, use_new_client: bool = False) -> None:
         Module name of the algorithm package.
     use_new_client : bool, optional
         Whether to use the new or old client, by default False
+    log_traceback: bool, optional
+        Whether to print the full error message from algorithms or not, by
+        default False. Algorithm developers should only use this option if
+        they are sure that the error message does not contain any sensitive
+        information. By default False.
     """
     wrapper = ParquetWrapper()
-    wrapper.wrap_algorithm(module, use_new_client)
+    wrapper.wrap_algorithm(module, use_new_client, log_traceback)
 
 
-def multidb_wrapper(module: str, use_new_client: bool = False) -> None:
+def multidb_wrapper(module: str, use_new_client: bool = False,
+                    log_traceback: bool = False) -> None:
     """
     Specific wrapper for multiple data sources.
 
@@ -160,21 +205,28 @@ def multidb_wrapper(module: str, use_new_client: bool = False) -> None:
         Module name of the algorithm package.
     use_new_client : bool, optional
         Whether to use the new or old client, by default False
+    log_traceback: bool, optional
+        Whether to print the full error message from algorithms or not, by
+        default False. Algorithm developers should only use this option if
+        they are sure that the error message does not contain any sensitive
+        information. By default False.
     """
     wrapper = MultiDBWrapper()
-    wrapper.wrap_algorithm(module, use_new_client)
+    wrapper.wrap_algorithm(module, use_new_client, log_traceback)
 
 
 class WrapperBase(ABC):
 
     def wrap_algorithm(self, module: str, load_data: bool = True,
-                       use_new_client: bool = False) -> None:
+                       use_new_client: bool = False,
+                       log_traceback: bool = False) -> None:
         """
         Wrap an algorithm module to provide input and output handling for the
         vantage6 infrastructure.
 
         Data is received in the form of files, whose location should be
         specified in the following environment variables:
+
         - ``INPUT_FILE``: input arguments for the algorithm
         - ``OUTPUT_FILE``: location where the results of the algorithm should
           be stored
@@ -211,6 +263,14 @@ class WrapperBase(ABC):
         load_data : bool, optional
             Whether to load the data into a pandas DataFrame or not, by default
             True
+        use_new_client: bool
+            Whether to use the new AlgorithmClient or the old ContainerClient,
+            by default False
+        log_traceback: bool
+            Whether to print the full error message from algorithms or not, by
+            default False. Algorithm developers should only use this option if
+            they are sure that the error message does not contain any sensitive
+            information.
         """
         info(f"wrapper for {module}")
 
@@ -241,7 +301,8 @@ class WrapperBase(ABC):
 
         # make the actual call to the method/function
         info("Dispatching ...")
-        output = dispatch_rpc(data, input_data, module, token, use_new_client)
+        output = dispatch_rpc(data, input_data, module, token, use_new_client,
+                              log_traceback)
 
         # write output from the method to mounted output file. Which will be
         # transferred back to the server by the node-instance.

@@ -136,6 +136,7 @@ class _AnsiColorStreamHandler(logging.StreamHandler):
 
 
 class _WinColorStreamHandler(logging.StreamHandler):
+    """ Color stream handler for Windows systems."""
     # wincon.h
     FOREGROUND_BLACK = 0x0000
     FOREGROUND_BLUE = 0x0001

@@ -30,10 +30,11 @@ class RabbitMQManager:
     ----------
     ctx: ServerContext
         Configuration object
-    queue_uri: str
-        URI where the RabbitMQ instance should be running
     network_mgr: NetworkManager
         Network manager for network in which server container resides
+    image: str
+        Docker image to use for RabbitMQ container. By default, the image
+        harbor2.vantage6.ai/infrastructure/rabbitmq is used.
     """
     def __init__(self, ctx: ServerContext, network_mgr: NetworkManager,
                  image: str = None) -> None:

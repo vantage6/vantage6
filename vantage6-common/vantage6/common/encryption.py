@@ -17,12 +17,12 @@ import os
 import logging
 
 from pathlib import Path
-from typing import Any
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     load_pem_public_key
@@ -105,7 +105,7 @@ class CryptorBase(metaclass=Singleton):
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
         """
-        Decrypt base64 encoded *string* `data.
+        Decrypt base64 encoded *string* data.
 
         Parameters
         ----------
@@ -165,7 +165,7 @@ class RSACryptor(CryptorBase):
         super().__init__()
         self.private_key = self.__load_private_key(private_key_file)
 
-    def __load_private_key(self, private_key_file: Path) -> Any:
+    def __load_private_key(self, private_key_file: Path) -> PrivateKeyTypes:
         """
         Load a private key file into this instance.
 
@@ -178,6 +178,11 @@ class RSACryptor(CryptorBase):
         -------
         Any
             The loaded private key.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the private key file does not exist.
         """
 
         if not private_key_file.exists():
@@ -315,7 +320,7 @@ class RSACryptor(CryptorBase):
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
         """
-        Decrypt base64 encoded *string* `data.
+        Decrypt base64 encoded *string* data.
 
         Parameters
         ----------

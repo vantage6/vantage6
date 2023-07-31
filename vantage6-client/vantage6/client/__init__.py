@@ -414,7 +414,7 @@ class ClientBase(object):
         assert self.__refresh_url, \
             "Refresh URL not found, did you authenticate?"
 
-        # if no port is specified explicit, then it should be omnit the
+        # if no port is specified explicit, then it should be omit the
         # colon : in the path. Similar (but different) to the property
         # base_path
         if self.__port:
@@ -515,7 +515,7 @@ class ClientBase(object):
 
     # TODO BvB 23-01-23 remove this method in v4+ (or make it private?). It is
     # only here for backwards compatibility.
-    def get_results(self, id: int = None, state: str = None,
+    def get_results(self, id_: int = None, state: str = None,
                     include_task: bool = False, task_id: int = None,
                     node_id: int = None, params: dict = {}) -> dict:
         """Get task result(s) from the central server
@@ -533,7 +533,7 @@ class ClientBase(object):
         state : str, optional
             The state of the task (e.g. `open`), by default None
         include_task : bool, optional
-            Whenever to include the orginating task, by default False
+            Whenever to include the originating task, by default False
         task_id : int, optional
             The id of the originating task, this will return all results
             belonging to this task, by default None
@@ -549,19 +549,20 @@ class ClientBase(object):
             Containing the result(s)
         """
         # Determine endpoint and create dict with query parameters
-        endpoint = 'result' if not id else f'result/{id}'
+        endpoint = 'result' if not id_ else f'result/{id_}'
 
+        extended_params = params.copy()
         if state:
-            params['state'] = state
+            extended_params['state'] = state
         if include_task:
-            params['include'] = 'task'
+            extended_params['include'] = 'task'
         if task_id:
-            params['task_id'] = task_id
+            extended_params['task_id'] = task_id
         if node_id:
-            params['node_id'] = node_id
+            extended_params['node_id'] = node_id
 
         # self.log.debug(f"Retrieving results using query parameters:{params}")
-        results = self.request(endpoint=endpoint, params=params)
+        results = self.request(endpoint=endpoint, params=extended_params)
 
         if isinstance(results, str):
             self.log.warn("Requesting results failed")
@@ -574,7 +575,7 @@ class ClientBase(object):
             wrapper = results
             results = results['data']
 
-        if id:
+        if id_:
             # Single result
             self._decrypt_result(results)
 
@@ -1963,7 +1964,8 @@ class UserClient(ClientBase):
             self.parent.log.info('--> Attempting to decrypt results!')
 
             # get_results also handles decryption
-            result = self.parent.get_results(id=id_, include_task=include_task)
+            result = self.parent.get_results(id_=id_,
+                                             include_task=include_task)
             result_data = result.get('result')
             if result_data:
                 try:
@@ -1981,7 +1983,7 @@ class UserClient(ClientBase):
                  assigned: tuple[str, str] = None,
                  finished: tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
-                 include_metadata: bool = True) -> list:
+                 include_metadata: bool = True) -> dict | list[dict]:
             """List results
 
             Parameters
@@ -2070,8 +2072,6 @@ class UserClient(ClientBase):
 
             return cleaned_results
 
-        # note: using typing.List instead of `list` to prevent referring
-        # to the list() function in an incorrect manner
         def from_task(
             self, task_id: int, include_task: bool = False
         ) -> typing.List[dict]:

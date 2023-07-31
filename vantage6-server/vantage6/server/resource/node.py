@@ -486,6 +486,9 @@ class Node(NodeBase):
                   ip:
                     type: string
                     description: The node's VPN IP address
+                  clear_ip:
+                    type: boolean
+                    description: Clear the node's VPN IP address
 
         responses:
           200:
@@ -563,6 +566,8 @@ class Node(NodeBase):
         ip = data.get('ip')
         if ip:
             node.ip = ip
+        elif data.get('clear_ip'):
+            node.ip = None
 
         node.save()
         return node_schema.dump(node).data, HTTPStatus.OK

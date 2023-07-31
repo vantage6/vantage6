@@ -5,6 +5,7 @@ import logging
 import logging.handlers
 
 from pathlib import Path
+from typing import Tuple
 
 from vantage6.common import Singleton, error, Fore, Style, logger_name
 from vantage6.common.colors import ColorStreamHandler
@@ -16,7 +17,9 @@ from vantage6.common._version import __version__
 
 
 class AppContext(metaclass=Singleton):
-
+    """
+    Base class from which to create Node and Server context classes.
+    """
     # FIXME: drop the prefix "INST_": a *class* is assigned.
     # FIXME: this does not need to be a class attribute, but ~~can~~_should_
     #        be set in __init__
@@ -50,6 +53,7 @@ class AppContext(metaclass=Singleton):
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
+        self.instance_type = instance_type
 
         # configuration environment, load a single configuration from
         # entire confiration file (which can contain multiple environments)
@@ -138,6 +142,7 @@ class AppContext(metaclass=Singleton):
         self_.config_dir = Path(path).parent
         self_.config_file = path
         self_.environment = environment
+        self_.instance_type = instance_type
         self_.set_folders(instance_type, instance_name, system_folders)
         module_name = logger_name(__name__)
         self_.log = logging.getLogger(module_name)
@@ -296,22 +301,33 @@ class AppContext(metaclass=Singleton):
         -------
         Path
             Path to the log file
+        """
+        return self.log_file_name(type_=self.instance_type)
+
+    def log_file_name(self, type_: str) -> Path:
+        """
+        Return a path to a log file for a given log file type
+
+        Parameters
+        ----------
+        type_: str
+            The type of log file to return.
+
+        Returns
+        -------
+        Path
+            The path to the log file.
 
         Raises
         ------
         AssertionError
-            If the configuration manager is not initialized
+            If the configuration manager is not initialized.
         """
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
+        file_ = (Path(self.config_manager.name) /
+                 f"{type_}_{self.environment}_{self.scope}.log")
 
-        # check if the configuration file contains a logging file setting
-        if self.config.get("logging"):
-            if self.config.get("logging").get("file"):
-                return self.log_dir / self.config.get("logging").get("file")
-
-        file_ = f"{self.config_manager.name}-{self.environment}"\
-                f"-{self.scope}.log"
         return self.log_dir / file_
 
     @property
@@ -367,7 +383,7 @@ class AppContext(metaclass=Singleton):
         return self.__environment
 
     @environment.setter
-    def environment(self, env) -> None:
+    def environment(self, env: str) -> None:
         """
         Set the environment.
 
@@ -514,9 +530,10 @@ class AppContext(metaclass=Singleton):
 
         Exits if the log file can't be created.
         """
+        # TODO BvB 2023-03-31: would be nice to refactor this with the other
+        # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
-        level = getattr(logging, log_config["level"].upper())
         format_ = log_config["format"]
         datefmt = log_config.get("datefmt", "")
 
@@ -524,8 +541,7 @@ class AppContext(metaclass=Singleton):
         os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
 
         # Create the root logger
-        logger = logging.getLogger()
-        logger.setLevel(level)
+        logger, level = self.configure_logger(None, log_config["level"])
 
         # Create RotatingFileHandler
         try:
@@ -550,5 +566,35 @@ class AppContext(metaclass=Singleton):
             ch.setFormatter(logging.Formatter(format_, datefmt))
             logger.addHandler(ch)
 
+        # control individual loggers
+        loggers = log_config.get("loggers", [])
+        for logger in loggers:
+            self.configure_logger(logger["name"], logger["level"])
+
         # Finally, capture all warnings using the logging mechanism.
         logging.captureWarnings(True)
+
+    @staticmethod
+    def configure_logger(name: str | None, level: str) \
+            -> Tuple[logging.Logger, int]:
+        """
+        Set the logging level of a logger.
+
+        Parameters
+        ----------
+        name : str
+            Name of the logger to configure. If `None`, the root logger is
+            configured.
+        level : str
+            Logging level to set. Must be one of 'debug', 'info', 'warning',
+            'error', 'critical'.
+
+        Returns
+        -------
+        Tuple[Logger, int]
+            The logger object and the logging level that was set.
+        """
+        logger = logging.getLogger(name)
+        level_ = getattr(logging, level.upper())
+        logger.setLevel(level_)
+        return logger, level

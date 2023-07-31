@@ -1,3 +1,4 @@
+from __future__ import annotations
 import vantage6.server.globals as constants
 
 from vantage6.common.context import AppContext
@@ -18,7 +19,7 @@ class TestContext(AppContext):
     LOGGING_ENABLED = False
 
     @classmethod
-    def from_external_config_file(cls) -> 'TestContext':
+    def from_external_config_file(cls) -> TestContext:
         """
         Create a context the unittest configuration file.
 

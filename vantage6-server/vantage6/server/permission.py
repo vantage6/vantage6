@@ -306,7 +306,7 @@ class PermissionManager:
 
         Returns
         -------
-        Union[dict, bool]
+        dict | bool
             Dict with a message which rule is missing, else None
         """
         for rule in rules:

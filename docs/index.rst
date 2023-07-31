@@ -57,12 +57,16 @@ This documentation space consists of the following main sections:
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
 * :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
-* :doc:`/technical-documentation/index` (Under construction) |rarr|
-  *Implementation details of the vantage6 platform*
+* :doc:`/features/index` (Under construction) |rarr|
+  *Documentation of vantage6 features*
+.. * :doc:`/technical-documentation/index` (Under construction) |rarr|
+..   *Implementation details of the vantage6 platform*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
   vantage6 infrastructure*
 * :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
   vantage6*
+* :doc:`/function-docs/index` |rarr|
+  *Documentation of the vantage6 infrastructure code*
 * :doc:`/glossary` |rarr| *A dictionary of common terms used in these docs*
 * :doc:`/release_notes` |rarr| *Log of what has been released and when*
 
@@ -115,8 +119,9 @@ Index
    node/index
    server/index
    algorithms/index
-   technical-documentation/index
+   features/index
    devops/index
+   function-docs/index
    glossary
 
 .. toctree::

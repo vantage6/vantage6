@@ -2,6 +2,9 @@
 This module contains a proxy server implementation that the node uses to
 communicate with the server. It contains general methods for any routes, and
 methods to handle tasks and results, including their encryption and decryption.
+
+(!) Not to be confused with the squid proxy that allows algorithm containers
+to access other places in the network.
 """
 import requests
 import logging
@@ -12,7 +15,7 @@ from requests import Response
 from flask import Flask, request, jsonify
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
-from vantage6.node.server_io import NodeClient
+from vantage6.node.node_client import NodeClient
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -147,13 +150,13 @@ def decrypt_result(result: dict) -> dict:
     dict
         Result dict with the `result` decrypted
     """
-    server_io: NodeClient = app.config.get('SERVER_IO')
+    client: NodeClient = app.config.get('SERVER_IO')
 
     # if the result is a None, there is no need to decrypt that..
     try:
         if result['result']:
             result["result"] = bytes_to_base64s(
-                server_io.cryptor.decrypt_str_to_bytes(
+                client.cryptor.decrypt_str_to_bytes(
                     result["result"]
                 )
             )
@@ -197,8 +200,8 @@ def proxy_task():
         Response from the vantage6 server
     """
     # We need the server io for the decryption of the results
-    server_io: NodeClient = app.config.get("SERVER_IO")
-    if not server_io:
+    client: NodeClient = app.config.get("SERVER_IO")
+    if not client:
         log.error("Task proxy request received but proxy server was not "
                   "initialized properly.")
         return jsonify({'msg': 'Proxy server not initialized properly'}), 500
@@ -249,8 +252,8 @@ def proxy_task():
         public_key = response.json().get("public_key")
 
         # Encrypt the input field
-        server_io: NodeClient = app.config.get("SERVER_IO")
-        organization["input"] = server_io.cryptor.encrypt_bytes_to_str(
+        client: NodeClient = app.config.get("SERVER_IO")
+        organization["input"] = client.cryptor.encrypt_bytes_to_str(
             base64s_to_bytes(input_),
             public_key
         )
@@ -259,7 +262,7 @@ def proxy_task():
                   f"{organization_id}!")
         return organization
 
-    if server_io.is_encrypted_collaboration():
+    if client.is_encrypted_collaboration():
 
         log.debug("Applying end-to-end encryption")
         data["organizations"] = [encrypt_input(o) for o in organizations]
@@ -291,8 +294,8 @@ def proxy_task_result(id: int) -> Response:
         Reponse from the vantage6 server
     """
     # We need the server io for the decryption of the results
-    server_io = app.config.get("SERVER_IO")
-    if not server_io:
+    client = app.config.get("SERVER_IO")
+    if not client:
         return jsonify({'msg': 'Proxy server not initialized properly'}),\
             HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -332,8 +335,8 @@ def proxy_results(id: int) -> Response:
         Response of the vantage6 server
     """
     # We need the server io for the decryption of the results
-    server_io: NodeClient = app.config.get("SERVER_IO")
-    if not server_io:
+    client: NodeClient = app.config.get("SERVER_IO")
+    if not client:
         return {'msg': 'Proxy server not initialized properly'},\
             HTTPStatus.INTERNAL_SERVER_ERROR
 

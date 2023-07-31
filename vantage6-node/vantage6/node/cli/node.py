@@ -29,7 +29,7 @@ from vantage6.node._version import __version__
 
 
 @click.group(name="vnode-local")
-def cli_node():
+def cli_node() -> None:
     """Command `vnode-local`."""
     pass
 
@@ -38,7 +38,7 @@ def cli_node():
 #   list
 #
 @cli_node.command(name="list")
-def cli_node_list():
+def cli_node_list() -> None:
     """Lists all nodes in the default configuration directories."""
 
     # FIXME: use package 'table' for this.
@@ -73,7 +73,8 @@ def cli_node_list():
 @click.option('--user', 'system_folders', flag_value=False,
               default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
               help="Use configuration from user folders")
-def cli_node_new_configuration(name, environment, system_folders):
+def cli_node_new_configuration(name: str, environment: str,
+                               system_folders: bool) -> None:
     """Create a new configation file.
 
     Checks if the configuration already exists. If this is not the case
@@ -121,7 +122,7 @@ def cli_node_new_configuration(name, environment, system_folders):
 @click.option('--user', 'system_folders', flag_value=False,
               default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
               help="Use configuration from user folders")
-def cli_node_files(name, environment, system_folders):
+def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
     """Print out the paths of important files.
 
     If the specified configuration cannot be found, it exits. Otherwise
@@ -166,7 +167,8 @@ def cli_node_files(name, environment, system_folders):
 @click.option('--dockerized/-non-dockerized', default=False,
               help=("Whether to use DockerNodeContext or regular NodeContext "
                     "(default)"))
-def cli_node_start(name, config, environment, system_folders, dockerized):
+def cli_node_start(name: str, config: str, environment: str,
+                   system_folders: bool, dockerized: bool) -> None:
     """Start the node instance.
 
     If no name or config is specified the default.yaml configuation is used.
@@ -216,6 +218,6 @@ def cli_node_start(name, config, environment, system_folders, dockerized):
 #   version
 #
 @cli_node.command(name='version')
-def cli_node_version():
+def cli_node_version() -> None:
     """Returns current version of vantage6 services installed."""
     click.echo(__version__)

@@ -87,7 +87,7 @@ class NodeClient(ClientBase):
                     int(time_until_expiry - REFRESH_BEFORE_EXPIRES_SECONDS + 1)
                 )
 
-    def request_token_for_container(self, task_id: int, image: str):
+    def request_token_for_container(self, task_id: int, image: str) -> dict:
         """ Request a container-token at the central server.
 
         This token is used by algorithm containers that run on this
@@ -145,7 +145,7 @@ class NodeClient(ClientBase):
             The results.
         """
         return super().get_results(
-            id=id_,
+            id_=id_,
             state=state,
             include_task=include_task,
             task_id=task_id,

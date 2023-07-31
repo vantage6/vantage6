@@ -8,7 +8,6 @@ The following pages each describe one feature of the vantage6 server.
    :caption: Contents:
 
    2fa
-   ssh_tunnel
    horizontal_scaling
    vpn
    permissions

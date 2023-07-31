@@ -231,7 +231,7 @@ def filter_dicts_by_values(
     return dicts
 
 
-def filter_dicts_keys(dicts: list[dict], keys: list[Any]) -> list[dict]:
+def filter_dicts_keys(dicts: list[dict], keys: list[str]) -> list[dict]:
     """
     Filter a list of dicts on the specified keys. If no keys are given, the
     original list of dicts is returned.
@@ -240,7 +240,7 @@ def filter_dicts_keys(dicts: list[dict], keys: list[Any]) -> list[dict]:
     ----------
     dicts : list[dict]
         The list of dicts to filter.
-    keys : list[Any]
+    keys : list[str]
         A list of keys to keep in the dictionaries
 
     Returns
@@ -253,7 +253,7 @@ def filter_dicts_keys(dicts: list[dict], keys: list[Any]) -> list[dict]:
     return dicts
 
 
-def filter_dict_keys(dict_: dict, keys: list[Any]) -> dict:
+def filter_dict_keys(dict_: dict, keys: list[str]) -> dict:
     """
     Filter a dict on the specified keys. If no keys are given, the original
     dict is returned.
@@ -262,7 +262,7 @@ def filter_dict_keys(dict_: dict, keys: list[Any]) -> dict:
     ----------
     dict_ : dict
         The dict to filter.
-    keys : list[Any]
+    keys : list[str]
         A list of keys to keep in the dictionary
 
     Returns
