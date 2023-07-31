@@ -1072,7 +1072,7 @@ class TestResources(unittest.TestCase):
         rule = Rule.get_by_("role", Scope.ORGANIZATION, Operation.EDIT)
         result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
                                headers=headers)
-        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
 
         # you can't assign rules you don't own
         rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.EDIT)
