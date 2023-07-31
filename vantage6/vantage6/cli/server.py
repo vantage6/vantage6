@@ -18,7 +18,7 @@ from vantage6.common import (info, warning, error, debug as debug_msg,
 from vantage6.common.docker.addons import (
     pull_if_newer, check_docker_running, remove_container,
     get_server_config_name, get_container, get_num_nonempty_networks,
-    get_network, delete_network
+    get_network, delete_network, remove_container_if_exists
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
@@ -36,7 +36,7 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
-from vantage6.cli.utils import check_config_name_allowed, remove_file
+from vantage6.cli.utils import check_config_name_allowed, new_config_name, remove_file
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
 
@@ -57,12 +57,12 @@ def click_insert_context(func: callable) -> callable:
         Click function with context
     """
     @click.option('-n', '--name', default=None,
-                  help="name of the configuration you want to use.")
+                  help="Name of the configuration you want to use.")
     @click.option('-c', '--config', default=None,
-                  help='absolute path to configuration-file; overrides NAME')
+                  help='Absolute path to configuration-file; overrides NAME')
     @click.option('-e', '--environment',
                   default=DEFAULT_SERVER_ENVIRONMENT,
-                  help='configuration environment to use')
+                  help='Configuration environment to use')
     @click.option('--system', 'system_folders', flag_value=True)
     @click.option('--user', 'system_folders', flag_value=False,
                   default=DEFAULT_SERVER_SYSTEM_FOLDERS)
@@ -434,11 +434,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     system_folders : bool
         Wether to use system folders or not
     """
-    if not name:
-        name = q.text("Please enter a configuration-name:").ask()
-        if name.count(" ") > 0:
-            name = name.replace(" ", "-")
-            info(f"Replaced spaces from configuration name: {name}")
+    name = new_config_name(name)
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(name)
@@ -926,7 +922,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
         Wether to use system folders or not
     """
     # kill the server
-    remove_container(container_name, kill=True)
+    remove_container_if_exists(client, name=container_name)
     info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
 
     # find the configuration name from the docker container name

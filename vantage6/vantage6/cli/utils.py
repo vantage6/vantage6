@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 import docker
 import os
+import questionary as q
 
 from vantage6.common import error, warning, info
 
@@ -64,3 +65,26 @@ def remove_file(file: str, file_type: str) -> None:
             error(e)
     else:
         warning(f"Could not remove {file_type} file: {file} does not exist")
+
+
+def new_config_name(name: str | None) -> None:
+    """
+    Get a new configuration name from the user, or simply return the name if
+    it is not None.
+
+    Parameters
+    ----------
+    name : str
+        Name to be checked
+
+    Returns
+    -------
+    str
+        The name of the configuration
+    """
+    if not name:
+        name = q.text("Please enter a configuration-name:").ask()
+        if name.count(" ") > 0:
+            name = name.replace(" ", "-")
+            info(f"Replaced spaces from configuration name: {name}")
+    return name

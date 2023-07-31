@@ -27,6 +27,7 @@ from vantage6.cli.globals import (
     DEFAULT_NODE_ENVIRONMENT as N_ENV
 )
 from vantage6.cli.server import (
+    click_insert_context,
     vserver_import,
     vserver_start,
     vserver_stop,
@@ -34,10 +35,7 @@ from vantage6.cli.server import (
     get_server_context
 )
 from vantage6.cli.node import vnode_stop
-from vantage6.cli.utils import remove_file
-
-server_name = 'dev_default_server'
-handle_ = 'dev_demo_'
+from vantage6.cli.utils import new_config_name, remove_file
 
 
 def dummy_data(node_name: str, dev_folder: Path) -> Path:
@@ -89,7 +87,9 @@ def create_node_config_file(server_url: str, port: int, config: dict) -> None:
     # TODO: make this name specific to the server it connects
     node_name = config['node_name']
     folders = NodeContext.instance_folders('node', node_name, False)
-    dummy_datafile = dummy_data(node_name, folders['dev'])
+    path_to_dev_dir = Path(folders['dev'])
+    path_to_dev_dir.mkdir(parents=True, exist_ok=True)
+    dummy_datafile = dummy_data(node_name, path_to_dev_dir)
 
     path_to_data_dir = Path(folders['data'])
     path_to_data_dir.mkdir(parents=True, exist_ok=True)
@@ -123,7 +123,8 @@ def create_node_config_file(server_url: str, port: int, config: dict) -> None:
          f"{Style.RESET_ALL}")
 
 
-def generate_node_configs(num_nodes: int, server_url: str, port: int) \
+def generate_node_configs(num_nodes: int, server_url: str, port: int,
+                          server_name: str) \
         -> list[dict]:
     """Generates ``num_nodes`` node configuration files.
 
@@ -135,6 +136,8 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int) \
         Url of the dummy server.
     port : int
         Port of the dummy server.
+    server_name : str
+        Configuration name of the dummy server.
 
     Returns
     -------
@@ -146,7 +149,7 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int) \
         config = {
             'org_id': i + 1,
             'api_key': generate_apikey(),
-            'node_name': f"{handle_}node_{i + 1}"
+            'node_name': f"{server_name}_node_{i + 1}"
         }
         create_node_config_file(server_url, port, config)
         configs.append(config)
@@ -277,7 +280,8 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
     tuple[list[dict], Path, Path]
         Tuple containing node, server import and server configurations.
     """
-    node_configs = generate_node_configs(num_nodes, server_url, server_port)
+    node_configs = generate_node_configs(num_nodes, server_url, server_port,
+                                         server_name)
     server_import_config = create_vserver_import_config(node_configs,
                                                         server_name)
     server_config = create_vserver_config(server_name, server_port)
@@ -287,44 +291,31 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
 @click.group(name="dev")
 def cli_dev() -> None:
     """Subcommand `vdev`."""
-    pass
 
 
 @cli_dev.command(name="create-demo-network")
-@click.option('-n', '--num-nodes', 'num_nodes', type=int, default=3,
-              help='generate N node-configuration files')
-@click.option('--server-url', 'server_url', type=str,
-              default='http://host.docker.internal')
-@click.option('-p', '--server-port', 'server_port', type=int, default=5000)
-@click.option('-i', '--image', 'image', type=str, default=None)
-def create_demo_network(num_nodes: int, server_url: str, server_port: int,
-                        image: str = None) -> dict:
+@click.option('-n', '--name', default=None, type=str,
+              help="Name for your development setup")
+@click.option('--num-nodes', type=int, default=3,
+              help='Generate this number of nodes in the development network')
+@click.option('--server-url', type=str, default='http://host.docker.internal',
+              help='Server URL to point to. If you are using Docker Desktop, '
+              'the default http://host.docker.internal should not be changed.')
+@click.option('-p', '--server-port', type=int, default=5000,
+              help='Port to run the server on. Default is 5000.')
+@click.option('-i', '--image', type=str, default=None,
+              help='Server docker image to use when setting up resources for'
+              'the development server')
+def create_demo_network(name: str, num_nodes: int, server_url: str,
+                        server_port: int, image: str = None) -> dict:
     """Synthesizes a demo network.
 
     Creates server instance as well as its import configuration file. Server
     name is set to 'dev_default_server'. Generates `n` node configurations, but
     by default this is set to 3. Then runs a Batch import of
     organizations/collaborations/users and tasks.
-
-    Parameters
-    ----------
-    num_nodes : int, optional
-        Number of node configurations to spawn, by default 3.
-    server_url : str, optional
-        Specify server url, for instance localhost in which case revert to,
-        by default ``http://host.docker.internal``
-    server_port : int, optional
-        Port to access, by default 5000
-    image : str, optional
-        Node Docker image to use which contains the import script,
-        by default None
-
-    Returns
-    -------
-    dict
-        Dictionary containing the locations of the node configurations,
-        server import configuration and server configuration (YAML).
     """
+    server_name = new_config_name(name)
     if not ServerContext.config_exists(server_name):
         demo = demo_network(num_nodes, server_url, server_port, server_name)
         info(f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
@@ -345,95 +336,75 @@ def create_demo_network(num_nodes: int, server_url: str, server_port: int,
 
 
 @cli_dev.command(name="start-demo-network")
-def start_demo_network(ip: str = None, port: int = None, image: str = None) \
-        -> None:
+@click_insert_context
+def start_demo_network(ctx: ServerContext) -> None:
     """Starts running a demo-network
 
-    Once run as, `start-demo-network`, it will display a list of available
-    configurations to run, select the correct option, if using default settings
-    it should be 'dev_default_server'.
-
-    Parameters
-    ----------
-    ip : str, fixed
-        ip interface to listen on, by default None
-    port : int, fixed
-        port to listen on, by default None
-    image : str, fixed
-        Server Docker image to use, by default None
+    Select a server configuration to run its demo network. You should choose a
+    server configuration that you created earlier for a demo network. If you
+    have not created a demo network, you can run `vdev create-demo-network` to
+    create one.
     """
+    # run the server
+    vserver_start(ctx, None, None, None, None, True, '', False)
+
+    # run all nodes that belong to this server
     configs, _ = NodeContext.available_configurations(system_folders=False)
-    ctx = get_server_context(server_name, S_ENV, True)
-    node_names = [config.name for config in configs if handle_ in config.name]
-    vserver_start(ctx, ip, port, image, None, False, '', False)
+    node_names = [
+        config.name for config in configs if f'{ctx.name}_node_' in config.name
+    ]
     for name in node_names:
         subprocess.run(["vnode", "start", "--name", name])
 
 
 @cli_dev.command(name="stop-demo-network")
-@click.option("-n", "--name", default=server_name,
-              help="Configuration name")
-def stop_demo_network(name: str) -> None:
-    """Stops currently running demo-network. Defaults names for the server is
-    'dev_default_server', if run as `vdev stop-demo-network`. Defaults to
-    stopping all the nodes spawned with the 'demo_' handle.
-
-    Parameters
-    ----------
-    name : str
-        Name of the spawned server executed from `vdev start-demo-network`
-    """
-    vserver_stop(name=name, environment=S_ENV, system_folders=True,
+@click_insert_context
+def stop_demo_network(ctx: ServerContext) -> None:
+    """ Stops a demo network's server and nodes """
+    # stop the server
+    vserver_stop(name=ctx.name, environment=S_ENV, system_folders=True,
                  all_servers=False)
+
+    # stop the nodes
     configs, _ = NodeContext.available_configurations(False)
-    node_names = [config.name for config in configs if handle_ in config.name]
+    node_names = [
+        config.name for config in configs if f'{ctx.name}_node_' in config.name
+    ]
     for name in node_names:
         vnode_stop(name, system_folders=False, all_nodes=False, force=False)
 
 
 @cli_dev.command(name="remove-demo-network")
-@click.option("-n", "--name", default=server_name,
-              help="Configuration name")
-def remove_demo_network(server_name: str) -> None:
-    """ Remove demo network.
+@click_insert_context
+def remove_demo_network(ctx: ServerContext) -> None:
+    """ Remove files and folders of server and all nodes in a demo network """
 
-    If no name is provided, the default option is chosen which is
-    `dev_default_server`. This function tries to remove the demo_network in
-    `system` as well as `user`system_folders.
-
-    Parameters
-    ----------
-    server_name : str
-        Name of the spawned server executed from `vdev start-demo-network`,
-        default `dev_default_server`.
-    """
-    # removing the server
-    if ServerContext.config_exists(server_name, S_ENV, True):
-        server_ctx = get_server_context(server_name, S_ENV, True)
-        # first we want to shut all the log files and root handlers...
-        for handler in itertools.chain(server_ctx.log.handlers,
-                                       server_ctx.log.root.handlers):
-            handler.close()
-        # now run vserver remove
-        vserver_remove(server_ctx, server_name, S_ENV, True)
+    # remove the server
+    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+        handler.close()
+    vserver_remove(ctx, ctx.name, S_ENV, True)
 
     # removing the server import config
-    server_configs = ServerContext.instance_folders("server", server_name,
-                                                    system_folders=True)
-    if 'dev' in server_configs:
-        info("Deleting demo import config file")
-        import_config_to_del = \
-            Path(server_configs['dev']) / f"{server_name}.yaml"
-        remove_file(import_config_to_del, 'import_configuration')
+    info("Deleting demo import config file")
+    server_configs = ServerContext.instance_folders("server", ctx.name,
+                                                    system_folders=False)
+    import_config_to_del = Path(server_configs['dev']) / f"{ctx.name}.yaml"
+    remove_file(import_config_to_del, 'import_configuration')
 
-    # also want to remove the server folder
+    # also remove the server folder
+    server_configs = ServerContext.instance_folders("server", ctx.name,
+                                                    system_folders=True)
     server_folder = server_configs['data']
     if server_folder.is_dir():
         shutil.rmtree(server_folder)
+    # TODO BvB 2023-07-31 can it happen that the server folder is not a
+    # directory? What then?
 
     # remove the nodes
     configs, _ = NodeContext.available_configurations(system_folders=False)
-    node_names = [config.name for config in configs if handle_ in config.name]
+    node_names = [
+        config.name for config in configs if f'{ctx.name}_node_' in config.name
+    ]
     for name in node_names:
         node_ctx = NodeContext(name, N_ENV, False)
         for handler in itertools.chain(node_ctx.log.handlers,

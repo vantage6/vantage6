@@ -57,7 +57,7 @@ from vantage6.cli.configuration_wizard import (
     NodeConfigurationManager
 )
 from vantage6.cli.utils import (
-    check_config_name_allowed, check_if_docker_daemon_is_running, remove_file
+    check_config_name_allowed, check_if_docker_daemon_is_running, new_config_name, remove_file
 )
 from vantage6.cli import __version__
 
@@ -150,15 +150,7 @@ def cli_node_new_configuration(name: str, environment: str,
     system_folders : bool
         Store this configuration in the system folders or in the user folders.
     """
-    # select configuration name if none supplied
-    if not name:
-        name = q.text("Please enter a configuration-name:").ask()
-
-    # remove spaces, from name
-    name_new = name.replace(" ", "-")
-    if name != name_new:
-        info(f"Replaced spaces from configuration name: {name_new}")
-        name = name_new
+    name = new_config_name(name)
 
     # check if config name is allowed docker name
     check_config_name_allowed(name)
