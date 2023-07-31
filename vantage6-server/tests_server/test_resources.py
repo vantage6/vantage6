@@ -1487,7 +1487,7 @@ class TestResources(unittest.TestCase):
                     organization=org)
         role.save()
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
-            'rules': [role.id]
+            'roles': [role.id]
         })
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
