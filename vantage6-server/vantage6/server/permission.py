@@ -37,6 +37,11 @@ def print_operation(operation: Operation) -> str:
     -------
     str
         String representation of the operation
+
+    Raises
+    ------
+    ValueError
+        If the operation is not known
     """
     if operation.VIEW:
         return "view"
@@ -48,8 +53,10 @@ def print_operation(operation: Operation) -> str:
         return "delete"
     elif operation.SEND:
         return "send"
-    else:
+    elif operation.RECEIVE:
         return "receive"
+    else:
+        raise ValueError(f"Unknown operation {operation}")
 
 
 def print_scope(scope: Scope) -> str:
@@ -65,6 +72,11 @@ def print_scope(scope: Scope) -> str:
     -------
     str
         String representation of the scope
+
+    Raises
+    ------
+    ValueError
+        If the scope is not known
     """
     if scope.ORGANIZATION:
         return "organization"
@@ -72,8 +84,10 @@ def print_scope(scope: Scope) -> str:
         return "collaboration"
     elif scope.GLOBAL:
         return "global"
-    else:
+    elif scope.OWN:
         return "own"
+    else:
+        raise ValueError(f"Unknown scope {scope}")
 
 
 class RuleCollection(dict):
