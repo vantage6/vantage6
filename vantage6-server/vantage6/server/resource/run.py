@@ -4,6 +4,7 @@ from typing import Union
 import sqlalchemy as sa
 
 from flask import g, request
+from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
 
@@ -39,8 +40,19 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-def setup(api, api_base, services):
+def setup(api: Api, api_base: str, services: dict) -> None:
+    """
+    Setup the run resource.
 
+    Parameters
+    ----------
+    api : Api
+        Flask restful api instance
+    api_base : str
+        Base url of the api
+    services : dict
+        Dictionary with services required for the resource endpoints
+    """
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -87,6 +99,14 @@ run_input_schema = RunInputSchema()
 # Permissions
 # -----------------------------------------------------------------------------
 def permissions(permissions: PermissionManager):
+    """
+    Define the permissions for this resource.
+    
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any run")
@@ -103,7 +123,7 @@ def permissions(permissions: PermissionManager):
 # Resources / API's
 # ------------------------------------------------------------------------------
 class RunBase(ServicesResources):
-
+    """Base class for run resources"""
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
@@ -203,7 +223,7 @@ class MultiRunBase(RunBase):
 
 class Runs(MultiRunBase):
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self):
         """ Returns a list of runs
         ---
@@ -294,19 +314,28 @@ class Runs(MultiRunBase):
               name: page
               schema:
                 type: integer
-              description: Page number for pagination
+              description: Page number for pagination (default 1)
             - in: query
               name: per_page
               schema:
                 type: integer
-              description: Number of items per page
+              description: Number of items per page (default 10)
+            - in: query
+              name: sort
+              schema:
+                type: string
+              description: >-
+                Sort by one or more fields, separated by a comma. Use a minus
+                sign (-) in front of the field to sort in descending order.
 
         responses:
-            200:
-                description: Ok
-            401:
-                description: Unauthorized
-
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
+                
         security:
         - bearerAuth: []
 
@@ -318,7 +347,10 @@ class Runs(MultiRunBase):
         if not isinstance(query, sa.orm.query.Query):
             return query
 
-        page = Pagination.from_query(query=query, request=request)
+        try:
+            page = Pagination.from_query(query=query, request=request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of the models
         s = run_inc_schema if self.is_included('task') else run_schema
@@ -328,7 +360,7 @@ class Runs(MultiRunBase):
 
 class Results(MultiRunBase):
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self):
         """ Returns a list of results
         ---
@@ -484,7 +516,7 @@ class SingleRunBase(RunBase):
 class Run(SingleRunBase):
     """Resource for /api/run"""
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(('node', 'user', 'container'))
     def get(self, id):
         """ Get a single run's data
         ---
