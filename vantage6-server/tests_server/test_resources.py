@@ -1068,8 +1068,14 @@ class TestResources(unittest.TestCase):
                                headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
 
-        # however you can only assign rules that you own
+        # you can only rules that are lower in hierarchy than the ones you own
         rule = Rule.get_by_("role", Scope.ORGANIZATION, Operation.EDIT)
+        result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
+                               headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.CREATED)
+
+        # you can't assign rules you don't own
+        rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.EDIT)
         result = self.app.post(f'/api/role/{role.id}/rule/{rule.id}',
                                headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
@@ -1481,12 +1487,26 @@ class TestResources(unittest.TestCase):
                     organization=org)
         role.save()
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
-            'rules': [role.id]
+            'roles': [role.id]
         })
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test that you cannot assign rules if you don't have all the rules
-        # that the other user has
+        # test that you CAN assign rules if you have higher permissions than
+        # the user you are assigning rules to. In this case, the user being
+        # changed only has permission to edit their own user, while the actor
+        # has global permission for that
+        headers = self.create_user_and_login(rules=[rule, not_owning_rule])
+        result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
+            'rules': [not_owning_rule.id, rule.id]
+        })
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
+        # test that you cannot assign rules to users if they have permissions
+        # that you don't have yourself
+        second_not_owning_rule = Rule.get_by_("node", Scope.ORGANIZATION,
+                                              Operation.EDIT)
+        user.rules.append(second_not_owning_rule)
+        user.save()
         headers = self.create_user_and_login(rules=[rule, not_owning_rule])
         result = self.app.patch(f'/api/user/{user.id}', headers=headers, json={
             'rules': [not_owning_rule.id, rule.id]
