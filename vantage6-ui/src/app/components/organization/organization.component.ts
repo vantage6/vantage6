@@ -49,7 +49,6 @@ export class OrganizationComponent implements OnInit {
   loggedin_user: User = EMPTY_USER;
   users: User[] = [];
   roles: Role[] = [];
-  nodes: Node[] = [];
   organization_nodes: Node[] = [];
   collaborations: Collaboration[] = [];
   MAX_ITEMS_DISPLAY: number = 5;
@@ -183,21 +182,6 @@ export class OrganizationComponent implements OnInit {
         this.organization_nodes = org_nodes;
       }
     );
-
-    // obtain the nodes relevant to the collaborations
-    this.nodes = [];
-    for (let collab of this.collaborations) {
-      (await this.nodeDataService.collab_list(collab.id)).subscribe((nodes) => {
-        this.nodes = filterArrayByProperty(
-          this.nodes,
-          'collaboration_id',
-          collab.id,
-          false
-        );
-        this.nodes.push(...nodes);
-      });
-    }
-    this.nodes = removeDuplicateIds(this.nodes);
   }
 
   async setCollaborations(): Promise<void> {
@@ -214,10 +198,6 @@ export class OrganizationComponent implements OnInit {
 
   deleteUser(user: User): void {
     this.users = removeMatchedIdFromArray(this.users, user.id);
-  }
-
-  deleteNode(node: Node): void {
-    this.nodes = removeMatchedIdFromArray(this.nodes, node.id);
   }
 
   async deleteRole(role: Role): Promise<void> {
@@ -238,7 +218,8 @@ export class OrganizationComponent implements OnInit {
     // delete nodes of collaboration
     for (let org of col.organizations) {
       if (org.node) {
-        removeMatchedIdFromArray(this.nodes, org.node.id);
+        this.organization_nodes = removeMatchedIdFromArray(
+          this.organization_nodes, org.node.id);
       }
     }
     // delete collaboration
