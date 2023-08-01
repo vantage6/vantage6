@@ -14,7 +14,11 @@ import {
   allPages,
   defaultFirstPage,
 } from 'src/app/interfaces/utils';
-import { getIdsFromArray, removeMatchedIdsFromArray } from 'src/app/shared/utils';
+import {
+  deepcopy,
+  getIdsFromArray,
+  removeMatchedIdsFromArray
+} from 'src/app/shared/utils';
 
 /**
  * Service for retrieving and updating user data.
@@ -44,6 +48,11 @@ export class UserDataService extends BaseDataService {
    */
   updateObsById(resources: User[]): void {
     for (let res of resources) {
+      // copy action below is required because otherwise the rules and roles
+      // are not always kept. This is because the resources are used in several
+      // places simultaneously.
+      // FIXME BvB 2023-07-25: find a better solution when refactoring caching
+      res = deepcopy(res);
       if (res.id in this.resources_by_id) {
         let cur_val = this.resources_by_id[res.id].value as User;
         if (cur_val.rules.length > 0 && res.rules.length === 0) {
