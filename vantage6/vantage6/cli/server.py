@@ -173,8 +173,8 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
         Wether to attach the server logs to the console after starting the
         server.
     """
-    vserver_start(ctx, ip, port, image, rabbitmq_image, keep, mount_src, attach
-                  )
+    vserver_start(ctx, ip, port, image, start_ui, ui_port, rabbitmq_image,
+                  keep, mount_src, attach)
 
 
 def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,

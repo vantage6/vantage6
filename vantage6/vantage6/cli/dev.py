@@ -60,10 +60,12 @@ def dummy_data(node_name: str, dev_folder: Path) -> Path:
     df.to_csv(dir_data)
     info(f"Spawned dataset for {Fore.GREEN}{node_name}, writing to "
          f"{Fore.GREEN}{dir_data}{Style.RESET_ALL}")
+    print(dir_data)
     return dir_data
 
 
-def create_node_config_file(server_url: str, port: int, config: dict) -> None:
+def create_node_config_file(server_url: str, port: int, config: dict,
+                            server_name: str) -> None:
     """Create a node configuration file (YAML).
 
     Creates a node configuration for a simulated organization. Organization ID
@@ -78,6 +80,8 @@ def create_node_config_file(server_url: str, port: int, config: dict) -> None:
         Port of the dummy server.
     config : dict
         Configuration dictionary containing org_id, api_key and node name.
+    server_name : str
+        Configuration name of the dummy server.
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
@@ -87,7 +91,7 @@ def create_node_config_file(server_url: str, port: int, config: dict) -> None:
     # TODO: make this name specific to the server it connects
     node_name = config['node_name']
     folders = NodeContext.instance_folders('node', node_name, False)
-    path_to_dev_dir = Path(folders['dev'])
+    path_to_dev_dir = Path(folders['dev'] / server_name)
     path_to_dev_dir.mkdir(parents=True, exist_ok=True)
     dummy_datafile = dummy_data(node_name, path_to_dev_dir)
 
@@ -151,7 +155,7 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int,
             'api_key': generate_apikey(),
             'node_name': f"{server_name}_node_{i + 1}"
         }
-        create_node_config_file(server_url, port, config)
+        create_node_config_file(server_url, port, config, server_name)
         configs.append(config)
 
     return configs
@@ -346,7 +350,7 @@ def start_demo_network(ctx: ServerContext) -> None:
     create one.
     """
     # run the server
-    vserver_start(ctx, None, None, None, None, True, '', False)
+    vserver_start(ctx, None, None, None, False, None, None, True, '', False)
 
     # run all nodes that belong to this server
     configs, _ = NodeContext.available_configurations(system_folders=False)
@@ -413,3 +417,7 @@ def remove_demo_network(ctx: ServerContext) -> None:
         subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
                         "--user"])
         shutil.rmtree(Path(node_ctx.config_dir) / name)
+
+    # remove data files attached to the network
+    data_dirs_nodes = NodeContext.instance_folders('node', '', False)['dev']
+    shutil.rmtree(Path(data_dirs_nodes / ctx.name))
