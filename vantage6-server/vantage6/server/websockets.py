@@ -220,16 +220,18 @@ class DefaultSocketNamespace(Namespace):
             Dictionary containing parameters on the updated algorithm status.
             It should look as follows:
 
-            {
-                # node_id where algorithm container was running
-                "node_id": 1,
-                # new status of algorithm container
-                "status": "active",
-                # result_id for which the algorithm was running
-                "result_id": 1,
-                # collaboration_id for which the algorithm was running
-                "collaboration_id": 1
-            }
+            .. code:: python
+
+                {
+                    # node_id where algorithm container was running
+                    "node_id": 1,
+                    # new status of algorithm container
+                    "status": "active",
+                    # result_id for which the algorithm was running
+                    "result_id": 1,
+                    # collaboration_id for which the algorithm was running
+                    "collaboration_id": 1
+                }
         """
         # only allow nodes to send this event
         if session.type != 'node':

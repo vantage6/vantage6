@@ -2,7 +2,7 @@ Release notes
 =============
 
 3.10.4
------
+------
 
 *27 June 2023*
 
@@ -22,7 +22,7 @@ Release notes
    `PR#725 <https://github.com/vantage6/vantage6/pull/725>`_).
 
 3.10.3
------
+------
 
 *20 June 2023*
 
@@ -37,7 +37,7 @@ Release notes
     so that version was skipped.
 
 3.10.1
------
+------
 
 *19 June 2023*
 
@@ -48,7 +48,7 @@ Release notes
    `PR#720 <https://github.com/vantage6/vantage6/pull/720>`_).
 
 3.10.0
------
+------
 
 *19 June 2023*
 
@@ -163,7 +163,7 @@ Release notes
      (`Issue#656 <https://github.com/vantage6/vantage6/issues/656>`_,
      `PR#676 <https://github.com/vantage6/vantage6/pull/676>`_)
    - Fixed database label logging
-     (`PR#674 <https://github.com/vantage6/vantage6/pull/664>`_)
+     (`PR#664 <https://github.com/vantage6/vantage6/pull/664>`_)
    - Fixed a bug were VPN messages to the originating node where not always
      sent/received
      (`Issue#671 <https://github.com/vantage6/vantage6/issues/671>`_,
@@ -272,20 +272,20 @@ Release notes
 
  - Refresh tokens are no longer indefinitely valid (
    `CVE#CVE-2023-23929 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-23929>`_,
-   `commit <https://github.com/vantage6/vantage6/commit/48ebfca42359e9a6743e9598684585e2522cdce8>`_).
+   `commit <https://github.com/vantage6/vantage6/commit/48ebfca42359e9a6743e9598684585e2522cdce8>`__).
  - It was possible to obtain usernames by brute forcing the login since v3.3.0.
    This was due to a change where users got to see a message their account was
    blocked after N failed login attempts. Now, users get an email instead if
    their account is blocked (
    `CVE#CVE-2022-39228 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-39228>`_,
-   `commit <https://github.com/vantage6/vantage6/commit/ab4381c35d24add06f75d5a8a284321f7a340bd2>`_
+   `commit <https://github.com/vantage6/vantage6/commit/ab4381c35d24add06f75d5a8a284321f7a340bd2>`__
    ).
  - Assigning existing users to a different organizations was possible. This may
    lead to unintended access: if a user from organization A is accidentally
    assigned to organization B, they will retain their permissions and
    therefore might be able to access resources they should not be allowed to
    access (`CVE#CVE-2023-22738 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-22738>`_,
-   `commit <https://github.com/vantage6/vantage6/commit/798aca1de142a4eca175ef51112e2235642f4f24>`_).
+   `commit <https://github.com/vantage6/vantage6/commit/798aca1de142a4eca175ef51112e2235642f4f24>`__).
 
 - **Feature**
 
@@ -363,7 +363,7 @@ Release notes
     `Issue#534 <https://github.com/vantage6/vantage6/issues/534>`_).
  -  Latest versions of VPN images were not automatically downloaded by node
     on VPN connection startup. This has been corrected (
-    `PR#533 <https://github.com/vantage6/vantage6/pull/542>`_).
+    `PR#542 <https://github.com/vantage6/vantage6/pull/542>`_).
 
 3.7.1
 -----

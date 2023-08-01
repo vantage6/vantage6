@@ -41,8 +41,8 @@ author = (
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
-              'sphinx_autodoc_typehints', 'sphinx.ext.autosectionlabel',
-              'sphinx.ext.intersphinx', 'sphinx_click.ext']
+              'sphinx_autodoc_typehints', 'sphinx.ext.intersphinx',
+              'sphinx_click.ext']
 
 # napoleon_use_rtype = False
 napoleon_use_ivar = True
@@ -53,7 +53,9 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+# We also include the files in the `common` folder, since these are included
+# in other files, and excluding them here prevents duplicate errors.
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'common/*.rst']
 
 
 # -- Options for HTML output -------------------------------------------------

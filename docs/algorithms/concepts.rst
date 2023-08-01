@@ -41,8 +41,6 @@ orchestration.
 In vantage6, we refer to the orchestration part as the **central function** and
 the federated part as the **partial function**.
 
-.. _wrapper-central-functions:
-
 A common pattern for a central function would be:
 
 1. Request partial models from all participants
@@ -170,8 +168,8 @@ container. These algorithm containers can create new tasks themselves.
 
 Every algorithm is supplied with a JWT token (see `Input & output`_).
 This token can be used to communicate with the vantage6-server. In case
-you use a algorithm wrapper, you simply can use the supplied ``Client``
-in case you use a :ref:`wrapper-central-functions`.
+you use an algorithm wrapper, you simply can use the supplied ``Client``
+in case you use a :ref:`wrapper <wrapper-concepts>`.
 
 A child container can be a parent container itself. There is no limit to
 the amount of task layers that can be created. It is common to have only

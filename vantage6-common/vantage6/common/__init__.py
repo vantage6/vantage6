@@ -313,28 +313,6 @@ def get_database_config(databases: list, label: str) -> dict | None:
     -------
     Dict | None
         Database configuration, or None if not found
-
-    Notes
-    -----
-    The ``databases`` configuration can be in two formats. The new format
-    allows for the specification of the database type. The structure of the
-    new format is as follows:
-
-    1. Old format:
-    {
-        "database_label": "database_uri",
-        ...
-    }
-
-    2. New format:
-    [
-        {
-            "label": "database_label",
-            "uri": "database_uri",
-            "db_type": "database_type"
-        }
-    ]
-
     """
     for database in databases:
         if database["label"] == label:

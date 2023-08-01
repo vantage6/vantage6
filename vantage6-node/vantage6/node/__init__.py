@@ -647,18 +647,18 @@ class Node:
 
         Expects the configuration in the following format:
 
-        ```yaml
-        whitelist:
-            domains:
-                - domain1
-                - domain2
-            ips:
-                - ip1
-                - ip2
-            ports:
-                - port1
-                - port2
-        ```
+        .. code:: yaml
+
+            whitelist:
+                domains:
+                    - domain1
+                    - domain2
+                ips:
+                    - ip1
+                    - ip2
+                ports:
+                    - port1
+                    - port2
 
         Parameters
         ----------
