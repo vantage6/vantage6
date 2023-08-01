@@ -38,7 +38,11 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
-from vantage6.cli.utils import check_config_name_allowed, new_config_name, remove_file
+from vantage6.cli.utils import (
+    check_config_name_allowed,
+    new_config_name,
+    remove_file
+)
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
 
@@ -110,7 +114,7 @@ def click_insert_context(func: callable) -> callable:
                 error("No configurations could be found!")
                 exit(1)
 
-        ctx = _get_server_context(name, environment, system_folders)
+        ctx = get_server_context(name, environment, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context
@@ -174,8 +178,8 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
 
 
 def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
-                  rabbitmq_image: str, keep: bool, mount_src: str,
-                  attach: bool) -> None:
+                  start_ui: bool, ui_port: int, rabbitmq_image: str,
+                  keep: bool, mount_src: str, attach: bool) -> None:
     """
     Start the server in a Docker container.
 
@@ -860,7 +864,7 @@ def cli_server_version(name: str, system_folders: bool) -> None:
 #
 # helper functions
 #
-def _get_server_context(name: str, environment: str, system_folders: bool) \
+def get_server_context(name: str, environment: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
@@ -953,7 +957,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = _get_server_context(config_name, environment, system_folders)
+    ctx = get_server_context(config_name, environment, system_folders)
 
     # kill the UI container (if it exists)
     _stop_ui(client, ctx)

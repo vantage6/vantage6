@@ -57,7 +57,8 @@ from vantage6.cli.configuration_wizard import (
     NodeConfigurationManager
 )
 from vantage6.cli.utils import (
-    check_config_name_allowed, check_if_docker_daemon_is_running, new_config_name, remove_file
+    check_config_name_allowed, check_if_docker_daemon_is_running,
+    new_config_name
 )
 from vantage6.cli import __version__
 
