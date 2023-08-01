@@ -4,11 +4,11 @@ import pandas as pd
 from functools import wraps
 from typing import Any
 
-from vantage6.client.algorithm_client import AlgorithmClient
-from vantage6.tools.mock_client import MockAlgorithmClient
-from vantage6.tools.wrap import load_input
-from vantage6.tools.util import info, error, warn
-from vantage6.tools.wrappers import select_wrapper
+from vantage6.algorithm.client.algorithm_client import AlgorithmClient
+from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
+from vantage6.algorithm.tools.wrap import load_input
+from vantage6.algorithm.tools.util import info, error, warn
+from vantage6.algorithm.tools.wrappers import select_wrapper
 
 
 def algorithm_client(func: callable) -> callable:

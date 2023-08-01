@@ -22,51 +22,6 @@ vantage6.client.utils
 
 .. _algo-client-api-ref:
 
-Algorithm Client
-----------------
-
-vantage6.client.algorithm_client
-+++++++++++++++++++++++++++++++++
-
-.. automodule:: vantage6.client.algorithm_client
-   :members:
-   :show-inheritance:
-
-Algorithm tooling
------------------
-
-.. _wrapper-function-docs:
-
-vantage6.tools.wrappers
-+++++++++++++++++++++++
-
-.. automodule:: vantage6.tools.wrappers
-   :members:
-   :show-inheritance:
-
-vantage6.tools.wrap
-++++++++++++++++++++++
-
-.. automodule:: vantage6.tools.wrap
-   :members:
-   :show-inheritance:
-
-.. _mock-client-api-ref:
-
-vantage6.tools.mock_client
-++++++++++++++++++++++++++
-
-.. automodule:: vantage6.tools.mock_client
-   :members:
-
-
-vantage6.tools.util
-+++++++++++++++++++
-
-.. automodule:: vantage6.tools.util
-   :members:
-
-
 Custom client exceptions
 ------------------------
 

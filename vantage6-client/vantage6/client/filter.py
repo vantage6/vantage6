@@ -134,10 +134,10 @@ def filter_keys_from_results(func: callable) -> callable:
         list[dict]
             The filtered list of dicts.
         """
-        dicts = func(*args, **kwargs)
+        dict_ = func(*args, **kwargs)
         if field:
-            return filter_dicts_keys(dicts, [field])
-        return filter_dicts_keys(dicts, fields)
+            return filter_dicts_keys(dict_, [field])
+        return filter_dicts_keys(dict_, fields)
     return wrapper_filter
 
 
@@ -231,7 +231,7 @@ def filter_dicts_by_values(
     return dicts
 
 
-def filter_dicts_keys(dicts: list[dict], keys: list[str]) -> list[dict]:
+def filter_dicts_keys(dict_: dict, keys: list[str]) -> list[dict]:
     """
     Filter a list of dicts on the specified keys. If no keys are given, the
     original list of dicts is returned.
@@ -239,7 +239,8 @@ def filter_dicts_keys(dicts: list[dict], keys: list[str]) -> list[dict]:
     Parameters
     ----------
     dicts : list[dict]
-        The list of dicts to filter.
+        The dict to filter. This is a dict with a 'data' key that contains the
+        list of data dictionaries that will be filtered.
     keys : list[str]
         A list of keys to keep in the dictionaries
 
@@ -248,9 +249,11 @@ def filter_dicts_keys(dicts: list[dict], keys: list[str]) -> list[dict]:
     list[dict]
         The filtered list of dicts.
     """
+    # note: we look only in the 'data' key of the dict, which contains the list
+    # of data. The only other key is 'links' which contains pagination links
     if keys:
-        return [filter_dict_keys(adict, keys) for adict in dicts]
-    return dicts
+        return [filter_dict_keys(adict, keys) for adict in dict_['data']]
+    return dict_
 
 
 def filter_dict_keys(dict_: dict, keys: list[str]) -> dict:

@@ -143,6 +143,11 @@ class Rules(ServicesResources):
 
         # find roles containing a specific rule
         if 'role_id' in args:
+            role = db.Role.get(args['role_id'])
+            if not role:
+                return {
+                    'msg': f'Role with id={args["role_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
             q = q.join(db.role_rule_association).join(db.Role)\
                  .filter(db.Role.id == args['role_id'])
 
@@ -151,6 +156,11 @@ class Rules(ServicesResources):
         # do an outer join to find all rules that are directly assigned to the
         # user.
         if 'user_id' in args:
+            user = db.User.get(args['user_id'])
+            if not user:
+                return {
+                    'msg': f'User with id={args["user_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
             q = q.join(db.role_rule_association).join(db.Role)\
                  .join(db.Permission).join(db.User)\
                  .outerjoin(db.UserPermission,

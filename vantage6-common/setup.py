@@ -31,7 +31,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     install_requires=[
         'appdirs==1.4.4',
         'click==8.1.3',
@@ -42,6 +42,7 @@ setup(
         'PyJWT==2.6.0',
         'PyYAML==6.0',
         'python-dateutil==2.8.2',
+        'qrcode==7.3.1',
         'requests==2.31.0',
         'schema==0.7.5',
     ],

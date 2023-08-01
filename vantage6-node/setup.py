@@ -31,7 +31,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     install_requires=[
         'click==8.1.3',
         'docker==6.1.2',

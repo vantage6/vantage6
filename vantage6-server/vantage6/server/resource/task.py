@@ -6,6 +6,7 @@ from flask import g, request, url_for
 from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
+from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.task_status import TaskStatus, has_task_finished
@@ -294,35 +295,47 @@ class Tasks(TaskBase):
                 }, HTTPStatus.UNAUTHORIZED
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+            collaboration_id = int(args['collaboration_id'])
+            if not self.r.can_for_col(P.VIEW, collaboration_id):
                 return {'msg': 'You lack the permission to view tasks '
-                        f'from collaboration {args["collaboration_id"]}!'}, \
+                        f'from collaboration {collaboration_id}!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.join(db.Collaboration).filter(
-                db.Collaboration.id == args['collaboration_id'])
+            # dont join collaboration table if it is already joined
+            # FIXME refactor this after moving to SQLAlchemy 2.0
+            has_already_joined_collab = False
+            for visitor in visitors.iterate(q.statement):
+                if visitor.__visit_name__ == 'table' and \
+                        visitor.name == 'collaboration':
+                    has_already_joined_collab = True
+            if not has_already_joined_collab:
+                q = q.join(db.Collaboration)
+            q = q.filter(db.Collaboration.id == collaboration_id)
 
         if 'init_org_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['init_org_id']):
+            init_org_id = int(args['init_org_id'])
+            if not self.r.can_for_org(P.VIEW, init_org_id):
                 return {'msg': 'You lack the permission to view tasks '
-                        f'from organization id={args["init_org_id"]}!'}, \
+                        f'from organization id={init_org_id}!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.init_org_id == args['init_org_id'])
+            q = q.filter(db.Task.init_org_id == init_org_id)
 
         if 'init_user_id' in args:
-            init_user = db.User.get(args['init_user_id'])
+            init_user_id = int(args['init_user_id'])
+            init_user = db.User.get(init_user_id)
             if not init_user:
-                return {'msg': f'User id={args["init_user_id"]} does not '
+                return {'msg': f'User id={init_user_id} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_org(P.VIEW, init_user.organization_id) \
                     and not (self.r.v_own.can() and g.user and
                              init_user.id == g.user.id):
                 return {'msg': 'You lack the permission to view tasks '
-                        f'from user id={args["init_user_id"]}!'}, \
+                        f'from user id={init_user_id}!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.init_user_id == args['init_user_id'])
+            q = q.filter(db.Task.init_user_id == init_user_id)
 
         if 'parent_id' in args:
-            parent = db.Task.get(args['parent_id'])
+            parent_id = int(args['parent_id'])
+            parent = db.Task.get(parent_id)
             if not parent:
                 return {'msg': f'Parent task id={args["parent_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
@@ -331,11 +344,12 @@ class Tasks(TaskBase):
                         'from the collaboration that the task with parent_id='
                         f'{parent.collaboration_id} belongs to!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.parent_id == args['parent_id'])
+            q = q.filter(db.Task.parent_id == int(parent_id))
 
         if 'job_id' in args:
+            job_id = int(args['job_id'])
             task_in_job = q.session.query(db.Task).filter(
-                db.Task.job_id == args['job_id']).first()
+                db.Task.job_id == job_id).first()
             if not task_in_job:
                 return {'msg': f'Job id={args["job_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
@@ -344,14 +358,15 @@ class Tasks(TaskBase):
                         'from the collaboration that the task with job_id='
                         f'{task_in_job.collaboration_id} belongs to!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.job_id == args['job_id'])
+            q = q.filter(db.Task.job_id == job_id)
 
         for param in ['name', 'image', 'description', 'status']:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
 
         if 'run_id' in args:
-            run = db.Run.get(args['run_id'])
+            run_id = int(args['run_id'])
+            run = db.Run.get(run_id)
             if not run:
                 return {'msg': f'Run id={args["run_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
@@ -360,7 +375,7 @@ class Tasks(TaskBase):
                         'from the collaboration that the run with id='
                         f'{run.collaboration_id} belongs to!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.join(db.Run).filter(db.Run.id == args['run_id'])
+            q = q.join(db.Run).filter(db.Run.id == run_id)
 
         if 'database' in args:
             q = q.join(db.TaskDatabase)\
