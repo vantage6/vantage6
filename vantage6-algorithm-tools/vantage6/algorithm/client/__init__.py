@@ -7,8 +7,8 @@ from typing import Any
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.task_status import TaskStatus
-from vantage6.tools.serialization import serialize
-from vantage6.tools.util import info
+from vantage6.common.serialization import serialize
+from vantage6.algorithm.tools.util import info
 
 
 class AlgorithmClient(ClientBase):

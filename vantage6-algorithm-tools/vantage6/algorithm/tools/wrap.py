@@ -5,9 +5,9 @@ import traceback
 from typing import Any
 
 from vantage6.common.client import deserialization
-from vantage6.tools import serialization
-from vantage6.tools.util import info, error
-from vantage6.tools.exceptions import DeserializationException
+from vantage6.common import serialization
+from vantage6.algorithm.tools.util import info, error
+from vantage6.algorithm.tools.exceptions import DeserializationException
 
 
 def wrap_algorithm(module: str, log_traceback: bool = True) -> None:

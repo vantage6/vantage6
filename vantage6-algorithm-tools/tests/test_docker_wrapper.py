@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 import pandas as pd
 
-from vantage6.tools import wrapper
+from vantage6.algorithm.tools import wrapper
 
 MODULE_NAME = 'algorithm_module'
 DATA = 'column1,column2\n1,2'
@@ -74,7 +74,7 @@ def run_docker_wrapper_with_echo_db(input_file, tmp_path):
     output_file = tmp_path / 'output_file.pkl'
     db_file.write_text(DATA)
     token_file.write_text(TOKEN)
-    with patch('vantage6.tools.docker_wrapper.os') as mock_os:
+    with patch('vantage6.algorithm.tools.docker_wrapper.os') as mock_os:
         mock_os.environ = {
             'INPUT_FILE': input_file,
             'TOKEN_FILE': token_file,
@@ -86,9 +86,9 @@ def run_docker_wrapper_with_echo_db(input_file, tmp_path):
     return output_file
 
 
-@patch('vantage6.tools.wrap._run_algorithm_method')
-@patch('vantage6.tools.docker_wrapper.os')
-@patch('vantage6.tools.docker_wrapper.SPARQLWrapper')
+@patch('vantage6.algorithm.tools.wrap._run_algorithm_method')
+@patch('vantage6.algorithm.tools.docker_wrapper.os')
+@patch('vantage6.algorithm.tools.docker_wrapper.SPARQLWrapper')
 def test_sparql_docker_wrapper_passes_dataframe(
     SPARQLWrapper: MagicMock, os: MagicMock, _run_algorithm_method: MagicMock,
     tmp_path: Path

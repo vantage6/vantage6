@@ -48,7 +48,8 @@ class RuleCollection(dict):
         permission = Permission(RuleNeed(self.name, scope, operation))
         self.__setattr__(f'{operation}_{scope}', permission)
 
-    def can_for_org(self, operation: Operation, subject_org_id: int) -> bool:
+    def can_for_org(self, operation: Operation,
+                    subject_org_id: int | str) -> bool:
         """
         Check if an operation is allowed on a certain organization
 
@@ -56,8 +57,9 @@ class RuleCollection(dict):
         ----------
         operation: Operation
             Operation to check if allowed
-        subject_org_id: int
-            Organization id on which the operation should be allowed
+        subject_org_id: int | str
+            Organization id on which the operation should be allowed. If a
+            string is given, it will be converted to an int
 
         Returns
         -------
@@ -65,6 +67,9 @@ class RuleCollection(dict):
             True if the operation is allowed on the organization, False
             otherwise
         """
+        if isinstance(subject_org_id, str):
+            subject_org_id = int(subject_org_id)
+
         auth_org = obtain_auth_organization()
 
         # check if the entity has global permission
@@ -89,7 +94,8 @@ class RuleCollection(dict):
         # no permission found
         return False
 
-    def can_for_col(self, operation: Operation, collaboration_id: int) -> bool:
+    def can_for_col(self, operation: Operation,
+                    collaboration_id: int | str) -> bool:
         """
         Check if the user or node can perform the operation on a certain
         collaboration
@@ -98,9 +104,13 @@ class RuleCollection(dict):
         ----------
         operation: Operation
             Operation to check if allowed
-        collaboration_id: int
-            Collaboration id on which the operation should be allowed
+        collaboration_id: int | str
+            Collaboration id on which the operation should be allowed. If a
+            string is given, it will be converted to an int
         """
+        if isinstance(collaboration_id, str):
+            collaboration_id = int(collaboration_id)
+
         auth_collabs = obtain_auth_collaborations()
 
         # check if the entity has global permission

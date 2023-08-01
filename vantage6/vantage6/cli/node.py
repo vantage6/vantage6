@@ -255,7 +255,6 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     """
     info("Starting node...")
     info("Finding Docker daemon")
-    print("alhoa")
     docker_client = docker.from_env()
     check_docker_running()
 

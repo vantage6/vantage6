@@ -41,6 +41,7 @@ community:
 uninstall:
 	pip uninstall -y vantage6
 	pip uninstall -y vantage6-client
+	pip uninstall -y vantage6-algorithm-tools
 	pip uninstall -y vantage6-common
 	pip uninstall -y vantage6-node
 	pip uninstall -y vantage6-server
@@ -48,6 +49,7 @@ uninstall:
 install:
 	cd vantage6-common && pip install .
 	cd vantage6-client && pip install .
+	cd vantage6-algorithm-tools && pip install .
 	cd vantage6 && pip install .
 	cd vantage6-node && pip install .
 	cd vantage6-server && pip install .
@@ -55,6 +57,7 @@ install:
 install-dev:
 	cd vantage6-common && pip install -e .
 	cd vantage6-client && pip install -e .
+	cd vantage6-algorithm-tools && pip install -e .
 	cd vantage6 && pip install -e .[dev]
 	cd vantage6-node && pip install -e .[dev]
 	cd vantage6-server && pip install -e .[dev]
@@ -157,6 +160,10 @@ rebuild:
 	@echo "------------------------------------"
 	cd vantage6-client && make rebuild
 	@echo "------------------------------------"
+	@echo "         VANTAGE6 ALGORITHM TOOLS   "
+	@echo "------------------------------------"
+	cd vantage6-algorithm-tools && make rebuild
+	@echo "------------------------------------"
 	@echo "         VANTAGE6 CLI            "
 	@echo "------------------------------------"
 	cd vantage6 && make rebuild
@@ -172,6 +179,7 @@ rebuild:
 publish:
 	cd vantage6-common && make publish
 	cd vantage6-client && make publish
+	cd vantage6-algorithm-tools && make publish
 	cd vantage6 && make publish
 	cd vantage6-node && make publish
 	cd vantage6-server && make publish

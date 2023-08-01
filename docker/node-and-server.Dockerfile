@@ -41,6 +41,7 @@ RUN pip install -r /vantage6/requirements.txt \
 # install individual packages
 RUN pip install -e /vantage6/vantage6-common
 RUN pip install -e /vantage6/vantage6-client
+RUN pip install -e /vantage6/vantage6-algorithm-tools
 RUN pip install -e /vantage6/vantage6
 RUN pip install -e /vantage6/vantage6-node
 RUN pip install -e /vantage6/vantage6-server

@@ -148,7 +148,7 @@ your ``Dockerfile``:
 
 .. code:: docker
 
-    CMD python -c "from vantage6.tools.wrap import wrap_algorithm; wrap_algorithm('${PKG_NAME}')"
+    CMD python -c "from vantage6.algorithm.tools.wrap import wrap_algorithm; wrap_algorithm('${PKG_NAME}')"
 
 where ``${PKG_NAME}`` is the name of your algorithm package. The ``wrap_algorithm``
 function will wrap your algorithm.

@@ -1,6 +1,7 @@
 # requirements for readthedocs generation
 -r ../vantage6-common/requirements.txt
 -r ../vantage6-client/requirements.txt
+-r ../vantage6-algorithm-tools/requirements.txt
 -r ../vantage6/requirements.txt
 -r ../vantage6-node/requirements.txt
 -r ../vantage6-server/requirements.txt
