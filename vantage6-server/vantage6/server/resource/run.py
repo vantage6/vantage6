@@ -289,9 +289,7 @@ class Runs(MultiRunBase):
               name: include
               schema:
                 type: string (can be multiple)
-              description: Include 'task' to include task data. Include
-                'metadata' to get pagination metadata. Note that this will put
-                the actual data in an envelope.
+              description: Include 'task' to include task data.
             - in: query
               name: page
               schema:
