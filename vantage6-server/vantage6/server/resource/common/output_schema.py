@@ -9,7 +9,7 @@ from flask import url_for
 from vantage6.server import db
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.server.model import Base
+from vantage6.server.model import Base, User
 from vantage6.server.resource.common.pagination import Pagination
 
 log = logging.getLogger(logger_name(__name__))
@@ -346,6 +346,49 @@ class UserSchema(HATEOASModelSchema):
     ))
 
     organization = fields.Method("organization")
+
+
+class UserWithPermissionDetailsSchema(UserSchema):
+    """
+    A schema for API responses that contains regular user details plus
+    additional permission details for the user to be used by the UI.
+    """
+    permissions = fields.Method("permissions_")
+
+    @staticmethod
+    def permissions_(obj: User) -> dict:
+        """
+        Returns a dictionary containing permission details for the user to be
+        used by the UI.
+
+        Parameters
+        ----------
+        obj : User
+            The user to get permission details for.
+
+        Returns
+        -------
+        dict
+            A dictionary containing permission details for the user.
+        """
+        role_ids = [role.id for role in obj.roles]
+        rule_ids = list(set(
+            [rule.id for rule in obj.rules] + \
+            [rule.id for role in obj.roles for rule in role.rules]
+        ))
+        # Return which organizations the user is in collaboration with so that
+        # UI knows which organizations user has access to if they have
+        # collaboration scope permissions
+        orgs_in_collabs = list(set([
+            org.id
+            for collab in obj.organization.collaborations
+            for org in collab.organizations
+        ]))
+        return {
+            "roles": role_ids,
+            "rules": rule_ids,
+            "orgs_in_collabs": orgs_in_collabs
+        }
 
 
 class RoleSchema(HATEOASModelSchema):
