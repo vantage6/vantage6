@@ -145,6 +145,13 @@ whitelist:
   ports:
     - 443
 
+# Containers that are defined here are linked to the algorithm containers and
+# can therefore be accessed when by the algorithm when it is running. Note that
+# for using this option, the container with 'container_name' should already be
+# started before the node is started.
+docker_services:
+    container_label: container_name
+
 # Settings for the logger
 logging:
   # Controls the logging output level. Could be one of the following
