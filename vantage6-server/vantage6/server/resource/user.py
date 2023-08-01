@@ -260,7 +260,10 @@ class Users(UserBase):
                 return {
                     'msg': f'Role with id={args["role_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, role.organization_id):
+            # note: We check if role has organization to ensure that users
+            # with limited permissions can still see who have default roles
+            elif not self.r.can_for_org(P.VIEW, role.organization_id) and \
+                    role.organization:
                 return {
                     'msg': 'You lack the permission view users from the '
                     f'organization that role with id={role.organization_id} '
