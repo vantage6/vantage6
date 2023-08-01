@@ -349,7 +349,7 @@ class DockerManager(DockerBaseManager):
         Stop all active tasks and delete the isolated network
 
         Note: the temporary docker volumes are kept as they may still be used
-        by a master container
+        by a parent container
         """
         # note: the function `cleanup_tasks` returns a list of tasks that were
         # killed, but we don't register them as killed so they will be run

@@ -225,7 +225,7 @@ def cli_node_files(name: str, system_folders: bool) -> None:
 @click.option('--attach/--detach', default=False,
               help="Attach node logs to the console after start")
 @click.option('--mount-src', default='',
-              help="mount vantage6-master package source")
+              help="Mount the main vantage6 package source")
 def cli_node_start(name: str, config: str, system_folders: bool, image: str,
                    keep: bool, mount_src: str, attach: bool,
                    force_db_mount: bool) -> None:

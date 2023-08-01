@@ -16,7 +16,7 @@ The node application runs four threads:
 *Proxy server thread*
     Algorithm containers are isolated from the internet for security reasons.
     The local proxy server provides an interface to the central server for
-    *master* containers to create subtasks and retrieve their results.
+    algorithm containers to create subtasks and retrieve their results.
 
 The node connects to the server using a websocket connection. This connection
 is mainly used for sharing status updates. This avoids the need for polling to

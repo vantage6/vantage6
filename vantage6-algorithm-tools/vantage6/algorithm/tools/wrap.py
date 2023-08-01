@@ -70,8 +70,7 @@ def _run_algorithm_method(input_data: dict, module: str,
     input_data : dict
         The input data that is passed to the algorithm. This should at least
         contain the key 'method' which is the name of the method that should be
-        called. Another often used key is 'master' which indicates that this
-        container is a master container. Other keys depend on the algorithm.
+        called. Other keys depend on the algorithm.
     module : str
         The module that contains the algorithm.
     log_traceback: bool, optional

@@ -1,9 +1,3 @@
-"""
-vantage6 clients
-
-This module is contains a base client. From this base client the container
-client (client used by master algorithms) and the user client are derived.
-"""
 from __future__ import annotations
 
 import logging

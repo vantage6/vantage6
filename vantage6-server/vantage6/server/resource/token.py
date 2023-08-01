@@ -291,7 +291,7 @@ class ContainerToken(ServicesResources):
         if not db_task:
             log.warning(f"Node {g.node.id} attempts to generate key for task "
                         f"{task_id} that does not exist")
-            return {"msg": "Master task does not exist!"}, \
+            return {"msg": "Parent task does not exist!"}, \
                 HTTPStatus.BAD_REQUEST
 
         # verify that task the token is requested for exists
