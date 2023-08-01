@@ -139,3 +139,20 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
 
 Testing 
 """""""
+It is now possible to test the infrastructure setup. This functionality can be
+accessed via the ``vdev`` command. Use the ``--help`` flag, e.g. 
+``vdev start-demo-network --help```. The purpose of this function extends as 
+well as a speed-run in setting up a server accompanied by some nodes. For 
+instance, one can create a network with `N` 
+
++------------------------------+--------------------------------------------+
+| **Command**                  | **Description**                            |
++==============================+============================================+
+| ``vdev create-demo-network`` | Create a new network with server and nodes |
++------------------------------+--------------------------------------------+
+| ``vdev start-demo-network``  | Start a network                            |
++------------------------------+--------------------------------------------+
+| ``vdev stop-demo-network``   | Stop a network                             |
++------------------------------+--------------------------------------------+
+| ``vdev remove-demo-network`` | Remove demo network completely             |
++------------------------------+--------------------------------------------+
