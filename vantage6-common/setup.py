@@ -36,7 +36,7 @@ setup(
         'appdirs==1.4.4',
         'click==8.1.3',
         'colorama==0.4.6',
-        'cryptography==41.0.0',
+        'cryptography==41.0.3',
         'docker==6.1.2',
         'pyfiglet==0.8.post1',
         'PyYAML==6.0',
