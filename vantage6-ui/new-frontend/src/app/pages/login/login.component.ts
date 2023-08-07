@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { LoginForm } from 'src/app/models/forms/login-form.model';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -7,16 +9,19 @@ import { FormBuilder, Validators } from '@angular/forms';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
-  loginForm = this.fb.group({
-    username: [null, Validators.required],
-    password: [null, Validators.required]
+  loginForm = this.fb.nonNullable.group({
+    username: ['', Validators.required],
+    password: ['', Validators.required]
   });
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService
+  ) {}
 
   onSubmit(): void {
     if (!this.loginForm.valid) return;
 
-    //TODO: Login
+    this.authService.login(this.loginForm.value as LoginForm);
   }
 }
