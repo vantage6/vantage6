@@ -1,3 +1,4 @@
+@import "config.scss";
 @import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
 
 /* You can add global styles to this file, and also import other style files */
@@ -9,4 +10,14 @@ body {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+//Angular Material overrides
+mat-form-field {
+  width: 100%;
+}
+
+//Reusable styles
+.login-card {
+  margin: 0 $spacing-px-4;
 }
