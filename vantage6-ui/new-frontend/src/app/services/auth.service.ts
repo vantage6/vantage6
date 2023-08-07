@@ -3,14 +3,16 @@ import { environment } from 'src/environments/environment.development';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
 import { Login } from '../models/api/login.model';
-
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
+import { ResourceType, Rule } from '../models/api/rule.model';
+import { Pagination } from '../models/api/pagination.model';
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  activeRules: Rule[] | null = null;
+
   constructor(private apiService: ApiService) {}
 
   async login(loginForm: LoginForm): Promise<boolean> {
@@ -20,13 +22,27 @@ export class AuthService {
     };
     const result = await this.apiService.post<Login>(environment.api_url + '/token/user', data);
     this.setSession(result);
-    return this.isAuthenticated();
+    return await this.isAuthenticated();
   }
 
-  isAuthenticated(): boolean {
+  async isAuthenticated(): Promise<boolean> {
     //TODO: check if token is valid
     const hasAccessToken = !!sessionStorage.getItem(ACCESS_TOKEN_KEY);
+
+    if (hasAccessToken && this.activeRules === null) {
+      await this.getUserRules();
+    }
     return hasAccessToken;
+  }
+
+  hasAdminAuthorization(resource: ResourceType): boolean {
+    return !!this.activeRules?.some((rule) => rule.resource === resource);
+  }
+
+  private async getUserRules() {
+    const userId = sessionStorage.getItem(USER_ID);
+    const result = await this.apiService.get<Pagination<Rule>>(environment.api_url + `/rule?user_id=${userId}`);
+    this.activeRules = result.data;
   }
 
   private setSession(result: Login): void {
@@ -36,6 +52,7 @@ export class AuthService {
 
     sessionStorage.setItem(ACCESS_TOKEN_KEY, result.access_token);
     sessionStorage.setItem(REFRESH_TOKEN_KEY, result.refresh_token);
+    sessionStorage.setItem(USER_ID, result.user_url.split('/').pop() || '');
   }
 
   private clearSession(): void {
