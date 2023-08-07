@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { LoginForm } from 'src/app/models/forms/login-form.model';
+import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
@@ -15,13 +17,17 @@ export class LoginComponent {
   });
 
   constructor(
+    private router: Router,
     private fb: FormBuilder,
     private authService: AuthService
   ) {}
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (!this.loginForm.valid) return;
 
-    this.authService.login(this.loginForm.value as LoginForm);
+    const isAuthenticated = await this.authService.login(this.loginForm.value as LoginForm);
+    if (isAuthenticated) {
+      this.router.navigate([routePaths.home]);
+    }
   }
 }

@@ -1,3 +1,4 @@
 export const routePaths = {
-  login: 'login'
+  login: 'login',
+  home: 'home'
 };
