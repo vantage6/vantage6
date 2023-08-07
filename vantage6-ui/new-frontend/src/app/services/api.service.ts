@@ -8,12 +8,16 @@ import { Observable, first } from 'rxjs';
 export class ApiService {
   constructor(private http: HttpClient) {}
 
-  post = async (url: string, body: any): Promise<any> => {
-    return await this.handleResult(this.http.post(url, body));
-  };
+  async get<T = null>(url: string): Promise<T> {
+    return await this.handleResult(this.http.get<T>(url));
+  }
 
-  private async handleResult(request: Observable<any>): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+  async post<T = null>(url: string, body: any): Promise<T> {
+    return await this.handleResult(this.http.post<T>(url, body));
+  }
+
+  private async handleResult<T = null>(request: Observable<T>): Promise<any> {
+    return new Promise<T>((resolve, reject) => {
       request.pipe(first()).subscribe(
         (response) => {
           resolve(response as any);

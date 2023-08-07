@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment.development';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
+import { Login } from '../models/api/login.model';
 
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -17,7 +18,7 @@ export class AuthService {
       username: loginForm.username,
       password: loginForm.password
     };
-    const result = await this.apiService.post(environment.api_url + '/token/user', data);
+    const result = await this.apiService.post<Login>(environment.api_url + '/token/user', data);
     this.setSession(result);
     return this.isAuthenticated();
   }
@@ -28,7 +29,7 @@ export class AuthService {
     return hasAccessToken;
   }
 
-  private setSession(result: any): void {
+  private setSession(result: Login): void {
     this.clearSession();
 
     if (!result.access_token) return;
