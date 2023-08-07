@@ -1,1 +1,20 @@
-<router-outlet></router-outlet>
+<mat-toolbar color="primary">
+  <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
+  <span>Vantage6</span>
+</mat-toolbar>
+
+<mat-sidenav-container>
+  <mat-sidenav #sideNav [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
+    <mat-nav-list>
+      <mat-list-item [routerLink]="[routes.home]" [routerLinkActive]="['mdc-list-item--activated']">
+        <mat-icon matListItemIcon>home</mat-icon>
+        <a matLine>Home</a>
+      </mat-list-item>
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <div class="layout-container">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
