@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, delay, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 
 @Component({
@@ -22,7 +22,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.breakpointObserver
       .observe([Breakpoints.XSmall])
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.destroy$), delay(1))
       .subscribe((result) => {
         this.hideSideMenu = result.matches;
         if (!this.hideSideMenu) {
