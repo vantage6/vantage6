@@ -4,7 +4,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { NavigationLink } from 'src/app/models/application/navigation-link.model';
-import { ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { IS_ADMINISTRATION } from 'src/app/models/constants/sessionStorage';
 import { NavigationEnd, Router } from '@angular/router';
@@ -75,6 +75,9 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
       }
     } else {
       newLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
+      if (this.authService.isOperationAllowed(ResourceType.TASK, ScopeType.GLOBAL, OperationType.CREATE)) {
+        newLinks.push({ route: routePaths.task, label: 'Task', icon: 'science' });
+      }
     }
 
     this.navigationLinks = newLinks;

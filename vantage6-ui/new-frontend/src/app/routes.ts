@@ -3,4 +3,5 @@ export const routePaths = {
   home: '',
   homeAdministration: 'administration',
   organization: 'organization',
+  task: 'task'
 };

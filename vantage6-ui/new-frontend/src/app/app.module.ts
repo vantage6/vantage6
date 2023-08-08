@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatStepperModule } from '@angular/material/stepper';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -21,9 +22,18 @@ import { LayoutLoginComponent } from './layouts/layout-login/layout-login.compon
 import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { OrganizationComponent } from './pages/organization/organization.component';
+import { TaskComponent } from './pages/task/task.component';
 
 @NgModule({
-  declarations: [AppComponent, LayoutLoginComponent, LoginComponent, HomeComponent, LayoutDefaultComponent, OrganizationComponent],
+  declarations: [
+    AppComponent,
+    LayoutLoginComponent,
+    LoginComponent,
+    HomeComponent,
+    LayoutDefaultComponent,
+    OrganizationComponent,
+    TaskComponent
+  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -38,6 +48,7 @@ import { OrganizationComponent } from './pages/organization/organization.compone
     MatListModule,
     MatSelectModule,
     MatSidenavModule,
+    MatStepperModule,
     MatToolbarModule
   ],
   providers: [],

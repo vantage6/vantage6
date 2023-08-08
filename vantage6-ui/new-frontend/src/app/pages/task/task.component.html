@@ -1,0 +1,36 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Create task</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <mat-stepper [linear]="true" orientation="vertical" #stepper>
+      <mat-step [stepControl]="form">
+        <form [formGroup]="form">
+          <ng-template matStepLabel>Select package</ng-template>
+          <mat-form-field>
+            <mat-label>Algorithm</mat-label>
+            <mat-select formControlName="algorithmID">
+              <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
+                {{ algorithm.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Analysis name</mat-label>
+            <input matInput type="text" formControlName="name" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Analysis description</mat-label>
+            <input matInput type="text" formControlName="description" />
+          </mat-form-field>
+          <div>
+            <button mat-button matStepperNext>Next</button>
+          </div>
+        </form>
+      </mat-step>
+      <mat-step [stepControl]="form">
+        <ng-template matStepLabel>Select function</ng-template>
+      </mat-step>
+    </mat-stepper>
+  </mat-card-content>
+</mat-card>
