@@ -19,9 +19,10 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
+import { OrganizationComponent } from './pages/organization/organization.component';
 
 @NgModule({
-  declarations: [AppComponent, LayoutLoginComponent, LoginComponent, HomeComponent, LayoutDefaultComponent],
+  declarations: [AppComponent, LayoutLoginComponent, LoginComponent, HomeComponent, LayoutDefaultComponent, OrganizationComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

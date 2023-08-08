@@ -6,6 +6,7 @@ import { LayoutLoginComponent } from './layouts/layout-login/layout-login.compon
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { HomeComponent } from './pages/home/home.component';
 import { authenticationGuard } from './guards/authentication.guard';
+import { OrganizationComponent } from './pages/organization/organization.component';
 
 const routes: Routes = [
   {
@@ -25,6 +26,11 @@ const routes: Routes = [
       {
         path: routePaths.home,
         component: HomeComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routePaths.organization,
+        component: OrganizationComponent,
         canActivate: [authenticationGuard()]
       }
     ]
