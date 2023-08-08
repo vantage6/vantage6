@@ -1,9 +1,14 @@
 <mat-toolbar color="primary">
   <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
   <span>Vantage6</span>
+  <div class="actions">
+    <button mat-flat-button (click)="handleAdministrationToggle()">
+      {{ isAdministration ? "Leave administration" : "Aministration" }}
+    </button>
+  </div>
 </mat-toolbar>
 
-<mat-sidenav-container>
+<mat-sidenav-container autosize>
   <mat-sidenav #sideNav [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
     <mat-nav-list>
       <mat-list-item

@@ -29,6 +29,11 @@ const routes: Routes = [
         canActivate: [authenticationGuard()]
       },
       {
+        path: routePaths.homeAdministration,
+        component: HomeComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
         path: routePaths.organization,
         component: OrganizationComponent,
         canActivate: [authenticationGuard()]

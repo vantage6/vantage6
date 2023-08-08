@@ -1,11 +1,13 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
-import { Subject, delay, takeUntil } from 'rxjs';
+import { Subject, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { NavigationLink } from 'src/app/models/application/navigation-link.model';
 import { ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
+import { IS_ADMINISTRATION } from 'src/app/models/constants/sessionStorage';
+import { NavigationEnd, Router } from '@angular/router';
 
 @Component({
   selector: 'app-layout-default',
@@ -16,20 +18,24 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
   destroy$ = new Subject();
   hideSideMenu = false;
   navigationLinks: NavigationLink[] = [];
+  isAdministration: boolean = false;
 
   @ViewChild(MatSidenav)
   sideNav!: MatSidenav;
 
   constructor(
+    private router: Router,
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService
-  ) {}
+  ) {
+    router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event) => {
+      this.setNavigationLinks();
+    });
+  }
 
   ngOnInit(): void {
-    this.navigationLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
-    if (this.authService.hasResourceInScope(ResourceType.ORGANIZATION, ScopeType.GLOBAL)) {
-      this.navigationLinks.push({ route: routePaths.organization, label: 'Organization', icon: 'location_city' });
-    }
+    const isAdministration = sessionStorage.getItem(IS_ADMINISTRATION);
+    this.isAdministration = isAdministration === 'true';
   }
 
   ngAfterViewInit(): void {
@@ -48,5 +54,29 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+  }
+
+  handleAdministrationToggle() {
+    this.isAdministration = !this.isAdministration;
+    sessionStorage.setItem(IS_ADMINISTRATION, String(this.isAdministration));
+    if (this.isAdministration) {
+      this.router.navigate([routePaths.homeAdministration]);
+    } else {
+      this.router.navigate([routePaths.home]);
+    }
+  }
+
+  private setNavigationLinks() {
+    const newLinks: NavigationLink[] = [];
+    if (this.isAdministration) {
+      newLinks.push({ route: routePaths.homeAdministration, label: 'Home', icon: 'home', shouldBeExact: true });
+      if (this.authService.hasResourceInScope(ResourceType.ORGANIZATION, ScopeType.GLOBAL)) {
+        newLinks.push({ route: routePaths.organization, label: 'Organization', icon: 'location_city' });
+      }
+    } else {
+      newLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
+    }
+
+    this.navigationLinks = newLinks;
   }
 }
