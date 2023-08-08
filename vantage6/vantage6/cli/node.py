@@ -25,6 +25,7 @@ from typing import Iterable
 from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
+from shutil import rmtree
 
 from vantage6.common import (
     warning, error, info, debug,
@@ -58,7 +59,7 @@ from vantage6.cli.configuration_wizard import (
 )
 from vantage6.cli.utils import (
     check_config_name_allowed, check_if_docker_daemon_is_running,
-    new_config_name
+    new_config_name, remove_file
 )
 from vantage6.cli import __version__
 
@@ -907,17 +908,23 @@ def vnode_remove(name: str, environment: str, system_folders: bool):
 
     # remove the VPN configuration file
     vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
-    _remove_file(vpn_config_file, 'VPN configuration')
+    remove_file(vpn_config_file, 'VPN configuration')
 
     # remove the config file
-    _remove_file(ctx.config_file, 'configuration')
+    remove_file(ctx.config_file, 'configuration')
 
     # remove the log file. As this process opens the log file above, the log
     # handlers need to be closed before deleting
     info(f"Removing log file {ctx.log_file}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    _remove_file(ctx.log_file, 'log')
+    # remove_file(ctx.log_file, 'log')
+
+    # removes the whole folder
+    rmtree(Path(ctx.log_file.parent))
+
+    # remove the folder
+    rmtree(ctx.config_dir / name)
 
 
 #
@@ -1106,23 +1113,23 @@ def _find_running_node_names(client: docker.DockerClient) -> list[str]:
     return [node.name for node in running_nodes]
 
 
-def _remove_file(file: str, file_type: str) -> None:
-    """
-    Remove a file if it exists.
+# def _remove_file(file: str, file_type: str) -> None:
+#     """
+#     Remove a file if it exists.
 
-    Parameters
-    ----------
-    file : str
-        absolute path to the file to be deleted
-    file_type : str
-        type of file, used for logging
-    """
-    if os.path.isfile(file):
-        info(f"Removing {file_type} file: {file}")
-        try:
-            os.remove(file)
-        except Exception as e:
-            error(f"Could not delete file: {file}")
-            error(e)
-    else:
-        warning(f"Could not remove {file_type} file: {file} does not exist")
+#     Parameters
+#     ----------
+#     file : str
+#         absolute path to the file to be deleted
+#     file_type : str
+#         type of file, used for logging
+#     """
+#     if os.path.isfile(file):
+#         info(f"Removing {file_type} file: {file}")
+#         try:
+#             os.remove(file)
+#         except Exception as e:
+#             error(f"Could not delete file: {file}")
+#             error(e)
+#     else:
+#         warning(f"Could not remove {file_type} file: {file} does not exist")

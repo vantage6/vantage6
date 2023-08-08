@@ -883,6 +883,7 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ServerContext
         Server context object
     """
+    print("asdiofj")
     if not ServerContext.config_exists(name, environment, system_folders):
         scope = "system" if system_folders else "user"
         error(

@@ -10,12 +10,12 @@ instance(s). The following commands are available:
 import pandas as pd
 import click
 import subprocess
-import shutil
 import itertools
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
+from shutil import rmtree
 
 from vantage6.common.globals import APPNAME
 from vantage6.common import info, error, generate_apikey
@@ -400,7 +400,7 @@ def remove_demo_network(ctx: ServerContext) -> None:
                                                     system_folders=True)
     server_folder = server_configs['data']
     if server_folder.is_dir():
-        shutil.rmtree(server_folder)
+        rmtree(server_folder)
     # TODO BvB 2023-07-31 can it happen that the server folder is not a
     # directory? What then?
 
@@ -416,8 +416,7 @@ def remove_demo_network(ctx: ServerContext) -> None:
             handler.close()
         subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
                         "--user"])
-        shutil.rmtree(Path(node_ctx.config_dir) / name)
 
     # remove data files attached to the network
     data_dirs_nodes = NodeContext.instance_folders('node', '', False)['dev']
-    shutil.rmtree(Path(data_dirs_nodes / ctx.name))
+    rmtree(Path(data_dirs_nodes / ctx.name))
