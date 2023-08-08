@@ -35,6 +35,6 @@ export interface Rule {
   id: number;
   type: string;
   operation: OperationType;
-  resource: ResourceType;
+  name: ResourceType; //TODO: should be named resource in backend
   scope: ScopeType;
 }

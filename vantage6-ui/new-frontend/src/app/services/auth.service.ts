@@ -3,7 +3,7 @@ import { environment } from 'src/environments/environment.development';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
 import { Login } from '../models/api/login.model';
-import { ResourceType, Rule } from '../models/api/rule.model';
+import { ResourceType, Rule, ScopeType } from '../models/api/rule.model';
 import { Pagination } from '../models/api/pagination.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 
@@ -35,8 +35,8 @@ export class AuthService {
     return hasAccessToken;
   }
 
-  hasAdminAuthorization(resource: ResourceType): boolean {
-    return !!this.activeRules?.some((rule) => rule.resource === resource);
+  hasResourceInScope(resource: ResourceType, scope: ScopeType): boolean {
+    return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.scope.toLowerCase() === scope);
   }
 
   private async getUserRules() {

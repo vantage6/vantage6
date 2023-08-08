@@ -1,23 +1,36 @@
-import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, delay, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
+import { NavigationLink } from 'src/app/models/application/navigation-link.model';
+import { ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-layout-default',
   templateUrl: './layout-default.component.html',
   styleUrls: ['./layout-default.component.scss']
 })
-export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
+export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy {
   destroy$ = new Subject();
   hideSideMenu = false;
-  routes = routePaths;
+  navigationLinks: NavigationLink[] = [];
 
   @ViewChild(MatSidenav)
   sideNav!: MatSidenav;
 
-  constructor(private breakpointObserver: BreakpointObserver) {}
+  constructor(
+    private breakpointObserver: BreakpointObserver,
+    private authService: AuthService
+  ) {}
+
+  ngOnInit(): void {
+    this.navigationLinks.push({ route: routePaths.home, label: 'Home', icon: 'home' });
+    if (this.authService.hasResourceInScope(ResourceType.ORGANIZATION, ScopeType.GLOBAL)) {
+      this.navigationLinks.push({ route: routePaths.organization, label: 'Organization', icon: 'location_city' });
+    }
+  }
 
   ngAfterViewInit(): void {
     this.breakpointObserver
