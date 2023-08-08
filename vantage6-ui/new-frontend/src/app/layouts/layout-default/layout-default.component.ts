@@ -26,7 +26,7 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
   ) {}
 
   ngOnInit(): void {
-    this.navigationLinks.push({ route: routePaths.home, label: 'Home', icon: 'home' });
+    this.navigationLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
     if (this.authService.hasResourceInScope(ResourceType.ORGANIZATION, ScopeType.GLOBAL)) {
       this.navigationLinks.push({ route: routePaths.organization, label: 'Organization', icon: 'location_city' });
     }

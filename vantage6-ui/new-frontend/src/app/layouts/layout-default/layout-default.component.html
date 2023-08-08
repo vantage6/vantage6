@@ -6,7 +6,12 @@
 <mat-sidenav-container>
   <mat-sidenav #sideNav [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
     <mat-nav-list>
-      <mat-list-item *ngFor="let link of navigationLinks" [routerLink]="[link.route]" [routerLinkActive]="['mdc-list-item--activated']">
+      <mat-list-item
+        *ngFor="let link of navigationLinks"
+        [routerLink]="[link.route]"
+        [routerLinkActive]="['mdc-list-item--activated']"
+        [routerLinkActiveOptions]="{ exact: !!link.shouldBeExact }"
+      >
         <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
         <a matLine>{{ link.label }}</a>
       </mat-list-item>

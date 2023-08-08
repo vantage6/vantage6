@@ -6,4 +6,5 @@ export interface NavigationLink {
   icon: string;
   resource?: ResourceType;
   scope?: ScopeType[];
+  shouldBeExact?: boolean;
 }
