@@ -35,7 +35,7 @@ from vantage6.cli.server import (
     get_server_context
 )
 from vantage6.cli.node import vnode_stop
-from vantage6.cli.utils import new_config_name, remove_file
+from vantage6.cli.utils import prompt_config_name, remove_file
 
 
 def dummy_data(node_name: str, dev_folder: Path) -> Path:
@@ -56,12 +56,11 @@ def dummy_data(node_name: str, dev_folder: Path) -> Path:
     df = pd.DataFrame({'name': ['Raphael', 'Donatello'],
                        'mask': ['red', 'purple'],
                        'weapon': ['sai', 'bo staff']})
-    dir_data = dev_folder / f"df_{node_name}.csv"
-    df.to_csv(dir_data)
-    info(f"Spawned dataset for {Fore.GREEN}{node_name}, writing to "
-         f"{Fore.GREEN}{dir_data}{Style.RESET_ALL}")
-    print(dir_data)
-    return dir_data
+    data_file = dev_folder / f"df_{node_name}.csv"
+    df.to_csv(data_file)
+    info(f"Spawned dataset for {Fore.GREEN}{node_name}{Style.RESET_ALL}, "
+         f"writing to{Fore.GREEN}{data_file}{Style.RESET_ALL}")
+    return data_file
 
 
 def create_node_config_file(server_url: str, port: int, config: dict,
@@ -308,7 +307,7 @@ def cli_dev() -> None:
 @click.option('-p', '--server-port', type=int, default=5000,
               help='Port to run the server on. Default is 5000.')
 @click.option('-i', '--image', type=str, default=None,
-              help='Server docker image to use when setting up resources for'
+              help='Server docker image to use when setting up resources for '
               'the development server')
 def create_demo_network(name: str, num_nodes: int, server_url: str,
                         server_port: int, image: str = None) -> dict:
@@ -319,7 +318,7 @@ def create_demo_network(name: str, num_nodes: int, server_url: str,
     by default this is set to 3. Then runs a Batch import of
     organizations/collaborations/users and tasks.
     """
-    server_name = new_config_name(name)
+    server_name = prompt_config_name(name)
     if not ServerContext.config_exists(server_name):
         demo = demo_network(num_nodes, server_url, server_port, server_name)
         info(f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
@@ -381,7 +380,7 @@ def stop_demo_network(ctx: ServerContext) -> None:
 @cli_dev.command(name="remove-demo-network")
 @click_insert_context
 def remove_demo_network(ctx: ServerContext) -> None:
-    """ Remove files and folders of server and all nodes in a demo network """
+    """ Remove all related demo network files and folders """
 
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):

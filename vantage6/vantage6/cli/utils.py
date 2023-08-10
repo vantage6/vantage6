@@ -8,6 +8,8 @@ import docker
 import os
 import questionary as q
 
+from pathlib import Path
+
 from vantage6.common import error, warning, info
 
 
@@ -45,7 +47,7 @@ def check_if_docker_daemon_is_running(
         exit(1)
 
 
-def remove_file(file: str, file_type: str) -> None:
+def remove_file(file: str | Path, file_type: str) -> None:
     """
     Remove a file if it exists.
 
@@ -67,7 +69,7 @@ def remove_file(file: str, file_type: str) -> None:
         warning(f"Could not remove {file_type} file: {file} does not exist")
 
 
-def new_config_name(name: str | None) -> None:
+def prompt_config_name(name: str | None) -> None:
     """
     Get a new configuration name from the user, or simply return the name if
     it is not None.

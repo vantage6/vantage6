@@ -40,7 +40,7 @@ from vantage6.cli.configuration_wizard import (
 )
 from vantage6.cli.utils import (
     check_config_name_allowed,
-    new_config_name,
+    prompt_config_name,
     remove_file
 )
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
@@ -460,7 +460,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     system_folders : bool
         Wether to use system folders or not
     """
-    name = new_config_name(name)
+    name = prompt_config_name(name)
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(name)
@@ -716,7 +716,7 @@ def cli_server_stop(name: str, environment: str, system_folders: bool,
 
 
 def vserver_stop(name: str, environment: str, system_folders: bool,
-                 all_servers: bool):
+                 all_servers: bool) -> None:
     """
     Stop one or all running server(s).
 
@@ -883,7 +883,6 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ServerContext
         Server context object
     """
-    print("asdiofj")
     if not ServerContext.config_exists(name, environment, system_folders):
         scope = "system" if system_folders else "user"
         error(
@@ -995,7 +994,6 @@ def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
-# TODO add click command for this
 def vserver_remove(ctx: ServerContext, name: str, environment: str,
                    system_folders: bool) -> None:
     """
