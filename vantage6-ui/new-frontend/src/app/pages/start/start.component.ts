@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Collaboration } from 'src/app/models/api/Collaboration.model';
+import { BaseCollaboration } from 'src/app/models/api/Collaboration.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
@@ -12,7 +12,7 @@ import { CollaborationService } from 'src/app/services/collaboration.service';
   host: { '[class.card-container]': 'true' }
 })
 export class StartComponent implements OnInit {
-  collaborations: Collaboration[] = [];
+  collaborations: BaseCollaboration[] = [];
 
   constructor(
     private router: Router,
@@ -24,8 +24,8 @@ export class StartComponent implements OnInit {
     this.collaborations = await this.collaborationService.getCollaborations();
   }
 
-  handleCollaborationClick(collaboration: Collaboration) {
-    this.chosenCollaborationService.setCollaboration(collaboration);
+  handleCollaborationClick(collaboration: BaseCollaboration) {
+    this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
     this.router.navigate([routePaths.home]);
   }
 }

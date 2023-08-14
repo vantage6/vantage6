@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Organization } from 'src/app/models/api/organization.model';
+import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
@@ -8,7 +8,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
   styleUrls: ['./organization.component.scss']
 })
 export class OrganizationComponent implements OnInit {
-  organizations: Organization[] = [];
+  organizations: BaseOrganization[] = [];
 
   constructor(private organizationService: OrganizationService) {}
 

@@ -1,4 +1,4 @@
-export interface Organization {
+export interface BaseOrganization {
   id: number;
   name: string;
 }

@@ -4,8 +4,8 @@
   </mat-card-header>
   <mat-card-content>
     <mat-stepper [linear]="true" orientation="vertical" #stepper>
-      <mat-step [stepControl]="form">
-        <form [formGroup]="form">
+      <mat-step [stepControl]="packageForm">
+        <form [formGroup]="packageForm">
           <ng-template matStepLabel>Select package</ng-template>
           <mat-form-field>
             <mat-label>Algorithm</mat-label>
@@ -28,8 +28,48 @@
           </div>
         </form>
       </mat-step>
-      <mat-step [stepControl]="form">
-        <ng-template matStepLabel>Select function</ng-template>
+      <mat-step [stepControl]="functionForm">
+        <form [formGroup]="functionForm">
+          <ng-template matStepLabel>Select function</ng-template>
+          <mat-form-field>
+            <mat-label>Function</mat-label>
+            <mat-select formControlName="functionName">
+              <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
+                {{ function.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field *ngIf="function">
+            <mat-label>Organization</mat-label>
+            <mat-select *ngIf="function.is_central" formControlName="organizationIDs" multiple>
+              <mat-option
+                *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                [value]="organization.id"
+              >
+                {{ organization.name }}
+              </mat-option>
+            </mat-select>
+            <mat-select *ngIf="!function.is_central" formControlName="organizationIDs">
+              <mat-option
+                *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                [value]="organization.id"
+              >
+                {{ organization.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div>
+            <button mat-button matStepperPrevious>Back</button>
+            <button mat-button matStepperNext>Next</button>
+          </div>
+        </form>
+      </mat-step>
+      <mat-step [stepControl]="functionForm">
+        <ng-template matStepLabel>Select database</ng-template>
+        <div>
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
       </mat-step>
     </mat-stepper>
   </mat-card-content>

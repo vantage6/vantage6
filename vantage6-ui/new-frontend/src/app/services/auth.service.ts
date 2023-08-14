@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { environment } from 'src/environments/environment.development';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
 import { Login } from '../models/api/login.model';
@@ -20,7 +19,7 @@ export class AuthService {
       username: loginForm.username,
       password: loginForm.password
     };
-    const result = await this.apiService.post<Login>(environment.api_url + '/token/user', data);
+    const result = await this.apiService.postForApi<Login>('/token/user', data);
     this.setSession(result);
     return await this.isAuthenticated();
   }
@@ -47,7 +46,7 @@ export class AuthService {
 
   private async getUserRules() {
     const userId = sessionStorage.getItem(USER_ID);
-    const result = await this.apiService.get<Pagination<Rule>>(environment.api_url + `/rule?user_id=${userId}`);
+    const result = await this.apiService.getForApi<Pagination<Rule>>(`/rule?user_id=${userId}`);
     this.activeRules = result.data;
   }
 

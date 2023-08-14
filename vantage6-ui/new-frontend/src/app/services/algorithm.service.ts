@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { environment } from 'src/environments/environment';
 import { Pagination } from '../models/api/pagination.model';
 import { Algorithm } from '../models/api/algorithm.model';
 
@@ -11,7 +10,13 @@ export class AlgorithmService {
   constructor(private apiService: ApiService) {}
 
   async getAlgorithms(): Promise<Algorithm[]> {
-    const result = await this.apiService.get<Pagination<Algorithm>>(`${environment.algorithm_server_url}/algorithm`);
+    //TODO: Use base algorithm model
+    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>('/algorithm');
     return result.data;
+  }
+
+  async getAlgorithm(id: string): Promise<Algorithm> {
+    const result = await this.apiService.getForAlgorithmApi<Algorithm>(`/algorithm/${id}`);
+    return result;
   }
 }

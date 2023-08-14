@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
 import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
+import { environment } from 'src/environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
@@ -9,23 +10,27 @@ import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
 export class ApiService {
   constructor(private http: HttpClient) {}
 
-  async get<T = null>(url: string): Promise<T> {
+  async getForApi<T = null>(path: string): Promise<T> {
     return await this.handleResult(
-      this.http.get<T>(url, {
-        headers: this.getAuthenticationHeaders()
+      this.http.get<T>(environment.api_url + path, {
+        headers: this.getApiAuthenticationHeaders()
       })
     );
   }
 
-  async post<T = null>(url: string, body: any): Promise<T> {
+  async postForApi<T = null>(path: string, body: any): Promise<T> {
     return await this.handleResult(
-      this.http.post<T>(url, body, {
-        headers: this.getAuthenticationHeaders()
+      this.http.post<T>(environment.api_url + path, body, {
+        headers: this.getApiAuthenticationHeaders()
       })
     );
   }
 
-  private getAuthenticationHeaders(): any {
+  async getForAlgorithmApi<T = null>(path: string): Promise<T> {
+    return await this.handleResult(this.http.get<T>(environment.api_url + path));
+  }
+
+  private getApiAuthenticationHeaders(): any {
     const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
 
     if (!accessToken) return {};
