@@ -30,6 +30,13 @@ mat-sidenav-container {
 
 mat-toolbar {
   .actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-px-2;
     margin-left: auto;
+
+    .mat-mdc-mini-fab {
+      box-shadow: none;
+    }
   }
 }
