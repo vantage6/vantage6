@@ -25,7 +25,7 @@ def check_config_name_allowed(name: str) -> None:
     if name.count(" ") > 0:
         name = name.replace(" ", "-")
         info(f"Replaced spaces from configuration name: {name}")
-    elif not re.match('^[a-zA-Z0-9_.-]+$', name):
+    if not re.match('^[a-zA-Z0-9_.-]+$', name):
         error(f"Name '{name}' is not allowed. Please use only the following "
               "characters: a-zA-Z0-9_.-")
         # FIXME: FM, 2023-01-03: I dont think this is a good side effect. This
