@@ -16,17 +16,19 @@ export class ChosenCollaborationService {
 
   async setCollaboration(id: string) {
     sessionStorage.setItem(CHOSEN_COLLABORATION, id);
-    const collaboration = await this.collaborationService.getCollaboration(id, [CollaborationLazyProperties.Organizations]);
+    const collaboration = await this.getCollaboration(id);
     this.collaboration$.next(collaboration);
   }
 
   private async initData() {
     const collaborationIDFromSession = sessionStorage.getItem(CHOSEN_COLLABORATION);
     if (collaborationIDFromSession) {
-      const collaboration = await this.collaborationService.getCollaboration(collaborationIDFromSession, [
-        CollaborationLazyProperties.Organizations
-      ]);
+      const collaboration = await this.getCollaboration(collaborationIDFromSession);
       this.collaboration$.next(collaboration);
     }
+  }
+
+  private async getCollaboration(id: string): Promise<Collaboration> {
+    return await this.collaborationService.getCollaboration(id, [CollaborationLazyProperties.Organizations]);
   }
 }
