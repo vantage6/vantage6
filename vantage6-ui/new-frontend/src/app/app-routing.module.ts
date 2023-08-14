@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { routePaths } from './routes';
+import { routerConfig } from './routes';
 import { LoginComponent } from './pages/login/login.component';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
@@ -12,7 +12,7 @@ import { StartComponent } from './pages/start/start.component';
 
 const routes: Routes = [
   {
-    path: routePaths.login,
+    path: routerConfig.login,
     component: LayoutLoginComponent,
     children: [
       {
@@ -26,28 +26,34 @@ const routes: Routes = [
     component: LayoutDefaultComponent,
     children: [
       {
-        path: routePaths.start,
+        path: routerConfig.start,
         component: StartComponent,
         canActivate: [authenticationGuard()]
       },
       {
-        path: routePaths.home,
+        path: routerConfig.home,
         component: HomeComponent,
         canActivate: [authenticationGuard()]
       },
       {
-        path: routePaths.homeAdministration,
-        component: HomeComponent,
-        canActivate: [authenticationGuard()]
-      },
-      {
-        path: routePaths.organization,
-        component: OrganizationComponent,
-        canActivate: [authenticationGuard()]
-      },
-      {
-        path: routePaths.task,
+        path: routerConfig.task,
         component: TaskComponent,
+        canActivate: [authenticationGuard()]
+      }
+    ]
+  },
+  {
+    path: routerConfig.admin,
+    component: LayoutDefaultComponent,
+    children: [
+      {
+        path: routerConfig.adminHome,
+        component: HomeComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.organization,
+        component: OrganizationComponent,
         canActivate: [authenticationGuard()]
       }
     ]

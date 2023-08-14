@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, delay, filter, takeUntil } from 'rxjs';
@@ -6,7 +6,6 @@ import { routePaths } from 'src/app/routes';
 import { NavigationLink } from 'src/app/models/application/navigation-link.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
-import { IS_ADMINISTRATION } from 'src/app/models/constants/sessionStorage';
 import { NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
@@ -15,7 +14,7 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
   templateUrl: './layout-default.component.html',
   styleUrls: ['./layout-default.component.scss']
 })
-export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy {
+export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   destroy$ = new Subject();
   routes = routePaths;
 
@@ -28,20 +27,16 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
   sideNav!: MatSidenav;
 
   constructor(
-    private router: Router,
+    router: Router,
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     public chosenCollaborationService: ChosenCollaborationService
   ) {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
-      this.isStartPage = event.url === `/${routePaths.start}`;
+      this.isStartPage = event.url.startsWith(routePaths.start);
+      this.isAdministration = event.url.startsWith(routePaths.adminHome);
       this.setNavigationLinks();
     });
-  }
-
-  ngOnInit(): void {
-    const isAdministration = sessionStorage.getItem(IS_ADMINISTRATION);
-    this.isAdministration = isAdministration === 'true';
   }
 
   ngAfterViewInit(): void {
@@ -62,13 +57,13 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
     this.destroy$.next(true);
   }
 
-  handleAdministrationToggle() {
-    this.isAdministration = !this.isAdministration;
-    sessionStorage.setItem(IS_ADMINISTRATION, String(this.isAdministration));
-    if (this.isAdministration) {
-      this.router.navigate([routePaths.homeAdministration]);
+  handleToggleAdmin(): string {
+    if (this.isAdministration && this.chosenCollaborationService.collaboration$.value) {
+      return routePaths.home;
+    } else if (this.isAdministration) {
+      return routePaths.start;
     } else {
-      this.router.navigate([routePaths.home]);
+      return routePaths.adminHome;
     }
   }
 
@@ -81,7 +76,7 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
     const newLinks: NavigationLink[] = [];
 
     if (this.isAdministration) {
-      newLinks.push({ route: routePaths.homeAdministration, label: 'Home', icon: 'home', shouldBeExact: true });
+      newLinks.push({ route: routePaths.adminHome, label: 'Home', icon: 'home', shouldBeExact: true });
       if (this.authService.hasResourceInScope(ResourceType.ORGANIZATION, ScopeType.GLOBAL)) {
         newLinks.push({ route: routePaths.organization, label: 'Organization', icon: 'location_city' });
       }

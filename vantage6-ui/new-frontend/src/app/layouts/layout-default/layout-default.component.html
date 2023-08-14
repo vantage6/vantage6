@@ -2,7 +2,7 @@
   <button mat-icon-button *ngIf="hideSideMenu && navigationLinks.length > 0" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
   <span>Vantage6</span>
   <div class="actions">
-    <button mat-flat-button (click)="handleAdministrationToggle()">
+    <button mat-flat-button [routerLink]="handleToggleAdmin()">
       {{ isAdministration ? "Leave administration" : "Administration" }}
     </button>
   </div>
@@ -11,7 +11,7 @@
 <mat-sidenav-container autosize>
   <mat-sidenav #sideNav [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
     <mat-nav-list>
-      <button mat-flat-button color="primary" *ngIf="!isStartPage" [routerLink]="routes.start">
+      <button mat-flat-button color="primary" *ngIf="!isStartPage && !isAdministration" [routerLink]="routes.start">
         <mat-icon>arrow_back</mat-icon>{{ (chosenCollaborationService.collaboration$ | async)?.name }}
       </button>
       <mat-list-item
