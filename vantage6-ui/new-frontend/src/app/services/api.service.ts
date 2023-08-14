@@ -27,7 +27,7 @@ export class ApiService {
   }
 
   async getForAlgorithmApi<T = null>(path: string): Promise<T> {
-    return await this.handleResult(this.http.get<T>(environment.api_url + path));
+    return await this.handleResult(this.http.get<T>(environment.algorithm_server_url + path));
   }
 
   private getApiAuthenticationHeaders(): any {
