@@ -23,6 +23,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { OrganizationComponent } from './pages/organization/organization.component';
 import { TaskComponent } from './pages/task/task.component';
+import { StartComponent } from './pages/start/start.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { TaskComponent } from './pages/task/task.component';
     HomeComponent,
     LayoutDefaultComponent,
     OrganizationComponent,
-    TaskComponent
+    TaskComponent,
+    StartComponent
   ],
   imports: [
     BrowserModule,

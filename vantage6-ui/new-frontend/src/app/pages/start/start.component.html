@@ -1,0 +1,11 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Choose a collaboration</mat-card-title>
+  </mat-card-header>
+</mat-card>
+
+<div class="tile-grid">
+  <button mat-raised-button *ngFor="let collaboration of collaborations" (click)="handleCollaborationClick(collaboration)">
+    {{ collaboration.name }}
+  </button>
+</div>

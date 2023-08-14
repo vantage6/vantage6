@@ -1,9 +1,9 @@
 <mat-toolbar color="primary">
-  <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
+  <button mat-icon-button *ngIf="hideSideMenu && navigationLinks.length > 0" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
   <span>Vantage6</span>
   <div class="actions">
     <button mat-flat-button (click)="handleAdministrationToggle()">
-      {{ isAdministration ? "Leave administration" : "Aministration" }}
+      {{ isAdministration ? "Leave administration" : "Administration" }}
     </button>
   </div>
 </mat-toolbar>
@@ -11,6 +11,9 @@
 <mat-sidenav-container autosize>
   <mat-sidenav #sideNav [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
     <mat-nav-list>
+      <button mat-flat-button color="primary" *ngIf="!isStartPage" [routerLink]="routes.start">
+        <mat-icon>arrow_back</mat-icon>{{ (chosenCollaborationService.collaboration$ | async)?.name }}
+      </button>
       <mat-list-item
         *ngFor="let link of navigationLinks"
         [routerLink]="[link.route]"

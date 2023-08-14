@@ -4,6 +4,22 @@
   margin: $spacing-px-4;
 }
 
+mat-sidenav {
+  button {
+    width: calc(100% - ($spacing-px-4 * 2));
+    margin: 0 $spacing-px-4 $spacing-px-2 $spacing-px-4;
+    box-sizing: border-box;
+  }
+
+  mat-list-item {
+    padding: 0 $spacing-px-8;
+
+    mat-icon {
+      margin: 0 $spacing-px-4 0 0;
+    }
+  }
+}
+
 mat-sidenav-container {
   min-height: calc(100% - 56px);
 

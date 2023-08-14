@@ -21,3 +21,9 @@ mat-form-field {
 .login-card {
   margin: 0 $spacing-px-4;
 }
+
+.card-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px-4;
+}

@@ -8,6 +8,7 @@ import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.
 import { AuthService } from 'src/app/services/auth.service';
 import { IS_ADMINISTRATION } from 'src/app/models/constants/sessionStorage';
 import { NavigationEnd, Router } from '@angular/router';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
 @Component({
   selector: 'app-layout-default',
@@ -16,9 +17,12 @@ import { NavigationEnd, Router } from '@angular/router';
 })
 export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy {
   destroy$ = new Subject();
+  routes = routePaths;
+
   hideSideMenu = false;
   navigationLinks: NavigationLink[] = [];
   isAdministration: boolean = false;
+  isStartPage: boolean = false;
 
   @ViewChild(MatSidenav)
   sideNav!: MatSidenav;
@@ -26,9 +30,11 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
   constructor(
     private router: Router,
     private breakpointObserver: BreakpointObserver,
-    private authService: AuthService
+    private authService: AuthService,
+    public chosenCollaborationService: ChosenCollaborationService
   ) {
-    router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event) => {
+    router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
+      this.isStartPage = event.url === `/${routePaths.start}`;
       this.setNavigationLinks();
     });
   }
@@ -67,7 +73,13 @@ export class LayoutDefaultComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private setNavigationLinks() {
+    if (this.isStartPage) {
+      this.navigationLinks = [];
+      return;
+    }
+
     const newLinks: NavigationLink[] = [];
+
     if (this.isAdministration) {
       newLinks.push({ route: routePaths.homeAdministration, label: 'Home', icon: 'home', shouldBeExact: true });
       if (this.authService.hasResourceInScope(ResourceType.ORGANIZATION, ScopeType.GLOBAL)) {
