@@ -1,3 +1,9 @@
+export enum ArgumentType {
+  String = 'str',
+  Integer = 'int',
+  Float = 'float'
+}
+
 export interface Algorithm {
   id: number;
   name: string;
@@ -12,4 +18,6 @@ export interface Function {
 
 interface Argument {
   name: string;
+  type: ArgumentType;
+  description?: string;
 }

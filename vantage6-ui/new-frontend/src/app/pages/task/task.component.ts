@@ -1,9 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, Function } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, Function } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { Collaboration } from 'src/app/models/api/Collaboration.model';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -13,6 +12,8 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class TaskComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
+  argumentType = ArgumentType;
+
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
   function: Function | null = null;
@@ -52,7 +53,18 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.function = this.algorithm?.functions.find((_) => _.name === functionName) || null;
 
       this.function?.arguments.forEach((argument) => {
-        this.parametersForm.addControl(argument.name, new FormControl('', Validators.required));
+        if (argument.type === ArgumentType.String) {
+          this.parametersForm.addControl(argument.name, new FormControl(null, Validators.required));
+        }
+        if (argument.type === ArgumentType.Integer) {
+          this.parametersForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*$')]));
+        }
+        if (argument.type === ArgumentType.Float) {
+          this.parametersForm.addControl(
+            argument.name,
+            new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*[,.]?[0-9]*$')])
+          );
+        }
       });
     });
   }

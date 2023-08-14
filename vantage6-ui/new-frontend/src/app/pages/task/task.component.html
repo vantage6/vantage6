@@ -67,10 +67,17 @@
       <mat-step [stepControl]="parametersForm">
         <form [formGroup]="parametersForm">
           <ng-template matStepLabel>Function parameters</ng-template>
-          <mat-form-field *ngFor="let argument of function?.arguments">
-            <mat-label>{{ argument.name }}</mat-label>
-            <input matInput type="text" [formControlName]="argument.name" />
-          </mat-form-field>
+          <ng-container *ngFor="let argument of function?.arguments">
+            <b>{{ argument.description }}</b>
+            <mat-form-field>
+              <mat-label>{{ argument.name }}</mat-label>
+              <input
+                matInput
+                [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                [formControlName]="argument.name"
+              />
+            </mat-form-field>
+          </ng-container>
           <div>
             <button mat-button matStepperPrevious>Back</button>
             <button mat-button matStepperNext>Next</button>
