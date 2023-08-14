@@ -8,6 +8,7 @@ import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.
 import { AuthService } from 'src/app/services/auth.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { CHOSEN_COLLABORATION } from 'src/app/models/constants/sessionStorage';
 
 @Component({
   selector: 'app-layout-default',
@@ -35,6 +36,12 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
       this.isStartPage = event.url.startsWith(routePaths.start);
       this.isAdministration = event.url.startsWith(routePaths.adminHome);
+      const chosenCollaboration = sessionStorage.getItem(CHOSEN_COLLABORATION);
+
+      if (!this.isStartPage && !this.isAdministration && !chosenCollaboration) {
+        router.navigateByUrl(routePaths.start);
+      }
+
       this.setNavigationLinks();
     });
   }
