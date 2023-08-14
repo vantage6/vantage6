@@ -7,4 +7,9 @@ export interface Algorithm {
 export interface Function {
   name: string;
   is_central: boolean;
+  arguments: Argument[];
+}
+
+interface Argument {
+  name: string;
 }

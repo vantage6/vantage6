@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, Function } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -28,6 +28,8 @@ export class TaskComponent implements OnInit, OnDestroy {
     organizationIDs: ['', Validators.required]
   });
 
+  parametersForm = this.fb.nonNullable.group({});
+
   constructor(
     private fb: FormBuilder,
     private algorithmService: AlgorithmService,
@@ -43,7 +45,15 @@ export class TaskComponent implements OnInit, OnDestroy {
 
     this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
       this.functionForm.controls.organizationIDs.reset();
+      Object.keys(this.parametersForm.controls).forEach((control) => {
+        this.parametersForm.removeControl(control);
+      });
+
       this.function = this.algorithm?.functions.find((_) => _.name === functionName) || null;
+
+      this.function?.arguments.forEach((argument) => {
+        this.parametersForm.addControl(argument.name, new FormControl('', Validators.required));
+      });
     });
   }
 
