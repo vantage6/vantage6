@@ -101,7 +101,7 @@ class NodeCLITest(unittest.TestCase):
         ])
 
         # check that info message is produced
-        self.assertEqual(result.output[:7], "[info ]")
+        self.assertEqual(result.output[6:13], "[info ]")
 
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
@@ -117,7 +117,7 @@ class NodeCLITest(unittest.TestCase):
         ])
 
         self.assertEqual(
-            result.output[:60],
+            result.output[4:64],
             "[info ] - Replaced spaces from configuration name: some-name"
         )
 
@@ -134,7 +134,7 @@ class NodeCLITest(unittest.TestCase):
         ])
 
         # check that error is produced
-        self.assertEqual(result.output[:7], "[error]")
+        self.assertEqual(result.output[6:13], "[error]")
 
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
@@ -154,7 +154,7 @@ class NodeCLITest(unittest.TestCase):
         ])
 
         # check that error is produced
-        self.assertEqual(result.output[:7], "[error]")
+        self.assertEqual(result.output[6:13], "[error]")
 
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)

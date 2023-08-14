@@ -152,11 +152,12 @@ def cli_node_new_configuration(name: str, environment: str,
     system_folders : bool
         Store this configuration in the system folders or in the user folders.
     """
+    print(1)
     name = prompt_config_name(name)
-
+    print(2)
     # check if config name is allowed docker name
     check_config_name_allowed(name)
-
+    print(3)
     if not environment:
         environment = q.select(
             "Please select the environment you want to configure:",
@@ -923,8 +924,9 @@ def vnode_remove(name: str, environment: str, system_folders: bool):
     # removes the whole folder
     rmtree(Path(ctx.log_file.parent))
 
-    # remove the folder
-    rmtree(ctx.config_dir / name)
+    # remove the folder: if it hasn't been started yet this won't exist...
+    if Path.exists(ctx.config_dir / name):
+        rmtree(ctx.config_dir / name)
 
 
 #
