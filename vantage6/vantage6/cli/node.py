@@ -25,6 +25,7 @@ from typing import Iterable
 from pathlib import Path
 from threading import Thread
 from colorama import Fore, Style
+from shutil import rmtree
 
 from vantage6.common import (
     warning, error, info, debug,
@@ -57,7 +58,8 @@ from vantage6.cli.configuration_wizard import (
     NodeConfigurationManager
 )
 from vantage6.cli.utils import (
-    check_config_name_allowed, check_if_docker_daemon_is_running
+    check_config_name_allowed, check_if_docker_daemon_is_running,
+    prompt_config_name, remove_file
 )
 from vantage6.cli import __version__
 
@@ -150,19 +152,9 @@ def cli_node_new_configuration(name: str, environment: str,
     system_folders : bool
         Store this configuration in the system folders or in the user folders.
     """
-    # select configuration name if none supplied
-    if not name:
-        name = q.text("Please enter a configuration-name:").ask()
-
-    # remove spaces, from name
-    name_new = name.replace(" ", "-")
-    if name != name_new:
-        info(f"Replaced spaces from configuration name: {name_new}")
-        name = name_new
-
+    name = prompt_config_name(name)
     # check if config name is allowed docker name
     check_config_name_allowed(name)
-
     if not environment:
         environment = q.select(
             "Please select the environment you want to configure:",
@@ -259,6 +251,13 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
 def cli_node_start(name: str, config: str, environment: str,
                    system_folders: bool, image: str, keep: bool,
                    mount_src: str, attach: bool, force_db_mount: bool) -> None:
+    vnode_start(name, config, environment, system_folders, image, keep,
+                mount_src, attach, force_db_mount)
+
+
+def vnode_start(name: str, config: str, environment: str, system_folders: bool,
+                image: str, keep: bool, mount_src: str, attach: bool,
+                force_db_mount: bool) -> None:
     """
     Start the node instance inside a Docker container.
 
@@ -289,12 +288,10 @@ def cli_node_start(name: str, config: str, environment: str,
     info("Finding Docker daemon")
     docker_client = docker.from_env()
     check_docker_running()
-
     NodeContext.LOGGING_ENABLED = False
     if config:
         name = Path(config).stem
         ctx = NodeContext(name, environment, system_folders, config)
-
     else:
         # in case no name is supplied, ask the user to select one
         if not name:
@@ -315,7 +312,6 @@ def cli_node_start(name: str, config: str, environment: str,
                 sys.exit(0)
 
         ctx = NodeContext(name, environment, system_folders)
-
     # check if config name is allowed docker name, else exit
     check_config_name_allowed(ctx.name)
 
@@ -393,7 +389,6 @@ def cli_node_start(name: str, config: str, environment: str,
     #   uses a lot of the same logic. Suggest moving this to
     #   ctx.get_private_key()
     filename = ctx.config.get("encryption", {}).get("private_key")
-
     # filename may be set to an empty string
     if not filename:
         filename = 'private_key.pem'
@@ -403,7 +398,6 @@ def cli_node_start(name: str, config: str, environment: str,
 
     # If ctx.get_data_file() receives an absolute path, it is returned as-is
     fullpath = Path(ctx.get_data_file(filename))
-
     if fullpath:
         if Path(fullpath).exists():
             mounts.append(("/mnt/private_key.pem", str(fullpath)))
@@ -419,7 +413,6 @@ def cli_node_start(name: str, config: str, environment: str,
         if not key_path:
             error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
                   "key not provided. Continuing to start without this tunnel.")
-            info()
         key_path = Path(key_path)
         if not key_path.exists():
             error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
@@ -548,6 +541,11 @@ def cli_node_start(name: str, config: str, environment: str,
                                                         "instantly")
 def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
                   force: bool) -> None:
+    vnode_stop(name, system_folders, all_nodes, force)
+
+
+def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
+               force: bool) -> None:
     """
     Stop a running node container.
 
@@ -845,6 +843,10 @@ def cli_node_clean() -> None:
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
 def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
+    vnode_remove(name, environment, system_folders)
+
+
+def vnode_remove(name: str, environment: str, system_folders: bool):
     """
     Delete a node permanently
 
@@ -904,17 +906,24 @@ def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
 
     # remove the VPN configuration file
     vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
-    _remove_file(vpn_config_file, 'VPN configuration')
+    remove_file(vpn_config_file, 'VPN configuration')
 
     # remove the config file
-    _remove_file(ctx.config_file, 'configuration')
+    remove_file(ctx.config_file, 'configuration')
 
     # remove the log file. As this process opens the log file above, the log
     # handlers need to be closed before deleting
     info(f"Removing log file {ctx.log_file}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    _remove_file(ctx.log_file, 'log')
+    # remove_file(ctx.log_file, 'log')
+
+    # removes the whole folder
+    rmtree(Path(ctx.log_file.parent))
+
+    # remove the folder: if it hasn't been started yet this won't exist...
+    if Path.exists(ctx.config_dir / name):
+        rmtree(ctx.config_dir / name)
 
 
 #
@@ -1101,25 +1110,3 @@ def _find_running_node_names(client: docker.DockerClient) -> list[str]:
     running_nodes = client.containers.list(
         filters={"label": f"{APPNAME}-type=node"})
     return [node.name for node in running_nodes]
-
-
-def _remove_file(file: str, file_type: str) -> None:
-    """
-    Remove a file if it exists.
-
-    Parameters
-    ----------
-    file : str
-        absolute path to the file to be deleted
-    file_type : str
-        type of file, used for logging
-    """
-    if os.path.isfile(file):
-        info(f"Removing {file_type} file: {file}")
-        try:
-            os.remove(file)
-        except Exception as e:
-            error(f"Could not delete file: {file}")
-            error(e)
-    else:
-        warning(f"Could not remove {file_type} file: {file} does not exist")

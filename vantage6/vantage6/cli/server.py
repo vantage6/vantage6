@@ -4,6 +4,7 @@ import docker
 import os
 import time
 import subprocess
+import itertools
 
 from typing import Iterable
 from threading import Thread
@@ -17,7 +18,7 @@ from vantage6.common import (info, warning, error, debug as debug_msg,
 from vantage6.common.docker.addons import (
     pull_if_newer, check_docker_running, remove_container,
     get_server_config_name, get_container, get_num_nonempty_networks,
-    get_network, delete_network
+    get_network, delete_network, remove_container_if_exists
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
@@ -37,7 +38,11 @@ from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire,
     configuration_wizard
 )
-from vantage6.cli.utils import check_config_name_allowed
+from vantage6.cli.utils import (
+    check_config_name_allowed,
+    prompt_config_name,
+    remove_file
+)
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli import __version__, rabbitmq
 
@@ -58,12 +63,12 @@ def click_insert_context(func: callable) -> callable:
         Click function with context
     """
     @click.option('-n', '--name', default=None,
-                  help="name of the configuration you want to use.")
+                  help="Name of the configuration you want to use.")
     @click.option('-c', '--config', default=None,
-                  help='absolute path to configuration-file; overrides NAME')
+                  help='Absolute path to configuration-file; overrides NAME')
     @click.option('-e', '--environment',
                   default=DEFAULT_SERVER_ENVIRONMENT,
-                  help='configuration environment to use')
+                  help='Configuration environment to use')
     @click.option('--system', 'system_folders', flag_value=True)
     @click.option('--user', 'system_folders', flag_value=False,
                   default=DEFAULT_SERVER_SYSTEM_FOLDERS)
@@ -109,7 +114,7 @@ def click_insert_context(func: callable) -> callable:
                 error("No configurations could be found!")
                 exit(1)
 
-        ctx = _get_server_context(name, environment, system_folders)
+        ctx = get_server_context(name, environment, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context
@@ -143,6 +148,38 @@ def cli_server() -> None:
 def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
                      start_ui: bool, ui_port: int, rabbitmq_image: str,
                      keep: bool, mount_src: str, attach: bool) -> None:
+    """
+    Start the server in a Docker container.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    ip : str
+        ip interface to listen on
+    port : int
+        port to listen on
+    image : str
+        Server Docker image to use
+    rabbitmq_image : str
+        RabbitMQ docker image to use
+    keep : bool
+        Wether to keep the image after the server has finished, useful for
+        debugging
+    mount_src : str
+        Path to the vantage6 package source, this overrides the source code in
+        the container. This is useful when developing and testing the server.
+    attach : bool
+        Wether to attach the server logs to the console after starting the
+        server.
+    """
+    vserver_start(ctx, ip, port, image, start_ui, ui_port, rabbitmq_image,
+                  keep, mount_src, attach)
+
+
+def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
+                  start_ui: bool, ui_port: int, rabbitmq_image: str,
+                  keep: bool, mount_src: str, attach: bool) -> None:
     """
     Start the server in a Docker container.
 
@@ -423,11 +460,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     system_folders : bool
         Wether to use system folders or not
     """
-    if not name:
-        name = q.text("Please enter a configuration-name:").ask()
-        if name.count(" ") > 0:
-            name = name.replace(" ", "-")
-            info(f"Replaced spaces from configuration name: {name}")
+    name = prompt_config_name(name)
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(name)
@@ -480,6 +513,30 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
                       image: str, mount_src: str, keep: bool) -> None:
     """
     Batch import organizations/collaborations/users and tasks.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    file_ : str
+        Yaml file containing the vantage6 formatted data to import
+    drop_all : bool
+        Wether to drop all data before importing
+    image : str
+        Node Docker image to use which contains the import script
+    mount_src : str
+        Vantage6 source location, this will overwrite the source code in the
+        container. Useful for debugging/development.
+    keep : bool
+        Wether to keep the image after finishing/crashing. Useful for
+        debugging.
+    """
+    vserver_import(ctx, file_, drop_all, image, mount_src, keep)
+
+
+def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
+                   image: str, mount_src: str, keep: bool) -> None:
+    """Batch import organizations/collaborations/users and tasks.
 
     Parameters
     ----------
@@ -655,6 +712,25 @@ def cli_server_stop(name: str, environment: str, system_folders: bool,
     all_servers : bool
         Wether to stop all servers or not
     """
+    vserver_stop(name, environment, system_folders, all_servers)
+
+
+def vserver_stop(name: str, environment: str, system_folders: bool,
+                 all_servers: bool) -> None:
+    """
+    Stop one or all running server(s).
+
+    Parameters
+    ----------
+    name : str
+        Name of the server to stop
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or not
+    all_servers : bool
+        Wether to stop all servers or not
+    """
     client = docker.from_env()
     check_docker_running()
 
@@ -788,7 +864,7 @@ def cli_server_version(name: str, system_folders: bool) -> None:
 #
 # helper functions
 #
-def _get_server_context(name: str, environment: str, system_folders: bool) \
+def get_server_context(name: str, environment: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
@@ -873,8 +949,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
         Wether to use system folders or not
     """
     # kill the server
-    container = client.containers.get(container_name)
-    container.kill()
+    remove_container_if_exists(client, name=container_name)
     info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
 
     # find the configuration name from the docker container name
@@ -882,7 +957,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = _get_server_context(config_name, environment, system_folders)
+    ctx = get_server_context(config_name, environment, system_folders)
 
     # kill the UI container (if it exists)
     _stop_ui(client, ctx)
@@ -917,6 +992,44 @@ def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     for log in logs_stream:
         print(log.decode(STRING_ENCODING), end="")
+
+
+def vserver_remove(ctx: ServerContext, name: str, environment: str,
+                   system_folders: bool) -> None:
+    """
+    Function to remove a server.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    name : str
+        Name of the server to remove
+    environment : str
+        DTAP environment to use
+    system_folders : bool
+        Wether to use system folders or not
+    """
+    check_docker_running()
+
+    # first stop server
+    vserver_stop(name, environment, system_folders, False)
+
+    if not q.confirm(
+        "This server will be deleted permanently including its configuration. "
+        "Are you sure?", default=False
+    ).ask():
+        info("Server will not be deleted")
+        exit(0)
+
+    # now remove the folders...
+    info(f"Removing configuration file {ctx.config_file}")
+    remove_file(ctx.config_file, 'configuration')
+
+    info(f"Removing log file {ctx.log_file}")
+    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+        handler.close()
+    remove_file(ctx.log_file, 'log')
 
 
 def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
