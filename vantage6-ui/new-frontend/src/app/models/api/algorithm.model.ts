@@ -14,10 +14,15 @@ export interface Function {
   name: string;
   is_central: boolean;
   arguments: Argument[];
+  databases: Database[];
 }
 
 interface Argument {
   name: string;
   type: ArgumentType;
   description?: string;
+}
+
+interface Database {
+  name: string;
 }

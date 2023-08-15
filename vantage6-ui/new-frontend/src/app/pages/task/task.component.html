@@ -41,7 +41,7 @@
           </mat-form-field>
           <mat-form-field *ngIf="function">
             <mat-label>Organization</mat-label>
-            <mat-select *ngIf="function.is_central" formControlName="organizationIDs" multiple>
+            <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
               <mat-option
                 *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                 [value]="organization.id"
@@ -49,7 +49,7 @@
                 {{ organization.name }}
               </mat-option>
             </mat-select>
-            <mat-select *ngIf="!function.is_central" formControlName="organizationIDs">
+            <mat-select *ngIf="!function.is_central" formControlName="organizationIDs" multiple>
               <mat-option
                 *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                 [value]="organization.id"
@@ -64,8 +64,36 @@
           </div>
         </form>
       </mat-step>
-      <mat-step [stepControl]="parametersForm">
-        <form [formGroup]="parametersForm">
+      <mat-step [stepControl]="databaseForm">
+        <form [formGroup]="databaseForm">
+          <ng-template matStepLabel>Select databases</ng-template>
+          <ng-container *ngFor="let database of function?.databases">
+            <h4>{{ database.name }}</h4>
+            <mat-form-field>
+              <mat-label>Database</mat-label>
+              <mat-select [formControlName]="database.name + '_name'">
+                <mat-option *ngFor="let database of databases" [value]="database.name">
+                  {{ database.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field *ngIf="databaseForm.get(database.name + '_query')">
+              <mat-label>Query</mat-label>
+              <textarea matInput type="text" [formControlName]="database.name + '_query'" rows="4"></textarea>
+            </mat-form-field>
+            <mat-form-field *ngIf="databaseForm.get(database.name + '_sheet')">
+              <mat-label>Sheet name</mat-label>
+              <input matInput type="text" [formControlName]="database.name + '_sheet'" />
+            </mat-form-field>
+          </ng-container>
+          <div>
+            <button mat-button matStepperPrevious>Back</button>
+            <button mat-button matStepperNext>Next</button>
+          </div>
+        </form>
+      </mat-step>
+      <mat-step [stepControl]="parameterForm">
+        <form [formGroup]="parameterForm">
           <ng-template matStepLabel>Function parameters</ng-template>
           <ng-container *ngFor="let argument of function?.arguments">
             <b>{{ argument.description }}</b>
@@ -80,7 +108,6 @@
           </ng-container>
           <div>
             <button mat-button matStepperPrevious>Back</button>
-            <button mat-button matStepperNext>Next</button>
           </div>
         </form>
       </mat-step>
