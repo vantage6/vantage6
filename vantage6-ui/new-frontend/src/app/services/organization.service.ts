@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { environment } from 'src/environments/environment';
 import { Pagination } from '../models/api/pagination.model';
-import { BaseOrganization } from '../models/api/organization.model';
+import { BaseOrganization, Organization, OrganizationLazyProperties } from '../models/api/organization.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,5 +12,18 @@ export class OrganizationService {
   async getOrganizations(): Promise<BaseOrganization[]> {
     const result = await this.apiService.getForApi<Pagination<BaseOrganization>>('/organization');
     return result.data;
+  }
+
+  async getOrganization(id: string, lazyProperties: OrganizationLazyProperties[] = []): Promise<Organization> {
+    const result = await this.apiService.getForApi<BaseOrganization>(`/organization/${id}`);
+
+    const organization: Organization = { ...result, nodes: [] };
+
+    lazyProperties.forEach(async (lazyProperty) => {
+      const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
+      organization[lazyProperty] = resultProperty.data;
+    });
+
+    return organization;
   }
 }

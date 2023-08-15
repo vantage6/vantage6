@@ -44,77 +44,141 @@ export class TaskComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.algorithms = await this.algorithmService.getAlgorithms();
+    this.initData();
 
     this.packageForm.controls.algorithmID.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
-      this.algorithm = await this.algorithmService.getAlgorithm(algorithmID);
+      this.handleAlgorithmChange(algorithmID);
     });
 
     this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
-      this.functionForm.controls.organizationIDs.reset();
-      Object.keys(this.databaseForm.controls).forEach((control) => {
-        this.parameterForm.removeControl(control);
-      });
-      Object.keys(this.parameterForm.controls).forEach((control) => {
-        this.parameterForm.removeControl(control);
-      });
-
-      const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
-
-      selectedFunction?.arguments.forEach((argument) => {
-        if (argument.type === ArgumentType.String) {
-          this.parameterForm.addControl(argument.name, new FormControl(null, Validators.required));
-        }
-        if (argument.type === ArgumentType.Integer) {
-          this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*$')]));
-        }
-        if (argument.type === ArgumentType.Float) {
-          this.parameterForm.addControl(
-            argument.name,
-            new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*[,.]?[0-9]*$')])
-          );
-        }
-      });
-
-      selectedFunction?.databases.forEach((database) => {
-        this.databaseForm.addControl(`${database.name}_name`, new FormControl(null, [Validators.required]));
-        this.databaseForm
-          .get(`${database.name}_name`)
-          ?.valueChanges.pipe(takeUntil(this.destroy$))
-          .subscribe(async (dataBaseName) => {
-            this.databaseForm.removeControl(`${database.name}_query`);
-            this.databaseForm.removeControl(`${database.name}_sheet`);
-            const type = this.databases.find((_) => _.name === dataBaseName)?.type;
-            if (type === DatabaseType.SQL || type === DatabaseType.OMOP || type === DatabaseType.Sparql) {
-              this.databaseForm.addControl(`${database.name}_query`, new FormControl(null, [Validators.required]));
-            }
-            if (type === DatabaseType.Excel) {
-              this.databaseForm.addControl(`${database.name}_sheet`, new FormControl(null, [Validators.required]));
-            }
-          });
-      });
-
-      this.function = selectedFunction;
+      this.handleFunctionChange(functionName);
     });
 
     this.functionForm.controls.organizationIDs.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (organizationID) => {
-      let id = organizationID;
-      if (Array.isArray(organizationID) && organizationID.length > 0) {
-        id = organizationID[0];
-      }
-
-      if (id) {
-        const nodes = await this.chosenCollaborationService.getNodes();
-        this.node = nodes.find((_) => _.organization.id === Number.parseInt(id)) || null;
-
-        if (this.node) {
-          this.databases = getDatabasesFromNode(this.node);
-        }
-      }
+      this.handleOrganizationChange(organizationID);
     });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+  }
+
+  private async initData(): Promise<void> {
+    this.algorithms = await this.algorithmService.getAlgorithms();
+  }
+
+  private async handleAlgorithmChange(algorithmID: string): Promise<void> {
+    //Clear form
+    this.clearFunctionStep();
+    this.clearDatabaseStep();
+    this.clearParameterStep();
+
+    //Get selected algorithm
+    this.algorithm = await this.algorithmService.getAlgorithm(algorithmID);
+  }
+
+  private handleFunctionChange(functionName: string): void {
+    //Clear form
+    this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
+    this.clearDatabaseStep();
+    this.clearParameterStep();
+
+    //Get selected function
+    const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
+
+    //Add form controls for parameters for selected function
+    selectedFunction?.arguments.forEach((argument) => {
+      if (argument.type === ArgumentType.String) {
+        this.parameterForm.addControl(argument.name, new FormControl(null, Validators.required));
+      }
+      if (argument.type === ArgumentType.Integer) {
+        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*$')]));
+      }
+      if (argument.type === ArgumentType.Float) {
+        this.parameterForm.addControl(
+          argument.name,
+          new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*[,.]?[0-9]*$')])
+        );
+      }
+    });
+
+    //Add form controls for databases for selected function
+    if (selectedFunction) {
+      this.setFormControlsForDatabase(selectedFunction);
+    }
+
+    //Delay setting function, so that form controls are added
+    this.function = selectedFunction;
+  }
+
+  private async handleOrganizationChange(organizationID: string): Promise<void> {
+    //Clear form
+    this.clearDatabaseStep();
+
+    //Get organization id, from array or string
+    let id = organizationID;
+    if (Array.isArray(organizationID) && organizationID.length > 0) {
+      id = organizationID[0];
+    }
+
+    //Get node
+    if (id) {
+      //Get all nodes for chosen collaboration
+      const nodes = await this.chosenCollaborationService.getNodes();
+      //Filter node for chosen organization
+      this.node = nodes.find((_) => _.organization.id === Number.parseInt(id)) || null;
+
+      //Get databases for node
+      if (this.node) {
+        this.databases = getDatabasesFromNode(this.node);
+      }
+    }
+
+    if (this.function) {
+      this.setFormControlsForDatabase(this.function);
+    }
+  }
+
+  private clearFunctionStep(): void {
+    this.functionForm.controls.organizationIDs.reset();
+    Object.keys(this.databaseForm.controls).forEach((control) => {
+      this.parameterForm.removeControl(control);
+    });
+  }
+
+  private clearDatabaseStep(): void {
+    Object.keys(this.databaseForm.controls).forEach((control) => {
+      this.databaseForm.removeControl(control);
+    });
+  }
+
+  private clearParameterStep(): void {
+    Object.keys(this.parameterForm.controls).forEach((control) => {
+      this.parameterForm.removeControl(control);
+    });
+  }
+
+  private setFormControlsForDatabase(selectedFunction: Function) {
+    selectedFunction?.databases.forEach((database) => {
+      this.databaseForm.addControl(`${database.name}_name`, new FormControl(null, [Validators.required]));
+      this.databaseForm
+        .get(`${database.name}_name`)
+        ?.valueChanges.pipe(takeUntil(this.destroy$))
+        .subscribe(async (dataBaseName) => {
+          //Clear form
+          Object.keys(this.databaseForm.controls).forEach((control) => {
+            if (control.startsWith(database.name) && !control.includes('_name')) this.databaseForm.removeControl(control);
+          });
+
+          //Add form controls for selected database
+          const type = this.databases.find((_) => _.name === dataBaseName)?.type;
+          if (type === DatabaseType.SQL || type === DatabaseType.OMOP || type === DatabaseType.Sparql) {
+            this.databaseForm.addControl(`${database.name}_query`, new FormControl(null, [Validators.required]));
+          }
+          if (type === DatabaseType.Excel) {
+            this.databaseForm.addControl(`${database.name}_sheet`, new FormControl(null, [Validators.required]));
+          }
+        });
+    });
   }
 }
