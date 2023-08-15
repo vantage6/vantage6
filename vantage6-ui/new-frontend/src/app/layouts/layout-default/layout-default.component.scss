@@ -4,6 +4,12 @@
   margin: $spacing-px-4;
 }
 
+mat-toolbar {
+  .logo {
+    height: $spacing-px-12;
+  }
+}
+
 mat-sidenav {
   button {
     width: calc(100% - ($spacing-px-4 * 2));
