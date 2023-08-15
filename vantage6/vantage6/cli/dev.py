@@ -38,7 +38,7 @@ from vantage6.cli.node import vnode_stop
 from vantage6.cli.utils import prompt_config_name, remove_file
 
 
-def dummy_data(node_name: str, dev_folder: Path) -> Path:
+def create_dummy_data(node_name: str, dev_folder: Path) -> Path:
     """Synthesize csv dataset.
 
     Parameters
@@ -92,7 +92,7 @@ def create_node_config_file(server_url: str, port: int, config: dict,
     folders = NodeContext.instance_folders('node', node_name, False)
     path_to_dev_dir = Path(folders['dev'] / server_name)
     path_to_dev_dir.mkdir(parents=True, exist_ok=True)
-    dummy_datafile = dummy_data(node_name, path_to_dev_dir)
+    dummy_datafile = create_dummy_data(node_name, path_to_dev_dir)
 
     path_to_data_dir = Path(folders['data'])
     path_to_data_dir.mkdir(parents=True, exist_ok=True)

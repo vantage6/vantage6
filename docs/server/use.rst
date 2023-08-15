@@ -137,14 +137,19 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
     `issue <https://github.com/vantage6/vantage6/issues/71>`__.
 
 
-Testing 
+Testing
 """""""
-You can test the infrastructure via the ``vdev`` command. Use the ``--help``
-flag, e.g. ``vdev start-demo-network --help```. The purpose of this function 
-is to setup a test server accompanied by `N` nodes. You can then easily run 
-this server and the nodes locally. For example, if you have `N = 10` datasets 
-to test a particular algorithm on, then you can spawn these nodes with a single 
-command.
+
+You can test the infrastructure via the ``vdev`` commands. The purpose of this
+functionality is to easily setup and run a test server accompanied by `N` nodes
+locally. For example, if you have `N = 10` datasets to test a particular
+algorithm on, then you can spawn a server and 10 nodes with a single command.
+
+You can view all available commands in the table below, or alternatively, use
+``vdev --help``. By using ``--help`` with the individual commands (e.g.
+``vdev start-demo-network --help``), you can view more details on how to execute
+them.
+
 
 +------------------------------+--------------------------------------------+
 | **Command**                  | **Description**                            |
