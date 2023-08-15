@@ -7,7 +7,7 @@ import typing
 
 from colorama import init, Fore, Style
 
-from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.globals import APPNAME, STRING_ENCODING
 
 
 # init colorstuff
@@ -258,14 +258,7 @@ def check_config_writeable(system_folders: bool = False) -> bool:
         file or not.
     """
     dirs = appdirs.AppDirs()
-    if system_folders:
-        dirs_to_check = [
-            dirs.site_config_dir
-        ]
-    else:
-        dirs_to_check = [
-            dirs.user_config_dir
-        ]
+    dirs_to_check = get_config_path(dirs, system_folders=system_folders)
     w_ok = True
     for dir_ in dirs_to_check:
         if not os.path.isdir(dir_):
@@ -277,6 +270,32 @@ def check_config_writeable(system_folders: bool = False) -> bool:
             w_ok = False
 
     return w_ok
+
+
+def get_config_path(dirs: appdirs.AppDirs,
+                    system_folders: bool = False) -> str:
+    """
+    Get the path to the configuration directory.
+
+    Parameters
+    ----------
+    dirs: appdirs.AppDirs
+        The appdirs object.
+    system_folders: bool
+        Whether to get path to the system folders or the user folders.
+
+    Returns
+    -------
+    str
+        The path to the configuration directory.
+    """
+    if system_folders:
+        config_dir = dirs.site_config_dir
+        if 'xdg' in config_dir:
+            config_dir = f'/etc/{APPNAME}'
+        return config_dir
+    else:
+        return dirs.user_config_dir
 
 
 def is_ip_address(ip: str) -> bool:
