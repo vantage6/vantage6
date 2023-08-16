@@ -66,7 +66,9 @@ from vantage6.cli import __version__
 
 @click.group(name="node")
 def cli_node() -> None:
-    """Subcommand `vnode`."""
+    """
+    The `vnode` commands allow you to manage your vantage6 node instances.
+    """
     pass
 
 
@@ -76,7 +78,10 @@ def cli_node() -> None:
 @cli_node.command(name="list")
 def cli_node_list() -> None:
     """
-    Lists all nodes in the default configuration directories.
+    Lists all node configurations.
+
+    Note that this command cannot find node configuration files in custom
+    directories.
     """
 
     client = docker.from_env()
@@ -130,27 +135,21 @@ def cli_node_list() -> None:
 #   new
 #
 @cli_node.command(name="new")
-@click.option("-n", "--name", default=None)
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option('-e', '--environment', default="",
-              help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+              help='Configuration environment to use')
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Store this configuration in the system folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Store this configuration in the user folders. This is the "
+                   "default")
 def cli_node_new_configuration(name: str, environment: str,
                                system_folders: bool) -> None:
     """
-    Create a new configuration file.
+    Create a new node configuration.
 
     Checks if the configuration already exists. If this is not the case
     a questionnaire is invoked to create a new configuration file.
-
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    environment : str
-        DTAP environment to use.
-    system_folders : bool
-        Store this configuration in the system folders or in the user folders.
     """
     name = prompt_config_name(name)
     # check if config name is allowed docker name
@@ -186,26 +185,20 @@ def cli_node_new_configuration(name: str, environment: str,
 #   files
 #
 @cli_node.command(name="files")
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for the configuration in the system folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for the configuration in the user folders. This is "
+                   "the default")
 def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
     """
-    Prints location important files.
+    Prints the location of important node files.
 
     If the specified configuration cannot be found, it exits. Otherwise
     it returns the absolute path to the output.
-
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    environment : str
-        DTAP environment to use.
-    system_folders : bool
-        Is this configuration stored in the system or in the user folders.
     """
     name, environment = _select_node(name, environment, system_folders)
 
@@ -231,26 +224,34 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
 #   start
 #
 @cli_node.command(name='start')
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("-c", "--config", default=None,
-              help='absolute path to configuration-file; overrides NAME')
+              help='Path to configuration-file; overrides NAME')
 @click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for the configuration in the system folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for the configuration in the user folders. This is "
+                   "the default")
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--keep/--auto-remove', default=False,
-              help="Keep image after finishing")
+              help="Keep node container after finishing. Useful for debugging")
 @click.option('--force-db-mount', is_flag=True,
-              help="Skip the check of the existence of the DB (always try to "
-                   "mount)")
+              help="Always mount node databases; skip the check if they are "
+                   "existing files.")
 @click.option('--attach/--detach', default=False,
-              help="Attach node logs to the console after start")
+              help="Show node logs on the current console after starting the "
+                   "node")
 @click.option('--mount-src', default='',
-              help="mount vantage6-master package source")
+              help="Override vantage6 source code in container with the source"
+                   " code in this path")
 def cli_node_start(name: str, config: str, environment: str,
                    system_folders: bool, image: str, keep: bool,
                    mount_src: str, attach: bool, force_db_mount: bool) -> None:
+    """
+    Start the node.
+    """
     vnode_start(name, config, environment, system_folders, image, keep,
                 mount_src, attach, force_db_mount)
 
@@ -533,14 +534,22 @@ def vnode_start(name: str, config: str, environment: str, system_folders: bool,
 #   stop
 #
 @cli_node.command(name='stop')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-@click.option('--all', 'all_nodes', flag_value=True)
-@click.option('--force', 'force', flag_value=True, help="kills containers "
-                                                        "instantly")
+@click.option("-n", "--name", default=None, help="Configuration name")
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for configuration in system folders instead of "
+                   "user folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for configuration in the user folders instead of "
+                   "system folders. This is the default.")
+@click.option('--all', 'all_nodes', flag_value=True,
+              help="Stop all running nodes")
+@click.option('--force', 'force', flag_value=True,
+              help="Kill nodes instantly; don't wait for them to shut down")
 def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
                   force: bool) -> None:
+    """
+    Stop one or all running nodes.
+    """
     vnode_stop(name, system_folders, all_nodes, force)
 
 
@@ -608,19 +617,16 @@ def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
 #   attach
 #
 @cli_node.command(name='attach')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option("-n", "--name", default=None, help="Configuration name")
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for configuration in system folders rather than "
+                   "user folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for configuration in user folders rather than "
+                   "system folders. This is the default")
 def cli_node_attach(name: str, system_folders: bool) -> None:
     """
-    Attach the logs from the docker container to the terminal.
-
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    system_folders : bool
-        Wether this configuration stored in the system or in the user folders.
+    Show the node logs in the current console.
     """
     client = docker.from_env()
     check_docker_running()
@@ -658,40 +664,35 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
 #   create-private-key
 #
 @cli_node.command(name='create-private-key')
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("-c", "--config", default=None,
-              help='absolute path to configuration-file; overrides NAME')
+              help='Path to configuration-file; overrides NAME')
 @click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
-@click.option('--no-upload', 'upload', flag_value=False, default=True)
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for configuration in system folders rather than "
+                   "user folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for configuration in user folders rather than "
+                   "system folders. This is the default")
+@click.option('--no-upload', 'upload', flag_value=False, default=True,
+              help="Don't upload the public key to the server")
 @click.option("-o", "--organization-name", default=None,
-              help="Organization name")
-@click.option('--overwrite', 'overwrite', flag_value=True, default=False)
+              help="Organization name. Used in the filename of the private key"
+                   " so that it can easily be recognized again later")
+@click.option('--overwrite', 'overwrite', flag_value=True, default=False,
+              help="Overwrite existing private key if present")
 def cli_node_create_private_key(
         name: str, config: str, environment: str, system_folders: bool,
         upload: bool, organization_name: str, overwrite: bool
         ) -> None:
     """
-    Create and upload a new private key (use with caution).
+    Create and upload a new private key
 
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    config : str
-        Absolute path to configuration-file; overrides NAME.
-    environment : str
-        DTAP environment to use.
-    system_folders : bool
-        Wether this configuration stored in the system or in the user folders.
-    upload : bool
-        Wether to upload the private key to the server.
-    organization_name : str
-        Used to store and reference the private key.
-    overwrite : bool
-        Overwrite existing private key if present.
+    Use this command with caution! Uploading a new key has several
+    consequences, e.g. you and other users of your organization
+    will no longer be able to read the results of tasks encrypted with current
+    key.
     """
     NodeContext.LOGGING_ENABLED = False
     if config:
@@ -804,7 +805,7 @@ def cli_node_create_private_key(
 @cli_node.command(name='clean')
 def cli_node_clean() -> None:
     """
-    This command erases temporary Docker volumes.
+    Erase temporary Docker volumes.
     """
     client = docker.from_env()
     check_docker_running()
@@ -837,12 +838,22 @@ def cli_node_clean() -> None:
 #   remove
 #
 @cli_node.command(name="remove")
-@click.option("-n", "--name", default=None)
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for configuration in system folders rather than "
+                   "user folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for configuration in user folders rather than "
+                   "system folders. This is the default")
 def cli_node_remove(name: str, environment: str, system_folders: bool) -> None:
+    """
+    Delete a node permanently.
+
+    Remove the configuration file, log file, and docker volumes attached to
+    the node.
+    """
     vnode_remove(name, environment, system_folders)
 
 
@@ -930,19 +941,16 @@ def vnode_remove(name: str, environment: str, system_folders: bool):
 #   version
 #
 @cli_node.command(name='version')
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option("-n", "--name", default=None, help="Configuration name")
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for configuration in system folders rather than "
+                   "user folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for configuration in user folders rather than "
+                   "system folders. This is the default")
 def cli_node_version(name: str, system_folders: bool) -> None:
     """
-    Returns current version of vantage6 services installed.
-
-    Parameters
-    ----------
-    name : str
-        Configuration name
-    system_folders : bool
-        If True, use system folders, otherwise use user folders
+    Returns current version of a vantage6 node.
     """
     client = docker.from_env()
     check_docker_running()
@@ -973,27 +981,20 @@ def cli_node_version(name: str, system_folders: bool) -> None:
 #   set-api-key
 #
 @cli_node.command(name='set-api-key')
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("--api-key", default=None, help="New API key")
 @click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
-@click.option('--system', 'system_folders', flag_value=True)
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL)
+@click.option('--system', 'system_folders', flag_value=True,
+              help="Search for configuration in system folders rather than "
+                   "user folders")
+@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
+              help="Search for configuration in user folders rather than "
+                   "system folders. This is the default")
 def cli_node_set_api_key(name: str, api_key: str, environment: str,
                          system_folders: bool) -> None:
     """
-    Put a new API key into the node configuration file
-
-    Parameters
-    ----------
-    name : str
-        Node configuration name
-    api_key : str
-        New API key
-    environment : str
-        DTAP environment
-    system_folders : bool
-        If True, use system folders, otherwise use user folders
+    Put a new API key into the node configuration file.
     """
     # select name and environment
     name, environment = _select_node(name, environment, system_folders)

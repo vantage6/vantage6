@@ -293,7 +293,10 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
 
 @click.group(name="dev")
 def cli_dev() -> None:
-    """Subcommand `vdev`."""
+    """
+    The `vdev` commands can be used to quickly manage a development network
+    with a server and several notes for local testing.
+    """
 
 
 @cli_dev.command(name="create-demo-network")
@@ -311,7 +314,7 @@ def cli_dev() -> None:
               'the development server')
 def create_demo_network(name: str, num_nodes: int, server_url: str,
                         server_port: int, image: str = None) -> dict:
-    """Synthesizes a demo network.
+    """Creates a demo network.
 
     Creates server instance as well as its import configuration file. Server
     name is set to 'dev_default_server'. Generates `n` node configurations, but
@@ -341,7 +344,7 @@ def create_demo_network(name: str, num_nodes: int, server_url: str,
 @cli_dev.command(name="start-demo-network")
 @click_insert_context
 def start_demo_network(ctx: ServerContext) -> None:
-    """Starts running a demo-network
+    """Starts running a demo-network.
 
     Select a server configuration to run its demo network. You should choose a
     server configuration that you created earlier for a demo network. If you
@@ -363,7 +366,11 @@ def start_demo_network(ctx: ServerContext) -> None:
 @cli_dev.command(name="stop-demo-network")
 @click_insert_context
 def stop_demo_network(ctx: ServerContext) -> None:
-    """ Stops a demo network's server and nodes """
+    """ Stops a demo network's server and nodes.
+
+    Select a server configuration to stop that server and the nodes attached
+    to it.
+    """
     # stop the server
     vserver_stop(name=ctx.name, environment=S_ENV, system_folders=True,
                  all_servers=False)
@@ -380,7 +387,11 @@ def stop_demo_network(ctx: ServerContext) -> None:
 @cli_dev.command(name="remove-demo-network")
 @click_insert_context
 def remove_demo_network(ctx: ServerContext) -> None:
-    """ Remove all related demo network files and folders """
+    """ Remove all related demo network files and folders.
+
+    Select a server configuration to remove that server and the nodes attached
+    to it.
+    """
 
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
