@@ -294,8 +294,8 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
 @click.group(name="dev")
 def cli_dev() -> None:
     """
-    The `vdev` commands can be used to quickly manage a development network
-    with a server and several notes for local testing.
+    The `vdev` commands can be used to quickly manage a network with a server
+    and several nodes for local testing.
     """
 
 

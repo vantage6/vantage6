@@ -226,7 +226,7 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
 @cli_node.command(name='start')
 @click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("-c", "--config", default=None,
-              help='Path to configuration-file; overrides NAME')
+              help='Absolute path to configuration-file; overrides NAME')
 @click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True,
@@ -666,7 +666,7 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
 @cli_node.command(name='create-private-key')
 @click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("-c", "--config", default=None,
-              help='Path to configuration-file; overrides NAME')
+              help='Absolute path to configuration-file; overrides NAME')
 @click.option('-e', '--environment', default=N_ENV,
               help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True,
