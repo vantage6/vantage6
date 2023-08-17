@@ -1,10 +1,13 @@
 import pickle
 import pandas as pd
+import logging
 
 from importlib import import_module
 from copy import deepcopy
 
 from vantage6.tools.wrapper import select_wrapper
+
+module_name = __name__.split('.')[1]
 
 
 class ClientMockProtocol:
@@ -152,7 +155,6 @@ class ClientMockProtocol:
         return organizations
 
 
-# TODO in v4+, rename to ClientMockProtocol?
 class MockAlgorithmClient:
     """
     The MockAlgorithmClient mimics the behaviour of the AlgorithmClient. It
@@ -167,51 +169,86 @@ class MockAlgorithmClient:
         {
             "database": str | pd.DataFrame,
             "type": str,
-            "input_data": dict
+            "db_input": dict, # optional, depends on database type
         }
         where database is the path/URI to the database, type is the database
-        type (as listed in node configuration) and input_data contains
-        the input data that is normally passed to the algorithm wrapper.
+        type (as listed in node configuration) and db_input is the input
+        that is given to the algorithm wrapper (this is e.g. a sheet name for
+        an excel file or a query for a SQL database).
 
         Note that if the database is a pandas DataFrame, the type and
         input_data keys are not required.
     module : str
         The name of the module that contains the algorithm.
-    node_id : int, optional
-        Sets the mocked node id that to this value. Defaults to 1.
     collaboration_id : int, optional
         Sets the mocked collaboration id to this value. Defaults to 1.
-    organization_id : int, optional
-        Sets the mocked organization id to this value. Defaults to 1.
+    organization_ids : list[int], optional
+        Set the organization ids to this value. The first value is used for
+        this organization, the rest for child tasks. Defaults to [0, 1, 2, ...].
+    node_ids: list[int], optional
+        Set the node ids to this value. The first value is used for this node,
+        the rest for child tasks. Defaults to [0, 1, 2, ...].
     """
-    # TODO not only read CSVs but also data types
     def __init__(
-        self, datasets: list[dict], module: str, node_id: int = None,
-        collaboration_id: int = None, organization_id: int = None
+        self, datasets: list[dict], module: str, collaboration_id: int = None,
+        organization_ids: int = None, node_ids: int = None,
     ) -> None:
+        self.log = logging.getLogger(module_name)
         self.n = len(datasets)
-        self.datasets = []
-        for dataset in datasets:
+        self.datasets = {}
+        self.organizations_with_data = []
+
+        if organization_ids and len(organization_ids) == self.n:
+            self.all_organization_ids = organization_ids
+        else:
+            default_organization_ids = list(range(self.n))
+            if organization_ids:
+                self.log.warning(
+                    "The number of organization ids (%s) does not match the number "
+                    "of datasets (#=%s), using default values (%s) instead",
+                    organization_ids,
+                    self.n,
+                    default_organization_ids,
+                )
+            self.all_organization_ids = default_organization_ids
+
+        self.organization_id = self.all_organization_ids[0]
+
+        # TODO v4+ rename host_node_id to node_id
+        if node_ids and len(node_ids) == self.n:
+            self.all_node_ids = node_ids
+        else:
+            default_node_ids = list(range(self.n))
+            if node_ids:
+                self.log.warning(
+                    "The number of node ids (%s) does not match the number of "
+                    "datasets (#=%s), using default values (%s) instead",
+                    node_ids,
+                    self.n,
+                    default_node_ids,
+                )
+            self.all_node_ids = default_node_ids
+        self.host_node_id = self.all_node_ids[0]
+
+        for idx, dataset in enumerate(datasets):
+            org_id = self.all_organization_ids[idx]
+            self.organizations_with_data.append(org_id)
             if isinstance(dataset["database"], pd.DataFrame):
-                self.datasets.append(dataset["database"])
+                self.datasets[org_id] = dataset["database"]
             else:
                 wrapper = select_wrapper(dataset["type"])
-                self.datasets.append(
-                    wrapper.load_data(
-                        dataset["database"],
-                        dataset["input_data"] if "input_data" in dataset
-                        else {}
-                    )
+                self.datasets[org_id] = wrapper.load_data(
+                    dataset["database"],
+                    dataset["db_input"] if "db_input" in dataset
+                    else {}
                 )
 
-        self.lib = import_module(module)
-        self.tasks = []
+        self.collaboration_id = collaboration_id if collaboration_id else 1
+        self.module_name = module
 
         self.image = 'mock_image'
         self.database = 'mock_database'
-        self.host_node_id = node_id if node_id else 1
-        self.collaboration_id = collaboration_id if collaboration_id else 1
-        self.organization_id = organization_id if organization_id else 1
+        self.tasks = []
 
         self.task = self.Task(self)
         self.result = self.Result(self)
@@ -272,11 +309,13 @@ class MockAlgorithmClient:
             # TODO in v4+, there is no master and this should be removed
             master = input_.get("master")
 
+            module = import_module(self.parent.module_name)
+
             method_name = input_.get("method")
             if master:
-                method = getattr(self.parent.lib, method_name)
+                method = getattr(module, method_name)
             else:
-                method = getattr(self.parent.lib, f"RPC_{method_name}")
+                method = getattr(module, f"RPC_{method_name}")
 
             # get input
             args = input_.get("args", [])
@@ -290,9 +329,9 @@ class MockAlgorithmClient:
                     # ensure that a task has a node_id and organization id that
                     # is unique compared to other tasks.
                     client_copy = deepcopy(self.parent)
-                    client_copy.host_node_id = org_id
+                    client_copy.host_node_id = self._select_node(org_id)
                     client_copy.organization_id = org_id
-                    result = method(self.parent, data, *args, **kwargs)
+                    result = method(client_copy, data, *args, **kwargs)
                 else:
                     result = method(data, *args, **kwargs)
 
@@ -347,6 +386,27 @@ class MockAlgorithmClient:
             """
             return self.parent.tasks[task_id]
 
+        def _select_node(self, org_id: int) -> int:
+            """
+            Select a node for the given organization id.
+
+            Parameters
+            ----------
+            org_id : int
+                The organization id.
+
+            Returns
+            -------
+            int
+                The node id.
+            """
+            if not self.parent.all_node_ids or \
+                    not self.parent.all_organization_ids or \
+                    org_id not in self.parent.all_organization_ids:
+                return org_id
+            org_idx = self.parent.all_organization_ids.index(org_id)
+            return self.parent.all_node_ids[org_idx]
+
     # TODO for v4+, add a Run class
     class Result(SubClient):
         """
@@ -393,6 +453,11 @@ class MockAlgorithmClient:
             dict
                 A mocked organization.
             """
+            if not id_ == self.parent.organization_id and \
+                    id_ not in self.parent.organizations_with_data:
+                return {
+                    "msg": f"Organization {id_} not found."
+                }
             return {
                 "id": id_,
                 "name": f"mock-{id_}",
@@ -419,7 +484,7 @@ class MockAlgorithmClient:
                 A list of mocked organizations in the collaboration.
             """
             organizations = []
-            for i in range(self.parent.n):
+            for i in self.parent.all_organization_ids:
                 organizations.append(self.get(i))
             return organizations
 

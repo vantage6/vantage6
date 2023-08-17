@@ -1,6 +1,81 @@
 Release notes
 =============
 
+3.10.4
+-----
+
+*27 June 2023*
+
+- **Change**
+
+ - Extended the AlgorithmMockClient so that algorithm developers may pass it
+   organization id's and node id's
+   (`PR#737 <https://github.com/vantage6/vantage6/pull/737>`_).
+
+- **Bugfix**
+
+ - Speed up starting algorithm using VPN  (
+   `Issue#681 <https://github.com/vantage6/vantage6/issues/681>`_,
+   `PR#732 <https://github.com/vantage6/vantage6/pull/732>`_).
+ - Updated VPN configurator Dockerfile so that VPN configuration works on
+   Ubuntu 22 (`Issue#724 <https://github.com/vantage6/vantage6/issues/724>`_,
+   `PR#725 <https://github.com/vantage6/vantage6/pull/725>`_).
+
+3.10.3
+-----
+
+*20 June 2023*
+
+- **Bugfix**
+
+ - Fixed bug in copying the MockClient itself to pass it on to a child task (
+   `PR#723 <https://github.com/vantage6/vantage6/pull/723>`_).
+
+.. note::
+
+    Release 3.10.2 failed to be published to PyPI due to a gateway error,
+    so that version was skipped.
+
+3.10.1
+-----
+
+*19 June 2023*
+
+- **Bugfix**
+
+ - Fixed bug in setting organization_id for the AlgorithmClient (
+   `Issue#719 <https://github.com/vantage6/vantage6/issues/719>`_,
+   `PR#720 <https://github.com/vantage6/vantage6/pull/720>`_).
+
+3.10.0
+-----
+
+*19 June 2023*
+
+- **Feature**
+
+ - There is a new implementation of a mock client, the ``MockAlgorithmClient``.
+   This client is an improved version of the old ``ClientMockProtocol``. The
+   new mock client now contains all the same functions as the regular client
+   with the same signatures, and it returns the same data fields as those
+   functions. Also, you may submit all supported data formats instead of just
+   CSV files, and you may also submit pandas Dataframes directly.
+   (`Issue#683 <https://github.com/vantage6/vantage6/issues/683>`_,
+   `PR#702 <https://github.com/vantage6/vantage6/pull/702>`_).
+
+- **Change**
+
+ - Updated cryptography dependency from 39.0.1 to 41.0.0
+   (`PR#707 <https://github.com/vantage6/vantage6/pull/707>`_,
+   `PR#708 <https://github.com/vantage6/vantage6/pull/708>`_).
+
+- **Bugfix**
+
+ - A node's VPN IP address was previously only updated when a new task was
+   started on that node. Instead, it is now updated properly on VPN connect/
+   disconnect (`Issue#520 <https://github.com/vantage6/vantage6/issues/520>`_,
+   `PR#704 <https://github.com/vantage6/vantage6/pull/704>`_).
+
 3.9.0
 -----
 
@@ -61,18 +136,18 @@ Release notes
 
 - **Bugfix**
 
-   - Fixed checking for newer images (node, server, and algorithms). Previously,
-     the dates used were not sufficient to check if an image was newer. Now,
-     we are also checking the image digest
-     (`Issue#507 <https://github.com/vantage6/vantage6/issues/507>`_,
-     `PR#602 <https://github.com/vantage6/vantage6/pull/602>`_).
-   - Users are prevented from posting socket events that are meant for nodes -
-     note that nothing harmful could be done but it should not be possible
-     nevertheless (`Issue#615 <https://github.com/vantage6/vantage6/issues/615>`_,
-     `PR#616 <https://github.com/vantage6/vantage6/pull/616>`_).
-   - Fixed bug with detecting if database was a file as '/mnt/' was not properly
-     prepended to the file path
-     (`PR#691 <https://github.com/vantage6/vantage6/pull/691>`_).
+ - Fixed checking for newer images (node, server, and algorithms). Previously,
+   the dates used were not sufficient to check if an image was newer. Now,
+   we are also checking the image digest
+   (`Issue#507 <https://github.com/vantage6/vantage6/issues/507>`_,
+   `PR#602 <https://github.com/vantage6/vantage6/pull/602>`_).
+ - Users are prevented from posting socket events that are meant for nodes -
+   note that nothing harmful could be done but it should not be possible
+   nevertheless (`Issue#615 <https://github.com/vantage6/vantage6/issues/615>`_,
+   `PR#616 <https://github.com/vantage6/vantage6/pull/616>`_).
+ - Fixed bug with detecting if database was a file as '/mnt/' was not properly
+   prepended to the file path
+   (`PR#691 <https://github.com/vantage6/vantage6/pull/691>`_).
 
 3.8.8
 -----
