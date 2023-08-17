@@ -349,15 +349,8 @@ def remove_container(container: Container, kill: bool = False) -> None:
     kill: bool
         Whether or not container should be killed before it is removed
     """
-    if kill:
-        # TODO it would be nice to observe container status before attempting
-        # to kill it, so that we do not have to pass Exceptions
-        try:
-            container.kill()
-        except Exception:
-            pass  # allow failure here, maybe container had already exited
     try:
-        container.remove()
+        container.remove(force=kill)
     except Exception as e:
         log.exception(f"Failed to remove container {container.name}")
         log.debug(e)
