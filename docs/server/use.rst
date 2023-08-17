@@ -123,7 +123,7 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
    <details>
    <summary><a>Example batch import</a></summary>
 
-.. literalinclude :: yaml/server_config.yaml
+.. literalinclude :: yaml/batch_import.yaml
     :language: yaml
 
 .. raw:: html
