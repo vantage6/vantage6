@@ -19,10 +19,6 @@ swagger_template = {
                         "type": "string",
                         "description": "Human-readable task description"
                     },
-                    "input": {
-                        "type": "string",
-                        "description": "Task input"
-                    },
                     "name": {
                         "type": "string",
                         "description": "Human-readable task name"
@@ -32,12 +28,14 @@ swagger_template = {
                         "description": "Collaboration id"
                     },
                     "organizations": {
-                        "type": "array",
-                        "items": {"type": "dictionary"},
+                        "type": "dict",
                         "description": (
-                            "List of organizations for who the task is "
-                            "intended. For each organization, the 'id' and "
-                            "'input' fields should be specified."
+                            "List of organizations that should run the task. "
+                            "The key 'id' should give the organization id, and"
+                            " the key 'input' should give the input for that "
+                            "organization. Each input should be a encrypted "
+                            "and/or serialized dictionary that may contain the"
+                            " keys 'method', kwargs', 'args', and 'master'."
                         )
                     },
                     "databases": {
@@ -51,11 +49,19 @@ swagger_template = {
                     "image": "hello-world",
                     "collaboration_id": 1,
                     "description": "human-readable-description",
-                    "organizations": [{
-                        "id": 1,
-                        "input": "input-for-organization-1"
-                    }],
                     "databases": ["database1", "database2"],
+                    "organizations": [
+                        {
+                            "id": 1,
+                            "input": {
+                                "method": "method-name",
+                                "kwargs": {"key": "value"},
+                                "args": ["arg1", "arg2"],
+                                "master": True
+                            }
+                        }
+                    ]
+
                 },
                 "required": ["image", "collaboration_id"]
             },

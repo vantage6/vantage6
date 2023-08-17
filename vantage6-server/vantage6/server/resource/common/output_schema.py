@@ -166,6 +166,7 @@ class TaskSchema(HATEOASModelSchema):
         model = db.Task
 
     status = fields.String()
+    finished_at = fields.DateTime()
     collaboration = fields.Method("collaboration")
     runs = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to="run", link_from="task_id"

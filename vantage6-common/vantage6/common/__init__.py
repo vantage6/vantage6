@@ -4,6 +4,7 @@ import click
 import appdirs
 import ipaddress
 import typing
+import uuid
 
 from colorama import init, Fore, Style
 
@@ -317,3 +318,15 @@ def get_database_config(databases: list, label: str) -> dict | None:
     for database in databases:
         if database["label"] == label:
             return database
+    return None
+
+
+def generate_apikey() -> str:
+    """Creates random api_key using uuid.
+
+    Returns
+    -------
+    str
+        api_key
+    """
+    return str(uuid.uuid4())

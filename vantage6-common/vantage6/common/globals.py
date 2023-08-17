@@ -15,6 +15,7 @@ DEFAULT_NODE_IMAGE = f"infrastructure/node:{MAIN_VERSION_NAME}"
 
 DEFAULT_SERVER_IMAGE = f"infrastructure/server:{MAIN_VERSION_NAME}"
 
+DEFAULT_UI_IMAGE = f"infrastructure/ui:{MAIN_VERSION_NAME}"
 
 #
 #   COMMON GLOBALS

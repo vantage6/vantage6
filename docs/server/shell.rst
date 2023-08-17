@@ -251,7 +251,7 @@ new node can be created as follows:
 
    # we'll use a uuid as the API-key, but you can use anything as
    # API key
-   from uuid import uuid1
+   from uuid import uuid4
 
    # nodes always belong to an organization *and* a collaboration,
    # this combination needs to be unique!
@@ -259,7 +259,7 @@ new node can be created as follows:
    collab = iknl.collaborations[0]
 
    # generate and save
-   api_key = str(uuid1())
+   api_key = str(uuid4())
    print(api_key)
 
    node = db.Node(

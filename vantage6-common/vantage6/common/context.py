@@ -226,7 +226,8 @@ class AppContext(metaclass=Singleton):
             return {
                 "log": Path(d.user_log_dir) / instance_type,
                 "data": Path(d.user_data_dir) / instance_type / instance_name,
-                "config": Path(d.user_config_dir) / instance_type
+                "config": Path(d.user_config_dir) / instance_type,
+                "dev": Path(d.user_config_dir) / "dev"
             }
 
     @classmethod

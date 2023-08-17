@@ -124,3 +124,19 @@ vpn_server:
     # Username and password to acccess the EduVPN portal
     portal_username: your_eduvpn_portal_user_name
     portal_userpass: your_eduvpn_portal_user_password
+
+# specify custom Docker images to use for starting the different
+# components.
+# OPTIONAL
+images:
+  server: harbor2.vantage6.ai/infrastructure/server:petronas
+  ui: harbor2.vantage6.ai/infrastructure/ui:petronas
+
+# options for starting the User Interface when starting the server
+ui:
+  # set this to true to start the UI when starting the server with
+  # `vserver start`
+  enabled: true
+
+  # port at which the UI will be available on your local machine
+  port: 3456

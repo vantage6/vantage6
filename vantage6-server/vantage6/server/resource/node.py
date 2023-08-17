@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
-import uuid
 
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 
+from vantage6.common import generate_apikey
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
 from vantage6.server.resource.common.pagination import Pagination
@@ -366,7 +366,7 @@ class Nodes(NodeBase):
             }, HTTPStatus.BAD_REQUEST
 
         # Ok we're good to go!
-        api_key = str(uuid.uuid4())
+        api_key = generate_apikey()
         node = db.Node(
             name=name,
             collaboration=collaboration,
