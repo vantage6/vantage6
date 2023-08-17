@@ -20,3 +20,9 @@ anything is unclear, please contact us via
 .. note::
     If you are a server administrator and want to set up a user interface, see
     :ref:`this section <install-ui>` on deploying a UI.
+
+.. note::
+    If you are :ref:`running your own server <use-server>` with ``vserver start``,
+    you can start the UI locally with ``vserver start --with-ui``, or you may
+    specify that the UI should always be started in the ``ui`` section of the
+    :ref:`server configuration file <server-configuration-file>`.

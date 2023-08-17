@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, ForeignKey, Integer, sql
+import datetime
+
+from sqlalchemy import Column, String, ForeignKey, Integer, sql, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -60,6 +62,7 @@ class Task(Base):
     database = Column(String)
     initiator_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
@@ -84,6 +87,21 @@ class Task(Base):
             True if task is complete, False otherwise
         """
         return all([r.complete for r in self.results])
+
+    # TODO update in v4+, with renaming to 'run'
+    @hybrid_property
+    def finished_at(self) -> datetime.datetime | None:
+        """
+        Determine the time at which a task was completed. This is the time at
+        which the last algorithm run was completed.
+
+        Returns
+        -------
+        datetime.datetime | None
+            Time at which task was completed, None if task is not completed
+        """
+        return max([r.finished_at for r in self.results]) \
+            if self.complete and self.results else None
 
     @hybrid_property
     def status(self) -> str:
