@@ -69,25 +69,17 @@ def click_insert_context(func: callable) -> callable:
     @click.option('-e', '--environment',
                   default=DEFAULT_SERVER_ENVIRONMENT,
                   help='Configuration environment to use')
-    @click.option('--system', 'system_folders', flag_value=True)
+    @click.option('--system', 'system_folders', flag_value=True,
+                  help='Use system folders instead of user folders. This is '
+                  'the default')
     @click.option('--user', 'system_folders', flag_value=False,
-                  default=DEFAULT_SERVER_SYSTEM_FOLDERS)
+                  default=DEFAULT_SERVER_SYSTEM_FOLDERS,
+                  help='Use user folders instead of system folders')
     @wraps(func)
     def func_with_context(name: str, config: str, environment: str,
                           system_folders: bool, *args, **kwargs) -> callable:
         """
         Decorator function that adds the context to the function.
-
-        Parameters
-        ----------
-        name : str
-            name of the configuration you want to use.
-        config : str
-            path to configuration file, overrides name
-        environment : str
-            DTAP environment to use
-        system_folders : bool
-            Wether to use system folders or not
 
         Returns
         -------
@@ -122,15 +114,17 @@ def click_insert_context(func: callable) -> callable:
 
 @click.group(name='server')
 def cli_server() -> None:
-    """Subcommand `vserver`."""
+    """
+    The `vserver` commands allow you to manage your vantage6 server instances.
+    """
 
 
 #
 #   start
 #
 @cli_server.command(name='start')
-@click.option('--ip', default=None, help='ip address to listen on')
-@click.option('-p', '--port', default=None, type=int, help='port to listen on')
+@click.option('--ip', default=None, help='IP address to listen on')
+@click.option('-p', '--port', default=None, type=int, help='Port to listen on')
 @click.option('-i', '--image', default=None, help="Server Docker image to use")
 @click.option('--with-ui', 'start_ui', flag_value=True, default=False,
               help="Start the graphical User Interface as well")
@@ -139,39 +133,18 @@ def cli_server() -> None:
 @click.option('--rabbitmq-image', default=None,
               help="RabbitMQ docker image to use")
 @click.option('--keep/--auto-remove', default=False,
-              help="Keep image after finishing")
+              help="Keep image after server has stopped. Useful for debugging")
 @click.option('--mount-src', default='',
-              help="mount vantage6-master package source")
+              help="Override vantage6 source code in container with the source"
+              " code in this path")
 @click.option('--attach/--detach', default=False,
-              help="Attach server logs to the console after start")
+              help="Print server logs to the console after start")
 @click_insert_context
 def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
                      start_ui: bool, ui_port: int, rabbitmq_image: str,
                      keep: bool, mount_src: str, attach: bool) -> None:
     """
-    Start the server in a Docker container.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        Server context object
-    ip : str
-        ip interface to listen on
-    port : int
-        port to listen on
-    image : str
-        Server Docker image to use
-    rabbitmq_image : str
-        RabbitMQ docker image to use
-    keep : bool
-        Wether to keep the image after the server has finished, useful for
-        debugging
-    mount_src : str
-        Path to the vantage6 package source, this overrides the source code in
-        the container. This is useful when developing and testing the server.
-    attach : bool
-        Wether to attach the server logs to the console after starting the
-        server.
+    Start the server.
     """
     vserver_start(ctx, ip, port, image, start_ui, ui_port, rabbitmq_image,
                   keep, mount_src, attach)
@@ -364,7 +337,7 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
 @cli_server.command(name='list')
 def cli_server_configuration_list() -> None:
     """
-    Print the available configurations.
+    Print the available server configurations.
     """
     client = docker.from_env()
     check_docker_running()
@@ -424,12 +397,7 @@ def cli_server_configuration_list() -> None:
 @click_insert_context
 def cli_server_files(ctx: ServerContext) -> None:
     """
-    List files locations of a server instance.
-
-    Parameters
-    ----------
-    ctx : Type[ServerContext]
-        Server context object
+    List files that belong to a particular server instance.
     """
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
@@ -450,15 +418,6 @@ def cli_server_files(ctx: ServerContext) -> None:
 def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
     """
     Create a new server configuration.
-
-    Parameters
-    ----------
-    name : str
-        name of the new configuration
-    environment : str
-        DTAP environment you want to configure
-    system_folders : bool
-        Wether to use system folders or not
     """
     name = prompt_config_name(name)
 
@@ -502,34 +461,23 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
 # TODO this method has a lot of duplicated code from `start`
 @cli_server.command(name='import')
 @click.argument('file_', type=click.Path(exists=True))
-@click.option('--drop-all', is_flag=True, default=False)
+@click.option('--drop-all', is_flag=True, default=False,
+              help="Drop all existing data before importing")
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
 @click.option('--mount-src', default='',
-              help="mount vantage6-master package source")
+              help="Override vantage6 source code in container with the source"
+                   " code in this path")
 @click.option('--keep/--auto-remove', default=False,
-              help="Keep image after finishing")
+              help="Keep image after finishing. Useful for debugging")
 @click_insert_context
 def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
                       image: str, mount_src: str, keep: bool) -> None:
     """
-    Batch import organizations/collaborations/users and tasks.
+    Import vantage6 resources, such as organizations, collaborations, users and
+    tasks into a server instance.
 
-    Parameters
-    ----------
-    ctx : ServerContext
-        Server context object
-    file_ : str
-        Yaml file containing the vantage6 formatted data to import
-    drop_all : bool
-        Wether to drop all data before importing
-    image : str
-        Node Docker image to use which contains the import script
-    mount_src : str
-        Vantage6 source location, this will overwrite the source code in the
-        container. Useful for debugging/development.
-    keep : bool
-        Wether to keep the image after finishing/crashing. Useful for
-        debugging.
+    The FILE_ argument should be a path to a yaml file containing the vantage6
+    formatted data to import.
     """
     vserver_import(ctx, file_, drop_all, image, mount_src, keep)
 
@@ -658,13 +606,12 @@ def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
 @click_insert_context
 def cli_server_shell(ctx: ServerContext) -> None:
     """
-    Run an iPython shell in the server container and attach the ORM. This
-    can be used to modify the database.
+    Run an iPython shell within a running server. This can be used to modify
+    the database.
 
-    Parameters
-    ----------
-    ctx : Type[ServerContext]
-        Server context object
+    NOTE: using the shell is no longer recommended as there is no validation on
+    the changes that you make. It is better to use the Python client or a
+    graphical user interface instead.
     """
     docker_client = docker.from_env()
     # will print an error if not
@@ -700,17 +647,6 @@ def cli_server_stop(name: str, environment: str, system_folders: bool,
                     all_servers: bool):
     """
     Stop one or all running server(s).
-
-    Parameters
-    ----------
-    name : str
-        Name of the server to stop
-    environment : str
-        DTAP environment to use
-    system_folders : bool
-        Wether to use system folders or not
-    all_servers : bool
-        Wether to stop all servers or not
     """
     vserver_stop(name, environment, system_folders, all_servers)
 
@@ -775,14 +711,7 @@ def vserver_stop(name: str, environment: str, system_folders: bool,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 def cli_server_attach(name: str, system_folders: bool) -> None:
     """
-    Attach the logs from the docker container to the terminal.
-
-    Parameters
-    ----------
-    name : str
-        Configuration name
-    system_folders : bool
-        Wether to use system folders or not
+    Show the server logs in the current console.
     """
     client = docker.from_env()
     check_docker_running()
@@ -818,20 +747,13 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
 #   version
 #
 @cli_server.command(name='version')
-@click.option("-n", "--name", default=None, help="configuration name")
+@click.option("-n", "--name", default=None, help="Configuration name")
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 def cli_server_version(name: str, system_folders: bool) -> None:
     """
-    Print the version of the vantage6 services.
-
-    Parameters
-    ----------
-    name : str
-        Name of the server to inspect
-    system_folders : bool
-        Wether to use system folders or not
+    Print the version of the vantage6 server.
     """
     client = docker.from_env()
     check_docker_running()
