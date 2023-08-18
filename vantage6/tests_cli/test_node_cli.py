@@ -80,8 +80,8 @@ class NodeCLITest(unittest.TestCase):
             result.output,
             "\nName                     Status          System/User\n"
             "-----------------------------------------------------\n"
-            "iknl                     Not running      System \n"
-            "iknl                     Running          User   \n"
+            "iknl                     Not running     System \n"
+            "iknl                     Running         User   \n"
             "-----------------------------------------------------\n"
         )
 
