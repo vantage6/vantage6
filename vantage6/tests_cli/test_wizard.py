@@ -54,7 +54,9 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [True, True, True, True]
+            q.confirm.return_value.ask.side_effect = [
+                True, True, True, True, True
+            ]
 
             config = server_configuration_questionaire("vantage6")
 
