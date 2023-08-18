@@ -261,7 +261,13 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         rabbit_uri = q.text(
             message='Enter the URI for your RabbitMQ:'
         ).ask()
-        config['rabbitmq_uri'] = rabbit_uri
+        run_rabbit_locally = q.confirm(
+            "Do you want to run RabbitMQ locally? (Use only for testing)"
+        ).ask()
+        config['rabbitmq'] = {
+            'uri': rabbit_uri,
+            'start_with_server': run_rabbit_locally
+        }
 
     config["logging"] = {
         "level": res,

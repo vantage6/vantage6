@@ -44,7 +44,7 @@ from vantage6.cli.utils import (
     remove_file
 )
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
-from vantage6.cli import __version__, rabbitmq
+from vantage6.cli import __version__
 
 
 def click_insert_context(func: callable) -> callable:
