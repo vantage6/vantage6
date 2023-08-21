@@ -7,6 +7,7 @@ export enum ArgumentType {
 export interface Algorithm {
   id: number;
   name: string;
+  url: string;
   functions: Function[];
 }
 

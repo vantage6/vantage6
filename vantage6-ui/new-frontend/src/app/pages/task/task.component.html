@@ -112,5 +112,13 @@
         </form>
       </mat-step>
     </mat-stepper>
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="packageForm.invalid || functionForm.invalid || databaseForm.invalid || parameterForm.invalid"
+      (click)="handleSubmit()"
+    >
+      Submit
+    </button>
   </mat-card-content>
 </mat-card>

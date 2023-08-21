@@ -6,6 +6,8 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode, DatabaseType } from 'src/app/models/api/node.model';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
+import { CreateTask, CreateTaskInput } from 'src/app/models/api/task.models';
+import { TaskService } from 'src/app/services/task.service';
 
 @Component({
   selector: 'app-task',
@@ -40,6 +42,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private algorithmService: AlgorithmService,
+    private taskService: TaskService,
     public chosenCollaborationService: ChosenCollaborationService
   ) {}
 
@@ -61,6 +64,38 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+  }
+
+  handleSubmit(): void {
+    if (this.packageForm.invalid || this.functionForm.invalid || this.databaseForm.invalid || this.parameterForm.invalid) {
+      return;
+    }
+
+    const selectedOrganizations = Array.isArray(this.functionForm.controls.organizationIDs.value)
+      ? this.functionForm.controls.organizationIDs.value
+      : [this.functionForm.controls.organizationIDs.value];
+    const selectedDatabases: string[] = Object.keys(this.databaseForm.controls)
+      .filter((control) => control.includes('_name'))
+      .map((controlName) => this.databaseForm.get(controlName)?.value || '');
+
+    const input: CreateTaskInput = {
+      master: this.function?.is_central || false,
+      method: this.algorithm?.name || '',
+      kwargs: this.parameterForm.value
+    };
+
+    const createTask: CreateTask = {
+      name: this.packageForm.controls.name.value,
+      description: this.packageForm.controls.description.value,
+      image: this.algorithm?.url || '',
+      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      databases: [...selectedDatabases],
+      organizations: selectedOrganizations.map((organizationID) => {
+        return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
+      })
+    };
+
+    this.taskService.create(createTask);
   }
 
   private async initData(): Promise<void> {
