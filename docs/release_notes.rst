@@ -24,13 +24,9 @@ Release notes
 
 - **Change**
 
- - Help text for the CLI has been updated and the formatting of the display
-   has been improved
+ - Help text for the CLI has been updated and the formatting has been improved
    (`Issue#745 <https://github.com/vantage6/vantage6/issues/745>`_,
    `PR#791 <https://github.com/vantage6/vantage6/pull/791>`_).
- - In the docs, the example file to import server resources with
-   `vserver import` was empty; now it contains example data.
-   (`PR#792 <https://github.com/vantage6/vantage6/pull/792>`_).
  - With `vnode list`, the terms `online` and `offline` have been replaced by
    `running` and `not running`. This is more accurate, since a node may be
    unable to authenticate and thus be offline, but still be running.
@@ -43,11 +39,9 @@ Release notes
 
 - **Bugfix**
 
- - Fixed checking for newer images (node, server, and algorithms). Previously,
-   the dates used were not sufficient to check if an image was newer. Now,
-   we are also checking the image digest
-   (`Issue#507 <https://github.com/vantage6/vantage6/issues/507>`_,
-   `PR#602 <https://github.com/vantage6/vantage6/pull/602>`_).
+ - In the docs, the example file to import server resources with
+   `vserver import` was accidentally empty; now it contains example data.
+   (`PR#792 <https://github.com/vantage6/vantage6/pull/792>`_).
 
 3.10.4
 -----
