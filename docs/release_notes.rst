@@ -1,6 +1,54 @@
 Release notes
 =============
 
+3.11.0
+------
+
+*21 August 2023*
+
+- **Feature**
+
+ - A suite of `vdev` commands has been added to the CLI. These commands
+   allow you to easily create a development environment for vantage6. The
+   commands allow you to easily create a server configuration, add organizations
+   and collaborations to it, and create the appropriate node configurations.
+   Also, you can easily start, stop, and remove the network.
+   (`Issue#625 <https://github.com/vantage6/vantage6/issues/625>`_,
+   `PR#624 <https://github.com/vantage6/vantage6/pull/624>`_).
+ - User Interface can now be started from the CLI with `vserver start --with-ui`
+   (`Issue#730 <https://github.com/vantage6/vantage6/issues/730>`_,
+   `PR#735 <https://github.com/vantage6/vantage6/pull/735>`_).
+ - Added `created_at` and `finished_at` timestamps to tasks
+   (`Issue#621 <https://github.com/vantage6/vantage6/issues/621>`_,
+   `PR#715 <https://github.com/vantage6/vantage6/pull/715>`_).
+
+- **Change**
+
+ - Help text for the CLI has been updated and the formatting of the display
+   has been improved
+   (`Issue#745 <https://github.com/vantage6/vantage6/issues/745>`_,
+   `PR#791 <https://github.com/vantage6/vantage6/pull/791>`_).
+ - In the docs, the example file to import server resources with
+   `vserver import` was empty; now it contains example data.
+   (`PR#792 <https://github.com/vantage6/vantage6/pull/792>`_).
+ - With `vnode list`, the terms `online` and `offline` have been replaced by
+   `running` and `not running`. This is more accurate, since a node may be
+   unable to authenticate and thus be offline, but still be running.
+   (`Issue#733 <https://github.com/vantage6/vantage6/issues/733>`_,
+   `PR#734 <https://github.com/vantage6/vantage6/pull/734>`_).
+ - Some legacy code that no longer fulfilled a function has been removed from
+   the endpoint to create tasks
+   (`Issue#742 <https://github.com/vantage6/vantage6/issues/742>`_,
+   `PR#747 <https://github.com/vantage6/vantage6/pull/747>`_).
+
+- **Bugfix**
+
+ - Fixed checking for newer images (node, server, and algorithms). Previously,
+   the dates used were not sufficient to check if an image was newer. Now,
+   we are also checking the image digest
+   (`Issue#507 <https://github.com/vantage6/vantage6/issues/507>`_,
+   `PR#602 <https://github.com/vantage6/vantage6/pull/602>`_).
+
 3.10.4
 -----
 
