@@ -45,7 +45,6 @@ setup(
         'Flask-SocketIO==5.3.2',
         'gevent==22.10.2',
         'ipython==8.10.0',
-        'jinja2==3.1.2',
         'kombu==5.2.4',
         'marshmallow==2.16.3',
         'marshmallow-sqlalchemy==0.15.0',
