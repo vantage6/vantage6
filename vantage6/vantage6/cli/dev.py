@@ -59,7 +59,7 @@ def create_dummy_data(node_name: str, dev_folder: Path) -> Path:
     data_file = dev_folder / f"df_{node_name}.csv"
     df.to_csv(data_file)
     info(f"Spawned dataset for {Fore.GREEN}{node_name}{Style.RESET_ALL}, "
-         f"writing to{Fore.GREEN}{data_file}{Style.RESET_ALL}")
+         f"writing to {Fore.GREEN}{data_file}{Style.RESET_ALL}")
     return data_file
 
 
