@@ -1,3 +1,15 @@
+enum TaskStatus {
+  Pending = 'pending',
+  Initializing = 'initializing',
+  Active = 'active',
+  Completed = 'completed',
+  Failed = 'failed',
+  StartFailed = 'start failed',
+  NoDockerImage = 'non-existing Docker image',
+  Crashed = 'crashed',
+  Killed = 'killed by user'
+}
+
 export interface BaseTask {
   id: number;
   name: string;
@@ -5,9 +17,6 @@ export interface BaseTask {
   status: TaskStatus;
 }
 
-enum TaskStatus {
-  Pending = 'pending'
-}
 export interface CreateTask {
   name: string;
   description: string;
