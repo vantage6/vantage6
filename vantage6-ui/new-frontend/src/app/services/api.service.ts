@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
 import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
 import { environment } from 'src/environments/environment.development';
+import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +19,20 @@ export class ApiService {
     );
   }
 
-  async postForApi<T = null>(path: string, body: any): Promise<T> {
+  async getForApiWithPagination<T>(path: string, currentPage: number): Promise<Pagination<T>> {
+    return await this.handleResultForPagination(
+      this.http.get<Pagination<T>>(environment.api_url + path, {
+        headers: this.getApiAuthenticationHeaders(),
+        observe: 'response',
+        params: {
+          page: currentPage,
+          per_page: '10'
+        }
+      })
+    );
+  }
+
+  async postForApi<T>(path: string, body: any): Promise<T> {
     return await this.handleResult(
       this.http.post<T>(environment.api_url + path, body, {
         headers: this.getApiAuthenticationHeaders()
@@ -38,11 +52,30 @@ export class ApiService {
     return { Authorization: `Bearer ${accessToken}` };
   }
 
-  private async handleResult<T = null>(request: Observable<T>): Promise<any> {
+  private async handleResult<T = null>(request: Observable<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       request.pipe(first()).subscribe(
         (response) => {
-          resolve(response as any);
+          resolve(response as T);
+        },
+        (error) => {
+          //TODO: handle error
+          reject(error);
+        }
+      );
+    });
+  }
+
+  private async handleResultForPagination<T>(request: Observable<HttpResponse<Pagination<T>>>): Promise<Pagination<T>> {
+    return new Promise<any>((resolve, reject) => {
+      request.pipe(first()).subscribe(
+        (response) => {
+          const body = response.body as Pagination<T>;
+
+          if (body.links) {
+            body.links['total'] = Number.parseInt(response.headers.get('Total-Count') || '0');
+          }
+          resolve(body);
         },
         (error) => {
           //TODO: handle error

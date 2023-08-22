@@ -1,3 +1,13 @@
+export interface BaseTask {
+  id: number;
+  name: string;
+  description: string;
+  status: TaskStatus;
+}
+
+enum TaskStatus {
+  Pending = 'pending'
+}
 export interface CreateTask {
   name: string;
   description: string;

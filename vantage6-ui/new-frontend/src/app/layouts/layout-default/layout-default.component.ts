@@ -89,8 +89,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       }
     } else {
       newLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
-      if (this.authService.isOperationAllowed(ResourceType.TASK, ScopeType.GLOBAL, OperationType.CREATE)) {
-        newLinks.push({ route: routePaths.task, label: 'Task', icon: 'science' });
+      if (this.authService.isOperationAllowed(ResourceType.TASK, ScopeType.COLLABORATION, OperationType.VIEW)) {
+        newLinks.push({ route: routePaths.tasks, label: 'Tasks', icon: 'science' });
       }
     }
 

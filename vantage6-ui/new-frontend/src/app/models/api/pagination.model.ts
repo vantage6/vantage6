@@ -1,10 +1,11 @@
 export interface Pagination<T> {
   data: T[];
-  links: Links;
+  links: PaginationLinks;
 }
 
-interface Links {
+export interface PaginationLinks {
   first: string;
   last: string;
   self: string;
+  total: number;
 }

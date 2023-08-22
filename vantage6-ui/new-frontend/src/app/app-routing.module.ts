@@ -9,6 +9,7 @@ import { authenticationGuard } from './guards/authentication.guard';
 import { OrganizationComponent } from './pages/organization/organization.component';
 import { TaskComponent } from './pages/task/task.component';
 import { StartComponent } from './pages/start/start.component';
+import { TasksComponent } from './pages/tasks/tasks.component';
 
 const routes: Routes = [
   {
@@ -36,8 +37,13 @@ const routes: Routes = [
         canActivate: [authenticationGuard()]
       },
       {
-        path: routerConfig.task,
+        path: routerConfig.taskCreate,
         component: TaskComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.tasks,
+        component: TasksComponent,
         canActivate: [authenticationGuard()]
       }
     ]

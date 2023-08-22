@@ -94,3 +94,18 @@ mat-form-field {
   flex-direction: column;
   gap: $spacing-px-4;
 }
+
+mat-card {
+  table {
+    width: calc(100% + $spacing-px-8);
+    margin-left: $spacing-px-minus-4;
+  }
+
+  mat-spinner {
+    margin: auto;
+  }
+}
+
+.card-header-actions {
+  margin-left: auto;
+}

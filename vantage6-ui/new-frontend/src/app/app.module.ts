@@ -9,9 +9,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatStepperModule } from '@angular/material/stepper';
+import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -24,6 +27,7 @@ import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.
 import { OrganizationComponent } from './pages/organization/organization.component';
 import { TaskComponent } from './pages/task/task.component';
 import { StartComponent } from './pages/start/start.component';
+import { TasksComponent } from './pages/tasks/tasks.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +38,8 @@ import { StartComponent } from './pages/start/start.component';
     LayoutDefaultComponent,
     OrganizationComponent,
     TaskComponent,
-    StartComponent
+    StartComponent,
+    TasksComponent
   ],
   imports: [
     BrowserModule,
@@ -48,9 +53,12 @@ import { StartComponent } from './pages/start/start.component';
     MatIconModule,
     MatInputModule,
     MatListModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
     MatSelectModule,
     MatSidenavModule,
     MatStepperModule,
+    MatTableModule,
     MatToolbarModule
   ],
   providers: [],

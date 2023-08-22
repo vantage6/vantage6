@@ -4,7 +4,8 @@ export const routePaths = {
   home: '/',
   adminHome: '/admin',
   organization: '/admin/organization',
-  task: '/task'
+  taskCreate: '/tasks/create',
+  tasks: '/tasks'
 };
 
 export const routerConfig = {
@@ -14,5 +15,6 @@ export const routerConfig = {
   admin: 'admin',
   adminHome: '',
   organization: 'organization',
-  task: 'task'
+  taskCreate: 'tasks/create',
+  tasks: 'tasks'
 };
