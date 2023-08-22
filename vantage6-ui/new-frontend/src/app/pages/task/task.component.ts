@@ -8,6 +8,7 @@ import { BaseNode, DatabaseType } from 'src/app/models/api/node.model';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { CreateTask, CreateTaskInput } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
+import { routePaths } from 'src/app/routes';
 
 @Component({
   selector: 'app-task',
@@ -16,6 +17,7 @@ import { TaskService } from 'src/app/services/task.service';
 })
 export class TaskComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
+  routes = routePaths;
   argumentType = ArgumentType;
 
   algorithms: Algorithm[] = [];

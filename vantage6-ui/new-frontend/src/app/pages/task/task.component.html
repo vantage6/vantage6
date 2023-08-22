@@ -112,13 +112,16 @@
         </form>
       </mat-step>
     </mat-stepper>
-    <button
-      mat-flat-button
-      color="primary"
-      [disabled]="packageForm.invalid || functionForm.invalid || databaseForm.invalid || parameterForm.invalid"
-      (click)="handleSubmit()"
-    >
-      Submit
-    </button>
+    <div class="button-container">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="packageForm.invalid || functionForm.invalid || databaseForm.invalid || parameterForm.invalid"
+        (click)="handleSubmit()"
+      >
+        Submit
+      </button>
+      <button mat-stroked-button [routerLink]="routes.tasks">Cancel</button>
+    </div>
   </mat-card-content>
 </mat-card>
