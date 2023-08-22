@@ -145,7 +145,7 @@ class Ports(PortBase):
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
         run_id = data['run_id']
-        linked_run = g.session.query.query(Run).filter(Run.id == run_id).one()
+        linked_run = g.session.query(Run).filter(Run.id == run_id).one()
         if g.node.id != linked_run.node.id:
             return {'msg': 'You lack the permissions to do that!'},\
                 HTTPStatus.UNAUTHORIZED
@@ -348,10 +348,10 @@ class VPNAddress(ServicesResources):
             d = {
                 'port': port.port,
                 'label': port.label,
-                'ip': port.result.node.ip,
-                'organization_id': port.result.organization_id,
-                'task_id': port.result.task_id,
-                'parent_id': port.result.task.parent_id,
+                'ip': port.run.node.ip,
+                'organization_id': port.run.organization_id,
+                'task_id': port.run.task_id,
+                'parent_id': port.run.task.parent_id,
             }
             addresses.append(d)
 
