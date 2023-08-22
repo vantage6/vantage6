@@ -25,9 +25,9 @@ import { LayoutLoginComponent } from './layouts/layout-login/layout-login.compon
 import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { OrganizationComponent } from './pages/organization/organization.component';
-import { TaskComponent } from './pages/task/task.component';
+import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
-import { TasksComponent } from './pages/tasks/tasks.component';
+import { TaskListComponent } from './pages/task/list/task-list.component';
 
 @NgModule({
   declarations: [
@@ -37,9 +37,9 @@ import { TasksComponent } from './pages/tasks/tasks.component';
     HomeComponent,
     LayoutDefaultComponent,
     OrganizationComponent,
-    TaskComponent,
+    TaskCreateComponent,
     StartComponent,
-    TasksComponent
+    TaskListComponent
   ],
   imports: [
     BrowserModule,

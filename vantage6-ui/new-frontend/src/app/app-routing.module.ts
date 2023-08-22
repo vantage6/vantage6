@@ -7,9 +7,9 @@ import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.
 import { HomeComponent } from './pages/home/home.component';
 import { authenticationGuard } from './guards/authentication.guard';
 import { OrganizationComponent } from './pages/organization/organization.component';
-import { TaskComponent } from './pages/task/task.component';
+import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
-import { TasksComponent } from './pages/tasks/tasks.component';
+import { TaskListComponent } from './pages/task/list/task-list.component';
 
 const routes: Routes = [
   {
@@ -38,12 +38,12 @@ const routes: Routes = [
       },
       {
         path: routerConfig.taskCreate,
-        component: TaskComponent,
+        component: TaskCreateComponent,
         canActivate: [authenticationGuard()]
       },
       {
         path: routerConfig.tasks,
-        component: TasksComponent,
+        component: TaskListComponent,
         canActivate: [authenticationGuard()]
       }
     ]

@@ -11,11 +11,11 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 
 @Component({
-  selector: 'app-task',
-  templateUrl: './task.component.html',
-  styleUrls: ['./task.component.scss']
+  selector: 'app-task-create',
+  templateUrl: './task-create.component.html',
+  styleUrls: ['./task-create.component.scss']
 })
-export class TaskComponent implements OnInit, OnDestroy {
+export class TaskCreateComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
   routes = routePaths;
   argumentType = ArgumentType;

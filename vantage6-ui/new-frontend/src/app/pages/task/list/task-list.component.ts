@@ -15,12 +15,12 @@ enum TableRows {
 }
 
 @Component({
-  selector: 'app-tasks',
-  templateUrl: './tasks.component.html',
-  styleUrls: ['./tasks.component.scss'],
+  selector: 'app-task-list',
+  templateUrl: './task-list.component.html',
+  styleUrls: ['./task-list.component.scss'],
   host: { '[class.card-container]': 'true' }
 })
-export class TasksComponent implements OnInit {
+export class TaskListComponent implements OnInit {
   tableRows = TableRows;
   routes = routePaths;
   tasks: BaseTask[] = [];
