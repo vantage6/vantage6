@@ -20,6 +20,8 @@ export class CollaborationService {
     const collaboration: Collaboration = { ...result, organizations: [] };
 
     lazyProperties.forEach(async (lazyProperty) => {
+      if (!result[lazyProperty]) return;
+
       const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
       collaboration[lazyProperty] = resultProperty.data;
     });

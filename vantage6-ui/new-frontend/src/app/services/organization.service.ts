@@ -20,6 +20,8 @@ export class OrganizationService {
     const organization: Organization = { ...result, nodes: [] };
 
     lazyProperties.forEach(async (lazyProperty) => {
+      if (!result[lazyProperty]) return;
+
       const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
       organization[lazyProperty] = resultProperty.data;
     });
