@@ -402,11 +402,11 @@ class Node:
             # to the algorithm container. First delete any existing port
             # assignments in case algorithm has crashed
             self.client.request(
-                'port', params={'result_id': task_incl_run['id']},
+                'port', params={'run_id': task_incl_run['id']},
                 method="DELETE"
             )
             for port in vpn_ports:
-                port['result_id'] = task_incl_run['id']
+                port['run_id'] = task_incl_run['id']
                 self.client.request('port', method='POST', json=port)
 
     def __listening_worker(self) -> None:
