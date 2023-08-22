@@ -456,17 +456,11 @@ class ClientBase(object):
             Data on the algorithm run(s) with decrypted input
         """
         if is_single_resource:
-            data[field] = deserialization.load_data(
-                self._decrypt_input(
-                    data[field]
-                )
-            )
+            data[field] = self._decrypt_input(data[field]).decode()
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data['data']:
-                resource[field] = deserialization.load_data(
-                    self._decrypt_input(resource[field])
-                )
+                resource[field] = self._decrypt_input(resource[field]).decode()
 
         return data
 

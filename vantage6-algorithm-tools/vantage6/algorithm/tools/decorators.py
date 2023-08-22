@@ -4,7 +4,7 @@ import pandas as pd
 from functools import wraps
 from typing import Any
 
-from vantage6.algorithm.client.algorithm_client import AlgorithmClient
+from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.wrap import load_input
 from vantage6.algorithm.tools.util import info, error, warn
