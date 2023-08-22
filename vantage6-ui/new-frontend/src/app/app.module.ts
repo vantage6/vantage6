@@ -28,6 +28,7 @@ import { OrganizationComponent } from './pages/organization/organization.compone
 import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
 import { TaskListComponent } from './pages/task/list/task-list.component';
+import { PageHeaderComponent } from './components/page-header/page-header.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +40,8 @@ import { TaskListComponent } from './pages/task/list/task-list.component';
     OrganizationComponent,
     TaskCreateComponent,
     StartComponent,
-    TaskListComponent
+    TaskListComponent,
+    PageHeaderComponent
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,11 @@
+.page-header {
+  display: flex;
+
+  h2 {
+    margin: 0;
+  }
+
+  &__actions {
+    margin-left: auto;
+  }
+}
