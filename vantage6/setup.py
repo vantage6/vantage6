@@ -39,6 +39,7 @@ setup(
         'colorama==0.4.6',
         'docker==6.1.2',
         'ipython==8.10.0',
+        'jinja2==3.1.2',
         'questionary==1.10.0',
         'schema==0.7.5',
         'SQLAlchemy==1.4.46',
@@ -54,6 +55,9 @@ setup(
         'vantage6.cli': [
             '__build__',
             'rabbitmq/rabbitmq.config',
+            'template/node_config.j2',
+            'template/server_config.j2',
+            'template/server_import_config.j2',
         ],
     },
     entry_points={
