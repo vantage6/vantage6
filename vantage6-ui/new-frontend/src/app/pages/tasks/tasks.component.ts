@@ -46,6 +46,17 @@ export class TasksComponent implements OnInit {
     await this.getTasks();
   }
 
+  handleRowClick(task: BaseTask) {
+    console.log(task);
+    //TODO: navigate to task details
+  }
+
+  handleRowKeyPress(event: KeyboardEvent, task: BaseTask) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      this.handleRowClick(task);
+    }
+  }
+
   private async initData() {
     await this.getTasks();
     this.isLoading = false;
