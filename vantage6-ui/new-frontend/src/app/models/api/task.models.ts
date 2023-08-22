@@ -23,7 +23,6 @@ interface Organization {
 }
 
 export interface CreateTaskInput {
-  master: boolean;
   method: string;
   kwargs: Object;
 }

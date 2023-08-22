@@ -79,7 +79,6 @@ export class TaskComponent implements OnInit, OnDestroy {
       .map((controlName) => this.databaseForm.get(controlName)?.value || '');
 
     const input: CreateTaskInput = {
-      master: this.function?.is_central || false,
       method: this.algorithm?.name || '',
       kwargs: this.parameterForm.value
     };
