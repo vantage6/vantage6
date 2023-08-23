@@ -586,6 +586,7 @@ class Tasks(TaskBase):
         task.save()
 
         # save the databases that the task uses
+        databases = data.get('databases')
         if not isinstance(databases, list):
             databases = [databases]
         for database in databases:
