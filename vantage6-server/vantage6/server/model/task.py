@@ -66,6 +66,10 @@ class Task(Base):
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
     runs = relationship("Run", back_populates="task")
+    # This second relationship is needed when constructing output JSON (
+    # including results with the task). It is marked 'view_only' to prevent
+    # write conflicts with the runs relationship.
+    results = relationship("Run", back_populates="task", viewonly=True)
     init_org = relationship("Organization", back_populates="tasks")
     init_user = relationship("User", back_populates="created_tasks")
     databases = relationship("TaskDatabase", back_populates="task")

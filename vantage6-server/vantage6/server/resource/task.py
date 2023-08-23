@@ -20,7 +20,9 @@ from vantage6.server.permission import (
 from vantage6.server.resource import only_for, ServicesResources, with_user
 from vantage6.server.resource.common.output_schema import (
     TaskSchema,
-    TaskIncludedSchema,
+    TaskWithResultSchema,
+    TaskWithRunSchema,
+    TaskWithRunAndResultSchema,
 )
 from vantage6.server.resource.common.input_schema import TaskInputSchema
 from vantage6.server.resource.common.pagination import Pagination
@@ -109,7 +111,10 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 task_schema = TaskSchema()
-task_result_schema = TaskIncludedSchema()
+task_run_schema = TaskWithRunSchema()
+task_result_schema = TaskWithResultSchema()
+task_result_run_schema = TaskWithRunAndResultSchema()
+
 task_input_schema = TaskInputSchema()
 
 
@@ -122,6 +127,23 @@ class TaskBase(ServicesResources):
         # resource as they are sometimes included
         self.r_run: RuleCollection = getattr(self.permissions, 'run')
 
+    def _select_schema(self) -> TaskSchema:
+        """
+        Select the schema to use for serialization.
+
+        Returns
+        -------
+        TaskSchema
+            Schema to use for serialization
+        """
+        if self.is_included('runs') and self.is_included('results'):
+            return task_result_run_schema
+        elif self.is_included('runs'):
+            return task_run_schema
+        elif self.is_included('results'):
+            return task_result_schema
+        else:
+            return task_schema
 
 class Tasks(TaskBase):
 
@@ -227,7 +249,9 @@ class Tasks(TaskBase):
               type: array
               items:
                 type: string
-            description: Include 'results' to get task results.
+            description: Include 'results' to include the task's results,
+              'runs' to include details on algorithm runs. For including
+               multiple, do either `include=x,y` or `include=x&include=y`.
           - in: query
             name: status
             schema:
@@ -404,8 +428,7 @@ class Tasks(TaskBase):
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
-        schema = task_result_schema if self.is_included('results') else\
-            task_schema
+        schema = self._select_schema()
 
         return self.response(page, schema)
 
@@ -563,7 +586,6 @@ class Tasks(TaskBase):
         task.save()
 
         # save the databases that the task uses
-        databases = data.get('databases')
         if not isinstance(databases, list):
             databases = [databases]
         for database in databases:
@@ -722,7 +744,9 @@ class Task(TaskBase):
             name: include
             schema:
               type: string
-            description: Include 'results' to include the task's results.
+            description: Include 'results' to include the task's results,
+              'runs' to include details on algorithm runs. For including
+              multiple, do either `include=x,y` or `include=x&include=y`.
 
         responses:
           200:
@@ -742,8 +766,7 @@ class Task(TaskBase):
             return {"msg": f"task id={id} is not found"}, HTTPStatus.NOT_FOUND
 
         # obtain schema
-        schema = task_result_schema if request.args.get('include') == \
-            'results' else task_schema
+        schema = self._select_schema()
 
         # check permissions
         if not self.r.can_for_org(P.VIEW, task.init_org_id) \
