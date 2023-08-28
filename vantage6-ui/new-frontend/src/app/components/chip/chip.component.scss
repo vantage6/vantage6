@@ -1,0 +1,22 @@
+@import "../../../config.scss";
+
+.chip {
+  display: inline-flex;
+  padding: $spacing-px-2 $spacing-px-3;
+  border-radius: $spacing-px-4;
+  font-size: 0.875rem;
+  line-height: 1rem;
+  background-color: rgb(224, 224, 224);
+
+  &--active {
+    background-color: $active-500;
+  }
+
+  &--success {
+    background-color: $success-500;
+  }
+
+  &--warning {
+    background-color: $warning-500;
+  }
+}

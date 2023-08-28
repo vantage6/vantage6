@@ -29,6 +29,7 @@ import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
 import { TaskListComponent } from './pages/task/list/task-list.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
+import { ChipComponent } from './components/chip/chip.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
     StartComponent,
     TaskListComponent,
     PageHeaderComponent
+    ChipComponent
   ],
   imports: [
     BrowserModule,
