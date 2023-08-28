@@ -507,7 +507,7 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables[type_var_name] = db['type']
 
             db_labels.append(label)
-        environment_variables['DB_LABELS'] = json.dumps(db_labels)
+        environment_variables['DB_LABELS'] = ','.join(db_labels)
 
         self.log.debug(f"environment: {environment_variables}")
 
