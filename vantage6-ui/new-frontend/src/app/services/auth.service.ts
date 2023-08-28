@@ -25,13 +25,18 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    //TODO: check if token is valid
-    const hasAccessToken = !!sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
 
-    if (hasAccessToken && this.activeRules === null) {
+    if (!token) {
+      return false;
+    }
+
+    const isExpired = Date.now() >= JSON.parse(atob(token.split('.')[1])).exp * 1000;
+
+    if (!isExpired && this.activeRules === null) {
       await this.getUserRules();
     }
-    return hasAccessToken;
+    return !isExpired;
   }
 
   hasResourceInScope(resource: ResourceType, scope: ScopeType): boolean {
