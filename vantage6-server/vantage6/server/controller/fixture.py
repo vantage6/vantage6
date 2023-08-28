@@ -3,6 +3,7 @@ import logging
 
 import vantage6.server.model as db
 from vantage6.server.model.base import Database
+from vantage6.server.permission import PermissionManager
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -45,6 +46,13 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
     if drop_all:
         Database().drop_all()
 
+    # If the server has never been started yet, no rules have been created yet.
+    # In that case, create them here so that the created users have
+    # permissions.
+    if not db.Rule.get():
+        permissions = PermissionManager()
+        permissions.load_rules_from_resources()
+
     log.info("Create Organizations and Users")
     for org in fixtures.get("organizations", {}):
         # print(org)
@@ -58,6 +66,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
         log.debug(f"processed organization={organization.name}")
         superuserrole = db.Role(name="super", description="Super user",
                                 rules=db.Rule.get(), organization=organization)
+        superuserrole.save()
         # create users
         for usr in org.get("users", {}):
             user = db.User(**usr)
