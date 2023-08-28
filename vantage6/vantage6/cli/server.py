@@ -454,9 +454,12 @@ def cli_server_new(name: str, system_folders: bool) -> None:
                    " code in this path")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing. Useful for debugging")
+@click.option('--wait', default=False, help="Wait for the import to finish")
 @click_insert_context
-def cli_server_import(ctx: ServerContext, file: str, drop_all: bool,
-                      image: str, mount_src: str, keep: bool) -> None:
+def cli_server_import(
+    ctx: ServerContext, file: str, drop_all: bool, image: str, mount_src: str,
+    keep: bool, wait: bool
+) -> None:
     """
     Import vantage6 resources, such as organizations, collaborations, users and
     tasks into a server instance.
@@ -464,11 +467,12 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool,
     The FILE_ argument should be a path to a yaml file containing the vantage6
     formatted data to import.
     """
-    vserver_import(ctx, file, drop_all, image, mount_src, keep)
+    vserver_import(ctx, file, drop_all, image, mount_src, keep,
+                   wait)
 
 
 def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
-                   image: str, mount_src: str, keep: bool) -> None:
+                   image: str, mount_src: str, keep: bool, wait: bool) -> None:
     """Batch import organizations/collaborations/users and tasks.
 
     Parameters
@@ -487,6 +491,8 @@ def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
     keep : bool
         Wether to keep the image after finishing/crashing. Useful for
         debugging.
+    wait : bool
+        Wether to wait for the import to finish before exiting this function
     """
     info("Starting server...")
     info("Finding Docker daemon.")
@@ -582,6 +588,10 @@ def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
     Thread(target=_print_log_worker, args=(logs,), daemon=False).start()
 
     info(f"Success! container id = {container.id}")
+
+    if wait:
+        container.wait()
+        info("Container finished!")
 
 
 #
@@ -887,8 +897,8 @@ def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def vserver_remove(ctx: ServerContext, name: str,
-                   system_folders: bool) -> None:
+def vserver_remove(ctx: ServerContext, name: str, system_folders: bool,
+                   force: bool) -> None:
     """
     Function to remove a server.
 
@@ -899,19 +909,22 @@ def vserver_remove(ctx: ServerContext, name: str,
     name : str
         Name of the server to remove
     system_folders : bool
-        Wether to use system folders or not
+        Whether to use system folders or not
+    force : bool
+        Whether to ask for confirmation before removing or not
     """
     check_docker_running()
 
     # first stop server
     vserver_stop(name, system_folders, False)
 
-    if not q.confirm(
-        "This server will be deleted permanently including its configuration. "
-        "Are you sure?", default=False
-    ).ask():
-        info("Server will not be deleted")
-        exit(0)
+    if not force:
+        if not q.confirm(
+            "This server will be deleted permanently including its "
+            "configuration. Are you sure?", default=False
+        ).ask():
+            info("Server will not be deleted")
+            exit(0)
 
     # now remove the folders...
     info(f"Removing configuration file {ctx.config_file}")

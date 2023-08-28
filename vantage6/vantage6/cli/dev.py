@@ -329,7 +329,7 @@ def create_demo_network(name: str, num_nodes: int, server_url: str,
         exit(1)
     (node_config, server_import_config, server_config) = demo
     ctx = get_server_context(server_name, True)
-    vserver_import(ctx, server_import_config, False, image, '', False)
+    vserver_import(ctx, server_import_config, False, image, '', False, True)
     return {
         "node_configs": node_config,
         "server_import_config": server_import_config,
@@ -391,7 +391,9 @@ def stop_demo_network(ctx: ServerContext) -> None:
 
 @cli_dev.command(name="remove-demo-network")
 @click_insert_context
-def remove_demo_network(ctx: ServerContext) -> None:
+@click.option('-f', "--force", type=bool, flag_value=True,
+              help='Don\'t ask for confirmation')
+def remove_demo_network(ctx: ServerContext, force: bool) -> None:
     """ Remove all related demo network files and folders.
 
     Select a server configuration to remove that server and the nodes attached
@@ -401,7 +403,7 @@ def remove_demo_network(ctx: ServerContext) -> None:
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    vserver_remove(ctx, ctx.name, True)
+    vserver_remove(ctx, ctx.name, True, force)
 
     # removing the server import config
     info("Deleting demo import config file")
@@ -429,7 +431,7 @@ def remove_demo_network(ctx: ServerContext) -> None:
         for handler in itertools.chain(node_ctx.log.handlers,
                                        node_ctx.log.root.handlers):
             handler.close()
-        subprocess.run(["vnode", "remove", "-n", name, "--user"])
+        subprocess.run(["vnode", "remove", "-n", name, "--user", "--force"])
 
     # remove data files attached to the network
     data_dirs_nodes = NodeContext.instance_folders('node', '', False)['dev']
