@@ -1,12 +1,9 @@
+<app-page-header title="Tasks">
+  <button actions mat-flat-button color="primary" *ngIf="canCreateTask" [routerLink]="routes.taskCreate">
+    <mat-icon>add</mat-icon>Create task
+  </button>
+</app-page-header>
 <mat-card>
-  <mat-card-header>
-    <mat-card-title>Tasks</mat-card-title>
-    <div class="card-header-actions">
-      <button mat-flat-button color="primary" *ngIf="canCreateTask" [routerLink]="routes.taskCreate">
-        <mat-icon>add</mat-icon>Create task
-      </button>
-    </div>
-  </mat-card-header>
   <mat-card-content>
     <ng-container *ngIf="!isLoading; else loading">
       <table mat-table class="clickable-table" [dataSource]="tasks">
