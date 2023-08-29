@@ -19,4 +19,10 @@ export class AlgorithmService {
     const result = await this.apiService.getForAlgorithmApi<Algorithm>(`/algorithm/${id}`);
     return result;
   }
+
+  async getAlgorithmByUrl(url: string): Promise<Algorithm> {
+    //TODO: Use correct backend url when backend has been developed
+    const result = await this.apiService.getForAlgorithmApi<Algorithm>(`/algorithm/${encodeURIComponent(url)}`);
+    return result;
+  }
 }

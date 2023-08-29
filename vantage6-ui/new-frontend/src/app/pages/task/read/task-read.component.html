@@ -1,0 +1,67 @@
+<app-page-header title="Task">
+  <button actions mat-flat-button color="primary" [routerLink]="routes.tasks"><mat-icon>arrow_back</mat-icon>All tasks</button>
+</app-page-header>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>General</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <ng-container *ngIf="!isLoading; else loading">
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>ID</b>
+          <span>{{ this.task?.id || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>Name</b>
+          <span>{{ this.task?.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>Status</b>
+          <app-chip *ngIf="this.task" label="{{ this.task.status }}" [type]="getChipTypeForStatus(task.status)"></app-chip>
+        </div>
+        <div class="data-list__item data-list__item--full">
+          <b>Description</b>
+          <span>{{ this.task?.description || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>Organization</b>
+          <span>{{ this.task?.init_org?.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>User</b>
+          <span>{{ this.task?.init_user?.username || "-" }}</span>
+        </div>
+      </div>
+    </ng-container>
+  </mat-card-content>
+</mat-card>
+<mat-card *ngIf="!isLoading">
+  <mat-card-header>
+    <mat-card-title>Algorithm</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="data-list">
+      <div class="data-list__item">
+        <b>Algorithm</b>
+        <span>{{ this.algorithm?.name || "-" }}</span>
+      </div>
+      <div class="data-list__item">
+        <b>Function</b>
+        <span>{{ this.task?.input?.method || "-" }}</span>
+      </div>
+    </div>
+    <ng-container *ngIf="this.task?.input?.parameters">
+      <h4 class="data-list__header">Parameters</h4>
+      <div class="data-list">
+        <div class="data-list__item" *ngFor="let parameter of this.task?.input?.parameters">
+          <b>{{ parameter.label }}</b>
+          <span>{{ parameter.value }}</span>
+        </div>
+      </div>
+    </ng-container>
+  </mat-card-content>
+</mat-card>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

@@ -10,6 +10,7 @@ import { OrganizationComponent } from './pages/organization/organization.compone
 import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
 import { TaskListComponent } from './pages/task/list/task-list.component';
+import { TaskReadComponent } from './pages/task/read/task-read.component';
 
 const routes: Routes = [
   {
@@ -34,6 +35,11 @@ const routes: Routes = [
       {
         path: routerConfig.home,
         component: HomeComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.task,
+        component: TaskReadComponent,
         canActivate: [authenticationGuard()]
       },
       {
@@ -67,7 +73,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, { bindToComponentInputs: true })],
   exports: [RouterModule]
 })
 export class AppRoutingModule {}
