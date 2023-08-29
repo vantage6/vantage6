@@ -18,13 +18,11 @@
           <th mat-header-cell *matHeaderCellDef>Name</th>
           <td mat-cell *matCellDef="let task">{{ task.name }}</td>
         </ng-container>
-        <ng-container [matColumnDef]="tableRows.Description">
-          <th mat-header-cell *matHeaderCellDef>Description</th>
-          <td mat-cell *matCellDef="let task">{{ task.description || "-" }}</td>
-        </ng-container>
         <ng-container [matColumnDef]="tableRows.Status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let task">{{ task.status }}</td>
+          <td mat-cell *matCellDef="let task">
+            <app-chip label="{{ task.status }}" [type]="getChipTypeForStatus(task.status)"></app-chip>
+          </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr

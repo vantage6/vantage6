@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Router } from '@angular/router';
+import { getChipTypeForStatus } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { BaseTask } from 'src/app/models/api/task.models';
+import { BaseTask, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -10,7 +12,6 @@ import { TaskService } from 'src/app/services/task.service';
 enum TableRows {
   ID = 'id',
   Name = 'name',
-  Description = 'description',
   Status = 'status'
 }
 
@@ -24,13 +25,14 @@ export class TaskListComponent implements OnInit {
   tableRows = TableRows;
   routes = routePaths;
   tasks: BaseTask[] = [];
-  displayedColumns: string[] = [TableRows.ID, TableRows.Name, TableRows.Description, TableRows.Status];
+  displayedColumns: string[] = [TableRows.ID, TableRows.Name, TableRows.Status];
   isLoading: boolean = true;
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
   canCreateTask: boolean = false;
 
   constructor(
+    private router: Router,
     private taskService: TaskService,
     authService: AuthService
   ) {
@@ -47,14 +49,17 @@ export class TaskListComponent implements OnInit {
   }
 
   handleRowClick(task: BaseTask) {
-    console.log(task);
-    //TODO: navigate to task details
+    this.router.navigate([routePaths.task, task.id]);
   }
 
   handleRowKeyPress(event: KeyboardEvent, task: BaseTask) {
     if (event.key === 'Enter' || event.key === ' ') {
       this.handleRowClick(task);
     }
+  }
+
+  getChipTypeForStatus(status: TaskStatus) {
+    return getChipTypeForStatus(status);
   }
 
   private async initData() {
