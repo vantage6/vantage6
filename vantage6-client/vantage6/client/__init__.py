@@ -1202,7 +1202,7 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input_: dict,
-                   databases: list[str] = None) -> dict:
+                   databases: list[dict] = None) -> dict:
             """Create a new task
 
             Parameters
@@ -1220,8 +1220,11 @@ class UserClient(ClientBase):
                 Human readable description
             input_ : dict
                 Algorithm input
-            databases: list[str], optional
-                Database names to be used at the node
+            databases: list[dict], optional
+                Databases to be used at the node. Each dict should contain
+                at least a 'label' key. Additional keys are 'query' (if using
+                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
+                and 'preprocessing' information.
 
             Returns
             -------
@@ -1232,13 +1235,15 @@ class UserClient(ClientBase):
             assert self.parent.cryptor, "Encryption has not yet been setup!"
 
             if organizations is None:
-                organizations = []
-            if databases is None:
-                databases = ['default']
-            elif isinstance(databases, str):
+                raise ValueError(
+                    'No organizations specified! Cannot create task without '
+                    'assigning it to at least one organization.'
+                )
+
+            if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
-                databases = [databases]
+                databases = [{'label': databases}]
 
             # Data will be serialized in JSON.
             serialized_input = serialize(input_)
@@ -1401,7 +1406,7 @@ class UserClient(ClientBase):
 
         def from_task(
             self, task_id: int, include_task: bool = False
-        ) -> typing.List[dict]:
+        ) -> list[dict]:
             """
             Get all algorithm runs from a specific task
 
@@ -1481,9 +1486,24 @@ class UserClient(ClientBase):
             return result['result']
 
         def from_task(self, task_id: int):
+            """
+            Get all results from a specific task
+
+            Parameters
+            ----------
+            task_id : int
+                Id of the task to get results from
+
+            Returns
+            -------
+            list[dict]
+                Containing the results
+            """
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            results = self.parent.request('result', {'task_id': task_id})
+            results = self.parent.request(
+                'result', params={'task_id': task_id}
+            )
             results = self._decrypt_result(results, False)
             return results
 

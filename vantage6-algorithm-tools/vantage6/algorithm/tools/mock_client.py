@@ -8,6 +8,7 @@ from copy import deepcopy
 
 from vantage6.algorithm.tools.wrappers import select_wrapper
 from vantage6.algorithm.tools.util import info
+from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 module_name = __name__.split('.')[1]
 
@@ -29,8 +30,13 @@ class MockAlgorithmClient:
 
         - database: str (path to file or SQL connection string) or pd.DataFrame
         - type (str, e.g. "csv" or "sql")
-        - input_data (dict). The input data that is normally passed to the
-          algorithm wrapper, e.g. a worksheet for an excel database.
+
+        There are also a number of keys that are optional but may be required
+        depending on the database type:
+        - query: str (required for SQL/Sparql/OMOP databases)
+        - sheet_name: str (optional for Excel databases)
+        - preprocessing: dict (optional, see the documentation for
+            preprocessing for more information)
 
         Note that if the database is a pandas DataFrame, the type and
         input_data keys are not required.
@@ -91,17 +97,7 @@ class MockAlgorithmClient:
             self.organizations_with_data.append(org_id)
             org_data = []
             for dataset in org_datasets:
-                if isinstance(dataset["database"], pd.DataFrame):
-                    org_data.append(dataset["database"])
-                else:
-                    wrapper = select_wrapper(dataset["type"])
-                    org_data.append(
-                        wrapper.load_data(
-                            dataset["database"],
-                            dataset["input_data"] if "input_data" in dataset
-                            else {}
-                        )
-                    )
+                org_data.append(self.__load_data(**dataset))
             self.datasets_per_org[org_id] = org_data
 
         self.collaboration_id = collaboration_id if collaboration_id else 1
@@ -119,7 +115,55 @@ class MockAlgorithmClient:
         self.collaboration = self.Collaboration(self)
         self.node = self.Node(self)
 
-    def wait_for_results(self, task_id: int, *args, **kwargs) -> list:
+    def __load_data(
+        self, database: str | pd.DataFrame, type_: str = None,
+        query: str = None, sheet_name: str = None,
+        preprocessing: list[dict] = None
+    ) -> pd.DataFrame:
+        """
+        Preprocess data and load it to the algorithm.
+
+        Parameters
+        ----------
+        database : str | pd.DataFrame
+            The database to load. If this is a string, it should be the path
+            to the database file or a SQL connection string. If this is a
+            pandas DataFrame, other parameters except preprocessing are
+            ignored.
+        type_ : str
+            The type of the database. This should be one of the CSV, SQL,
+            Excel, Sparql, Parquet or OMOP.
+        query : str
+            The query to execute on the database. This is required for SQL,
+            Sparql and OMOP databases.
+        sheet_name : str
+            The sheet name to read from the Excel file. This is optional and
+            only forExcel databases.
+        preprocessing : list[dict]
+            The preprocessing steps to apply to the data. This should be a
+            list of preprocessing steps
+        """
+        # load initial dataframe
+        df = pd.DataFrame()
+        if isinstance(database, pd.DataFrame):
+            df = database
+        else:
+            wrapper = select_wrapper(type_)
+            if type_ == "excel":
+                wrapper.load_data(database, sheet_name=sheet_name)
+            elif type_ in ("sql", "sparql", "omop"):
+                wrapper.load_data(database, query=query)
+            else:
+                wrapper.load_data(database)
+
+        # apply preprocessing
+        if preprocessing:
+            df = preprocess_data(df, preprocessing)
+
+        return df
+
+    # pylint: disable=unused-argument
+    def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
         Mock waiting for results - just return the results as tasks are
         completed synchronously in the mock client.
@@ -128,6 +172,10 @@ class MockAlgorithmClient:
         ----------
         task_id: int
             ID of the task for which the results should be obtained.
+        interval: float
+            Interval in seconds between checking for new results. This is
+            ignored in the mock client but included for compatibility with
+            the AlgorithmClient.
 
         Returns
         -------
@@ -158,8 +206,8 @@ class MockAlgorithmClient:
             self.last_result_id = 0
 
         def create(
-            self, input_: dict, organizations: list[int],
-            name: str = "mock", description: str = "mock", *args, **kwargs
+            self, input_: dict, organizations: list[int], name: str = "mock",
+            description: str = "mock"
         ) -> int:
             """
             Create a new task with the MockProtocol and return the task id.
@@ -182,7 +230,7 @@ class MockAlgorithmClient:
             int
                 The id of the task.
             """
-            if not len(organizations):
+            if not organizations:
                 raise ValueError(
                     "No organization ids provided. Cannot create a task for "
                     "zero organizations."

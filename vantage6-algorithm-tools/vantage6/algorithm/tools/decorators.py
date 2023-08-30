@@ -1,15 +1,14 @@
+import json
 import os
 import pandas as pd
 
 from functools import wraps
-from typing import Any
 
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
-from vantage6.algorithm.tools.wrap import load_input
 from vantage6.algorithm.tools.util import info, error, warn
 from vantage6.algorithm.tools.wrappers import select_wrapper
-
+from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 def algorithm_client(func: callable) -> callable:
     """
@@ -114,7 +113,6 @@ def data(number_of_databases: int = 1) -> callable:
             # query to execute on the database
             input_file = os.environ["INPUT_FILE"]
             info(f"Reading input file {input_file}")
-            input_data = load_input(input_file)
 
             # read the labels that the user requested, which is a comma
             # separated list of labels.
@@ -133,7 +131,19 @@ def data(number_of_databases: int = 1) -> callable:
 
             for i in range(number_of_databases):
                 label = labels[i]
-                data_ = _get_data_from_label(label, input_data)
+                # read the data from the database
+                info("Reading data from database")
+                data_ = _get_data_from_label(label)
+
+                # do any data preprocessing here
+                info(f"Applying preprocessing for database '{label}'")
+                preprocess = json.loads(
+                    os.environ.get(f"{label.upper()}_PREPROCESSING")
+                )
+                if preprocess:
+                    data_ = preprocess_data(data_, preprocess)
+
+                # add the data to the arguments
                 args = (data_, *args)
 
             return func(*args, **kwargs)
@@ -141,7 +151,7 @@ def data(number_of_databases: int = 1) -> callable:
     return protection_decorator
 
 
-def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
+def _get_data_from_label(label: str) -> pd.DataFrame:
     """
     Load data from a database based on the label
 
@@ -149,8 +159,6 @@ def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
     ----------
     label : str
         Label of the database to load
-    input_data : Any
-        Input data from the input file
 
     Returns
     -------
@@ -174,5 +182,18 @@ def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
               f"label '{label}'. Please check the node configuration.")
         exit(1)
 
-    # Load the data from the database
-    return wrapper.load_data(database_uri, input_data)
+    if database_type == "excel":
+        # read sheet name from the environment variables. If not given, read
+        # the first sheet.
+        sheet_name = os.environ.get(f"{label.upper()}_SHEET_NAME")
+        return wrapper.load_data(database_uri, sheet_name=sheet_name)
+    elif database_type in ("sparql", "sql", "omop"):
+        query = os.environ.get(f"{label.upper()}_QUERY")
+        if not query:
+            error(f"Missing query for database with label '{label}'. Please "
+                  f"include it when creating the task.")
+            exit(1)
+        return wrapper.load_data(database_uri, query)
+    else:
+        # Load the data from the database without additional arguments
+        return wrapper.load_data(database_uri)

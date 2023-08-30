@@ -43,11 +43,9 @@ setup(
     ],
     tests_require=["pytest"],
     package_data={
-        'vantage6.client': [
+        'vantage6.algorithm.tools': [
             '__build__',
-        ],
-        'vantage6.tools': [
-            '__build__'
+            'preprocessing/template.yaml'
         ],
     }
 )

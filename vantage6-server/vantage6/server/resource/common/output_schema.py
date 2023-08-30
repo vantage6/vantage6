@@ -181,7 +181,12 @@ class TaskSchema(HATEOASModelSchema):
 
     @staticmethod
     def databases_(obj):
-        return [db.database for db in obj.databases]
+        return [
+            {
+                "label": db.database,
+                "parameters": db.parameters
+            } for db in obj.databases
+        ]
 
 
 class ResultSchema(HATEOASModelSchema):

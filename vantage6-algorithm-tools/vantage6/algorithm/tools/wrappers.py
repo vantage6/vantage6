@@ -17,12 +17,12 @@ by the vantage6 node based on its configuration file.
 """
 from __future__ import annotations
 import io
-import pandas
+import pandas as pd
 
 from abc import ABC, abstractmethod
 from SPARQLWrapper import SPARQLWrapper, CSV
 
-from vantage6.algorithm.tools.util import info, error
+from vantage6.algorithm.tools.util import info
 
 _SPARQL_RETURN_FORMAT = CSV
 
@@ -61,7 +61,7 @@ def select_wrapper(database_type: str) -> WrapperBase | None:
 class WrapperBase(ABC):
     @staticmethod
     @abstractmethod
-    def load_data(database_uri: str, input_data: dict):
+    def load_data(database_uri: str, **kwargs):
         """
         Load the local privacy-sensitive data from the database.
 
@@ -69,15 +69,15 @@ class WrapperBase(ABC):
         ----------
         database_uri : str
             URI of the database to read
-        input_data : dict
-            User defined input, which may contain a query for the database
+        **kwargs
+            Additional arguments that depend on the specialized wrapper
         """
         pass
 
 
 class CSVWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+    def load_data(database_uri: str) -> pd.DataFrame:
         """
         Load the local privacy-sensitive data from the database.
 
@@ -85,20 +85,18 @@ class CSVWrapper(WrapperBase):
         ----------
         database_uri : str
             URI of the csv file, supplied by te node
-        input_data : dict
-            Unused, as csv files do not require a query
 
         Returns
         -------
-        pandas.DataFrame
+        pd.DataFrame
             The data from the csv file
         """
-        return pandas.read_csv(database_uri)
+        return pd.read_csv(database_uri)
 
 
 class ExcelWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+    def load_data(database_uri: str, sheet_name: str = None) -> pd.DataFrame:
         """
         Load the local privacy-sensitive data from the database.
 
@@ -107,23 +105,25 @@ class ExcelWrapper(WrapperBase):
         database_uri : str
             URI of the excel file, supplied by te node
         input_data : dict
-            May contain a 'sheet_name', which is passed to pandas.read_excel
+            May contain a 'sheet_name', which is passed to pd.read_excel
 
         Returns
         -------
-        pandas.DataFrame
+        pd.DataFrame
             The data from the excel file
         """
-        # The default sheet_name is 0, which is the first sheet
-        sheet_name = input_data.get('sheet_name', 0)
         if sheet_name:
             info(f"Reading sheet '{sheet_name}' from excel file")
-        return pandas.read_excel(database_uri, sheet_name=sheet_name)
+        else:
+            # The default sheet_name is 0, which is the first sheet
+            sheet_name = 0
+        # TODO add try/except to check if sheet_name exists
+        return pd.read_excel(database_uri, sheet_name=sheet_name)
 
 
 class SparqlDockerWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+    def load_data(database_uri: str, query: str) -> pd.DataFrame:
         """
         Load the local privacy-sensitive data from the database.
 
@@ -131,21 +131,18 @@ class SparqlDockerWrapper(WrapperBase):
         ----------
         database_uri : str
             URI of the triplestore, supplied by te node
-        input_data : dict
-            Can contain a 'query', to retrieve the data from the triplestore
+        query: str
+            Query to retrieve the data from the triplestore
 
         Returns
         -------
-        pandas.DataFrame
+        pd.DataFrame
             The data from the triplestore
         """
-        if 'query' not in input_data:
-            error("No query in the input specified. Exiting ...")
-        query = input_data['query']
         return SparqlDockerWrapper._query_triplestore(database_uri, query)
 
     @staticmethod
-    def _query_triplestore(endpoint: str, query: str) -> pandas.DataFrame:
+    def _query_triplestore(endpoint: str, query: str) -> pd.DataFrame:
         """
         Send a query to a triplestore and return the result as a pandas
         DataFrame.
@@ -159,7 +156,7 @@ class SparqlDockerWrapper(WrapperBase):
 
         Returns
         -------
-        pandas.DataFrame
+        pd.DataFrame
             The result of the query
         """
         sparql = SPARQLWrapper(endpoint, returnFormat=_SPARQL_RETURN_FORMAT)
@@ -167,12 +164,12 @@ class SparqlDockerWrapper(WrapperBase):
 
         result = sparql.query().convert().decode()
 
-        return pandas.read_csv(io.StringIO(result))
+        return pd.read_csv(io.StringIO(result))
 
 
 class ParquetWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+    def load_data(database_uri: str) -> pd.DataFrame:
         """
         Load the local privacy-sensitive data from the database.
 
@@ -180,20 +177,18 @@ class ParquetWrapper(WrapperBase):
         ----------
         database_uri : str
             URI of the parquet file, supplied by te node
-        input_data : dict
-            Unused, as no additional settings are required
 
         Returns
         -------
-        pandas.DataFrame
+        pd.DataFrame
             The data from the parquet file
         """
-        return pandas.read_parquet(database_uri)
+        return pd.read_parquet(database_uri)
 
 
 class SQLWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+    def load_data(database_uri: str, query: str) -> pd.DataFrame:
         """
         Load the local privacy-sensitive data from the database.
 
@@ -201,22 +196,20 @@ class SQLWrapper(WrapperBase):
         ----------
         database_uri : str
             URI of the sql database, supplied by te node
-        input_data : dict
-            Contain a 'query', to retrieve the data from the database
+        query: str
+            Query to retrieve the data from the database
 
         Returns
         -------
-        pandas.DataFrame
+        pd.DataFrame
             The data from the database
         """
-        if 'query' not in input_data:
-            error("No query in the input specified. Exiting ...")
-        return pandas.read_sql(database_uri, input_data['query'])
+        return pd.read_sql(database_uri, query)
 
 
 class OMOPWrapper(WrapperBase):
     @staticmethod
-    def load_data(database_uri: str, input_data: dict) -> pandas.DataFrame:
+    def load_data(database_uri: str, query: str) -> pd.DataFrame:
         """
         Load the local privacy-sensitive data from the database.
 
@@ -224,14 +217,13 @@ class OMOPWrapper(WrapperBase):
         ----------
         database_uri : str
             URI of the OMOP database, supplied by te node
-        input_data : dict
-            Contain a JSON cohort definition from the ATLAS tool, to retrieve
-            the data from the database
+        query: str
+            Query to retrieve the data from the database
 
         Returns
         -------
-        pandas.DataFrame
+        pd.DataFrame
             The data from the database
         """
-        # TODO: parse the OMOP json and convert to SQL
-        return pandas.read_sql(database_uri, input_data['query'])
+        # TODO: replace query by OMOP json and convert to SQL
+        return pd.read_sql(database_uri, query)

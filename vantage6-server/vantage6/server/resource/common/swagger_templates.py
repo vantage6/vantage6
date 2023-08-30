@@ -35,12 +35,12 @@ swagger_template = {
                             " the key 'input' should give the input for that "
                             "organization. Each input should be a encrypted "
                             "and/or serialized dictionary that may contain the"
-                            " keys 'method', kwargs', 'args', and 'master'."
+                            " keys 'method', kwargs', 'args'."
                         )
                     },
                     "databases": {
                         "type": "array",
-                        "items": {"type": "string"},
+                        "items": {"type": "dict"},
                         "description": "Databases to use for this task"
                     }
                 },
@@ -49,18 +49,32 @@ swagger_template = {
                     "image": "hello-world",
                     "collaboration_id": 1,
                     "description": "human-readable-description",
-                    "databases": ["database1", "database2"],
                     "organizations": [
                         {
                             "id": 1,
                             "input": {
                                 "method": "method-name",
                                 "kwargs": {"key": "value"},
-                                "args": ["arg1", "arg2"],
-                                "master": True
+                                "args": ["arg1", "arg2"]
                             }
                         }
-                    ]
+                    ],
+                    "databases": [
+                        {
+                            "label": "database-label",
+                            "query": "SELECT * FROM table",
+                            "preprocessing": [
+                                {
+                                    "type": "filter_range",
+                                    "parameters": {
+                                        "column": "column-name",
+                                        "min": 0,
+                                        "max": 10,
+                                    }
+                                }
+                            ]
+                        }
+                    ],
 
                 },
                 "required": ["image", "collaboration_id"]

@@ -559,16 +559,29 @@ class Tasks(TaskBase):
             task.init_user_id = parent.init_user_id
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
-        # ok commit session...
-        task.save()
-
         # save the databases that the task uses
         databases = data.get('databases')
-        if not isinstance(databases, list):
-            databases = [databases]
+        if isinstance(databases, str):
+            databases = [{'label': databases}]
+        db_records = []
         for database in databases:
-            db_record = db.TaskDatabase(task_id=task.id, database=database)
-            db_record.save()
+            if 'label' not in database:
+                return {'msg': "Database label missing! The dictionary "
+                        f"{database} should contain a 'label' key"}, \
+                    HTTPStatus.BAD_REQUEST
+            # remove label from the database dictionary, which apart from it
+            # may only contain some optional parameters . Save optional
+            # parameters as JSON without spaces to database
+            label = database.pop('label')
+            db_records.append(db.TaskDatabase(
+                task_id=task.id,
+                database=label,
+                parameters=json.dumps(database, separators=(',', ':'))
+            ))
+
+        # All checks completed, save task to database
+        task.save()
+        [db_record.save() for db_record in db_records] # pylint: disable=W0106
 
         # send socket event that task has been created
         self.socketio.emit(
