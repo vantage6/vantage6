@@ -59,6 +59,8 @@ def algorithm_client(func: callable) -> callable:
         client = AlgorithmClient(token=token, host=host, port=port,
                                  path=api_path)
         return func(client, *args, **kwargs)
+    # set attribute that this function is wrapped in an algorithm client
+    wrap_function.wrapped_in_algorithm_client_decorator = True
     return wrap_function
 
 
@@ -147,6 +149,8 @@ def data(number_of_databases: int = 1) -> callable:
                 args = (data_, *args)
 
             return func(*args, **kwargs)
+        # set attribute that this function is wrapped in a data decorator
+        decorator.wrapped_in_data_decorator = True
         return decorator
     return protection_decorator
 
