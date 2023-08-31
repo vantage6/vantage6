@@ -249,7 +249,6 @@ class MockAlgorithmClient:
                     "No organization ids provided. Cannot create a task for "
                     "zero organizations."
                 )
-            print(self.parent.module_name)
             module = import_module(self.parent.module_name)
 
             # extract method from lib and input
