@@ -1,16 +1,11 @@
 import pandas as pd
-import yaml
-
-from pathlib import Path
 
 from vantage6.common import STRING_ENCODING
 import vantage6.algorithm.tools.preprocessing.functions as prepro_functions
 from vantage6.algorithm.tools.util import error, info
 
 
-
-def preprocess_data(data: pd.DataFrame,
-                    preproc_input: list[dict]) -> pd.DataFrame:
+def preprocess_data(data: pd.DataFrame, preproc_input: list[dict]) -> pd.DataFrame:
     """
     Execute any data preprocessing steps here that the user may have specified
 
@@ -26,37 +21,39 @@ def preprocess_data(data: pd.DataFrame,
     pd.DataFrame
         Preprocessed data
     """
-    # read yaml file to get the preprocessing function information
-    preprocess_yaml_file = Path(__file__).parent / 'template.yaml'
-    with open(preprocess_yaml_file, encoding=STRING_ENCODING) as yaml_file:
-        cfg_preprocessing = yaml.safe_load(yaml_file)
+
+    # allow some mistakes in input format on the user side
+    if isinstance(preproc_input, dict):
+        preproc_input = [preproc_input]
+
+    available_functions = [
+        name for name, obj in prepro_functions.__dict__.items() if callable(obj)
+    ]
 
     # loop over the preprocessing steps
     for preprocess_step in preproc_input:
-        if not "type" in preprocess_step:
-            error("Preprocessing step does not contain a type. Exiting...")
-            exit(1)
+        func_name = (
+            preprocess_step["type"]
+            if "type" in preprocess_step
+            else list(preprocess_step.keys())[0]
+        )
 
-        type_ = preprocess_step["type"]
-        if not type_ in cfg_preprocessing:
-            error(f"Unknown preprocessing type '{type_}'. Exiting...")
-            exit(1)
+        if func_name not in available_functions:
+            error(f"Unknown preprocessing function '{func_name}'. Exiting...")
+            raise ValueError(f"Unknown preprocessing function '{func_name}'")
 
-        # get preprocessing function
-        preprocess_func = getattr(prepro_functions, type_)
+        func = getattr(prepro_functions, func_name)
 
-        # get the arguments and check that required arguments are present
-        # TODO extend with checks on the values of the parameters
-        # TODO it would be nice to be able to specify additional checks within
-        # the preprocessing function (or in the YAML representation)
-        # TODO include optional args
-        parameters = preprocess_step.get("parameters", {})
-        for param in cfg_preprocessing[type_].get('parameters', []):
-            if param["required"] and not param["name"] in parameters:
-                error(f"Required parameter '{param['name']}' not "
-                      f"provided for preprocessing step '{type_}'. Exiting...")
-                exit(1)
+        if func_name in preprocess_step:
+            parameters = preprocess_step[func_name]
+        else:
+            parameters = preprocess_step.get("parameters", {})
 
-        data = preprocess_func(data, **parameters)
+        if isinstance(parameters, dict):
+            data = func(data, **parameters)
+        elif isinstance(parameters, str):
+            data = func(data, *[parameters])
+        else:
+            data = func(data, *parameters)
 
     return data
