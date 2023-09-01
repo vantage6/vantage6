@@ -45,7 +45,6 @@ setup(
     package_data={
         'vantage6.algorithm.tools': [
             '__build__',
-            'preprocessing/template.yaml'
         ],
     }
 )
