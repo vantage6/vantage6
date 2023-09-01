@@ -317,21 +317,24 @@ Here we assume that
 
 In this manual, we'll use the averaging algorithm from
 ``harbor2.vantage6.ai/demo/average``, so the second requirement is met.
-This container assumes a comma-separated (\*.csv) file as input, and will
-compute the average over one of the named columns. We'll assume the
-nodes in your collaboration have been configured to look at a
-comma-separated database, i.e. their config contains something like
+We'll assume the nodes in your collaboration have been configured to look as
+something like:
 
 ::
 
      databases:
-         default: /path/to/my/example.csv
-         my_other_database: /path/to/my/example2.csv
+        - label: default
+          uri: /path/to/my/example.csv
+          type: csv
+        - label: my_other_database
+          uri: /path/to/my/example2.csv
+          type: excel
 
-so that the third requirement is also met. As an end-user running the
+The third requirement is met when all nodes have the same labels in their
+configuration. As an end-user running the
 algorithm, you'll need to align with the node owner about which database
 name is used for the database you are interested in. For more details, see
-how to :ref:`configure-node` your node.
+:ref:`how to configure <configure-node>` your node.
 
 **Determining which collaboration / organizations to create a task for**
 
@@ -375,7 +378,7 @@ algorithm (which runs on one node and may spawns subtasks on other nodes),
 or create a task that will (only) run the partial methods (which are run
 on each node). Typically, the partial methods only run the node local analysis
 (e.g. compute the averages per node), whereas the central methods
-performs aggregation of those results as well (e.g. starts the partial 
+performs aggregation of those results as well (e.g. starts the partial
 analyses and then computes the overall average). First, let
 us create a task that runs the central part of the
 ``harbor2.vantage6.ai/demo/average`` algorithm:
@@ -387,12 +390,17 @@ us create a task that runs the central part of the
        'kwargs': {'column_name': 'age'}
    }
 
-   average_task = client.task.create(collaboration=1,
-                                     organizations=[2,3],
-                                     name="an-awesome-task",
-                                     image="harbor2.vantage6.ai/demo/average",
-                                     description='',
-                                     input=input_)
+   average_task = client.task.create(
+      collaboration=1,
+      organizations=[2,3],
+      name="an-awesome-task",
+      image="harbor2.vantage6.ai/demo/average",
+      description='',
+      input=input_,
+      databases=[
+         {'label': 'default'}
+      ]
+   )
 
 Note that the ``kwargs`` we specified in the ``input_`` are specific to
 this algorithm: this algorithm expects an argument ``column_name`` to be
@@ -401,12 +409,24 @@ Furthermore, note that here we created a task for collaboration with id
 ``1`` (i.e. our ``example_collab1``) and the organizations with id ``2``
 and ``3`` (i.e. ``example_org1`` and ``example_org2``). I.e. the
 algorithm need not necessarily be run on *all* the organizations
-involved in the collaboration. Finally, note that
-``client.task.create()`` has an optional argument called ``database``.
-Suppose that we would have wanted to run this analysis on the database
-called ``my_other_database`` instead of the ``default`` database, we
-could have specified an additional ``database = 'my_other_database'``
-argument. Check ``help(client.task.create)`` for more information.
+involved in the collaboration.
+
+Finally, note that you should provide any
+databases that you want to use via the ``databases`` argument. In the example
+above, we use the ``default`` database; using the ``my_other_database`` database
+can be done by simply specifying that label in the dictionary. If you have
+a SQL, SPARQL or OMOP database, you should also provide a ``query`` argument,
+e.g.
+
+.. code:: python
+
+   databases=[
+      {'label': 'default', 'query': 'SELECT * FROM my_table'}
+   ]
+
+Similarly, you can define a ``sheet_name`` for Excel databases if you want to
+read data from a specific worksheet. Check ``help(client.task.create)`` for
+more information.
 
 **Creating a task that runs the partial algorithm**
 

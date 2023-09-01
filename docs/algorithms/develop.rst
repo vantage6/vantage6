@@ -68,6 +68,8 @@ where ``__init__.py`` contains the following:
 and where ``central.py`` and ``partial.py`` obviously contain the implementation
 of those functions.
 
+.. _implementing-decorators:
+
 Implementing the algorithm functions
 ------------------------------------
 
