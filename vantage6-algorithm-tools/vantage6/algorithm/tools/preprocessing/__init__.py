@@ -23,11 +23,6 @@ def preprocess_data(data: pd.DataFrame,
     pd.DataFrame
         Preprocessed data
     """
-    # # read yaml file to get the preprocessing function information
-    # preprocess_yaml_file = Path(__file__).parent / 'template.yaml'
-    # with open(preprocess_yaml_file, encoding=STRING_ENCODING) as yaml_file:
-    #     cfg_preprocessing = yaml.safe_load(yaml_file)
-
     # loop over the preprocessing steps
     for preprocess_step in preproc_input:
         if not "type" in preprocess_step:
@@ -37,9 +32,11 @@ def preprocess_data(data: pd.DataFrame,
         type_ = preprocess_step["type"]
 
         # get preprocessing function
-        preprocess_func = getattr(prepro_functions, type_)
-        if not preprocess_func:
-            error(f"Unknown preprocessing type '{type_}'. Exiting...")
+        try:
+            preprocess_func = getattr(prepro_functions, type_)
+        except AttributeError:
+            error(f"Unknown preprocessing type '{type_}' defined. Please check"
+                  " your preprocessing input. Exiting...")
             exit(1)
 
         # check if the function parameters without default values have been
