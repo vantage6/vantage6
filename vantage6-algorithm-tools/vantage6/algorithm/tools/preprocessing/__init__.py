@@ -5,7 +5,7 @@ from pathlib import Path
 
 from vantage6.common import STRING_ENCODING
 import vantage6.algorithm.tools.preprocessing.functions as prepro_functions
-from vantage6.algorithm.tools.util import error, info
+from vantage6.algorithm.tools.util import error
 
 
 

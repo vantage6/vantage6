@@ -1,4 +1,3 @@
-import pandas as pd
 import json
 import logging
 
@@ -6,7 +5,7 @@ from typing import Any
 from importlib import import_module
 from copy import deepcopy
 
-from vantage6.algorithm.tools.wrappers import select_wrapper
+from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 
@@ -98,7 +97,14 @@ class MockAlgorithmClient:
             self.organizations_with_data.append(org_id)
             org_data = []
             for dataset in org_datasets:
-                org_data.append(self.__load_data(**dataset))
+                df = load_data(
+                    database_uri=dataset.get("database"),
+                    db_type=dataset.get("db_type"),
+                    query=dataset.get("query"),
+                    sheet_name=dataset.get("sheet_name")
+                )
+                df = preprocess_data(df, dataset.get("preprocessing", []))
+                org_data.append(df)
             self.datasets_per_org[org_id] = org_data
 
         self.collaboration_id = collaboration_id if collaboration_id else 1
@@ -116,53 +122,6 @@ class MockAlgorithmClient:
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.node = self.Node(self)
-
-    def __load_data(
-        self, database: str | pd.DataFrame, db_type: str = None,
-        query: str = None, sheet_name: str = None,
-        preprocessing: list[dict] = None
-    ) -> pd.DataFrame:
-        """
-        Preprocess data and load it to the algorithm.
-
-        Parameters
-        ----------
-        database : str | pd.DataFrame
-            The database to load. If this is a string, it should be the path
-            to the database file or a SQL connection string. If this is a
-            pandas DataFrame, other parameters except preprocessing are
-            ignored.
-        db_type : str
-            The type of the database. This should be one of the CSV, SQL,
-            Excel, Sparql, Parquet or OMOP.
-        query : str
-            The query to execute on the database. This is required for SQL,
-            Sparql and OMOP databases.
-        sheet_name : str
-            The sheet name to read from the Excel file. This is optional and
-            only forExcel databases.
-        preprocessing : list[dict]
-            The preprocessing steps to apply to the data. This should be a
-            list of preprocessing steps
-        """
-        # load initial dataframe
-        df = pd.DataFrame()
-        if isinstance(database, pd.DataFrame):
-            df = database
-        else:
-            wrapper = select_wrapper(db_type)
-            if db_type == "excel":
-                df = wrapper.load_data(database, sheet_name=sheet_name)
-            elif db_type in ("sql", "sparql", "omop"):
-                df = wrapper.load_data(database, query=query)
-            else:
-                df = wrapper.load_data(database)
-
-        # apply preprocessing
-        if preprocessing:
-            df = preprocess_data(df, preprocessing)
-
-        return df
 
     # pylint: disable=unused-argument
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
