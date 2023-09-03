@@ -1,6 +1,6 @@
 import { TaskStatus } from '../models/api/task.models';
 
-export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' | 'success' | 'warning' => {
+export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' | 'success' | 'error' => {
   switch (status) {
     case TaskStatus.Initializing:
     case TaskStatus.Active:
@@ -11,7 +11,7 @@ export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' |
     case TaskStatus.StartFailed:
     case TaskStatus.NoDockerImage:
     case TaskStatus.Crashed:
-      return 'warning';
+      return 'error';
     default:
       return 'default';
   }

@@ -7,7 +7,7 @@ import { Component, Input } from '@angular/core';
 })
 export class ChipComponent {
   @Input() label: string = '';
-  @Input() type: 'default' | 'active' | 'success' | 'warning' = 'default';
+  @Input() type: 'default' | 'active' | 'success' | 'warning' | 'error' = 'default';
 
   getTypeClass(): string {
     if (this.type === 'default') {
