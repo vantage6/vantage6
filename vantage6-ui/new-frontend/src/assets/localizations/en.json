@@ -19,6 +19,12 @@
         "user": "user",
         "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
     },
+    "task-run": {
+        "assigned-at": "Created",
+        "started-at": "Started",
+        "finished-at": "Finished",
+        "node": "Assigned node"
+    },
     "task-create": {
         "title": "Create task",
         "step-package": {
@@ -40,6 +46,9 @@
         },
         "card-algorithm": {
             "title": "Algorithm"
+        },
+        "card-runs": {
+            "title": "Runs"
         }
     },
     "task-list": {

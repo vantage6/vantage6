@@ -149,6 +149,28 @@ mat-card {
   }
 }
 
+.card-accordion {
+  mat-expansion-panel.mat-expansion-panel {
+    width: calc(100% + $spacing-px-8);
+    margin: 0 0 0 $spacing-px-minus-4;
+    box-shadow: none;
+    border-radius: 0 !important;
+
+    &:first-of-type {
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .mat-expansion-panel-header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .mat-expansion-panel-body {
+      margin-top: $spacing-px-4;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+  }
+}
+
 .data-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -157,7 +179,7 @@ mat-card {
   &__item {
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: flex-start;
     gap: $spacing-px-1;
     word-break: break-all;
     padding-bottom: $spacing-px-1;

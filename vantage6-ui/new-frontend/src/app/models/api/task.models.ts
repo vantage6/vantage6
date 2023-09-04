@@ -43,7 +43,19 @@ export interface Task {
 }
 
 interface TaskRun {
+  id: number;
+  status: TaskStatus;
   input: string;
+  node: RunNode;
+  assigned_at: string;
+  started_at?: string;
+  finished_at?: string;
+}
+
+//Not compatible with BaseNode
+export interface RunNode {
+  id: number;
+  name: string;
 }
 
 interface TaskInput {
