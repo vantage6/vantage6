@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { getChipTypeForStatus } from 'src/app/helpers/task.helper';
+import { TranslateService } from '@ngx-translate/core';
+import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { BaseTask, TaskStatus } from 'src/app/models/api/task.models';
@@ -33,6 +34,7 @@ export class TaskListComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private translateService: TranslateService,
     private taskService: TaskService,
     authService: AuthService
   ) {
@@ -60,6 +62,10 @@ export class TaskListComponent implements OnInit {
 
   getChipTypeForStatus(status: TaskStatus) {
     return getChipTypeForStatus(status);
+  }
+
+  getTaskStatusTranslation(status: TaskStatus) {
+    return getTaskStatusTranslation(this.translateService, status);
   }
 
   private async initData() {

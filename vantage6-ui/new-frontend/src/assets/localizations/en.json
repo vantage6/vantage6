@@ -1,1 +1,26 @@
-{}
+{
+    "task": {
+        "id": "ID",
+        "name": "Name",
+        "status": "Status"
+    },
+    "task-list": {
+        "header": {
+            "actions": {
+                "create": "Create task"
+            },
+            "title": "Tasks"
+        }
+    },
+    "task-status": {
+        "Active": "Active",
+        "Completed": "Completed",
+        "Crashed": "Crashed",
+        "Failed": "Failed",
+        "Initializing": "Initializing",
+        "Killed": "Killed by user",
+        "NoDockerImage": "Non-existing Docker image",
+        "Pending": "Pending",
+        "StartFailed": "Start failed"
+    }
+}
