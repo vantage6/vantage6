@@ -8,6 +8,10 @@
   line-height: 1rem;
   background-color: rgb(224, 224, 224);
 
+  &--small {
+    padding: $spacing-px-1 $spacing-px-3;
+  }
+
   &--active {
     background-color: $active-500;
   }

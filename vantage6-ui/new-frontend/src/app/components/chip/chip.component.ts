@@ -8,12 +8,16 @@ import { Component, Input } from '@angular/core';
 export class ChipComponent {
   @Input() label: string = '';
   @Input() type: 'default' | 'active' | 'success' | 'warning' | 'error' = 'default';
+  @Input() small: boolean = false;
 
   getTypeClass(): string {
-    if (this.type === 'default') {
-      return '';
-    } else {
-      return `chip--${this.type}`;
+    const classNames: string[] = [];
+    if (this.type !== 'default') {
+      classNames.push(`chip--${this.type}`);
     }
+    if (this.small) {
+      classNames.push('chip--small');
+    }
+    return classNames.join(' ');
   }
 }
