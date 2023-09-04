@@ -1,4 +1,3 @@
-import pandas as pd
 import json
 import logging
 
@@ -6,7 +5,7 @@ from typing import Any
 from importlib import import_module
 from copy import deepcopy
 
-from vantage6.algorithm.tools.wrappers import select_wrapper
+from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 
@@ -29,7 +28,7 @@ class MockAlgorithmClient:
         configuration:
 
         - database: str (path to file or SQL connection string) or pd.DataFrame
-        - type_: str (type of the database, e.g. "csv" or "sql")
+        - db_type (str, e.g. "csv" or "sql")
 
         There are also a number of keys that are optional but may be required
         depending on the database type:
@@ -53,11 +52,8 @@ class MockAlgorithmClient:
     """
 
     def __init__(
-        self,
-        datasets: list[dict],
-        module: str,
-        collaboration_id: int = None,
-        organization_ids: int = None,
+        self, datasets: list[list[dict]], module: str,
+        collaboration_id: int = None, organization_ids: int = None,
         node_ids: int = None,
     ) -> None:
         self.log = logging.getLogger(module_name)
@@ -103,7 +99,14 @@ class MockAlgorithmClient:
             org_data = []
 
             for dataset in org_datasets:
-                org_data.append(self.__load_data(**dataset))
+                df = load_data(
+                    database_uri=dataset.get("database"),
+                    db_type=dataset.get("db_type"),
+                    query=dataset.get("query"),
+                    sheet_name=dataset.get("sheet_name")
+                )
+                df = preprocess_data(df, dataset.get("preprocessing", []))
+                org_data.append(df)
             self.datasets_per_org[org_id] = org_data
 
         self.collaboration_id = collaboration_id if collaboration_id else 1
@@ -117,59 +120,10 @@ class MockAlgorithmClient:
 
         self.task = self.Task(self)
         self.result = self.Result(self)
+        self.run = self.Run(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.node = self.Node(self)
-
-    def __load_data(
-        self,
-        database: str | pd.DataFrame,
-        type_: str = None,
-        query: str = None,
-        sheet_name: str = None,
-        preprocessing: list[dict] = None,
-    ) -> pd.DataFrame:
-        """
-        Preprocess data and load it to the algorithm.
-
-        Parameters
-        ----------
-        database : str | pd.DataFrame
-            The database to load. If this is a string, it should be the path
-            to the database file or a SQL connection string. If this is a
-            pandas DataFrame, other parameters except preprocessing are
-            ignored.
-        type_ : str
-            The type of the database. This should be one of the CSV, SQL,
-            Excel, Sparql, Parquet or OMOP.
-        query : str
-            The query to execute on the database. This is required for SQL,
-            Sparql and OMOP databases.
-        sheet_name : str
-            The sheet name to read from the Excel file. This is optional and
-            only forExcel databases.
-        preprocessing : list[dict]
-            The preprocessing steps to apply to the data. This should be a
-            list of preprocessing steps
-        """
-        # load initial dataframe
-        df = pd.DataFrame()
-        if isinstance(database, pd.DataFrame):
-            df = database
-        else:
-            wrapper = select_wrapper(type_)
-            if type_ == "excel":
-                wrapper.load_data(database, sheet_name=sheet_name)
-            elif type_ in ("sql", "sparql", "omop"):
-                wrapper.load_data(database, query=query)
-            else:
-                wrapper.load_data(database)
-
-        # apply preprocessing
-        if preprocessing:
-            df = preprocess_data(df, preprocessing)
-
-        return df
 
     # pylint: disable=unused-argument
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
@@ -241,8 +195,8 @@ class MockAlgorithmClient:
 
             Returns
             -------
-            int
-                The id of the task.
+            task
+                A dictionary with information on the created task.
             """
             if not organizations:
                 raise ValueError(
@@ -259,6 +213,8 @@ class MockAlgorithmClient:
             args = input_.get("args", [])
             kwargs = input_.get("kwargs", {})
 
+            new_task_id = len(self.parent.tasks) + 1
+
             # get data for organization
             for org_id in organizations:
                 # When creating a child task, pass the parent's datasets and
@@ -269,59 +225,67 @@ class MockAlgorithmClient:
                 client_copy.node_id = self._select_node(org_id)
                 client_copy.organization_id = org_id
 
-                result = method(self.parent, data, *args, **kwargs)
+                # detect which decorators are used and provide the mock client
+                # and/or mocked data that is required to the method
+                mocked_kwargs = {}
+                if getattr(method, 'wrapped_in_algorithm_client_decorator',
+                           False):
+                    mocked_kwargs['mock_client'] = self.parent
+                if getattr(method, 'wrapped_in_data_decorator', False):
+                    mocked_kwargs['mock_data'] = data
+
+                result = method(*args, **kwargs, **mocked_kwargs)
 
                 self.last_result_id += 1
                 self.parent.results.append(
                     {
                         "id": self.last_result_id,
-                        "result": json.dumps(result),
-                        "run": {
-                            "id": self.last_result_id,
-                            "link": f"/api/run/{self.last_result_id}",
-                            "methods": ["GET", "PATCH"],
-                        },
-                    }
-                )
-                self.parent.runs.append(
-                    {
+                        "link": f"/api/run/{self.last_result_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "task": {
+                        "id": new_task_id,
+                        "link": f"/api/task/{new_task_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                })
+                self.parent.runs.append({
+                    "id": self.last_result_id,
+                    "started_at": "2021-01-01T00:00:00.000000",
+                    "assigned_at": "2021-01-01T00:00:00.000000",
+                    "finished_at": "2021-01-01T00:00:00.000000",
+                    "log": "mock_log",
+                    "ports": [],
+                    "status": "completed",
+                    "input": json.dumps(input_),
+                    "results": {
                         "id": self.last_result_id,
-                        "started_at": "2021-01-01T00:00:00.000000",
-                        "assigned_at": "2021-01-01T00:00:00.000000",
-                        "finished_at": "2021-01-01T00:00:00.000000",
-                        "log": "mock_log",
-                        "ports": [],
-                        "status": "completed",
-                        "input": json.dumps(input_),
-                        "results": {
-                            "id": self.last_result_id,
-                            "link": f"/api/result/{self.last_result_id}",
-                            "methods": ["GET", "PATCH"],
-                        },
-                        "node": {
-                            "id": org_id,
-                            "ip": None,
-                            "name": "mock_node",
-                            "status": "online",
-                        },
-                        "organization": {
-                            "id": org_id,
-                            "link": f"/api/organization/{org_id}",
-                            "methods": ["GET", "PATCH"],
-                        },
-                        "task": {
-                            "id": len(self.parent.tasks),
-                            "link": f"/api/task/{len(self.parent.tasks)}",
-                            "methods": ["GET", "PATCH"],
-                        },
-                    }
-                )
+                        "link": f"/api/result/{self.last_result_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "node": {
+                        "id": org_id,
+                        "ip": None,
+                        "name": "mock_node",
+                        "status": "online",
+                    },
+                    "organization": {
+                        "id": org_id,
+                        "link": f"/api/organization/{org_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "task": {
+                        "id": new_task_id,
+                        "link": f"/api/task/{new_task_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                })
 
-            id_ = len(self.parent.tasks)
             collab_id = self.parent.collaboration_id
             task = {
-                "id": id_,
-                "runs": f"/api/run?task_id={id_}",
+                "id": new_task_id,
+                "runs": f"/api/run?task_id={new_task_id}",
+                "results": f"/api/results?task_id={new_task_id}",
                 "status": "completed",
                 "name": name,
                 "databases": ["mock"],
@@ -473,10 +437,9 @@ class MockAlgorithmClient:
                 The results of the task.
             """
             results = []
-            for task in self.parent.tasks:
-                if task.get("id") == task_id:
-                    for result in task.get("results"):
-                        results.append(json.loads(result.get("result")))
+            for result in self.parent.results:
+                if result.get("task").get("id") == task_id:
+                    results.append(json.loads(result.get("result")))
             return results
 
     class Organization(SubClient):

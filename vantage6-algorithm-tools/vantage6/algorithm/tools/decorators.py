@@ -7,7 +7,7 @@ from functools import wraps
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.util import info, error, warn
-from vantage6.algorithm.tools.wrappers import select_wrapper
+from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 def algorithm_client(func: callable) -> callable:
@@ -33,8 +33,8 @@ def algorithm_client(func: callable) -> callable:
     callable
         Decorated function
     """
-    def wrap_function(mock_client: MockAlgorithmClient = None,
-                      *args, **kwargs) -> callable:
+    def wrap_function(*args, mock_client: MockAlgorithmClient = None,
+                      **kwargs) -> callable:
         """
         Wrap the function with the client object
 
@@ -59,6 +59,8 @@ def algorithm_client(func: callable) -> callable:
         client = AlgorithmClient(token=token, host=host, port=port,
                                  path=api_path)
         return func(client, *args, **kwargs)
+    # set attribute that this function is wrapped in an algorithm client
+    wrap_function.wrapped_in_algorithm_client_decorator = True
     return wrap_function
 
 
@@ -147,6 +149,8 @@ def data(number_of_databases: int = 1) -> callable:
                 args = (data_, *args)
 
             return func(*args, **kwargs)
+        # set attribute that this function is wrapped in a data decorator
+        decorator.wrapped_in_data_decorator = True
         return decorator
     return protection_decorator
 
@@ -174,26 +178,11 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
     database_type = os.environ.get(
         f"{label.upper()}_DATABASE_TYPE", "csv").lower()
 
-    # Create the correct wrapper based on the database type, note that the
-    # multi database wrapper is not available.
-    wrapper = select_wrapper(database_type)
-    if wrapper is None:
-        error(f"Unknown database type '{database_type}' for database with "
-              f"label '{label}'. Please check the node configuration.")
-        exit(1)
-
-    if database_type == "excel":
-        # read sheet name from the environment variables. If not given, read
-        # the first sheet.
-        sheet_name = os.environ.get(f"{label.upper()}_SHEET_NAME")
-        return wrapper.load_data(database_uri, sheet_name=sheet_name)
-    elif database_type in ("sparql", "sql", "omop"):
-        query = os.environ.get(f"{label.upper()}_QUERY")
-        if not query:
-            error(f"Missing query for database with label '{label}'. Please "
-                  f"include it when creating the task.")
-            exit(1)
-        return wrapper.load_data(database_uri, query)
-    else:
-        # Load the data from the database without additional arguments
-        return wrapper.load_data(database_uri)
+    # Load the data based on the database type. Try to provide environment
+    # variables that should be available for some data types.
+    return load_data(
+        database_uri,
+        database_type,
+        query=os.environ.get(f"{label.upper()}_QUERY"),
+        sheet_name=os.environ.get(f"{label.upper()}_SHEET_NAME")
+    )

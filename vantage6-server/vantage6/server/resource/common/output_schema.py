@@ -193,9 +193,10 @@ class ResultSchema(HATEOASModelSchema):
     class Meta:
         model = db.Run
         exclude = ("assigned_at", "started_at", "finished_at", "status",
-                   "task", "ports", "organization", "log", "input",)
+                   "ports", "organization", "log", "input",)
 
     run = fields.Method("make_run_link")
+    task = fields.Method("task")
 
     @staticmethod
     def make_run_link(obj):

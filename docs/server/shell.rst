@@ -12,6 +12,8 @@ Shell
     Instead, we recommend using the :ref:`user interface <ui>`, the
     :ref:`Python client <python-client>` or the :ref:`API <server-api>`.
 
+    The commands in this page have not been updated to match version 4.0.
+
 The shell allows a server admin to manage all server entities. To start
 the shell, use ``vserver shell [options]``.
 

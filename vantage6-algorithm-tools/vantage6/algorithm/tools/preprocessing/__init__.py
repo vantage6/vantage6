@@ -1,8 +1,9 @@
 import pandas as pd
 
-from vantage6.common import STRING_ENCODING
+import inspect
+
 import vantage6.algorithm.tools.preprocessing.functions as prepro_functions
-from vantage6.algorithm.tools.util import error, info
+from vantage6.algorithm.tools.util import error
 
 
 def preprocess_data(data: pd.DataFrame, preproc_input: list[dict]) -> pd.DataFrame:
@@ -21,15 +22,6 @@ def preprocess_data(data: pd.DataFrame, preproc_input: list[dict]) -> pd.DataFra
     pd.DataFrame
         Preprocessed data
     """
-
-    # allow some mistakes in input format on the user side
-    if isinstance(preproc_input, dict):
-        preproc_input = [preproc_input]
-
-    available_functions = [
-        name for name, obj in prepro_functions.__dict__.items() if callable(obj)
-    ]
-
     # loop over the preprocessing steps
     for preprocess_step in preproc_input:
         func_name = (
@@ -38,16 +30,37 @@ def preprocess_data(data: pd.DataFrame, preproc_input: list[dict]) -> pd.DataFra
             else list(preprocess_step.keys())[0]
         )
 
-        if func_name not in available_functions:
-            error(f"Unknown preprocessing function '{func_name}'. Exiting...")
-            raise ValueError(f"Unknown preprocessing function '{func_name}'")
+        func_name = preprocess_step["type"]
 
-        func = getattr(prepro_functions, func_name)
+        # get preprocessing function
+        try:
+            func = getattr(prepro_functions, func_name)
+        except AttributeError:
+            error(
+                f"Unknown preprocessing type '{func_name}' defined. Please check"
+                " your preprocessing input. Exiting..."
+            )
+            exit(1)
 
-        if func_name in preprocess_step:
-            parameters = preprocess_step[func_name]
-        else:
-            parameters = preprocess_step.get("parameters", {})
+        # check if the function parameters without default values have been
+        # provided - except for the first parameter (the pandas dataframe),
+        # which is provided by the infrastructure
+        sig = inspect.signature(func)
+        first_arg_name = next(iter(sig.parameters))
+        for param in sig.parameters.values():
+            if (
+                param.name != first_arg_name
+                and param.default is param.empty
+                and param.name not in preprocess_step["parameters"]
+            ):
+                error(
+                    f"Parameter '{param.name}' not provided for "
+                    f"preprocessing step '{func_name}'. Exiting..."
+                )
+                exit(1)
+
+        # execute the preprocessing function
+        parameters = preprocess_step.get("parameters", {})
 
         if isinstance(parameters, dict):
             data = func(data, **parameters)

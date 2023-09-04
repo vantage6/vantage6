@@ -563,6 +563,8 @@ class Tasks(TaskBase):
         databases = data.get('databases')
         if isinstance(databases, str):
             databases = [{'label': databases}]
+        elif databases is None:
+            databases = []
         db_records = []
         for database in databases:
             if 'label' not in database:
