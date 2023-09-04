@@ -157,6 +157,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       id = organizationID[0];
     }
 
+    //TODO: What should happen for multiple selected organizations
     //Get node
     if (id) {
       //Get all nodes for chosen collaboration

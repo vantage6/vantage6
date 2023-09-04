@@ -58,6 +58,11 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+          <app-alert
+            class="node-alert"
+            *ngIf="node && node?.status !== 'online'"
+            [label]="'The node ' + node.name + ' is offline. This task will be handled when the node is back online.'"
+          ></app-alert>
           <div>
             <button mat-button matStepperPrevious>Back</button>
             <button mat-button matStepperNext>Next</button>

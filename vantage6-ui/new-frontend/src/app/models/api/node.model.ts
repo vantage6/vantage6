@@ -1,3 +1,5 @@
+import { BaseOrganization } from './organization.model';
+
 export enum DatabaseType {
   CSV = 'csv',
   Excel = 'excel',
@@ -11,11 +13,9 @@ export enum DatabaseType {
 export interface BaseNode {
   id: number;
   organization: BaseOrganization;
+  name: string;
   config: Config[];
-}
-
-interface BaseOrganization {
-  id: number;
+  status?: string;
 }
 
 interface Config {
