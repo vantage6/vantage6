@@ -79,7 +79,7 @@ class TestPreprocessing(unittest.TestCase):
         org_ids = [org["id"] for org in mockclient.organization.list()]
         org_ids
 
-        input_ = {"method": "execute", "master": True, "kwargs": {}}
+        input_ = {"method": "execute", "kwargs": {}}
         child_task = mockclient.task.create(
             organizations=org_ids,
             input_=input_,
