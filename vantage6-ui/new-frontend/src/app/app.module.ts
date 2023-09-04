@@ -33,6 +33,7 @@ import { TaskListComponent } from './pages/task/list/task-list.component';
 import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ChipComponent } from './components/chip/chip.component';
+import { AlertComponent } from './components/alert/alert.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -51,7 +52,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     TaskListComponent,
     TaskReadComponent,
     PageHeaderComponent,
-    ChipComponent
+    ChipComponent,
+    AlertComponent
   ],
   imports: [
     BrowserModule,

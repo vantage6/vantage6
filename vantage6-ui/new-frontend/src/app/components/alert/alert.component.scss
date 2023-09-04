@@ -1,0 +1,18 @@
+@import "../../../config.scss";
+
+.alert {
+  display: flex;
+  align-items: center;
+  padding: $spacing-px-2;
+  border: 1px solid $warning-500;
+  border-radius: $spacing-px-1;
+  background-color: $warning-50;
+  color: $warning-900;
+  font-size: 0.875rem;
+
+  &__icon {
+    flex-shrink: 0;
+    margin-right: $spacing-px-2;
+    color: $warning-500;
+  }
+}
