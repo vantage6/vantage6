@@ -5,7 +5,6 @@ import vantage6.algorithm.tools.preprocessing.functions as prepro_functions
 from vantage6.algorithm.tools.util import error
 
 
-
 def preprocess_data(data: pd.DataFrame,
                     preproc_input: list[dict]) -> pd.DataFrame:
     """
@@ -25,18 +24,19 @@ def preprocess_data(data: pd.DataFrame,
     """
     # loop over the preprocessing steps
     for preprocess_step in preproc_input:
-        if not "type" in preprocess_step:
-            error("Preprocessing step does not contain a type. Exiting...")
+        if "function" not in preprocess_step:
+            error("Preprocessing step does not contain a 'function' to run. "
+                  "Exiting...")
             exit(1)
 
-        type_ = preprocess_step["type"]
+        func_name = preprocess_step["function"]
 
         # get preprocessing function
         try:
-            preprocess_func = getattr(prepro_functions, type_)
+            preprocess_func = getattr(prepro_functions, func_name)
         except AttributeError:
-            error(f"Unknown preprocessing type '{type_}' defined. Please check"
-                  " your preprocessing input. Exiting...")
+            error(f"Unknown preprocessing type '{func_name}' defined. Please "
+                  "check your preprocessing input. Exiting...")
             exit(1)
 
         # check if the function parameters without default values have been
@@ -51,7 +51,7 @@ def preprocess_data(data: pd.DataFrame,
                 param.name not in preprocess_step["parameters"]
             ):
                 error(f"Parameter '{param.name}' not provided for "
-                      f"preprocessing step '{type_}'. Exiting...")
+                      f"preprocessing step '{func_name}'. Exiting...")
                 exit(1)
 
         # execute the preprocessing function
