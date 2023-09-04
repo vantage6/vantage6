@@ -51,7 +51,7 @@ export class TaskService {
     return task;
   }
 
-  create(createTask: CreateTask) {
-    return this.apiService.postForApi('/task', createTask);
+  async create(createTask: CreateTask): Promise<BaseTask> {
+    return await this.apiService.postForApi<BaseTask>('/task', createTask);
   }
 }

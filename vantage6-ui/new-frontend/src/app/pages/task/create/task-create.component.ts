@@ -9,6 +9,7 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { CreateTask, CreateTaskInput } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-task-create',
@@ -44,6 +45,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
+    private router: Router,
     private algorithmService: AlgorithmService,
     private taskService: TaskService,
     public chosenCollaborationService: ChosenCollaborationService
@@ -69,7 +71,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.destroy$.next(true);
   }
 
-  handleSubmit(): void {
+  async handleSubmit(): Promise<void> {
     if (this.packageForm.invalid || this.functionForm.invalid || this.databaseForm.invalid || this.parameterForm.invalid) {
       return;
     }
@@ -97,7 +99,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       })
     };
 
-    this.taskService.create(createTask);
+    const newTask = await this.taskService.create(createTask);
+    if (newTask) {
+      this.router.navigate([routePaths.task, newTask.id]);
+    }
   }
 
   private async initData(): Promise<void> {
