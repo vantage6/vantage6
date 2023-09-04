@@ -1,14 +1,16 @@
+<app-page-header title="{{ 'task-create.title' | translate }}">
+  <button actions mat-flat-button color="primary" [routerLink]="routes.tasks">
+    <mat-icon>arrow_back</mat-icon>{{ "task-list.title" | translate }}
+  </button>
+</app-page-header>
 <mat-card>
-  <mat-card-header>
-    <mat-card-title>Create task</mat-card-title>
-  </mat-card-header>
   <mat-card-content>
     <mat-stepper [linear]="true" orientation="vertical" #stepper>
       <mat-step [stepControl]="packageForm">
         <form [formGroup]="packageForm">
-          <ng-template matStepLabel>Select package</ng-template>
+          <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
           <mat-form-field>
-            <mat-label>Algorithm</mat-label>
+            <mat-label>{{ "task.algorithm" | translate }}</mat-label>
             <mat-select formControlName="algorithmID">
               <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
                 {{ algorithm.name }}
@@ -16,23 +18,23 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field>
-            <mat-label>Analysis name</mat-label>
+            <mat-label>{{ "task.name" | translate }}</mat-label>
             <input matInput type="text" formControlName="name" />
           </mat-form-field>
           <mat-form-field>
-            <mat-label>Analysis description</mat-label>
+            <mat-label>{{ "task.description" | translate }}</mat-label>
             <input matInput type="text" formControlName="description" />
           </mat-form-field>
           <div>
-            <button mat-button matStepperNext>Next</button>
+            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
           </div>
         </form>
       </mat-step>
       <mat-step [stepControl]="functionForm">
         <form [formGroup]="functionForm">
-          <ng-template matStepLabel>Select function</ng-template>
+          <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
           <mat-form-field>
-            <mat-label>Function</mat-label>
+            <mat-label>{{ "task.function" | translate }}</mat-label>
             <mat-select formControlName="functionName">
               <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
                 {{ function.name }}
@@ -40,7 +42,7 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field *ngIf="function">
-            <mat-label>Organization</mat-label>
+            <mat-label>{{ "task.organization" | translate }}</mat-label>
             <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
               <mat-option
                 *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
@@ -61,21 +63,21 @@
           <app-alert
             class="node-alert"
             *ngIf="node && node?.status !== 'online'"
-            [label]="'The node ' + node.name + ' is offline. This task will be handled when the node is back online.'"
+            label="{{ 'task.alert-node-offline' | translate: { name: node.name } }}"
           ></app-alert>
           <div>
-            <button mat-button matStepperPrevious>Back</button>
-            <button mat-button matStepperNext>Next</button>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
           </div>
         </form>
       </mat-step>
       <mat-step [stepControl]="databaseForm">
         <form [formGroup]="databaseForm">
-          <ng-template matStepLabel>Select databases</ng-template>
+          <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <ng-container *ngFor="let database of function?.databases">
             <h4>{{ database.name }}</h4>
             <mat-form-field>
-              <mat-label>Database</mat-label>
+              <mat-label>{{ "task.database" | translate }}</mat-label>
               <mat-select [formControlName]="database.name + '_name'">
                 <mat-option *ngFor="let database of databases" [value]="database.name">
                   {{ database.name }}
@@ -83,23 +85,23 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field *ngIf="databaseForm.get(database.name + '_query')">
-              <mat-label>Query</mat-label>
+              <mat-label>{{ "task.query" | translate }}</mat-label>
               <textarea matInput type="text" [formControlName]="database.name + '_query'" rows="4"></textarea>
             </mat-form-field>
             <mat-form-field *ngIf="databaseForm.get(database.name + '_sheet')">
-              <mat-label>Sheet name</mat-label>
+              <mat-label>{{ "task.sheet" | translate }}</mat-label>
               <input matInput type="text" [formControlName]="database.name + '_sheet'" />
             </mat-form-field>
           </ng-container>
           <div>
-            <button mat-button matStepperPrevious>Back</button>
-            <button mat-button matStepperNext>Next</button>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
           </div>
         </form>
       </mat-step>
       <mat-step [stepControl]="parameterForm">
         <form [formGroup]="parameterForm">
-          <ng-template matStepLabel>Function parameters</ng-template>
+          <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
           <ng-container *ngFor="let argument of function?.arguments">
             <b>{{ argument.description }}</b>
             <mat-form-field>
@@ -112,21 +114,18 @@
             </mat-form-field>
           </ng-container>
           <div>
-            <button mat-button matStepperPrevious>Back</button>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
           </div>
         </form>
       </mat-step>
     </mat-stepper>
-    <div class="button-container">
-      <button
-        mat-flat-button
-        color="primary"
-        [disabled]="packageForm.invalid || functionForm.invalid || databaseForm.invalid || parameterForm.invalid"
-        (click)="handleSubmit()"
-      >
-        Submit
-      </button>
-      <button mat-stroked-button [routerLink]="routes.tasks">Cancel</button>
-    </div>
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="packageForm.invalid || functionForm.invalid || databaseForm.invalid || parameterForm.invalid"
+      (click)="handleSubmit()"
+    >
+      {{ "general.submit" | translate }}
+    </button>
   </mat-card-content>
 </mat-card>

@@ -1,16 +1,39 @@
 {
+    "general": {
+        "back": "Back",
+        "next": "Next",
+        "submit": "Submit"
+    },
     "task": {
+        "algorithm": "Algorithm",
+        "database": "Database",
+        "description": "Description",
+        "function": "Function",
         "id": "ID",
+        "organization": "Organization",
         "name": "Name",
-        "status": "Status"
+        "query": "Query",
+        "sheet": "Sheet name",
+        "status": "Status",
+        "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
+    },
+    "task-create": {
+        "title": "Create task",
+        "step-package": {
+            "title": "Select package"
+        },
+        "step-function": {
+            "title": "Select function"
+        },
+        "step-database": {
+            "title": "Select databases"
+        },
+        "step-parameters": {
+            "title": "Function parameters"
+        }
     },
     "task-list": {
-        "header": {
-            "actions": {
-                "create": "Create task"
-            },
-            "title": "Tasks"
-        }
+        "title": "Tasks"
     },
     "task-status": {
         "Active": "Active",

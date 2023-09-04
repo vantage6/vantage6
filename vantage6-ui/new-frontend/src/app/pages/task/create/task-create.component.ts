@@ -13,7 +13,8 @@ import { routePaths } from 'src/app/routes';
 @Component({
   selector: 'app-task-create',
   templateUrl: './task-create.component.html',
-  styleUrls: ['./task-create.component.scss']
+  styleUrls: ['./task-create.component.scss'],
+  host: { '[class.card-container]': 'true' }
 })
 export class TaskCreateComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
@@ -150,6 +151,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   private async handleOrganizationChange(organizationID: string): Promise<void> {
     //Clear form
     this.clearDatabaseStep();
+    this.node = null;
 
     //Get organization id, from array or string
     let id = organizationID;

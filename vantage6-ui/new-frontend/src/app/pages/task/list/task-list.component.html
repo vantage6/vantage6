@@ -1,6 +1,6 @@
-<app-page-header title="{{ 'task-list.header.title' | translate }}">
+<app-page-header title="{{ 'task-list.title' | translate }}">
   <button actions mat-flat-button color="primary" *ngIf="canCreateTask" [routerLink]="routes.taskCreate">
-    <mat-icon>add</mat-icon>{{ "task-list.header.actions.create" | translate }}
+    <mat-icon>add</mat-icon>{{ "task-create.title" | translate }}
   </button>
 </app-page-header>
 <mat-card>
