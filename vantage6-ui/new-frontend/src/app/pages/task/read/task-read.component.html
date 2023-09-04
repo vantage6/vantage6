@@ -3,33 +3,37 @@
 </app-page-header>
 <mat-card>
   <mat-card-header>
-    <mat-card-title>General</mat-card-title>
+    <mat-card-title>{{ "task-read.card-general.title" | translate }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
     <ng-container *ngIf="!isLoading; else loading">
       <div class="data-list">
         <div class="data-list__item">
-          <b>ID</b>
+          <b>{{ "task.id" | translate }}</b>
           <span>{{ this.task?.id || "-" }}</span>
         </div>
         <div class="data-list__item">
-          <b>Name</b>
+          <b>{{ "task.name" | translate }}</b>
           <span>{{ this.task?.name || "-" }}</span>
         </div>
         <div class="data-list__item">
-          <b>Status</b>
-          <app-chip *ngIf="this.task" label="{{ this.task.status }}" [type]="getChipTypeForStatus(task.status)"></app-chip>
+          <b>{{ "task.status" | translate }}</b>
+          <app-chip
+            *ngIf="this.task"
+            label="{{ getTaskStatusTranslation(this.task.status) }}"
+            [type]="getChipTypeForStatus(task.status)"
+          ></app-chip>
         </div>
         <div class="data-list__item data-list__item--full">
-          <b>Description</b>
+          <b>{{ "task.description" | translate }}</b>
           <span>{{ this.task?.description || "-" }}</span>
         </div>
         <div class="data-list__item">
-          <b>Organization</b>
+          <b>{{ "task.organization" | translate }}</b>
           <span>{{ this.task?.init_org?.name || "-" }}</span>
         </div>
         <div class="data-list__item">
-          <b>User</b>
+          <b>{{ "task.user" | translate }}</b>
           <span>{{ this.task?.init_user?.username || "-" }}</span>
         </div>
       </div>
@@ -38,21 +42,21 @@
 </mat-card>
 <mat-card *ngIf="!isLoading">
   <mat-card-header>
-    <mat-card-title>Algorithm</mat-card-title>
+    <mat-card-title>{{ "task-read.card-algorithm.title" | translate }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
     <div class="data-list">
       <div class="data-list__item">
-        <b>Algorithm</b>
+        <b>{{ "task.algorithm" | translate }}</b>
         <span>{{ this.algorithm?.name || "-" }}</span>
       </div>
       <div class="data-list__item">
-        <b>Function</b>
+        <b>{{ "task.function" | translate }}</b>
         <span>{{ this.task?.input?.method || "-" }}</span>
       </div>
     </div>
     <ng-container *ngIf="this.task?.input?.parameters">
-      <h4 class="data-list__header">Parameters</h4>
+      <h4 class="data-list__header">{{ "task.parameters" | translate }}</h4>
       <div class="data-list">
         <div class="data-list__item" *ngFor="let parameter of this.task?.input?.parameters">
           <b>{{ parameter.label }}</b>

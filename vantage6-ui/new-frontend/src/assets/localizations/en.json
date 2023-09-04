@@ -10,11 +10,13 @@
         "description": "Description",
         "function": "Function",
         "id": "ID",
+        "parameters": "Parameters",
         "organization": "Organization",
         "name": "Name",
         "query": "Query",
         "sheet": "Sheet name",
         "status": "Status",
+        "user": "user",
         "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
     },
     "task-create": {
@@ -30,6 +32,14 @@
         },
         "step-parameters": {
             "title": "Function parameters"
+        }
+    },
+    "task-read": {
+        "card-general": {
+            "title": "General"
+        },
+        "card-algorithm": {
+            "title": "Algorithm"
         }
     },
     "task-list": {

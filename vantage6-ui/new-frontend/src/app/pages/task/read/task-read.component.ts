@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { getChipTypeForStatus } from 'src/app/helpers/task.helper';
+import { TranslateService } from '@ngx-translate/core';
+import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { Task, TaskLazyProperties, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
@@ -22,6 +23,7 @@ export class TaskReadComponent implements OnInit {
   isLoading = true;
 
   constructor(
+    private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService
   ) {}
@@ -38,5 +40,9 @@ export class TaskReadComponent implements OnInit {
 
   getChipTypeForStatus(status: TaskStatus) {
     return getChipTypeForStatus(status);
+  }
+
+  getTaskStatusTranslation(status: TaskStatus) {
+    return getTaskStatusTranslation(this.translateService, status);
   }
 }
