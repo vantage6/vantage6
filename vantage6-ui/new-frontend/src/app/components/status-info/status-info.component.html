@@ -1,0 +1,12 @@
+<div [ngClass]="['status-info', getClasses()]">
+  <mat-spinner *ngIf="shouldShowLoader" class="status-info__loader" diameter="28"></mat-spinner>
+  <mat-icon *ngIf="!shouldShowLoader" class="status-info__icon">{{ getIcon() }}</mat-icon>
+  <div>{{ title }}</div>
+  <div class="status-info__sub-title">{{ subTitle }}</div>
+  <div class="status-info__actions">
+    <ng-content select="[actions]"></ng-content>
+  </div>
+  <div class="status-info__action-text">
+    <ng-content select="[actionText]"></ng-content>
+  </div>
+</div>

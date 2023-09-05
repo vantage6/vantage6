@@ -35,6 +35,7 @@ import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ChipComponent } from './components/chip/chip.component';
 import { AlertComponent } from './components/alert/alert.component';
+import { StatusInfoComponent } from './components/status-info/status-info.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -54,7 +55,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     TaskReadComponent,
     PageHeaderComponent,
     ChipComponent,
-    AlertComponent
+    AlertComponent,
+    StatusInfoComponent
   ],
   imports: [
     BrowserModule,

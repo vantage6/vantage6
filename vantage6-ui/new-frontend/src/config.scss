@@ -1,9 +1,27 @@
 $dark-primary-text: rgba(black, 0.87);
 $light-primary-text: white;
 
-$success-500: #4caf50;
-$error-500: #f44336;
+$active-50: #fffde7;
+$active-100: #fff9c4;
+$active-200: #fff59d;
+$active-300: #fff176;
+$active-400: #ffee58;
 $active-500: #ffeb3b;
+$active-600: #fdd835;
+$active-700: #fbc02d;
+$active-800: #f9a825;
+$active-900: #f57f17;
+
+$success-50: #e8f5e9;
+$success-100: #c8e6c9;
+$success-200: #a5d6a7;
+$success-300: #81c784;
+$success-400: #66bb6a;
+$success-500: #4caf50;
+$success-600: #43a047;
+$success-700: #388e3c;
+$success-800: #2e7d32;
+$success-900: #1b5e20;
 
 $warning-50: #fff3e0;
 $warning-100: #ffe0b2;
@@ -15,6 +33,17 @@ $warning-600: #fb8c00;
 $warning-700: #f57c00;
 $warning-800: #ef6c00;
 $warning-900: #e65100;
+
+$error-50: #ffebee;
+$error-100: #ffcdd2;
+$error-200: #ef9a9a;
+$error-300: #e57373;
+$error-400: #ef5350;
+$error-500: #f44336;
+$error-600: #e53935;
+$error-700: #d32f2f;
+$error-800: #c62828;
+$error-900: #b71c1c;
 
 $spacing-px-1: 4px;
 $spacing-px-2: 8px;
