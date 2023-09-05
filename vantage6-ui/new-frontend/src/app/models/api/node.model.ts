@@ -10,6 +10,11 @@ export enum DatabaseType {
   Other = 'other'
 }
 
+export enum NodeStatus {
+  Online = 'online',
+  Offline = 'offline'
+}
+
 export interface BaseNode {
   id: number;
   organization: BaseOrganization;

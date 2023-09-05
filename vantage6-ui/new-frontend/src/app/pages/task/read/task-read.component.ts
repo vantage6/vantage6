@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
+import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { Task, TaskLazyProperties, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
@@ -44,5 +44,13 @@ export class TaskReadComponent implements OnInit {
 
   getTaskStatusTranslation(status: TaskStatus) {
     return getTaskStatusTranslation(this.translateService, status);
+  }
+
+  getStatusInfoTypeForStatus(status: TaskStatus) {
+    return getStatusInfoTypeForStatus(status);
+  }
+
+  isActiveRun(status: TaskStatus): boolean {
+    return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
   }
 }

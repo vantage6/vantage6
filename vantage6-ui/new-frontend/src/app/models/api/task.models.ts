@@ -1,6 +1,7 @@
 import { BaseLink } from './base.model';
 import { BaseOrganization } from './organization.model';
 import { BaseUser } from './user.model';
+import { NodeStatus } from './node.model';
 
 export enum TaskLazyProperties {
   InitOrg = 'init_org',
@@ -50,12 +51,14 @@ interface TaskRun {
   assigned_at: string;
   started_at?: string;
   finished_at?: string;
+  log?: string;
 }
 
 //Not compatible with BaseNode
 export interface RunNode {
   id: number;
   name: string;
+  status?: NodeStatus;
 }
 
 interface TaskInput {

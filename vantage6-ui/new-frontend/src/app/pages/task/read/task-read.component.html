@@ -3,12 +3,30 @@
     <mat-icon>arrow_back</mat-icon>{{ "task-list.title" | translate }}
   </button>
 </app-page-header>
-<mat-card>
+<mat-card *ngIf="!isLoading && task && task.runs.length > 0">
+  <mat-card-header>
+    <mat-card-title>Status</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="status-info-container">
+      <app-status-info
+        *ngFor="let run of task.runs"
+        [type]="getStatusInfoTypeForStatus(run.status)"
+        title="{{ run.node.name }}"
+        [subTitle]="getTaskStatusTranslation(run.status)"
+      >
+        <button actions mat-raised-button *ngIf="run.log && !isActiveRun(run.status)">Show logs</button>
+        <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run.status)">Task can't start, node is offline.</span>
+      </app-status-info>
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card *ngIf="!isLoading">
   <mat-card-header>
     <mat-card-title>{{ "task-read.card-general.title" | translate }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <ng-container *ngIf="!isLoading; else loading">
+    <ng-container>
       <div class="data-list">
         <div class="data-list__item">
           <b>{{ "task.id" | translate }}</b>
@@ -20,11 +38,7 @@
         </div>
         <div class="data-list__item">
           <b>{{ "task.status" | translate }}</b>
-          <app-chip
-            *ngIf="this.task"
-            label="{{ getTaskStatusTranslation(this.task.status) }}"
-            [type]="getChipTypeForStatus(task.status)"
-          ></app-chip>
+          <app-chip *ngIf="this.task" [label]="getTaskStatusTranslation(task.status)" [type]="getChipTypeForStatus(task.status)"></app-chip>
         </div>
         <div class="data-list__item data-list__item--full">
           <b>{{ "task.description" | translate }}</b>
@@ -108,6 +122,8 @@
     </mat-accordion>
   </mat-card-content>
 </mat-card>
-<ng-template #loading>
-  <mat-spinner diameter="48"></mat-spinner>
-</ng-template>
+<mat-card *ngIf="isLoading">
+  <mat-card-content>
+    <mat-spinner diameter="48"></mat-spinner>
+  </mat-card-content>
+</mat-card>

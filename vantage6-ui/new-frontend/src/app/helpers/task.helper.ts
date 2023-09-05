@@ -27,3 +27,20 @@ export const getTaskStatusTranslation = (translateService: TranslateService, sta
   }
   return translation;
 };
+
+export const getStatusInfoTypeForStatus = (status: TaskStatus): 'pending' | 'active' | 'success' | 'error' => {
+  switch (status) {
+    case TaskStatus.Initializing:
+    case TaskStatus.Active:
+      return 'active';
+    case TaskStatus.Completed:
+      return 'success';
+    case TaskStatus.Failed:
+    case TaskStatus.StartFailed:
+    case TaskStatus.NoDockerImage:
+    case TaskStatus.Crashed:
+      return 'error';
+    default:
+      return 'pending';
+  }
+};
