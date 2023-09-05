@@ -12,7 +12,7 @@ import pandas as pd
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 
 
-def test_dataframe(n=1000, seed=0):
+def get_test_dataframe(n=1000, seed=0):
     # Set a seed for reproducibility
     np.random.seed(seed)
 
@@ -61,7 +61,7 @@ def test_dataframe(n=1000, seed=0):
 
 class TestPreprocessing(unittest.TestCase):
     def test_preprocessing(self):
-        df = test_dataframe()
+        df = get_test_dataframe()
 
         datasets = [df]
         datasets = [
@@ -69,15 +69,19 @@ class TestPreprocessing(unittest.TestCase):
                 {
                     "database": dataset,
                     "type_": "csv",
-                    "preprocessing": {"select_rows": "age>50"},
+                    "preprocessing": {
+                        "function": "select_rows",
+                        "parameters": "age>50",
+                    },
                 }
                 for dataset in datasets
             ]
         ]
-        mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
+        mockclient = MockAlgorithmClient(
+            datasets=datasets, module="mock_package"
+        )
 
         org_ids = [org["id"] for org in mockclient.organization.list()]
-        org_ids
 
         input_ = {"method": "execute", "kwargs": {}}
         child_task = mockclient.task.create(
@@ -85,9 +89,6 @@ class TestPreprocessing(unittest.TestCase):
             input_=input_,
         )
 
-        try:
-            result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
-        except:
-            result = pd.read_json(mockclient.result.get(id_=child_task.get("id") + 1))
+        result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
 
-        self.assert_(result["age"].min() > 50)
+        self.assertTrue(result["age"].min() > 50)

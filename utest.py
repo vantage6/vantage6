@@ -10,7 +10,9 @@ def run():
     success_cli = run_tests(cli_test_suites)
 
     # run server tests
-    server_test_suites = find_tests(str(Path(__file__).parent / "vantage6-server"))
+    server_test_suites = find_tests(
+        str(Path(__file__).parent / "vantage6-server")
+    )
     success_server = run_tests(server_test_suites)
 
     # run algorithm tests

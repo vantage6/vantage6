@@ -1,13 +1,14 @@
 import json
 import logging
-
-from typing import Any
-from importlib import import_module
 from copy import deepcopy
+from importlib import import_module
+from typing import Any
 
-from vantage6.algorithm.tools.wrappers import load_data
-from vantage6.algorithm.tools.util import info
+import pandas as pd
+
 from vantage6.algorithm.tools.preprocessing import preprocess_data
+from vantage6.algorithm.tools.util import info
+from vantage6.algorithm.tools.wrappers import load_data
 
 module_name = __name__.split(".")[1]
 
@@ -102,12 +103,16 @@ class MockAlgorithmClient:
             org_data = []
 
             for dataset in org_datasets:
-                df = load_data(
-                    database_uri=dataset.get("database"),
-                    db_type=dataset.get("db_type"),
-                    query=dataset.get("query"),
-                    sheet_name=dataset.get("sheet_name"),
-                )
+                database_handle = dataset.get("database")
+                if isinstance(database_handle, pd.DataFrame):
+                    df = database_handle
+                else:
+                    df = load_data(
+                        database_uri=dataset.get("database"),
+                        db_type=dataset.get("db_type"),
+                        query=dataset.get("query"),
+                        sheet_name=dataset.get("sheet_name"),
+                    )
                 df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
             self.datasets_per_org[org_id] = org_data
@@ -230,15 +235,16 @@ class MockAlgorithmClient:
 
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
-                mocked_kwargs = {}
-                if getattr(
-                    method, "wrapped_in_algorithm_client_decorator", False
-                ):
-                    mocked_kwargs["mock_client"] = self.parent
-                if getattr(method, "wrapped_in_data_decorator", False):
-                    mocked_kwargs["mock_data"] = data
+                # mock_client = None
+                # mock_data = None
+                # # if getattr(
+                # #     method, "wrapped_in_algorithm_client_decorator", False
+                # # ):
+                # mock_client = self.parent
+                # # if getattr(method, "wrapped_in_data_decorator", False):
+                # mock_data = data
 
-                result = method(*args, **kwargs, **mocked_kwargs)
+                result = method(client_copy, data, *args, **kwargs)
 
                 self.last_result_id += 1
                 self.parent.results.append(
