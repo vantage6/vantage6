@@ -1,14 +1,16 @@
 import json
 import os
+from functools import wraps
+
 import pandas as pd
 
-from functools import wraps
 
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.util import info, error, warn
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.preprocessing import preprocess_data
+
 
 def algorithm_client(func: callable) -> callable:
     """
@@ -100,7 +102,7 @@ def data(number_of_databases: int = 1) -> callable:
     """
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
-        def decorator(mock_data: list[pd.DataFrame] = None, *args,
+        def decorator(*args, mock_data: list[pd.DataFrame] = None,
                       **kwargs) -> callable:
             """
             Wrap the function with the data
