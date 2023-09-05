@@ -20,6 +20,7 @@ from flask_restful import Api
 from flask_mail import Mail
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
+from threading import Thread
 
 from vantage6.cli.context import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import get_rabbitmq_uri
@@ -40,6 +41,7 @@ from vantage6.server.resource.swagger import swagger_template
 from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
+import vantage6.server.node_online_check as node_online_check
 
 
 module_name = logger_name(__name__)
@@ -409,7 +411,20 @@ class ServerApp:
             node.save()
         # session.commit()
 
+        # specific for starter: send a task that checks which nodes are online
+        log.info("Starting node online check task in the background")
+        t = Thread(target=self.run_node_online_check, daemon=True)
+        t.start()
+
         return self
+
+    def run_node_online_check(self):
+        """
+        Run the node online check task for all collaborations.
+
+        This method is called in the background
+        """
+        node_online_check.run_for_all_collaborations(self.socketio)
 
 
 def run_server(config: str, environment: str = 'prod',

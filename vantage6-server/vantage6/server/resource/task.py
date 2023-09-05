@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import json
+from threading import Thread
 
 from flask import g, request, url_for
 from http import HTTPStatus
@@ -20,6 +21,7 @@ from vantage6.server.resource._schema import (
     TaskIncludedSchema,
     TaskResultSchema
 )
+import vantage6.server.node_online_check as node_online_check
 
 
 module_name = __name__.split('.')[-1]
@@ -49,6 +51,13 @@ def setup(api, api_base, services):
         path + '/<int:id>/result',
         endpoint='task_result',
         methods=('GET',),
+        resource_class_kwargs=services
+    )
+    api.add_resource(
+        TaskForNodeStatus,
+        path + '/node/status',
+        endpoint='task_for_node_status',
+        methods=('POST',),
         resource_class_kwargs=services
     )
 
@@ -373,3 +382,39 @@ class TaskResult(ServicesResources):
 
         return self.task_result_schema.dump(task.results, many=True).data, \
             HTTPStatus.OK
+
+
+class TaskForNodeStatus(ServicesResources):
+    """Resource for /api/task/node/status """
+
+    def __init__(self, socketio, mail, api, permissions):
+        super().__init__(socketio, mail, api, permissions)
+        self.r = getattr(self.permissions, module_name)
+
+    @only_for(["user"])
+    def post(self):
+        """Create a new Task."""
+        log.info("Starting node online check")
+        data = request.get_json()
+        collaboration_id = data.get('collaboration_id')
+        collaboration = db.Collaboration.get(collaboration_id)
+
+        if not collaboration:
+            return {"msg": f"Collaboration id={collaboration_id} not found!"},\
+                   HTTPStatus.NOT_FOUND
+
+        # verify permissions
+        if not self.r.c_glo.can():
+            c_orgs = collaboration.organizations
+            if not (self.r.c_org.can() and g.user.organization in c_orgs):
+                return {'msg': 'You lack the permission to do that!'}, \
+                    HTTPStatus.UNAUTHORIZED
+
+        t = Thread(target=self.__run_check, daemon=True,
+                   args=(collaboration_id,))
+        t.start()
+
+        return {"msg": "Node online check started"}, HTTPStatus.CREATED
+
+    def __run_check(self, collaboration_id: int):
+        node_online_check.run(collaboration_id, self.socketio)

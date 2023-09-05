@@ -7,7 +7,6 @@ from vantage6.tools.util import info, warn
 
 
 def dispact_rpc(data, input_data, module, token):
-
     # import algorithm module
     try:
         lib = importlib.import_module(module)
