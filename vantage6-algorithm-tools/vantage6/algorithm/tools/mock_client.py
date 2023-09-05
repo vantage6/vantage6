@@ -52,8 +52,11 @@ class MockAlgorithmClient:
     """
 
     def __init__(
-        self, datasets: list[list[dict]], module: str,
-        collaboration_id: int = None, organization_ids: int = None,
+        self,
+        datasets: list[list[dict]],
+        module: str,
+        collaboration_id: int = None,
+        organization_ids: int = None,
         node_ids: int = None,
     ) -> None:
         self.log = logging.getLogger(module_name)
@@ -103,7 +106,7 @@ class MockAlgorithmClient:
                     database_uri=dataset.get("database"),
                     db_type=dataset.get("db_type"),
                     query=dataset.get("query"),
-                    sheet_name=dataset.get("sheet_name")
+                    sheet_name=dataset.get("sheet_name"),
                 )
                 df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
@@ -228,11 +231,12 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if getattr(method, 'wrapped_in_algorithm_client_decorator',
-                           False):
-                    mocked_kwargs['mock_client'] = self.parent
-                if getattr(method, 'wrapped_in_data_decorator', False):
-                    mocked_kwargs['mock_data'] = data
+                if getattr(
+                    method, "wrapped_in_algorithm_client_decorator", False
+                ):
+                    mocked_kwargs["mock_client"] = self.parent
+                if getattr(method, "wrapped_in_data_decorator", False):
+                    mocked_kwargs["mock_data"] = data
 
                 result = method(*args, **kwargs, **mocked_kwargs)
 
@@ -240,46 +244,52 @@ class MockAlgorithmClient:
                 self.parent.results.append(
                     {
                         "id": self.last_result_id,
-                        "link": f"/api/run/{self.last_result_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                    "task": {
-                        "id": new_task_id,
-                        "link": f"/api/task/{new_task_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                })
-                self.parent.runs.append({
-                    "id": self.last_result_id,
-                    "started_at": "2021-01-01T00:00:00.000000",
-                    "assigned_at": "2021-01-01T00:00:00.000000",
-                    "finished_at": "2021-01-01T00:00:00.000000",
-                    "log": "mock_log",
-                    "ports": [],
-                    "status": "completed",
-                    "input": json.dumps(input_),
-                    "results": {
+                        "result": json.dumps(result),
+                        "run": {
+                            "id": self.last_result_id,
+                            "link": f"/api/run/{self.last_result_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                        "task": {
+                            "id": new_task_id,
+                            "link": f"/api/task/{new_task_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                    }
+                )
+                self.parent.runs.append(
+                    {
                         "id": self.last_result_id,
-                        "link": f"/api/result/{self.last_result_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                    "node": {
-                        "id": org_id,
-                        "ip": None,
-                        "name": "mock_node",
-                        "status": "online",
-                    },
-                    "organization": {
-                        "id": org_id,
-                        "link": f"/api/organization/{org_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                    "task": {
-                        "id": new_task_id,
-                        "link": f"/api/task/{new_task_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                })
+                        "started_at": "2021-01-01T00:00:00.000000",
+                        "assigned_at": "2021-01-01T00:00:00.000000",
+                        "finished_at": "2021-01-01T00:00:00.000000",
+                        "log": "mock_log",
+                        "ports": [],
+                        "status": "completed",
+                        "input": json.dumps(input_),
+                        "results": {
+                            "id": self.last_result_id,
+                            "link": f"/api/result/{self.last_result_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                        "node": {
+                            "id": org_id,
+                            "ip": None,
+                            "name": "mock_node",
+                            "status": "online",
+                        },
+                        "organization": {
+                            "id": org_id,
+                            "link": f"/api/organization/{org_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                        "task": {
+                            "id": new_task_id,
+                            "link": f"/api/task/{new_task_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                    }
+                )
 
             collab_id = self.parent.collaboration_id
             task = {
