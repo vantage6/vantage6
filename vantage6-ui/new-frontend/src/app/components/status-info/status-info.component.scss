@@ -11,9 +11,9 @@
   text-align: center;
 
   &__icon {
-    width: 2rem;
-    height: 2rem;
-    font-size: 2rem;
+    width: $spacing-px-10;
+    height: $spacing-px-10;
+    font-size: $spacing-px-10;
     margin: 0 0 $spacing-px-1 0;
   }
 
@@ -38,13 +38,13 @@
 
   &--success {
     background-color: $success-50;
-    border-color: $success-500;
+    border-color: $success-200;
     color: $success-900;
   }
 
   &--error {
     background-color: $error-50;
-    border-color: $error-500;
+    border-color: $error-200;
     color: $error-900;
   }
 }
