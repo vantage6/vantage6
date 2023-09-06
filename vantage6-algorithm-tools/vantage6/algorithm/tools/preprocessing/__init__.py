@@ -52,28 +52,24 @@ def preprocess_data(
         # extract the parameters
         parameters = preprocess_step.get("parameters", {})
 
-        if isinstance(parameters, str):
-            parameters = [parameters]
-            data = func(data, *parameters)
-        else:
-            # check if the function parameters without default values have been
-            # provided - except for the first parameter (the pandas dataframe),
-            # which is provided by the infrastructure
-            sig = inspect.signature(func)
-            first_arg_name = next(iter(sig.parameters))
-            for param in sig.parameters.values():
-                if (
-                    param.name != first_arg_name
-                    and param.default is param.empty
-                    and param.name not in preprocess_step["parameters"]
-                ):
-                    error(
-                        f"Parameter '{param.name}' not provided for "
-                        f"preprocessing step '{func_name}'. Exiting..."
-                    )
-                    exit(1)
+        # check if the function parameters without default values have been
+        # provided - except for the first parameter (the pandas dataframe),
+        # which is provided by the infrastructure
+        sig = inspect.signature(func)
+        first_arg_name = next(iter(sig.parameters))
+        for param in sig.parameters.values():
+            if (
+                param.name != first_arg_name
+                and param.default is param.empty
+                and param.name not in preprocess_step["parameters"]
+            ):
+                error(
+                    f"Parameter '{param.name}' not provided for "
+                    f"preprocessing step '{func_name}'. Exiting..."
+                )
+                exit(1)
 
-            # execute the preprocessing function
-            data = func(data, **parameters)
+        # execute the preprocessing function
+        data = func(data, **parameters)
 
     return data

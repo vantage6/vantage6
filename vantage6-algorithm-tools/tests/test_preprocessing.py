@@ -70,10 +70,36 @@ class TestPreprocessing(unittest.TestCase):
                 {
                     "database": dataset,
                     "type_": "csv",
-                    "preprocessing": {
-                        "function": "select_rows",
-                        "parameters": "age>50",
-                    },
+                    "preprocessing": [
+                        {
+                            "function": "select_rows",
+                            "parameters": {"query": "age>50"},
+                        },
+                        {
+                            "function": "select_columns",
+                            "parameters": {
+                                "columns": [
+                                    "age",
+                                    "income",
+                                    "education",
+                                    "color_preference",
+                                    "purchased_product",
+                                ]
+                            },
+                        },
+                        {
+                            "function": "select_columns_by_index",
+                            "parameters": {"columns": [0, 1, 2, 3]},
+                        },
+                        {
+                            "function": "drop_columns",
+                            "parameters": {"columns": ["education"]},
+                        },
+                        {
+                            "function": "drop_columns_by_index",
+                            "parameters": {"columns": [-1]},
+                        },
+                    ],
                 }
                 for dataset in datasets
             ]
@@ -93,6 +119,7 @@ class TestPreprocessing(unittest.TestCase):
         result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
 
         self.assertTrue(result["age"].min() > 50)
+        self.assertTrue(result.shape[1] == 2)
 
 
 class TestSelectRows(unittest.TestCase):

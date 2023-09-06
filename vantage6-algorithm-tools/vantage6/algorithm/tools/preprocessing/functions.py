@@ -120,6 +120,215 @@ def filter_range(
     return df
 
 
+def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """
+    Select columns from the data.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The data to filter.
+    columns : list
+        A list of names of the columns to keep in the provided order.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered data.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "a": [1, 2, 3, 4, 5],
+    ...         "b": [6, 7, 8, 9, 10],
+    ...         "c": [11, 12, 13, 14, 15],
+    ...     }
+    ... )
+    >>> df
+       a   b   c
+    0  1   6  11
+    1  2   7  12
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+
+    >>> select_columns(df, ["a", "c"])
+       a   c
+    0  1  11
+    1  2  12
+    2  3  13
+    3  4  14
+    4  5  15
+
+    >>> select_columns(df, ["c", "a"])
+        c  a
+    0  11  1
+    1  12  2
+    2  13  3
+    3  14  4
+    4  15  5
+
+    """
+    return df[columns]
+
+
+def select_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """
+    Select columns from the data.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The data to filter.
+    columns : list
+        A list of indices of the columns to keep in the provided order.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered data.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "a": [1, 2, 3, 4, 5],
+    ...         "b": [6, 7, 8, 9, 10],
+    ...         "c": [11, 12, 13, 14, 15],
+    ...     }
+    ... )
+    >>> df
+       a   b   c
+    0  1   6  11
+    1  2   7  12
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+
+    >>> select_columns_by_index(df, [0, 2])
+       a   c
+    0  1  11
+    1  2  12
+    2  3  13
+    3  4  14
+    4  5  15
+
+    >>> select_columns_by_index(df, [2, 0])
+        c  a
+    0  11  1
+    1  12  2
+    2  13  3
+    3  14  4
+    4  15  5
+
+    """
+    return df.iloc[:, columns]
+
+
+def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """
+    Drop columns from the data.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The data to filter.
+    columns : list
+        A list of names of the columns to drop.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered data.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "a": [1, 2, 3, 4, 5],
+    ...         "b": [6, 7, 8, 9, 10],
+    ...         "c": [11, 12, 13, 14, 15],
+    ...     }
+    ... )
+    >>> df
+       a   b   c
+    0  1   6  11
+    1  2   7  12
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+
+    >>> drop_columns(df, ["a", "c"])
+        b
+    0   6
+    1   7
+    2   8
+    3   9
+    4  10
+
+    """
+
+    return df.drop(columns, axis=1)
+
+
+def drop_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """
+    Drop columns from the data.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The data to filter.
+    columns : list
+        A list of indices of the columns to drop.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered data.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "a": [1, 2, 3, 4, 5],
+    ...         "b": [6, 7, 8, 9, 10],
+    ...         "c": [11, 12, 13, 14, 15],
+    ...     }
+    ... )
+    >>> df
+       a   b   c
+    0  1   6  11
+    1  2   7  12
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+    >>> drop_columns_by_index(df, [0, 2])
+        b
+    0   6
+    1   7
+    2   8
+    3   9
+    4  10
+
+    >>> drop_columns_by_index(df, [-1])
+       a   b
+    0  1   6
+    1  2   7
+    2  3   8
+    3  4   9
+    4  5  10
+
+    """
+
+    return df.drop(df.columns[columns], axis=1)
+
+
 # TODO delete later on
 def dummy_preprocess(df: pd.DataFrame) -> pd.DataFrame:
     """
