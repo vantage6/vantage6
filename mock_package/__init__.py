@@ -1,3 +1,8 @@
+from vantage6.algorithm.tools.decorators import algorithm_client, data
+
+
+@data()
+@algorithm_client
 def execute(
     mock_client,
     mock_data,
@@ -6,4 +11,4 @@ def execute(
     """
     This will be called by the mock client task
     """
-    return mock_data[0].to_json()
+    return mock_data.to_json()

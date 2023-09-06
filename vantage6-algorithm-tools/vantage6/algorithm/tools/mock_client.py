@@ -233,18 +233,22 @@ class MockAlgorithmClient:
                 client_copy.node_id = self._select_node(org_id)
                 client_copy.organization_id = org_id
 
+                data = self.parent.datasets_per_org[org_id]
+                client_copy = deepcopy(self.parent)
+                client_copy.node_id = self._select_node(org_id)
+                client_copy.organization_id = org_id
+
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
-                # mock_client = None
-                # mock_data = None
-                # # if getattr(
-                # #     method, "wrapped_in_algorithm_client_decorator", False
-                # # ):
-                # mock_client = self.parent
-                # # if getattr(method, "wrapped_in_data_decorator", False):
-                # mock_data = data
+                mocked_kwargs = {}
+                if getattr(
+                    method, "wrapped_in_algorithm_client_decorator", False
+                ):
+                    mocked_kwargs["mock_client"] = client_copy
+                if getattr(method, "wrapped_in_data_decorator", False):
+                    mocked_kwargs["mock_data"] = data
 
-                result = method(client_copy, data, *args, **kwargs)
+                result = method(*args, **kwargs, **mocked_kwargs)
 
                 self.last_result_id += 1
                 self.parent.results.append(
