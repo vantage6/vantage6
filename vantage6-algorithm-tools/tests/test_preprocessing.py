@@ -1,15 +1,16 @@
 """Test the preprocessing functionality of the vantage6-algorithm-tools package.
 
-python -m unittest vantage6-algorithm-tools.tests.test_preprocessing
+To run only this test, from the vantage6 root directory run:
+
 
 """
-
 import unittest
 
 import numpy as np
 import pandas as pd
 
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
+from vantage6.algorithm.tools.preprocessing.functions import select_rows
 
 
 def get_test_dataframe(n=1000, seed=0):
@@ -92,3 +93,13 @@ class TestPreprocessing(unittest.TestCase):
         result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
 
         self.assertTrue(result["age"].min() > 50)
+
+
+class TestSelectRows(unittest.TestCase):
+    def test_query(self):
+        df = pd.DataFrame(
+            {"A": range(1, 6), "B": range(10, 0, -2), "C C": range(10, 5, -1)}
+        )
+
+        query = "A > B"
+        self.assertTrue(select_rows(df, query).shape == (1, 3))

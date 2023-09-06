@@ -8,7 +8,9 @@ import pandas as pd
 
 def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     """
-    Select rows from the data based on a query.
+    Select rows from the data based on a query. It uses the pandas.DataFrame.query
+    function to filter the data. See the documentation of that function for more
+    information on the query syntax.
 
     Parameters
     ----------
@@ -21,6 +23,50 @@ def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     -------
     pandas.DataFrame
         The filtered data.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "a": [1, 2, 3, 4, 5],
+    ...         "b": [6, 7, 8, 9, 10],
+    ...         "c": [11, 12, 13, 14, 15],
+    ...     }
+    ... )
+    >>> df
+       a   b   c
+    0  1   6  11
+    1  2   7  12
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+
+    >>> select_rows(df, "a > 2")
+       a   b   c
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+
+    >>> select_rows(df, "a > 2 and b < 10")
+       a  b   c
+    2  3  8  13
+    3  4  9  14
+
+    >>> select_rows(df, "a > 2 or c < 12")
+       a   b   c
+    0  1   6  11
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+
+    >>> select_rows(df, "2 * a + b > c")
+       a   b   c
+    2  3   8  13
+    3  4   9  14
+    4  5  10  15
+
+    for more examples, see the documentation of pandas.DataFrame.query
     """
     return df.query(query)
 

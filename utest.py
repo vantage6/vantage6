@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-from pathlib import Path
-from vantage6.common.utest import run_tests, find_tests
+import doctest
 import sys
+from pathlib import Path
+
+from vantage6.algorithm.tools.preprocessing import functions
+from vantage6.common.utest import find_tests, run_tests
 
 
 def run():
@@ -19,6 +22,10 @@ def run():
     algorithm_test_suites = find_tests(
         str(Path(__file__).parent / "vantage6-algorithm-tools")
     )
+
+    # add preprocessing doctests
+    algorithm_test_suites.addTests(doctest.DocTestSuite(functions))
+
     success_algo = run_tests(algorithm_test_suites)
 
     success = success_server and success_cli and success_algo
