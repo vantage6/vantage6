@@ -224,7 +224,7 @@ class MockAlgorithmClient:
                 mocked_kwargs = {}
                 if getattr(method, 'wrapped_in_algorithm_client_decorator',
                            False):
-                    mocked_kwargs['mock_client'] = self.parent
+                    mocked_kwargs['mock_client'] = client_copy
                 if getattr(method, 'wrapped_in_data_decorator', False):
                     mocked_kwargs['mock_data'] = data
 
