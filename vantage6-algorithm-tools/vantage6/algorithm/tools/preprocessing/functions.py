@@ -4,7 +4,7 @@ prepare the data for the algorithm.
 """
 
 import pandas as pd
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Optional
 
 
 def _extract_columns(
@@ -470,3 +470,141 @@ def rename_columns(
         return df.set_axis(new_names, axis=1, copy=True)
     else:
         raise TypeError("Invalid type for new_names; expected a dict or list")
+
+
+def min_max_scale(
+    df: pd.DataFrame,
+    min_vals: List[float],
+    max_vals: List[float],
+    columns: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """
+    Perform min-max scaling on specified columns of a DataFrame using the
+    formula (x - min) / (max - min). The function is applied in a federated
+    setting, meaning one node does not know the global min and mix. This means
+    the minimum and maximum values for each column must be specified.
+    If columns are not provied, all columns are scaled and the length of
+    min_vals and max_vals must match the number of DataFrame columns.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame to scale.
+    min_vals : list
+        List of minimum values for scaling; should match the length of columns.
+    max_vals : list
+        List of maximum values for scaling; should match the length of columns.
+    columns : list, optional
+        List of columns to scale; if None, all columns are scaled and length of min_vals and max_vals must match df.columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with scaled columns.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'a': [1, 2, 3],
+    ...     'b': [4, 5, 6]
+    ... })
+    >>> min_max_scale(df, [0, 1], [2, 3], ['a', 'b'])
+         a    b
+    0  0.5  1.5
+    1  1.0  2.0
+    2  1.5  2.5
+
+    >>> min_max_scale(df, [1, 4], [3, 6])
+         a    b
+    0  0.0  0.0
+    1  0.5  0.5
+    2  1.0  1.0
+    """
+
+    if columns is None:
+        if len(min_vals) != len(max_vals) or len(min_vals) != len(df.columns):
+            raise ValueError(
+                "Length of min_vals and max_vals must match the number of "
+                "DataFrame columns when columns is None"
+            )
+        columns = df.columns.tolist()
+    else:
+        if len(min_vals) != len(max_vals) or len(min_vals) != len(columns):
+            raise ValueError(
+                "Length of min_vals and max_vals must match the number of "
+                "specified columns"
+            )
+
+    df_scaled = df.copy()
+    for col, min_val, max_val in zip(columns, min_vals, max_vals):
+        df_scaled[col] = (df[col] - min_val) / (max_val - min_val)
+
+    return df_scaled
+
+
+def standard_scale(
+    df: pd.DataFrame,
+    means: List[float],
+    stds: List[float],
+    columns: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """
+    Perform standard scaling on specified columns of a DataFrame using the
+    formula (x - mean) / std. The function is applied in a federated
+    setting, meaning one node does not know the global mean and std. This means
+    the mean and standard deviation values for each column must be specified.
+    If columns are not provided, all columns are scaled and the length of
+    means and stds must match the number of DataFrame columns.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame to scale.
+    means : list
+        List of mean values for scaling; should match the length of columns.
+    stds : list
+        List of standard deviation values for scaling; should match the length of columns.
+    columns : list, optional
+        List of columns to scale; if None, all columns are scaled and the length of means and stds must match df.columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with scaled columns.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'a': [1, 2, 3],
+    ...     'b': [4, 5, 6]
+    ... })
+    >>> standard_scale(df, [1, 4], [1, 1], ['a', 'b'])
+         a    b
+    0  0.0  0.0
+    1  1.0  1.0
+    2  2.0  2.0
+
+    >>> standard_scale(df, [2, 5], [1, 1])
+         a    b
+    0 -1.0 -1.0
+    1  0.0  0.0
+    2  1.0  1.0
+    """
+
+    if columns is None:
+        if len(means) != len(stds) or len(means) != len(df.columns):
+            raise ValueError(
+                "Length of means and stds must match the number of DataFrame columns when columns is None"
+            )
+        columns = df.columns.tolist()
+    else:
+        if len(means) != len(stds) or len(means) != len(columns):
+            raise ValueError(
+                "Length of means and stds must match the number of specified columns"
+            )
+
+    df_scaled = df.copy()
+    for col, mean, std in zip(columns, means, stds):
+        df_scaled[col] = (df[col] - mean) / std
+
+    return df_scaled
