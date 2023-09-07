@@ -4,7 +4,7 @@ prepare the data for the algorithm.
 """
 
 import pandas as pd
-from typing import Union, List
+from typing import Union, List, Dict
 
 
 def _extract_columns(
@@ -424,19 +424,49 @@ def drop_columns_by_index(
     return df.drop(_extract_columns(df, columns), axis=1)
 
 
-# TODO delete later on
-def dummy_preprocess(df: pd.DataFrame) -> pd.DataFrame:
+def rename_columns(
+    df: pd.DataFrame, new_names: Union[Dict[str, str], List[str]]
+) -> pd.DataFrame:
     """
-    Dummy preprocessing function that does nothing.
+    Rename DataFrame columns.
 
     Parameters
     ----------
     df : pandas.DataFrame
-        The data to preprocess.
+        The DataFrame whose columns you want to rename.
+    new_names : dict or list
+        If a dict, a mapping from current column names to new names.
+        If a list, new column names in order; the length should match the number of columns.
 
     Returns
     -------
     pandas.DataFrame
-        The preprocessed data.
+        DataFrame with renamed columns.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'a': [1, 2],
+    ...     'b': [3, 4]
+    ... })
+    >>> rename_columns(df, {'a': 'x', 'b': 'y'})
+       x  y
+    0  1  3
+    1  2  4
+
+    >>> rename_columns(df, ['x', 'y'])
+       x  y
+    0  1  3
+    1  2  4
     """
-    return df
+
+    if isinstance(new_names, dict):
+        return df.rename(columns=new_names)
+    elif isinstance(new_names, list):
+        if len(new_names) != len(df.columns):
+            raise ValueError(
+                "Length of new names list must match the number of columns"
+            )
+        return df.set_axis(new_names, axis=1, copy=True)
+    else:
+        raise TypeError("Invalid type for new_names; expected a dict or list")
