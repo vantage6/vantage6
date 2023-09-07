@@ -608,3 +608,218 @@ def standard_scale(
         df_scaled[col] = (df[col] - mean) / std
 
     return df_scaled
+
+
+def one_hot_encode(
+    df: pd.DataFrame,
+    column: str,
+    categories: List[str],
+    unknown_category: Optional[str] = "unknown",
+    drop_original: bool = True,
+    prefix: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Perform one-hot encoding on a specific column of a DataFrame. As one node
+    may not have access to all possible categories in the entire dataset. This
+    requires predefined categories to be specified upfront. The function allows
+    encoding of unseen categories into a specified 'unknown' category label.
+    The original column can be optionally dropped, and a prefix can be added
+    to the new one-hot encoded columns.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame to encode.
+    column : str
+        The column to one-hot encode.
+    categories : list
+        List of predefined categories.
+    unknown_category : str, optional
+        Label for unseen categories.
+    drop_original : bool, optional
+        Whether to drop the original column, default is True.
+    prefix : str, optional
+        Prefix for the new one-hot encoded columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with one-hot encoded column.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'color': ['red', 'green', 'blue', 'yellow']
+    ... })
+
+    # Basic one-hot encoding
+    >>> one_hot_encode(df, 'color', ['red', 'green', 'blue'])
+       blue  green  red  unknown
+    0     0      0    1        0
+    1     0      1    0        0
+    2     1      0    0        0
+    3     0      0    0        1
+
+    # Keep the original column
+    >>> one_hot_encode(df, 'color', ['red', 'green'], drop_original=False)
+        color  green  red  unknown
+    0     red      0    1        0
+    1   green      1    0        0
+    2    blue      0    0        1
+    3  yellow      0    0        1
+
+    # Custom unknown category label and prefix
+    >>> one_hot_encode(df, 'color', ['red', 'green'], unknown_category='other', prefix='col')
+       col_green  col_other  col_red
+    0          0          0        1
+    1          1          0        0
+    2          0          1        0
+    3          0          1        0
+
+    """
+
+    # Map unseen categories to the unknown_category label
+    df_copy = df.copy()
+    df_copy[column] = df_copy[column].apply(
+        lambda x: x if x in categories else unknown_category
+    )
+
+    # Perform one-hot encoding
+    one_hot_df = pd.get_dummies(df_copy[column], prefix=prefix)
+
+    # Merge one-hot encoded DataFrame with the original DataFrame
+    df_out = pd.concat([df, one_hot_df], axis=1)
+
+    # Drop the original column if specified
+    if drop_original:
+        df_out.drop(column, axis=1, inplace=True)
+
+    return df_out
+
+
+def encode(
+    df: pd.DataFrame,
+    columns: list,
+    mapping: Dict,
+    unknown_value: Union[str, int] = -1,
+    raise_on_unknown: bool = False,
+) -> pd.DataFrame:
+    """
+    Custom encoding of DataFrame columns using a provided mapping.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame to encode.
+    columns : list
+        List of column names to be encoded.
+    mapping : Dict
+        Dictionary containing the mapping for encoding. Keys are original values
+        and values are the new encoded values.
+    unknown_value : Union[str, int]
+        Value to use for any unknown categories.
+    raise_on_unknown : bool
+        If True, raises an error when encountering an unknown category.
+        Otherwise, uses `unknown_value`.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The encoded DataFrame.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'color': ['red', 'green', 'purple'],
+    ...     'shape': ['circle', 'square', 'pentagon']
+    ... })
+
+    >>> mapping = {'red': 1, 'green': 2, 'circle': 'A', 'square': 'B'}
+    >>> encode(df, ['color', 'shape'], mapping)
+       color shape
+    0      1     A
+    1      2     B
+    2     -1    -1
+
+    >>> encode(df, ['color', 'shape'], mapping, unknown_value='N/A')
+      color shape
+    0     1     A
+    1     2     B
+    2   N/A   N/A
+
+    >>> encode(df, ['color'], mapping, unknown_value=3)
+       color     shape
+    0      1    circle
+    1      2    square
+    2      3  pentagon
+
+    """
+
+    encoded_df = df.copy()
+    for col in columns:
+        unique_vals = set(encoded_df[col].unique()) - set(mapping.keys())
+        if raise_on_unknown and unique_vals:
+            raise ValueError(
+                f"Unknown categories {unique_vals} encountered in column {col}."
+            )
+        encoded_df[col] = encoded_df[col].apply(
+            lambda x: mapping.get(x, unknown_value)
+        )
+
+    return encoded_df
+
+
+def assign_column(
+    df: pd.DataFrame, column_name: str, expression: str, overwrite: bool = False
+) -> pd.DataFrame:
+    """
+    Create or modify a column in a new DataFrame based on the given expression.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame from which a new DataFrame will be created.
+    column_name : str
+        The name of the new or existing column.
+    expression : str
+        The expression used to create or modify the column. The expression can
+        be any valid pandas DataFrame eval() expression, which includes
+        arithmetic, comparison, and logical  operations. For more details, see:
+        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.eval.html
+    overwrite : bool, optional
+        Whether to overwrite the column if it already exists in the new
+        DataFrame (default is False).
+
+    Returns
+    -------
+    pandas.DataFrame
+        A new DataFrame with the new or modified column.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+    >>> new_df = assign_column(df, "C", "A + B")
+    >>> new_df
+       A  B  C
+    0  1  4  5
+    1  2  5  7
+    2  3  6  9
+
+    >>> another_df = assign_column(new_df, "B", "A * B", overwrite=True)
+    >>> another_df
+       A   B  C
+    0  1   4  5
+    1  2  10  7
+    2  3  18  9
+    """
+
+    new_df = df.copy()
+    if column_name in new_df.columns and not overwrite:
+        raise ValueError(
+            f"Column '{column_name}' already exists and overwrite is set to"
+            "False."
+        )
+
+    new_df[column_name] = new_df.eval(expression)
+    return new_df
