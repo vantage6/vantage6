@@ -4,13 +4,51 @@ prepare the data for the algorithm.
 """
 
 import pandas as pd
+from typing import Union, List
+
+
+def _extract_columns(
+    df: pd.DataFrame, columns: List[Union[int, str]]
+) -> List[str]:
+    """
+    Extract column names from the DataFrame based on indices or slice-strings.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame from which to extract columns.
+    columns : list
+        A list of indices or slice-strings specifying the columns to extract.
+
+    Returns
+    -------
+    list
+        A list of column names corresponding to the specified indices or
+        slice-strings.
+    """
+    extracted_cols = []
+    for col in columns:
+        if isinstance(col, int):
+            extracted_cols.append(df.columns[col])
+        elif isinstance(col, str) and ":" in col:
+            start, end = col.split(":")
+            start = int(start) if start else None
+            end = int(end) if end else None
+            extracted_cols.extend(df.columns[start:end])
+        else:
+            raise ValueError(
+                f"Column specifier {col} is not an integer or slice-string "
+                f"(e.g. '1:3')."
+            )
+
+    return extracted_cols
 
 
 def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     """
-    Select rows from the data based on a query. It uses the pandas.DataFrame.query
-    function to filter the data. See the documentation of that function for more
-    information on the query syntax.
+    Select rows from the data based on a query. It uses the
+    pandas.DataFrame.query function to filter the data. See the documentation of
+    that function for more information on the query syntax.
 
     Parameters
     ----------
@@ -174,7 +212,9 @@ def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     return df[columns]
 
 
-def select_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+def select_columns_by_index(
+    df: pd.DataFrame, columns: List[Union[int, str]]
+) -> pd.DataFrame:
     """
     Select columns from the data.
 
@@ -183,7 +223,9 @@ def select_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     df : pandas.DataFrame
         The data to filter.
     columns : list
-        A list of indices of the columns to keep in the provided order.
+        A list of indices or slice-strings of the columns to keep in the
+        provided order.
+
 
     Returns
     -------
@@ -224,8 +266,34 @@ def select_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     3  14  4
     4  15  5
 
+    slice examples:
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "a": [1, 2],
+    ...         "b": [3, 4],
+    ...         "c": [5, 6],
+    ...         "d": [7, 8],
+    ...         "e": [9, 10]
+    ...     }
+    ... )
+
+    >>> select_columns_by_index(df, [0, 2])
+       a  c
+    0  1  5
+    1  2  6
+
+    >>> select_columns_by_index(df, ['0:3'])
+       a  b  c
+    0  1  3  5
+    1  2  4  6
+
+    >>> select_columns_by_index(df, [0, '1:4', 4])
+       a  b  c  d   e
+    0  1  3  5  7   9
+    1  2  4  6  8  10
+
     """
-    return df.iloc[:, columns]
+    return df[_extract_columns(df, columns)]
 
 
 def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
@@ -275,7 +343,9 @@ def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     return df.drop(columns, axis=1)
 
 
-def drop_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+def drop_columns_by_index(
+    df: pd.DataFrame, columns: List[Union[int, str]]
+) -> pd.DataFrame:
     """
     Drop columns from the data.
 
@@ -284,7 +354,7 @@ def drop_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     df : pandas.DataFrame
         The data to filter.
     columns : list
-        A list of indices of the columns to drop.
+        A list of indices or slice-strings of the columns to drop.
 
     Returns
     -------
@@ -324,9 +394,34 @@ def drop_columns_by_index(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     3  4   9
     4  5  10
 
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "a": [1, 2],
+    ...         "b": [3, 4],
+    ...         "c": [5, 6],
+    ...         "d": [7, 8],
+    ...         "e": [9, 10]
+    ...     }
+    ... )
+
+    >>> drop_columns_by_index(df, [0, 2])
+       b  d   e
+    0  3  7   9
+    1  4  8  10
+
+    >>> drop_columns_by_index(df, ['0:3'])
+       d   e
+    0  7   9
+    1  8  10
+
+    >>> drop_columns_by_index(df, ['1:4', 4])
+       a
+    0  1
+    1  2
+
     """
 
-    return df.drop(df.columns[columns], axis=1)
+    return df.drop(_extract_columns(df, columns), axis=1)
 
 
 # TODO delete later on
