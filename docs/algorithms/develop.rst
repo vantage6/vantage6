@@ -303,6 +303,8 @@ Central function
 
 .. code:: python
 
+  from vantage6.algorithm.tools.decorators import algorithm_client
+
    @algorithm_client
    def main(client, *args, **kwargs):
       # Run partial function.
@@ -327,6 +329,7 @@ Partial function
 .. code:: python
 
    import pandas as pd
+   from vantage6.algorithm.tools.decorators import data
 
    @data(1)
    def my_partial_function(data: pd.DataFrame, column_name: str):
