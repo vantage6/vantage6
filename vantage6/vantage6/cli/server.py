@@ -172,7 +172,8 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     ui_port : int
         Port to listen on for the User Interface
     start_rabbitmq : bool
-        Start RabbitMQ message broker as local container - use in development
+        Start RabbitMQ message broker as local container - use only in
+        development
     rabbitmq_image : str
         RabbitMQ docker image to use
     keep : bool
@@ -831,7 +832,7 @@ def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
     network_mgr : NetworkManager
         Network manager object
     """
-    rabbit_uri = ctx.config.get('rabbitmq').get('uri')
+    rabbit_uri = ctx.config['rabbitmq'].get('uri')
     if not rabbit_uri:
         error("No RabbitMQ URI found in the configuration file! Please add"
               "a 'uri' key to the 'rabbitmq' section of the configuration.")
@@ -878,8 +879,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
 
     # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
     # is not in other docker networks with other containers)
-    rabbit_uri = ctx.config.get('rabbitmq').get('uri') \
-        if ctx.config.get('rabbitmq') else None
+    rabbit_uri = ctx.config.get('rabbitmq', {}).get('uri')
     if rabbit_uri:
         rabbit_container_name = split_rabbitmq_uri(
             rabbit_uri=rabbit_uri)['host']
