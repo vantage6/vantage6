@@ -291,6 +291,9 @@ def get_config_path(dirs: appdirs.AppDirs,
     """
     if system_folders:
         config_dir = dirs.site_config_dir
+        # the Appdirs package prefers to store the config in /etc/xdg, but
+        # we chose instead to put it in /etc/vantage6. We think this is more
+        # in accordance with the Unix File Hierarchy Standard for config files.
         if 'xdg' in config_dir:
             config_dir = f'/etc/{APPNAME}'
         return config_dir
