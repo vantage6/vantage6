@@ -8,19 +8,26 @@ Release notes
 
 - **Security**
 
-.. TODO complete this section
-.. - collab delete linked resources
-.. - pickles
-.. - resource name int
-.. - access in /collaboration/tasks
-.. - e.g.
-..  - Refresh tokens are no longer indefinitely valid (
-..    `CVE#CVE-2023-23929 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-23929>`_,
-..    `commit <https://github.com/vantage6/vantage6/commit/48ebfca42359e9a6743e9598684585e2522cdce8>`_).
+ - No longer using Python pickles for serialization and deserialization of
+   algorithm results. Using JSON instead (
+   `CVE#CVE-2023-23930 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-23930>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/e62f03bacf2247bd59eed217e2e7338c3a01a5f0>`_).
+ - Not allowing resources to have an integer name (
+   `CVE#CVE-2023-28635 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-28635>`_,
+   `PR#744 <https://github.com/vantage6/vantage6/pull/744>`_).
+ - Users allowed to view collaborations but not allowed to view tasks may be
+   able to view them via ``/api/collaboration/<id>/task`` (
+   `CVE#CVE-2023-28635 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-28635>`_,
+   `PR#622 <https://github.com/vantage6/vantage6/pull/622>`_).
+ - Users allowed to view tasks but not results may be able to view them via
+   ``/api/task?include=results`` (
+   `CVE#CVE-2023-28635 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-28635>`_,
+   `PR#711 <https://github.com/vantage6/vantage6/pull/711>`_).
+ - Deleting all linked tasks when a collaboration is deleted (
+   `CVE#CVE-2023-41881 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-41881>`_,
+   `PR#748 <https://github.com/vantage6/vantage6/pull/748>`_).
 
-todo
-decorators
-vserver-local remove
+.. TODO update the 3rd and 4th CVE's with the correct CVE numbers
 
 - **Feature**
 
@@ -29,6 +36,14 @@ vserver-local remove
    collaboration level without requiring global access
    (`Issue#245 <https://github.com/vantage6/vantage6/issues/245>`_,
    `PR#711 <https://github.com/vantage6/vantage6/pull/711>`_).
+ - Added decorators ``@algorithm_client`` and ``@data()`` to make the signatures
+   and names of algorithm functions more flexible and also to allow for multiple
+   databases (`Issue#440 <https://github.com/vantage6/vantage6/issues/440>`_,
+   `PR#652 <https://github.com/vantage6/vantage6/pull/652>`_).
+ - Allow a single algorithm function to make use of multiple databases
+   (`Issue#804 <https://github.com/vantage6/vantage6/issues/804>`_,
+   `PR#652 <https://github.com/vantage6/vantage6/pull/652>`_,
+   `PR#807 <https://github.com/vantage6/vantage6/pull/807>`_).
  - Enforce pagination in the API to improve performance, and add a `sort`
    parameter for GET requests which yield multiple resources
    (`Issue#392 <https://github.com/vantage6/vantage6/issues/392>`_,
@@ -90,18 +105,33 @@ vserver-local remove
    instead of the latest image of it's major version
    (`Issue#700 <https://github.com/vantage6/vantage6/issues/700>`_,
    `PR#706 <https://github.com/vantage6/vantage6/pull/706>`_).
+ - ``vserver-local`` commands have been removed if they were not used within the
+   docker images or the CLI (`Issue#663 <https://github.com/vantage6/vantage6/issues/663>`_,
+   `PR#728 <https://github.com/vantage6/vantage6/pull/728>`_).
+ - The way in which RabbitMQ is started locally has been changed to make it
+   easier to run RabbitMQ locally. Now, a user indicates with a configuration
+   flag whether they expect RabbitMQ to be started locally
+   (`Issue#282 <https://github.com/vantage6/vantage6/issues/282>`_,
+   `PR#795 <https://github.com/vantage6/vantage6/pull/795>`_).
+ - The place in which server configuration files were stored on Linux has been
+   changed fro ``/etc/xdg`` to ``/etc/vantage6/``
+   (`Issue#269 <https://github.com/vantage6/vantage6/issues/269>`_,
+   `PR#789 <https://github.com/vantage6/vantage6/pull/789>`_).
  - Backwards compatibility code that was present to make different v3.x versions
    compatible has been removed. Additionally, small improvements have been made
    that were not possible to do without breaking compatibility
    (`Issue#454 <https://github.com/vantage6/vantage6/issues/454>`_,
    `PR#740 <https://github.com/vantage6/vantage6/pull/740>`_,
    `PR#758 <https://github.com/vantage6/vantage6/pull/758>`_).
-..    # TODO check what the above entails
 
 - **Bugfix**
 
  - Remove wrong dot in the version for prereleases  (
    `PR#764 <https://github.com/vantage6/vantage6/pull/764>`_).
+ - Users were not assigned any permissions if `vserver import` was run before
+   the server had ever been started
+   (`Issue#634 <https://github.com/vantage6/vantage6/issues/634>`_,
+   `PR#806 <https://github.com/vantage6/vantage6/pull/806>`_).
 
 3.10.4
 -----
