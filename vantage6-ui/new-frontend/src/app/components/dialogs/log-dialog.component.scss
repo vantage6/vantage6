@@ -1,0 +1,13 @@
+@import "../../../config.scss";
+
+.log-dialog-content {
+  display: flex;
+
+  textarea {
+    flex-grow: 1;
+    height: 60vh;
+    padding: $spacing-px-2;
+    resize: none;
+    outline: none;
+  }
+}

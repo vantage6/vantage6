@@ -17,3 +17,11 @@
     display: contents;
   }
 }
+
+.run {
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: $spacing-px-2;
+  }
+}

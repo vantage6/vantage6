@@ -2,7 +2,8 @@
     "general": {
         "back": "Back",
         "next": "Next",
-        "submit": "Submit"
+        "submit": "Submit",
+        "close": "Close"
     },
     "task": {
         "algorithm": "Algorithm",
@@ -23,7 +24,9 @@
         "assigned-at": "Created",
         "started-at": "Started",
         "finished-at": "Finished",
-        "node": "Assigned node"
+        "node": "Assigned node",
+        "show-log": "Show logs",
+        "alert-node-offline": "Task can't start, node is offline."
     },
     "task-create": {
         "title": "Create task",
@@ -64,5 +67,8 @@
         "NoDockerImage": "Non-existing Docker image",
         "Pending": "Pending",
         "StartFailed": "Start failed"
+    },
+    "log-dialog": {
+        "title": "Log"
     }
 }

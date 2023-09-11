@@ -6,6 +6,8 @@ import { Task, TaskLazyProperties, TaskStatus } from 'src/app/models/api/task.mo
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
+import { LogDialog } from '../../../components/dialogs/log-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-task-read',
@@ -23,6 +25,7 @@ export class TaskReadComponent implements OnInit {
   isLoading = true;
 
   constructor(
+    public dialog: MatDialog,
     private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService
@@ -52,5 +55,18 @@ export class TaskReadComponent implements OnInit {
 
   isActiveRun(status: TaskStatus): boolean {
     return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
+  }
+
+  openLog(log: string): void {
+    try {
+      log = JSON.stringify(JSON.parse(log), null, 2);
+    } catch (e) {}
+
+    this.dialog.open(LogDialog, {
+      width: '80vw',
+      data: {
+        log: log
+      }
+    });
   }
 }

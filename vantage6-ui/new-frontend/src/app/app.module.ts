@@ -5,6 +5,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -36,6 +37,7 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
 import { ChipComponent } from './components/chip/chip.component';
 import { AlertComponent } from './components/alert/alert.component';
 import { StatusInfoComponent } from './components/status-info/status-info.component';
+import { LogDialog } from './components/dialogs/log-dialog.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -56,7 +58,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     PageHeaderComponent,
     ChipComponent,
     AlertComponent,
-    StatusInfoComponent
+    StatusInfoComponent,
+    LogDialog
   ],
   imports: [
     BrowserModule,
@@ -74,6 +77,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     }),
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,

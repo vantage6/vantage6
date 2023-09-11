@@ -15,8 +15,12 @@
         title="{{ run.node.name }}"
         [subTitle]="getTaskStatusTranslation(run.status)"
       >
-        <button actions mat-raised-button *ngIf="run.log && !isActiveRun(run.status)">Show logs</button>
-        <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run.status)">Task can't start, node is offline.</span>
+        <button actions mat-raised-button *ngIf="run.log && !isActiveRun(run.status)" (click)="openLog(run.log)">
+          {{ "task-run.show-log" | translate }}
+        </button>
+        <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run.status)">{{
+          "task-run.alert-node-offline" | translate
+        }}</span>
       </app-status-info>
     </div>
   </mat-card-content>
@@ -117,6 +121,11 @@
             <b>{{ "task-run.node" | translate }}</b>
             <span>{{ run.node.name }}</span>
           </div>
+        </div>
+        <div class="run__actions">
+          <button mat-flat-button color="warn" *ngIf="run.log && !isActiveRun(run.status)" (click)="openLog(run.log)">
+            {{ "task-run.show-log" | translate }}
+          </button>
         </div>
       </mat-expansion-panel>
     </mat-accordion>
