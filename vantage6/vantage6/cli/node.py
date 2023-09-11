@@ -785,17 +785,19 @@ def cli_node_clean() -> None:
 @click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
               help="Search for configuration in user folders rather than "
                    "system folders. This is the default")
-def cli_node_remove(name: str, system_folders: bool) -> None:
+@click.option('-f', "--force", type=bool, flag_value=True,
+              help='Don\'t ask for confirmation')
+def cli_node_remove(name: str, system_folders: bool, force: bool) -> None:
     """
     Delete a node permanently.
 
     Remove the configuration file, log file, and docker volumes attached to
     the node.
     """
-    vnode_remove(name, system_folders)
+    vnode_remove(name, system_folders, force)
 
 
-def vnode_remove(name: str, system_folders: bool):
+def vnode_remove(name: str, system_folders: bool, force: bool):
     """
     Delete a node permanently
 
@@ -810,6 +812,8 @@ def vnode_remove(name: str, system_folders: bool):
         Configuration name
     system_folders : bool
         If True, use system folders, otherwise use user folders
+    force : bool
+        If True, don't ask for confirmation before removing the node
     """
     # select configuration name if none supplied
     name = _select_node(name, system_folders)
@@ -827,12 +831,13 @@ def vnode_remove(name: str, system_folders: bool):
               "deleting it.")
         exit(1)
 
-    if not q.confirm(
-        "This node will be deleted permanently including its configuration. "
-        "Are you sure?", default=False
-    ).ask():
-        info("Node will not be deleted")
-        exit(0)
+    if not force:
+        if not q.confirm(
+            "This node will be deleted permanently including its "
+            "configuration. Are you sure?", default=False
+        ).ask():
+            info("Node will not be deleted")
+            exit(0)
 
     # create node context
     ctx = NodeContext(name, system_folders=system_folders)

@@ -22,10 +22,6 @@ from vantage6.common import info, error, generate_apikey
 
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context import ServerContext, NodeContext
-from vantage6.cli.globals import (
-    DEFAULT_SERVER_ENVIRONMENT as S_ENV,
-    DEFAULT_NODE_ENVIRONMENT as N_ENV
-)
 from vantage6.cli.server import (
     click_insert_context,
     vserver_import,
@@ -332,8 +328,8 @@ def create_demo_network(name: str, num_nodes: int, server_url: str,
               "already exists!")
         exit(1)
     (node_config, server_import_config, server_config) = demo
-    ctx = get_server_context(server_name, S_ENV, True)
-    vserver_import(ctx, server_import_config, False, image, '', False)
+    ctx = get_server_context(server_name, True)
+    vserver_import(ctx, server_import_config, False, image, '', False, True)
     return {
         "node_configs": node_config,
         "server_import_config": server_import_config,
@@ -343,7 +339,13 @@ def create_demo_network(name: str, num_nodes: int, server_url: str,
 
 @cli_dev.command(name="start-demo-network")
 @click_insert_context
-def start_demo_network(ctx: ServerContext) -> None:
+@click.option('--server-image', type=str, default=None,
+              help='Server Docker image to use')
+@click.option('--node-image', type=str, default=None,
+              help='Node Docker image to use')
+def start_demo_network(
+    ctx: ServerContext, server_image: str, node_image: str
+) -> None:
     """Starts running a demo-network.
 
     Select a server configuration to run its demo network. You should choose a
@@ -352,7 +354,8 @@ def start_demo_network(ctx: ServerContext) -> None:
     create one.
     """
     # run the server
-    vserver_start(ctx, None, None, None, False, None, None, True, '', False)
+    vserver_start(ctx, None, None, server_image, False, None, None, True, '',
+                  False)
 
     # run all nodes that belong to this server
     configs, _ = NodeContext.available_configurations(system_folders=False)
@@ -360,7 +363,10 @@ def start_demo_network(ctx: ServerContext) -> None:
         config.name for config in configs if f'{ctx.name}_node_' in config.name
     ]
     for name in node_names:
-        subprocess.run(["vnode", "start", "--name", name])
+        cmd = ["vnode", "start", "--name", name]
+        if node_image:
+            cmd.extend(["--image", node_image])
+        subprocess.run(cmd)
 
 
 @cli_dev.command(name="stop-demo-network")
@@ -372,8 +378,7 @@ def stop_demo_network(ctx: ServerContext) -> None:
     to it.
     """
     # stop the server
-    vserver_stop(name=ctx.name, environment=S_ENV, system_folders=True,
-                 all_servers=False)
+    vserver_stop(name=ctx.name, system_folders=True, all_servers=False)
 
     # stop the nodes
     configs, _ = NodeContext.available_configurations(False)
@@ -386,7 +391,9 @@ def stop_demo_network(ctx: ServerContext) -> None:
 
 @cli_dev.command(name="remove-demo-network")
 @click_insert_context
-def remove_demo_network(ctx: ServerContext) -> None:
+@click.option('-f', "--force", type=bool, flag_value=True,
+              help='Don\'t ask for confirmation')
+def remove_demo_network(ctx: ServerContext, force: bool) -> None:
     """ Remove all related demo network files and folders.
 
     Select a server configuration to remove that server and the nodes attached
@@ -396,7 +403,7 @@ def remove_demo_network(ctx: ServerContext) -> None:
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    vserver_remove(ctx, ctx.name, S_ENV, True)
+    vserver_remove(ctx, ctx.name, True, force)
 
     # removing the server import config
     info("Deleting demo import config file")
@@ -420,12 +427,11 @@ def remove_demo_network(ctx: ServerContext) -> None:
         config.name for config in configs if f'{ctx.name}_node_' in config.name
     ]
     for name in node_names:
-        node_ctx = NodeContext(name, N_ENV, False)
+        node_ctx = NodeContext(name, False)
         for handler in itertools.chain(node_ctx.log.handlers,
                                        node_ctx.log.root.handlers):
             handler.close()
-        subprocess.run(["vnode", "remove", "-n", name, "-e", N_ENV,
-                        "--user"])
+        subprocess.run(["vnode", "remove", "-n", name, "--user", "--force"])
 
     # remove data files attached to the network
     data_dirs_nodes = NodeContext.instance_folders('node', '', False)['dev']
