@@ -1,4 +1,7 @@
-FROM harbor2.vantage6.ai/infrastructure/base
+# FROM harbor2.vantage6.ai/infrastructure/base
+# FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:3.3.2
+# FROM harbor2.vantage6.ai/infrastructure/old-base
+FROM infra-base-starter
 
 LABEL version="2.0"
 LABEL infrastructure_version = "2.0.0"

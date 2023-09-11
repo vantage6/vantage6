@@ -61,7 +61,8 @@ setup(
         'greenlet==0.4.17',
         'python-engineio==3.10.0',
         'python-socketio==4.4.0',
-        'kombu==5.2.2'
+        'kombu==5.2.2',
+        'jinja2<3.1.0'
     ],
     extras_require={
         'dev': [

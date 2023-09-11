@@ -9,7 +9,7 @@ from vantage6.client.encryption import DummyCryptor
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
 
-NODE_ONLINE_CHECK_IMAGE = "harbor2.vantage6.ai/starter/utils:with-node-status-check"
+NODE_ONLINE_CHECK_IMAGE = "harbor2.vantage6.ai/starter/utils"
 TIME_WAIT_NODE_RESPONSE = 120
 
 
@@ -17,7 +17,7 @@ def run(collaboration_id: int, socketio):
     """
     Create a task to check which nodes are online for the given collaboration.
     """
-
+    time.sleep(10)
     collab = db.Collaboration.get(collaboration_id)
 
     # Create a task for all nodes in the collaboration
@@ -41,7 +41,8 @@ def run(collaboration_id: int, socketio):
         "args": [],
     }
     orgs = collab.organizations
-    log.debug("Creating algorithm runs for %s organizations", len(orgs))
+    log.debug("Creating algorithm runs for collaboration %s for %s "
+              "organizations", collaboration_id, len(orgs))
     cryptor = DummyCryptor()  # NOTE: OK for this project, not for others!
     for org in orgs:
         serialized_input = pickle.dumps(input_)
@@ -53,6 +54,7 @@ def run(collaboration_id: int, socketio):
         )
         result.save()
 
+    log.debug("Emitting new_task event for task %s", task.id)
     # notify nodes a new task available (only to online nodes), nodes that
     # are offline will receive this task on sign in.
     socketio.emit('new_task', task.id, namespace='/tasks',
@@ -92,6 +94,10 @@ def run_for_all_collaborations(socketio):
     """
     Create a task to check which nodes are online for all collaborations.
     """
-    collabs = db.Collaboration.get()
-    for collab in collabs:
-        run(collab.id, socketio)
+    # FIXME the below is extremely ugly -> 2 is the id of the starter
+    # collaboration. This fix should never make it into another branch.
+    collab = db.Collaboration.get(2)
+    run(collab.id, socketio)
+    # collabs = db.Collaboration.get(2)
+    # for collab in collabs:
+    #     run(collab.id, socketio)
