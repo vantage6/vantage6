@@ -58,7 +58,7 @@ interface TaskRun {
 export interface RunNode {
   id: number;
   name: string;
-  status?: NodeStatus;
+  status?: NodeStatus | null;
 }
 
 interface TaskInput {

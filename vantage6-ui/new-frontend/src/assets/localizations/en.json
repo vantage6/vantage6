@@ -50,6 +50,9 @@
         "card-general": {
             "title": "General"
         },
+        "card-status": {
+            "title": "Status"
+        },
         "card-algorithm": {
             "title": "Algorithm"
         },
