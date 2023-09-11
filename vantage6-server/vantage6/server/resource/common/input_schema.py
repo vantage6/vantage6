@@ -399,13 +399,13 @@ class TaskInputSchema(_NameValidationSchema):
                 # TODO we may add further validation on the preprocessing
                 # parameters when that is completed
                 for prepro in database['preprocessing']:
-                    if not 'type' in prepro:
+                    if 'type' not in prepro:
                         raise ValidationError(
                             f"Database preprocessing {prepro} is missing a "
                             "'type'"
                         )
             allowed_keys = {'label', 'preprocessing', 'query', 'sheet_name'}
-            if database.keys() - allowed_keys:
+            if not set(database.keys()).issubset(set(allowed_keys)):
                 raise ValidationError(
                     f"Database {database} contains unknown keys. Allowed keys "
                     f"are {allowed_keys}."

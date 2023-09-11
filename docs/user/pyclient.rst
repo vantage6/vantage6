@@ -320,7 +320,7 @@ In this manual, we'll use the averaging algorithm from
 We'll assume the nodes in your collaboration have been configured to look as
 something like:
 
-::
+.. code:: yaml
 
      databases:
         - label: default

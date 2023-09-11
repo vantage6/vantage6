@@ -135,7 +135,7 @@ class MockAlgorithmClient:
             ID of the task for which the results should be obtained.
         interval: float
             Interval in seconds between checking for new results. This is
-            ignored in the mock client but included for compatibility with
+            ignored in the mock client but included to match the signature of
             the AlgorithmClient.
 
         Returns
